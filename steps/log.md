@@ -6,7 +6,9 @@ Newest entry first.
 
 ## 2026-09-08, tenth pass. Creation, and a count that could not agree with its list
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 13, one commit.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#13](https://github.com/baderrahal/RCRC-Green/pull/13), one commit, 20 files, merged into main
+as `f2c2eb5`.
 
 ### 1. The count and the list. What I found, and what I have for it
 
@@ -112,7 +114,8 @@ about what the tool can do. The run line and the report both say this in as many
 
 ### Tests
 
-248 pass, 0 failed, 0 skipped, from a run made after the last file was written. 34 are new,
+248 pass, 0 failed, 0 skipped, locally from a run made after the last file was written and
+again on the runner. 34 are new,
 covering the search, All and None over a filter, the code buttons, added types across a
 refresh, `ScheduleDefinition`, and what a run would make. The build has 0 warnings.
 
