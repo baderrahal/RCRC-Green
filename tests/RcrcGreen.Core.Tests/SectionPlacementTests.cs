@@ -126,5 +126,15 @@ namespace RcrcGreen.Core.Tests
         {
             Assert.Throws<ArgumentException>(() => new PlotBox("DM-41", 0, 0, 0, 100, -20, 10));
         }
+
+        [Theory]
+        [InlineData(double.NaN)]
+        [InlineData(double.PositiveInfinity)]
+        [InlineData(double.NegativeInfinity)]
+        public void ABoundThatIsNotARealNumberIsRefusedRatherThanTurningTheCentreIntoNaN(double bound)
+        {
+            Assert.Throws<ArgumentException>(() => new PlotBox("DM-41", 0, 0, 0, bound, 20, 10));
+            Assert.Throws<ArgumentException>(() => new PlotBox("DM-41", bound, 0, 0, 100, 20, 10));
+        }
     }
 }

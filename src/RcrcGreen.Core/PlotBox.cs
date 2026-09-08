@@ -76,11 +76,14 @@ namespace RcrcGreen.Core
             get { return new Point3D(CentreX, CentreY, CentreZ); }
         }
 
+        // An infinite bound survives the ordering check and then turns every centre into NaN,
+        // which reads as a placement rather than as a failure. Both are refused here instead.
         private static void RequireOrdered(double min, double max, string axis)
         {
-            if (double.IsNaN(min) || double.IsNaN(max))
+            if (double.IsNaN(min) || double.IsNaN(max)
+                || double.IsInfinity(min) || double.IsInfinity(max))
             {
-                throw new ArgumentException("The " + axis + " extent is not a number.");
+                throw new ArgumentException("The " + axis + " extent is not a real number.");
             }
             if (max < min)
             {

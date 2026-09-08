@@ -46,7 +46,10 @@ The add-in project can only be tested inside Revit, so it never splits.
 Three projects in `RcrcGreen.sln`.
 
 - `src/RcrcGreen.Core`, netstandard2.0, no Revit reference. View name parsing, the plot
-  list, the grid, the missing view report, the section maths.
+  list, the grid, the missing view report, the section maths. A bound that is NaN or
+  infinite is refused when a `PlotBox` is built, because an infinite bound survives an
+  ordering check and then turns every centre into NaN, which reads as a placement rather
+  than as a failure.
 - `src/RcrcGreen.Revit`, net48. One `IExternalApplication` that makes the RCRC Green tab
   with an empty Sheets panel, plus `RcrcGreen.addin`. No commands.
 - `tests/RcrcGreen.Core.Tests`, net8.0, xunit, Core only.

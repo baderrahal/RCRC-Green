@@ -86,6 +86,18 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
+        public void ANullInsideAListIsSteppedOverRatherThanCountedOrThrownOn()
+        {
+            PlotRegistryResult result = PlotRegistry.Build(
+                new[] { null, "DM-41-(010) Location Key Plan" },
+                new string[] { null },
+                new[] { "PF-12", null });
+
+            Assert.Equal(new[] { "DM-41", "PF-12" }, result.Plots.Select(plot => plot.PlotId));
+            Assert.Empty(result.Ignored);
+        }
+
+        [Fact]
         public void AScopeBoxNamedWithSomethingLongerThanThePlotIsNotAPlot()
         {
             PlotRegistryResult result = PlotRegistry.Build(
