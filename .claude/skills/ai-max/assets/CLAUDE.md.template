@@ -1,0 +1,38 @@
+# [Tool name]
+
+[One sentence: what it does.]
+
+Done means: [the observable result from phase 1]
+
+## Running it
+
+[The exact command, or the exact steps.]
+
+## Running the tests
+
+[The exact command. If there is no test suite yet, say so here rather than leaving this blank.]
+
+## How this is laid out
+
+[Two or three lines. Only what is not obvious from the folder names.]
+
+## Conventions
+
+[Only what a reader could not work out from the code. Delete this section if there is nothing.]
+
+## Things that have gone wrong before
+
+[Add to this whenever something breaks. This section is the most valuable part of the file
+over time, because it is the only part that cannot be rediscovered by reading the code.]
+
+## Writing
+
+No em dash, no semicolon, no emoji anywhere, including commit messages.
+No generated-by or co-authored-by line on commits.
+Comments say why, not what.
+
+## Working agreements
+
+Never report a test result that did not come from a run made after the last file was written.
+Never open a pull request unasked. Never merge.
+When something cannot be checked, say UNKNOWN rather than filling the gap.
