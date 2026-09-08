@@ -217,8 +217,9 @@ and the gate executed 248 tests against it. Pull request 15 landed the write pat
 `792c203`, and the gate executed 257 tests against it. Pull request 17 landed the guarded
 delete, the reports folder and the openable scope box cases as `a18a2ae`, and the gate executed
 274 tests against it. Pull request 19 landed everything the first real write found, plus
-sections and sheets, as `8a68492`, and the gate executed 310 tests against it, 0 failed and
-0 skipped.
+sections and sheets, as `8a68492`, and the gate executed 310 tests against it. Pull request 20
+landed the five step interface as `67dec1e`, and the gate executed 332 tests against it,
+0 failed and 0 skipped.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
