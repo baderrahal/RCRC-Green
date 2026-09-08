@@ -71,7 +71,24 @@ namespace RcrcGreen.Revit
             return "RCRC Green Drawing Sheet";
         }
 
+        /// <summary>
+        /// Nothing may leave here. An exception out of an IExternalEventHandler does not raise
+        /// a dialog, it ends Revit along with whatever the user had not saved. The failures
+        /// worth naming are named in <see cref="Run"/>. This is what catches the rest.
+        /// </summary>
         public void Execute(UIApplication application)
+        {
+            try
+            {
+                Run(application);
+            }
+            catch (Exception failed)
+            {
+                Stop(failed);
+            }
+        }
+
+        private void Run(UIApplication application)
         {
             DrawingSheetRequest wanted;
             long viewToSelect;
@@ -118,6 +135,17 @@ namespace RcrcGreen.Revit
             {
                 Told?.Invoke("Revit refused that. " + failed.Message);
             }
+            catch (InvalidOperationException failed)
+            {
+                // The Revit API throws the plain .NET exceptions as well as its own, and a bad
+                // argument or a wrong moment arrives as one of these two rather than as
+                // anything under Autodesk.Revit.Exceptions.
+                Told?.Invoke("Revit would not do that now. " + failed.Message);
+            }
+            catch (ArgumentException failed)
+            {
+                Told?.Invoke("Revit refused that as a bad argument. " + failed.Message);
+            }
             catch (UnauthorizedAccessException denied)
             {
                 Told?.Invoke("The Desktop folder refused the report. " + denied.Message);
@@ -125,6 +153,24 @@ namespace RcrcGreen.Revit
             catch (IOException failed)
             {
                 Told?.Invoke("The report could not be written. " + failed.Message);
+            }
+        }
+
+        /// <summary>
+        /// The last thing before Revit would have gone down. The panel may already be gone by
+        /// now, so a throw out of the report itself is caught too. There is nowhere further to
+        /// pass it and rethrowing would be the crash all of this exists to stop.
+        /// </summary>
+        private void Stop(Exception failed)
+        {
+            try
+            {
+                Told?.Invoke(
+                    "That request failed and was stopped here rather than being let out. "
+                    + failed.GetType().Name + ". " + failed.Message);
+            }
+            catch (Exception)
+            {
             }
         }
 
@@ -150,7 +196,19 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            open.ActiveView = view;
+            try
+            {
+                open.ActiveView = view;
+            }
+            catch (InvalidOperationException)
+            {
+                // Revit will not make a view template or a legend active, among others. One
+                // click on one grid cell is not worth a crash dialog.
+                Told?.Invoke(view.Name + " cannot be opened. Revit will not make that kind of "
+                    + "view active.");
+                return;
+            }
+
             open.Selection.SetElementIds(new List<ElementId> { id });
             Told?.Invoke("Showing " + view.Name + ".");
         }

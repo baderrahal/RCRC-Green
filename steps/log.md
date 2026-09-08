@@ -4,6 +4,91 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, seventh pass. Three audit fixes, all the same shape
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 7, one commit, five files.
+
+All three findings are one fault written three ways. A failure inside the panel was allowed
+to reach past the panel. Nothing else was touched.
+
+### 1. RegisterDockablePane was the only unguarded call in OnStartup
+
+`CreateRibbonTab` was in a try and `PanelNamed` looked before it created, but
+`RegisterDockablePane` stood bare between them. An exception there leaves `OnStartup`
+throwing, and Revit answers a throwing `OnStartup` by building no ribbon at all. So a panel
+that would not register took Scan Model and Scope Box down with it, and the user would have
+seen an add-in that simply was not there.
+
+`Registered` now wraps the call and returns whether it took. It catches
+`Autodesk.Revit.Exceptions.ApplicationException`, which is the base of every Revit exception,
+plus `InvalidOperationException` and `ArgumentException`, because `new DrawingSheetPanel()`
+is inside the same try and building a WPF tree throws from the .NET side rather than the
+Revit one.
+
+The ribbon is then built either way. When registration failed the Drawing Sheet button is
+still there and its tooltip reads that the panel is not available, its long description says
+the Reports panel is unaffected and to restart Revit, and clicking it returns that same
+sentence rather than opening anything. `ShowDrawingSheetCommand.PaneRegistered` carries the
+one fact and `NotAvailable` carries the one sentence, so the button and the click cannot say
+two different things.
+
+A button that explains itself beats a button that is silently missing, because a missing
+button reads as a broken install and sends someone looking in the wrong place.
+
+### 2. Setting ActiveView on a view Revit will not activate
+
+`open.ActiveView = view` throws `InvalidOperationException` on a view template, a legend and
+others. The grid offers a cell for every view it read, so a single click on the wrong one
+produced a crash dialog. It is caught now and the panel says the view cannot be opened,
+naming it. The name is read off the view, so the user knows which cell did it.
+
+### 3. The handler could still let an exception out
+
+`Execute` caught `Autodesk.Revit.Exceptions.ApplicationException`, `UnauthorizedAccessException`
+and `IOException`. The Revit API also throws the plain .NET exceptions, and a bad argument or
+a call at the wrong moment arrives as `InvalidOperationException` or `ArgumentException`,
+neither of which was covered. Both are caught now with their own message.
+
+The requirement behind the finding is absolute. An exception leaving an
+`IExternalEventHandler` does not raise a dialog, it ends Revit along with whatever was not
+saved. Two more named types do not deliver that on their own, so the body moved into `Run`
+and `Execute` is now a last resort catch around it. Every failure worth naming is still named
+separately. `Stop` reports what got through by type and message, and it catches its own
+report as well, because the panel can be gone by then and a throw out of the reporting would
+be exactly the crash the catch exists to stop.
+
+This is the one place in the repo where a catch of everything is right rather than lazy. It
+is a boundary the process does not survive being crossed.
+
+### Core
+
+Nothing in Core changed, so no test was added. All three fixes are Revit failure paths, and
+Core holds no Revit type by design. Adding a test here would have been a test written for the
+sake of having written one.
+
+The suite still runs and still passes, which is the check that these three edits broke
+nothing that was already covered.
+
+### Not observed, because it needs Revit
+
+None of the three paths was made to happen. Specifically:
+
+- registration has not been made to fail, so the fallback button, its tooltip and the message
+  on clicking it have never been seen
+- no view template or legend has been clicked in the grid, so the message naming the view is
+  untested
+- no exception has been driven through `Execute`, so neither the two new named catches nor
+  the last resort catch has ever run
+- whether Revit really does build no ribbon when `OnStartup` throws is taken from the finding
+  rather than observed here
+
+### What comes next
+
+Unchanged. Run the panel in Revit and compare its counts against Scan Model and Scope Box on
+the same model. Then creation, working from the marks.
+
+---
+
 ## 2026-09-08, sixth pass. The Drawing Sheet panel, and PRX_Plot_ID as the first source
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request
