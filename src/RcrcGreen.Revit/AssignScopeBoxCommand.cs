@@ -13,13 +13,13 @@ namespace RcrcGreen.Revit
     /// <summary>
     /// Gives every view that names a plot the scope box named for that plot.
     ///
-    /// A new view with no scope box is useless on this project, so this belongs to the Drawing
-    /// Sheet work rather than being a tool of its own. It applies to every view that names a
-    /// plot, not only newly created ones.
-    ///
     /// Only case C writes. A view that already carries a scope box is never overwritten,
     /// whether that box is the right one or not, because someone put it there and this command
     /// does not know why.
+    ///
+    /// The confirmation, the assignment and the report are internal rather than private
+    /// because the Drawing Sheet panel runs the same three over the plots on screen. Two
+    /// copies of this logic would drift, and the button is the check on the panel.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
@@ -89,26 +89,15 @@ namespace RcrcGreen.Revit
                 }
             }
 
-            DateTime writtenAt = DateTime.Now;
-            string report = ScopeBoxReport.Write(plan, document.Title, writtenAt, applied, refused);
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-                ScanFileName.For(ScanFileName.ScopeBoxPrefix, document.Title, writtenAt));
-
+            string path;
             try
             {
-                File.WriteAllText(path, report, new UTF8Encoding(false));
+                path = WriteReport(plan, document.Title, applied, refused);
             }
             catch (UnauthorizedAccessException denied)
             {
                 message = Written(applied, refused.Count, ready)
                     + " The Desktop folder refused the report. " + denied.Message;
-                return Result.Failed;
-            }
-            catch (DirectoryNotFoundException missing)
-            {
-                message = Written(applied, refused.Count, ready)
-                    + " The Desktop folder was not where Windows said it would be. " + missing.Message;
                 return Result.Failed;
             }
             catch (PathTooLongException tooLong)
@@ -120,7 +109,7 @@ namespace RcrcGreen.Revit
             catch (IOException failed)
             {
                 message = Written(applied, refused.Count, ready)
-                    + " The report could not be written to " + path + ". " + failed.Message;
+                    + " The report could not be written. " + failed.Message;
                 return Result.Failed;
             }
 
@@ -133,7 +122,7 @@ namespace RcrcGreen.Revit
         /// progress window is not pumped in here, because letting other clicks through while a
         /// transaction is open is how a model ends up half changed.
         /// </summary>
-        private static void Assign(
+        internal static void Assign(
             Document document,
             ScopeBoxPlan plan,
             Dictionary<string, ElementId> boxIdByName,
@@ -169,7 +158,23 @@ namespace RcrcGreen.Revit
             }
         }
 
-        private static bool Confirmed(ScopeBoxPlan plan, int ready)
+        internal static string WriteReport(
+            ScopeBoxPlan plan, string documentTitle, bool applied, IEnumerable<long> refused)
+        {
+            DateTime writtenAt = DateTime.Now;
+            string path = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                ScanFileName.For(ScanFileName.ScopeBoxPrefix, documentTitle, writtenAt));
+
+            File.WriteAllText(
+                path,
+                ScopeBoxReport.Write(plan, documentTitle, writtenAt, applied, refused),
+                new UTF8Encoding(false));
+
+            return path;
+        }
+
+        internal static bool Confirmed(ScopeBoxPlan plan, int ready)
         {
             var asking = new TaskDialog("RCRC Green, Scope Box")
             {

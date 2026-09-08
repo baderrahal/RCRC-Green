@@ -4,6 +4,118 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, sixth pass. The Drawing Sheet panel, and PRX_Plot_ID as the first source
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 5, one commit.
+
+This is the first round built on a real model rather than on the project facts alone. Both
+commands were run on RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached and the numbers came back:
+96,934 elements in 1.4 seconds, 1,385 sheets, 953 views on sheets, 2,430 views not on
+sheets, 79 view templates, 406 scope boxes, 160 distinct PRX_Plot_ID values, 2,114 names
+parsed and 4,039 not. Scope Box sorted them A 1,269, B 972, C 849, D 57, E 49, F 187, and
+849 views were assigned.
+
+Three of those numbers overturned something that had been assumed for five rounds.
+
+### What was built
+
+**Plot detection changed.** `ViewPlotReader.Read` takes the PRX_Plot_ID parameter on the view
+first and falls back to the name only when the parameter is empty or absent. It reports which
+source answered, as `Parameter`, `ViewName`, `ParameterNotAPlot` or `None`. 1,269 views were
+skipped by Scope Box for no reason other than a name that does not parse, and the parameter
+holds the plot for most of them. The parser is untouched, because the same run confirmed it
+correct on the 2,114 names that do parse. A parameter holding something that is not a plot
+identifier is its own answer rather than a silent fall through to the name, because a view
+carrying a wrong PRX_Plot_ID and a right name is a data problem someone needs to see.
+
+**A dockable panel.** `DrawingSheetPanel` is an `IDockablePaneProvider` registered in
+`OnStartup`, built in C# rather than XAML because an SDK style net48 project has no XAML
+compilation step. `ShowDrawingSheetCommand` shows it from a button on a new ribbon panel.
+
+**One route to the API.** Every model action goes through `DrawingSheetRequestHandler`, an
+`IExternalEventHandler`, and one `ExternalEvent`. `DrawingSheetPanel.cs` names no `Document`,
+no `Transaction`, no `FilteredElementCollector` and no `ElementId`, which was checked by
+grep after the last edit. It holds a `DrawingSheetSnapshot` of plain values, which is also
+what lets it stay open while the user closes one document and opens another.
+
+**The range is the main control.** Prefix, from and to are dropdowns filled from plots the
+model holds. There is no free text entry for a plot anywhere in the panel, so no identifier
+the tool invented can be offered or acted on. Everything below the range is disabled until a
+range is set. `PlotRange` does the filtering in Core, and a range whose ends are the wrong
+way round returns nothing rather than throwing.
+
+**The grid.** One row per plot in range, one column per view type, cells reading exists,
+missing or marked. `SheetGrid` builds it in Core, and an existing view can never be marked.
+A row label carries a mark when no scope box named for that plot exists. Clicking a cell that
+holds a view selects and shows it in Revit through the external event. Clicking one that does
+not toggles a mark, which records intent and writes nothing. Nothing creates a view or a
+sheet this round.
+
+**Assign Scope Boxes on the panel** runs the untouched case A to F logic over the plots on
+screen, through the same confirmation dialog and the same report file as the button.
+`Confirmed`, `Assign` and `WriteReport` became internal so there is one copy rather than two
+that drift.
+
+**Two ribbon panels.** Drawing Sheet holds the panel. Reports holds Scan Model and Scope Box,
+working exactly as before. They read the whole model rather than a range, which is what makes
+them the check on the panel. `PanelNamed` looks through `GetRibbonPanels` before creating, so
+a reload does not stack duplicates.
+
+**No progress window on the panel read.** The audit finding about a slow read was wrong.
+1.4 seconds for the whole document, and this read touches only views and scope boxes.
+
+### Tests
+
+176 pass locally, 0 failed, 0 skipped, from a run made after the last file was written.
+40 are new this round, covering the range filter, the grid shaping and the source ordering.
+The five the brief named are all there: DM-11 to DM-28 returns those and nothing outside,
+a reversed range returns nothing, the parameter beats the name, the name is used when the
+parameter is empty, and DM-2 sorts before DM-100.
+
+### A hook that refused a commit that was fine
+
+`commit-scope.py` tokenises the bash command with `shlex` and `punctuation_chars=True`, which
+splits `2>&1` into `2`, `>&` and `1`. The `2` read as a path being committed, so the commit
+looked like `git commit 2`, which carries nothing, and `require-file-on-commit.sh` refused it
+for not carrying the state file. Fixed by replacing the single break pattern with
+`ends_the_command`, which knows a bare file descriptor in front of a redirection belongs to
+the redirection while a digit in front of a pipe is still a path. Checked by hand against
+seven command forms, including the one that broke and the path literally named 2.
+
+This is the mirror of the entry already in `CLAUDE.md`. It failed closed, so nothing went
+through unchecked, and that is the difference between an hour lost and a rule quietly not
+applied.
+
+### Not observed, because it needs Revit
+
+None of this was run. It compiles against the Revit 2024 reference assemblies and that is
+the whole of what can be said from here. Specifically untested:
+
+- whether `RegisterDockablePane` in `OnStartup` is accepted, and whether the pane appears
+- whether the pane docks, resizes, and keeps its position across a Revit restart
+- whether the WPF tree built in code renders as intended at any DPI or theme
+- whether the `ExternalEvent` fires and whether `Raise` from a Windows event handler is
+  accepted at the moments the panel raises it
+- whether clicking a cell actually selects and shows that view in Revit
+- whether the prefix, from and to dropdowns fill from a real model, and what they hold for
+  the 160 plots in it
+- whether the panel survives the user closing and reopening the document, which is the case
+  the snapshot exists for
+- whether PRX_Plot_ID is readable by `LookupParameter` on a view, and how many of the 1,269
+  it actually recovers. The number in this entry is what the parameter could recover, not
+  what it did
+- whether Assign Scope Boxes from the panel produces the same report as the button
+- whether the two ribbon panels appear with the right buttons on them
+- what a model with no PRX_Plot_ID anywhere does to the panel
+
+### What comes next
+
+Run the panel in Revit and compare its counts against Scan Model and Scope Box on the same
+model, which is what the Reports panel is for. Then creation, which is the first thing that
+makes a view rather than reporting one, and the marks are the list it works from.
+
+---
+
 ## 2026-09-08, fifth pass. Scope Box, the first command that writes, merged into main
 
 Branch `claude/rcrc-green-setup-wf9ham`, restarted from main. Pull request

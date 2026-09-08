@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -6,13 +7,15 @@ using Autodesk.Revit.UI;
 namespace RcrcGreen.Revit
 {
     /// <summary>
-    /// Builds the ribbon and puts the commands on it.
+    /// Builds the ribbon and registers the dockable panel.
     /// </summary>
     public class RcrcGreenApplication : IExternalApplication
     {
         public const string TabName = "RCRC Green";
 
-        public const string SheetsPanelName = "Sheets";
+        public const string DrawingSheetPanelName = "Drawing Sheet";
+
+        public const string ReportsPanelName = "Reports";
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -26,9 +29,26 @@ namespace RcrcGreen.Revit
                 // of the add-in is registered.
             }
 
-            RibbonPanel sheets = SheetsPanel(application);
+            // The panel has to be registered before any document opens, which is why it is
+            // here rather than in the command that shows it.
+            application.RegisterDockablePane(
+                ShowDrawingSheetCommand.PaneId,
+                ShowDrawingSheetCommand.PaneTitle,
+                new DrawingSheetPanel());
 
-            Add(sheets, ScanModelCommand.ButtonName, ScanModelCommand.ButtonText,
+            RibbonPanel drawingSheet = PanelNamed(application, DrawingSheetPanelName);
+            Add(drawingSheet, ShowDrawingSheetCommand.ButtonName, ShowDrawingSheetCommand.ButtonText,
+                typeof(ShowDrawingSheetCommand),
+                "Open the Drawing Sheet panel.",
+                "Pick a plot range, see which view types each plot in it has, and mark the ones "
+                + "that are wanted. Marking records intent and changes nothing. The panel also "
+                + "runs the scope box assignment over the plots in range.");
+
+            // The two report commands sit on their own panel. They read the whole model rather
+            // than a range, and they are the check the panel is measured against.
+            RibbonPanel reports = PanelNamed(application, ReportsPanelName);
+
+            Add(reports, ScanModelCommand.ButtonName, ScanModelCommand.ButtonText,
                 typeof(ScanModelCommand),
                 "Read the open model and write what is in it to a text file on the Desktop.",
                 "Lists every sheet, view, view template and scope box, and every value of "
@@ -36,7 +56,7 @@ namespace RcrcGreen.Revit
                 + "sheet name and sheet number through the naming pattern and reports which "
                 + "ones it did not fit. Nothing in the model is changed.");
 
-            Add(sheets, AssignScopeBoxCommand.ButtonName, AssignScopeBoxCommand.ButtonText,
+            Add(reports, AssignScopeBoxCommand.ButtonName, AssignScopeBoxCommand.ButtonText,
                 typeof(AssignScopeBoxCommand),
                 "Give every view that names a plot the scope box named for that plot.",
                 "Sorts every view into one of six cases and shows the counts before writing "
@@ -54,24 +74,24 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Creating the panel blind gives a second Sheets panel when the add-in is registered
-        /// twice, and the user then has two panels holding the same two buttons with no way to
-        /// tell which is which.
+        /// Creating a panel blind gives a second one of the same name when the add-in is
+        /// registered twice, and the user then has two panels holding the same buttons with no
+        /// way to tell which is which.
         /// </summary>
-        private static RibbonPanel SheetsPanel(UIControlledApplication application)
+        private static RibbonPanel PanelNamed(UIControlledApplication application, string name)
         {
             List<RibbonPanel> already = application.GetRibbonPanels(TabName);
             RibbonPanel found = already == null
                 ? null
-                : already.FirstOrDefault(panel => panel.Name == SheetsPanelName);
+                : already.FirstOrDefault(panel => panel.Name == name);
 
-            return found ?? application.CreateRibbonPanel(TabName, SheetsPanelName);
+            return found ?? application.CreateRibbonPanel(TabName, name);
         }
 
         // Text only on purpose. An icon goes on once the buttons have earned a place people
         // look for, and a missing image is better than a wrong one.
         private static void Add(
-            RibbonPanel panel, string name, string text, System.Type command, string tip, string longer)
+            RibbonPanel panel, string name, string text, Type command, string tip, string longer)
         {
             var button = new PushButtonData(
                 name,

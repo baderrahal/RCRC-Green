@@ -21,6 +21,12 @@ namespace RcrcGreen.Revit
         {
             public List<ViewScopeBoxState> Views;
             public Dictionary<string, ElementId> BoxIdByName;
+
+            /// <summary>
+            /// PRX_Plot_ID as it sits on each view, kept so a caller narrowing to a plot range
+            /// does not have to fetch every view a second time to ask.
+            /// </summary>
+            public Dictionary<long, string> PlotParameterByView;
         }
 
         /// <summary>
@@ -54,6 +60,7 @@ namespace RcrcGreen.Revit
                 .ToList();
 
             var states = new List<ViewScopeBoxState>(views.Count);
+            var plotParameterByView = new Dictionary<long, string>();
             int read = 0;
 
             foreach (View view in views)
@@ -74,9 +81,25 @@ namespace RcrcGreen.Revit
                 }
 
                 states.Add(new ViewScopeBoxState(view.Id.Value, view.Name, canHold, current));
+                plotParameterByView[view.Id.Value] = PlotParameterOf(view);
             }
 
-            return new DocumentScopeBoxes { Views = states, BoxIdByName = boxIdByName };
+            return new DocumentScopeBoxes
+            {
+                Views = states,
+                BoxIdByName = boxIdByName,
+                PlotParameterByView = plotParameterByView
+            };
+        }
+
+        private static string PlotParameterOf(View view)
+        {
+            Parameter holder = view.LookupParameter(ModelScanner.PlotIdParameterName);
+            if (holder == null || !holder.HasValue) return null;
+
+            return holder.StorageType == StorageType.String
+                ? holder.AsString()
+                : holder.AsValueString();
         }
     }
 }
