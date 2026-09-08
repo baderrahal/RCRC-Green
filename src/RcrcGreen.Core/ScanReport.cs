@@ -82,6 +82,19 @@ namespace RcrcGreen.Core
             }
             Line(report, string.Empty);
 
+            List<ScannedViewFamilyType> familyTypes = scan.ViewFamilyTypes
+                .OrderBy(type => type.ViewFamily, NaturalOrder.Comparer)
+                .ThenBy(type => type.Name, NaturalOrder.Comparer)
+                .ToList();
+            Heading(report, "VIEW FAMILY TYPES", familyTypes.Count, "view family | type name");
+            Line(report, "This is what a new view is made with. A type name does not have to match "
+                + "the view names that use it, and on this model several do not.");
+            foreach (ScannedViewFamilyType type in familyTypes)
+            {
+                Line(report, Join(type.ViewFamily, type.Name));
+            }
+            Line(report, string.Empty);
+
             List<ScannedScopeBox> boxes = scan.ScopeBoxes
                 .OrderBy(box => box.Name, NaturalOrder.Comparer)
                 .ToList();
@@ -103,6 +116,21 @@ namespace RcrcGreen.Core
                 Line(report, Join(
                     value.Value.Length == 0 ? "(empty)" : value.Value,
                     Count(value.ElementCount, "element")));
+            }
+            Line(report, string.Empty);
+
+            List<ScannedDisagreement> disagreeing = scan.Disagreements
+                .OrderBy(one => one.PlotInTheName, NaturalOrder.Comparer)
+                .ThenBy(one => one.ViewName, NaturalOrder.Comparer)
+                .ToList();
+            Heading(report, "VIEWS THAT DISAGREE WITH THEMSELVES", disagreeing.Count,
+                "view name | plot in the name | plot in PRX_Plot_ID");
+            Line(report, "Nothing here was changed. The grid follows the name, because a cell "
+                + "filled from a disagreeing parameter is a claim no view backs up. Which of the "
+                + "two is right is a question about the project.");
+            foreach (ScannedDisagreement one in disagreeing)
+            {
+                Line(report, Join(one.ViewName, one.PlotInTheName, one.PlotInTheParameter));
             }
             Line(report, string.Empty);
 

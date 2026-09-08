@@ -59,12 +59,21 @@ namespace RcrcGreen.Revit
         private readonly Button _assign = new Button { Content = "Assign Scope Boxes", Margin = new Thickness(0, 4, 0, 2) };
         private readonly TextBlock _runCounts = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 4) };
         private readonly Button _run = new Button { Content = "Run", Margin = new Thickness(0, 2, 0, 2) };
+        private readonly ComboBox _sheetToCopy = new ComboBox { Margin = new Thickness(0, 2, 0, 2) };
+        private readonly TextBlock _sheetHelp = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 4) };
+        private readonly Grid _sheetTable = new Grid { Margin = new Thickness(0, 2, 0, 2) };
 
         private PanelTheme _theme = PanelTheme.Current();
         private DrawingSheetSnapshot _model = DrawingSheetSnapshot.Nothing;
         private GridColumns _columns = GridColumns.Over(null);
         private PlotSelection _picked = PlotSelection.Nothing;
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
+
+        // What the user typed, per plot, held here rather than read back off the text boxes.
+        // The table is rebuilt whenever the range changes, and a control that has been thrown
+        // away is not a place to keep the only copy of something the user typed.
+        private readonly Dictionary<string, string> _sheetNumbers = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> _sheetNames = new Dictionary<string, string>(StringComparer.Ordinal);
         private bool _filling;
         private bool _readOnce;
         private ScopeBoxCase? _caseOpen;
@@ -199,6 +208,19 @@ namespace RcrcGreen.Revit
             _assign.Click += (sender, e) => AskToAssign();
             everything.Children.Add(_assign);
 
+            everything.Children.Add(Heading("SHEETS"));
+            everything.Children.Add(Labelled("Copy", _sheetToCopy));
+            _sheetToCopy.SelectionChanged += (sender, e) => SheetToCopyPicked();
+            everything.Children.Add(_sheetHelp);
+            everything.Children.Add(new ScrollViewer
+            {
+                Content = _sheetTable,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                MaxHeight = 200,
+                Margin = new Thickness(0, 2, 0, 6)
+            });
+
             everything.Children.Add(Heading("RUN"));
             everything.Children.Add(_runCounts);
             _run.Click += (sender, e) => AskToRun();
@@ -288,18 +310,183 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            RunPlan plan = RunPlan.Of(
+            _runCounts.Text = PlanNow().InWords()
+                + " Only marked cells on ticked plots are made, and nothing is copied."
+                + Environment.NewLine
+                + "A sheet is made only for a plot with both a number and a name typed in, and "
+                + "only when a sheet to copy is picked.";
+        }
+
+        /// <summary>
+        /// The same call Revit makes before it writes, over the same plots by the same rule.
+        /// Revit reads the model again first, so the numbers can differ if the model changed,
+        /// but the rule that produced them cannot.
+        /// </summary>
+        private RunPlan PlanNow()
+        {
+            return RunPlan.Of(
                 _marked,
                 _picked.Ticked,
                 _model.PlotsWithAScopeBox,
                 _model.ScheduleTypes,
-                _model.ScheduleTypes);
+                _model.SectionTypes,
+                _model.ScheduleTypes,
+                SheetsWanted(),
+                PickedSheetId() != 0);
+        }
 
-            _runCounts.Text = plan.InWords()
-                + " Only marked cells on ticked plots are made, and nothing is copied."
-                + Environment.NewLine
-                + "No sheets. Which title block a new sheet takes and where a view sits on it "
-                + "have not been answered, and this tool does not guess a rule.";
+        private IReadOnlyList<SheetRequest> SheetsWanted()
+        {
+            var asked = new List<SheetRequest>();
+
+            foreach (string plotId in _picked.Ticked)
+            {
+                string number;
+                string name;
+                _sheetNumbers.TryGetValue(plotId, out number);
+                _sheetNames.TryGetValue(plotId, out name);
+
+                asked.Add(new SheetRequest(plotId, number, name));
+            }
+
+            return asked;
+        }
+
+        private long PickedSheetId()
+        {
+            var picked = _sheetToCopy.SelectedItem as SheetInTheModel;
+            return picked == null ? 0L : picked.SheetId;
+        }
+
+        private void FillSheetsToCopy()
+        {
+            _filling = true;
+            try
+            {
+                var was = _sheetToCopy.SelectedItem as SheetInTheModel;
+
+                _sheetToCopy.Items.Clear();
+                foreach (SheetInTheModel sheet in _model.Sheets) _sheetToCopy.Items.Add(sheet);
+
+                if (was != null)
+                {
+                    foreach (SheetInTheModel sheet in _model.Sheets)
+                    {
+                        if (sheet.SheetId != was.SheetId) continue;
+                        _sheetToCopy.SelectedItem = sheet;
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                _filling = false;
+            }
+
+            SayTheSheetHelp();
+        }
+
+        private void SheetToCopyPicked()
+        {
+            if (_filling) return;
+
+            SayTheSheetHelp();
+            SayTheRun();
+        }
+
+        private void SayTheSheetHelp()
+        {
+            if (_model.Sheets.Count == 0)
+            {
+                _sheetHelp.Text = "This model holds no sheets, so there is none to copy and no "
+                    + "sheet can be made.";
+                return;
+            }
+
+            if (PickedSheetId() == 0)
+            {
+                _sheetHelp.Text = "Pick the sheet to copy. A new sheet takes its title block and "
+                    + "puts each view where that sheet has it. Set one plot up by hand first.";
+                return;
+            }
+
+            _sheetHelp.Text = "Type a sheet number and a sheet name for every plot that wants "
+                + "one. Both are yours to write and neither is invented. A plot with either box "
+                + "empty gets no sheet.";
+        }
+
+        /// <summary>
+        /// One row per ticked plot. The values live in the two dictionaries rather than in the
+        /// boxes, because the table is thrown away and rebuilt every time the range changes.
+        /// </summary>
+        private void DrawSheetTable()
+        {
+            _sheetTable.Children.Clear();
+            _sheetTable.ColumnDefinitions.Clear();
+            _sheetTable.RowDefinitions.Clear();
+
+            if (!_readOnce) return;
+
+            IReadOnlyList<string> ticked = _picked.Ticked;
+            if (ticked.Count == 0) return;
+
+            _sheetTable.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            _sheetTable.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(110) });
+            _sheetTable.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
+
+            _sheetTable.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Put(_sheetTable, HeaderCell("Plot"), 0, 0);
+            Put(_sheetTable, HeaderCell("Sheet number"), 0, 1);
+            Put(_sheetTable, HeaderCell("Sheet name"), 0, 2);
+
+            int row = 1;
+            foreach (string plotId in ticked)
+            {
+                _sheetTable.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                Put(_sheetTable, new TextBlock
+                {
+                    Text = plotId,
+                    Margin = new Thickness(0, 2, 8, 2),
+                    VerticalAlignment = VerticalAlignment.Center
+                }, row, 0);
+
+                Put(_sheetTable, SheetBox(plotId, _sheetNumbers), row, 1);
+                Put(_sheetTable, SheetBox(plotId, _sheetNames), row, 2);
+
+                row++;
+            }
+        }
+
+        private TextBox SheetBox(string plotId, Dictionary<string, string> holding)
+        {
+            string already;
+            holding.TryGetValue(plotId, out already);
+
+            var box = new TextBox { Text = already ?? string.Empty, Margin = new Thickness(0, 1, 4, 1) };
+            string forPlot = plotId;
+
+            box.TextChanged += (sender, e) =>
+            {
+                if (_filling) return;
+
+                holding[forPlot] = box.Text;
+                SayTheRun();
+            };
+
+            return box;
+        }
+
+        private static TextBlock HeaderCell(string text)
+        {
+            return new TextBlock { Text = text, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 2, 8, 4) };
+        }
+
+        private static void Put(Grid grid, UIElement what, int row, int column)
+        {
+            Grid.SetRow(what, row);
+            Grid.SetColumn(what, column);
+            grid.Children.Add(what);
         }
 
         private void AskToRun()
@@ -311,14 +498,15 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            if (_marked.Count == 0)
+            if (PlanNow().MakesNothing)
             {
-                Say("Nothing is marked. Click an empty cell to mark the view you want made.");
+                Say("Nothing is marked and no sheet is asked for. Click an empty cell to mark "
+                    + "the view you want made, or type a sheet number and name.");
                 return;
             }
 
             Say("Working out the run.");
-            _handler.AskToRun(ticked, _marked.ToList());
+            _handler.AskToRun(ticked, _marked.ToList(), SheetsWanted(), PickedSheetId());
             _asking.Raise();
         }
 
@@ -359,6 +547,7 @@ namespace RcrcGreen.Revit
                 FillPrefixes();
                 FillCodeButtons();
                 FillColumnList();
+                FillSheetsToCopy();
                 PutTheRangeBack(prefixWas, fromWas, toWas);
             });
         }
@@ -767,6 +956,7 @@ namespace RcrcGreen.Revit
             _sheet.RowDefinitions.Clear();
 
             SayTheCases();
+            DrawSheetTable();
             SayTheRun();
 
             SheetGrid grid = SheetGrid.Build(

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using RcrcGreen.Core;
 using Xunit;
@@ -7,7 +8,7 @@ namespace RcrcGreen.Core.Tests
     public class RunPlanTests
     {
         private static readonly ViewType General = new ViewType("200", "General Arrangement Layout");
-        private static readonly ViewType Section = new ViewType("400", "Landscape Cross Section");
+        private static readonly ViewType CrossSection = new ViewType("400", "Landscape Cross Section");
         private static readonly ViewType Furniture = new ViewType("600", "FURNITURE SCHEDULE");
         private static readonly ViewType Irrigation = new ViewType("600", "IRRIGATION SCHEDULE");
 
@@ -16,12 +17,12 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void OnlyMarkedCellsOnTickedPlotsAreMade()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[]
                 {
                     new PlotViewKey("DM-11", General),
                     new PlotViewKey("DM-12", General),
-                    new PlotViewKey("DM-13", Section)
+                    new PlotViewKey("DM-13", CrossSection)
                 },
                 new[] { "DM-11", "DM-13" },
                 new[] { "DM-11", "DM-12", "DM-13" },
@@ -40,7 +41,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void AMarkOnAnUntickedPlotIsDroppedWithoutARefusal()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[] { new PlotViewKey("DM-12", General) },
                 new[] { "DM-11" },
                 new[] { "DM-11", "DM-12" },
@@ -58,7 +59,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void APlanViewOnAPlotWithNoScopeBoxIsRefused()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[] { new PlotViewKey("DM-13", General) },
                 new[] { "DM-13" },
                 new[] { "DM-11" },
@@ -76,7 +77,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void AScheduleIsMadeOnAPlotWithNoScopeBox()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[] { new PlotViewKey("DM-13", Furniture) },
                 new[] { "DM-13" },
                 new string[0],
@@ -96,7 +97,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void AScheduleTypeNoPlotHasIsRefusedByName()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[] { new PlotViewKey("DM-11", Irrigation) },
                 new[] { "DM-11" },
                 new[] { "DM-11" },
@@ -112,11 +113,11 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void PlanViewsAndSchedulesAreCountedApart()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[]
                 {
                     new PlotViewKey("DM-11", General),
-                    new PlotViewKey("DM-11", Section),
+                    new PlotViewKey("DM-11", CrossSection),
                     new PlotViewKey("DM-11", Furniture)
                 },
                 new[] { "DM-11" },
@@ -124,15 +125,15 @@ namespace RcrcGreen.Core.Tests
                 Schedules,
                 new[] { Furniture });
 
-            Assert.Equal(2, plan.PlanViewCount);
-            Assert.Equal(1, plan.ScheduleCount);
+            Assert.Equal(2, plan.CountOf(RunItemKind.PlanView));
+            Assert.Equal(1, plan.CountOf(RunItemKind.Schedule));
             Assert.Equal("This run would make 2 plan views and 1 schedule.", plan.InWords());
         }
 
         [Fact]
         public void OneOfEachReadsAsSingular()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[] { new PlotViewKey("DM-11", General), new PlotViewKey("DM-11", Furniture) },
                 new[] { "DM-11" },
                 new[] { "DM-11" },
@@ -145,7 +146,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void RefusalsAreCountedInTheWordsTheConfirmationUses()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[] { new PlotViewKey("DM-11", General), new PlotViewKey("DM-13", General) },
                 new[] { "DM-11", "DM-13" },
                 new[] { "DM-11" },
@@ -153,14 +154,14 @@ namespace RcrcGreen.Core.Tests
                 new[] { Furniture });
 
             Assert.Equal(
-                "This run would make 1 plan view. 1 marked cells cannot be made and are named in the report.",
+                "This run would make 1 plan view. 1 things cannot be made and are named in the report.",
                 plan.InWords());
         }
 
         [Fact]
         public void NothingMarkedMakesNothingAndSaysSo()
         {
-            RunPlan plan = RunPlan.Of(null, new[] { "DM-11" }, new[] { "DM-11" }, Schedules, Schedules);
+            RunPlan plan = RunFixture.Of(null, new[] { "DM-11" }, new[] { "DM-11" }, Schedules, Schedules);
 
             Assert.True(plan.MakesNothing);
             Assert.Equal(
@@ -171,7 +172,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void EverythingRefusedMakesNothingAndSaysHowMany()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[] { new PlotViewKey("DM-13", General), new PlotViewKey("DM-14", General) },
                 new[] { "DM-13", "DM-14" },
                 new string[0],
@@ -180,7 +181,7 @@ namespace RcrcGreen.Core.Tests
 
             Assert.True(plan.MakesNothing);
             Assert.Equal(
-                "This run would make nothing. 2 marked cells cannot be made.",
+                "This run would make nothing. 2 things cannot be made.",
                 plan.InWords());
         }
 
@@ -191,11 +192,11 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void ItemsComeBackInPlotThenTypeOrder()
         {
-            RunPlan plan = RunPlan.Of(
+            RunPlan plan = RunFixture.Of(
                 new[]
                 {
                     new PlotViewKey("DM-100", General),
-                    new PlotViewKey("DM-2", Section),
+                    new PlotViewKey("DM-2", CrossSection),
                     new PlotViewKey("DM-2", General)
                 },
                 new[] { "DM-2", "DM-100" },

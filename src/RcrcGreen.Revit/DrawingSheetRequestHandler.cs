@@ -36,6 +36,8 @@ namespace RcrcGreen.Revit
         private long _viewToSelect;
         private IReadOnlyList<string> _plotsTicked = new List<string>();
         private IReadOnlyList<PlotViewKey> _marked = new List<PlotViewKey>();
+        private IReadOnlyList<SheetRequest> _sheetsWanted = new List<SheetRequest>();
+        private long _sheetToCopy;
 
         /// <summary>
         /// Called back on the Revit thread when a request finishes. The panel marshals to its
@@ -76,13 +78,19 @@ namespace RcrcGreen.Revit
         /// into the panel for it, so what is written is what was on screen when the button was
         /// pressed and cannot drift while Revit gets round to the event.
         /// </summary>
-        public void AskToRun(IReadOnlyList<string> plotsTicked, IReadOnlyList<PlotViewKey> marked)
+        public void AskToRun(
+            IReadOnlyList<string> plotsTicked,
+            IReadOnlyList<PlotViewKey> marked,
+            IReadOnlyList<SheetRequest> sheetsWanted,
+            long sheetToCopy)
         {
             lock (_asking)
             {
                 _wanted = DrawingSheetRequest.Run;
                 _plotsTicked = plotsTicked ?? new List<string>();
                 _marked = marked ?? new List<PlotViewKey>();
+                _sheetsWanted = sheetsWanted ?? new List<SheetRequest>();
+                _sheetToCopy = sheetToCopy;
             }
         }
 
@@ -114,6 +122,8 @@ namespace RcrcGreen.Revit
             long viewToSelect;
             IReadOnlyList<string> plotsTicked;
             IReadOnlyList<PlotViewKey> marked;
+            IReadOnlyList<SheetRequest> sheetsWanted;
+            long sheetToCopy;
 
             lock (_asking)
             {
@@ -121,6 +131,8 @@ namespace RcrcGreen.Revit
                 viewToSelect = _viewToSelect;
                 plotsTicked = _plotsTicked;
                 marked = _marked;
+                sheetsWanted = _sheetsWanted;
+                sheetToCopy = _sheetToCopy;
                 _wanted = DrawingSheetRequest.Nothing;
             }
 
@@ -155,7 +167,7 @@ namespace RcrcGreen.Revit
                         Scan(document);
                         break;
                     case DrawingSheetRequest.Run:
-                        RunTheMarkedCells(document, plotsTicked, marked);
+                        RunTheMarkedCells(document, plotsTicked, marked, sheetsWanted, sheetToCopy);
                         break;
                 }
             }
@@ -342,29 +354,38 @@ namespace RcrcGreen.Revit
         /// run that made nothing did so for a reason worth keeping.
         /// </summary>
         private void RunTheMarkedCells(
-            Document document, IReadOnlyList<string> plotsTicked, IReadOnlyList<PlotViewKey> marked)
+            Document document,
+            IReadOnlyList<string> plotsTicked,
+            IReadOnlyList<PlotViewKey> marked,
+            IReadOnlyList<SheetRequest> sheetsWanted,
+            long sheetToCopy)
         {
-            DrawingSheetSnapshot now = DrawingSheetReader.Read(document);
-
             // Read again rather than trusting the panel's snapshot. It is as old as the last
             // refresh, and creating a view that somebody else added in the meantime is how a
             // model ends up with two of everything.
+            DrawingSheetSnapshot now = DrawingSheetReader.Read(document);
+
             Dictionary<ViewType, RcrcGreen.Core.ScheduleDefinition> definitions =
                 ScheduleCapture.ByType(document);
+
+            SheetDefinition layout = sheetToCopy == 0
+                ? null
+                : SheetCapture.Of(document, new ElementId(sheetToCopy));
 
             RunPlan plan = RunPlan.Of(
                 marked,
                 plotsTicked,
                 now.PlotsWithAScopeBox,
                 now.ScheduleTypes,
-                definitions.Keys);
+                now.SectionTypes,
+                definitions.Keys,
+                sheetsWanted,
+                layout != null && layout.CanBeUsed);
 
             bool applied = false;
-            var refused = new List<RunRefusal>();
-            var attention = new List<RunRefusal>();
-            var leftBehind = new List<RunRefusal>();
+            RunOutcome outcome = RunOutcome.NothingWasWritten();
 
-            if (!plan.MakesNothing && Confirmed(plan))
+            if (!plan.MakesNothing && Confirmed(plan, layout))
             {
                 var boxIdByName = new Dictionary<string, ElementId>(StringComparer.Ordinal);
                 foreach (Element box in new FilteredElementCollector(document)
@@ -377,8 +398,7 @@ namespace RcrcGreen.Revit
                 using (var making = new Transaction(document, "Create drawing sheet views"))
                 {
                     making.Start();
-                    ModelWriter.Make(
-                        document, plan, definitions, boxIdByName, refused, attention, leftBehind);
+                    ModelWriter.Make(document, plan, outcome, definitions, boxIdByName, layout);
                     making.Commit();
                 }
 
@@ -388,7 +408,7 @@ namespace RcrcGreen.Revit
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(
                 ScanFileName.For(ScanFileName.RunPrefix, document.Title, writtenAt),
-                RunReport.Write(plan, document.Title, writtenAt, applied, refused, attention, leftBehind));
+                RunReport.Write(plan, outcome, document.Title, writtenAt, applied));
 
             string where = ReportPlaces.Written(written);
 
@@ -398,31 +418,41 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            int made = plan.Items.Count - refused.Count - leftBehind.Count;
-            string said = made + " created, " + (refused.Count + leftBehind.Count) + " not created.";
-            if (attention.Count > 0) said += " " + attention.Count + " need attention.";
+            // Counted off what the run did, never off what it planned. The two disagreeing is
+            // what put four views under both created and not created in the first real report.
+            string said = outcome.CreatedCount + " created, " + outcome.NotCreatedCount
+                + " not created.";
+            if (outcome.Attention.Count > 0) said += " " + outcome.Attention.Count + " need attention.";
 
             // Loud, and first. A wrong schedule left in the model is not a footnote.
-            if (leftBehind.Count > 0)
+            if (outcome.LeftBehind.Count > 0)
             {
-                said = leftBehind.Count
-                    + (leftBehind.Count == 1 ? " WRONG SCHEDULE IS" : " WRONG SCHEDULES ARE")
+                said = outcome.LeftBehind.Count
+                    + (outcome.LeftBehind.Count == 1 ? " WRONG SCHEDULE IS" : " WRONG SCHEDULES ARE")
                     + " IN THE MODEL AND MUST BE DELETED BY HAND. " + said;
             }
 
             Told?.Invoke(said + " Press Refresh to see them. " + where);
         }
 
-        private static bool Confirmed(RunPlan plan)
+        private static bool Confirmed(RunPlan plan, SheetDefinition layout)
         {
+            string how = "A plan view is created fresh and carries no annotation. Its family "
+                + "type, level and view template come from a view of the same type on another "
+                + "plot. A section is cut across the middle of the plot's scope box, the short "
+                + "way. A schedule is captured from a plot that already has it and rebuilt with "
+                + "only the plot filter changed. The whole run is one undo.";
+
+            if (plan.CountOf(RunItemKind.Sheet) > 0 && layout != null)
+            {
+                how += Environment.NewLine + Environment.NewLine + "Each sheet copies "
+                    + layout.InWords();
+            }
+
             var asking = new TaskDialog("RCRC Green, Drawing Sheet")
             {
                 MainInstruction = plan.InWords(),
-                MainContent = Listed(plan)
-                    + Environment.NewLine + Environment.NewLine
-                    + "A plan view is created fresh and carries no annotation. A schedule is "
-                    + "captured from a plot that already has it and rebuilt with only the plot "
-                    + "filter changed. The whole run is one undo.",
+                MainContent = Listed(plan) + Environment.NewLine + Environment.NewLine + how,
                 CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No,
                 DefaultButton = TaskDialogResult.No
             };

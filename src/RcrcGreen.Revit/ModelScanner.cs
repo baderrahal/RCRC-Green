@@ -62,6 +62,8 @@ namespace RcrcGreen.Revit
             }
 
             var scannedViews = new List<ScannedView>();
+            var disagreements = new List<ScannedDisagreement>();
+
             foreach (View view in new FilteredElementCollector(document).OfClass(typeof(View)).Cast<View>())
             {
                 // A ViewSheet is a View. It has its own section in the report, so leaving it
@@ -77,6 +79,20 @@ namespace RcrcGreen.Revit
 
                 scannedViews.Add(new ScannedView(
                     view.Name, view.ViewType.ToString(), view.IsTemplate, sheetNumber));
+
+                if (view.IsTemplate) continue;
+
+                // The panel has counted these since the grid stopped filing a view under the
+                // wrong plot. A count says there is a problem and nothing about where, so the
+                // scan names them. Same reading the panel does, so the two cannot disagree.
+                string onTheView = ValueOf(view.LookupParameter(PlotIdParameterName));
+                ViewOnAPlot read = ViewReading.Read(onTheView, view.Name, view.Id.Value);
+
+                if (read.SourcesDisagree)
+                {
+                    disagreements.Add(new ScannedDisagreement(
+                        view.Name, read.Fills.Where.PlotId, read.PlotId));
+                }
             }
 
             PlotIdScan plotIds = ReadPlotIds(document, watcher);
@@ -86,8 +102,10 @@ namespace RcrcGreen.Revit
                 document.Title,
                 scannedSheets,
                 scannedViews,
+                ReadViewFamilyTypes(document),
                 ReadScopeBoxes(document),
                 plotIds.Values,
+                disagreements,
                 plotIds.ElementsRead,
                 plotIds.Seconds);
             return true;
@@ -135,6 +153,28 @@ namespace RcrcGreen.Revit
             }
 
             return found;
+        }
+
+        /// <summary>
+        /// What a new view is actually made with, which the report used to leave out.
+        ///
+        /// The tool matched these by name and the belief that the type for a
+        /// (010) Location Key Plan is called (010) Location Key Plan. It is called
+        /// (010) Key Location Plan. Nothing in the scan would have shown that, so it took a
+        /// Properties panel to find, and it cost three of the four refusals in the first run.
+        /// </summary>
+        private static List<ScannedViewFamilyType> ReadViewFamilyTypes(Document document)
+        {
+            var types = new List<ScannedViewFamilyType>();
+
+            foreach (ViewFamilyType type in new FilteredElementCollector(document)
+                .OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>())
+            {
+                types.Add(new ScannedViewFamilyType(type.Name, type.ViewFamily.ToString()));
+            }
+
+            return types;
         }
 
         private static List<ScannedScopeBox> ReadScopeBoxes(Document document)

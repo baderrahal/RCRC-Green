@@ -34,6 +34,7 @@ namespace RcrcGreen.Revit
             var present = new List<PlotViewPresence>();
             var states = new List<ViewScopeBoxState>();
             var scheduleTypes = new List<ViewType>();
+            var sectionTypes = new List<ViewType>();
 
             int viewsRead = 0;
             int fromParameter = 0;
@@ -71,6 +72,12 @@ namespace RcrcGreen.Revit
                     // grid has to be able to tell the user which columns are schedules.
                     if (view is ViewSchedule) scheduleTypes.Add(read.Fills.Where.ViewType);
 
+                    // Which types need a section rather than a plan comes off the kind of the
+                    // views the model already holds, never off the code in the name. (400) is a
+                    // section on this model and that is a fact about this model. ViewPlan.Create
+                    // can never make one, which is what refused every (400) in the first run.
+                    if (view is ViewSection) sectionTypes.Add(read.Fills.Where.ViewType);
+
                     // The plot on the cell comes from the name, so it can differ from the row
                     // plot above. Both are plots the model really holds, and both belong in
                     // the list, or a filled cell would have no row to sit in.
@@ -92,6 +99,15 @@ namespace RcrcGreen.Revit
                 scopeBoxNames.Add(box.Name);
             }
 
+            var sheets = new List<SheetInTheModel>();
+            foreach (ViewSheet sheet in new FilteredElementCollector(document)
+                .OfClass(typeof(ViewSheet))
+                .Cast<ViewSheet>()
+                .Where(sheet => !sheet.IsTemplate))
+            {
+                sheets.Add(new SheetInTheModel(sheet.Id.Value, sheet.SheetNumber, sheet.Name));
+            }
+
             return new DrawingSheetSnapshot(
                 document.Title,
                 DateTime.Now,
@@ -99,8 +115,10 @@ namespace RcrcGreen.Revit
                 viewTypes,
                 present,
                 scheduleTypes,
+                sectionTypes,
                 scopeBoxNames,
                 states,
+                sheets,
                 viewsRead,
                 fromParameter,
                 fromViewName,

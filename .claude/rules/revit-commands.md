@@ -82,26 +82,82 @@ do not any more. Both read it from the view's own name, because the panel filing
 PRX_Plot_ID while taking the view type from the name is what put a view in the wrong row. The
 comparison that difference was kept for has been made, and it came out against it.
 
-## A plan view is set up from the model, never from a default
+## A new view is set up from the sibling, never from a name
 
-Read off DM-18-(200) General Arrangement Layout. Three lookups, and all three refuse rather
-than fall back, because a view that looks finished and is wrong costs more than one that was
-never made.
+The sibling is a view of the same view type that the model already holds on another plot. It
+is what the team built, so how it is set up is the answer to how a new one should be. Three
+things come off it and none of them is matched on a name:
 
-**Family type.** Named exactly the view type, `(200) General Arrangement Layout`. Not a
-generic floor plan type. No match means the item is refused and the report names the type it
-looked for.
+**Family type**, from `sibling.GetTypeId()`. **Level**, from its `GenLevel`, for a plan view.
+**View template**, from its `ViewTemplateId`.
 
-**Level.** Taken from an existing view of the same type on another plot, which is what the
-team did. On DM-18 that is Level 1. Nothing of that type anywhere means no level to take, so
-the item is refused rather than a level being picked.
+No sibling means the item is refused and the report says to make one by hand on any plot.
 
-**View template.** The view type followed by how it is drawn, so match on the prefix:
-`(200) General Arrangement Layout SC - Scale 250`. The template carries the scale, the detail
-level, the discipline, the visibility overrides and the phase filter, so setting it is how all
-of those follow and none of them is set one by one. Exactly one match is applied. None creates
-the view and says plainly it has no template. More than one creates the view and names every
-candidate, because Scale 250 and Scale 500 are both real and choosing is not this tool's to do.
+This replaced two name matches and both were wrong on the real model.
+
+The family type was matched on the view type, on the belief that a
+`(010) Location Key Plan` is made with a type of that name. It is made with
+`(010) Key Location Plan`. The words are swapped. Three of the four refusals in the first real
+run were that, and it took a Properties panel to find, which is why the scan now lists view
+family types.
+
+The template was matched on a prefix. Eight templates start with
+`(200) General Arrangement Layout`: Scale 250, 400, 500, 600, 1000 and 2500, plus
+`(Coordination)` and `(Streets)`. A prefix match found several and so applied none, which
+would have created every view with no template at all. The sibling already carries the one in
+use.
+
+`ViewTypeNaming` and `TemplateMatch` held both matches and are deleted. Two ways to answer one
+question is the shape this repo keeps getting caught by.
+
+## A section is a different call from a plan view
+
+`(400) Landscape Cross Section` is a section on this model. `ViewPlan.Create` can never make
+one, which is why the first real run refused every one of them with a message that blamed the
+level.
+
+**Which types need a section is read off the model, not off the code.** `DrawingSheetReader`
+records the view type of every `ViewSection` it passes, `RunPlan` turns those into
+`RunItemKind.Section`, and nothing anywhere says that 400 means section. That is a fact about
+this model and the next model may not share it.
+
+The maths was in Core and unused since it was written. `SectionPlacement.Across` takes the
+plot's scope box as a `PlotBox`, `SectionAxis.ShortSide` and a depth, and hands back the two
+ends of the line, the direction the view looks and the depth. `SectionDefaults` turns the ten
+metres into feet at the Revit boundary, because Revit holds every length in feet and passing
+the ten straight through would place a section ten feet deep.
+
+`ModelWriter.SectionBoxFor` turns that into the `BoundingBoxXYZ` Revit wants. Its transform is
+the section's own frame, and the one thing worth knowing about it is that `BasisZ` points back
+at the viewer, so the view looks along the negative of it. That is why the direction Core hands
+back is negated there. Min and Max are in that frame: X is half the line either side of the
+middle, Y is the height of the scope box, and Z runs from the depth behind the cut up to zero
+at the cut.
+
+A plot with no scope box has nowhere to cut, so the item is refused and says so in those words
+rather than repeating the plan view line.
+
+## A sheet is copied, never designed
+
+The three questions that stopped sheets being made have one answer between them. The user sets
+one plot's sheet up by hand and that sheet is copied. So the title block is whichever one it
+carries, a view sits where it sits there, and several views lay out however it has them.
+
+`SheetCapture` reads a sheet into a Core `SheetDefinition`: the title block family and type,
+the sheet size, and one placement per view on it holding the view type and the centre of its
+viewport in feet from the sheet origin. Viewports and `ScheduleSheetInstance` both, because
+they are different elements and reading only the first would drop every schedule off a copied
+layout without saying so.
+
+`ModelWriter` creates the sheet with that title block and places each view at the captured
+position. Views are made before sheets in the same transaction, so a sheet can carry a view
+this run only just created.
+
+Two things it will not do. **The sheet number and the sheet name are typed by the user and are
+never invented**, so a row missing either gets no sheet and is named in the report. And a view
+already sitting on another sheet is refused rather than moved, because it belongs to whoever
+put it there. `Viewport.CanAddViewToSheet` is asked before every placement, so that comes back
+as a refusal rather than as a throw.
 
 ## A missing filter is not a missing field
 

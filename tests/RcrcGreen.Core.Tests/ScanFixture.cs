@@ -13,8 +13,10 @@ namespace RcrcGreen.Core.Tests
             string documentTitle = "NG05",
             ScannedSheet[] sheets = null,
             ScannedView[] views = null,
+            ScannedViewFamilyType[] viewFamilyTypes = null,
             ScannedScopeBox[] scopeBoxes = null,
             ScannedParameterValue[] plotIdValues = null,
+            ScannedDisagreement[] disagreements = null,
             int elementsScanned = 0,
             double scanSeconds = 0.0)
         {
@@ -22,8 +24,10 @@ namespace RcrcGreen.Core.Tests
                 documentTitle,
                 sheets ?? new ScannedSheet[0],
                 views ?? new ScannedView[0],
+                viewFamilyTypes ?? new ScannedViewFamilyType[0],
                 scopeBoxes ?? new ScannedScopeBox[0],
                 plotIdValues ?? new ScannedParameterValue[0],
+                disagreements ?? new ScannedDisagreement[0],
                 elementsScanned,
                 scanSeconds);
         }
