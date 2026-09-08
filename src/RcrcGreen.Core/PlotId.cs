@@ -45,6 +45,17 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
+        /// The two letters at the front, or empty when the text is not a plot identifier.
+        /// The panel groups plots by this, so a stretch of numbers under one prefix can be
+        /// picked without any typing.
+        /// </summary>
+        public static string PrefixOf(string candidate)
+        {
+            if (!IsPlotId(candidate)) return string.Empty;
+            return candidate.Substring(0, 2);
+        }
+
+        /// <summary>
         /// Reads a scope box name or a PRX_Plot_ID value. Surrounding whitespace is dropped
         /// first, because a trailing space on a text parameter is ordinary in a shared model
         /// and it must not turn one plot into two.

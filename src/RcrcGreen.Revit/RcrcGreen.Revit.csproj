@@ -20,6 +20,13 @@
          a long read has got and stop it. -->
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
+    <!-- The dockable panel is WPF, which is what Revit hosts. The interface is built in C#
+         rather than XAML, because an SDK style net48 project has no XAML compilation step and
+         adding one is a build change nobody here can test. -->
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Xaml" />
   </ItemGroup>
 
   <ItemGroup>

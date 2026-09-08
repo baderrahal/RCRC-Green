@@ -25,7 +25,21 @@ import sys
 # Where one command in the line ends and the next begins. Without this the words of a
 # following command read as pathspecs, and a commit chained after a git add looks like a
 # commit that names paths.
-SHELL_BREAK = re.compile(r"\A([&|;()]+|\d*(>>|>|<<|<)(&\d+)?)\Z")
+SHELL_OPERATOR = re.compile(r"\A[&|;()]+\Z")
+REDIRECTION = re.compile(r"\A\d*(>>|>|<<|<)(&\d*)?\Z")
+
+
+def ends_the_command(tokens, at):
+    word = tokens[at]
+    if SHELL_OPERATOR.match(word) or REDIRECTION.match(word):
+        return True
+
+    # shlex with punctuation_chars splits 2>&1 into 2, >&, 1, so the file descriptor arrives
+    # as a word of its own and read as a path named 2. Only a redirection claims it. A digit
+    # in front of a pipe really is a path.
+    return (word.isdigit()
+            and at + 1 < len(tokens)
+            and REDIRECTION.match(tokens[at + 1]) is not None)
 
 # Short options that swallow a value, either the rest of their own cluster or the next word.
 VALUE_TAKING_SHORT = set("mFCct")
@@ -67,7 +81,7 @@ def find_commit_arguments(tokens):
             after = at + 1
             while after < len(tokens):
                 option = tokens[after]
-                if SHELL_BREAK.match(option):
+                if ends_the_command(tokens, after):
                     break
                 if option in ("-C", "-c") or option in GIT_VALUE_TAKING_LONG:
                     after += 2
@@ -78,7 +92,7 @@ def find_commit_arguments(tokens):
                 break
             if after < len(tokens) and tokens[after] == "commit":
                 end = after + 1
-                while end < len(tokens) and not SHELL_BREAK.match(tokens[end]):
+                while end < len(tokens) and not ends_the_command(tokens, end):
                     end += 1
                 found.append(tokens[after + 1:end])
                 at = end
