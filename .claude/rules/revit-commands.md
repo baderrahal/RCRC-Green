@@ -38,6 +38,31 @@ through mid write is how a model ends up half changed.
 Scope Box reports a view carrying the wrong scope box and leaves it alone. Someone chose it,
 and this add-in does not know why.
 
+## No brush is written in the panel file
+
+The first install came up black on black. A dockable pane on Revit's dark theme sits on a
+black background, WPF defaults a TextBlock to black text, and every heading, label and grid
+label in the panel was invisible. `PanelTheme` reads `UIThemeManager.CurrentTheme` and hands
+back a background, a foreground and one warning colour per theme. The panel sets Background
+and Foreground on itself once, and every TextBlock under it inherits.
+
+The only colour named anywhere else is the warning on a plot with no scope box, and it has a
+value per theme because firebrick vanishes on dark grey. If a new element needs a colour, it
+goes in `PanelTheme` with both values, not next to the element.
+
+`PanelTheme` reads the theme without an external event, because a theme lookup touches no
+document and the panel has to paint itself before any document exists. It lives in its own
+file so `DrawingSheetPanel` names no Revit type at all.
+
+## Any round that changes the panel writes an HTML mockup
+
+`design/pr-<number>/panel.html`, drawn by hand from the code, so the layout and the wording
+can be read before someone spends an install on it.
+
+It says at the top, in the file itself, that it is a mockup and not a screenshot, and that it
+cannot show how Revit will render it. That line is the whole point. A mockup passed off as a
+screenshot is worse than no mockup, because it answers a question it never asked.
+
 ## The Reports buttons are the check on the panel
 
 Scan Model and Scope Box read the whole model rather than a range. They are deliberately not

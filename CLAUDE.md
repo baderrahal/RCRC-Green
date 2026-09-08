@@ -17,12 +17,13 @@ sections, a cut through the middle of the plot.
 Two ribbon panels. Drawing Sheet holds the panel. Reports holds the two commands that write
 a text file to the Desktop and change nothing on screen.
 
-**Drawing Sheet** is a dockable panel that stays open while the user works. Pick a two letter
-prefix, then a first and a last plot, and it draws a grid of those plots down the side and
-view types across the top. A cell that holds a view opens that view in Revit. A cell that
-does not can be marked, and a mark records intent and nothing else, because this version
-creates no views and no sheets. Everything below the range is disabled until a range is set,
-and every dropdown is filled from the model, so no plot the model lacks can be chosen.
+**Drawing Sheet** is a dockable panel that stays open while the user works. It reads the model
+as soon as it is shown. Pick a two letter prefix, then a first and a last plot, and it draws
+those plots down the side and view types across the top. A filled square is a view that
+exists and opens on a click, an empty one is missing and can be marked, and a mark records
+intent and nothing else, because this version creates no views and no sheets. Everything
+below the range is disabled until a range is set, and every dropdown is filled from the
+model, so no plot the model lacks can be chosen. It follows the Revit theme.
 
 **Scan Model** reads the open document and writes what it found to a text file. It creates
 nothing and changes nothing.
@@ -33,9 +34,8 @@ view has no scope box and one exists with exactly the plot name is written. A vi
 already carries a scope box is left alone whether it is the right one or not. It writes a
 report either way.
 
-The Reports commands show a progress window with a Cancel button while they read, because
-both walk the whole document. The panel does not, because it reads views and scope boxes
-only and the whole document came back in 1.4 seconds.
+The Reports commands show a progress window with a Cancel button, because both walk the whole
+document. The panel does not, because it reads views and scope boxes only.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
 layout the manifest asks for under `%APPDATA%\Autodesk\Revit\Addins\2024\` and names every
@@ -120,10 +120,9 @@ PF-12-(200) General Arrangement Layout
 two different view names, so the code on its own does not say which view something is.
 `ViewType` holds both and the grid columns are built from it.
 
-**The plot list is the union of three sources.** A plot can be found from a view name, from
-a scope box, or from PRX_Plot_ID. A plot that only has a scope box and some tagged elements
-has no views at all, and that is the plot the team most needs to see, so it has to survive
-into the list rather than be dropped.
+**The plot list is the union of three sources.** A view name, a scope box, or PRX_Plot_ID. A
+plot that has only a scope box and some tagged elements has no views at all, and that is the
+plot the team most needs to see, so it survives into the list rather than being dropped.
 
 **The grid shows a range of plots, never all of them.** 160 plots down one side is not
 readable and not what anyone works on at once. The range comes from a prefix and two plots
@@ -132,28 +131,26 @@ that exist, and Core does the filtering in `PlotRange`.
 **SectionPlacement takes the axis and the depth as required arguments.** The code picks no
 default for either. The interface preselects ShortSide, because the default cut is the short
 way across the plot. The depth is a plain number in whatever unit the box numbers are in, so
-the 10 metres above lives in `SectionDefaults` in the Revit project and is converted to feet
-there, because Revit works in feet and passing 10 straight through would place a ten foot
-section.
+the 10 metres lives in `SectionDefaults` in the Revit project and is turned into feet there.
+Revit works in feet, and passing 10 straight through would place a ten foot section.
 
-**Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots
-or geometry. Open questions are recorded in `steps/log.md`, and they are answered by the
-team, not by a plausible guess.
+**Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots or
+geometry. Open questions are recorded in `steps/log.md` and answered by the team.
 
 ## Hooks
 
 Three of them, wired in `.claude/settings.json`. They are walls, not requests.
 
 - `block-paths.sh` refuses any write that resolves outside this repo
-- `require-file-on-commit.sh` refuses a commit that does not carry `steps/ai-max-state.md`
-- `writing-check.sh` reads the commit message and every file the commit carries, and
-  refuses one holding an em dash, a generated-by footer, a co-author credit line, an emoji,
-  or a word from the list in `.claude/skills/ai-max/references/writing-rules.md`
+- `require-file-on-commit.sh` refuses a commit not carrying `steps/ai-max-state.md`
+- `writing-check.sh` reads the commit message and every file the commit carries, and refuses
+  one holding an em dash, a generated-by footer, a co-author credit line, an emoji, or a word
+  from `.claude/skills/ai-max/references/writing-rules.md`. It skips `.claude/skills/`, where
+  that word list lives as data, and keeps the word landscape, which is the discipline here
 
-The word check skips `.claude/skills/`, where the word list lives as data, and drops the word
-landscape, which is the discipline name here and appears in real view names. Both commit
-hooks work out what a commit will really carry through `.claude/hooks/commit-scope.py`, which
-reads the command rather than the index. A hook script that cannot be found blocks.
+Both commit hooks work out what a commit will really carry through
+`.claude/hooks/commit-scope.py`, which reads the command rather than the index. A hook script
+that cannot be found blocks.
 
 ## Things that have gone wrong before
 
@@ -161,14 +158,13 @@ Add to this whenever something breaks. Over time it is the most valuable part of
 because it is the only part that cannot be rediscovered by reading the code.
 
 **A guard that fails open reads exactly like a guard that passed.** `writing-check.sh` took
-its file list line by line, so a file name holding a space arrived at the scanner in pieces
-and every piece read as a file that does not exist. The file went through unchecked and the
-hook reported success. Fixed in 6f0cf1d. The same shape came back twice in the phase 8
-findings, once for a missing hook script exiting 127 rather than blocking, and once for a
-commit form the hook never looked at. When a check cannot see its subject, it has to refuse.
-The opposite turned up this round. `commit-scope.py` read the 2 of `2>&1` as a file to commit
-and refused a commit that was fine. A guard that refuses good input at least announces
-itself, which is the whole reason it is the side to fail on.
+its file list line by line, so a file name holding a space reached the scanner in pieces and
+every piece read as a file that does not exist. It went through unchecked and the hook
+reported success. Fixed in 6f0cf1d. The same shape came back twice in the phase 8 findings.
+When a check cannot see its subject, it has to refuse. The opposite also turned up.
+`commit-scope.py` read the 2 of `2>&1` as a file to commit and refused a commit that was
+fine. A guard that refuses good input at least announces itself, which is why it is the side
+to fail on.
 
 **A number that is not a number still looks like an answer.** `PlotBox` rejected NaN and let
 infinity through, and every centre derived from an infinite bound came out NaN. A section on
@@ -180,6 +176,11 @@ taken from four examples, the read was assumed slow enough to need a progress wi
 PRX_Plot_ID was assumed to be on elements only. One run on a real model corrected all three.
 Numbers in the section above came from that run. Prefer them to anything reasoned out.
 
+**Code that is there is not code you can see.** The Drawing Sheet panel shipped with every
+heading, label and grid entry written and none of them visible. A dockable pane on Revit's
+dark theme is black, WPF defaults text to black, and nothing set a foreground. It also opened
+with empty dropdowns, and the line explaining that was one of the invisible ones.
+
 **A test that reads the code back to itself proves nothing.** Four tests compared the grid
 against its own output, or worked out the expected value with the same rule the code uses.
 Each one stayed green while the behaviour it named was broken. Write the expected value out by
@@ -188,8 +189,8 @@ hand, then break the code once and watch the test go red.
 ## Writing
 
 No em dash, no semicolon in prose, no emoji anywhere, including commit messages. No
-generated-by footer and no co-author credit line on commits or pull requests. Comments
-say why, not what. The full list is in `.claude/skills/ai-max/references/writing-rules.md`.
+generated-by footer and no co-author credit line. Comments say why, not what. Full list in
+`.claude/skills/ai-max/references/writing-rules.md`.
 
 ## Working agreements
 

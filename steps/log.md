@@ -4,6 +4,136 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, eighth pass. The panel was installed, and it was unusable
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 9, one commit.
+
+First install into Revit 2024. The pane opened and docked, which answers the biggest open
+question from the round that built it. Then two faults, both confirmed from a screenshot.
+
+### Every piece of text was invisible
+
+A dockable pane on Revit's dark theme sits on a black background. WPF defaults a TextBlock's
+Foreground to black. `DrawingSheetPanel` set a Foreground on nothing, so the headings, the
+Prefix, From and To captions, the plot count, the status line and every grid label rendered
+black on black. All of it was in the code and none of it could be read. The one place that
+did name a colour, `Brushes.Black` on the row label, made it worse rather than better.
+
+`PanelTheme` now reads `UIThemeManager.CurrentTheme` and hands back three brushes for that
+theme, a background, a foreground and one warning colour. The panel sets Background and
+Foreground on itself once. Foreground is an inherited property in WPF, so every TextBlock
+under it picks the value up and none of them names a colour. `DrawingSheetPanel.cs` now
+contains no brush and no `System.Windows.Media` using at all, which was checked by grep after
+the last edit.
+
+The values are white with near black text on the light theme, and #2E2E2E with #E6E6E6 on
+the dark one. The no scope box mark is firebrick #B22222 on light and #FF8080 on dark,
+because firebrick on dark grey is close to unreadable. Reasoned contrast ratios, computed
+from the WCAG relative luminance formula rather than measured on a screen: 17.8 to 1 and 10.6
+to 1 for the body text, 6.7 to 1 and 5.5 to 1 for the warning. All four clear 4.5 to 1.
+
+`PanelTheme` reads the theme without going through the external event. That is a deliberate
+exception and it is worth naming. A theme lookup touches no document, no transaction and no
+element, and the panel has to paint itself while it is being built, which is during OnStartup
+before any document exists. Routing it through the event would leave the panel unpainted
+until the first refresh returns, which is the bug. The lookup lives in its own file so
+`DrawingSheetPanel` still names no Revit type of its own.
+
+The theme is re-read every time the pane becomes visible, so switching Revit between light and
+dark while the pane is closed is picked up rather than needing a restart.
+
+### The panel opened blank with no way to know why
+
+`FillPrefixes` ran only when a refresh completed, and nothing asked for a refresh. So the
+prefix dropdown was empty on open, and the line that would have said to press Refresh was one
+of the invisible TextBlocks. The panel looked broken and said nothing.
+
+The pane now asks for a refresh through the external event when it becomes visible, and again
+on any later showing while it is still holding nothing. Not in the constructor, because a
+dockable pane is built during OnStartup when no document exists.
+
+The grid and a line of text now share one slot, and exactly one of them is visible. Every
+path that leaves the grid empty goes through `Waiting`, so there is no state where the panel
+shows a blank area:
+
+| When | What it says |
+|---|---|
+| before the first read | Reading the model. |
+| no document | No open document. Open a model and press Refresh. |
+| model holds no plots | No plots in this model. No view carries a PRX_Plot_ID and no view name gives one. |
+| plots found, no prefix picked | Pick a prefix above. From and To fill themselves with the plots under it. |
+| range set, no columns | the grid draws the plot names, and the line above it says to add a column |
+| range genuinely empty | No plots in that range. Widen From and To. |
+
+The range with no columns is the one that does not use the empty slot. `SheetGrid.Build`
+returns a row per plot even with no columns, so the grid does draw, showing the plot names and
+which of them have no scope box. That is useful rather than broken, so the line above the grid
+carries the instruction instead.
+
+### Cells carry a mark, not a word
+
+Eighteen plots by several columns of "exists" and "missing" is a wall of text. The three
+states are now one character, filled square, empty square and filled circle, written as
+`\u25A0`, `\u25A1` and `\u25CF` so the source file stays pure ASCII. csc reads a file with no
+byte order mark in the machine's ANSI code page, and a literal box character in the source is
+not the same character on every build machine.
+
+The shape differs as well as the fill, so the three do not depend on reading fill weight. The
+words moved into the tooltip and gained what a click does: exists, click to open it.
+
+### Labels
+
+`BOTTOM` was a layout name showing through into the interface. It reads `ACTIONS` now, and
+`GRID` reads `PLOTS AND VIEW TYPES`. The Prefix, From and To captions were already docked
+left of their dropdowns and stay there. The plot count line sits directly above the grid it
+describes, which is why the add a column instruction went there rather than into the status
+line, where a refresh would overwrite it.
+
+### The mockup
+
+`design/pr-9/panel.html` draws the layout in both themes with the exact values from
+`PanelTheme`, the three cell marks with their tooltips, and the five empty states. The first
+thing in the file says it is a mockup drawn from the code and not a screenshot, and that it
+cannot show how Revit will render it. Every future round that changes the interface writes
+one, which is now written into `.claude/rules/revit-commands.md`.
+
+### Core
+
+Nothing in Core changed. The theme, the mockup and every fix here are Revit side, and Core
+holds no Revit type by design. No test was added. The suite still runs and still passes,
+which is the check that nothing already covered was broken.
+
+### Not observed, because it needs Revit
+
+Nothing on this list has been seen. The whole round is a fix for something that was seen once,
+in one screenshot, on one theme.
+
+- neither theme has been rendered. The light palette and the dark palette are both reasoned,
+  not observed. The contrast ratios above are arithmetic, not a measurement
+- the dark theme is the one that failed, so it is the one that matters, and it is the one
+  that has not been checked
+- whether Revit paints anything of its own behind or around the pane that these colours sit
+  badly against
+- the buttons and the dropdowns keep the Windows control chrome, which is drawn light on both
+  Revit themes. Readable, and not a match for the dark theme. This is not fixed and has not
+  been looked at
+- whether the font Revit gives the pane has a glyph for the three box characters. If it does
+  not they come out as empty rectangles and the tooltip is all that is left
+- whether `IsVisibleChanged` fires when a dockable pane is shown in Revit. The whole fix for
+  the blank panel rests on that and it is taken from WPF, not from Revit
+- whether the refresh raised from that event is accepted at that moment
+- whether `UIThemeManager.CurrentTheme` is readable during OnStartup, when the panel is built
+- whether a theme switch while the pane is closed is picked up on the next showing
+- every empty state message. None has been on screen
+
+### What comes next
+
+Install and look at it on both themes. If the box characters have no glyph, the fallback is
+plain ASCII and the tooltip already carries the words. After that, creation, working from the
+marks.
+
+---
+
 ## 2026-09-08, seventh pass. Three audit fixes, all the same shape
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request
