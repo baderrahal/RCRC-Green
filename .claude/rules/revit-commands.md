@@ -38,7 +38,54 @@ through mid write is how a model ends up half changed.
 Scope Box reports a view carrying the wrong scope box and leaves it alone. Someone chose it,
 and this add-in does not know why.
 
-## No brush is written in the panel file
+## The panel is five numbered steps
+
+`PLOTS`, `VIEW TYPES`, `MARK`, `SHEETS`, `RUN`, in the order somebody does them. One open at a
+time. It was a flat list of controls before, which read as a wall to anyone who had not built
+it.
+
+Four rules hold it together.
+
+**A shut step carries its own summary**, so the whole state reads without opening anything.
+`1  PLOTS   DM-11 to DM-28, 17 of 17 ticked`.
+
+**A step that cannot be used yet is greyed out with one line saying why.** A disabled control
+with no reason next to it tells nobody anything.
+
+**Every summary and every reason is in `PanelSteps` in Core, with a test.** None of it is
+formatted next to the control that shows it. That is the same shape as the grid cell, the
+column count and the run report, and it has been the bug three times.
+
+**Nothing drags the user out of a step they are working in.** Picking a range opens step 2 by
+itself, once per read, because that is the one act that unlocks everything below. Everything
+else is a Next button at the foot of the open step or a click on any header.
+
+The scope box counts live inside step 5 rather than in a section of their own, because they act
+on the same ticked plots the run does.
+
+## The strip, the steps and the status line
+
+The strip at the top holds the model name, when it was last read, Refresh and Scan Model. Those
+belong to the document rather than to any one step. The status line is docked at the bottom, so
+it is in the same place whatever is open above it. Both are built once and repainted rather
+than redrawn, which is why `PaintFromTheTheme` sets their brushes by hand: a colour set once,
+before the theme it follows is read, is how the panel came up black on black the first time.
+
+## A control that outlives a redraw has to be taken out of its old parent
+
+The steps are thrown away and built again on every change. A handful of controls do not go with
+them, because a ComboBox carries its own item list and a TextBox carries what somebody is
+halfway through typing. Each of those is put into a new parent every time.
+
+WPF refuses that outright. An element already has a logical parent and adding it to a second
+throws, which would take the panel down on the second click rather than the first.
+`Reparented` takes it out of whatever held it before. Anything added to the tree that is also a
+field goes through it.
+
+The same reason a keystroke in a sheet number box calls `RefreshHeaders` rather than a full
+redraw. Rebuilding the tree under the cursor takes the cursor out of the box.
+
+## No brush and no number is written in the panel file
 
 The first install came up black on black. A dockable pane on Revit's dark theme sits on a
 black background, WPF defaults a TextBlock to black text, and every heading, label and grid
@@ -46,9 +93,16 @@ label in the panel was invisible. `PanelTheme` reads `UIThemeManager.CurrentThem
 back a background, a foreground and one warning colour per theme. The panel sets Background
 and Foreground on itself once, and every TextBlock under it inherits.
 
-The only colour named anywhere else is the warning on a plot with no scope box, and it has a
-value per theme because firebrick vanishes on dark grey. If a new element needs a colour, it
+Every colour has a value per theme, because firebrick vanishes on dark grey and a green that
+reads as primary on white reads as an error on charcoal. If a new element needs a colour, it
 goes in `PanelTheme` with both values, not next to the element.
+
+`PanelMetrics` is the same rule for spacing and font sizes. Every margin, padding, row height
+and size is named once there. The panel was built by typing a number at each control, so
+nothing lined up with anything and changing the rhythm meant finding forty numbers. The grid's
+frozen column and its scrolling columns share one fixed row height from there, which is the
+only thing making the two halves line up: auto height on either side drifts the moment one cell
+wraps.
 
 `PanelTheme` reads the theme without an external event, because a theme lookup touches no
 document and the panel has to paint itself before any document exists. It lives in its own

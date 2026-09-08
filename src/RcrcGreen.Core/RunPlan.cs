@@ -312,17 +312,28 @@ namespace RcrcGreen.Core
                     : "This run would make nothing. " + Refusals.Count + " things cannot be made.";
             }
 
+            string counts = CountsInWords();
+            if (Refusals.Count == 0) return "This run would make " + counts + ".";
+
+            return "This run would make " + counts + ". " + Refusals.Count
+                + " things cannot be made and are named in the report.";
+        }
+
+        /// <summary>
+        /// The counts on their own, with no sentence round them, for a place that has room for
+        /// a phrase rather than a line. The step headers use it.
+        /// </summary>
+        public string CountsInWords()
+        {
+            if (MakesNothing) return "nothing to make";
+
             var said = new List<string>();
             Say(said, RunItemKind.PlanView, "plan view", "plan views");
             Say(said, RunItemKind.Section, "section", "sections");
             Say(said, RunItemKind.Schedule, "schedule", "schedules");
             Say(said, RunItemKind.Sheet, "sheet", "sheets");
 
-            string counts = Listed(said);
-            if (Refusals.Count == 0) return "This run would make " + counts + ".";
-
-            return "This run would make " + counts + ". " + Refusals.Count
-                + " things cannot be made and are named in the report.";
+            return Listed(said);
         }
 
         private void Say(List<string> said, RunItemKind kind, string one, string many)

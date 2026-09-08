@@ -17,12 +17,11 @@ a cut through the middle of the plot.
 One ribbon tab, one panel, one button. Everything happens inside the Drawing Sheet panel.
 
 **Drawing Sheet** is a dockable panel that stays open while the user works and reads the model
-every time it is shown. Pick a prefix, then a first and a last plot. Every plot in range gets a
-row with a tick box, all ticked, and unticking one drops it out of anything that writes. Every
-view type is a column, none ticked to start, with a search box, All and None, a button per code,
-and a row for adding a type the model lacks. A filled square is a view that exists and opens on
-a click, an empty one is missing and can be marked. Every dropdown comes from the model, so no
-plot the model lacks can be chosen. It follows the Revit theme.
+every time it is shown. It is five numbered steps in the order somebody does them, one open at a
+time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step carries its own summary, and a step that
+cannot be used yet is greyed out with one line saying why. A filled square is a view that exists
+and opens on a click, an empty one is missing and can be marked. Every dropdown comes from the
+model, so no plot the model lacks can be chosen. It follows the Revit theme.
 
 **Run**, inside the panel, creates what the marked cells on the ticked plots ask for: plan
 views, sections, schedules and sheets. One confirmation, one transaction, one undo, a report
