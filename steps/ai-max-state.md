@@ -1,11 +1,19 @@
 # ai-max state
 
-Phase: 9, ship. Sixth pass, three audit fixes on the panel.
+Phase: 9, ship. Seventh pass, the panel is readable and no longer opens blank.
 
-The three are the same shape. A failure in the panel was allowed to reach further than the
-panel. Registering the pane now cannot cost the ribbon, a click on a view Revit will not
-activate now cannot cost a crash dialog, and nothing at all leaves the external event
-handler, because an exception out of one ends Revit rather than showing a message.
+The panel was installed and run in Revit 2024 for the first time. It opened and docked and
+was unusable. Every TextBlock rendered black on the dark theme's black pane, and the panel
+opened with an empty prefix dropdown because nothing asked for a read until Refresh was
+pressed. Both are fixed. `PanelTheme` reads `UIThemeManager.CurrentTheme` and the panel
+paints its own background and foreground once, so no brush is written in the panel file at
+all. The pane asks for a read through the external event when it becomes visible, and the
+grid slot always carries a line saying what to do rather than being blank.
+
+The round before was three audit fixes, all the same shape. A failure in the panel was
+allowed to reach further than the panel. Registering the pane cannot cost the ribbon, a click
+on a view Revit will not activate cannot cost a crash dialog, and nothing at all leaves the
+external event handler.
 
 Both commands have now been run on a real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached,
 and this round is the first built on measured numbers rather than on the project facts
@@ -20,7 +28,8 @@ not a control.
 
 Drawing Sheet is modeless and reaches Revit through one `ExternalEvent` and nothing else. It
 shows a range of plots, one row each, one column per view type, and a cell that holds a view
-opens it. A cell that does not can be marked. A mark records intent and writes nothing.
+opens it. A cell that does not can be marked. A mark records intent and writes nothing. Cells
+carry one character rather than a word, with the words in the tooltip.
 
 Scan Model reads a document and writes a report. It creates nothing and changes nothing.
 
@@ -84,7 +93,8 @@ runner against each and executed 48 tests, then 79, then 109, then 136, 0 failed
 skipped every time. Pull request 5 landed the Drawing Sheet panel as `999381c`, and the gate
 executed 176 tests against it, 0 failed and 0 skipped. Pull request 7 landed the three audit
 fixes on that panel as `20e214a`, and the gate executed 176 tests against it, the same count,
-because that round changed no Core code.
+because that round changed no Core code. Pull request 9 is the readability round, also Revit
+side only.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
@@ -103,7 +113,8 @@ Three projects in `RcrcGreen.sln`.
   placement rather than as a failure.
 - `src/RcrcGreen.Revit`, net48. One `IExternalApplication` making the RCRC Green tab, the
   Drawing Sheet panel and the Reports panel, three `IExternalCommand` classes,
-  `DrawingSheetPanel` which is the `IDockablePaneProvider`, `DrawingSheetRequestHandler`
+  `DrawingSheetPanel` which is the `IDockablePaneProvider`, `PanelTheme` which holds every
+  colour the panel paints in, one set per Revit theme, `DrawingSheetRequestHandler`
   which is the only route from that panel to the API, `DrawingSheetReader`, `ModelScanner`
   and `ScopeBoxScanner` which read a document into plain values, `ScanProgressWindow` which
   shows how far a read has got and can stop it, `RcrcGreen.addin`, and `SectionDefaults`,
@@ -122,3 +133,10 @@ reference assemblies and no more than that can be said from here. The panel espe
 a dockable pane, an external event and a WPF tree built in code can all compile and still be
 wrong the first time Revit loads them. That goes for the three failure paths added in the
 sixth pass as well. None of them has been made to happen.
+
+The seventh pass fixes two faults that were seen in Revit and confirmed from a screenshot.
+The fixes themselves have not been seen. Neither theme has been observed rendering, and the
+list of what that leaves unchecked is in the newest `steps/log.md` entry.
+
+`design/pr-9/panel.html` is a hand drawn mockup of the layout, not a screenshot, and it says
+so at the top of the file. Every round that changes the panel writes one.
