@@ -443,7 +443,12 @@ namespace RcrcGreen.Revit
                 "Unticks every type the search is showing."));
             block.Children.Add(allOrNone);
 
+            // The buttons and the Add dropdown are filled from the same list in the same loop.
+            // They used to be filled by one method, the buttons were moved inline here when the
+            // panel was rebuilt, and the dropdown half was left behind, so it opened empty and
+            // no view type could be added at all.
             var codes = new WrapPanel { Margin = PanelMetrics.Row };
+            FillTheCodes();
             foreach (string code in _columns.CodesInUse)
             {
                 string which = code;
@@ -493,6 +498,40 @@ namespace RcrcGreen.Revit
 
             block.Children.Add(NextButton(PanelStep.ViewTypes));
             return block;
+        }
+
+        /// <summary>
+        /// The codes the Add row offers. Refilled rather than rebuilt, because the dropdown is
+        /// one of the controls that outlives a redraw and clearing it under an open list would
+        /// take the selection with it.
+        /// </summary>
+        private void FillTheCodes()
+        {
+            IReadOnlyList<string> codes = _columns.CodesInUse;
+
+            bool same = _newCode.Items.Count == codes.Count;
+            for (int at = 0; same && at < codes.Count; at++)
+            {
+                same = string.Equals(_newCode.Items[at] as string, codes[at], StringComparison.Ordinal);
+            }
+
+            if (same) return;
+
+            _filling = true;
+            try
+            {
+                string was = _newCode.SelectedItem as string;
+
+                _newCode.Items.Clear();
+                foreach (string code in codes) _newCode.Items.Add(code);
+
+                if (was != null && codes.Contains(was)) _newCode.SelectedItem = was;
+                else if (codes.Count > 0) _newCode.SelectedIndex = 0;
+            }
+            finally
+            {
+                _filling = false;
+            }
         }
 
         private UIElement InsideMark()

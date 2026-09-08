@@ -41,6 +41,8 @@ namespace RcrcGreen.Core
 
         public const string NeedsAttention = "CREATED, BUT NEEDS ATTENTION";
 
+        public const string SetUpFrom = "WHERE EACH NEW VIEW WAS SET UP FROM";
+
         public static readonly IReadOnlyList<string> CreatedHeadings = new List<string>
         {
             CreatedPlanViews, CreatedSections, CreatedSchedules, CreatedSheets
@@ -89,6 +91,11 @@ namespace RcrcGreen.Core
 
             Section(report, NeedsAttention, outcome.Attention.Select(one => one.ToString()));
 
+            // Named rather than assumed. A view came out with a template and a family type that
+            // looked as though they had come from two different places, and nothing in the file
+            // said which view either had come from, so it could not be checked at all.
+            Section(report, SetUpFrom, outcome.SetUp.Select(one => one.ToString()));
+
             Closing(report);
 
             return report.ToString();
@@ -133,10 +140,15 @@ namespace RcrcGreen.Core
             Line(report, "family type, its level and its view template all come from a view of the");
             Line(report, "same type that this model already holds on another plot, so they are what");
             Line(report, "the team built rather than anything matched on a name.");
-            Line(report, "A section is cut across the middle of the plot's scope box, the short way,");
-            Line(report, "and looks " + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture)
-                + " metres. Whether a view type needs a section rather than a plan");
-            Line(report, "is read off the kind of the view the model already holds for it.");
+            Line(report, "A section is cut across the middle of the plot's scope box, the short way.");
+            Line(report, "How far it looks is the far clip offset of the sibling section, and only");
+            Line(report, "when that sibling has none does it fall back to the "
+                + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture) + " metres the team");
+            Line(report, "named. The section listed above says which of the two was used for each one.");
+            Line(report, "A section is left with no scope box, because a real one in this model has");
+            Line(report, "none and its own section box is what bounds it. The plot's box is still what");
+            Line(report, "says where to cut. Whether a view type needs a section rather than a plan is");
+            Line(report, "read off the kind of the view the model already holds for it.");
             Line(report, "A schedule is captured from a plot that already has it and rebuilt for");
             Line(report, "the target plot, with only the filter naming the plot changed.");
             Line(report, "A schedule that lost a FILTER is deleted again inside the same");

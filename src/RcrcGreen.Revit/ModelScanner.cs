@@ -58,7 +58,11 @@ namespace RcrcGreen.Revit
             {
                 int onThisSheet;
                 placedPerSheet.TryGetValue(sheet.SheetNumber, out onThisSheet);
-                scannedSheets.Add(new ScannedSheet(sheet.SheetNumber, sheet.Name, onThisSheet));
+                scannedSheets.Add(new ScannedSheet(
+                    sheet.SheetNumber,
+                    sheet.Name,
+                    onThisSheet,
+                    ValueOf(sheet.LookupParameter(PlotIdParameterName))));
             }
 
             var scannedViews = new List<ScannedView>();

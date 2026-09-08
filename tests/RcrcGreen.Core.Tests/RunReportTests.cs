@@ -257,7 +257,11 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Contains("family type, its level and its view template all come from a view of the", written);
             Assert.DoesNotContain("No sheet was created and none can be yet", written);
-            Assert.Contains("looks 10 metres", written);
+
+            // The depth is the sibling section's far clip offset now, and the 10 the team named
+            // is only what happens when there is no sibling section to read one off.
+            Assert.Contains("the far clip offset of the sibling section", written);
+            Assert.Contains("fall back to the 10 metres the team", written);
         }
 
         [Fact]

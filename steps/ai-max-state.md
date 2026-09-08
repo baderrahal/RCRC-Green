@@ -1,6 +1,32 @@
 # ai-max state
 
-Phase: 9, ship. Thirteenth pass, the interface rebuilt as five steps.
+Phase: 9, ship. Fourteenth pass, four fixes off the first run that created anything.
+
+Three plan views and one sheet were made in a real model. The level, the view template, the
+scope box and the plot parameter all came out right.
+
+**The family type looked wrong and the code could not have made it wrong.** Neither candidate I
+was given survives a grep. There is no name based family type lookup anywhere, and there is one
+sibling lookup per item. In `MakePlanView` the family type and the template were read off the
+same local four lines apart. What was missing was any record of WHICH view had been the sibling,
+so the question could not be settled at all. It can be now: `SiblingReader` reads every
+candidate once, `SiblingChoice` in Core picks one, all four settings travel on that one object,
+and the report names it under WHERE EACH NEW VIEW WAS SET UP FROM. A Core test goes red if
+anything ever pairs one view's family type with another's template, and it was watched failing.
+
+The add-a-type code dropdown was empty because I emptied it. One method used to fill the code
+buttons and that dropdown. The buttons were moved inline when the panel was rebuilt into steps
+and the dropdown half was left behind. Both are filled in the same loop now.
+
+Section settings come off the model. A real section reads 42.1054 feet of far clip, which is
+12.83 metres, against the 10 the team named before opening one. `SectionDepthChoice` takes the
+sibling's offset where there is one, falls back where there is not, and says which it used. A
+section is still left with no scope box, which it already was.
+
+The scan counts sheets numbered as a duplicate and sheets carrying no PRX_Plot_ID, because only
+plot DM-11 has real numbers in this model.
+
+Before that, the interface rebuilt as five steps.
 
 The panel worked and read as a list of controls. It is five numbered steps now, in the order
 somebody does them, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step
@@ -261,14 +287,16 @@ a dockable pane, an external event and a WPF tree built in code can all compile 
 wrong the first time Revit loads them. That goes for the three failure paths added in the
 sixth pass as well. None of them has been made to happen.
 
-**The write path has run once and created nothing.** Four plan views were attempted and all
-four were refused. Every fix that run produced is written and none has been run: not one view,
-section, schedule or sheet has ever been created by this tool, and the section path and the
-sheet path have never executed at all.
+**Three plan views and one sheet have been created. Nothing else ever has.** No section and no
+schedule has ever been made by this tool, so the section path and the schedule path have still
+never executed. The sheet that was made came out empty, and the whole route that made it is
+being replaced.
 
-**The rebuilt panel has never been rendered.** Not one step header, not the frozen grid column,
-not the green Run button, on either theme. The newest `steps/log.md` entry lists what that
-leaves unchecked, item by item.
+**Nothing in this round has been run.** The single sibling lookup, the far clip taken from the
+model, the refilled code dropdown and the two new scan counts are all written and none has been
+seen working. The rebuilt panel has been used, which is where three of these four faults came
+from, but no part of this round's change to it has been rendered. The newest `steps/log.md`
+entry lists what that leaves unchecked, item by item.
 
 The mockups under `design/` are hand drawn, not screenshots, and each says so at the top of the
 file. Every round that changes the panel writes one.

@@ -25,8 +25,8 @@ namespace RcrcGreen.Core.Tests
                 documentTitle: "NG05",
                 sheets: new[]
                 {
-                    new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 2),
-                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "DM-41-(200) General Arrangement Layout", 1)
+                    new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 2, "DM-11"),
+                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "DM-41-(200) General Arrangement Layout", 1, "DM-11")
                 },
                 views: new[]
                 {
@@ -136,12 +136,12 @@ namespace RcrcGreen.Core.Tests
         public void OneOfAThingIsNotCalledOneThings()
         {
             ModelScan scan = ScanFixture.Build(
-                sheets: new[] { new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 1) },
+                sheets: new[] { new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 1, "DM-11") },
                 plotIdValues: new[] { new ScannedParameterValue("DM-41", 1) });
 
             string[] lines = LinesOf(ScanReport.Write(scan, Noon));
 
-            Assert.Contains("600QD | SOFTSCAPE SCHEDULES | 1 view", lines);
+            Assert.Contains("600QD | SOFTSCAPE SCHEDULES | 1 view | DM-11", lines);
             Assert.Contains("DM-41 | 1 element", lines);
         }
 
@@ -202,9 +202,9 @@ namespace RcrcGreen.Core.Tests
             ModelScan scan = ScanFixture.Build(
                 sheets: new[]
                 {
-                    new ScannedSheet("DM-100", "one", 0),
-                    new ScannedSheet("DM-2", "two", 0),
-                    new ScannedSheet("DM-9", "three", 0)
+                    new ScannedSheet("DM-100", "one", 0, "DM-11"),
+                    new ScannedSheet("DM-2", "two", 0, "DM-11"),
+                    new ScannedSheet("DM-9", "three", 0, "DM-11")
                 });
 
             string[] lines = LinesOf(ScanReport.Write(scan, Noon));
@@ -212,7 +212,14 @@ namespace RcrcGreen.Core.Tests
                 .Where(line => line.StartsWith("DM-", StringComparison.Ordinal))
                 .ToArray();
 
-            Assert.Equal(new[] { "DM-2 | two | 0 views", "DM-9 | three | 0 views", "DM-100 | one | 0 views" }, rows);
+            Assert.Equal(
+                new[]
+                {
+                    "DM-2 | two | 0 views | DM-11",
+                    "DM-9 | three | 0 views | DM-11",
+                    "DM-100 | one | 0 views | DM-11"
+                },
+                rows);
         }
 
         [Fact]
@@ -339,4 +346,86 @@ namespace RcrcGreen.Core.Tests
             Assert.Contains("Nothing here was changed.", report);
         }
     }
+
+    /// <summary>
+    /// Two counts about the shape of the sheet set. Only plot DM-11 has real sheet numbers in
+    /// the first model. Every other plot carries numbers like 010QE Copy 001, and a group of
+    /// sheets carries no PRX_Plot_ID at all, which is what the Sheet List filters on.
+    /// </summary>
+    public class ScanReportSheetShapeTests
+    {
+        private static readonly DateTime Noon = new DateTime(2026, 9, 8, 12, 0, 0);
+
+        private static string Report(params ScannedSheet[] sheets)
+        {
+            return ScanReport.Write(ScanFixture.Build(sheets: sheets), Noon);
+        }
+
+        [Fact]
+        public void SheetsNumberedAsADuplicateAreCounted()
+        {
+            string report = Report(
+                new ScannedSheet("DM-11-010", "Location Key Plan", 1, "DM-11"),
+                new ScannedSheet("010QE Copy 001", "Location Key Plan", 0, "DM-12"),
+                new ScannedSheet("400Q Copy 009", "Cross Section", 0, "DM-13"));
+
+            Assert.Contains(
+                "2 of them are numbered as a duplicate, meaning the number holds Copy.", report);
+        }
+
+        [Fact]
+        public void SheetsCarryingNoPlotAreCounted()
+        {
+            string report = Report(
+                new ScannedSheet("DM-11-010", "Location Key Plan", 1, "DM-11"),
+                new ScannedSheet("Z-001", "Cover", 0, string.Empty),
+                new ScannedSheet("Z-002", "Notes", 0, string.Empty));
+
+            Assert.Contains(
+                "2 of them carry no PRX_Plot_ID, so the Sheet List will not find them under any "
+                + "plot.", report);
+        }
+
+        [Fact]
+        public void BothCountsReadZeroOnASetWithNeitherProblem()
+        {
+            string report = Report(new ScannedSheet("DM-11-010", "Location Key Plan", 1, "DM-11"));
+
+            Assert.Contains("0 of them are numbered as a duplicate", report);
+            Assert.Contains("0 of them carry no PRX_Plot_ID", report);
+        }
+
+        /// <summary>
+        /// Copy is matched exactly, so a sheet whose name happens to hold the word copyright or
+        /// a lower case copy is not counted as a duplicate.
+        /// </summary>
+        [Fact]
+        public void OnlyTheNumberIsSearchedAndOnlyForThatExactWord()
+        {
+            string report = Report(
+                new ScannedSheet("DM-11-010", "Copy of the key plan", 0, "DM-11"),
+                new ScannedSheet("DM-11-020", "copy 3", 0, "DM-11"),
+                new ScannedSheet("DM-11-copy-030", "Notes", 0, "DM-11"));
+
+            Assert.Contains("0 of them are numbered as a duplicate", report);
+        }
+
+        [Fact]
+        public void TheRowSaysWhichPlotEachSheetCarriesAndNoneWhenItCarriesNothing()
+        {
+            string report = Report(
+                new ScannedSheet("DM-11-010", "Location Key Plan", 1, "DM-11"),
+                new ScannedSheet("Z-001", "Cover", 0, string.Empty));
+
+            Assert.Contains("DM-11-010 | Location Key Plan | 1 view | DM-11", report);
+            Assert.Contains("Z-001 | Cover | 0 views | (none)", report);
+        }
+
+        [Fact]
+        public void TheSectionSaysItChangedNothing()
+        {
+            Assert.Contains("Nothing here was changed. This is a count of what is there.", Report());
+        }
+    }
 }
+

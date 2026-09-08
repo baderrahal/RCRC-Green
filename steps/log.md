@@ -4,6 +4,131 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, fifteenth pass. Four fixes off the first run that created anything
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 22, one commit. This entry goes in with
+the work, so the merge and the runner count are written into it by the follow-up.
+
+**This round is split.** Items 1 to 4 are here. Item 5, sheets rebuilt, is a second pull
+request. It replaces the whole sheet route, adds layout maths to Core and rebuilds step 4, and
+putting it on top of four unrelated fixes would leave no green gate between them.
+
+### 1. The family type, and what I actually found
+
+**Neither of the two candidates is the cause, and I can show that from the code rather than
+argue it.**
+
+Candidate (a), a leftover name match or a first-found lookup. Ruled out. Grepping `src/` for
+every place a view family type is chosen gives three hits: `ModelScanner.ReadViewFamilyTypes`,
+which only reads them for the scan report, and `sibling.GetTypeId()` twice in `ModelWriter`,
+once in `MakePlanView` and once in `MakeSection`. There is no name match. `ViewTypeNaming`,
+which held the old one, was deleted in pull request 19 and nothing replaced it.
+
+Candidate (b), the lookup called more than once with the calls disagreeing. Ruled out. Grepping
+for `SiblingOfType` gives three hits: the definition, one call in `MakePlanView` and one call in
+`MakeSection`. One call per item.
+
+And inside `MakePlanView` the two settings were read off the same local, four lines apart:
+
+```
+ElementId familyTypeId = sibling.GetTypeId();          // line 141
+ViewPlan made = ViewPlan.Create(document, familyTypeId, siblingPlan.GenLevel.Id);
+ApplySiblingTemplate(made, sibling, item, outcome);    // made.ViewTemplateId = sibling.ViewTemplateId
+```
+
+Nothing between them can rebind `sibling`. **The code could not have taken them from two
+different views.**
+
+**So what is left.** The sibling view itself carries family type `(200) General Arrangement
+Layout` and view template `(010) Overall Plan`, and the copy was faithful. That is not a strange
+thing for this model to do. It is the same fact already written in `CLAUDE.md` one step further
+on: a view family type is not named after the view type, `(010) Location Key Plan` is built on
+`(010) Key Location Plan`, and a team building every plan view on one family type and telling
+them apart by template is ordinary Revit practice.
+
+**What I cannot prove, and will not pretend to.** Which view was the sibling. UNKNOWN. Nothing
+recorded it, and I have no access to the model. That is the actual fault here: not that the
+setting was copied from the wrong place, but that **nothing said where it was copied from**, so
+a plainly answerable question could not be answered.
+
+So the fix is the one asked for, and it is the right one whatever the sibling turns out to hold.
+`SiblingReader.Of` reads every candidate view into a Core `SiblingView` once per run, before
+anything is created. `SiblingChoice.For` picks one. The family type, the level, the template and
+the far clip all travel on that one object. The report names it:
+
+```
+WHERE EACH NEW VIEW WAS SET UP FROM, 3
+  DM-11-(010) Overall Plan. Set up from DM-18-(010) Overall Plan: family type (200) General
+  Arrangement Layout, view template (010) Overall Plan, level Level 1.
+```
+
+One run of that settles it in one line and no Properties panel.
+
+**A second fault turned up while doing it.** `SiblingOfType` took the first view of the type
+whatever kind it was, and `MakePlanView` then refused if that view was not a `ViewPlan`. A view
+type the model draws both ways would refuse a plan view because the first match was a section,
+while a usable plan sat further down the list. `SiblingChoice` prefers the kind that can answer.
+
+**The test.** `NoChoiceEverPairsOneViewsFamilyTypeWithAnothersTemplate` hands two views of one
+type with different family types and different templates and asserts the chosen pair belongs to
+one of them. I broke `SiblingChoice.For` on purpose, making it take the family type off the last
+candidate and everything else off the first, and watched that test and its neighbour go red, 350
+passed and 2 failed. Restored, 352 passed.
+
+### 2. The empty code dropdown, and it was mine
+
+`FillCodeButtons` in pull request 19 did two things: filled the code buttons and filled
+`_newCode.Items`. When the panel was rebuilt into steps I moved the buttons inline into
+`InsideViewTypes` and deleted the method. The dropdown fill went with it. `git show 8a68492`
+against the current file makes it plain: the old file has `_newCode.Items.Clear()` and
+`_newCode.Items.Add(which)`, the new one has no line that adds an item to it at all.
+
+The same shape this repo keeps hitting, wearing different clothes. One method served two records
+of one fact, and splitting it took only half. They are filled in the same loop now, and
+`FillTheCodes` compares before it clears so an open list does not lose its selection.
+
+### 3. Section settings from the model
+
+`SectionDepthChoice.For` takes the sibling section's far clip offset where it has one and falls
+back to the value the team named where it does not, and carries which of the two so the report
+can say. On the real numbers, 42.1054 feet reads as 12.83 metres, and the fallback still reads
+as 10.
+
+**The scope box part needed no change.** A section already carried none. `MakeSection` sets the
+plot parameter and the template and stops, with a comment saying why. I have left it alone and
+sharpened the comment rather than claiming a fix I did not make. The plot's box is still
+required for the section to be created at all, because it is what says where to cut.
+
+### 4. The scan
+
+Two counts under SHEETS: how many sheet numbers hold the word Copy, and how many sheets carry no
+PRX_Plot_ID. Each sheet row now also prints the plot it carries, or (none). Report only.
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln` and `dotnet test`, both after the last file was written. Build 0
+warnings and 0 errors across all three projects. 352 tests, 0 failed and 0 skipped, locally, up
+from 332.
+
+The new sibling test was watched failing against a deliberately broken `SiblingChoice` before
+being trusted, which is the rule in `.claude/rules/core-rules.md`.
+
+### What has never been observed
+
+- **No section and no schedule has ever been created by this tool.** Both paths are written and
+  neither has executed
+- The single sibling lookup has never run. Which view it picks on the real model, and whether
+  the family type it copies matches what a Properties panel shows, are both UNKNOWN
+- No report has ever carried the WHERE EACH NEW VIEW WAS SET UP FROM section
+- No far clip offset has ever been read off a sibling. `VIEWER_BOUND_OFFSET_FAR` is read from
+  the API and has not been seen returning a value
+- The refilled code dropdown has not been rendered. Whether it now opens with the codes in it
+  is the one thing in this round most easily checked and it has not been checked
+- The two new scan counts have never been produced by a real scan
+- Nothing about the empty sheet is fixed here. That is item 5
+
+---
+
 ## 2026-09-08, fourteenth pass. The interface rebuilt as five steps
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request

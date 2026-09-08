@@ -12,8 +12,8 @@ namespace RcrcGreen.Core.Tests
             ModelScan scan = ScanFixture.Build(
                 sheets: new[]
                 {
-                    new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 3),
-                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "DM-41-(010) Location Key Plan", 1)
+                    new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 3, "DM-11"),
+                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "DM-41-(010) Location Key Plan", 1, "DM-11")
                 },
                 views: new[]
                 {
@@ -34,8 +34,8 @@ namespace RcrcGreen.Core.Tests
             ModelScan scan = ScanFixture.Build(
                 sheets: new[]
                 {
-                    new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 0),
-                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "PF-12-(200) General Arrangement Layout", 0)
+                    new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 0, "DM-11"),
+                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "PF-12-(200) General Arrangement Layout", 0, "DM-11")
                 },
                 views: new[]
                 {
