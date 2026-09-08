@@ -1,6 +1,11 @@
 # ai-max state
 
-Phase: 9, ship. Fifth pass, the Drawing Sheet panel.
+Phase: 9, ship. Sixth pass, three audit fixes on the panel.
+
+The three are the same shape. A failure in the panel was allowed to reach further than the
+panel. Registering the pane now cannot cost the ribbon, a click on a view Revit will not
+activate now cannot cost a crash dialog, and nothing at all leaves the external event
+handler, because an exception out of one ends Revit rather than showing a message.
 
 Both commands have now been run on a real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached,
 and this round is the first built on measured numbers rather than on the project facts
@@ -77,7 +82,8 @@ request 1 landed the scaffold as `17f1850`, 2 the fix round as `57dd1ee`, 3 the 
 command as `04ff9fc`, and 4 the Scope Box command as `c5b8c9a`. The test gate ran on a real
 runner against each and executed 48 tests, then 79, then 109, then 136, 0 failed and 0
 skipped every time. Pull request 5 landed the Drawing Sheet panel as `999381c`, and the gate
-executed 176 tests against it, 0 failed and 0 skipped.
+executed 176 tests against it, 0 failed and 0 skipped. Pull request 7 is the three audit
+fixes on that panel. It changes no Core code, so the count does not move.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
@@ -113,4 +119,5 @@ writes nothing. Creation is the next round.
 Nothing in the Revit project has been run on this machine. It compiles against the Revit 2024
 reference assemblies and no more than that can be said from here. The panel especially, since
 a dockable pane, an external event and a WPF tree built in code can all compile and still be
-wrong the first time Revit loads them.
+wrong the first time Revit loads them. That goes for the three failure paths added in the
+sixth pass as well. None of them has been made to happen.

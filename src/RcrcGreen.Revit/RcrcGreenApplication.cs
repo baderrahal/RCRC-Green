@@ -31,18 +31,19 @@ namespace RcrcGreen.Revit
 
             // The panel has to be registered before any document opens, which is why it is
             // here rather than in the command that shows it.
-            application.RegisterDockablePane(
-                ShowDrawingSheetCommand.PaneId,
-                ShowDrawingSheetCommand.PaneTitle,
-                new DrawingSheetPanel());
+            ShowDrawingSheetCommand.PaneRegistered = Registered(application);
 
             RibbonPanel drawingSheet = PanelNamed(application, DrawingSheetPanelName);
             Add(drawingSheet, ShowDrawingSheetCommand.ButtonName, ShowDrawingSheetCommand.ButtonText,
                 typeof(ShowDrawingSheetCommand),
-                "Open the Drawing Sheet panel.",
-                "Pick a plot range, see which view types each plot in it has, and mark the ones "
-                + "that are wanted. Marking records intent and changes nothing. The panel also "
-                + "runs the scope box assignment over the plots in range.");
+                ShowDrawingSheetCommand.PaneRegistered
+                    ? "Open the Drawing Sheet panel."
+                    : ShowDrawingSheetCommand.NotAvailableTip,
+                ShowDrawingSheetCommand.PaneRegistered
+                    ? "Pick a plot range, see which view types each plot in it has, and mark the "
+                      + "ones that are wanted. Marking records intent and changes nothing. The "
+                      + "panel also runs the scope box assignment over the plots in range."
+                    : ShowDrawingSheetCommand.NotAvailable);
 
             // The two report commands sit on their own panel. They read the whole model rather
             // than a range, and they are the check the panel is measured against.
@@ -71,6 +72,39 @@ namespace RcrcGreen.Revit
         public Result OnShutdown(UIControlledApplication application)
         {
             return Result.Succeeded;
+        }
+
+        /// <summary>
+        /// Registers the dockable pane and says whether it took.
+        ///
+        /// Guarded because an exception here leaves OnStartup throwing, and Revit answers that
+        /// by building no ribbon at all. A panel that will not register is worth losing the
+        /// panel over. It is not worth losing Scan Model and Scope Box as well.
+        /// </summary>
+        private static bool Registered(UIControlledApplication application)
+        {
+            try
+            {
+                application.RegisterDockablePane(
+                    ShowDrawingSheetCommand.PaneId,
+                    ShowDrawingSheetCommand.PaneTitle,
+                    new DrawingSheetPanel());
+                return true;
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                // Building the panel is WPF work and registering is Revit work, so the throw
+                // can come from either side of the line.
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
