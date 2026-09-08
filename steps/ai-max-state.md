@@ -76,7 +76,8 @@ run is closed.
 request 1 landed the scaffold as `17f1850`, 2 the fix round as `57dd1ee`, 3 the Scan Model
 command as `04ff9fc`, and 4 the Scope Box command as `c5b8c9a`. The test gate ran on a real
 runner against each and executed 48 tests, then 79, then 109, then 136, 0 failed and 0
-skipped every time. The Drawing Sheet round is pull request 5.
+skipped every time. Pull request 5 landed the Drawing Sheet panel as `999381c`, and the gate
+executed 176 tests against it, 0 failed and 0 skipped.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.

@@ -6,7 +6,9 @@ Newest entry first.
 
 ## 2026-09-08, sixth pass. The Drawing Sheet panel, and PRX_Plot_ID as the first source
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 5, one commit.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#5](https://github.com/baderrahal/RCRC-Green/pull/5), one commit, 25 files, merged into main
+as `999381c`.
 
 This is the first round built on a real model rather than on the project facts alone. Both
 commands were run on RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached and the numbers came back:
@@ -66,8 +68,9 @@ a reload does not stack duplicates.
 
 ### Tests
 
-176 pass locally, 0 failed, 0 skipped, from a run made after the last file was written.
-40 are new this round, covering the range filter, the grid shaping and the source ordering.
+176 pass, 0 failed, 0 skipped, locally from a run made after the last file was written and
+again on the runner, which reported 176 tests ran. 40 are new this round, covering the range
+filter, the grid shaping and the source ordering.
 The five the brief named are all there: DM-11 to DM-28 returns those and nothing outside,
 a reversed range returns nothing, the parameter beats the name, the name is used when the
 parameter is empty, and DM-2 sorts before DM-100.
