@@ -4,6 +4,129 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, fourth pass. Scan Model, the first command, merged into main
+
+The add-in was confirmed loading in Revit 2024.3 before this round started. The RCRC Green
+tab and the Sheets panel both appear, which is the first thing in this repo anyone has seen
+work in the host program.
+
+Branch `claude/rcrc-green-setup-wf9ham`, restarted from main. Pull request
+[#3](https://github.com/baderrahal/RCRC-Green/pull/3), one commit, 18 files, merged into main
+as `04ff9fc`.
+
+### Why this command exists
+
+The parser in Core was written from four example names the user gave. The first real model
+holds a sheet numbered 600QD named SOFTSCAPE SCHEDULES, which matches no part of that
+pattern, and a model called NG05, which has no dash in it. Scan Model reads a document and
+writes down what is really there, so the naming is known rather than assumed. It creates
+nothing and changes nothing.
+
+That also means the project facts in `CLAUDE.md` are now suspect. A note saying so sits in
+the Things that have gone wrong before section of that file. The parse summary from a real
+run is the source of truth about naming from here, not the four examples.
+
+### What was built
+
+**Revit project.** A text only PushButton on the Sheets panel, deliberately with no icon.
+`ScanModelCommand` behind it, marked `[Transaction(TransactionMode.ReadOnly)]`. `ModelScanner`
+reads the document into plain strings and numbers.
+
+**Core.** `ModelScan` holds what was read. `ScanReport` turns it into the text of the file.
+`NameParseSummary` and `NameParseTally` run every name through `ViewNameParser` and count the
+answers. `ScanFileName` builds the file name and takes out anything Windows will not accept
+in a path. `ScannedSheet`, `ScannedView`, `ScannedScopeBox` and `ScannedParameterValue` are
+the carriers.
+
+The report has seven sections in the order the brief asked for, each heading carrying its own
+count, so a section that found nothing reads differently from one that was never filled in.
+
+### Decisions worth knowing about
+
+**Views on sheets come from Viewports and from ScheduleSheetInstances.** Counting only
+Viewports, which is what `GetAllPlacedViews` does, misses every schedule placed on a sheet.
+The first model has a whole sheet of them.
+
+**A ViewSheet is a View, so sheets are kept out of the view sections.** Leaving them in would
+count every sheet twice and file it under views that are not on a sheet, which reads as a
+fault in the model rather than a fault in the report. The report header says this.
+
+**PRX_Plot_ID is looked up by name**, so it works whether the team set it up as shared or
+project, on an instance or a type. The type answer is cached per type, because asking once
+per element on a model with a hundred thousand of them is the difference between seconds and
+minutes. The element count and the elapsed time both go in the report.
+
+**The refusal list shows up to twenty per kind rather than twenty in total.** The brief reads
+either way. Each block says how many of how many, so nothing is hidden, and one mixed list of
+twenty could have been all sheet names. Easy to change if that is the wrong reading.
+
+**View template names are not run through the parser.** The brief named three kinds and a
+template gets its own section. The report says so in the parse summary.
+
+### Checks that actually ran
+
+Local, on main at `04ff9fc`, clean working tree, 2026-09-08 10:52:04 UTC:
+
+```
+dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+Passed!  Failed: 0, Passed: 109, Skipped: 0, Total: 109
+```
+
+On the runner, run
+[34217596029](https://github.com/baderrahal/RCRC-Green/actions/runs/34217596029) against
+commit `ae8b061`, the tree that merged:
+
+```
+Passed!  Failed: 0, Passed: 109, Skipped: 0, Total: 109
+109 tests ran.
+```
+
+Both numbers are 109. The suite was 79 before this round.
+
+Also run: `dotnet build RcrcGreen.sln -c Release` succeeded with 0 warnings and 0 errors, and
+the add-in output still holds only the two project assemblies, their symbol files and the
+manifest. The source was searched for a transaction being opened and there is none, only the
+attribute that declares the command opens none. The report was rendered once from a fixture
+and read by eye, which is how the column layout was settled.
+
+### What is untested because it needs Revit
+
+All of it, on the Revit side. The command has never been run. `dotnet build` against the
+Revit 2024 reference assemblies says the API calls exist and take the arguments given. It
+says nothing about whether the button appears on the panel, whether the scan finds what it
+should in a real document, how long it takes on a real model, or whether the file lands on
+the Desktop. Anyone reading a green test count here should know it covers Core only.
+
+Named specifically, none of this has been observed:
+
+- the button rendering with text and no icon
+- `ScheduleSheetInstance.IsTitleblockRevisionSchedule` behaving as expected on a real titleblock
+- `get_BoundingBox(null)` on a scope box giving the extent the team expects
+- the speed of reading PRX_Plot_ID across a full model
+- the Desktop write, including on a machine where that folder is redirected to a network share
+
+### Known bugs
+
+None seen in a run, and only Core has been run.
+
+### Left to do
+
+- Phase 10, packaging, has not started
+- Nothing creates a view, a sheet or a section
+- The grid and the missing view report exist in Core but no command uses them yet
+- Eight of the twelve open questions are still open
+- `--amend` is still the one commit form `commit-scope.py` does not model
+
+### Next
+
+Run Scan Model on the real model and read the file. Everything after this depends on what it
+says. The parse summary decides whether `ViewNameParser` needs a second pattern, a looser
+one, or replacing, and the PRX_Plot_ID section decides whether the plot list has anything to
+work from at all. Until that file exists, building the grid on top of the current pattern
+would be building on the same guess this command was written to test.
+
+---
+
 ## 2026-09-08, third pass. The fourteen reviewed items fixed, merged into main
 
 A fix round on the scaffold, not new work. Fourteen items from the reviewed phase 8 findings
