@@ -36,7 +36,31 @@ namespace RcrcGreen.Revit
                 return Result.Cancelled;
             }
 
-            ModelScan scan = ModelScanner.Read(document);
+            ModelScan scan;
+            try
+            {
+                using (var watching = new ScanProgressWindow(
+                    commandData.Application.MainWindowHandle,
+                    "RCRC Green, Scan Model",
+                    "Reading " + document.Title))
+                {
+                    // Guarded here as well as round the file write. A model can refuse a read
+                    // for reasons of its own, and without this the user gets the raw crash
+                    // dialog with a stack trace and no idea which part gave up.
+                    if (!ModelScanner.TryRead(document, watching, out scan))
+                    {
+                        TaskDialog.Show(
+                            "RCRC Green",
+                            "Stopped before the scan finished, so no file was written and nothing was changed.");
+                        return Result.Cancelled;
+                    }
+                }
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException failed)
+            {
+                message = "Revit refused part of the scan of " + document.Title + ". " + failed.Message;
+                return Result.Failed;
+            }
 
             if (scan.FoundNoViews)
             {

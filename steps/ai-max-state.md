@@ -1,12 +1,17 @@
 # ai-max state
 
-Phase: 9, ship. Third pass, the first command.
+Phase: 9, ship. Fourth pass, the second command.
 
 The scaffold is merged and the add-in has been confirmed loading in Revit 2024.3, with the
-RCRC Green tab and the Sheets panel both appearing. Scan Model is the first command on that
-panel. It reads a document and writes a report. It creates nothing and changes nothing,
+RCRC Green tab and the Sheets panel both appearing. Two commands sit on that panel now.
+
+Scan Model reads a document and writes a report. It creates nothing and changes nothing,
 because the naming pattern in the project facts came from four examples and the first real
 model does not fit it.
+
+Scope Box gives every view that names a plot the scope box named for that plot. It is the
+first command that writes. It decides everything with no transaction open, shows the counts,
+asks, and only then writes, in one transaction so the whole run is one undo.
 
 Before this, a fix round closed fourteen items from the reviewed phase 8 findings. The rest
 of the 53 stay written down in `steps/log.md` as reported and untouched. Four of the twelve
@@ -71,17 +76,18 @@ Three projects in `RcrcGreen.sln`.
   ordering check and then turns every centre into NaN, which reads as a placement rather
   than as a failure.
 - `src/RcrcGreen.Revit`, net48. One `IExternalApplication` making the RCRC Green tab and the
-  Sheets panel, one `IExternalCommand` behind the Scan Model button, `ModelScanner` which
-  reads a document into plain strings and numbers, `RcrcGreen.addin`, and `SectionDefaults`,
-  which holds the 10 metre section depth and converts it to feet.
+  Sheets panel, two `IExternalCommand` classes behind the Scan Model and Scope Box buttons,
+  `ModelScanner` and `ScopeBoxScanner` which read a document into plain values,
+  `ScanProgressWindow` which shows how far a read has got and can stop it, `RcrcGreen.addin`,
+  and `SectionDefaults`, which holds the 10 metre section depth and converts it to feet.
 - `install/install.ps1` and `install/uninstall.ps1` build the per user layout the manifest
   asks for, which the build itself does not produce.
 - `tests/RcrcGreen.Core.Tests`, net8.0, xunit, Core only.
 
 ## What is not built
 
-Nothing creates a view, a sheet or a section. Scan Model reads and reports, and that is all
-there is. The grid and the creation logic wait on the naming being settled from a real scan.
+Nothing creates a view, a sheet or a section. The grid and the creation logic wait on the
+naming being settled from a real scan.
 
 Nothing in the Revit project has been run on this machine. It compiles against the Revit 2024
 reference assemblies and no more than that can be said from here.
