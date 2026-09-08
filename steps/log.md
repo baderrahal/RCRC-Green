@@ -6,8 +6,9 @@ Newest entry first.
 
 ## 2026-09-08, twelfth pass. A guarded delete, reports the code can read, and cases that open
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 17, one commit. This entry goes in with
-the work, so the merge and the runner count are written into it by the follow-up.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#17](https://github.com/baderrahal/RCRC-Green/pull/17), one commit, 18 files, merged into main
+as `a18a2ae`.
 
 ### 1. The delete I flagged last round
 
@@ -81,7 +82,8 @@ Assign is unchanged. It acts on C alone, it confirms, it writes in one transacti
 
 `dotnet build RcrcGreen.sln` and `dotnet test`, both run after the last file was written.
 Build 0 warnings and 0 errors across all three projects. 274 tests, 0 failed and 0 skipped,
-locally. 17 of them are new. The runner count follows in the report round.
+locally, 17 of them new. The gate then executed 274 on a real runner, the same count, 0 failed
+and 0 skipped.
 
 `git add reports/` staged `reports/README.md` alone, which is the only way to check the ignore
 rule without committing a report.

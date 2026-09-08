@@ -161,7 +161,9 @@ because that round changed no Core code. Pull request 9 landed the readability r
 the grid as `63d3a38`, and the gate executed 214 tests against it, up from 176 because it is
 the first round since the panel was built to change Core. Pull request 13 landed creation as `f2c2eb5`,
 and the gate executed 248 tests against it. Pull request 15 landed the write path fixes as
-`792c203`, and the gate executed 257 tests against it.
+`792c203`, and the gate executed 257 tests against it. Pull request 17 landed the guarded
+delete, the reports folder and the openable scope box cases as `a18a2ae`, and the gate executed
+274 tests against it, 0 failed and 0 skipped.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
