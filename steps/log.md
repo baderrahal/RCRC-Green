@@ -6,8 +6,10 @@ Newest entry first.
 
 ## 2026-09-08, fourteenth pass. The interface rebuilt as five steps
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 20, one commit. This entry goes in with
-the work, so the merge and the runner count are written into it by the follow-up.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#20](https://github.com/baderrahal/RCRC-Green/pull/20), one commit, 12 files, merged into main
+as `67dec1e`. The gate executed 332 tests against it, 0 failed and 0 skipped, which is the same
+count the local run gave.
 
 This is item 9 of the round. Items 1 to 8 went in as pull request 19 and merged as `8a68492`.
 The split is written up in the entry below this one.
