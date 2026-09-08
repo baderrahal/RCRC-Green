@@ -6,7 +6,9 @@ Newest entry first.
 
 ## 2026-09-08, eighth pass. The panel was installed, and it was unusable
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 9, one commit.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#9](https://github.com/baderrahal/RCRC-Green/pull/9), one commit, seven files, merged into
+main as `2b5361e`.
 
 First install into Revit 2024. The pane opened and docked, which answers the biggest open
 question from the round that built it. Then two faults, both confirmed from a screenshot.
@@ -100,8 +102,9 @@ one, which is now written into `.claude/rules/revit-commands.md`.
 ### Core
 
 Nothing in Core changed. The theme, the mockup and every fix here are Revit side, and Core
-holds no Revit type by design. No test was added. The suite still runs and still passes,
-which is the check that nothing already covered was broken.
+holds no Revit type by design. No test was added. 176 tests pass, 0 failed and 0 skipped,
+locally from a run made after the last file was written and again on the runner. Third round
+at that number, which is what a Revit side round should give.
 
 ### Not observed, because it needs Revit
 
