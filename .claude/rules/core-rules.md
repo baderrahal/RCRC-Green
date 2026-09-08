@@ -14,6 +14,16 @@ Code 010 appears twice in the real model with two different view names, so the c
 does not say which view something is. `ViewType` holds both and the grid columns are built
 from it.
 
+Real names, which is where that comes from:
+
+```
+DM-41-(010) Location Key Plan
+DM-41-(010) Overall Key Plan
+DM-41-(200) General Arrangement Layout
+DM-41-(400) Landscape Cross Section
+PF-12-(200) General Arrangement Layout
+```
+
 ## The plot list is the union of three sources
 
 A view name, a scope box, or PRX_Plot_ID. A plot that has only a scope box and some tagged

@@ -4,6 +4,103 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, eleventh pass. Two silent skips in the write path, and how a view is really made
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 15, one commit.
+
+### 1 and 2. The two skips, and why they are not the same fault
+
+`ModelWriter.MakeSchedule` had two bare `continue` statements and neither wrote anything down.
+
+A **field** that did not resolve against `GetSchedulableFields` was dropped. The user gets a
+schedule short of a column that looks finished.
+
+A **filter** whose field was not in `fieldByName` was dropped. That one is worse and it is
+worse in kind, not degree. A quantity schedule that lost its `PRX_Ref Plot ID equals DM-11`
+rule shows every plot's elements in the model. It has rows, it has totals, and it reads as
+correct on a drawing until somebody adds up the site and finds the number is the whole job.
+
+Both are recorded now, naming the schedule, the plot and the field or filter, and both reach
+the report.
+
+**What I decided, and why.** A schedule that lost a filter is **not created at all**. It is
+built, the loss is noticed, and it is deleted again inside the same transaction, then reported
+under NOT CREATED. The check can only happen after creation, because `GetSchedulableFields`
+needs a schedule to exist, so deleting it is the only way to refuse it. The transaction is
+already open and covers the whole run, so nothing is left behind either way.
+
+A schedule that lost only a field is kept and reported under a new heading, CREATED, BUT NEEDS
+ATTENTION. A missing column can be seen by the person holding the drawing. A missing filter
+cannot.
+
+### 3. How a plan view is really set up
+
+Read off DM-18-(200) General Arrangement Layout. Family type `(200) General Arrangement
+Layout`, template `(200) General Arrangement Layout SC - Scale 250`, level Level 1, phase
+Proposed, no scope box on that particular view.
+
+Three things in `ModelWriter` were guesses and all three are gone.
+
+**The family type** was the first `ViewFamily.FloorPlan` type the collector returned. It is
+now the type named exactly the view type. There is no fallback. A view made with a different
+family type looks finished and is wrong, so a missing type refuses the item and the report
+names what it looked for.
+
+**The level** was the lowest level in the model by elevation. It is now the level an existing
+view of the same type sits on, anywhere in the model, which is what the team actually chose.
+No view of that type anywhere means no level to take, and the item is refused rather than a
+level being picked.
+
+**The view template** was not set at all, so scale, detail level, discipline, visibility and
+phase filter were whatever a new view gets. The template is now looked up by prefix, since a
+template name is the view type followed by how it is drawn. Exactly one match is applied. None
+creates the view and says plainly it has no template. More than one creates the view and names
+every candidate, because Scale 250 and Scale 500 are both real and choosing between them is
+not this tool's to do.
+
+`ViewTypeNaming` in Core does the matching and is tested, including the case that a name
+holding the view type in the middle is not a match and that case matters.
+
+### Tests
+
+257 pass, 0 failed, 0 skipped, from a run made after the last file was written. 9 are new,
+covering the family type name and every outcome of the template match. The build has 0
+warnings.
+
+### No mockup this round
+
+The panel did not change, so there is nothing new to draw. `design/pr-13/panel.html` is still
+what the interface looks like.
+
+### Not observed, because it needs Revit
+
+Nothing here has run. The write path has still never executed once.
+
+- whether a view family type in this model really is named exactly `(200) General Arrangement
+  Layout`. That is read from one Properties panel in one screenshot, not from the type list
+- whether `ViewFamilyType.Name` returns that string. `Element.Name` on a type usually does,
+  and it has not been checked
+- whether `ViewPlan.GenLevel` is non null for these views, which the level lookup rests on
+- whether `View.ViewTemplateId` accepts the id of a template found this way, and whether
+  applying it after `ViewPlan.Create` but before the plot parameter is set is the right order
+- whether the template really does carry the phase filter, so that Proposed follows from it
+  rather than needing to be set
+- whether `document.Delete` on a `ViewSchedule` created earlier in the same transaction works
+  cleanly, which the filter refusal rests on entirely
+- whether a missing filter is even possible in practice. If every captured field resolves,
+  neither new path ever runs and both are untested in the strongest sense
+- whether `SchedulableField.GetName(document)` returns what `ScheduleField.GetName()` does.
+  Unchanged from last round and still the thing the field matching rests on
+- capture still does not record the filter operator and create still assumes equals
+
+### What comes next
+
+Run it on a copy and check one created plan view against DM-18 property by property. Then the
+three sheet questions, which are the only thing between this and a finished tool: which title
+block, where a view sits, and how several lay out together.
+
+---
+
 ## 2026-09-08, tenth pass. Creation, and a count that could not agree with its list
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request

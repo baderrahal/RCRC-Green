@@ -360,6 +360,7 @@ namespace RcrcGreen.Revit
 
             bool applied = false;
             var refused = new List<RunRefusal>();
+            var attention = new List<RunRefusal>();
 
             if (!plan.MakesNothing && Confirmed(plan))
             {
@@ -374,7 +375,7 @@ namespace RcrcGreen.Revit
                 using (var making = new Transaction(document, "Create drawing sheet views"))
                 {
                     making.Start();
-                    ModelWriter.Make(document, plan, definitions, boxIdByName, refused);
+                    ModelWriter.Make(document, plan, definitions, boxIdByName, refused, attention);
                     making.Commit();
                 }
 
@@ -388,7 +389,7 @@ namespace RcrcGreen.Revit
 
             File.WriteAllText(
                 path,
-                RunReport.Write(plan, document.Title, writtenAt, applied, refused),
+                RunReport.Write(plan, document.Title, writtenAt, applied, refused, attention),
                 new UTF8Encoding(false));
 
             if (!applied)
@@ -398,8 +399,10 @@ namespace RcrcGreen.Revit
             }
 
             int made = plan.Items.Count - refused.Count;
-            Told?.Invoke(made + " created, " + refused.Count + " refused by Revit. Press Refresh "
-                + "to see them. Report at " + path);
+            string said = made + " created, " + refused.Count + " not created.";
+            if (attention.Count > 0) said += " " + attention.Count + " need attention.";
+
+            Told?.Invoke(said + " Press Refresh to see them. Report at " + path);
         }
 
         private static bool Confirmed(RunPlan plan)

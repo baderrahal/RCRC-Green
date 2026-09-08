@@ -82,6 +82,38 @@ do not any more. Both read it from the view's own name, because the panel filing
 PRX_Plot_ID while taking the view type from the name is what put a view in the wrong row. The
 comparison that difference was kept for has been made, and it came out against it.
 
+## A plan view is set up from the model, never from a default
+
+Read off DM-18-(200) General Arrangement Layout. Three lookups, and all three refuse rather
+than fall back, because a view that looks finished and is wrong costs more than one that was
+never made.
+
+**Family type.** Named exactly the view type, `(200) General Arrangement Layout`. Not a
+generic floor plan type. No match means the item is refused and the report names the type it
+looked for.
+
+**Level.** Taken from an existing view of the same type on another plot, which is what the
+team did. On DM-18 that is Level 1. Nothing of that type anywhere means no level to take, so
+the item is refused rather than a level being picked.
+
+**View template.** The view type followed by how it is drawn, so match on the prefix:
+`(200) General Arrangement Layout SC - Scale 250`. The template carries the scale, the detail
+level, the discipline, the visibility overrides and the phase filter, so setting it is how all
+of those follow and none of them is set one by one. Exactly one match is applied. None creates
+the view and says plainly it has no template. More than one creates the view and names every
+candidate, because Scale 250 and Scale 500 are both real and choosing is not this tool's to do.
+
+## A missing filter is not a missing field
+
+Both used to be skipped with `continue` and nothing written down.
+
+A schedule short of a FIELD is short of a column. Somebody looking at it can see that. It is
+created and named in the report under CREATED, BUT NEEDS ATTENTION.
+
+A schedule short of a FILTER is a different thing. A quantity schedule that lost its plot
+filter shows every plot's elements and reads as correct on a drawing. That one is deleted
+again inside the same transaction and reported as refused, so the model never holds it.
+
 ## Building and installing
 
 `CLAUDE.md` covers `install/install.ps1`. Two things it leaves out. `-Configuration Debug`
