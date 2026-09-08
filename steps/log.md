@@ -6,7 +6,9 @@ Newest entry first.
 
 ## 2026-09-08, eleventh pass. Two silent skips in the write path, and how a view is really made
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 15, one commit.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#15](https://github.com/baderrahal/RCRC-Green/pull/15), one commit, 10 files, merged into main
+as `792c203`.
 
 ### 1 and 2. The two skips, and why they are not the same fault
 
@@ -63,7 +65,8 @@ holding the view type in the middle is not a match and that case matters.
 
 ### Tests
 
-257 pass, 0 failed, 0 skipped, from a run made after the last file was written. 9 are new,
+257 pass, 0 failed, 0 skipped, locally from a run made after the last file was written and
+again on the runner. 9 are new,
 covering the family type name and every outcome of the template match. The build has 0
 warnings.
 
