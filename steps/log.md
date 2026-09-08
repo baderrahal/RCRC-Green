@@ -4,6 +4,153 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, thirteenth pass. The first real write, and the seven things it found
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 19, one commit. This entry goes
+in with the work, so the merge and the runner count are written into it by the follow-up.
+
+**This round is split.** Items 1 to 8 are here. Item 9, the interface rebuild, is a second pull
+request, because item 7 alone is a Core type, a capture path, a create path and new panel
+controls, and putting a full panel rewrite on top of that would make a diff nobody can review
+and leave no green gate between two independent risks. The cost of splitting is that the sheets
+controls go in here in the current panel style and move into step 4 in the second. I took that
+over shipping sheet creation with no way to use it.
+
+The write path ran in Revit for the first time. Four plan views were attempted and none was
+created. Every item below comes out of that one run.
+
+### 1. The report said both created and not created
+
+Four names under PLAN VIEWS, the same four under NOT CREATED, REFUSED BY REVIT, and a status
+line reading 0 created, 4 not created. The status line was right.
+
+The created sections were printing `plan.Items`, which is what the run set out to make. The
+refusal sections were printing what happened. Two records of one fact, for the third time in
+this repo, after the grid cell and the column count.
+
+`RunOutcome` is now what the run did. Something reaches a created section only by being handed
+to `RunOutcome.Made` after the call that made it returned. `RunPlan` appears in the report in
+exactly one line, the one beginning This run would make, and nowhere else.
+
+The test the round asked for reads the file rather than the object, because the file is what
+somebody reads. It pulls the entries out of the four created sections and the three not-created
+sections and holds them against each other by name. `RunRefusal` now carries the same `Name`
+string a `RunItem` would, which is what makes that a comparison rather than an argument about
+two naming schemes. There is a second test that puts the fault back on purpose and watches the
+check fail, because a test for a thing that cannot happen proves nothing until it has been seen
+going red.
+
+A report where that list is not empty now prints a heading saying it is a bug in the tool, above
+everything else. A file that contradicts itself has nothing in it worth believing.
+
+### 2 and 3. Name matching is gone, not fixed
+
+I was told the view family type is named after the view type. That came from one Properties
+panel and it was wrong. DM-18-(200) General Arrangement Layout uses
+`(200) General Arrangement Layout` and matches. DM-11-(010) Location Key Plan uses
+`(010) Key Location Plan`, the words swapped, and does not. Three of the four refusals were that.
+
+The instruction was to remove the matching rather than fix it, and that is right for a second
+reason: eight templates start with `(200) General Arrangement Layout`, so the prefix match for
+the view template could never have answered either and would have created every view with no
+template at all.
+
+Both now come off the sibling, meaning a view of the same type the model already holds on
+another plot. Family type from its type id, level from its `GenLevel`, template from its
+`ViewTemplateId`. It is the view the team built, so it cannot be wrong about itself. No sibling
+means the item is refused and the report says to make one by hand on any plot.
+
+`ViewTypeNaming` and `TemplateMatch` are deleted along with their five tests, rather than left
+sitting there as a second way to answer a question that now has one.
+
+### 4. A cross section is not a plan view
+
+`(400) Landscape Cross Section` is a section on this model, and its template is the only listed
+template whose kind is Section. `ViewPlan.Create` can never make one. That is what refused the
+fourth view, with a message that blamed the level.
+
+There is a section path now. It reads the plot's scope box, builds a Core `PlotBox` in feet,
+asks `SectionPlacement.Across` for the short way across the middle, converts the ten metres to
+feet at the Revit boundary, and turns the answer into the `BoundingBoxXYZ` Revit wants. That
+maths has been in Core since it was written and had never been called by anything.
+
+**Which types need a section is read off the model, not off the code.** `DrawingSheetReader`
+records the view type of every `ViewSection` it passes and `RunPlan` turns those into section
+items. Nothing anywhere says that 400 means section.
+
+The one thing worth writing down about the section box: its transform's `BasisZ` points back at
+the viewer, so the view looks along the negative of it, which is why the direction Core hands
+back is negated there.
+
+### 5 and 6. The scan could not have shown either fault
+
+It listed view templates and not view family types, so the mismatch in item 2 could only be
+found in a Properties panel. There is a VIEW FAMILY TYPES section now, view family and type name
+for each.
+
+The six views whose name and PRX_Plot_ID disagree were counted and never named. They are named
+now, with both values, under VIEWS THAT DISAGREE WITH THEMSELVES. Nothing changes one. Which of
+the two is right is a question about the project.
+
+### 7. Sheets
+
+The three open questions have one answer between them: the user sets one plot's sheet up by hand
+and it is copied.
+
+`SheetDefinition` in Core holds the title block family and type, the sheet size, and one
+placement per view carrying the view type and the centre of its viewport in feet from the sheet
+origin. One placement per view type, because a source sheet holding the same type twice gives no
+way to say which position a new one takes. `SheetCapture` reads a sheet into one. `ModelWriter`
+builds a sheet from one and places each view.
+
+Two details worth naming. Viewports and `ScheduleSheetInstance` are both captured, because they
+are different elements and reading only the first would drop every schedule off a copied layout
+without saying so. And `Viewport.CanAddViewToSheet` is asked before every placement, so a view
+already on another sheet comes back as a refusal rather than as a throw.
+
+Views are made before sheets inside the same transaction, so a sheet can carry a view this run
+only just created.
+
+The panel has a SHEETS section: a source sheet dropdown, and a row per ticked plot with a sheet
+number and a sheet name to type. What the user types is held in the panel rather than read back
+off the boxes, because the table is rebuilt whenever the range changes and a control that has
+been thrown away is not a place to keep the only copy of something somebody typed.
+
+### 8. The report
+
+Sections and sheets have counted sections of their own, on the same rule as item 1. Every one of
+them reads the outcome.
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln` and `dotnet test`, both after the last file was written. Build 0
+warnings and 0 errors across all three projects. 310 tests, 0 failed and 0 skipped,
+locally, up from 269 after the five that went with `ViewTypeNaming`.
+
+### What has never been observed
+
+The write path has run once and created nothing. Everything below is unchecked.
+
+- No view, section, schedule or sheet has ever been created by this tool
+- The section path has never executed. `ViewSection.CreateSection` has never been called, the
+  section box transform has never been seen by Revit, and nobody has looked at a section this
+  tool placed to say whether it faces the right way or cuts in the right place
+- The sheet path has never executed. No sheet has been captured, no title block found, no
+  viewport placed, and `Viewport.CanAddViewToSheet` has never returned false
+- The sibling lookup has never run against a real model. Whether `GetTypeId` on a view gives the
+  view family type Revit will accept, and whether `ViewTemplateId` comes back valid, are read
+  off the API and not off a run
+- The two new scan sections have never been written by a real scan
+- The SHEETS controls have not been rendered on either theme
+- No schedule has lost a filter, so the guarded delete has still never been reached
+- `ReportFile` has still never written anything and `reports/` has never received a file
+
+One thing I did not do. There is no mockup this round, because the panel change here is one
+section added in the existing style and item 9 rebuilds the whole panel. The mockup goes with
+the second pull request, showing all five steps, which is what it was asked for.
+
+---
+
 ## 2026-09-08, twelfth pass. A guarded delete, reports the code can read, and cases that open
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request

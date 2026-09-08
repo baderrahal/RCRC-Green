@@ -17,7 +17,8 @@ namespace RcrcGreen.Core
     public sealed class DrawingSheetSnapshot
     {
         public static readonly DrawingSheetSnapshot Nothing = new DrawingSheetSnapshot(
-            string.Empty, default(DateTime), null, null, null, null, null, null, 0, 0, 0, 0, 0);
+            string.Empty, default(DateTime), null, null, null, null, null, null, null, null,
+            0, 0, 0, 0, 0);
 
         public DrawingSheetSnapshot(
             string documentTitle,
@@ -26,8 +27,10 @@ namespace RcrcGreen.Core
             IEnumerable<ViewType> viewTypes,
             IEnumerable<PlotViewPresence> present,
             IEnumerable<ViewType> scheduleTypes,
+            IEnumerable<ViewType> sectionTypes,
             IEnumerable<string> scopeBoxNames,
             IEnumerable<ViewScopeBoxState> viewStates,
+            IEnumerable<SheetInTheModel> sheets,
             int viewsRead,
             int fromParameter,
             int fromViewName,
@@ -57,6 +60,17 @@ namespace RcrcGreen.Core
             ScheduleTypes = (scheduleTypes ?? Enumerable.Empty<ViewType>())
                 .Where(one => one != null)
                 .Distinct()
+                .OrderBy(one => one)
+                .ToList();
+
+            SectionTypes = (sectionTypes ?? Enumerable.Empty<ViewType>())
+                .Where(one => one != null)
+                .Distinct()
+                .OrderBy(one => one)
+                .ToList();
+
+            Sheets = (sheets ?? Enumerable.Empty<SheetInTheModel>())
+                .Where(one => one != null)
                 .OrderBy(one => one)
                 .ToList();
 
@@ -112,6 +126,27 @@ namespace RcrcGreen.Core
         {
             return type != null && ScheduleTypes.Contains(type);
         }
+
+        /// <summary>
+        /// The view types the model holds as sections rather than plan views. On this model
+        /// (400) Landscape Cross Section is one, and its template is the only one of the listed
+        /// templates whose kind is Section.
+        ///
+        /// This is read off the kind of the views the model already has, never off the code in
+        /// the name. ViewPlan.Create can never make a section, which is what the first real run
+        /// found out with a message that blamed the level.
+        /// </summary>
+        public IReadOnlyList<ViewType> SectionTypes { get; }
+
+        public bool IsASection(ViewType type)
+        {
+            return type != null && SectionTypes.Contains(type);
+        }
+
+        /// <summary>
+        /// Every sheet in the model, offered as the one to copy a new sheet from.
+        /// </summary>
+        public IReadOnlyList<SheetInTheModel> Sheets { get; }
 
         /// <summary>
         /// Every scope box name in the model, whether or not it is shaped like a plot.

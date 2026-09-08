@@ -110,6 +110,45 @@ section.
 an ordering check and then turns every centre into NaN, which comes back looking like a
 placement rather than a failure. Geometry read from a model is worth checking at the door.
 
+## What the run intended and what it did are two objects
+
+`RunPlan` is the intention. `RunOutcome` is what happened. The report reads the outcome for
+every counted section and reads the plan for exactly one line, the one beginning This run would
+make.
+
+That is not tidiness either. The first real run listed four plan views under PLAN VIEWS and the
+same four under NOT CREATED, REFUSED BY REVIT, while the panel said nothing was created.
+Nothing was. The created sections were printing `plan.Items`, which is the list of things the
+run set out to make. Two records of one fact again, and the third time it has been the bug.
+
+So something reaches a created section only by being handed to `RunOutcome.Made` after the call
+that made it has returned. A `RunRefusal` carries the same `Name` string a `RunItem` would,
+which is what lets `BothWays` be a comparison rather than an argument about two naming schemes.
+A report where that list is not empty prints a heading saying it is a bug in the tool, because
+a file that contradicts itself has nothing else in it worth believing either.
+
+Needing attention is not the same as not being created. A schedule short of a column is in the
+model and it is wrong, and counting it as not created would be a second lie.
+
+## A sheet is captured, not designed
+
+`SheetDefinition` holds the title block family and type, the sheet size, and one placement per
+view on the source sheet, each carrying a view type and a position in feet from the sheet
+origin. Plain strings and numbers, the same shape as `ScheduleDefinition` and for the same
+reason: capture and create are two halves that do not know about each other, and a definition
+loaded from a file is then a small round rather than a rewrite.
+
+One placement per view type. A source sheet holding the same type twice gives no way to say
+which position a new one takes, and placing both would put two views on top of each other.
+
+A schedule on a sheet is a different element from a drawing on a sheet and is placed by a
+different call, so `IsASchedule` is captured rather than worked out later.
+
+The sheet number and the sheet name are not in here at all. They come one per plot in a
+`SheetRequest`, typed by the user, and `Blank` and `Complete` are different questions. Both
+boxes empty is a plot nobody asked for a sheet on. One box empty is a row that was meant and is
+short, and that one is refused by name and told which half is missing.
+
 ## A test that reads the code back to itself proves nothing
 
 Write the expected value out by hand. Do not work it out with the same rule the code uses.

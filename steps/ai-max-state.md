@@ -1,7 +1,37 @@
 # ai-max state
 
-Phase: 9, ship. Eleventh pass, a guarded delete, reports where the code can read them, and
-scope box cases that open.
+Phase: 9, ship. Twelfth pass, the first real write, and everything it found.
+
+Four plan views were attempted in Revit and none was created. Seven faults came out of that one
+run and its reports, and all seven are fixed here. None of the fixes has been run.
+
+**The report said both created and not created.** Four names under PLAN VIEWS and the same four
+under NOT CREATED, while the panel said nothing was made. The created sections printed
+`RunPlan.Items`, which is the intention. `RunOutcome` is what the run did, every counted section
+reads it, and a name found on both sides prints as a bug in the tool.
+
+**The family type rule was wrong, and so was matching on names at all.** A view called
+DM-11-(010) Location Key Plan is made with a type called `(010) Key Location Plan`, words
+swapped. Three of the four refusals were that. The family type, the level and the view template
+now all come off a view of the same type the model already holds on another plot. Prefix
+matching for the template went with it, along with `ViewTypeNaming`, because eight templates
+start with (200) General Arrangement Layout and it could never have answered.
+
+**A cross section is not a plan view.** `ViewPlan.Create` can never make one, which is what
+refused the fourth, with a message that blamed the level. There is a section path now, built on
+`SectionPlacement`, `PlotBox` and `SectionAxis`, which had been in Core unused since they were
+written. Which types need one is read off the kind of the views the model holds.
+
+**The scan could not have shown either fault.** It lists view family types now, and it names the
+six views whose name and PRX_Plot_ID disagree rather than only counting them.
+
+**Sheets are answered.** The user sets one plot's sheet up by hand and it is copied.
+`SheetDefinition` holds the title block, the size and one placement per view. `SheetCapture`
+reads one, `ModelWriter` builds one, and the panel takes a source sheet and a table of numbers
+and names. The tool still invents neither half.
+
+Before that, a guarded delete, reports where the code can read them, and scope box cases that
+open.
 
 `ModelWriter` deletes a schedule that lost a filter, and that delete was unguarded. A Revit
 refusal there would have left a wrong schedule in the model while the report said it was gone.
@@ -196,12 +226,8 @@ Three projects in `RcrcGreen.sln`.
 
 ## What is not built
 
-No sheet is created. The team has said the user types the sheet number and the sheet name and
-chooses one view per sheet or several. Three things are still open and none of them is worth
-guessing: which title block a new sheet takes, where a view sits on it, and how several views
-lay out together.
-
-No section is created. `SectionPlacement` works out where one goes and nothing calls it yet.
+Sheet creation and section creation are both written and neither has run. The three questions
+that blocked sheets are answered: a sheet is copied from one the user set up by hand.
 
 Nothing in the Revit project has been run on this machine. It compiles against the Revit 2024
 reference assemblies and no more than that can be said from here. The panel especially, since
@@ -209,11 +235,11 @@ a dockable pane, an external event and a WPF tree built in code can all compile 
 wrong the first time Revit loads them. That goes for the three failure paths added in the
 sixth pass as well. None of them has been made to happen.
 
-**The write path has still never run.** Not one view, not one schedule, not one deletion. Every
-sentence about what Revit does when a filter will not go on, or when a delete is refused, is
-written from the API and not from a run. The reports folder has never been written to either,
-and `reports-folder.txt` has never been read by the add-in. The newest `steps/log.md` entry
-lists what that leaves unchecked, item by item.
+**The write path has run once and created nothing.** Four plan views were attempted and all
+four were refused. That run is the source of everything in this round, and none of the fixes it
+produced has itself been run: not one view, section, schedule or sheet has ever been created by
+this tool. The section path and the sheet path have never executed at all. The newest
+`steps/log.md` entry lists what that leaves unchecked, item by item.
 
 The mockups under `design/` are hand drawn, not screenshots, and each says so at the top of the
 file. Every round that changes the panel writes one.

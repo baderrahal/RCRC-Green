@@ -14,8 +14,10 @@ namespace RcrcGreen.Core
             string documentTitle,
             IEnumerable<ScannedSheet> sheets,
             IEnumerable<ScannedView> views,
+            IEnumerable<ScannedViewFamilyType> viewFamilyTypes,
             IEnumerable<ScannedScopeBox> scopeBoxes,
             IEnumerable<ScannedParameterValue> plotIdValues,
+            IEnumerable<ScannedDisagreement> disagreements,
             int elementsScanned,
             double scanSeconds)
         {
@@ -24,8 +26,10 @@ namespace RcrcGreen.Core
             DocumentTitle = documentTitle;
             Sheets = Held(sheets);
             Views = Held(views);
+            ViewFamilyTypes = Held(viewFamilyTypes);
             ScopeBoxes = Held(scopeBoxes);
             PlotIdValues = Held(plotIdValues);
+            Disagreements = Held(disagreements);
             ElementsScanned = elementsScanned;
             ScanSeconds = scanSeconds;
         }
@@ -40,9 +44,22 @@ namespace RcrcGreen.Core
         /// </summary>
         public IReadOnlyList<ScannedView> Views { get; }
 
+        /// <summary>
+        /// Every view family type in the model, which is what a new view is made with. The
+        /// report listed the templates and not these, and the one mismatch that hid there cost
+        /// three of the four refusals in the first real run.
+        /// </summary>
+        public IReadOnlyList<ScannedViewFamilyType> ViewFamilyTypes { get; }
+
         public IReadOnlyList<ScannedScopeBox> ScopeBoxes { get; }
 
         public IReadOnlyList<ScannedParameterValue> PlotIdValues { get; }
+
+        /// <summary>
+        /// Views named for one plot while PRX_Plot_ID holds another. Named rather than counted,
+        /// so somebody can go and fix them.
+        /// </summary>
+        public IReadOnlyList<ScannedDisagreement> Disagreements { get; }
 
         /// <summary>
         /// How many elements were read looking for PRX_Plot_ID, and how long that took. Both

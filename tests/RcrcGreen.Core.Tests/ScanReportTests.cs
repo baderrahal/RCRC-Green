@@ -81,8 +81,10 @@ namespace RcrcGreen.Core.Tests
                     "== VIEWS ON SHEETS (3) ==",
                     "== VIEWS NOT ON SHEETS (2) ==",
                     "== VIEW TEMPLATES (1) ==",
+                    "== VIEW FAMILY TYPES (0) ==",
                     "== SCOPE BOXES (2) ==",
                     "== PRX_Plot_ID VALUES (2) ==",
+                    "== VIEWS THAT DISAGREE WITH THEMSELVES (0) ==",
                     "== PARSE SUMMARY (9) =="
                 },
                 headings);
@@ -234,6 +236,107 @@ namespace RcrcGreen.Core.Tests
 
             Assert.EndsWith(ScanReport.LineEnd, report);
             Assert.DoesNotContain(report.Replace(ScanReport.LineEnd, string.Empty), "\n");
+        }
+    }
+
+    /// <summary>
+    /// The two sections the first real run showed were missing. The scan listed view templates
+    /// and not view family types, so a name mismatch that cost three refusals could only be
+    /// found in a Properties panel, and it counted disagreeing views without naming one.
+    /// </summary>
+    public class ScanReportNewSectionsTests
+    {
+        private static readonly DateTime Noon = new DateTime(2026, 9, 8, 12, 0, 0);
+
+        [Fact]
+        public void EveryViewFamilyTypeIsListedWithItsViewFamily()
+        {
+            string report = ScanReport.Write(
+                ScanFixture.Build(viewFamilyTypes: new[]
+                {
+                    new ScannedViewFamilyType("(200) General Arrangement Layout", "FloorPlan"),
+                    new ScannedViewFamilyType("(010) Key Location Plan", "FloorPlan"),
+                    new ScannedViewFamilyType("(400) Landscape Cross Section", "Section")
+                }),
+                Noon);
+
+            Assert.Contains("== VIEW FAMILY TYPES (3) ==", report);
+            Assert.Contains("view family | type name", report);
+            Assert.Contains("Section | (400) Landscape Cross Section", report);
+            Assert.Contains("FloorPlan | (010) Key Location Plan", report);
+        }
+
+        /// <summary>
+        /// The mismatch that cost the first run. The view is called Location Key Plan and its
+        /// family type is called Key Location Plan, and nothing but this section shows it.
+        /// </summary>
+        [Fact]
+        public void TheTypeNameDoesNotHaveToMatchTheViewNamesThatUseIt()
+        {
+            string report = ScanReport.Write(
+                ScanFixture.Build(
+                    views: new[] { ScanFixture.View("DM-11-(010) Location Key Plan", "FloorPlan") },
+                    viewFamilyTypes: new[]
+                    {
+                        new ScannedViewFamilyType("(010) Key Location Plan", "FloorPlan")
+                    }),
+                Noon);
+
+            Assert.Contains("FloorPlan | (010) Key Location Plan", report);
+            Assert.Contains("A type name does not have to match", report);
+        }
+
+        [Fact]
+        public void EveryDisagreeingViewIsNamedWithBothPlots()
+        {
+            string report = ScanReport.Write(
+                ScanFixture.Build(disagreements: new[]
+                {
+                    new ScannedDisagreement("DM-12-(200) General Arrangement Layout", "DM-12", "DM-11"),
+                    new ScannedDisagreement("DM-11-(010) Location Key Plan", "DM-11", "DM-41")
+                }),
+                Noon);
+
+            Assert.Contains("== VIEWS THAT DISAGREE WITH THEMSELVES (2) ==", report);
+            Assert.Contains("view name | plot in the name | plot in PRX_Plot_ID", report);
+            Assert.Contains("DM-12-(200) General Arrangement Layout | DM-12 | DM-11", report);
+            Assert.Contains("DM-11-(010) Location Key Plan | DM-11 | DM-41", report);
+        }
+
+        /// <summary>
+        /// Plots read as numbers, so DM-2 comes before DM-100 in the list somebody works down.
+        /// </summary>
+        [Fact]
+        public void TheyComeInPlotOrderWithTheNumberReadAsANumber()
+        {
+            string report = ScanReport.Write(
+                ScanFixture.Build(disagreements: new[]
+                {
+                    new ScannedDisagreement("DM-100-(200) A", "DM-100", "DM-1"),
+                    new ScannedDisagreement("DM-2-(200) A", "DM-2", "DM-1"),
+                    new ScannedDisagreement("DM-11-(200) A", "DM-11", "DM-1")
+                }),
+                Noon);
+
+            int two = report.IndexOf("DM-2-(200) A", StringComparison.Ordinal);
+            int eleven = report.IndexOf("DM-11-(200) A", StringComparison.Ordinal);
+            int hundred = report.IndexOf("DM-100-(200) A", StringComparison.Ordinal);
+
+            Assert.True(two < eleven);
+            Assert.True(eleven < hundred);
+        }
+
+        /// <summary>
+        /// The scan reads and never writes, so the section has to say plainly that it changed
+        /// none of them and that which value is right is not the tool's to decide.
+        /// </summary>
+        [Fact]
+        public void TheSectionSaysNothingWasChanged()
+        {
+            string report = ScanReport.Write(ScanFixture.Build(), Noon);
+
+            Assert.Contains("== VIEWS THAT DISAGREE WITH THEMSELVES (0) ==", report);
+            Assert.Contains("Nothing here was changed.", report);
         }
     }
 }
