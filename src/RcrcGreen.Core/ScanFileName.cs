@@ -14,6 +14,8 @@ namespace RcrcGreen.Core
 
         public const string ScopeBoxPrefix = "RCRC-Green-ScopeBox_";
 
+        public const string RunPrefix = "RCRC-Green-Run_";
+
         public const string Extension = ".txt";
 
         /// <summary>

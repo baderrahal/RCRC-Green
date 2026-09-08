@@ -6,6 +6,8 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RcrcGreen.Core;
 
+using ViewType = RcrcGreen.Core.ViewType;
+
 namespace RcrcGreen.Revit
 {
     internal enum DrawingSheetRequest
@@ -14,7 +16,8 @@ namespace RcrcGreen.Revit
         Refresh,
         SelectView,
         AssignScopeBoxes,
-        ScanModel
+        ScanModel,
+        Run
     }
 
     /// <summary>
@@ -32,6 +35,7 @@ namespace RcrcGreen.Revit
         private DrawingSheetRequest _wanted = DrawingSheetRequest.Nothing;
         private long _viewToSelect;
         private IReadOnlyList<string> _plotsTicked = new List<string>();
+        private IReadOnlyList<PlotViewKey> _marked = new List<PlotViewKey>();
 
         /// <summary>
         /// Called back on the Revit thread when a request finishes. The panel marshals to its
@@ -67,6 +71,21 @@ namespace RcrcGreen.Revit
             }
         }
 
+        /// <summary>
+        /// Everything the run acts on comes in with the request. The handler never reaches back
+        /// into the panel for it, so what is written is what was on screen when the button was
+        /// pressed and cannot drift while Revit gets round to the event.
+        /// </summary>
+        public void AskToRun(IReadOnlyList<string> plotsTicked, IReadOnlyList<PlotViewKey> marked)
+        {
+            lock (_asking)
+            {
+                _wanted = DrawingSheetRequest.Run;
+                _plotsTicked = plotsTicked ?? new List<string>();
+                _marked = marked ?? new List<PlotViewKey>();
+            }
+        }
+
         public string GetName()
         {
             return "RCRC Green Drawing Sheet";
@@ -94,12 +113,14 @@ namespace RcrcGreen.Revit
             DrawingSheetRequest wanted;
             long viewToSelect;
             IReadOnlyList<string> plotsTicked;
+            IReadOnlyList<PlotViewKey> marked;
 
             lock (_asking)
             {
                 wanted = _wanted;
                 viewToSelect = _viewToSelect;
                 plotsTicked = _plotsTicked;
+                marked = _marked;
                 _wanted = DrawingSheetRequest.Nothing;
             }
 
@@ -132,6 +153,9 @@ namespace RcrcGreen.Revit
                         break;
                     case DrawingSheetRequest.ScanModel:
                         Scan(document);
+                        break;
+                    case DrawingSheetRequest.Run:
+                        RunTheMarkedCells(document, plotsTicked, marked);
                         break;
                 }
             }
@@ -306,6 +330,117 @@ namespace RcrcGreen.Revit
 
             File.WriteAllText(path, ScanReport.Write(scan, writtenAt), new UTF8Encoding(false));
             Told?.Invoke("Scan written to " + path);
+        }
+
+        /// <summary>
+        /// Creates what the marked cells on the ticked plots ask for.
+        ///
+        /// Everything is decided before a transaction exists, so the confirmation offers a real
+        /// count and the answer to it cannot change what was counted. On yes, one transaction
+        /// covers the whole run, so it is one undo. The report is written either way, because a
+        /// run that made nothing did so for a reason worth keeping.
+        /// </summary>
+        private void RunTheMarkedCells(
+            Document document, IReadOnlyList<string> plotsTicked, IReadOnlyList<PlotViewKey> marked)
+        {
+            DrawingSheetSnapshot now = DrawingSheetReader.Read(document);
+
+            // Read again rather than trusting the panel's snapshot. It is as old as the last
+            // refresh, and creating a view that somebody else added in the meantime is how a
+            // model ends up with two of everything.
+            Dictionary<ViewType, RcrcGreen.Core.ScheduleDefinition> definitions =
+                ScheduleCapture.ByType(document);
+
+            RunPlan plan = RunPlan.Of(
+                marked,
+                plotsTicked,
+                now.PlotsWithAScopeBox,
+                now.ScheduleTypes,
+                definitions.Keys);
+
+            bool applied = false;
+            var refused = new List<RunRefusal>();
+
+            if (!plan.MakesNothing && Confirmed(plan))
+            {
+                var boxIdByName = new Dictionary<string, ElementId>(StringComparer.Ordinal);
+                foreach (Element box in new FilteredElementCollector(document)
+                    .OfCategory(BuiltInCategory.OST_VolumeOfInterest)
+                    .WhereElementIsNotElementType())
+                {
+                    if (!boxIdByName.ContainsKey(box.Name)) boxIdByName.Add(box.Name, box.Id);
+                }
+
+                using (var making = new Transaction(document, "Create drawing sheet views"))
+                {
+                    making.Start();
+                    ModelWriter.Make(document, plan, definitions, boxIdByName, refused);
+                    making.Commit();
+                }
+
+                applied = true;
+            }
+
+            DateTime writtenAt = DateTime.Now;
+            string path = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                ScanFileName.For(ScanFileName.RunPrefix, document.Title, writtenAt));
+
+            File.WriteAllText(
+                path,
+                RunReport.Write(plan, document.Title, writtenAt, applied, refused),
+                new UTF8Encoding(false));
+
+            if (!applied)
+            {
+                Told?.Invoke("Nothing was created. Report at " + path);
+                return;
+            }
+
+            int made = plan.Items.Count - refused.Count;
+            Told?.Invoke(made + " created, " + refused.Count + " refused by Revit. Press Refresh "
+                + "to see them. Report at " + path);
+        }
+
+        private static bool Confirmed(RunPlan plan)
+        {
+            var asking = new TaskDialog("RCRC Green, Drawing Sheet")
+            {
+                MainInstruction = plan.InWords(),
+                MainContent = Listed(plan)
+                    + Environment.NewLine + Environment.NewLine
+                    + "A plan view is created fresh and carries no annotation. A schedule is "
+                    + "captured from a plot that already has it and rebuilt with only the plot "
+                    + "filter changed. The whole run is one undo.",
+                CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No,
+                DefaultButton = TaskDialogResult.No
+            };
+
+            return asking.Show() == TaskDialogResult.Yes;
+        }
+
+        /// <summary>
+        /// The first few by name. A dialog listing 200 is a dialog nobody reads, and the report
+        /// carries every one of them.
+        /// </summary>
+        private static string Listed(RunPlan plan)
+        {
+            var said = new StringBuilder();
+            int shown = 0;
+
+            foreach (RunItem item in plan.Items)
+            {
+                if (shown == 8)
+                {
+                    said.AppendLine("and " + (plan.Items.Count - shown) + " more.");
+                    break;
+                }
+
+                said.AppendLine(item.Name);
+                shown++;
+            }
+
+            return said.ToString();
         }
 
         /// <summary>

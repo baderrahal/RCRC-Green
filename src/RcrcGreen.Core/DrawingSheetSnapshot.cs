@@ -17,7 +17,7 @@ namespace RcrcGreen.Core
     public sealed class DrawingSheetSnapshot
     {
         public static readonly DrawingSheetSnapshot Nothing = new DrawingSheetSnapshot(
-            string.Empty, default(DateTime), null, null, null, null, null, 0, 0, 0, 0, 0);
+            string.Empty, default(DateTime), null, null, null, null, null, null, 0, 0, 0, 0, 0);
 
         public DrawingSheetSnapshot(
             string documentTitle,
@@ -25,6 +25,7 @@ namespace RcrcGreen.Core
             IEnumerable<string> plotIds,
             IEnumerable<ViewType> viewTypes,
             IEnumerable<PlotViewPresence> present,
+            IEnumerable<ViewType> scheduleTypes,
             IEnumerable<string> scopeBoxNames,
             IEnumerable<ViewScopeBoxState> viewStates,
             int viewsRead,
@@ -51,6 +52,12 @@ namespace RcrcGreen.Core
 
             Present = (present ?? Enumerable.Empty<PlotViewPresence>())
                 .Where(one => one != null)
+                .ToList();
+
+            ScheduleTypes = (scheduleTypes ?? Enumerable.Empty<ViewType>())
+                .Where(one => one != null)
+                .Distinct()
+                .OrderBy(one => one)
                 .ToList();
 
             ScopeBoxNames = Clean(scopeBoxNames)
@@ -92,6 +99,19 @@ namespace RcrcGreen.Core
         public IReadOnlyList<ViewType> ViewTypes { get; }
 
         public IReadOnlyList<PlotViewPresence> Present { get; }
+
+        /// <summary>
+        /// The view types that are schedules rather than plan views. Six of the things under a
+        /// plot in the real model sit under Schedules and Quantities, they are built by a
+        /// different call, and they filter on a different parameter, so the grid has to show
+        /// which is which.
+        /// </summary>
+        public IReadOnlyList<ViewType> ScheduleTypes { get; }
+
+        public bool IsASchedule(ViewType type)
+        {
+            return type != null && ScheduleTypes.Contains(type);
+        }
 
         /// <summary>
         /// Every scope box name in the model, whether or not it is shaped like a plot.

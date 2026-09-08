@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Autodesk.Revit.UI;
@@ -8,6 +9,7 @@ using RcrcGreen.Core;
 // Autodesk.Revit.UI carries a ComboBox of its own for the ribbon. This panel is WPF, so the
 // name is pinned to the one that belongs in a UserControl.
 using ComboBox = System.Windows.Controls.ComboBox;
+using TextBox = System.Windows.Controls.TextBox;
 
 namespace RcrcGreen.Revit
 {
@@ -49,12 +51,18 @@ namespace RcrcGreen.Revit
         private readonly TextBlock _caseCounts = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 4) };
         private readonly Grid _sheet = new Grid();
         private readonly StackPanel _columnList = new StackPanel { Margin = new Thickness(4, 2, 0, 2) };
-        private readonly Expander _columnBox = new Expander { Header = "View types", Margin = new Thickness(0, 2, 0, 2) };
+        private readonly Expander _columnBox = new Expander { Header = "View types", Margin = new Thickness(0, 2, 0, 2), IsExpanded = true };
+        private readonly TextBox _search = new TextBox { Margin = new Thickness(0, 2, 0, 2) };
+        private readonly WrapPanel _codeButtons = new WrapPanel { Margin = new Thickness(0, 2, 0, 2) };
+        private readonly ComboBox _newCode = new ComboBox { Width = 70, Margin = new Thickness(0, 2, 4, 2) };
+        private readonly TextBox _newName = new TextBox { Margin = new Thickness(0, 2, 4, 2), MinWidth = 120 };
         private readonly Button _assign = new Button { Content = "Assign Scope Boxes", Margin = new Thickness(0, 4, 0, 2) };
+        private readonly TextBlock _runCounts = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 4) };
+        private readonly Button _run = new Button { Content = "Run", Margin = new Thickness(0, 2, 0, 2) };
 
         private PanelTheme _theme = PanelTheme.Current();
         private DrawingSheetSnapshot _model = DrawingSheetSnapshot.Nothing;
-        private GridColumns _columns = GridColumns.ShowingAll(null);
+        private GridColumns _columns = GridColumns.Over(null);
         private PlotSelection _picked = PlotSelection.Nothing;
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
         private bool _filling;
@@ -136,14 +144,37 @@ namespace RcrcGreen.Revit
             _to.SelectionChanged += (sender, e) => RangeChosen();
 
             everything.Children.Add(Heading("COLUMNS"));
+
+            _search.TextChanged += (sender, e) => FillColumnList();
+            everything.Children.Add(Labelled("Search", _search));
+
+            var allOrNone = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+            allOrNone.Children.Add(SmallButton("All", () => TickWhatTheFilterShows(true)));
+            allOrNone.Children.Add(SmallButton("None", () => TickWhatTheFilterShows(false)));
+            everything.Children.Add(allOrNone);
+
+            everything.Children.Add(_codeButtons);
+
             _columnBox.Content = new ScrollViewer
             {
                 Content = _columnList,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                MaxHeight = 200
+                MaxHeight = 220
             };
             everything.Children.Add(_columnBox);
             everything.Children.Add(_columnCount);
+
+            // A view type the model does not hold is exactly what someone opens this panel to
+            // create. The code list is filled from the model so the naming stays inside the
+            // codes already in use, and the name is free text because that is the new part.
+            var adding = new DockPanel { Margin = new Thickness(0, 4, 0, 2) };
+            Button add = SmallButton("Add", AddTheTypedType);
+            DockPanel.SetDock(_newCode, Dock.Left);
+            DockPanel.SetDock(add, Dock.Right);
+            adding.Children.Add(_newCode);
+            adding.Children.Add(add);
+            adding.Children.Add(_newName);
+            everything.Children.Add(adding);
 
             everything.Children.Add(Heading("PLOTS AND VIEW TYPES"));
 
@@ -166,6 +197,11 @@ namespace RcrcGreen.Revit
             everything.Children.Add(_caseCounts);
             _assign.Click += (sender, e) => AskToAssign();
             everything.Children.Add(_assign);
+
+            everything.Children.Add(Heading("RUN"));
+            everything.Children.Add(_runCounts);
+            _run.Click += (sender, e) => AskToRun();
+            everything.Children.Add(_run);
 
             everything.Children.Add(Heading("MODEL"));
 
@@ -213,6 +249,13 @@ namespace RcrcGreen.Revit
             return line;
         }
 
+        private static Button SmallButton(string text, Action clicked)
+        {
+            var button = new Button { Content = text, Margin = new Thickness(0, 0, 4, 0), Padding = new Thickness(6, 1, 6, 1) };
+            button.Click += (sender, e) => clicked();
+            return button;
+        }
+
         private void Ask(DrawingSheetRequest wanted)
         {
             _handler.Ask(wanted);
@@ -229,6 +272,53 @@ namespace RcrcGreen.Revit
         {
             Say("Scanning the whole model. This one reads every element, so it takes longer.");
             Ask(DrawingSheetRequest.ScanModel);
+        }
+
+        /// <summary>
+        /// What the run would make, worked out from the snapshot so the line follows a tick or a
+        /// mark straight away. Revit works it out again from a fresh read before it writes, by
+        /// the same rule over the same plots.
+        /// </summary>
+        private void SayTheRun()
+        {
+            if (!_readOnce)
+            {
+                _runCounts.Text = "Nothing has been read yet.";
+                return;
+            }
+
+            RunPlan plan = RunPlan.Of(
+                _marked,
+                _picked.Ticked,
+                _model.PlotsWithAScopeBox,
+                _model.ScheduleTypes,
+                _model.ScheduleTypes);
+
+            _runCounts.Text = plan.InWords()
+                + " Only marked cells on ticked plots are made, and nothing is copied."
+                + Environment.NewLine
+                + "No sheets. Which title block a new sheet takes and where a view sits on it "
+                + "have not been answered, and this tool does not guess a rule.";
+        }
+
+        private void AskToRun()
+        {
+            IReadOnlyList<string> ticked = _picked.Ticked;
+            if (ticked.Count == 0)
+            {
+                Say("No plots are ticked, so there is nothing to run.");
+                return;
+            }
+
+            if (_marked.Count == 0)
+            {
+                Say("Nothing is marked. Click an empty cell to mark the view you want made.");
+                return;
+            }
+
+            Say("Working out the run.");
+            _handler.AskToRun(ticked, _marked.ToList());
+            _asking.Raise();
         }
 
         private void AskToAssign()
@@ -266,6 +356,7 @@ namespace RcrcGreen.Revit
                 _columns = _columns.OverTheseTypes(_model.ViewTypes);
 
                 FillPrefixes();
+                FillCodeButtons();
                 FillColumnList();
                 PutTheRangeBack(prefixWas, fromWas, toWas);
             });
@@ -330,16 +421,31 @@ namespace RcrcGreen.Revit
             RangeChosen();
         }
 
+        /// <summary>
+        /// Draws the list from <see cref="_columns"/> and nothing else.
+        ///
+        /// The tick box used to remember its own state and the count was written from the
+        /// model, so the two could and did drift apart. Every change now goes into the model
+        /// and the whole list is drawn again from it, which is what makes a disagreement
+        /// impossible rather than unlikely.
+        ///
+        /// _filling is held for the whole build, because setting IsChecked on a box that
+        /// already has a handler raises the event, and a tick put there by this method is not
+        /// the user asking for anything.
+        /// </summary>
         private void FillColumnList()
         {
+            _filling = true;
+
             _columnList.Children.Clear();
 
-            foreach (ViewType viewType in _columns.All)
+            IReadOnlyList<ViewType> showing = _columns.Matching(_search.Text);
+            foreach (ViewType viewType in showing)
             {
                 ViewType which = viewType;
                 var tick = new CheckBox
                 {
-                    Content = which.ToString(),
+                    Content = which + (_columns.IsNew(which) ? "   new" : string.Empty),
                     IsChecked = _columns.IsShown(which),
                     Margin = new Thickness(0, 1, 0, 1)
                 };
@@ -349,7 +455,22 @@ namespace RcrcGreen.Revit
                 _columnList.Children.Add(tick);
             }
 
-            SayTheColumns();
+            _filling = false;
+
+            SayTheColumns(showing.Count);
+        }
+
+        private void FillCodeButtons()
+        {
+            _codeButtons.Children.Clear();
+            _newCode.Items.Clear();
+
+            foreach (string code in _columns.CodesInUse)
+            {
+                string which = code;
+                _codeButtons.Children.Add(SmallButton(which, () => TickWholeCode(which)));
+                _newCode.Items.Add(which);
+            }
         }
 
         private void ColumnShown(ViewType which, bool shown)
@@ -357,18 +478,73 @@ namespace RcrcGreen.Revit
             if (_filling) return;
 
             _columns = _columns.Showing(which, shown);
-            SayTheColumns();
+
+            // Not FillColumnList. The box the user just clicked already looks right, and
+            // rebuilding the list under a click loses the scroll position.
+            SayTheColumns(_columns.Matching(_search.Text).Count);
             DrawSheet();
         }
 
-        private void SayTheColumns()
+        /// <summary>
+        /// All and None act on what the search is showing, which is the point of having them.
+        /// </summary>
+        private void TickWhatTheFilterShows(bool ticked)
         {
-            int hidden = _columns.HiddenCount;
-            _columnBox.Header = _columns.All.Count + " view types";
-            _columnCount.Text = hidden == 0
-                ? _columns.All.Count + " view types, all shown."
-                : _columns.Shown.Count + " of " + _columns.All.Count + " view types shown, "
-                    + hidden + " hidden.";
+            _columns = _columns.ShowingThese(_columns.Matching(_search.Text), ticked);
+            FillColumnList();
+            DrawSheet();
+        }
+
+        private void TickWholeCode(string code)
+        {
+            _columns = _columns.ShowingCode(code);
+            FillColumnList();
+            DrawSheet();
+        }
+
+        private void AddTheTypedType()
+        {
+            string code = _newCode.SelectedItem as string;
+            string name = (_newName.Text ?? string.Empty).Trim();
+
+            if (string.IsNullOrEmpty(code))
+            {
+                Say("Pick a code for the new view type. The list holds the codes this model uses.");
+                return;
+            }
+
+            if (name.Length == 0)
+            {
+                Say("Type a name for the new view type.");
+                return;
+            }
+
+            var wanted = new ViewType(code, name);
+            if (_columns.All.Contains(wanted))
+            {
+                Say(wanted + " is already a column.");
+                return;
+            }
+
+            _columns = _columns.Adding(wanted);
+            _newName.Text = string.Empty;
+
+            FillColumnList();
+            DrawSheet();
+            Say(wanted + " added. It shows missing on every plot, which is right, and it is "
+                + "marked new until the model holds one.");
+        }
+
+        private void SayTheColumns(int showing)
+        {
+            _columnBox.Header = _columns.ShownCount + " of " + _columns.All.Count + " ticked";
+
+            string counted = _columns.ShownCount + " of " + _columns.All.Count
+                + " view types ticked.";
+
+            _columnCount.Text = showing == _columns.All.Count
+                ? counted
+                : counted + " The search is showing " + showing + " of them.";
         }
 
         private void PrefixChosen()
@@ -449,7 +625,7 @@ namespace RcrcGreen.Revit
         {
             _sheet.IsEnabled = ready;
             _assign.IsEnabled = ready;
-            _columnBox.IsEnabled = ready;
+            _run.IsEnabled = ready;
         }
 
         private void PlotTicked(string plotId, bool ticked)
@@ -503,6 +679,7 @@ namespace RcrcGreen.Revit
             _sheet.RowDefinitions.Clear();
 
             SayTheCases();
+            SayTheRun();
 
             SheetGrid grid = SheetGrid.Build(
                 _picked.InRange, _columns.Shown, _model.Present, _model.PlotsWithAScopeBox, _marked);
@@ -529,11 +706,21 @@ namespace RcrcGreen.Revit
 
             for (int column = 0; column < grid.Columns.Count; column++)
             {
+                ViewType type = grid.Columns[column];
+
+                // A schedule is a different thing to build, it lives under Schedules and
+                // Quantities rather than Views, and it filters on PRX_Ref Plot ID rather than
+                // PRX_Plot_ID. The user has to be able to see which columns are which.
+                bool schedule = _model.IsASchedule(type);
+                string mark = schedule ? "  schedule" : string.Empty;
+                if (_columns.IsNew(type)) mark += "  new";
+
                 Place(
                     new TextBlock
                     {
-                        Text = grid.Columns[column].ToString(),
+                        Text = type + mark,
                         FontWeight = FontWeights.Bold,
+                        FontStyle = schedule ? FontStyles.Italic : FontStyles.Normal,
                         Margin = new Thickness(4, 2, 8, 2),
                         MaxWidth = 160,
                         TextWrapping = TextWrapping.Wrap
