@@ -1,63 +1,83 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// One sheet the user asked for, on one plot.
+    /// The sheet number one plot gets for one sheet definition.
     ///
-    /// The number and the name are typed by the user and are never invented, so a request short
-    /// of either is not a sheet. It is refused by name in the report rather than filled in with
-    /// something plausible, because a sheet numbered by a tool is a sheet nobody can find.
+    /// It is the only part of a sheet that differs between plots, and it is typed by the user
+    /// or picked off the numbers the model already uses. Never invented, so a plot without one
+    /// gets no sheet and the run says which plot and which sheet.
     /// </summary>
     public sealed class SheetRequest
     {
-        public SheetRequest(string plotId, string sheetNumber, string sheetName)
+        public SheetRequest(string plotId, string sheetNumber)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
 
             PlotId = plotId;
             SheetNumber = (sheetNumber ?? string.Empty).Trim();
-            SheetName = (sheetName ?? string.Empty).Trim();
         }
 
         public string PlotId { get; }
 
         public string SheetNumber { get; }
 
-        public string SheetName { get; }
-
         public bool Complete
         {
-            get { return SheetNumber.Length > 0 && SheetName.Length > 0; }
-        }
-
-        /// <summary>
-        /// Empty when the request is complete. Otherwise it names which box the user left
-        /// blank, because "incomplete" sends somebody hunting across two columns.
-        /// </summary>
-        public string WhatIsMissing
-        {
-            get
-            {
-                if (Complete) return string.Empty;
-                if (SheetNumber.Length == 0 && SheetName.Length == 0) return "a sheet number and a sheet name";
-                return SheetNumber.Length == 0 ? "a sheet number" : "a sheet name";
-            }
-        }
-
-        /// <summary>
-        /// True when the user typed nothing at all, which is a plot they did not ask for a
-        /// sheet on rather than one they filled in badly. Those are dropped without a refusal,
-        /// the same way an unticked plot is.
-        /// </summary>
-        public bool Blank
-        {
-            get { return SheetNumber.Length == 0 && SheetName.Length == 0; }
+            get { return SheetNumber.Length > 0; }
         }
 
         public override string ToString()
         {
-            return PlotId + " " + SheetNumber + " " + SheetName;
+            return PlotId + " " + SheetNumber;
+        }
+    }
+
+    /// <summary>
+    /// One sheet definition and the number every plot gets for it.
+    ///
+    /// The definition is shared and the numbers are not, which is the whole shape of how the
+    /// team works: one sheet described once, repeated across the plots, each carrying its own
+    /// number. A run can hold several of these, so one press gives a plot its LIST OF DRAWINGS
+    /// and its GENERAL ARRANGEMENT LAYOUT together.
+    /// </summary>
+    public sealed class SheetOrder
+    {
+        public SheetOrder(SheetDefinition definition, IEnumerable<SheetRequest> numbers)
+        {
+            if (definition == null) throw new ArgumentNullException("definition");
+
+            Definition = definition;
+
+            // One number per plot. A second row for a plot would make two sheets that differ
+            // only by a number nobody meant to type twice.
+            Numbers = (numbers ?? Enumerable.Empty<SheetRequest>())
+                .Where(one => one != null)
+                .GroupBy(one => one.PlotId, StringComparer.Ordinal)
+                .Select(byPlot => byPlot.First())
+                .ToList();
+        }
+
+        public SheetDefinition Definition { get; }
+
+        public IReadOnlyList<SheetRequest> Numbers { get; }
+
+        public SheetRequest NumberFor(string plotId)
+        {
+            if (plotId == null) return null;
+            return Numbers.FirstOrDefault(
+                one => string.Equals(one.PlotId, plotId, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// How many plots have a number typed in. It is what the step header counts.
+        /// </summary>
+        public int FilledIn
+        {
+            get { return Numbers.Count(one => one.Complete); }
         }
     }
 }

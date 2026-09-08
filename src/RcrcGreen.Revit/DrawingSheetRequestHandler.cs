@@ -36,8 +36,7 @@ namespace RcrcGreen.Revit
         private long _viewToSelect;
         private IReadOnlyList<string> _plotsTicked = new List<string>();
         private IReadOnlyList<PlotViewKey> _marked = new List<PlotViewKey>();
-        private IReadOnlyList<SheetRequest> _sheetsWanted = new List<SheetRequest>();
-        private long _sheetToCopy;
+        private IReadOnlyList<SheetOrder> _sheetsWanted = new List<SheetOrder>();
 
         /// <summary>
         /// Called back on the Revit thread when a request finishes. The panel marshals to its
@@ -81,16 +80,14 @@ namespace RcrcGreen.Revit
         public void AskToRun(
             IReadOnlyList<string> plotsTicked,
             IReadOnlyList<PlotViewKey> marked,
-            IReadOnlyList<SheetRequest> sheetsWanted,
-            long sheetToCopy)
+            IReadOnlyList<SheetOrder> sheetsWanted)
         {
             lock (_asking)
             {
                 _wanted = DrawingSheetRequest.Run;
                 _plotsTicked = plotsTicked ?? new List<string>();
                 _marked = marked ?? new List<PlotViewKey>();
-                _sheetsWanted = sheetsWanted ?? new List<SheetRequest>();
-                _sheetToCopy = sheetToCopy;
+                _sheetsWanted = sheetsWanted ?? new List<SheetOrder>();
             }
         }
 
@@ -122,8 +119,7 @@ namespace RcrcGreen.Revit
             long viewToSelect;
             IReadOnlyList<string> plotsTicked;
             IReadOnlyList<PlotViewKey> marked;
-            IReadOnlyList<SheetRequest> sheetsWanted;
-            long sheetToCopy;
+            IReadOnlyList<SheetOrder> sheetsWanted;
 
             lock (_asking)
             {
@@ -132,7 +128,6 @@ namespace RcrcGreen.Revit
                 plotsTicked = _plotsTicked;
                 marked = _marked;
                 sheetsWanted = _sheetsWanted;
-                sheetToCopy = _sheetToCopy;
                 _wanted = DrawingSheetRequest.Nothing;
             }
 
@@ -167,7 +162,7 @@ namespace RcrcGreen.Revit
                         Scan(document);
                         break;
                     case DrawingSheetRequest.Run:
-                        RunTheMarkedCells(document, plotsTicked, marked, sheetsWanted, sheetToCopy);
+                        RunTheMarkedCells(document, plotsTicked, marked, sheetsWanted);
                         break;
                 }
             }
@@ -357,8 +352,7 @@ namespace RcrcGreen.Revit
             Document document,
             IReadOnlyList<string> plotsTicked,
             IReadOnlyList<PlotViewKey> marked,
-            IReadOnlyList<SheetRequest> sheetsWanted,
-            long sheetToCopy)
+            IReadOnlyList<SheetOrder> sheetsWanted)
         {
             // Read again rather than trusting the panel's snapshot. It is as old as the last
             // refresh, and creating a view that somebody else added in the meantime is how a
@@ -368,10 +362,6 @@ namespace RcrcGreen.Revit
             Dictionary<ViewType, RcrcGreen.Core.ScheduleDefinition> definitions =
                 ScheduleCapture.ByType(document);
 
-            SheetDefinition layout = sheetToCopy == 0
-                ? null
-                : SheetCapture.Of(document, new ElementId(sheetToCopy));
-
             RunPlan plan = RunPlan.Of(
                 marked,
                 plotsTicked,
@@ -379,13 +369,12 @@ namespace RcrcGreen.Revit
                 now.ScheduleTypes,
                 now.SectionTypes,
                 definitions.Keys,
-                sheetsWanted,
-                layout != null && layout.CanBeUsed);
+                sheetsWanted);
 
             bool applied = false;
             RunOutcome outcome = RunOutcome.NothingWasWritten();
 
-            if (!plan.MakesNothing && Confirmed(plan, layout))
+            if (!plan.MakesNothing && Confirmed(plan, sheetsWanted))
             {
                 var boxIdByName = new Dictionary<string, ElementId>(StringComparer.Ordinal);
                 foreach (Element box in new FilteredElementCollector(document)
@@ -398,7 +387,7 @@ namespace RcrcGreen.Revit
                 using (var making = new Transaction(document, "Create drawing sheet views"))
                 {
                     making.Start();
-                    ModelWriter.Make(document, plan, outcome, definitions, boxIdByName, layout);
+                    ModelWriter.Make(document, plan, outcome, definitions, boxIdByName);
                     making.Commit();
                 }
 
@@ -435,7 +424,7 @@ namespace RcrcGreen.Revit
             Told?.Invoke(said + " Press Refresh to see them. " + where);
         }
 
-        private static bool Confirmed(RunPlan plan, SheetDefinition layout)
+        private static bool Confirmed(RunPlan plan, IReadOnlyList<SheetOrder> sheetsWanted)
         {
             string how = "A plan view is created fresh and carries no annotation. Its family "
                 + "type, level and view template come from a view of the same type on another "
@@ -443,10 +432,12 @@ namespace RcrcGreen.Revit
                 + "way. A schedule is captured from a plot that already has it and rebuilt with "
                 + "only the plot filter changed. The whole run is one undo.";
 
-            if (plan.CountOf(RunItemKind.Sheet) > 0 && layout != null)
+            // Every sheet says what it will carry before anything is pressed, including the ones
+            // that will come out empty, because an empty sheet is a real thing to ask for and a
+            // surprising thing to be given.
+            foreach (SheetOrder order in sheetsWanted ?? new List<SheetOrder>())
             {
-                how += Environment.NewLine + Environment.NewLine + "Each sheet copies "
-                    + layout.InWords();
+                how += Environment.NewLine + Environment.NewLine + order.Definition.InWords();
             }
 
             var asking = new TaskDialog("RCRC Green, Drawing Sheet")

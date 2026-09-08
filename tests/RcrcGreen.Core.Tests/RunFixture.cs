@@ -28,8 +28,7 @@ namespace RcrcGreen.Core.Tests
                 scheduleTypes,
                 null,
                 capturableScheduleTypes,
-                null,
-                false);
+                null);
         }
 
         public static RunPlan WithSections(
@@ -39,16 +38,58 @@ namespace RcrcGreen.Core.Tests
             IEnumerable<ViewType> sectionTypes)
         {
             return RunPlan.Of(
-                marked, ticked, plotsWithAScopeBox, null, sectionTypes, null, null, false);
+                marked, ticked, plotsWithAScopeBox, null, sectionTypes, null, null);
         }
 
         public static RunPlan WithSheets(
             IEnumerable<string> ticked,
-            IEnumerable<SheetRequest> sheetsWanted,
-            bool haveASheetDefinition)
+            params SheetOrder[] sheetsWanted)
         {
-            return RunPlan.Of(
-                null, ticked, null, null, null, null, sheetsWanted, haveASheetDefinition);
+            return RunPlan.Of(null, ticked, null, null, null, null, sheetsWanted);
+        }
+
+        /// <summary>
+        /// A sheet the user described, with a number for every plot named. Pass an empty string
+        /// for a plot that has no number typed in.
+        /// </summary>
+        public static SheetOrder Sheet(
+            string sheetName, IEnumerable<ViewType> views, int perSheet,
+            params string[] plotAndNumber)
+        {
+            var numbers = new List<SheetRequest>();
+            for (int at = 0; at + 1 < plotAndNumber.Length; at += 2)
+            {
+                numbers.Add(new SheetRequest(plotAndNumber[at], plotAndNumber[at + 1]));
+            }
+
+            return new SheetOrder(
+                new SheetDefinition("AR-PRX-Title_Block_A1", "GA-DETAILED DESIGN", sheetName,
+                    views, perSheet),
+                numbers);
+        }
+
+        public static SheetOrder SheetMissingAName(params string[] plotAndNumber)
+        {
+            var numbers = new List<SheetRequest>();
+            for (int at = 0; at + 1 < plotAndNumber.Length; at += 2)
+            {
+                numbers.Add(new SheetRequest(plotAndNumber[at], plotAndNumber[at + 1]));
+            }
+
+            return new SheetOrder(
+                new SheetDefinition("AR-PRX-Title_Block_A1", "GA-DETAILED DESIGN", string.Empty,
+                    null, 1),
+                numbers);
+        }
+
+        /// <summary>
+        /// One made sheet, named the way the run would name it.
+        /// </summary>
+        public static RunItem SheetItem(string plotId, string number, string name)
+        {
+            return RunItem.ForSheet(
+                new SheetRequest(plotId, number),
+                new SheetDefinition("AR-PRX-Title_Block_A1", "GA-DETAILED DESIGN", name, null, 1));
         }
 
         public static RunOutcome Outcome(

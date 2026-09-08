@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drawing Sheet step 4, pull request 23</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+
+  .light .strip  { background: #ececec; }
+  .dark  .strip  { background: #262626; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .card   { background: #e4e4e4; border: 1px solid #c8c8c8; }
+  .dark  .card   { background: #3a3a3a; border: 1px solid #4a4a4a; }
+  .light .primary { background: #1f5c2e; color: #ffffff; }
+  .dark  .primary { background: #6eb083; color: #1a1a1a; }
+  .light .statusbar { background: #ececec; border-top: 1px solid #c8c8c8; }
+  .dark  .statusbar { background: #262626; border-top: 1px solid #4a4a4a; }
+
+  .strip { padding: 6px 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .strip .name { font-weight: bold; }
+  .body { padding: 8px; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .head.off { opacity: 0.55; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .statusbar { padding: 6px 8px; }
+  .step { margin-bottom: 4px; }
+  .card { padding: 6px 6px 8px 10px; margin: 3px 0; }
+  .cardtop { display: flex; justify-content: space-between; align-items: center;
+             font-weight: bold; margin-bottom: 4px; }
+
+  .row { display: flex; align-items: center; margin: 3px 0; }
+  .row .cap { width: 150px; flex: none; }
+  .combo, .text { flex: 1; background: #fdfdfd; color: #1a1a1a;
+                  border: 1px solid #adadad; padding: 2px 4px; }
+  .combo::after { content: " \25BC"; float: right; color: #666; }
+  .btn { display: inline-block; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+         padding: 2px 6px; margin: 0 6px 0 0; }
+  .primary { display: block; border: 0; padding: 5px 8px; margin: 3px 0;
+             text-align: center; font-weight: bold; }
+  .scroll { max-height: 120px; overflow-y: auto; border: 1px solid transparent; }
+  .kind { color: #808080; }
+  .dark .kind { color: #aaaaaa; }
+
+  table.grid { border-collapse: collapse; width: 100%; }
+  table.grid td, table.grid th { padding: 2px 6px; text-align: left; font-weight: normal;
+                                 vertical-align: middle; }
+  table.grid th { font-weight: bold; }
+  table.grid td.numbercell { width: 150px; }
+</style>
+</head>
+<body>
+
+<h1>Drawing Sheet, step 4 rebuilt</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show how Revit's theme
+  paints a docked pane, what WPF's own chrome does to an editable ComboBox or a RadioButton,
+  whether a card inside a step reads as one thing or as a box inside a box, how two scrolling
+  lists one above the other behave under a real mouse, or what the real fonts and spacing come
+  out as.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on it.
+  If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>What changed</h2>
+
+<p class="caption">Step 4 used to hold one dropdown of sheets already in the model, to copy, and
+a table of a number and a name per plot. The first sheet it made came out empty, because the
+sheet picked to copy had no views on it. A sheet is described here now. The type, the name, the
+views and how many go per sheet are shared, the number is per plot, and more than one sheet can
+be described so one run gives a plot its list of drawings and its layout together.</p>
+
+<h2>The five steps, shut</h2>
+
+<p class="caption">Step 4 counts what is described and what that comes to. Two sheets over two
+plots with a number each is four.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme.</p>
+<div class="panel light">
+  <div class="strip">
+    <div>
+      <div class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">2,430 views read at 13:07:12</div>
+    </div>
+    <div><span class="btn">Refresh</span><span class="btn">Scan Model</span></div>
+  </div>
+  <div class="body">
+    <div class="step"><div class="head"><span class="sign">+</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;DM-11 to DM-28, 2 of 17 ticked</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>2&nbsp;&nbsp;VIEW TYPES&nbsp;&nbsp;&nbsp;3 of 84 ticked</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;2 marked</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;2 sheets, 4 to make</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;1 plan view, 1 section and 4 sheets</div></div>
+  </div>
+  <div class="statusbar">2,430 views read at 13:07:12. 160 plots, 1,204 found through
+  PRX_Plot_ID, 910 through the name, 316 with no plot at all.</div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme.</p>
+<div class="panel dark">
+  <div class="strip">
+    <div>
+      <div class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">2,430 views read at 13:07:12</div>
+    </div>
+    <div><span class="btn">Refresh</span><span class="btn">Scan Model</span></div>
+  </div>
+  <div class="body">
+    <div class="step"><div class="head"><span class="sign">+</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;DM-11 to DM-28, 2 of 17 ticked</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>2&nbsp;&nbsp;VIEW TYPES&nbsp;&nbsp;&nbsp;3 of 84 ticked</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;2 marked</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;2 sheets, 4 to make</div></div>
+    <div class="step"><div class="head"><span class="sign">+</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;1 plan view, 1 section and 4 sheets</div></div>
+  </div>
+  <div class="statusbar">2,430 views read at 13:07:12. 160 plots, 1,204 found through
+  PRX_Plot_ID, 910 through the name, 316 with no plot at all.</div>
+</div>
+</div>
+
+</div>
+
+<h2>Step 4 open, nothing described yet</h2>
+
+<p class="caption">The step opens on a line saying what it is for and one button. A model
+holding no title block type never reaches this, because the step is greyed out with that as its
+reason.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme.</p>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;none added</div>
+      <div class="inside">
+        <div class="faint">No sheet added yet. A sheet is described once here and made for every
+        ticked plot that has a number typed in.</div>
+        <span class="btn">Add a sheet</span>
+        <span class="btn">Next: 5&nbsp;&nbsp;RUN</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme, and the step before a range is picked.</p>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;none added</div>
+      <div class="inside">
+        <div class="faint">No sheet added yet. A sheet is described once here and made for every
+        ticked plot that has a number typed in.</div>
+        <span class="btn">Add a sheet</span>
+        <span class="btn">Next: 5&nbsp;&nbsp;RUN</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="head off"><span class="sign">+</span>4&nbsp;&nbsp;SHEETS</div>
+      <div class="inside faint">Pick a plot range and tick at least one plot first.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>Step 4 open, two sheets described</h2>
+
+<p class="caption">Each sheet is a card. Type and Name are shared, so they are at the top. The
+tick list offers the view types ticked in step 2 and nothing else. Under it, in the faint line,
+is what the sheet comes to in words, which is where a view ticked but too far down the list to
+fit is named. The number table is last, one row per ticked plot, because it is the only part
+that differs between them.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme. Sheet 1 finished.</p>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;2 sheets, 4 to make</div>
+      <div class="inside">
+
+        <div class="card">
+          <div class="cardtop"><span>Sheet 1</span><span class="btn">Remove</span></div>
+          <div class="row"><span class="cap">Type</span><span class="combo">AR-PRX-Title_Block_A1&nbsp;&nbsp;&nbsp;GA-DETAILED DESIGN</span></div>
+          <div class="row"><span class="cap">Name</span><span class="combo">GENERAL ARRANGEMENT LAYOUT</span></div>
+          <div class="row"><span class="cap">Views per sheet</span>
+            <span><input type="radio" checked disabled> 1</span>
+            <span>&nbsp;&nbsp;<input type="radio" disabled> 2</span>
+            <span>&nbsp;&nbsp;<input type="radio" disabled> 4</span>
+          </div>
+          <div class="faint">Tick the views that go on it, from the types ticked in step 2.</div>
+          <div class="scroll">
+            <div><input type="checkbox" checked disabled> (200) General Arrangement Layout<span class="kind">&nbsp;&nbsp;&nbsp;plan</span></div>
+            <div><input type="checkbox" disabled> (400) Landscape Cross Section<span class="kind">&nbsp;&nbsp;&nbsp;section</span></div>
+            <div><input type="checkbox" disabled> (600) HARDSCAPE SCHEDULE<span class="kind">&nbsp;&nbsp;&nbsp;schedule</span></div>
+          </div>
+          <div class="faint">GENERAL ARRANGEMENT LAYOUT on AR-PRX-Title_Block_A1 GA-DETAILED
+          DESIGN, 1 view per sheet: (200) General Arrangement Layout.</div>
+          <div class="scroll">
+            <table class="grid">
+              <tr><th>Plot</th><th>Sheet number</th></tr>
+              <tr><td>DM-11</td><td class="numbercell"><span class="combo">L-211</span></td></tr>
+              <tr><td>DM-12</td><td class="numbercell"><span class="combo">L-212</span></td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardtop"><span>Sheet 2</span><span class="btn">Remove</span></div>
+          <div class="row"><span class="cap">Type</span><span class="combo">AR-PRX-Title_Block_A1&nbsp;&nbsp;&nbsp;SCHEDULES</span></div>
+          <div class="row"><span class="cap">Name</span><span class="combo">SCHEDULES</span></div>
+          <div class="row"><span class="cap">Views per sheet</span>
+            <span><input type="radio" disabled> 1</span>
+            <span>&nbsp;&nbsp;<input type="radio" checked disabled> 2</span>
+            <span>&nbsp;&nbsp;<input type="radio" disabled> 4</span>
+          </div>
+          <div class="faint">Tick the views that go on it, from the types ticked in step 2.</div>
+          <div class="scroll">
+            <div><input type="checkbox" disabled> (200) General Arrangement Layout<span class="kind">&nbsp;&nbsp;&nbsp;plan</span></div>
+            <div><input type="checkbox" checked disabled> (400) Landscape Cross Section<span class="kind">&nbsp;&nbsp;&nbsp;section</span></div>
+            <div><input type="checkbox" checked disabled> (600) HARDSCAPE SCHEDULE<span class="kind">&nbsp;&nbsp;&nbsp;schedule</span></div>
+          </div>
+          <div class="faint">SCHEDULES on AR-PRX-Title_Block_A1 SCHEDULES, 2 views per sheet:
+          (400) Landscape Cross Section, (600) HARDSCAPE SCHEDULE.</div>
+          <div class="scroll">
+            <table class="grid">
+              <tr><th>Plot</th><th>Sheet number</th></tr>
+              <tr><td>DM-11</td><td class="numbercell"><span class="combo">L-291</span></td></tr>
+              <tr><td>DM-12</td><td class="numbercell"><span class="combo">L-292</span></td></tr>
+            </table>
+          </div>
+        </div>
+
+        <span class="btn">Add a sheet</span>
+        <span class="btn">Next: 5&nbsp;&nbsp;RUN</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme. One card, with three things it will say rather than refuse.</p>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 sheet, 1 to make</div>
+      <div class="inside">
+
+        <div class="card">
+          <div class="cardtop"><span>Sheet 1</span><span class="btn">Remove</span></div>
+          <div class="row"><span class="cap">Type</span><span class="combo">AR-PRX-Title_Block_A1&nbsp;&nbsp;&nbsp;KEYPLAN</span></div>
+          <div class="row"><span class="cap">Name</span><span class="combo">LIST OF DRAWINGS</span></div>
+          <div class="row"><span class="cap">Views per sheet</span>
+            <span><input type="radio" disabled> 1</span>
+            <span>&nbsp;&nbsp;<input type="radio" checked disabled> 2</span>
+            <span>&nbsp;&nbsp;<input type="radio" disabled> 4</span>
+          </div>
+          <div class="faint">Tick the views that go on it, from the types ticked in step 2.</div>
+          <div class="scroll">
+            <div><input type="checkbox" checked disabled> (200) General Arrangement Layout<span class="kind">&nbsp;&nbsp;&nbsp;plan</span></div>
+            <div><input type="checkbox" checked disabled> (400) Landscape Cross Section<span class="kind">&nbsp;&nbsp;&nbsp;section</span></div>
+            <div><input type="checkbox" checked disabled> (600) HARDSCAPE SCHEDULE<span class="kind">&nbsp;&nbsp;&nbsp;schedule</span></div>
+          </div>
+          <div class="faint">LIST OF DRAWINGS on AR-PRX-Title_Block_A1 KEYPLAN, 2 views per
+          sheet: (200) General Arrangement Layout, (400) Landscape Cross Section. 1 more ticked
+          than fit, left off: (600) HARDSCAPE SCHEDULE.</div>
+          <div class="scroll">
+            <table class="grid">
+              <tr><th>Plot</th><th>Sheet number</th></tr>
+              <tr><td>DM-11</td><td class="numbercell"><span class="combo">L-201</span></td></tr>
+              <tr><td>DM-12</td><td class="numbercell"><span class="combo"></span></td></tr>
+            </table>
+          </div>
+        </div>
+
+        <span class="btn">Add a sheet</span>
+        <span class="btn">Next: 5&nbsp;&nbsp;RUN</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="caption">Three of them. A view ticked past what fits is named as left off rather than
+dropped. DM-12 has no number, so it gets no sheet from this one and the report says which plot
+and which sheet. A card with nothing ticked reads <em>with no views ticked, so every sheet it
+makes will be empty</em>, which is a real thing to ask for and is said before the run rather
+than found afterwards.</p>
+</div>
+
+</div>
+
+<h2>Step 5, with the sheets counted in</h2>
+
+<p class="caption">The run line counts sheets apart from views and reads the whole thing as a
+list. Sheets come after the views inside the one transaction, so a sheet can carry a view the
+same run only just created.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme.</p>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;1 plan view, 1 section and 4 sheets</div>
+      <div class="inside">
+        <div>This run would make 1 plan view, 1 section and 4 sheets. Only marked cells on ticked
+        plots are made, and nothing is copied from another plot. A sheet is made only for a plot
+        with a sheet number typed in.</div>
+        <div style="font-weight:bold;margin:6px 0 3px">SCOPE BOXES</div>
+        <div class="faint">28 views across 2 ticked plots. Only C is written.</div>
+        <div class="faint">The six case buttons under this line are unchanged by this round and
+        are drawn in <code>design/pr-20/panel.html</code>.</div>
+        <span class="btn">Assign Scope Boxes</span>
+        <div class="primary">Run</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme, with every sheet unfinished.</p>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head off"><span class="sign">+</span>5&nbsp;&nbsp;RUN</div>
+      <div class="inside faint">Every sheet in step 4 is missing a type or a name, so none can be
+      made. Mark a cell in step 3 or finish one off.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>Where the views sit</h2>
+
+<p class="caption">Worked out in <code>SheetLayout.For</code> in Core from the title block's own
+width and height, not read off a sheet somebody laid out. One is centred, two sit side by side,
+four make a two by two grid, and the margin round the outside is the same measurement as the gap
+down the middle. Reading order, left to right then top to bottom, so views go on in the order
+they were ticked. Revit counts Y up from the bottom, so the first spot back is the top left one.
+The rectangles below are drawn to those proportions on a sheet of 841 by 594.</p>
+
+<div class="pair">
+<div>
+<p class="caption">1 view per sheet.</p>
+<svg width="280" height="198" viewBox="0 0 841 594">
+  <rect x="0" y="0" width="841" height="594" fill="#fff" stroke="#999"></rect>
+  <rect x="210.25" y="148.5" width="420.5" height="297" fill="#e4e4e4" stroke="#1f5c2e"></rect>
+  <text x="420.5" y="305" text-anchor="middle" font-size="34" fill="#1a1a1a">1</text>
+</svg>
+</div>
+<div>
+<p class="caption">2 views per sheet.</p>
+<svg width="280" height="198" viewBox="0 0 841 594">
+  <rect x="0" y="0" width="841" height="594" fill="#fff" stroke="#999"></rect>
+  <rect x="105.125" y="148.5" width="210.25" height="297" fill="#e4e4e4" stroke="#1f5c2e"></rect>
+  <rect x="525.625" y="148.5" width="210.25" height="297" fill="#e4e4e4" stroke="#1f5c2e"></rect>
+  <text x="210.25" y="305" text-anchor="middle" font-size="34" fill="#1a1a1a">1</text>
+  <text x="630.75" y="305" text-anchor="middle" font-size="34" fill="#1a1a1a">2</text>
+</svg>
+</div>
+<div>
+<p class="caption">4 views per sheet.</p>
+<svg width="280" height="198" viewBox="0 0 841 594">
+  <rect x="0" y="0" width="841" height="594" fill="#fff" stroke="#999"></rect>
+  <rect x="105.125" y="74.25" width="210.25" height="148.5" fill="#e4e4e4" stroke="#1f5c2e"></rect>
+  <rect x="525.625" y="74.25" width="210.25" height="148.5" fill="#e4e4e4" stroke="#1f5c2e"></rect>
+  <rect x="105.125" y="371.25" width="210.25" height="148.5" fill="#e4e4e4" stroke="#1f5c2e"></rect>
+  <rect x="525.625" y="371.25" width="210.25" height="148.5" fill="#e4e4e4" stroke="#1f5c2e"></rect>
+  <text x="210.25" y="160" text-anchor="middle" font-size="34" fill="#1a1a1a">1</text>
+  <text x="630.75" y="160" text-anchor="middle" font-size="34" fill="#1a1a1a">2</text>
+  <text x="210.25" y="457" text-anchor="middle" font-size="34" fill="#1a1a1a">3</text>
+  <text x="630.75" y="457" text-anchor="middle" font-size="34" fill="#1a1a1a">4</text>
+</svg>
+</div>
+</div>
+
+<p class="caption">The rectangle is the space a viewport is given, not the viewport. How big a
+view actually draws is its own scale and its own crop, and nothing here sets either. This
+picture shows where the centre lands and nothing more.</p>
+
+</body>
+</html>

@@ -8,9 +8,8 @@ Read `.claude/skills/ai-max/SKILL.md` before doing any work in this repo. It set
 order, the writing rules and the reporting rules that everything here follows. The current phase
 is in `steps/ai-max-state.md`.
 
-Done means: for a model of plots, the tool lists every plot, shows which of the known view
-types each one is missing, and creates those views with correct names and, for cross sections,
-a cut through the middle of the plot.
+Done means: the tool lists every plot in a model, shows which known view types each is missing,
+and creates them with correct names and, for a cross section, a cut across the middle of a plot.
 
 ## Running it
 
@@ -49,8 +48,7 @@ The whole suite. It is what the pull request gate runs and nothing in it needs R
   numbers and plot identifiers. `reports/README.md` is the only file in it that is tracked
 
 A command is split the same way. The Revit project reads the document into plain strings and
-numbers, and Core decides and formats. That is why every report layout, count and rule has a
-test and none needs Revit.
+numbers, and Core decides and formats, so every report layout, count and rule has a test.
 
 ## The rule that keeps the tests possible
 
@@ -59,8 +57,7 @@ reference, no type from it in a signature. The moment Core touches the API, the 
 cannot load and the gate stops protecting anything.
 
 Anything that reads a `Document`, a `View`, an `Element` or a `BoundingBoxXYZ` belongs in
-`RcrcGreen.Revit`. Pull the plain values out there, hand them to Core, and put what comes back
-into the model.
+`RcrcGreen.Revit`. Pull the plain values out there and put what Core hands back into the model.
 
 ## Project facts
 
@@ -96,8 +93,10 @@ NO scope box while every plan view has one. A section takes its depth from its s
 left without a box, and the 10 metres in `SectionDefaults` is now only the fallback.
 
 A new view is CREATED FRESH, never copied from another plot, and carries no annotation,
-dimensions, tags or detailing. The user types every sheet number and sheet name and the tool
-invents neither.
+dimensions, tags or detailing. A SHEET IS DESCRIBED rather than copied. The title block type,
+the sheet name, the view types and whether 1, 2 or 4 views go on it are shared across the ticked
+plots, and the sheet number is the only thing per plot. The user types every number and every
+name and the tool invents neither.
 
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 
@@ -132,9 +131,8 @@ hooks read the command rather than the index, through `commit-scope.py`.
 - `block-paths.sh` refuses any write that resolves outside this repo
 - `require-file-on-commit.sh` refuses a commit not carrying `steps/ai-max-state.md`
 - `writing-check.sh` refuses a commit whose message or files hold an em dash, a generated-by
-  footer, a co-author credit line, an emoji, or a word from
-  `.claude/skills/ai-max/references/writing-rules.md`. It skips `.claude/skills/`, where that
-  list is data, and keeps the word landscape, the discipline here
+  footer, a co-author credit line, an emoji, or a banned word. The list is in
+  `.claude/skills/ai-max/references/writing-rules.md`, which it skips, and landscape is kept
 
 A hook script that cannot be found blocks.
 
@@ -150,8 +148,7 @@ read as a file that does not exist. It went through unchecked and reported succe
 
 **An assumption held for five rounds because nobody ran the thing.** The naming pattern came
 from four examples, the read was assumed to need a progress window, and PRX_Plot_ID was assumed
-to be on elements only. One run corrected all three, and a later one corrected the section
-depth from 10 metres to 12.83. Prefer measured numbers to reasoning.
+to be on elements only. One run corrected all three. Prefer measured numbers to reasoning.
 
 **Code that is there is not code you can see.** The panel shipped with every heading and label
 written and none visible. A dockable pane on the dark theme is black, WPF defaults text to
@@ -162,10 +159,9 @@ a view's plot from PRX_Plot_ID and its type from the name without checking they 
 view named for DM-12 carrying PRX_Plot_ID DM-11 filled a DM-11 cell that stayed full after every
 DM-11 view was deleted. Then the column count against its list. Then the run report, which made
 nothing and named the same four views under PLAN VIEWS and under NOT CREATED. Then a panel step
-that read the range off its arguments rather than off whether step 1 was usable. Then one method
-that filled both the view type code buttons and the Add row's dropdown, whose buttons were moved
-inline when the panel was rebuilt and whose dropdown fill was left behind, so no view type could
-be added at all while the same codes sat as buttons above the empty list.
+reading the range off its arguments rather than off whether step 1 was usable. Then one method
+filling both the code buttons and the Add row's dropdown, split when the panel was rebuilt into
+steps and half of it kept, so no view type could be added while the codes sat as buttons above.
 
 **A skip with nothing written down is a lie by omission.** `ModelWriter` dropped a schedule
 field it could not resolve, and a filter, both with a bare `continue`. A schedule short of a
@@ -180,6 +176,10 @@ report said it was gone. The delete is checked now and the report names what has
 Properties panel showed a type named exactly that. The next plot's is `(010) Key Location Plan`
 against a view called Location Key Plan, which cost three of the four refusals in the first
 write and was invisible in a scan report that listed only templates.
+
+**Copying takes whatever state the thing is in, including nothing.** The first sheet the tool
+made was empty. It was built by copying one the user picked, and that one had no views on it.
+Nothing failed and nothing was reported. A sheet is described now, so what goes on it is stated.
 
 **A setting nobody recorded cannot be argued about.** A created view came out with a template
 that looked right and a family type that looked wrong. The code read both off one view four

@@ -34,7 +34,7 @@ namespace RcrcGreen.Core.Tests
                 new RunItem("DM-11", General, RunItemKind.PlanView),
                 new RunItem("DM-12", General, RunItemKind.PlanView),
                 new RunItem("DM-11", Hardscape, RunItemKind.Schedule),
-                RunItem.ForSheet(new SheetRequest("DM-11", "L-201", "Layout"))
+                RunFixture.SheetItem("DM-11", "L-201", "Layout")
             });
 
             Assert.Equal(2, outcome.CreatedOfKind(RunItemKind.PlanView).Count);
@@ -109,11 +109,12 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void ASheetNamedByTheUserIsFoundOnBothSidesToo()
         {
-            var wanted = new SheetRequest("DM-11", "L-201", "General Arrangement");
-
             RunOutcome outcome = RunFixture.Outcome(
-                made: new[] { RunItem.ForSheet(wanted) },
-                leftBehind: new[] { RunRefusal.ForSheet(wanted, "Something went wrong.") });
+                made: new[] { RunFixture.SheetItem("DM-11", "L-201", "General Arrangement") },
+                leftBehind: new[]
+                {
+                    RunRefusal.ForSheet("DM-11", "L-201", "General Arrangement", "Something went wrong.")
+                });
 
             Assert.Equal(new[] { "L-201 General Arrangement" }, outcome.BothWays.ToArray());
         }
@@ -140,7 +141,10 @@ namespace RcrcGreen.Core.Tests
                 () => new RunItem("DM-11", General, RunItemKind.Sheet));
 
             Assert.Throws<ArgumentException>(
-                () => RunItem.ForSheet(new SheetRequest("DM-11", "L-201", string.Empty)));
+                () => RunFixture.SheetItem("DM-11", string.Empty, "Layout"));
+
+            Assert.Throws<ArgumentException>(
+                () => RunFixture.SheetItem("DM-11", "L-201", string.Empty));
         }
     }
 }

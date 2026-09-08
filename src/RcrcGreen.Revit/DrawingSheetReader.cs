@@ -99,13 +99,26 @@ namespace RcrcGreen.Revit
                 scopeBoxNames.Add(box.Name);
             }
 
-            var sheets = new List<SheetInTheModel>();
+            var sheetNames = new List<string>();
+            var sheetNumbers = new List<string>();
             foreach (ViewSheet sheet in new FilteredElementCollector(document)
                 .OfClass(typeof(ViewSheet))
                 .Cast<ViewSheet>()
                 .Where(sheet => !sheet.IsTemplate))
             {
-                sheets.Add(new SheetInTheModel(sheet.Id.Value, sheet.SheetNumber, sheet.Name));
+                sheetNames.Add(sheet.Name);
+                sheetNumbers.Add(sheet.SheetNumber);
+            }
+
+            // Types rather than instances. A model can hold a title block type no sheet uses
+            // yet, and that is exactly the one somebody is about to start using.
+            var titleBlocks = new List<TitleBlockType>();
+            foreach (FamilySymbol symbol in new FilteredElementCollector(document)
+                .OfCategory(BuiltInCategory.OST_TitleBlocks)
+                .OfClass(typeof(FamilySymbol))
+                .Cast<FamilySymbol>())
+            {
+                titleBlocks.Add(new TitleBlockType(symbol.FamilyName ?? string.Empty, symbol.Name));
             }
 
             return new DrawingSheetSnapshot(
@@ -118,7 +131,9 @@ namespace RcrcGreen.Revit
                 sectionTypes,
                 scopeBoxNames,
                 states,
-                sheets,
+                titleBlocks,
+                sheetNames,
+                sheetNumbers,
                 viewsRead,
                 fromParameter,
                 fromViewName,

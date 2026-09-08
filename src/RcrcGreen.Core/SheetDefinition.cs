@@ -5,87 +5,43 @@ using System.Linq;
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// One view on a sheet: which view type it is, and where the middle of it sits.
+    /// One sheet the user described, repeated across every ticked plot.
     ///
-    /// The position is measured from the sheet origin in feet, because that is the unit Revit
-    /// holds a sheet in and converting it here would mean converting it back to place it.
-    /// </summary>
-    public sealed class SheetViewPlacement
-    {
-        public SheetViewPlacement(ViewType type, double centreX, double centreY, bool isASchedule)
-        {
-            if (type == null) throw new ArgumentNullException("type");
-            if (double.IsNaN(centreX) || double.IsInfinity(centreX)
-                || double.IsNaN(centreY) || double.IsInfinity(centreY))
-            {
-                throw new ArgumentException("That viewport centre is not a real position.");
-            }
-
-            Type = type;
-            CentreX = centreX;
-            CentreY = centreY;
-            IsASchedule = isASchedule;
-        }
-
-        public ViewType Type { get; }
-
-        public double CentreX { get; }
-
-        public double CentreY { get; }
-
-        /// <summary>
-        /// A schedule on a sheet is a different element from a drawing on a sheet and is placed
-        /// by a different call, so the two are told apart when the definition is captured
-        /// rather than guessed at when it is used.
-        /// </summary>
-        public bool IsASchedule { get; }
-
-        public override string ToString()
-        {
-            return Type + " at " + CentreX.ToString("0.###") + " " + CentreY.ToString("0.###");
-        }
-    }
-
-    /// <summary>
-    /// A sheet the user set up by hand, read into plain values so another one can be built like
-    /// it.
+    /// It used to be read off a sheet that already existed. The user picked one with no views
+    /// on it and got an empty sheet, and copying an existing layout was not how they wanted to
+    /// work anyway. So it is filled from four choices instead: which title block type, what the
+    /// sheet is called, which of the ticked view types go on it, and how many per sheet.
     ///
-    /// The team answered the three questions that stopped sheet creation before. The title
-    /// block is whichever one the source sheet carries, a view sits where it sits on the source
-    /// sheet, and several views lay out however the source sheet has them. So none of it is
-    /// decided here. All of it is copied from a sheet somebody already got right.
+    /// The sheet number is not in here. It is typed per plot, because it is the one thing that
+    /// differs between the sheets this definition makes, and the tool invents neither it nor
+    /// the name.
     ///
-    /// Same shape as <see cref="ScheduleDefinition"/> and for the same reason. Capture fills one
-    /// in from a sheet that exists, create builds one in the model, and neither half knows about
-    /// the other.
+    /// A run can carry several of these, so one press can give a plot its LIST OF DRAWINGS and
+    /// its GENERAL ARRANGEMENT LAYOUT together.
     /// </summary>
     public sealed class SheetDefinition
     {
         public SheetDefinition(
             string titleBlockFamilyName,
             string titleBlockTypeName,
-            double sheetWidth,
-            double sheetHeight,
-            IEnumerable<SheetViewPlacement> views)
+            string sheetName,
+            IEnumerable<ViewType> views,
+            int viewsPerSheet)
         {
             if (titleBlockFamilyName == null) throw new ArgumentNullException("titleBlockFamilyName");
             if (titleBlockTypeName == null) throw new ArgumentNullException("titleBlockTypeName");
 
             TitleBlockFamilyName = titleBlockFamilyName;
             TitleBlockTypeName = titleBlockTypeName;
-            SheetWidth = sheetWidth;
-            SheetHeight = sheetHeight;
+            SheetName = (sheetName ?? string.Empty).Trim();
 
-            // One placement per view type. A source sheet holding the same view type twice
-            // gives no way to tell which position the new one should take, so the first is
-            // kept and the second is dropped rather than the pair being placed on top of
-            // each other.
-            Views = (views ?? Enumerable.Empty<SheetViewPlacement>())
+            Views = (views ?? Enumerable.Empty<ViewType>())
                 .Where(one => one != null)
-                .GroupBy(one => one.Type)
-                .Select(byType => byType.First())
-                .OrderBy(one => one.Type)
+                .Distinct()
+                .OrderBy(one => one)
                 .ToList();
+
+            ViewsPerSheet = SheetLayout.IsACount(viewsPerSheet) ? viewsPerSheet : 1;
         }
 
         public string TitleBlockFamilyName { get; }
@@ -93,54 +49,91 @@ namespace RcrcGreen.Core
         public string TitleBlockTypeName { get; }
 
         /// <summary>
-        /// The sheet size in feet, carried so a report can say what was copied. Nothing sets it
-        /// on a new sheet, because the title block is what decides the size.
+        /// Typed by the user, or picked off the list of names the model already uses. Never
+        /// invented, so a definition without one makes no sheet.
         /// </summary>
-        public double SheetWidth { get; }
+        public string SheetName { get; }
 
-        public double SheetHeight { get; }
+        /// <summary>
+        /// The view types that go on this sheet, for whichever plot it is made for. Ticked from
+        /// the types already ticked in step 2, so a sheet can only carry a view the run either
+        /// makes or finds.
+        /// </summary>
+        public IReadOnlyList<ViewType> Views { get; }
 
-        public IReadOnlyList<SheetViewPlacement> Views { get; }
+        public int ViewsPerSheet { get; }
 
-        public IReadOnlyList<ViewType> ViewTypes
+        public string TitleBlock
         {
-            get { return Views.Select(one => one.Type).ToList(); }
+            get { return (TitleBlockFamilyName + " " + TitleBlockTypeName).Trim(); }
         }
 
         /// <summary>
-        /// A sheet with no title block cannot be rebuilt, because the title block is the one
-        /// thing a new sheet is created with. A sheet with no views on it can be, and it makes
-        /// an empty sheet, which is a thing somebody might want.
+        /// A sheet is created with a title block and given a name. Without either there is
+        /// nothing to make, and neither is guessed.
         /// </summary>
         public bool CanBeUsed
         {
-            get { return TitleBlockFamilyName.Length > 0 && TitleBlockTypeName.Length > 0; }
-        }
-
-        public SheetViewPlacement PlacementFor(ViewType type)
-        {
-            if (type == null) return null;
-            return Views.FirstOrDefault(one => one.Type.Equals(type));
+            get { return TitleBlockTypeName.Length > 0 && SheetName.Length > 0; }
         }
 
         /// <summary>
-        /// What the panel and the report say about the captured sheet, so the user can see what
-        /// is about to be copied before pressing anything.
+        /// Empty when it can be used. Otherwise it names which choice is missing, because
+        /// "incomplete" sends somebody looking across four controls.
+        /// </summary>
+        public string WhatIsMissing
+        {
+            get
+            {
+                if (TitleBlockTypeName.Length == 0 && SheetName.Length == 0) return "a sheet type and a sheet name";
+                if (TitleBlockTypeName.Length == 0) return "a sheet type";
+                if (SheetName.Length == 0) return "a sheet name";
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// More views ticked than fit on one sheet. The run makes one sheet per definition, so
+        /// the ones past the count are left off and the report says which.
+        /// </summary>
+        public IReadOnlyList<ViewType> Placed
+        {
+            get { return Views.Take(ViewsPerSheet).ToList(); }
+        }
+
+        public IReadOnlyList<ViewType> LeftOff
+        {
+            get { return Views.Skip(ViewsPerSheet).ToList(); }
+        }
+
+        /// <summary>
+        /// What the panel and the confirmation say about this sheet before anything is made. An
+        /// empty sheet is a real thing to ask for, so it says so plainly rather than refusing.
         /// </summary>
         public string InWords()
         {
-            if (!CanBeUsed) return "That sheet carries no title block, so nothing can be copied from it.";
+            if (!CanBeUsed) return "This sheet is missing " + WhatIsMissing + ", so none is made.";
 
-            string block = TitleBlockFamilyName + " " + TitleBlockTypeName;
+            string what = SheetName + " on " + TitleBlock;
 
             if (Views.Count == 0)
             {
-                return "Title block " + block + ", no views on it. A new sheet would be empty.";
+                return what + ", with no views ticked, so every sheet it makes will be empty.";
             }
 
-            return "Title block " + block + ", " + Views.Count
-                + (Views.Count == 1 ? " view on it: " : " views on it: ")
-                + string.Join(", ", Views.Select(one => one.Type.ToString()).ToArray());
+            string carrying = what + ", " + ViewsPerSheet
+                + (ViewsPerSheet == 1 ? " view per sheet: " : " views per sheet: ")
+                + string.Join(", ", Placed.Select(one => one.ToString()).ToArray());
+
+            if (LeftOff.Count == 0) return carrying + ".";
+
+            return carrying + ". " + LeftOff.Count + " more ticked than fit, left off: "
+                + string.Join(", ", LeftOff.Select(one => one.ToString()).ToArray()) + ".";
+        }
+
+        public override string ToString()
+        {
+            return SheetName.Length == 0 ? "(unnamed sheet)" : SheetName;
         }
     }
 }

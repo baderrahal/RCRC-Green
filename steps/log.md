@@ -4,6 +4,102 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, sixteenth pass. Sheets, rebuilt
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 23, one commit, the second half of the
+round pull request 22 opened. This entry goes in with the work, so the merge and the runner
+count are written into it by the follow-up.
+
+### What was there, and the fault it hid
+
+Step 4 held a dropdown of the sheets the model already has and a table of a sheet number and a
+sheet name per plot. Run copied the sheet that was picked: its title block, its viewports and
+where each one sat. The one sheet this has ever made in a real model came out empty, because the
+sheet picked to copy had no views on it. Nothing threw, nothing was refused and the report said
+a sheet was created, which was true.
+
+That is the lesson worth keeping. **Copying takes whatever state the thing is in, including
+nothing.** A tool that reads its answer off an existing object inherits every gap in it and has
+no way to notice, because the gap is a legitimate value.
+
+It also asked for an order of work the team does not follow. One plot has to be laid out by hand
+first, and only then can the rest be made from it.
+
+### What replaces it
+
+`SheetCapture` is deleted. Leaving it in place would have left two ways to build one thing, and
+this repo has now been bitten five times by two records of one fact.
+
+A sheet is described. Four things are shared across every ticked plot: the title block type, the
+sheet name, the view types that go on it, and whether 1, 2 or 4 views go per sheet. One thing is
+per plot, the sheet number, because that is the only part that differs between the sheets one
+description makes.
+
+The title block types are read from the model. So are the two lists behind the name and the
+number, which are the names and numbers already in use, offered in editable dropdowns because a
+new sheet usually carries a number no sheet has yet. The list is an offer and never a
+restriction, and the tool still invents neither. A plot with no number gets no sheet and the
+report names the plot and the sheet.
+
+More than one sheet can be described, so one press gives a plot its LIST OF DRAWINGS and its
+GENERAL ARRANGEMENT LAYOUT together.
+
+### What moved into Core
+
+`SheetLayout.For` takes the title block's width and height and a count of 1, 2 or 4 and hands
+back the centre of each viewport in reading order. It divides the sheet evenly, so the margin
+outside is the same measurement as the gap between. Y counts up from the bottom in Revit, which
+is the only thing about it worth remembering, and it is why the first spot back is the top one.
+A title block reporting no size, or a NaN, is refused at the door rather than placing everything
+on the origin.
+
+Every expected number in `SheetLayoutTests` is written out by hand from an 800 by 600 sheet
+rather than worked out with the same division the code uses, and the margin test holds the four
+edges against the sheet edges rather than against each other.
+
+`SheetDefinition` now holds what the user chose rather than what a sheet already had.
+`SheetRequest` is one plot and one number, `SheetOrder` pairs a definition with the number every
+plot gets for it, and `TitleBlockType` is the family and type name pair the dropdown lists.
+`RunPlan.Of` takes the orders and turns each one into an item per ticked plot that has a number.
+
+`SheetBeingDescribed` is the one new type in the Revit project, and it is there because it is
+mutable and the panel owns it while somebody is still filling a sheet in. Step 4 is thrown away
+and built again on every change, so a control that has gone is not a place to keep the only copy
+of something typed. What it hands out is the immutable Core definition, narrowed to the view
+types still ticked in step 2, and the tick is remembered rather than dropped so re-ticking a
+type in step 2 puts it back on the sheet.
+
+### Three things it will not do
+
+A definition short of a type or a name is refused once rather than once per plot, because it is
+one thing to go and fix rather than seventeen.
+
+A view already sitting on another sheet is refused rather than moved.
+`Viewport.CanAddViewToSheet` is asked before every placement, so that comes back as a line in
+the report rather than as a throw that takes the transaction down.
+
+A definition with nothing ticked still makes a sheet, empty, which is a real thing to ask for.
+The card says so in words before anything runs, so nobody is surprised by an empty sheet twice.
+
+### What has not been run
+
+No sheet has ever been created by this route. The one sheet this tool has made was made by the
+copy route that is now deleted.
+
+No section and no schedule has ever been created by this tool at all. The section path, the
+schedule path, the far clip taken off a sibling, the refusal of a view already on a sheet, the
+placement of any viewport at any of the three counts, and the empty sheet case are all written
+and tested in Core and none has been through Revit.
+
+The mockup is at `design/pr-23/panel.html`, in both themes, drawn by hand from
+`DrawingSheetPanel.cs`. It is not a screenshot and says so at the top.
+
+Locally, after the last file was written, `dotnet build RcrcGreen.sln` came back with 0 warnings
+and 0 errors and `dotnet test` with 361 passed and 0 failed. The runner count goes in with the
+follow-up, because the runner is what the gate reads.
+
+---
+
 ## 2026-09-08, fifteenth pass. Four fixes off the first run that created anything
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request 22, one commit. This entry goes in with
