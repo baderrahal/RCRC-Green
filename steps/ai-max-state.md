@@ -1,6 +1,29 @@
 # ai-max state
 
-Phase: 9, ship. Twelfth pass, the first real write, and everything it found.
+Phase: 9, ship. Thirteenth pass, the interface rebuilt as five steps.
+
+The panel worked and read as a list of controls. It is five numbered steps now, in the order
+somebody does them, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step
+carries its own summary, so the whole state reads without opening anything. A step that cannot
+be used yet is greyed out with one line saying why.
+
+`PanelSteps` in Core holds every one of those summaries and every one of those reasons, with
+tests. None of it is formatted next to the control that shows it, which is the shape that
+produced the grid cell, the column count and the run report. Writing it caught a fourth case of
+the same thing: a step below the plots was usable whenever the range fields held a value, even
+on a panel that had read no model, because the range was read off the arguments rather than off
+whether step 1 was usable.
+
+The grid has a legend, a frozen Use and Plot column, and shading on every other row. A column
+header says plan, section or schedule in words rather than in italics. One primary button, Run.
+A strip at the top holds the model name, when it was read, Refresh and Scan Model. One status
+line, docked at the bottom. `PanelMetrics` holds every spacing and font size the way
+`PanelTheme` holds every colour, so the panel file names neither a number nor a brush.
+
+The scope box counts moved inside step 5, because they act on the same ticked plots the run
+does.
+
+Before that, the first real write, and everything it found.
 
 Four plan views were attempted in Revit and none was created. Seven faults came out of that one
 run and its reports, and all seven are fixed here. None of the fixes has been run.
@@ -193,7 +216,9 @@ the first round since the panel was built to change Core. Pull request 13 landed
 and the gate executed 248 tests against it. Pull request 15 landed the write path fixes as
 `792c203`, and the gate executed 257 tests against it. Pull request 17 landed the guarded
 delete, the reports folder and the openable scope box cases as `a18a2ae`, and the gate executed
-274 tests against it, 0 failed and 0 skipped.
+274 tests against it. Pull request 19 landed everything the first real write found, plus
+sections and sheets, as `8a68492`, and the gate executed 310 tests against it, 0 failed and
+0 skipped.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
@@ -236,10 +261,13 @@ wrong the first time Revit loads them. That goes for the three failure paths add
 sixth pass as well. None of them has been made to happen.
 
 **The write path has run once and created nothing.** Four plan views were attempted and all
-four were refused. That run is the source of everything in this round, and none of the fixes it
-produced has itself been run: not one view, section, schedule or sheet has ever been created by
-this tool. The section path and the sheet path have never executed at all. The newest
-`steps/log.md` entry lists what that leaves unchecked, item by item.
+four were refused. Every fix that run produced is written and none has been run: not one view,
+section, schedule or sheet has ever been created by this tool, and the section path and the
+sheet path have never executed at all.
+
+**The rebuilt panel has never been rendered.** Not one step header, not the frozen grid column,
+not the green Run button, on either theme. The newest `steps/log.md` entry lists what that
+leaves unchecked, item by item.
 
 The mockups under `design/` are hand drawn, not screenshots, and each says so at the top of the
 file. Every round that changes the panel writes one.

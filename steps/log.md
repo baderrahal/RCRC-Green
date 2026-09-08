@@ -4,10 +4,120 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, fourteenth pass. The interface rebuilt as five steps
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 20, one commit. This entry goes in with
+the work, so the merge and the runner count are written into it by the follow-up.
+
+This is item 9 of the round. Items 1 to 8 went in as pull request 19 and merged as `8a68492`.
+The split is written up in the entry below this one.
+
+### What was wrong with it
+
+The panel worked. It was a flat list of controls, top to bottom, and it read as a wall to
+anyone who had not built it. A production person opening it for the first time had no way to
+tell what to do first, what a control acted on, or why half of them did nothing yet.
+
+### Five steps
+
+`PLOTS`, `VIEW TYPES`, `MARK`, `SHEETS`, `RUN`, in the order somebody does them, one open at a
+time. Four rules hold it together and the first three are the ones that make it readable.
+
+**A shut step carries its own summary.** `1  PLOTS   DM-11 to DM-28, 17 of 17 ticked`, and
+`2  VIEW TYPES   4 of 84 ticked`. The whole state of the panel reads without opening anything.
+
+**A step that cannot be used yet is greyed out with one line saying why.** Step 3 with no view
+types ticked says to tick one in step 2 and that the grid has no columns until then. A disabled
+control with no reason next to it tells nobody anything, and there were several.
+
+**Every summary and every reason is Core, with tests.** `PanelSteps` holds all five steps, what
+each says shut, whether it is usable and why not. The panel draws them and formats none of them.
+
+**Nothing drags the user out of a step they are working in.** Picking a range opens step 2 by
+itself, once per read, because that is the one act that unlocks everything below it. Everything
+else is a Next button at the foot of the open step, or a click on any header. Auto advancing on
+every completing action would have thrown somebody out of the grid on their first mark.
+
+### The fourth case of the same fault
+
+Writing `PanelSteps` turned one up. A step below the plots was usable whenever the range fields
+held a value, even on a panel that had read no model at all, because the range came off the
+arguments rather than off whether step 1 was usable. Two tests went red on the first run and
+both were right. The code was wrong.
+
+That is the grid cell, the column count, the run report and now this. Four times, one shape:
+two records of one fact, kept up to date by two paths.
+
+### The grid
+
+A legend above it for the three marks. A frozen Use and Plot column, so the plot a row belongs
+to stays on screen however far across somebody has scrolled. Shading on every other row. Both
+halves share one fixed row height from `PanelMetrics`, which is the only thing making them line
+up, because auto height on either side drifts the moment one cell wraps.
+
+A column header says `plan`, `section` or `schedule` in a word under the name. It was italics
+before, and italics is not something anyone reads off a column header.
+
+### The rest of it
+
+A strip at the top with the model name, when it was last read, Refresh and Scan Model, because
+those belong to the document rather than to any one step. One status line, docked at the bottom,
+in the same place whatever is open above it. One primary button, Run, and everything else
+secondary. The scope box counts moved inside step 5, because they act on the same ticked plots.
+
+`PanelMetrics` holds every spacing and font size, the way `PanelTheme` holds every colour. The
+panel file names neither a number nor a brush. `PanelTheme` grew six colours, each with a value
+per theme, because a green that reads as primary on white reads as an error on charcoal.
+
+### One thing I got wrong and caught before pushing
+
+The first draft of the rebuild re-parented the combo boxes and the text boxes on every redraw.
+WPF refuses that outright: an element already has a logical parent and adding it to a second
+one throws. It would have taken the panel down on the second click rather than the first, and
+it compiled clean. `Reparented` takes a control out of whatever held it before, and anything
+that is both a field and in the tree goes through it.
+
+The same reason a keystroke in a sheet number box calls `RefreshHeaders` rather than a full
+redraw. Rebuilding the tree under the cursor takes the cursor out of the box.
+
+The first draft also painted the strip and the status line once, at construction, before the
+theme they follow was read. That is exactly how the panel came up black on black the first
+time, so `PaintFromTheTheme` sets their brushes by hand now.
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln` and `dotnet test`, both after the last file was written. Build 0
+warnings and 0 errors across all three projects. 332 tests, 0 failed and 0 skipped, locally, up
+from 310, all 22 of the new ones on `PanelSteps`.
+
+`design/pr-20/panel.html` shows all five steps in both themes, shut and open, plus the grid, the
+scope box lists and a table of what every unusable step says. It is hand drawn and says so at
+the top.
+
+### What has never been observed
+
+**None of this has been rendered.** Not one pixel of the rebuilt panel has been on a screen.
+
+- No step header has been drawn. Whether a WPF Button wrapped round a Border reads as a header
+  or as a control, on either theme, is unknown
+- The frozen column has never been held against the scrolling columns. One fixed row height is
+  what should make them line up and nobody has looked
+- The green Run button has not been seen on the dark theme, where it may read as an error
+- `Reparented` has never run. It is the guard on the fault most likely to be found on the first
+  install, and it is guarded from reading the API rather than from watching it fail
+- Whether two scrollbars, the pane's and the grid's, are usable together is unknown
+- What a 17 row grid does to the height of a docked pane is unknown
+- The six new colours in `PanelTheme` have not been rendered in either theme
+- Everything from the entry below still stands: no view, section, schedule or sheet has ever
+  been created by this tool, and the section path and the sheet path have never executed
+
+---
+
 ## 2026-09-08, thirteenth pass. The first real write, and the seven things it found
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 19, one commit. This entry goes
-in with the work, so the merge and the runner count are written into it by the follow-up.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#19](https://github.com/baderrahal/RCRC-Green/pull/19), one commit, 33 files, merged into main
+as `8a68492`. The gate executed 310 tests against it, 0 failed and 0 skipped.
 
 **This round is split.** Items 1 to 8 are here. Item 9, the interface rebuild, is a second pull
 request, because item 7 alone is a Core type, a capture path, a create path and new panel

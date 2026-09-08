@@ -149,6 +149,19 @@ The sheet number and the sheet name are not in here at all. They come one per pl
 boxes empty is a plot nobody asked for a sheet on. One box empty is a row that was meant and is
 short, and that one is refused by name and told which half is missing.
 
+## Every count the panel shows is worked out here
+
+`PanelSteps` holds the five steps, what each says while it is shut, whether it can be used yet
+and one line saying why when it cannot. The panel draws them and formats none of them.
+
+A summary written next to the control that shows it is two records of one fact, which is the
+shape that produced the grid cell, the column count and the run report. Three times is enough.
+
+One rule in it is worth knowing: a step below the plots is usable only when the plots step
+itself is. Reading the range off the arguments alone let every step open on a panel that had
+read no model at all, because the range fields still held what the last read put there. A test
+caught that, and it was the code that was wrong.
+
 ## A test that reads the code back to itself proves nothing
 
 Write the expected value out by hand. Do not work it out with the same rule the code uses.
