@@ -40,8 +40,8 @@ namespace RcrcGreen.Core
         public Vector3D ViewDirection { get; }
 
         /// <summary>
-        /// The distance from the line to the face of the box the view looks at, which is half
-        /// the box extent on that axis because the line sits in the middle.
+        /// How far the view looks, exactly as the caller supplied it, in the same unit as the
+        /// <see cref="PlotBox"/> numbers. Nothing here derives it from the size of the box.
         /// </summary>
         public double Depth { get; }
 
@@ -52,20 +52,35 @@ namespace RcrcGreen.Core
                 double dx = End.X - Start.X;
                 double dy = End.Y - Start.Y;
                 double dz = End.Z - Start.Z;
-                return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+
+                // Squaring the deltas first flushes a tiny line to zero and overflows a very
+                // long one to infinity. Scaling by the largest of them keeps both readable.
+                double largest = Math.Max(Math.Abs(dx), Math.Max(Math.Abs(dy), Math.Abs(dz)));
+                if (largest == 0.0) return 0.0;
+
+                double ux = dx / largest;
+                double uy = dy / largest;
+                double uz = dz / largest;
+                return largest * Math.Sqrt((ux * ux) + (uy * uy) + (uz * uz));
             }
         }
 
         /// <summary>
-        /// The axis has no default here on purpose. The caller decides, because the choice
-        /// belongs to whoever is looking at the plot.
+        /// The axis and the depth have no default here on purpose. The caller decides both,
+        /// because the choice belongs to whoever is looking at the plot, and because a depth
+        /// carries a unit that Core knows nothing about.
         /// </summary>
-        public static SectionPlacement Across(PlotBox box, SectionAxis axis)
+        /// <param name="depth">How far the view looks, in the same unit as the box numbers.</param>
+        public static SectionPlacement Across(PlotBox box, SectionAxis axis, double depth)
         {
             if (box == null) throw new ArgumentNullException("box");
             if (axis != SectionAxis.ShortSide && axis != SectionAxis.LongSide)
             {
                 throw new ArgumentOutOfRangeException("axis", axis, "Not a section axis.");
+            }
+            if (double.IsNaN(depth) || double.IsInfinity(depth))
+            {
+                throw new ArgumentException("The depth is not a real number.", "depth");
             }
             if (box.WidthX <= 0.0 || box.WidthY <= 0.0)
             {
@@ -87,7 +102,7 @@ namespace RcrcGreen.Core
                     new Point3D(box.CentreX, box.MinY, box.CentreZ),
                     new Point3D(box.CentreX, box.MaxY, box.CentreZ),
                     new Vector3D(1.0, 0.0, 0.0),
-                    box.WidthX / 2.0);
+                    depth);
             }
 
             return new SectionPlacement(
@@ -96,7 +111,7 @@ namespace RcrcGreen.Core
                 new Point3D(box.MinX, box.CentreY, box.CentreZ),
                 new Point3D(box.MaxX, box.CentreY, box.CentreZ),
                 new Vector3D(0.0, -1.0, 0.0),
-                box.WidthY / 2.0);
+                depth);
         }
 
         /// <summary>

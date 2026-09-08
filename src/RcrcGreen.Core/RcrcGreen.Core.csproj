@@ -5,6 +5,9 @@
     <RootNamespace>RcrcGreen.Core</RootNamespace>
     <AssemblyName>RcrcGreen.Core</AssemblyName>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- netstandard2.0 otherwise falls back to C# 7.3 while the test project that consumes
+         this gets C# 12, so the same line compiles there and fails here. -->
+    <LangVersion>12.0</LangVersion>
     <!-- Core is consumed by a net48 add-in and by net8.0 tests, so it stays on the
          shared surface both can load. Nothing here may reference the Revit API. -->
   </PropertyGroup>

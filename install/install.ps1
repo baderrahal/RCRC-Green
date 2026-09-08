@@ -1,0 +1,89 @@
+<#
+.SYNOPSIS
+Puts RCRC Green where Revit 2024 will find it, for the person running this and nobody else.
+
+.DESCRIPTION
+The manifest names the assembly as RcrcGreen\RcrcGreen.Revit.dll, a path read relative to the
+manifest itself. The build puts the manifest and both assemblies in one flat folder, so the
+subfolder has to be made here. Doing it by hand is the step people miss, and Revit answers a
+missing assembly by not loading the add-in and not saying why.
+
+Layout this produces:
+
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+
+.PARAMETER Configuration
+Which build to install. Release unless you are debugging.
+
+.PARAMETER BuildOutput
+The folder holding the build output. Worked out from the repo layout when it is not given.
+
+.EXAMPLE
+.\install\install.ps1
+
+.EXAMPLE
+.\install\install.ps1 -Configuration Debug
+#>
+[CmdletBinding()]
+param(
+    [ValidateSet('Debug', 'Release')]
+    [string] $Configuration = 'Release',
+
+    [string] $BuildOutput
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$repoRoot = Split-Path -Parent $PSScriptRoot
+
+if (-not $BuildOutput) {
+    $BuildOutput = Join-Path $repoRoot "src\RcrcGreen.Revit\bin\$Configuration"
+}
+
+$manifestName = 'RcrcGreen.addin'
+$assemblyNames = @('RcrcGreen.Revit.dll', 'RcrcGreen.Core.dll')
+
+if (-not (Test-Path -LiteralPath $BuildOutput)) {
+    throw "Nothing to install. $BuildOutput does not exist. Build RcrcGreen.sln in $Configuration first."
+}
+
+$wanted = @($manifestName) + $assemblyNames
+$missing = $wanted | Where-Object { -not (Test-Path -LiteralPath (Join-Path $BuildOutput $_)) }
+if ($missing) {
+    throw "Nothing to install. $BuildOutput is missing $($missing -join ', '). Build RcrcGreen.sln in $Configuration first."
+}
+
+$addinsFolder = Join-Path $env:APPDATA 'Autodesk\Revit\Addins\2024'
+$assemblyFolder = Join-Path $addinsFolder 'RcrcGreen'
+
+New-Item -ItemType Directory -Path $addinsFolder -Force | Out-Null
+New-Item -ItemType Directory -Path $assemblyFolder -Force | Out-Null
+
+$copied = New-Object System.Collections.Generic.List[string]
+
+Copy-Item -LiteralPath (Join-Path $BuildOutput $manifestName) -Destination $addinsFolder -Force
+$copied.Add((Join-Path $addinsFolder $manifestName))
+
+foreach ($assembly in $assemblyNames) {
+    Copy-Item -LiteralPath (Join-Path $BuildOutput $assembly) -Destination $assemblyFolder -Force
+    $copied.Add((Join-Path $assemblyFolder $assembly))
+}
+
+# The symbol files are optional. Without them a stack trace from Revit has no line numbers,
+# which is the difference between a report you can act on and one you cannot.
+foreach ($symbols in @('RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb')) {
+    $from = Join-Path $BuildOutput $symbols
+    if (Test-Path -LiteralPath $from) {
+        Copy-Item -LiteralPath $from -Destination $assemblyFolder -Force
+        $copied.Add((Join-Path $assemblyFolder $symbols))
+    }
+}
+
+Write-Host "Installed RCRC Green from $BuildOutput"
+foreach ($file in $copied) {
+    Write-Host "  $file"
+}
+Write-Host "$($copied.Count) files copied. Restart Revit 2024 and look for the RCRC Green tab."

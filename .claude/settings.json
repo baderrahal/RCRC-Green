@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/block-paths.sh\""
+            "command": "sh -c 'H=\"$CLAUDE_PROJECT_DIR/.claude/hooks/block-paths.sh\"; if [ ! -x \"$H\" ]; then echo \"Refused. The hook $H is missing or not executable, so this write was not checked.\" >&2; exit 2; fi; exec \"$H\"'"
           }
         ]
       },
@@ -25,11 +25,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/require-file-on-commit.sh\""
+            "command": "sh -c 'H=\"$CLAUDE_PROJECT_DIR/.claude/hooks/require-file-on-commit.sh\"; if [ ! -x \"$H\" ]; then echo \"Refused. The hook $H is missing or not executable, so this command was not checked.\" >&2; exit 2; fi; exec \"$H\"'"
           },
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/writing-check.sh\""
+            "command": "sh -c 'H=\"$CLAUDE_PROJECT_DIR/.claude/hooks/writing-check.sh\"; if [ ! -x \"$H\" ]; then echo \"Refused. The hook $H is missing or not executable, so this command was not checked.\" >&2; exit 2; fi; exec \"$H\"'"
           }
         ]
       }

@@ -11,7 +11,7 @@ namespace RcrcGreen.Core
     /// </summary>
     public sealed class PlotRegistryResult
     {
-        public PlotRegistryResult(IReadOnlyList<PlotRecord> plots, IReadOnlyList<string> ignored)
+        public PlotRegistryResult(IReadOnlyList<PlotRecord> plots, IReadOnlyList<IgnoredName> ignored)
         {
             if (plots == null) throw new ArgumentNullException("plots");
             if (ignored == null) throw new ArgumentNullException("ignored");
@@ -22,6 +22,6 @@ namespace RcrcGreen.Core
 
         public IReadOnlyList<PlotRecord> Plots { get; }
 
-        public IReadOnlyList<string> Ignored { get; }
+        public IReadOnlyList<IgnoredName> Ignored { get; }
     }
 }

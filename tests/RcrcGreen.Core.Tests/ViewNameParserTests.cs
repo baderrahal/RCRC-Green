@@ -72,13 +72,50 @@ namespace RcrcGreen.Core.Tests
             Assert.Null(parsed);
         }
 
-        [Fact]
-        public void AStrayNewlineDoesNotGetTrimmedAwayIntoAValidName()
+        [Theory]
+        [InlineData("DM-41-(010) Location Key Plan\n")]
+        [InlineData("DM-41-(010) Location Key Plan\r\n")]
+        [InlineData("DM-41-(010) Location Key Plan ")]
+        [InlineData("DM-41-(010) Location Key Plan\t")]
+        [InlineData(" DM-41-(010) Location Key Plan")]
+        [InlineData("\tDM-41-(010) Location Key Plan")]
+        public void SurroundingWhitespaceIsDroppedSoTheNameMatchesTheCleanOne(string name)
+        {
+            ParsedViewName clean;
+            ParsedViewName ragged;
+
+            Assert.True(ViewNameParser.TryParse("DM-41-(010) Location Key Plan", out clean));
+            Assert.True(ViewNameParser.TryParse(name, out ragged));
+
+            Assert.Equal(clean.PlotId, ragged.PlotId);
+            Assert.Equal(clean.Code, ragged.Code);
+            Assert.Equal(clean.ViewName, ragged.ViewName);
+            Assert.Equal(clean.Type, ragged.Type);
+
+            // The text handed in is kept as it came, so the caller can still find the view.
+            Assert.Equal(name, ragged.Original);
+        }
+
+        [Theory]
+        [InlineData("dm-41-(010) Location Key Plan")]
+        [InlineData("Dm-41-(010) Location Key Plan")]
+        [InlineData("dM-41-(010) Location Key Plan")]
+        public void ALowerCaseOrMixedCasePlotIdentifierDoesNotParse(string name)
         {
             ParsedViewName parsed;
 
-            Assert.False(ViewNameParser.TryParse("DM-41-(010) Location Key Plan\n", out parsed));
-            Assert.False(ViewNameParser.TryParse("\nDM-41-(010) Location Key Plan", out parsed));
+            Assert.False(ViewNameParser.TryParse(name, out parsed));
+            Assert.Null(parsed);
+            Assert.True(ViewNameParser.FailsOnlyOnPlotCase(name));
+        }
+
+        [Theory]
+        [InlineData("Site Plan")]
+        [InlineData("DM-41 Location Key Plan")]
+        [InlineData("DM-41-(0A0) Location Key Plan")]
+        public void ANameThatWasNeverAPlotNameIsNotReportedAsACaseProblem(string name)
+        {
+            Assert.False(ViewNameParser.FailsOnlyOnPlotCase(name));
         }
 
         [Fact]

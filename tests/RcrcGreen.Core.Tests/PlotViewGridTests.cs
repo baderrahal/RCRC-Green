@@ -49,9 +49,20 @@ namespace RcrcGreen.Core.Tests
         {
             PlotViewGrid grid = PlotViewGrid.Build(Parse(ModelNames), new[] { "AB-7", "DM-41", "PF-12" });
 
+            // Spelled out rather than read back off the grid. Comparing the grid against
+            // itself passes just as happily when the columns have all gone missing.
+            ViewType[] everyKnownType =
+            {
+                Type("010", "Location Key Plan"),
+                Type("010", "Overall Key Plan"),
+                Type("200", "General Arrangement Layout"),
+                Type("400", "Landscape Cross Section")
+            };
+
             Assert.Contains("AB-7", grid.PlotIds);
-            Assert.Equal(grid.ViewTypes, grid.MissingFor("AB-7"));
-            Assert.All(grid.ViewTypes, type => Assert.False(grid.IsPresent("AB-7", type)));
+            Assert.Equal(everyKnownType, grid.ViewTypes);
+            Assert.Equal(everyKnownType, grid.MissingFor("AB-7"));
+            Assert.All(everyKnownType, type => Assert.False(grid.IsPresent("AB-7", type)));
         }
 
         [Fact]
@@ -91,9 +102,15 @@ namespace RcrcGreen.Core.Tests
                 new[] { "AB-7", "DM-41", "PF-12" });
 
             ViewType generalArrangement = Type("200", "General Arrangement Layout");
+            ViewType locationKeyPlan = Type("010", "Location Key Plan");
 
             Assert.Equal(2, grid.PlotsHolding(generalArrangement));
-            Assert.Contains(generalArrangement, grid.MissingFor("AB-7"));
+
+            // The whole list, so a missing lookup that answers everything is missing fails
+            // here. AB-7 holds the key plan, and that is the entry that must not appear.
+            Assert.Equal(new[] { generalArrangement }, grid.MissingFor("AB-7"));
+            Assert.DoesNotContain(locationKeyPlan, grid.MissingFor("AB-7"));
+            Assert.True(grid.IsPresent("AB-7", locationKeyPlan));
         }
 
         [Fact]
@@ -129,6 +146,22 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(
                 new[] { Type("010", "Overall Key Plan"), Type("400", "Landscape Cross Section") },
                 reports.Single(report => report.PlotId == "PF-12").Missing.Select(entry => entry.ViewType));
+        }
+
+        [Fact]
+        public void RowsAndColumnsPutTheNumberPartInNumberOrder()
+        {
+            PlotViewGrid grid = PlotViewGrid.Build(
+                Parse(
+                    "DM-100-(1000) Long Section",
+                    "DM-2-(200) General Arrangement Layout",
+                    "DM-9-(90) Setting Out"),
+                new[] { "DM-100", "DM-2", "DM-9" });
+
+            Assert.Equal(new[] { "DM-2", "DM-9", "DM-100" }, grid.PlotIds);
+            Assert.Equal(
+                new[] { "90", "200", "1000" },
+                grid.ViewTypes.Select(type => type.Code));
         }
 
         [Fact]

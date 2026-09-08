@@ -43,7 +43,9 @@ namespace RcrcGreen.Core
         public int CompareTo(ViewType other)
         {
             if (ReferenceEquals(other, null)) return 1;
-            int byCode = string.CompareOrdinal(Code, other.Code);
+
+            // Codes read as numbers, so 200 comes before 1000 rather than after it.
+            int byCode = NaturalOrder.Comparer.Compare(Code, other.Code);
             if (byCode != 0) return byCode;
             return string.CompareOrdinal(ViewName, other.ViewName);
         }
