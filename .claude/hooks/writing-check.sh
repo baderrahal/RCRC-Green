@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# PreToolUse hook on Bash. Reads the staged files and refuses the commit when any of them
-# carries a tell from .claude/skills/ai-max/references/writing-rules.md.
+# PreToolUse hook on Bash. Reads the commit message and everything the commit is going to
+# carry, and refuses when any of it holds a tell from
+# .claude/skills/ai-max/references/writing-rules.md.
 #
 # Two things are deliberately left out of the scan, and the hook fails on itself without
 # both of them:
@@ -21,12 +22,21 @@ esac
 
 cd "$(git rev-parse --show-toplevel)"
 
+if [ ! -f .claude/hooks/commit-scope.py ]; then
+  echo "Refused. .claude/hooks/commit-scope.py is missing, so nothing could be checked." >&2
+  exit 2
+fi
+
+export RCRC_COMMIT_COMMAND="$COMMAND"
+
 read -r -d '' SCAN <<'PY' || true
+import os
 import re
 import subprocess
 import sys
 
 RULES_FILE = ".claude/skills/ai-max/references/writing-rules.md"
+SCOPE_FILE = ".claude/hooks/commit-scope.py"
 SKIP_PREFIX = ".claude/skills/"
 KEEP_ANYWAY = {"landscape"}
 
@@ -35,6 +45,9 @@ EM_DASH = "\u2014"
 FOOTER = re.compile("Generated[ ]with")
 CO_AUTHOR = re.compile("Co-Authored[-]By", re.IGNORECASE)
 EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F]")
+
+UNREADABLE = object()
+BINARY = object()
 
 
 def banned_words():
@@ -55,8 +68,13 @@ def banned_words():
     return []
 
 
-UNREADABLE = object()
-BINARY = object()
+def scope(action):
+    done = subprocess.run(
+        ["python3", SCOPE_FILE, action, os.environ.get("RCRC_COMMIT_COMMAND", "")],
+        capture_output=True)
+    if done.returncode != 0:
+        return None
+    return done.stdout.decode("utf-8", "replace")
 
 
 def staged_text(path):
@@ -67,6 +85,20 @@ def staged_text(path):
         return BINARY
     try:
         return blob.stdout.decode("utf-8")
+    except UnicodeDecodeError:
+        return BINARY
+
+
+def worktree_text(path):
+    try:
+        with open(path, "rb") as handle:
+            raw = handle.read()
+    except IOError:
+        return staged_text(path)
+    if b"\x00" in raw:
+        return BINARY
+    try:
+        return raw.decode("utf-8")
     except UnicodeDecodeError:
         return BINARY
 
@@ -82,19 +114,11 @@ word_patterns = [
 ]
 
 findings = []
-for path in sys.argv[1:]:
-    if path.startswith(SKIP_PREFIX):
-        continue
-    text = staged_text(path)
-    if text is BINARY:
-        continue
-    if text is UNREADABLE:
-        # Skipping in silence would let a file through unchecked, which is the one outcome
-        # this hook exists to prevent.
-        findings.append(path + " is staged but could not be read back out of the index.")
-        continue
+
+
+def check(label, text):
     for number, line in enumerate(text.splitlines(), start=1):
-        where = path + ":" + str(number)
+        where = label + ":" + str(number)
         if EM_DASH in line:
             findings.append(where + " has an em dash.")
         if FOOTER.search(line):
@@ -108,8 +132,40 @@ for path in sys.argv[1:]:
             if pattern.search(line):
                 findings.append(where + " uses the word " + word + ".")
 
+
+message = scope("message")
+if message is None:
+    print("Refused. " + SCOPE_FILE + " could not read the commit message.")
+    sys.exit(1)
+if "RCRC_UNREADABLE_MESSAGE_FILE" in message:
+    print("Refused. The commit message file named on the command line could not be read.")
+    sys.exit(1)
+check("the commit message", message)
+
+listed = scope("paths")
+if listed is None:
+    print("Refused. " + SCOPE_FILE + " could not work out what this commit carries.")
+    sys.exit(1)
+
+fields = listed.split("\0")
+mode = fields[0] if fields else "index"
+read_text = worktree_text if mode == "worktree" else staged_text
+
+for path in [field for field in fields[1:] if field]:
+    if path.startswith(SKIP_PREFIX):
+        continue
+    text = read_text(path)
+    if text is BINARY:
+        continue
+    if text is UNREADABLE:
+        # Skipping in silence would let a file through unchecked, which is the one outcome
+        # this hook exists to prevent.
+        findings.append(path + " is in this commit and could not be read.")
+        continue
+    check(path, text)
+
 if findings:
-    print("Refused. The staged files break the writing rules:")
+    print("Refused. This commit breaks the writing rules:")
     for finding in findings[:40]:
         print("  " + finding)
     if len(findings) > 40:
@@ -117,9 +173,7 @@ if findings:
     sys.exit(1)
 PY
 
-# NUL separated, because a file name holding a space, a quote or a newline would otherwise
-# arrive at the scanner in pieces and the pieces would read as files that do not exist.
-if git diff --cached --name-only -z --diff-filter=ACMR | xargs -0 -r python3 -c "$SCAN" >&2; then
+if python3 -c "$SCAN" >&2; then
   exit 0
 fi
 

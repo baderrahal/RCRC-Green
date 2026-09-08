@@ -15,11 +15,18 @@ sections, a cut through the middle of the plot.
 ## Running it
 
 Not yet. The ribbon exists and holds no commands. Build `RcrcGreen.sln` in Visual Studio
-2026, then copy the output as described in `src/RcrcGreen.Revit/RcrcGreen.addin` into
+2026, then
 
 ```
-%APPDATA%\Autodesk\Revit\Addins\2024\
+.\install\install.ps1
 ```
+
+which copies `RcrcGreen.addin` into `%APPDATA%\Autodesk\Revit\Addins\2024\` and both
+assemblies into the `RcrcGreen` subfolder beside it, then names every file it copied. That
+subfolder is the layout the manifest asks for and the build does not produce it, so copying
+the output folder across by hand leaves Revit unable to find the assembly. `install.ps1
+-Configuration Debug` installs the debug build. `.\install\uninstall.ps1` takes it all back
+out again.
 
 Revit 2023, 2025 and 2027 are also installed on the build machine. This add-in targets 2024
 only, and `RevitAPI.dll` for that version sits at
@@ -64,7 +71,8 @@ what Core returns back into the model.
 These come from the team and from real models. They are not guesses.
 
 - Views and sheets are named `<PlotID>-(<code>) <View name>`
-- PlotID is always two letters, a dash, then digits. Examples DM-41, PF-12
+- PlotID is always two uppercase letters, a dash, then digits. Examples DM-41, PF-12.
+  Lowercase is not a different plot, it is invalid
 - The code is digits inside round brackets. Examples 010, 200, 400
 - The view name is free text after the closing bracket and one space
 - Plots also exist in the model as scope boxes named with the PlotID, for example a scope
@@ -72,6 +80,10 @@ These come from the team and from real models. They are not guesses.
 - Elements carry a parameter named PRX_Plot_ID holding the PlotID
 - Missing cross sections are placed across the middle of the plot's scope box
 - The default cut is the SHORT way across the plot
+- A cross section looks 10 metres. This is a starting value and the team will change it
+  after sections have been placed in a real model
+- View names repeat word for word across plots. The same view type on two plots carries the
+  same text after the bracket, and nothing plot specific appears in a view name
 
 Real names seen in a model:
 
@@ -94,9 +106,12 @@ a scope box, or from PRX_Plot_ID on an element. A plot that only has a scope box
 tagged elements has no views at all, and that is the plot the team most needs to see, so it
 has to survive into the list rather than be dropped.
 
-**SectionPlacement takes the axis as a required argument.** The code picks no default. The
-interface preselects ShortSide, because the default cut is the short way across the plot,
-and that choice belongs to the interface rather than to the maths.
+**SectionPlacement takes the axis and the depth as required arguments.** The code picks no
+default for either. The interface preselects ShortSide, because the default cut is the short
+way across the plot. The depth is a plain number in whatever unit the box numbers are in, so
+the 10 metres above lives in `SectionDefaults` in the Revit project and is converted to feet
+there, because Revit works in feet and passing 10 straight through would place a ten foot
+section.
 
 **Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots
 or geometry. Open questions are recorded in `steps/log.md`, and they are answered by the
@@ -108,18 +123,41 @@ Three of them, wired in `.claude/settings.json`. They are walls, not requests.
 
 - `block-paths.sh` refuses any write that resolves outside this repo
 - `require-file-on-commit.sh` refuses a commit that does not carry `steps/ai-max-state.md`
-- `writing-check.sh` reads the staged files and refuses a commit holding an em dash, a
-  generated-by footer, a co-author credit line, an emoji, or a word from the list in
-  `.claude/skills/ai-max/references/writing-rules.md`
+- `writing-check.sh` reads the commit message and every file the commit carries, and
+  refuses one holding an em dash, a generated-by footer, a co-author credit line, an emoji,
+  or a word from the list in `.claude/skills/ai-max/references/writing-rules.md`
 
 The word check skips `.claude/skills/`, because the word list lives there as data, and it
 drops the word landscape from that list, because it is the discipline name here and it
 appears in real view names.
 
+Both commit hooks work out what the commit will really contain through
+`.claude/hooks/commit-scope.py`, which reads the command rather than the index. `git commit -a`
+stages after the hook has returned and `git commit <path>` ignores the index, so a hook reading
+the index alone was wrong on both. A hook script that cannot be found blocks the action
+instead of passing it, and so does a missing `commit-scope.py`.
+
 ## Things that have gone wrong before
 
-Nothing yet. Add to this whenever something breaks. Over time it is the most valuable part
-of this file, because it is the only part that cannot be rediscovered by reading the code.
+Add to this whenever something breaks. Over time it is the most valuable part of this file,
+because it is the only part that cannot be rediscovered by reading the code.
+
+**A guard that fails open reads exactly like a guard that passed.** `writing-check.sh` took
+its file list line by line, so a file name holding a space arrived at the scanner in pieces
+and every piece read as a file that does not exist. The file went through unchecked and the
+hook reported success. Fixed in 6f0cf1d. The same shape came back twice in the phase 8
+findings, once for a missing hook script exiting 127 rather than blocking, and once for a
+commit form the hook never looked at. When a check cannot see its subject, it has to refuse.
+
+**A number that is not a number still looks like an answer.** `PlotBox` rejected NaN and let
+infinity through, and every centre derived from an infinite bound came out NaN. A section
+placed on that box was handed back as an ordinary result. Fixed in 7ae6759. Geometry read
+from a model is worth checking at the door, because nothing downstream will notice.
+
+**A test that reads the code back to itself proves nothing.** Four tests compared the grid
+against its own output, or worked out the expected value with the same rule the code uses.
+Each one stayed green while the behaviour it named was broken. Write the expected value out
+by hand, then break the code once and watch the test go red.
 
 ## Writing
 

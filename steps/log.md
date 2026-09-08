@@ -175,22 +175,27 @@ None seen. Nothing in the list below is a bug, it is a question with no answer y
 Every one of these was left as written rather than guessed. Where the code had to do
 something, what it does is written next to the question.
 
-1. Are plot identifiers case sensitive. `DM-41` and `dm-41` are two different plots today.
-2. Are the two letters always uppercase. The parser accepts either case.
+1. ANSWERED. Are plot identifiers case sensitive. They are. A plot identifier is always two
+   uppercase letters, and lowercase is not a different plot, it is invalid.
+2. ANSWERED. Are the two letters always uppercase. Yes. The parser accepts uppercase only,
+   and a lowercase or mixed case identifier reaches the ignored list marked WrongCase.
 3. May a view name be empty after the bracket and the space. Today it must hold at least
    one character, so `DM-41-(010) ` does not parse.
-4. How far should a cross section look. Nothing was stated. `SectionPlacement.Depth`
-   returns the distance from the centre line to the face of the box it looks at, which is
-   half the box extent on that axis.
+4. ANSWERED. How far should a cross section look. 10 metres, as a starting value the team
+   will change after testing in Revit. `SectionPlacement` no longer works the depth out from
+   the box, it takes it as a required argument and hands it back untouched. The 10 metres
+   lives in `SectionDefaults` in the Revit project and is converted to feet there.
 5. Which way should a cross section face. Nothing was stated. The view direction is the
    line direction crossed with world up, so the same box and axis always give the same
    side.
 6. What height does the section line sit at. It sits at the middle of the box in Z.
 7. What happens on a square plot, where the short side and the long side are the same
    length. The tie goes to Y as the short side, so the answer does not move between runs.
-8. Does every plot need every view type. The grid puts every type found anywhere across the
-   top of every row, so a type that only ever applies to one kind of plot will read as
-   missing everywhere else.
+8. PARTLY ANSWERED. Does every plot need every view type. Still open. What is settled is
+   that view names repeat word for word across plots, so the same view type on two plots
+   carries the same text and nothing plot specific appears in a view name. The grid still
+   puts every type found anywhere across the top of every row, so a type that only ever
+   applies to one kind of plot will read as missing everywhere else.
 9. Can a scope box name carry more than the plot identifier, for example `DM-41 working`.
    Anything that is not exactly a plot identifier goes into `PlotRegistryResult.Ignored`
    rather than being read as a plot or dropped in silence.

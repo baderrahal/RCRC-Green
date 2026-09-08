@@ -1,6 +1,10 @@
 # ai-max state
 
-Phase: 9, ship.
+Phase: 9, ship. On the second pass, a fix round on the scaffold rather than new work.
+
+Fourteen items from the reviewed phase 8 findings were fixed and nothing else was touched.
+The rest of the 53 findings stay written down in `steps/log.md` as reported and untouched.
+Four of the twelve open questions came back answered and are marked in that list.
 
 Phases 1 and 2 were settled before this repo was opened. The tool is a Revit 2024 add-in
 for the landscape production team, and it is written in C# against the Revit 2024 API
@@ -20,8 +24,11 @@ SessionStart hook that prints one line pointing at the skill.
 
 - `block-paths.sh` on Write, Edit and NotebookEdit. Refuses a write outside the repo.
 - `require-file-on-commit.sh` on Bash. Refuses a commit without this file in it.
-- `writing-check.sh` on Bash. Refuses a commit whose staged files hold an em dash, a
-  generated-by footer, a co-author credit line, an emoji, or a banned word.
+- `writing-check.sh` on Bash. Refuses a commit whose message or carried files hold an em
+  dash, a generated-by footer, a co-author credit line, an emoji, or a banned word.
+- `commit-scope.py` is not a hook. It reads the command and works out what the commit will
+  really contain, so the two hooks above see the git commit -a form and the form that names
+  paths on the command line rather than reading the index and guessing.
 
 All three were run by hand against crafted input before being trusted. The file list inside
 `writing-check.sh` is NUL separated, because a file name holding a space or a quote arrived
@@ -57,7 +64,11 @@ Three projects in `RcrcGreen.sln`.
   ordering check and then turns every centre into NaN, which reads as a placement rather
   than as a failure.
 - `src/RcrcGreen.Revit`, net48. One `IExternalApplication` that makes the RCRC Green tab
-  with an empty Sheets panel, plus `RcrcGreen.addin`. No commands.
+  with an empty Sheets panel, plus `RcrcGreen.addin` and `SectionDefaults`, which holds the
+  10 metre section depth and converts it to feet. No commands.
+- `install/install.ps1` and `install/uninstall.ps1` build the per user layout the manifest
+  asks for, which the build itself does not produce. Neither has been run, because there is
+  no PowerShell and no Revit on the machine this was written on.
 - `tests/RcrcGreen.Core.Tests`, net8.0, xunit, Core only.
 
 ## What is not built

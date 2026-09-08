@@ -44,7 +44,8 @@ namespace RcrcGreen.Core.Tests
             IReadOnlyList<PlotMissingViews> reports = MissingViewFinder.Find(grid);
 
             Assert.Equal(new[] { "AB-7", "DM-41", "PF-12" }, plots.Plots.Select(plot => plot.PlotId));
-            Assert.Equal(new[] { "Site Plan", "Level 00" }, plots.Ignored);
+            Assert.Equal(new[] { "Site Plan", "Level 00" }, plots.Ignored.Select(entry => entry.Text));
+            Assert.All(plots.Ignored, entry => Assert.Equal(IgnoredReason.NotAPlotName, entry.Reason));
 
             PlotRecord ab7 = plots.Plots.Single(plot => plot.PlotId == "AB-7");
             Assert.Equal(new[] { PlotSource.ScopeBox, PlotSource.ElementParameter }, ab7.Sources);
@@ -70,25 +71,54 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void EveryPlotWithAScopeBoxGetsASectionAcrossTheMiddleOfIt()
         {
-            var boxes = new[]
+            // Written out rather than worked out from the box, so a change to the rule that
+            // picks the short side shows up here instead of being followed by the test.
+            var expected = new[]
             {
-                new PlotBox("DM-41", 0, 0, 0, 300, 80, 20),
-                new PlotBox("PF-12", 400, 0, 0, 480, 350, 20),
-                new PlotBox("AB-7", -100, -100, -5, -40, -30, 5)
+                new
+                {
+                    Box = new PlotBox("DM-41", 0, 0, 0, 300, 80, 20),
+                    Start = new Point3D(150, 0, 10),
+                    End = new Point3D(150, 80, 10),
+                    Direction = new Vector3D(1, 0, 0),
+                    Length = 80.0
+                },
+                new
+                {
+                    Box = new PlotBox("PF-12", 400, 0, 0, 480, 350, 20),
+                    Start = new Point3D(400, 175, 10),
+                    End = new Point3D(480, 175, 10),
+                    Direction = new Vector3D(0, -1, 0),
+                    Length = 80.0
+                },
+                new
+                {
+                    Box = new PlotBox("AB-7", -100, -100, -5, -40, -30, 5),
+                    Start = new Point3D(-100, -65, 0),
+                    End = new Point3D(-40, -65, 0),
+                    Direction = new Vector3D(0, -1, 0),
+                    Length = 60.0
+                }
             };
 
-            foreach (PlotBox box in boxes)
+            const double depth = 32.808398950131235;
+
+            foreach (var one in expected)
             {
-                SectionPlacement placement = SectionPlacement.Across(box, SectionAxis.ShortSide);
+                SectionPlacement placement = SectionPlacement.Across(one.Box, SectionAxis.ShortSide, depth);
 
-                double shorter = box.WidthX < box.WidthY ? box.WidthX : box.WidthY;
-
-                Assert.Equal(box.PlotName, placement.PlotName);
-                Assert.Equal(shorter, placement.Length, 9);
-                Assert.Equal(box.CentreX, placement.Midpoint.X, 9);
-                Assert.Equal(box.CentreY, placement.Midpoint.Y, 9);
-                Assert.Equal(box.CentreZ, placement.Midpoint.Z, 9);
-                Assert.True(placement.Depth > 0.0);
+                Assert.Equal(one.Box.PlotName, placement.PlotName);
+                Assert.Equal(one.Length, placement.Length, 9);
+                Assert.Equal(one.Start.X, placement.Start.X, 9);
+                Assert.Equal(one.Start.Y, placement.Start.Y, 9);
+                Assert.Equal(one.Start.Z, placement.Start.Z, 9);
+                Assert.Equal(one.End.X, placement.End.X, 9);
+                Assert.Equal(one.End.Y, placement.End.Y, 9);
+                Assert.Equal(one.End.Z, placement.End.Z, 9);
+                Assert.Equal(one.Direction.X, placement.ViewDirection.X, 9);
+                Assert.Equal(one.Direction.Y, placement.ViewDirection.Y, 9);
+                Assert.Equal(one.Direction.Z, placement.ViewDirection.Z, 9);
+                Assert.Equal(depth, placement.Depth, 9);
             }
         }
     }

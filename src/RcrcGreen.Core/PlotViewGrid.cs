@@ -39,7 +39,7 @@ namespace RcrcGreen.Core
                 .Where(name => name != null)
                 .ToList();
 
-            var rows = new SortedSet<string>(StringComparer.Ordinal);
+            var rows = new SortedSet<string>(NaturalOrder.Comparer);
             foreach (string id in (plotIds ?? Enumerable.Empty<string>()).Where(id => id != null))
             {
                 rows.Add(id);

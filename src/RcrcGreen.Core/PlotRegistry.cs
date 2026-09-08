@@ -23,7 +23,7 @@ namespace RcrcGreen.Core
             IEnumerable<string> elementPlotIdValues)
         {
             var sourcesByPlot = new Dictionary<string, SortedSet<int>>(StringComparer.Ordinal);
-            var ignored = new List<string>();
+            var ignored = new List<IgnoredName>();
 
             foreach (string name in Safe(viewNames))
             {
@@ -34,7 +34,11 @@ namespace RcrcGreen.Core
                 }
                 else
                 {
-                    ignored.Add(name);
+                    ignored.Add(new IgnoredName(
+                        name,
+                        ViewNameParser.FailsOnlyOnPlotCase(name)
+                            ? IgnoredReason.WrongCase
+                            : IgnoredReason.NotAPlotName));
                 }
             }
 
@@ -42,7 +46,7 @@ namespace RcrcGreen.Core
             AddDirect(sourcesByPlot, ignored, elementPlotIdValues, PlotSource.ElementParameter);
 
             List<PlotRecord> plots = sourcesByPlot
-                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                .OrderBy(pair => pair.Key, NaturalOrder.Comparer)
                 .Select(pair => new PlotRecord(pair.Key, pair.Value.Select(v => (PlotSource)v)))
                 .ToList();
 
@@ -51,19 +55,24 @@ namespace RcrcGreen.Core
 
         private static void AddDirect(
             Dictionary<string, SortedSet<int>> sourcesByPlot,
-            List<string> ignored,
+            List<IgnoredName> ignored,
             IEnumerable<string> candidates,
             PlotSource source)
         {
             foreach (string candidate in Safe(candidates))
             {
-                if (PlotId.IsPlotId(candidate))
+                string plotId;
+                if (PlotId.TryRead(candidate, out plotId))
                 {
-                    Record(sourcesByPlot, candidate, source);
+                    Record(sourcesByPlot, plotId, source);
                 }
                 else
                 {
-                    ignored.Add(candidate);
+                    ignored.Add(new IgnoredName(
+                        candidate,
+                        PlotId.FailsOnlyOnCase(candidate.Trim())
+                            ? IgnoredReason.WrongCase
+                            : IgnoredReason.NotAPlotName));
                 }
             }
         }
