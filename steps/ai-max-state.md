@@ -138,7 +138,8 @@ because that round changed no Core code. Pull request 9 landed the readability r
 `2b5361e`, also 176, because it too was Revit side only. Pull request 11 landed the round that fixed
 the grid as `63d3a38`, and the gate executed 214 tests against it, up from 176 because it is
 the first round since the panel was built to change Core. Pull request 13 landed creation as `f2c2eb5`,
-and the gate executed 248 tests against it. Pull request 15 is the write path fixes, at 257.
+and the gate executed 248 tests against it. Pull request 15 landed the write path fixes as
+`792c203`, and the gate executed 257 tests against it.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
