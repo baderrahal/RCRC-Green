@@ -106,8 +106,9 @@ skipped every time. Pull request 5 landed the Drawing Sheet panel as `999381c`, 
 executed 176 tests against it, 0 failed and 0 skipped. Pull request 7 landed the three audit
 fixes on that panel as `20e214a`, and the gate executed 176 tests against it, the same count,
 because that round changed no Core code. Pull request 9 landed the readability round as
-`2b5361e`, also 176, because it too was Revit side only. Pull request 11 is the round that
-fixed the grid, and it takes the count to 214.
+`2b5361e`, also 176, because it too was Revit side only. Pull request 11 landed the round that fixed
+the grid as `63d3a38`, and the gate executed 214 tests against it, up from 176 because it is
+the first round since the panel was built to change Core.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
