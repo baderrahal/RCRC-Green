@@ -6,7 +6,9 @@ Newest entry first.
 
 ## 2026-09-08, ninth pass. The grid was reporting views that are not there
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 11, one commit.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#11](https://github.com/baderrahal/RCRC-Green/pull/11), one commit, 20 files, merged into main
+as `63d3a38`.
 
 ### The cause, and the evidence for it
 
@@ -125,8 +127,10 @@ up with a scope box on a view somebody else already changed.
 
 ### Tests
 
-214 pass, 0 failed, 0 skipped, from a run made after the last file was written. 38 are new,
-covering the plot a view fills, the tick boxes, the columns and the per selection case counts.
+214 pass, 0 failed, 0 skipped, locally from a run made after the last file was written and
+again on the runner. 38 are new, covering the plot a view fills, the tick boxes, the columns
+and the per selection case counts. The four rounds before this one all sat at 176, because
+none of them touched Core.
 
 ### Not observed, because it needs Revit
 
