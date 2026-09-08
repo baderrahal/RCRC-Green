@@ -84,8 +84,11 @@ These come from the team and from real models. They are not guesses.
 - The view name is free text after the closing bracket and one space
 - Plots also exist in the model as scope boxes named with the PlotID, for example a scope
   box named DM-41
-- A parameter named PRX_Plot_ID holds the PlotID. It is on views as well as on elements,
-  and on a view it is the first place to look. The name is the fallback
+- **There are two plot parameters, not one.** `PRX_Plot_ID` sits on views and on sheets, and
+  the Sheet List filters on it. `PRX_Ref Plot ID` sits on model elements, and every quantity
+  schedule filters on that one. The second name carries spaces, not underscores. A schedule
+  built against the wrong one comes back empty
+- On a view, PRX_Plot_ID is the first place to look for the plot. The name is the fallback
 - Missing cross sections are placed across the middle of the plot's scope box
 - The default cut is the SHORT way across the plot
 - A cross section looks 10 metres. This is a starting value and the team will change it
@@ -93,12 +96,21 @@ These come from the team and from real models. They are not guesses.
 - View names repeat word for word across plots. The same view type on two plots carries the
   same text after the bracket, and nothing plot specific appears in a view name
 
-Creation, answered by the team and not built yet:
+Six of the things under a plot are schedules, under Schedules and Quantities rather than
+Views. They are built by a different call and filter on PRX_Ref Plot ID. Category alone does
+not identify one, because HARDSCAPE SCHEDULE and SHRUBS AND LAWN SCHEDULE are both Floors and
+are told apart only by their second filter. Field names are copied exactly, including
+PRX_Furniture Lenght, which is spelled that way in the model.
+
+Creation, answered by the team:
 
 - A new view is CREATED FRESH, never copied or duplicated from another plot. It shows the
   model and carries no annotation, no dimensions, no tags and no detailing
 - The user chooses one view per sheet or several views per sheet
 - The user fills in the sheet number and the sheet name. The tool invents neither
+
+Still UNKNOWN about sheets, and the reason no sheet is created yet: which title block a new
+sheet takes, where a view sits on it, and how several views lay out together.
 
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 

@@ -1,6 +1,22 @@
 # ai-max state
 
-Phase: 9, ship. Eighth pass, the grid stopped lying about which views exist.
+Phase: 9, ship. Ninth pass, creation, and the model has two plot parameters.
+
+The biggest fact of the round is in `CLAUDE.md`. `PRX_Plot_ID` sits on views and sheets and
+the Sheet List filters on it. `PRX_Ref Plot ID`, with spaces, sits on model elements and every
+quantity schedule filters on that one. A schedule built against the wrong one comes back
+empty.
+
+Six of the things under a plot are schedules rather than plan views. `ScheduleDefinition` in
+Core holds one as plain values, `ScheduleCapture` reads an existing schedule into one, and
+`ModelWriter` builds a schedule from one with the plot swapped. Duplicating is the two run
+back to back, and a model with no schedule to copy is a later round rather than a rewrite.
+
+The Run section makes what the marked cells on the ticked plots ask for, in one transaction.
+No sheet is created, because which title block a sheet takes and where a view sits on it have
+not been answered and this repo does not invent a rule.
+
+Before that, the grid stopped lying about which views exist.
 
 Run on a real model, the panel showed views under a plot whose views had all been deleted.
 The cause is in the code and needs no Revit to see. `DrawingSheetReader` took a view's plot
@@ -108,7 +124,8 @@ fixes on that panel as `20e214a`, and the gate executed 176 tests against it, th
 because that round changed no Core code. Pull request 9 landed the readability round as
 `2b5361e`, also 176, because it too was Revit side only. Pull request 11 landed the round that fixed
 the grid as `63d3a38`, and the gate executed 214 tests against it, up from 176 because it is
-the first round since the panel was built to change Core.
+the first round since the panel was built to change Core. Pull request 13 is creation, and it
+takes the count to 248.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
@@ -129,7 +146,8 @@ Three projects in `RcrcGreen.sln`.
   Drawing Sheet panel and the Reports panel, three `IExternalCommand` classes,
   `DrawingSheetPanel` which is the `IDockablePaneProvider` and the only thing on the ribbon,
   `PanelTheme` which holds every colour the panel paints in, one set per Revit theme,
-  `DrawingSheetRequestHandler`
+  `ScheduleCapture` and `ModelWriter` which read a schedule into a definition and build one
+  from it, `DrawingSheetRequestHandler`
   which is the only route from that panel to the API, `DrawingSheetReader`, `ModelScanner`
   and `ScopeBoxScanner` which read a document into plain values, `ScanProgressWindow` which
   shows how far a read has got and can stop it, `RcrcGreen.addin`, and `SectionDefaults`,
@@ -140,8 +158,12 @@ Three projects in `RcrcGreen.sln`.
 
 ## What is not built
 
-Nothing creates a view, a sheet or a section. Marking a cell in the panel records intent and
-writes nothing. Creation is the next round.
+No sheet is created. The team has said the user types the sheet number and the sheet name and
+chooses one view per sheet or several. Three things are still open and none of them is worth
+guessing: which title block a new sheet takes, where a view sits on it, and how several views
+lay out together.
+
+No section is created. `SectionPlacement` works out where one goes and nothing calls it yet.
 
 Nothing in the Revit project has been run on this machine. It compiles against the Revit 2024
 reference assemblies and no more than that can be said from here. The panel especially, since

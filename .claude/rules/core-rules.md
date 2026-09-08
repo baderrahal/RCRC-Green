@@ -42,11 +42,41 @@ inside it. `PlotSelection` puts a tick on every plot in that range, all on to be
 the plots in the middle nobody is working on can come out. Changing the range builds a new
 selection, which is what resets the ticks.
 
-## Every view type is a column, and hiding is the exception
+## One state, drawn again, never two
 
-Adding columns one at a time was the wrong way round. Someone opens the panel to find out what
-is missing, and an empty grid answers nothing. `GridColumns` starts with everything shown and
-counts what is hidden.
+`GridColumns` is the only record of which view types are ticked. The panel draws the whole
+list from it every time it changes rather than letting a tick box remember its own state.
+
+That is not tidiness. The count and the list disagreed on a real model, and they could because
+they were two representations of one fact kept up to date by two different paths. A click that
+failed to reach the model left the box moved and the count where it was, with nothing that
+would ever bring them back together. Anything that changes what is ticked goes through
+`GridColumns` and then the interface is drawn again.
+
+Nothing is ticked when the model is first read. 84 types with all of them on is a grid too
+wide to read and a hidden count that says nothing.
+
+## Inventing a view type is allowed. Inventing a plot is not
+
+A view type the user wants to create is what this tool is for, so `GridColumns.Adding` exists
+and an added type draws missing on every plot, which is correct. A plot is different. Every
+plot the tool offers or acts on comes from the model, and nothing anywhere can add one.
+
+## A definition sits between reading a schedule and writing one
+
+`ScheduleDefinition` holds the category, the fields in order, the filters and the link setting
+as plain values. Capture fills one in from a schedule that exists, create builds one in the
+model, and duplicating is the two run back to back.
+
+Writing a duplicate-the-nearest routine instead would have been shorter and would have left
+the tool useless on a project holding no schedules, which is the next one it will be pointed
+at. Loading a definition from a file is then a small round. Built the other way round it is a
+rewrite.
+
+`ForPlot` changes only the filter rule whose value is a plot identifier. Every other rule is
+carried across untouched, because HARDSCAPE and SHRUBS AND LAWN are both category Floors and
+that second rule is the only thing telling them apart. Field names are copied exactly,
+including the one spelled PRX_Furniture Lenght in the model, or the field is not found.
 
 ## What is counted is what gets written
 

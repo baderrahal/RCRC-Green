@@ -33,6 +33,7 @@ namespace RcrcGreen.Revit
             var viewTypes = new List<ViewType>();
             var present = new List<PlotViewPresence>();
             var states = new List<ViewScopeBoxState>();
+            var scheduleTypes = new List<ViewType>();
 
             int viewsRead = 0;
             int fromParameter = 0;
@@ -65,6 +66,11 @@ namespace RcrcGreen.Revit
 
                 if (read.Fills != null)
                 {
+                    // A ViewSchedule is a View, so it arrives in the same collector. It is a
+                    // different thing to build and it filters on a different parameter, so the
+                    // grid has to be able to tell the user which columns are schedules.
+                    if (view is ViewSchedule) scheduleTypes.Add(read.Fills.Where.ViewType);
+
                     // The plot on the cell comes from the name, so it can differ from the row
                     // plot above. Both are plots the model really holds, and both belong in
                     // the list, or a filled cell would have no row to sit in.
@@ -92,6 +98,7 @@ namespace RcrcGreen.Revit
                 plotIds,
                 viewTypes,
                 present,
+                scheduleTypes,
                 scopeBoxNames,
                 states,
                 viewsRead,

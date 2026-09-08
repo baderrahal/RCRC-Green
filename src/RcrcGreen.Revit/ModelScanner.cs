@@ -13,7 +13,18 @@ namespace RcrcGreen.Revit
     /// </summary>
     internal static class ModelScanner
     {
+        /// <summary>
+        /// The plot on a view or a sheet. The Sheet List filters on this one.
+        /// </summary>
         public const string PlotIdParameterName = "PRX_Plot_ID";
+
+        /// <summary>
+        /// The plot on a model element. Every quantity schedule filters on this one, and the
+        /// name really does carry spaces rather than underscores. A schedule built against
+        /// PRX_Plot_ID by mistake comes back empty, which is why both are named here rather
+        /// than one being assumed to cover the other.
+        /// </summary>
+        public const string RefPlotIdParameterName = "PRX_Ref Plot ID";
 
         /// <summary>
         /// False when the user stopped it. The scan is then incomplete, so nothing is handed

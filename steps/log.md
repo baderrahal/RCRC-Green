@@ -4,6 +4,153 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, tenth pass. Creation, and a count that could not agree with its list
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 13, one commit.
+
+### 1. The count and the list. What I found, and what I have for it
+
+The panel read "54 of 84 view types shown, 30 hidden" while the list showed three ticked. The
+three numbers in that sentence add up, so `GridColumns` was self consistent. The disagreement
+was between `GridColumns` and the tick boxes on screen, and the reason is structural.
+
+**They were two records of one fact, updated by two different paths.**
+
+- the count was written from `_columns` by `SayTheColumns`
+- the list was written from `_columns` **once**, in `FillColumnList`, which ran only after a
+  refresh. From then on each tick box's own visual state was the record of what the user had
+  clicked, and `_columns` was updated as a side effect of the click event
+
+Nothing ever drew the list again from `_columns`, so once the two parted they stayed parted.
+
+The specific way they part is one line, and it is in the old code:
+
+```
+private void ColumnShown(ViewType which, bool shown)
+{
+    if (_filling) return;
+```
+
+A click that arrives while `_filling` is true is dropped. The box has already moved, the model
+is not told, the count is not even recalculated, and nothing puts the box back. `_filling` is
+held while `FillPrefixes`, `PrefixChosen` and `PutTheRangeBack` run, and those set
+`ComboBox.Items` and `SelectedItem`, which WPF can pump input during.
+
+**What I have for it.** That is read off the code and it is certain as a mechanism. What I
+cannot do is prove it is what produced those particular numbers, because I cannot run Revit.
+
+**And there is a second explanation I also cannot rule out.** The list sits in a `ScrollViewer`
+with `MaxHeight = 200`. At roughly 18 pixels a row, about 11 of the 84 rows are on screen at
+once. "Three ticked and the rest unticked" describes what fits in that window, not 84 rows. 54
+ticked out of 84 is entirely consistent with seeing three ticked among eleven visible.
+
+So: one certain drift mechanism, one certain visibility limit, and no way from here to say
+which produced the screenshot. I did not pick the likelier one. The fix removes both.
+
+**The fix.** `GridColumns` is now the only record. `FillColumnList` draws the whole list from
+it and `_filling` is held for the entire build, because setting `IsChecked` on a box that
+already carries a handler raises the event and a tick put there by the code is not the user
+asking for anything. Everything that changes what is ticked goes through `GridColumns` and
+then the interface is drawn again from it. The count reads ticked out of total and says how
+many the search is showing, so the number on screen names the same set the list is showing.
+
+### 2. Picking four out of 84
+
+A Search box filtering on the code and the name as the user types. All and None acting on what
+the search is showing rather than the whole list. One button per code in use, each ticking
+every type carrying that code and leaving the rest alone. Nothing is ticked when the model is
+first read.
+
+### 3. Adding a view type that does not exist
+
+The earlier instruction that the tool must never invent a view type was withdrawn. It must
+never invent a **plot**, and it still cannot. A code dropdown filled from codes in use, a free
+text name, and Add. The added type is ticked, marked new, and draws missing on every plot.
+
+It survives a refresh. `GridColumns.OverTheseTypes` keeps an added type the model still lacks,
+and drops the new mark once the model holds one, which is what happens after a run makes it.
+
+### 4. Schedules are not plan views
+
+`DrawingSheetReader` records which view types are `ViewSchedule`, the snapshot carries them,
+and the grid sets those column headers in italics and appends the word schedule.
+
+### 5. The definition in the middle
+
+`ScheduleDefinition` in Core holds the category, the fields in order, the filter rules and the
+link setting as plain values. `ScheduleCapture` reads an existing schedule into one.
+`ModelWriter` builds one in the model. Duplicating is the two run back to back, and loading a
+definition from a file for a model holding no schedules is a small round on top rather than a
+rewrite.
+
+`ForPlot` changes only the rule whose value is a plot identifier. Everything else is carried
+across, because HARDSCAPE and SHRUBS AND LAWN are both category Floors and their second filter
+is the only thing telling them apart. Which parameter the plot is filtered on is read off the
+captured schedule rather than assumed, so the Sheet List keeps PRX_Plot_ID and a quantity
+schedule keeps PRX_Ref Plot ID. Field names are copied exactly, PRX_Furniture Lenght included.
+
+A schedule type no plot in the model has cannot be captured, so it is refused by name rather
+than half made.
+
+### 6. Run
+
+A Run section at the bottom saying what it would make, counted by kind, before anything is
+pressed. One confirmation, one transaction, one undo, and a report file either way. A plan
+view is created fresh with PRX_Plot_ID set and the scope box assigned, and a plot with no
+scope box is refused rather than given a useless view.
+
+**Sheets are not created.** The team answered that the user types the sheet number and the
+sheet name and chooses one view per sheet or several. Three things are still open: which title
+block a new sheet takes, where a view sits on it, and how several views lay out together.
+Guessing any of them would put the wrong drawing in front of a reviewer, so nothing is
+guessed. No sheet controls were added either, because a control that does nothing is a lie
+about what the tool can do. The run line and the report both say this in as many words.
+
+### 7. The three warnings
+
+`Assert.Single` in all three places. The whole test file was rewritten for the new behaviour.
+
+### Tests
+
+248 pass, 0 failed, 0 skipped, from a run made after the last file was written. 34 are new,
+covering the search, All and None over a filter, the code buttons, added types across a
+refresh, `ScheduleDefinition`, and what a run would make. The build has 0 warnings.
+
+### Not observed, because it needs Revit
+
+Nothing in this round has been run. **This is the first round that writes new elements to a
+model, and none of that code has ever executed.** Specifically:
+
+- every Revit API call in `ScheduleCapture` and `ModelWriter` is written from knowledge of the
+  API and has never run. `ViewSchedule.CreateSchedule`, `CreateSheetList`, `GetSchedulableFields`,
+  `AddField`, `AddFilter`, `IncludeLinkedFiles`, `ViewPlan.Create` and the filter value getters
+  are all unverified against Revit 2024
+- whether a captured definition rebuilds a schedule that matches the original, field for field
+  and filter for filter
+- whether `SchedulableField.GetName(document)` returns the same string `ScheduleField.GetName()`
+  does. The field matching between capture and create rests on that and it is untested
+- whether a field in the captured order is available on the new schedule at all. One that is
+  not is skipped silently, which may leave a schedule short of columns with nothing said
+- whether `ScheduleFilterType.Equal` is right for every captured filter. Capture does not
+  record the operator and create assumes equals, which matches all six schedules on the
+  screenshots and would be wrong for any that used something else
+- whether a created plan view is any use. It is made on the lowest level with the first floor
+  plan view family type, and neither choice has been asked about
+- whether the run's one transaction commits, rolls back cleanly, or leaves a model half changed
+- the search box, All and None, the code buttons, the add row, the new mark, the italic
+  schedule headers and the whole Run section have never been on screen
+- whether the panel is now too tall to use. Seven sections in a docked pane
+- whether reading the model twice during a run, once by the panel and once by the handler, is
+  fast enough to be invisible
+
+### What comes next
+
+Run it on a copy of the model and check a created schedule against its original field by
+field. Then answer the three sheet questions and sheets become small. Sections are still
+unbuilt, and `SectionPlacement` has been waiting since the first round.
+
+---
+
 ## 2026-09-08, ninth pass. The grid was reporting views that are not there
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request
