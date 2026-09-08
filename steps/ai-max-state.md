@@ -1,9 +1,21 @@
 # ai-max state
 
-Phase: 9, ship. Seventh pass, the panel is readable and no longer opens blank.
+Phase: 9, ship. Eighth pass, the grid stopped lying about which views exist.
 
-The panel was installed and run in Revit 2024 for the first time. It opened and docked and
-was unusable. Every TextBlock rendered black on the dark theme's black pane, and the panel
+Run on a real model, the panel showed views under a plot whose views had all been deleted.
+The cause is in the code and needs no Revit to see. `DrawingSheetReader` took a view's plot
+from PRX_Plot_ID and its view type from the name, and never checked the two agreed, so a view
+named for DM-12 carrying PRX_Plot_ID DM-11 filled a DM-11 cell. `ViewReading` now decides
+both in one place and a cell is filled only by the plot in the view's own name. The
+disagreement is counted and shown instead.
+
+The same round added a tick box on every plot row, made every view type a column with a
+checklist for hiding, put the six scope box case counts on screen for the ticked plots, and
+cut the ribbon down to one panel with one button.
+
+
+Before that, the panel was installed and run in Revit 2024 for the first time. It opened and
+docked and was unusable. Every TextBlock rendered black on the dark theme's black pane, and the panel
 opened with an empty prefix dropdown because nothing asked for a read until Refresh was
 pressed. Both are fixed. `PanelTheme` reads `UIThemeManager.CurrentTheme` and the panel
 paints its own background and foreground once, so no brush is written in the panel file at
@@ -94,7 +106,8 @@ skipped every time. Pull request 5 landed the Drawing Sheet panel as `999381c`, 
 executed 176 tests against it, 0 failed and 0 skipped. Pull request 7 landed the three audit
 fixes on that panel as `20e214a`, and the gate executed 176 tests against it, the same count,
 because that round changed no Core code. Pull request 9 landed the readability round as
-`2b5361e`, also 176, because it too was Revit side only.
+`2b5361e`, also 176, because it too was Revit side only. Pull request 11 is the round that
+fixed the grid, and it takes the count to 214.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
@@ -113,8 +126,9 @@ Three projects in `RcrcGreen.sln`.
   placement rather than as a failure.
 - `src/RcrcGreen.Revit`, net48. One `IExternalApplication` making the RCRC Green tab, the
   Drawing Sheet panel and the Reports panel, three `IExternalCommand` classes,
-  `DrawingSheetPanel` which is the `IDockablePaneProvider`, `PanelTheme` which holds every
-  colour the panel paints in, one set per Revit theme, `DrawingSheetRequestHandler`
+  `DrawingSheetPanel` which is the `IDockablePaneProvider` and the only thing on the ribbon,
+  `PanelTheme` which holds every colour the panel paints in, one set per Revit theme,
+  `DrawingSheetRequestHandler`
   which is the only route from that panel to the API, `DrawingSheetReader`, `ModelScanner`
   and `ScopeBoxScanner` which read a document into plain values, `ScanProgressWindow` which
   shows how far a read has got and can stop it, `RcrcGreen.addin`, and `SectionDefaults`,
@@ -138,5 +152,6 @@ The seventh pass fixes two faults that were seen in Revit and confirmed from a s
 The fixes themselves have not been seen. Neither theme has been observed rendering, and the
 list of what that leaves unchecked is in the newest `steps/log.md` entry.
 
-`design/pr-9/panel.html` is a hand drawn mockup of the layout, not a screenshot, and it says
-so at the top of the file. Every round that changes the panel writes one.
+`design/pr-9/panel.html` and `design/pr-11/panel.html` are hand drawn mockups of the layout,
+not screenshots, and each says so at the top of the file. Every round that changes the panel
+writes one.

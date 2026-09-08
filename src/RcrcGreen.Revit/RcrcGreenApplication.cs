@@ -15,8 +15,6 @@ namespace RcrcGreen.Revit
 
         public const string DrawingSheetPanelName = "Drawing Sheet";
 
-        public const string ReportsPanelName = "Reports";
-
         public Result OnStartup(UIControlledApplication application)
         {
             try
@@ -40,32 +38,15 @@ namespace RcrcGreen.Revit
                     ? "Open the Drawing Sheet panel."
                     : ShowDrawingSheetCommand.NotAvailableTip,
                 ShowDrawingSheetCommand.PaneRegistered
-                    ? "Pick a plot range, see which view types each plot in it has, and mark the "
-                      + "ones that are wanted. Marking records intent and changes nothing. The "
-                      + "panel also runs the scope box assignment over the plots in range."
+                    ? "Pick a plot range, untick the plots you are not working on, and see "
+                      + "which view types each of the rest is missing. Marking a missing view "
+                      + "records intent and changes nothing. Scan Model and the scope box "
+                      + "assignment are both in there too."
                     : ShowDrawingSheetCommand.NotAvailable);
 
-            // The two report commands sit on their own panel. They read the whole model rather
-            // than a range, and they are the check the panel is measured against.
-            RibbonPanel reports = PanelNamed(application, ReportsPanelName);
-
-            Add(reports, ScanModelCommand.ButtonName, ScanModelCommand.ButtonText,
-                typeof(ScanModelCommand),
-                "Read the open model and write what is in it to a text file on the Desktop.",
-                "Lists every sheet, view, view template and scope box, and every value of "
-                + "PRX_Plot_ID with a count of the elements carrying it. Runs each view name, "
-                + "sheet name and sheet number through the naming pattern and reports which "
-                + "ones it did not fit. Nothing in the model is changed.");
-
-            Add(reports, AssignScopeBoxCommand.ButtonName, AssignScopeBoxCommand.ButtonText,
-                typeof(AssignScopeBoxCommand),
-                "Give every view that names a plot the scope box named for that plot.",
-                "Sorts every view into one of six cases and shows the counts before writing "
-                + "anything. Only a view with no scope box, whose plot has a scope box of "
-                + "exactly that name, is changed. A view that already carries a scope box is "
-                + "left alone whether it is the right one or not, and reported. Every "
-                + "assignment goes in one transaction, so it is one undo.");
-
+            // One tab, one panel, one button. Scan Model and Scope Box were buttons of their
+            // own and are not any more. Both are still reachable from inside the panel, which
+            // is where someone deciding what to do already is.
             return Result.Succeeded;
         }
 

@@ -14,6 +14,11 @@ namespace RcrcGreen.Revit
     /// Reads a document into a <see cref="DrawingSheetSnapshot"/>. Nothing here writes and
     /// nothing here opens a transaction.
     ///
+    /// One pass over the views gives the plot list, the columns, which cells are filled and the
+    /// scope box state of every view. The panel then works the six case counts out again on
+    /// every tick without asking Revit anything, which is what makes those counts follow the
+    /// tick boxes instantly.
+    ///
     /// There is no progress window on this read. The first real model, 96,934 elements, came
     /// back in 1.4 seconds, and this one touches only views and scope boxes rather than every
     /// element. A progress window on a read that fast is a flicker, not information.
@@ -27,49 +32,50 @@ namespace RcrcGreen.Revit
             var plotIds = new List<string>();
             var viewTypes = new List<ViewType>();
             var present = new List<PlotViewPresence>();
+            var states = new List<ViewScopeBoxState>();
 
             int viewsRead = 0;
             int fromParameter = 0;
             int fromViewName = 0;
             int withNoPlot = 0;
+            int disagree = 0;
 
             foreach (View view in new FilteredElementCollector(document)
                 .OfClass(typeof(View))
                 .Cast<View>()
+                // A sheet is a View and so is a template. Neither is a view of a plot, and a
+                // template's scope box would push onto every view using it.
                 .Where(view => !(view is ViewSheet) && !view.IsTemplate))
             {
                 viewsRead++;
 
                 string onTheView = ValueOf(view.LookupParameter(ModelScanner.PlotIdParameterName));
-                ViewPlotReading reading = ViewPlotReader.Read(onTheView, view.Name);
+                ViewOnAPlot read = ViewReading.Read(onTheView, view.Name, view.Id.Value);
 
-                if (!reading.Found)
+                if (read.Found)
                 {
-                    withNoPlot++;
-                    continue;
-                }
-
-                if (reading.Source == PlotSourceOnView.Parameter)
-                {
-                    fromParameter++;
+                    plotIds.Add(read.PlotId);
+                    if (read.Source == PlotSourceOnView.Parameter) fromParameter++;
+                    else fromViewName++;
                 }
                 else
                 {
-                    fromViewName++;
+                    withNoPlot++;
                 }
 
-                plotIds.Add(reading.PlotId);
-
-                // The column a view fills still comes from its name, because the code and the
-                // view name together are what a view type is and PRX_Plot_ID holds neither.
-                // A view whose plot came from the parameter but whose name does not parse has
-                // a row and fills no column, which is the honest answer.
-                ParsedViewName parsed;
-                if (ViewNameParser.TryParse(view.Name, out parsed))
+                if (read.Fills != null)
                 {
-                    viewTypes.Add(parsed.Type);
-                    present.Add(new PlotViewPresence(reading.PlotId, parsed.Type, view.Id.Value));
+                    // The plot on the cell comes from the name, so it can differ from the row
+                    // plot above. Both are plots the model really holds, and both belong in
+                    // the list, or a filled cell would have no row to sit in.
+                    plotIds.Add(read.Fills.Where.PlotId);
+                    viewTypes.Add(read.Fills.Where.ViewType);
+                    present.Add(read.Fills);
                 }
+
+                if (read.SourcesDisagree) disagree++;
+
+                states.Add(ScopeBoxStateOf(document, view));
             }
 
             var scopeBoxNames = new List<string>();
@@ -77,20 +83,37 @@ namespace RcrcGreen.Revit
                 .OfCategory(BuiltInCategory.OST_VolumeOfInterest)
                 .WhereElementIsNotElementType())
             {
-                string plotId;
-                if (PlotId.TryRead(box.Name, out plotId)) scopeBoxNames.Add(plotId);
+                scopeBoxNames.Add(box.Name);
             }
 
             return new DrawingSheetSnapshot(
                 document.Title,
+                DateTime.Now,
                 plotIds,
                 viewTypes,
                 present,
                 scopeBoxNames,
+                states,
                 viewsRead,
                 fromParameter,
                 fromViewName,
-                withNoPlot);
+                withNoPlot,
+                disagree);
+        }
+
+        private static ViewScopeBoxState ScopeBoxStateOf(Document document, View view)
+        {
+            Parameter holder = view.get_Parameter(ScopeBoxScanner.ScopeBoxParameter);
+            bool canHold = holder != null && !holder.IsReadOnly;
+
+            string current = string.Empty;
+            if (holder != null && holder.HasValue)
+            {
+                Element box = document.GetElement(holder.AsElementId());
+                if (box != null) current = box.Name;
+            }
+
+            return new ViewScopeBoxState(view.Id.Value, view.Name, canHold, current);
         }
 
         private static string ValueOf(Parameter parameter)

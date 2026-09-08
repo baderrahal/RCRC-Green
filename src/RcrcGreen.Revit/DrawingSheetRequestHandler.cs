@@ -13,7 +13,8 @@ namespace RcrcGreen.Revit
         Nothing,
         Refresh,
         SelectView,
-        AssignScopeBoxes
+        AssignScopeBoxes,
+        ScanModel
     }
 
     /// <summary>
@@ -30,7 +31,7 @@ namespace RcrcGreen.Revit
 
         private DrawingSheetRequest _wanted = DrawingSheetRequest.Nothing;
         private long _viewToSelect;
-        private IReadOnlyList<string> _plotsInRange = new List<string>();
+        private IReadOnlyList<string> _plotsTicked = new List<string>();
 
         /// <summary>
         /// Called back on the Revit thread when a request finishes. The panel marshals to its
@@ -57,12 +58,12 @@ namespace RcrcGreen.Revit
             }
         }
 
-        public void AskToAssign(IReadOnlyList<string> plotsInRange)
+        public void AskToAssign(IReadOnlyList<string> plotsTicked)
         {
             lock (_asking)
             {
                 _wanted = DrawingSheetRequest.AssignScopeBoxes;
-                _plotsInRange = plotsInRange ?? new List<string>();
+                _plotsTicked = plotsTicked ?? new List<string>();
             }
         }
 
@@ -92,13 +93,13 @@ namespace RcrcGreen.Revit
         {
             DrawingSheetRequest wanted;
             long viewToSelect;
-            IReadOnlyList<string> plotsInRange;
+            IReadOnlyList<string> plotsTicked;
 
             lock (_asking)
             {
                 wanted = _wanted;
                 viewToSelect = _viewToSelect;
-                plotsInRange = _plotsInRange;
+                plotsTicked = _plotsTicked;
                 _wanted = DrawingSheetRequest.Nothing;
             }
 
@@ -127,7 +128,10 @@ namespace RcrcGreen.Revit
                         Select(open, document, viewToSelect);
                         break;
                     case DrawingSheetRequest.AssignScopeBoxes:
-                        Assign(application, document, plotsInRange);
+                        Assign(document, plotsTicked);
+                        break;
+                    case DrawingSheetRequest.ScanModel:
+                        Scan(document);
                         break;
                 }
             }
@@ -178,11 +182,23 @@ namespace RcrcGreen.Revit
         {
             DrawingSheetSnapshot snapshot = DrawingSheetReader.Read(document);
             Read?.Invoke(snapshot);
-            Told?.Invoke(
-                snapshot.ViewsRead + " views read, " + snapshot.PlotIds.Count + " plots, "
-                + snapshot.FromParameter + " found through PRX_Plot_ID, "
-                + snapshot.FromViewName + " through the name, "
-                + snapshot.WithNoPlot + " with no plot at all.");
+
+            var said = new StringBuilder();
+            said.Append(snapshot.ViewsRead).Append(" views read at ");
+            said.Append(snapshot.ReadAt.ToString("HH:mm:ss")).Append(". ");
+            said.Append(snapshot.PlotIds.Count).Append(" plots, ");
+            said.Append(snapshot.FromParameter).Append(" found through PRX_Plot_ID, ");
+            said.Append(snapshot.FromViewName).Append(" through the name, ");
+            said.Append(snapshot.WithNoPlot).Append(" with no plot at all.");
+
+            if (snapshot.SourcesDisagree > 0)
+            {
+                said.Append(" ").Append(snapshot.SourcesDisagree);
+                said.Append(" views are named for one plot and carry PRX_Plot_ID for another. ");
+                said.Append("The grid follows the name.");
+            }
+
+            Told?.Invoke(said.ToString());
         }
 
         private void Select(UIDocument open, Document document, long viewId)
@@ -214,15 +230,18 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// The same case A to F logic the Scope Box command runs, narrowed to the plots on
-        /// screen. The confirmation and the report file are the same, so the panel and the
-        /// button cannot drift apart.
+        /// The same case A to F logic the panel shows the counts for, over the ticked plots
+        /// only.
+        ///
+        /// The model is read again here rather than the panel's snapshot being trusted. The
+        /// snapshot is as old as the last Refresh, and a write built on a stale read is how a
+        /// model ends up with a scope box on a view somebody else already changed.
         /// </summary>
-        private void Assign(UIApplication application, Document document, IReadOnlyList<string> plotsInRange)
+        private void Assign(Document document, IReadOnlyList<string> plotsTicked)
         {
-            if (plotsInRange.Count == 0)
+            if (plotsTicked.Count == 0)
             {
-                Told?.Invoke("No plots are in range, so there was nothing to assign.");
+                Told?.Invoke("No plots are ticked, so there was nothing to assign.");
                 return;
             }
 
@@ -235,20 +254,11 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            var inRange = new HashSet<string>(plotsInRange, StringComparer.Ordinal);
-            var narrowed = new List<ViewScopeBoxState>();
-
-            foreach (ViewScopeBoxState view in found.Views)
-            {
-                string onTheView;
-                found.PlotParameterByView.TryGetValue(view.ViewId, out onTheView);
-
-                // Which views are in range is decided the way the grid decides it, parameter
-                // first. What then happens to each one is the untouched case A to F logic, so
-                // the button on the Reports panel stays the check on this.
-                string plotId = ViewPlotReader.Read(onTheView, view.ViewName).PlotId;
-                if (plotId.Length > 0 && inRange.Contains(plotId)) narrowed.Add(view);
-            }
+            // Narrowed by the plot in the view's own name, which is the rule ScopeBoxPlan
+            // follows and the rule the counts on screen were worked out with. Two rules would
+            // mean the number shown and the number written were different numbers.
+            IReadOnlyList<ViewScopeBoxState> narrowed =
+                ScopeBoxCounts.Narrow(found.Views, plotsTicked);
 
             ScopeBoxPlan plan = ScopeBoxPlan.Decide(narrowed, found.BoxIdByName.Keys);
             int ready = plan.Count(ScopeBoxCase.ReadyToAssign);
@@ -264,8 +274,38 @@ namespace RcrcGreen.Revit
 
             string path = AssignScopeBoxCommand.WriteReport(plan, document.Title, applied, refused);
             Told?.Invoke(applied
-                ? (ready - refused.Count) + " views given a scope box. Report at " + path
+                ? (ready - refused.Count) + " views given a scope box over " + plotsTicked.Count
+                    + " ticked plots. Report at " + path
                 : "Nothing was changed. Report at " + path);
+        }
+
+        /// <summary>
+        /// Scan Model, reachable from the panel now that it is off the ribbon. It reads the
+        /// whole document rather than a range, which is what makes it the check the panel is
+        /// measured against.
+        /// </summary>
+        private void Scan(Document document)
+        {
+            ModelScan scan;
+            if (!ModelScanner.TryRead(document, NeverCancels.Watcher, out scan))
+            {
+                Told?.Invoke("The scan did not finish, so no file was written.");
+                return;
+            }
+
+            if (scan.FoundNoViews)
+            {
+                Told?.Invoke("No views were found in " + document.Title + ", so no file was written.");
+                return;
+            }
+
+            DateTime writtenAt = DateTime.Now;
+            string path = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                ScanFileName.For(scan.DocumentTitle, writtenAt));
+
+            File.WriteAllText(path, ScanReport.Write(scan, writtenAt), new UTF8Encoding(false));
+            Told?.Invoke("Scan written to " + path);
         }
 
         /// <summary>

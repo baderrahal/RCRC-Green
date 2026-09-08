@@ -63,13 +63,24 @@ It says at the top, in the file itself, that it is a mockup and not a screenshot
 cannot show how Revit will render it. That line is the whole point. A mockup passed off as a
 screenshot is worse than no mockup, because it answers a question it never asked.
 
-## The Reports buttons are the check on the panel
+## One tab, one panel, one button
 
-Scan Model and Scope Box read the whole model rather than a range. They are deliberately not
-changed when the panel changes, because a control that moves with the thing it measures is
-not a control. Scope Box still finds a view's plot from the view name alone. The panel finds
-it from PRX_Plot_ID first. That difference is on purpose until the panel has been used on a
-real model and the two counts compared.
+The RCRC Green tab holds the Drawing Sheet panel and nothing else. Scan Model and Scope Box
+were buttons of their own and are not any more. `ScanModelCommand` and `AssignScopeBoxCommand`
+are still classes and still do the work, reached through the external event from inside the
+panel, because somebody deciding what to do is already in the panel and should not be hunting
+along a ribbon for the next step.
+
+## Scan Model is the check on the panel
+
+It reads the whole document rather than the range, so its numbers are worked out a different
+way from the panel's and can be held against them. That is why it is still there and why it is
+not narrowed to the range when the panel is.
+
+The panel and Scope Box used to disagree on purpose about where a view's plot comes from. They
+do not any more. Both read it from the view's own name, because the panel filing a view under
+PRX_Plot_ID while taking the view type from the name is what put a view in the wrong row. The
+comparison that difference was kept for has been made, and it came out against it.
 
 ## Building and installing
 

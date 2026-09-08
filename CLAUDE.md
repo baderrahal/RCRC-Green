@@ -14,28 +14,27 @@ sections, a cut through the middle of the plot.
 
 ## Running it
 
-Two ribbon panels. Drawing Sheet holds the panel. Reports holds the two commands that write
-a text file to the Desktop and change nothing on screen.
+One ribbon tab, one panel, one button. Everything happens inside the Drawing Sheet panel.
 
-**Drawing Sheet** is a dockable panel that stays open while the user works. It reads the model
-as soon as it is shown. Pick a two letter prefix, then a first and a last plot, and it draws
-those plots down the side and view types across the top. A filled square is a view that
-exists and opens on a click, an empty one is missing and can be marked, and a mark records
-intent and nothing else, because this version creates no views and no sheets. Everything
-below the range is disabled until a range is set, and every dropdown is filled from the
-model, so no plot the model lacks can be chosen. It follows the Revit theme.
+**Drawing Sheet** is a dockable panel that stays open while the user works, and it reads the
+model every time it is shown. Pick a two letter prefix, then a first and a last plot. Every
+plot in that range gets a row with a tick box, all ticked to start, and unticking one drops it
+out of the counts and out of anything that writes. Every view type the model holds is a
+column, all shown to start, with a checklist for hiding the ones nobody is working on. A
+filled square is a view that exists and opens on a click, an empty one is missing and can be
+marked, and a mark records intent and nothing else, because this version creates no views and
+no sheets. Every dropdown is filled from the model, so no plot the model lacks can be chosen.
+It follows the Revit theme.
 
-**Scan Model** reads the open document and writes what it found to a text file. It creates
-nothing and changes nothing.
+**Scope boxes**, inside the panel. The six case counts for the ticked plots are on screen
+before anything is pressed. Assign still confirms, still writes in one transaction, and still
+writes a report either way. Only the case where a view has no scope box and one exists with
+exactly the plot name is written. A view that already carries a scope box is left alone
+whether it is the right one or not.
 
-**Scope Box** gives every view that names a plot the scope box named for that plot. It sorts
-every view into six cases, shows the counts, and asks before writing. Only the case where a
-view has no scope box and one exists with exactly the plot name is written. A view that
-already carries a scope box is left alone whether it is the right one or not. It writes a
-report either way.
-
-The Reports commands show a progress window with a Cancel button, because both walk the whole
-document. The panel does not, because it reads views and scope boxes only.
+**Scan Model**, also inside the panel, reads the whole document and writes what it found to a
+text file. It creates nothing and changes nothing. It reads everything rather than a range,
+which is what makes it the check the panel is measured against.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
 layout the manifest asks for under `%APPDATA%\Autodesk\Revit\Addins\2024\` and names every
@@ -58,8 +57,7 @@ Revit.
 - `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panel
 - `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only, and `install/` holds the two
   PowerShell scripts
-- `.claude/rules/revit-commands.md` holds the rules for writing a command or the panel and
-  loads when something in `src/RcrcGreen.Revit` is being touched
+- `.claude/rules/` holds the rules for each project, loaded when that project is touched
 
 A command is split the same way. The Revit project reads the document into plain strings and
 numbers, and Core decides and formats. That is why every report layout, every count and every
@@ -95,6 +93,13 @@ These come from the team and from real models. They are not guesses.
 - View names repeat word for word across plots. The same view type on two plots carries the
   same text after the bracket, and nothing plot specific appears in a view name
 
+Creation, answered by the team and not built yet:
+
+- A new view is CREATED FRESH, never copied or duplicated from another plot. It shows the
+  model and carries no annotation, no dimensions, no tags and no detailing
+- The user chooses one view per sheet or several views per sheet
+- The user fills in the sheet number and the sheet name. The tool invents neither
+
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 
 - 96,934 elements read in 1.4 seconds. The read is not slow and does not need caching
@@ -116,26 +121,12 @@ PF-12-(200) General Arrangement Layout
 
 ## Conventions
 
-**A view type is the code and the view name together.** Code 010 above appears twice with
-two different view names, so the code on its own does not say which view something is.
-`ViewType` holds both and the grid columns are built from it.
-
-**The plot list is the union of three sources.** A view name, a scope box, or PRX_Plot_ID. A
-plot that has only a scope box and some tagged elements has no views at all, and that is the
-plot the team most needs to see, so it survives into the list rather than being dropped.
-
-**The grid shows a range of plots, never all of them.** 160 plots down one side is not
-readable and not what anyone works on at once. The range comes from a prefix and two plots
-that exist, and Core does the filtering in `PlotRange`.
-
-**SectionPlacement takes the axis and the depth as required arguments.** The code picks no
-default for either. The interface preselects ShortSide, because the default cut is the short
-way across the plot. The depth is a plain number in whatever unit the box numbers are in, so
-the 10 metres lives in `SectionDefaults` in the Revit project and is turned into feet there.
-Revit works in feet, and passing 10 straight through would place a ten foot section.
-
 **Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots or
 geometry. Open questions are recorded in `steps/log.md` and answered by the team.
+
+The rest of them live next to the code they govern. `.claude/rules/core-rules.md` holds what
+Core decides, including why a view fills the cell named by its own name and nothing else.
+`.claude/rules/revit-commands.md` holds how a command and the panel are written.
 
 ## Hooks
 
@@ -166,11 +157,6 @@ When a check cannot see its subject, it has to refuse. The opposite also turned 
 fine. A guard that refuses good input at least announces itself, which is why it is the side
 to fail on.
 
-**A number that is not a number still looks like an answer.** `PlotBox` rejected NaN and let
-infinity through, and every centre derived from an infinite bound came out NaN. A section on
-that box was handed back as an ordinary result. Fixed in 7ae6759. Geometry read from a model
-is worth checking at the door, because nothing downstream will notice.
-
 **An assumption held for five rounds because nobody ran the thing.** The naming pattern was
 taken from four examples, the read was assumed slow enough to need a progress window, and
 PRX_Plot_ID was assumed to be on elements only. One run on a real model corrected all three.
@@ -181,10 +167,11 @@ heading, label and grid entry written and none of them visible. A dockable pane 
 dark theme is black, WPF defaults text to black, and nothing set a foreground. It also opened
 with empty dropdowns, and the line explaining that was one of the invisible ones.
 
-**A test that reads the code back to itself proves nothing.** Four tests compared the grid
-against its own output, or worked out the expected value with the same rule the code uses.
-Each one stayed green while the behaviour it named was broken. Write the expected value out by
-hand, then break the code once and watch the test go red.
+**Two sources for one fact is two facts.** The grid took a view's plot from PRX_Plot_ID and
+its view type from the name, and never checked the two agreed. A view named for DM-12 carrying
+PRX_Plot_ID DM-11 filled a DM-11 cell, so deleting every DM-11 view left that cell full. A
+row and a column that come from different places have to be reconciled or the cell is a claim
+nothing backs. Fixed in `ViewReading`.
 
 ## Writing
 
