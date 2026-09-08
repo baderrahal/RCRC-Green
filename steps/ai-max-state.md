@@ -1,6 +1,12 @@
 # ai-max state
 
-Phase: 9, ship. Sixteenth pass, sheets rebuilt.
+Phase: 9, ship. Seventeenth pass, the report for the split round.
+
+Pull request 22 merged as `ab83eb1` with 352 tests on the runner, and pull request 23 as
+`cd987d0` with 361, 0 failed and 0 skipped on each. Both log entries carry their own merge and
+count now.
+
+Before that, sheets rebuilt.
 
 **A sheet is described now, never copied.** The one sheet this tool has made came out empty,
 because it was built by copying a sheet the user picked and that sheet had no views on it.
