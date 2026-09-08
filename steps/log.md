@@ -4,6 +4,128 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, third pass. The fourteen reviewed items fixed, merged into main
+
+A fix round on the scaffold, not new work. Fourteen items from the reviewed phase 8 findings
+and nothing else. The other findings stay written down below as reported and untouched.
+
+Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because its first pull request
+had already merged. Pull request [#2](https://github.com/baderrahal/RCRC-Green/pull/2), one
+commit, 26 files, merged into main as `57dd1ee`.
+
+### Three answers, now project facts
+
+They are written into the project facts in `CLAUDE.md`, and questions 1, 2 and 4 in the
+open list below are marked ANSWERED with the answer beside them. Question 8 is marked PARTLY
+ANSWERED. None of the twelve was deleted.
+
+- A plot identifier is always two uppercase letters. Lowercase is invalid, not a second plot
+- A cross section looks 10 metres, a starting value the team will change after testing
+- View names repeat word for word across plots, and nothing plot specific appears in one
+
+### What was fixed
+
+| Item | Findings | What changed |
+|---|---|---|
+| 1 | 37, 42 | `install/install.ps1` and `install/uninstall.ps1` build the per user layout the manifest asks for, which the build does not produce. Both documented in `CLAUDE.md` |
+| 2 | 43 | `LangVersion` on Core pinned to 12.0, the same version the test project resolves to |
+| 3 | 2, 3, 4 | Surrounding whitespace, tabs, carriage returns and newlines come off identifiers and view names before anything is compared or keyed on |
+| 4 | 5 | Plot identifiers are uppercase only. A lowercase one reaches the ignored list carrying `IgnoredReason.WrongCase`, which is why that list holds entries rather than bare strings |
+| 5 | 7 | `NaturalOrder` sorts the number part as a number, so DM-2 comes before DM-100 and code 200 before code 1000 |
+| 6 | 12 | `SectionPlacement.Length` scales by the largest delta instead of squaring all three |
+| 7 | 9 | Already done in `7ae6759` last round, with tests. Checked rather than redone |
+| 8 | 13 | Depth is a required argument, in the caller's unit, handed back untouched. Core derives nothing from the box |
+| 9 | new | `SectionDefaults` in the Revit project holds the 10 metres and converts it to feet |
+| 10 | 18 | `writing-check.sh` reads the commit message as well as the files |
+| 11 | 14, 22, 34 | Both commit hooks read the command through `commit-scope.py` and work out what the commit will really carry |
+| 12 | 24 | A hook script that cannot be found blocks instead of exiting 127 and being read as a non blocking error |
+| 13 | 38, 39, 40, 41 | Four tests rewritten against values written out by hand |
+| 14 | none | The three answers recorded, four questions marked |
+
+### The four tests, broken then fixed
+
+Each was proved by editing the code, running the suite, reading the result, and putting the
+code back. The suite came back to 79 green afterwards with only the intended changes in the
+tree.
+
+- finding 38, `APlotMissingATypeEveryOtherPlotHasIsReportedMissing`. Broke `MissingFor` to
+  return every column. RED as intended, 3 failed and 76 passed.
+- finding 39, `APlotWithNoViewsGetsARowAndEveryColumnReadsMissing`. Deleted the line that
+  adds a column, so the grid has none. RED as intended, 8 failed and 71 passed.
+- finding 40, `EveryPlotWithAScopeBoxGetsASectionAcrossTheMiddleOfIt`. Put the old rule back
+  so depth came from half the box extent instead of the argument. RED as intended, 6 failed
+  and 73 passed.
+- finding 41, the same test. Flipped the comparison that picks the short side. RED as
+  intended, 7 failed and 72 passed.
+
+Before the rewrite each of those four stayed green under the same break.
+
+### Checks that actually ran
+
+Local, on main at `57dd1ee`, clean working tree, 2026-09-08 10:24:22 UTC:
+
+```
+dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+Passed!  Failed: 0, Passed: 79, Skipped: 0, Total: 79
+```
+
+On the runner, run
+[34215178742](https://github.com/baderrahal/RCRC-Green/actions/runs/34215178742) against
+commit `2cc4df5`, the tree that merged:
+
+```
+Passed!  Failed: 0, Passed: 79, Skipped: 0, Total: 79
+79 tests ran.
+```
+
+Both numbers are 79. The suite was 48 before this round.
+
+Also run: `dotnet build RcrcGreen.sln -c Release` succeeded with 0 warnings and 0 errors, and
+the add-in output still holds only the two project assemblies, their symbol files and the
+manifest. Both `LangVersion` values were read back with `dotnet msbuild -getProperty` and
+both are 12.0. Every hook was run by hand in a scratch repository against every commit form
+named in item 11, plus each of the five things the writing rules ban, in the message and in
+the files, and the missing script case for item 12.
+
+### Known bugs
+
+None seen in a run. Two things found while doing this work and fixed in the same commit,
+both worth naming because neither came from the findings list.
+
+`require-file-on-commit.sh` captured the NUL separated path list in a shell variable, and a
+command substitution drops NUL bytes with a warning. The whole list collapsed into one line
+and every commit was refused. Caught by running the hook rather than by reading it.
+
+`commit-scope.py` read past the end of the {G} invocation into the rest of a chained command,
+so `{G} -m x && git log` read the words of the second command as pathspecs and found no
+files. Fixed by splitting on shell operators, and the parser is now checked against eleven
+command shapes including quoting, redirects and two commits on one line.
+
+### What was deliberately not touched
+
+The other 39 findings. The list below is unchanged.
+
+### Left to do
+
+- Phase 10, packaging, has not started
+- No command reads a model. The ribbon is empty on purpose
+- The add-in has never been loaded into Revit 2024, so nothing proves the ribbon appears
+- `install.ps1` and `uninstall.ps1` have never been run. There is no PowerShell and no Revit
+  on this machine, so whether they work is UNKNOWN
+- Eight of the twelve open questions are still open
+- `--amend` is the one commit form `commit-scope.py` does not model. It falls back to reading
+  the index, which is what both hooks did for every form before this round
+
+### Next
+
+Write the first command behind the Sheets panel. Core now covers the naming, the plot list,
+the grid and the section placement, and the answers that were blocking it have arrived. The
+Revit side cannot be checked on this machine, so that work stays in one session and each
+round trip costs the user a load of Revit. Running `install.ps1` once on a real machine is
+the cheapest check left, and it is the one that decides whether anyone can use this at all.
+
+---
+
 ## 2026-09-08, later the same day. Pushed, merged into main, phase 8 written up
 
 ### What was done
