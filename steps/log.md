@@ -4,6 +4,96 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, later the same day. Pushed, merged into main, phase 8 written up
+
+### What was done
+
+The branch was pushed and landed. GitHub access to this repository was granted between the
+two halves of the session, so the push that was refused twice earlier went through on the
+third try without any change to the commits.
+
+The branch is named `claude/rcrc-green-setup-wf9ham`, not `setup/harness` as the brief asked.
+That name was fixed by the session before any work started and could not be chosen here.
+
+- pull request [#1](https://github.com/baderrahal/RCRC-Green/pull/1), four commits, 39 files
+- opened as a draft, then taken out of draft, then merged into main as `17f1850`
+- the GitHub app appended a generated-by footer to the pull request body on creation. It was
+  removed by rewriting the body, and the rewrite held
+
+Phase 8 ran as six reading passes over the repo. All six finished and reported 53 findings
+between them, written up in the entry below under Phase 8 review findings, one line each,
+nothing fixed and nothing ranked. A seventh pass that would have tried to refute each finding
+was cancelled before it finished, so no finding has been checked by a second reader.
+
+### Checks that actually ran
+
+Local, on main at `17f1850`, with a clean working tree, at 2026-09-08 09:53:00 UTC:
+
+```
+dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+Passed!  Failed: 0, Passed: 48, Skipped: 0, Total: 48
+```
+
+On the runner, `.github/workflows/tests.yml` run
+[34212285598](https://github.com/baderrahal/RCRC-Green/actions/runs/34212285598) against
+commit `d3db9c8`, which is the same tree that merged:
+
+```
+Passed!  Failed: 0, Passed: 48, Skipped: 0, Total: 48
+48 tests ran.
+```
+
+Both numbers are 48, so there is no gap between what was run here and what the runner ran.
+The second line is the zero test gate reading the count back out of the result file, which is
+the first time that gate has run on a real runner rather than by hand.
+
+### Correction to the entry below
+
+The entry below reports 41 tests in two places, at the line about the test run and at the line
+about the count parsing. That number came from a run made before the two hardening commits,
+and it was left behind when those commits added tests. The real count is 48. The wrong number
+is left in place rather than edited, because the entry is the record of what was believed at
+the time, and two of the phase 8 findings are about exactly that mistake.
+
+### Known bugs
+
+None seen in a run. 53 findings from six reading passes are listed in the entry below and
+none of them has been through a second reader, so treat that list as reported rather than
+confirmed. Three of the breaker findings on Core describe code that has since changed, which
+is noted at the head of that list.
+
+The one finding worth naming here, because it stops the tool working rather than making it
+wrong: `src/RcrcGreen.Revit/RcrcGreen.addin` names a `RcrcGreen` subfolder for the assembly
+while the build copies the manifest flat, beside the two assemblies. Two separate passes
+reported it. Anyone following the layout in the file header has to build that subfolder by
+hand or Revit will not load the add-in.
+
+### Left to do
+
+- Phase 10, packaging, has not started
+- No command reads a model. The ribbon is empty on purpose
+- The add-in has never been loaded into Revit 2024. Nothing here proves the ribbon appears
+- Nothing has been done about any of the 53 findings
+
+### Next
+
+Two things, in this order.
+
+First, put the 53 findings in front of a person and decide which are real. They were reported
+by readers, not confirmed by a second pass, and a list that size acted on blind will churn the
+repo. The manifest path is the one to look at first.
+
+Second, take the twelve open questions in the entry below to the team. Several of them, the
+case sensitivity of a plot identifier and how far a cross section should look in particular,
+change what the first command has to do, so answering them is cheaper before that command is
+written than after.
+
+The first command behind the Sheets panel comes after those two. Nothing in the Revit project
+can be checked on this machine, so that work stays in one session and each round trip costs
+the user a load of Revit.
+
+---
+
 ## 2026-09-08. Repo set up, Core logic and tests written, ribbon stubbed
 
 Entered at phase 3 with one commit in the repo. Ran phases 3 through 9.

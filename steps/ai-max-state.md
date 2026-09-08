@@ -41,8 +41,11 @@ over the repo along with four other reading passes, and the 53 findings are writ
 Phase 8 review findings in `steps/log.md`. Nothing was fixed in response to them. The phase 8
 run is closed.
 
-**9, ship.** The scaffold, the Core logic, the tests and the harness on branch
-`claude/rcrc-green-setup-wf9ham`.
+**9, ship.** Merged. Pull request 1 landed on main as `17f1850`, from branch
+`claude/rcrc-green-setup-wf9ham`. The test gate ran on a real runner against that tree and
+executed 48 tests, 0 failed, 0 skipped.
+
+Phase 10, packaging, has not started.
 
 ## What is built
 
