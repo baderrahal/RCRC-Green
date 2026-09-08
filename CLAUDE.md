@@ -14,8 +14,9 @@ sections, a cut through the middle of the plot.
 
 ## Running it
 
-Not yet. The ribbon exists and holds no commands. Build `RcrcGreen.sln` in Visual Studio
-2026, then
+The ribbon holds one command, Scan Model, on the Sheets panel. It reads the open document and
+writes what it found to a text file on the Desktop. It creates nothing and changes nothing.
+Build `RcrcGreen.sln` in Visual Studio 2026, then
 
 ```
 .\install\install.ps1
@@ -51,8 +52,14 @@ older run.
 ## How this is laid out
 
 - `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation
-- `src/RcrcGreen.Revit` is net48 and holds the ribbon and, later, the commands
+- `src/RcrcGreen.Revit` is net48 and holds the ribbon and the commands
 - `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only
+- `install/` holds the two PowerShell scripts
+
+A command is split the same way everything else is. `ModelScanner` in the Revit project reads
+the document into plain strings and numbers, and `ScanReport` in Core turns those into the
+text of the file. The report layout, the counting and the file name are all tested without
+Revit because of that split.
 
 ## The rule that keeps the tests possible
 
@@ -113,6 +120,11 @@ the 10 metres above lives in `SectionDefaults` in the Revit project and is conve
 there, because Revit works in feet and passing 10 straight through would place a ten foot
 section.
 
+**A read only command opens no transaction.** Scan Model exists to find out what the real
+naming is before anything is created. Nothing in it writes, so nothing in it needs a
+`Transaction`, and adding one would be the first step toward a command that changes a model
+while claiming to read it.
+
 **Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots
 or geometry. Open questions are recorded in `steps/log.md`, and they are answered by the
 team, not by a plausible guess.
@@ -153,6 +165,12 @@ commit form the hook never looked at. When a check cannot see its subject, it ha
 infinity through, and every centre derived from an infinite bound came out NaN. A section
 placed on that box was handed back as an ordinary result. Fixed in 7ae6759. Geometry read
 from a model is worth checking at the door, because nothing downstream will notice.
+
+**The naming pattern was a guess from four examples.** The first real model holds a sheet
+numbered 600QD named SOFTSCAPE SCHEDULES and a model called NG05, none of which fit the
+pattern in the project facts above. Nothing built on that pattern is safe until Scan Model
+has been run on a real model and the output read. Treat the parse summary as the source of
+truth about naming, not the examples.
 
 **A test that reads the code back to itself proves nothing.** Four tests compared the grid
 against its own output, or worked out the expected value with the same rule the code uses.
