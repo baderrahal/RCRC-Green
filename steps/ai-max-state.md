@@ -1,10 +1,16 @@
 # ai-max state
 
-Phase: 9, ship. On the second pass, a fix round on the scaffold rather than new work.
+Phase: 9, ship. Third pass, the first command.
 
-Fourteen items from the reviewed phase 8 findings were fixed and nothing else was touched.
-The rest of the 53 findings stay written down in `steps/log.md` as reported and untouched.
-Four of the twelve open questions came back answered and are marked in that list.
+The scaffold is merged and the add-in has been confirmed loading in Revit 2024.3, with the
+RCRC Green tab and the Sheets panel both appearing. Scan Model is the first command on that
+panel. It reads a document and writes a report. It creates nothing and changes nothing,
+because the naming pattern in the project facts came from four examples and the first real
+model does not fit it.
+
+Before this, a fix round closed fourteen items from the reviewed phase 8 findings. The rest
+of the 53 stay written down in `steps/log.md` as reported and untouched. Four of the twelve
+open questions came back answered and are marked in that list.
 
 Phases 1 and 2 were settled before this repo was opened. The tool is a Revit 2024 add-in
 for the landscape production team, and it is written in C# against the Revit 2024 API
@@ -64,14 +70,18 @@ Three projects in `RcrcGreen.sln`.
   infinite is refused when a `PlotBox` is built, because an infinite bound survives an
   ordering check and then turns every centre into NaN, which reads as a placement rather
   than as a failure.
-- `src/RcrcGreen.Revit`, net48. One `IExternalApplication` that makes the RCRC Green tab
-  with an empty Sheets panel, plus `RcrcGreen.addin` and `SectionDefaults`, which holds the
-  10 metre section depth and converts it to feet. No commands.
+- `src/RcrcGreen.Revit`, net48. One `IExternalApplication` making the RCRC Green tab and the
+  Sheets panel, one `IExternalCommand` behind the Scan Model button, `ModelScanner` which
+  reads a document into plain strings and numbers, `RcrcGreen.addin`, and `SectionDefaults`,
+  which holds the 10 metre section depth and converts it to feet.
 - `install/install.ps1` and `install/uninstall.ps1` build the per user layout the manifest
-  asks for, which the build itself does not produce. Neither has been run, because there is
-  no PowerShell and no Revit on the machine this was written on.
+  asks for, which the build itself does not produce.
 - `tests/RcrcGreen.Core.Tests`, net8.0, xunit, Core only.
 
 ## What is not built
 
-No Revit command logic beyond the empty ribbon. Nothing reads a model yet.
+Nothing creates a view, a sheet or a section. Scan Model reads and reports, and that is all
+there is. The grid and the creation logic wait on the naming being settled from a real scan.
+
+Nothing in the Revit project has been run on this machine. It compiles against the Revit 2024
+reference assemblies and no more than that can be said from here.
