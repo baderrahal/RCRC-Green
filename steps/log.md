@@ -6,7 +6,9 @@ Newest entry first.
 
 ## 2026-09-08, seventh pass. Three audit fixes, all the same shape
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 7, one commit, five files.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request
+[#7](https://github.com/baderrahal/RCRC-Green/pull/7), one commit, five files, merged into
+main as `20e214a`.
 
 All three findings are one fault written three ways. A failure inside the panel was allowed
 to reach past the panel. Nothing else was touched.
@@ -67,7 +69,9 @@ Core holds no Revit type by design. Adding a test here would have been a test wr
 sake of having written one.
 
 The suite still runs and still passes, which is the check that these three edits broke
-nothing that was already covered.
+nothing that was already covered. 176 tests, 0 failed, 0 skipped, locally from a run made
+after the last file was written and again on the runner. Same count as the round before,
+which is what a round that changes no Core code should give.
 
 ### Not observed, because it needs Revit
 
