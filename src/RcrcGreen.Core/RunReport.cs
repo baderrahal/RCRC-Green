@@ -21,13 +21,17 @@ namespace RcrcGreen.Core
             string documentTitle,
             DateTime writtenAt,
             bool applied,
-            IEnumerable<RunRefusal> failed)
+            IEnumerable<RunRefusal> failed,
+            IEnumerable<RunRefusal> needingAttention)
         {
             if (plan == null) throw new ArgumentNullException("plan");
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
 
             IReadOnlyList<RunRefusal> refusedWhileWriting =
                 (failed ?? Enumerable.Empty<RunRefusal>()).Where(one => one != null).ToList();
+
+            IReadOnlyList<RunRefusal> attention =
+                (needingAttention ?? Enumerable.Empty<RunRefusal>()).Where(one => one != null).ToList();
 
             var report = new StringBuilder();
 
@@ -53,6 +57,12 @@ namespace RcrcGreen.Core
             Section(report, "NOT CREATED, REFUSED BY REVIT DURING THE RUN",
                 refusedWhileWriting.Select(one => one.ToString()));
 
+            // Made, and not the same as made right. A schedule short of a column and a view
+            // with no template are both usable and both wrong, so they are named here rather
+            // than left to be noticed on a drawing.
+            Section(report, "CREATED, BUT NEEDS ATTENTION",
+                attention.Select(one => one.ToString()));
+
             Line(report, "SHEETS, 0");
             Line(report, "  No sheet was created and none can be yet.");
             Line(report, "  The team has said the user types the sheet number and the sheet name");
@@ -65,6 +75,9 @@ namespace RcrcGreen.Core
             Line(report, "new view carries no annotation, dimensions, tags or detailing.");
             Line(report, "A schedule is captured from a plot that already has it and rebuilt for");
             Line(report, "the target plot, with only the filter naming the plot changed.");
+            Line(report, "A schedule that lost a FILTER is not created at all. It would show every");
+            Line(report, "plot's elements and read as correct on a drawing. A schedule short of a");
+            Line(report, "FIELD is created and named above, because a missing column can be seen.");
 
             return report.ToString();
         }

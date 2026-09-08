@@ -1,6 +1,19 @@
 # ai-max state
 
-Phase: 9, ship. Ninth pass, creation, and the model has two plot parameters.
+Phase: 9, ship. Tenth pass, the write path stopped skipping things quietly.
+
+`ModelWriter` skipped a schedule field it could not resolve and a filter it could not apply,
+both with a bare `continue` and nothing written down. Both are recorded now and the two are
+handled apart. A schedule short of a field is created and named in the report. One short of a
+filter is deleted again inside the same transaction and refused, because it would show every
+plot's elements and read as correct on a drawing.
+
+A screenshot of DM-18 also settled how a plan view is really set up. The view family type is
+named after the view type, the level comes from an existing view of that type, and the view
+template carries the scale, detail level, discipline and phase filter. All three were guesses
+in the code and all three now refuse rather than fall back.
+
+Before that, creation, and the model turned out to have two plot parameters.
 
 The biggest fact of the round is in `CLAUDE.md`. `PRX_Plot_ID` sits on views and sheets and
 the Sheet List filters on it. `PRX_Ref Plot ID`, with spaces, sits on model elements and every
@@ -125,7 +138,7 @@ because that round changed no Core code. Pull request 9 landed the readability r
 `2b5361e`, also 176, because it too was Revit side only. Pull request 11 landed the round that fixed
 the grid as `63d3a38`, and the gate executed 214 tests against it, up from 176 because it is
 the first round since the panel was built to change Core. Pull request 13 landed creation as `f2c2eb5`,
-and the gate executed 248 tests against it.
+and the gate executed 248 tests against it. Pull request 15 is the write path fixes, at 257.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
@@ -147,7 +160,7 @@ Three projects in `RcrcGreen.sln`.
   `DrawingSheetPanel` which is the `IDockablePaneProvider` and the only thing on the ribbon,
   `PanelTheme` which holds every colour the panel paints in, one set per Revit theme,
   `ScheduleCapture` and `ModelWriter` which read a schedule into a definition and build one
-  from it, `DrawingSheetRequestHandler`
+  from it and record everything they could not do, `DrawingSheetRequestHandler`
   which is the only route from that panel to the API, `DrawingSheetReader`, `ModelScanner`
   and `ScopeBoxScanner` which read a document into plain values, `ScanProgressWindow` which
   shows how far a read has got and can stop it, `RcrcGreen.addin`, and `SectionDefaults`,
