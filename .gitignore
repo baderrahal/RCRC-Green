@@ -31,3 +31,9 @@ Thumbs.db
 
 # Test output
 TestResults/
+
+# Reports the add-in writes. This repository is public and a report holds client view names,
+# sheet numbers, plot identifiers and schedule setups. Read them locally, commit none of them.
+# The README stays, because it is the thing that says why.
+reports/*
+!reports/README.md

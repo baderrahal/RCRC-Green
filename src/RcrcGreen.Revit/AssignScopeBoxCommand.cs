@@ -89,10 +89,10 @@ namespace RcrcGreen.Revit
                 }
             }
 
-            string path;
+            IReadOnlyList<string> written;
             try
             {
-                path = WriteReport(plan, document.Title, applied, refused);
+                written = WriteReport(plan, document.Title, applied, refused);
             }
             catch (UnauthorizedAccessException denied)
             {
@@ -113,7 +113,9 @@ namespace RcrcGreen.Revit
                 return Result.Failed;
             }
 
-            TaskDialog.Show("RCRC Green", Closing(plan, path, applied, refused.Count, ready));
+            TaskDialog.Show(
+                "RCRC Green",
+                Closing(plan, ReportPlaces.Written(written), applied, refused.Count, ready));
             return Result.Succeeded;
         }
 
@@ -158,20 +160,18 @@ namespace RcrcGreen.Revit
             }
         }
 
-        internal static string WriteReport(
+        /// <summary>
+        /// Every place the report landed, Desktop first. The repo copy is what lets anybody
+        /// reading the code see what a real run produced.
+        /// </summary>
+        internal static IReadOnlyList<string> WriteReport(
             ScopeBoxPlan plan, string documentTitle, bool applied, IEnumerable<long> refused)
         {
             DateTime writtenAt = DateTime.Now;
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-                ScanFileName.For(ScanFileName.ScopeBoxPrefix, documentTitle, writtenAt));
 
-            File.WriteAllText(
-                path,
-                ScopeBoxReport.Write(plan, documentTitle, writtenAt, applied, refused),
-                new UTF8Encoding(false));
-
-            return path;
+            return ReportFile.Write(
+                ScanFileName.For(ScanFileName.ScopeBoxPrefix, documentTitle, writtenAt),
+                ScopeBoxReport.Write(plan, documentTitle, writtenAt, applied, refused));
         }
 
         internal static bool Confirmed(ScopeBoxPlan plan, int ready)
@@ -204,13 +204,12 @@ namespace RcrcGreen.Revit
             return said.ToString();
         }
 
-        private static string Closing(ScopeBoxPlan plan, string path, bool applied, int refusedCount, int ready)
+        private static string Closing(ScopeBoxPlan plan, string where, bool applied, int refusedCount, int ready)
         {
             var said = new StringBuilder();
             said.AppendLine(Written(applied, refusedCount, ready));
             said.AppendLine();
-            said.AppendLine("Report written to");
-            said.AppendLine(path);
+            said.AppendLine(where);
             said.AppendLine();
             said.Append(Counts(plan));
             return said.ToString();

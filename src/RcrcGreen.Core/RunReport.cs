@@ -22,7 +22,8 @@ namespace RcrcGreen.Core
             DateTime writtenAt,
             bool applied,
             IEnumerable<RunRefusal> failed,
-            IEnumerable<RunRefusal> needingAttention)
+            IEnumerable<RunRefusal> needingAttention,
+            IEnumerable<RunRefusal> leftBehind)
         {
             if (plan == null) throw new ArgumentNullException("plan");
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
@@ -33,6 +34,9 @@ namespace RcrcGreen.Core
             IReadOnlyList<RunRefusal> attention =
                 (needingAttention ?? Enumerable.Empty<RunRefusal>()).Where(one => one != null).ToList();
 
+            IReadOnlyList<RunRefusal> stillThere =
+                (leftBehind ?? Enumerable.Empty<RunRefusal>()).Where(one => one != null).ToList();
+
             var report = new StringBuilder();
 
             Line(report, "RCRC GREEN, DRAWING SHEET RUN");
@@ -41,7 +45,22 @@ namespace RcrcGreen.Core
             Line(report, string.Empty);
             Line(report, applied ? "The run was confirmed and written." : "Nothing was written.");
             Line(report, plan.InWords());
+
+            // At the top, not buried. A wrong schedule sitting in the model is the one thing in
+            // here that gets worse the longer nobody reads it.
+            if (stillThere.Count > 0)
+            {
+                Line(report, string.Empty);
+                Line(report, "READ THIS FIRST. " + stillThere.Count
+                    + (stillThere.Count == 1 ? " wrong schedule is" : " wrong schedules are")
+                    + " in the model and could not");
+                Line(report, "be removed. Each one is named below and has to be deleted by hand.");
+            }
+
             Line(report, string.Empty);
+
+            Section(report, "CREATED WRONG AND STILL IN THE MODEL, DELETE BY HAND",
+                stillThere.Select(one => one.ToString()));
 
             Section(report, "PLAN VIEWS", plan.Items
                 .Where(item => item.Kind == RunItemKind.PlanView)
@@ -75,8 +94,10 @@ namespace RcrcGreen.Core
             Line(report, "new view carries no annotation, dimensions, tags or detailing.");
             Line(report, "A schedule is captured from a plot that already has it and rebuilt for");
             Line(report, "the target plot, with only the filter naming the plot changed.");
-            Line(report, "A schedule that lost a FILTER is not created at all. It would show every");
-            Line(report, "plot's elements and read as correct on a drawing. A schedule short of a");
+            Line(report, "A schedule that lost a FILTER is deleted again inside the same");
+            Line(report, "transaction, because it would show every plot's elements and read as");
+            Line(report, "correct on a drawing. When Revit refuses that delete, the schedule is in");
+            Line(report, "the model and is named at the top of this report. A schedule short of a");
             Line(report, "FIELD is created and named above, because a missing column can be seen.");
 
             return report.ToString();

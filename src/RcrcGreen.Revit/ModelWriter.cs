@@ -28,7 +28,8 @@ namespace RcrcGreen.Revit
             Dictionary<ViewType, CapturedSchedule> definitions,
             Dictionary<string, ElementId> boxIdByName,
             List<RunRefusal> refused,
-            List<RunRefusal> attention)
+            List<RunRefusal> attention,
+            List<RunRefusal> leftBehind)
         {
             foreach (RunItem item in plan.Items)
             {
@@ -36,7 +37,7 @@ namespace RcrcGreen.Revit
                 {
                     if (item.Kind == RunItemKind.Schedule)
                     {
-                        MakeSchedule(document, item, definitions, refused, attention);
+                        MakeSchedule(document, item, definitions, refused, attention, leftBehind);
                     }
                     else
                     {
@@ -192,7 +193,8 @@ namespace RcrcGreen.Revit
             RunItem item,
             Dictionary<ViewType, CapturedSchedule> definitions,
             List<RunRefusal> refused,
-            List<RunRefusal> attention)
+            List<RunRefusal> attention,
+            List<RunRefusal> leftBehind)
         {
             CapturedSchedule captured;
             if (!definitions.TryGetValue(item.Type, out captured))
@@ -251,16 +253,32 @@ namespace RcrcGreen.Revit
 
             if (missingFilters.Count > 0)
             {
-                document.Delete(made.Id);
+                string lost = string.Join(", ", missingFilters.ToArray());
+                string named = made.Name;
 
-                refused.Add(new RunRefusal(
+                // The delete is guarded on its own rather than left to the catch around the
+                // whole item. If Revit refuses it there, the report would say the schedule was
+                // deleted while the model still held it, and a report that disagrees with the
+                // model is the one thing worth more than the schedule.
+                if (Deleted(document, made))
+                {
+                    refused.Add(new RunRefusal(
+                        item.PlotId,
+                        item.Type,
+                        "Created and then deleted again, because " + missingFilters.Count
+                        + " of its filters could not be applied. Not applied: " + lost
+                        + ". A schedule missing a filter shows every plot's elements and reads as "
+                        + "correct on a drawing, so it is not left in the model."));
+                    return;
+                }
+
+                leftBehind.Add(new RunRefusal(
                     item.PlotId,
                     item.Type,
-                    "Created and then deleted again, because " + missingFilters.Count
-                    + " of its filters could not be applied. Not applied: "
-                    + string.Join(", ", missingFilters.ToArray())
-                    + ". A schedule missing a filter shows every plot's elements and reads as "
-                    + "correct on a drawing, so it is not left in the model."));
+                    "STILL IN THE MODEL, named " + named + ". It is missing " + missingFilters.Count
+                    + " of its filters, not applied: " + lost + ". Revit refused to delete it "
+                    + "again, so it is there and it is wrong. It shows every plot's elements and "
+                    + "will read as correct on a drawing. Delete it by hand."));
                 return;
             }
 
@@ -273,6 +291,32 @@ namespace RcrcGreen.Revit
                     + "not schedulable for this category here. Missing: "
                     + string.Join(", ", missingFields.ToArray())
                     + ". The schedule is short of those columns."));
+            }
+        }
+
+        /// <summary>
+        /// True only when the schedule really is gone. Deleting an element made earlier in the
+        /// same transaction ought to work and has never been run, so what happens when it does
+        /// not is written down rather than assumed away.
+        /// </summary>
+        private static bool Deleted(Document document, ViewSchedule made)
+        {
+            try
+            {
+                ICollection<ElementId> gone = document.Delete(made.Id);
+                return gone != null && gone.Count > 0;
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return false;
             }
         }
 

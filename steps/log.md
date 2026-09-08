@@ -4,6 +4,112 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, twelfth pass. A guarded delete, reports the code can read, and cases that open
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 17, one commit. This entry goes in with
+the work, so the merge and the runner count are written into it by the follow-up.
+
+### 1. The delete I flagged last round
+
+`ModelWriter.MakeSchedule` builds a schedule, notices a filter would not go on, and deletes it
+again inside the same transaction. Last round I wrote that down as the right call and then
+wrote the delete unguarded, so the whole thing rested on `document.Delete` never failing.
+
+If it did fail, the exception would have been caught by the handler around the whole item and
+turned into "Revit refused it", while the report's own closing note still said a schedule that
+lost a filter is never created. The model would have held a schedule showing every plot's
+elements and the report would have said it was gone.
+
+`ModelWriter.Deleted` returns true only when `document.Delete` came back with something in it,
+and catches the three exception types the rest of the file catches. A false does not fall
+through to the refusal list. It goes to a third list, `leftBehind`, which prints under a section
+of its own, `CREATED WRONG AND STILL IN THE MODEL, DELETE BY HAND`, naming the schedule, the
+filters it lost and what that means on a drawing.
+
+`RunReport` puts a banner above every section when that list is not empty, because the section
+is a long way down and the one person who needs it is the one who stopped reading. The panel
+status line says the same thing in capitals before it says how many were made.
+
+Two things came out of writing it. The banner said "1 wrong schedules are in the model", so it
+reads singular now. And the closing note of every run report said a schedule that lost a filter
+is not created at all, which stopped being true the moment the delete could fail, so it now says
+what happens when Revit refuses. There is a test that fails if that old sentence comes back.
+
+### 2. Reports where this can read them
+
+Every report went to the Desktop only. That is where the team looks and it is the one place
+nothing here can reach, so a run on a real model came back to me as a description of a report
+rather than a report.
+
+`ReportFile.Write` now writes both. The Desktop copy is unguarded, because a report that cannot
+be written at all is worth an exception. The repo copy is guarded and never costs the first one.
+It returns the paths that really landed, and `ReportPlaces.Written` turns that list into the
+line the panel shows, so the panel names what exists rather than what was attempted.
+
+Revit runs the add-in from `%APPDATA%\Autodesk\Revit\Addins\2024\` and has no idea where the
+repo is. `install.ps1` writes the absolute path into `reports-folder.txt` beside the installed
+assembly and lists it with everything else it copied. No pointer file means the Desktop only,
+and the status line says so and says to run `install.ps1` again.
+
+**That folder is in `.gitignore` and stays there.** This repository is public. A report carries
+client view names, sheet numbers, plot identifiers, scope box names and the full field list of
+every schedule it touched. `reports/README.md` is the only tracked file in it and says why, and
+`git add reports/` was run to confirm that it stages the README and nothing else.
+
+### 3. Six numbers and a button
+
+The scope box section read A 0, B 102, C 66, D 0, E 13, F 1 on the real model. F 1 is one view
+carrying a scope box that is not its plot's, and finding out which view meant opening a text
+file on the Desktop.
+
+Five of the six are buttons now. Clicking one lists its views by plot and by name with the box
+each one holds, and clicking a view opens it in Revit through the external event, the same route
+the grid cells use. One case is open at a time, because six lists inside a docked pane is a
+scroll rather than a view. B stays a plain line, 102 schedules with no scope box parameter and
+nothing anyone acts on. A case with a count of 0 is drawn disabled rather than left looking
+clickable.
+
+`ScopeBoxCounts` keeps the decisions per case now instead of only the totals, so `Of` is
+`In(...).Count` and a list can never be a different length from the number above it. That is the
+same fault as the column count and the grid cell, and it is now the third time one fact kept in
+two places has been the bug, so this one is not kept in two places. There is a test that walks
+all six cases and holds the count against the list.
+
+Assign is unchanged. It acts on C alone, it confirms, it writes in one transaction.
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln` and `dotnet test`, both run after the last file was written.
+Build 0 warnings and 0 errors across all three projects. 274 tests, 0 failed and 0 skipped,
+locally. 17 of them are new. The runner count follows in the report round.
+
+`git add reports/` staged `reports/README.md` alone, which is the only way to check the ignore
+rule without committing a report.
+
+### What has still never been observed
+
+The list from last round has not shrunk. Nothing in the Revit project has run on this machine
+and nothing in the write path has ever run anywhere.
+
+- No view and no schedule has ever been created by this tool
+- No schedule has ever lost a filter, so the delete has never been reached
+- `ModelWriter.Deleted` has never returned false, and no report has ever carried the section
+  that exists for it. Every sentence about what Revit does when a delete is refused is read off
+  the API and not off a run
+- `ReportFile` has never written anything. Neither path has been written to, `reports-folder.txt`
+  has never been read by the add-in, and no report has ever landed in `reports/`
+- `install.ps1` has not been run since it started writing that file
+- The case list buttons have not been rendered. Whether a stretched Button reads as a row on
+  either theme, what a 66 entry list does to the height of a docked pane, and whether a full
+  view name fits the width are all unknown
+- Clicking a view in a case list has never opened a view. The route is the one the grid uses
+  and the grid has been clicked in Revit, but these buttons have not
+
+`design/pr-17/panel.html` is a hand drawn mockup of the case lists and the report, in both
+themes, and says at the top that it is not a screenshot.
+
+---
+
 ## 2026-09-08, eleventh pass. Two silent skips in the write path, and how a view is really made
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request

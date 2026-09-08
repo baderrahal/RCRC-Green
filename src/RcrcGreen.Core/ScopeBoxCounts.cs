@@ -15,11 +15,12 @@ namespace RcrcGreen.Core
     /// </summary>
     public sealed class ScopeBoxCounts
     {
-        private readonly Dictionary<ScopeBoxCase, int> _counts;
+        private readonly Dictionary<ScopeBoxCase, IReadOnlyList<ViewScopeBoxDecision>> _byCase;
 
-        private ScopeBoxCounts(Dictionary<ScopeBoxCase, int> counts, int considered)
+        private ScopeBoxCounts(
+            Dictionary<ScopeBoxCase, IReadOnlyList<ViewScopeBoxDecision>> byCase, int considered)
         {
-            _counts = counts;
+            _byCase = byCase;
             Considered = considered;
         }
 
@@ -31,13 +32,18 @@ namespace RcrcGreen.Core
             IReadOnlyList<ViewScopeBoxState> narrowed = Narrow(views, plotsWanted);
             ScopeBoxPlan plan = ScopeBoxPlan.Decide(narrowed, scopeBoxNames);
 
-            var counts = new Dictionary<ScopeBoxCase, int>();
+            // The views themselves are kept, not just how many. F equals 1 on the real model
+            // and the useful thing in that number is which view it is, which a count cannot say.
+            var byCase = new Dictionary<ScopeBoxCase, IReadOnlyList<ViewScopeBoxDecision>>();
             foreach (ScopeBoxCase outcome in (ScopeBoxCase[])Enum.GetValues(typeof(ScopeBoxCase)))
             {
-                counts[outcome] = plan.Count(outcome);
+                byCase[outcome] = plan.Of(outcome)
+                    .OrderBy(decision => decision.PlotId, NaturalOrder.Comparer)
+                    .ThenBy(decision => decision.ViewName, StringComparer.Ordinal)
+                    .ToList();
             }
 
-            return new ScopeBoxCounts(counts, narrowed.Count);
+            return new ScopeBoxCounts(byCase, narrowed.Count);
         }
 
         /// <summary>
@@ -73,8 +79,19 @@ namespace RcrcGreen.Core
 
         public int Of(ScopeBoxCase outcome)
         {
-            int found;
-            return _counts.TryGetValue(outcome, out found) ? found : 0;
+            return In(outcome).Count;
+        }
+
+        /// <summary>
+        /// The views in one case, plot order then name order, so a person can open the one they
+        /// need rather than reading a file on the Desktop to find out which it is.
+        /// </summary>
+        public IReadOnlyList<ViewScopeBoxDecision> In(ScopeBoxCase outcome)
+        {
+            IReadOnlyList<ViewScopeBoxDecision> found;
+            return _byCase.TryGetValue(outcome, out found)
+                ? found
+                : (IReadOnlyList<ViewScopeBoxDecision>)new List<ViewScopeBoxDecision>();
         }
 
         public int ReadyToAssign

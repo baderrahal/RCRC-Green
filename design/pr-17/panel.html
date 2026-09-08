@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drawing Sheet panel layout, pull request 17</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 880px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; }
+  .note { max-width: 880px; }
+
+  /* The two palettes are the values in PanelTheme.cs, nothing else. */
+  .panel { width: 400px; padding: 8px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .warn { color: #b22222; }
+  .dark  .warn { color: #ff8080; }
+
+  .heading { font-weight: bold; margin: 10px 0 4px; }
+  .heading:first-child { margin-top: 0; }
+  .row { display: flex; align-items: center; margin: 2px 0; }
+  .row .cap { width: 52px; flex: none; }
+  .combo, .text { flex: 1; background: #fdfdfd; color: #1a1a1a;
+                  border: 1px solid #adadad; padding: 2px 4px; }
+  .count { margin: 4px 0; }
+  .slot { border: 1px dashed #888; padding: 4px; margin: 2px 0 6px;
+          min-height: 36px; overflow-x: auto; }
+  table { border-collapse: collapse; }
+  th, td { padding: 2px 8px 2px 4px; text-align: left; font-weight: normal; vertical-align: top; }
+  th { font-weight: bold; max-width: 110px; }
+  .cell { display: inline-block; min-width: 30px; text-align: center; font-size: 14px;
+          background: #ddd; color: #1a1a1a; border: 1px solid #adadad; padding: 1px 0; margin: 1px; }
+  .btn { display: block; width: 100%; box-sizing: border-box; background: #ddd; color: #1a1a1a;
+         border: 1px solid #adadad; padding: 3px; margin: 3px 0; text-align: center; }
+  .small { display: inline-block; width: auto; padding: 1px 8px; margin: 0 4px 2px 0; }
+
+  /* A case line. A Button stretched across the pane, left aligned, so the sign at the
+     front lines up down the column. */
+  .case { display: block; width: 100%; box-sizing: border-box; background: #ddd; color: #1a1a1a;
+          border: 1px solid #adadad; padding: 1px 4px; margin: 1px 0; text-align: left;
+          font: 12px/1.45 "Segoe UI", Arial, sans-serif; white-space: pre; }
+  .case.dead { opacity: 0.45; }
+  .plain { margin: 1px 0; padding: 1px 4px; }
+  .viewline { display: block; box-sizing: border-box; width: calc(100% - 16px);
+              margin: 0 0 1px 16px; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+              padding: 0 4px; text-align: left; white-space: pre; overflow: hidden;
+              text-overflow: ellipsis; }
+  .status { margin-top: 8px; }
+  .runline { margin: 1px 0; }
+  .loud { font-weight: bold; }
+  .light .loud { color: #b22222; }
+  .dark  .loud { color: #ff8080; }
+  .key td, .key th { border-bottom: 1px solid #ddd; padding: 4px 12px 4px 0; }
+  .mark { font-size: 15px; }
+  code { background: #eee; padding: 0 3px; }
+  pre.report { background: #fff; border: 1px solid #999; padding: 12px 16px; max-width: 880px;
+               overflow-x: auto; font: 12px/1.45 Consolas, "Courier New", monospace; }
+</style>
+</head>
+<body>
+
+<h1>Drawing Sheet panel layout</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show how Revit's
+  theme will paint the panel, how a stretched Button looks against the dark theme's pane, what
+  the real fonts and spacing come out as, whether a long view name fits the width of a docked
+  pane, or whether the box characters in the grid have a glyph in the font Revit uses.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on
+  it. If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>The scope box section, with case F open</h2>
+
+<p class="caption">The counts are the ones the real model gave over one range: A 0, B 102,
+C 66, D 0, E 13, F 1. F is the single view carrying a scope box that is not its plot's, and
+the number on its own never said which view that was.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme. Background #ffffff, text #1a1a1a.</p>
+<div class="panel light">
+
+  <div class="heading">SCOPE BOXES</div>
+  <div class="plain">181 views across 6 ticked plots.</div>
+  <span class="case dead">+  A, name does not parse: 0</span>
+  <div class="plain">B, cannot hold a scope box: 102</div>
+  <span class="case">+  C, ready to assign: 66</span>
+  <span class="case dead">+  D, no scope box for that plot: 0</span>
+  <span class="case">+  E, already right: 13</span>
+  <span class="case">-  F, holds a different scope box: 1</span>
+  <span class="viewline">DM-11   DM-11-(200) General Arrangement Layout   holds DM-41</span>
+  <div class="plain">Only C is written.</div>
+  <span class="btn">Assign Scope Boxes</span>
+
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme. Background #2e2e2e, text #e6e6e6.</p>
+<div class="panel dark">
+
+  <div class="heading">SCOPE BOXES</div>
+  <div class="plain">181 views across 6 ticked plots.</div>
+  <span class="case dead">+  A, name does not parse: 0</span>
+  <div class="plain">B, cannot hold a scope box: 102</div>
+  <span class="case">+  C, ready to assign: 66</span>
+  <span class="case dead">+  D, no scope box for that plot: 0</span>
+  <span class="case">+  E, already right: 13</span>
+  <span class="case">-  F, holds a different scope box: 1</span>
+  <span class="viewline">DM-11   DM-11-(200) General Arrangement Layout   holds DM-41</span>
+  <div class="plain">Only C is written.</div>
+  <span class="btn">Assign Scope Boxes</span>
+
+</div>
+</div>
+
+</div>
+
+<h2>Case D open on a range that has one</h2>
+
+<p class="caption">D is the other case a person acts on. A view whose plot has no scope box at
+all cannot be assigned one by this tool, and the fix is to draw the box. The list gives the
+plot and the view, and no box name, because there is none to give.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme.</p>
+<div class="panel light">
+
+  <div class="heading">SCOPE BOXES</div>
+  <div class="plain">24 views across 4 ticked plots.</div>
+  <span class="case dead">+  A, name does not parse: 0</span>
+  <div class="plain">B, cannot hold a scope box: 6</div>
+  <span class="case">+  C, ready to assign: 9</span>
+  <span class="case">-  D, no scope box for that plot: 3</span>
+  <span class="viewline">DM-13   DM-13-(010) Location Key Plan</span>
+  <span class="viewline">DM-13   DM-13-(200) General Arrangement Layout</span>
+  <span class="viewline">DM-13   DM-13-(400) Landscape Cross Section</span>
+  <span class="case">+  E, already right: 6</span>
+  <span class="case dead">+  F, holds a different scope box: 0</span>
+  <div class="plain">Only C is written.</div>
+  <span class="btn">Assign Scope Boxes</span>
+
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme.</p>
+<div class="panel dark">
+
+  <div class="heading">SCOPE BOXES</div>
+  <div class="plain">24 views across 4 ticked plots.</div>
+  <span class="case dead">+  A, name does not parse: 0</span>
+  <div class="plain">B, cannot hold a scope box: 6</div>
+  <span class="case">+  C, ready to assign: 9</span>
+  <span class="case">-  D, no scope box for that plot: 3</span>
+  <span class="viewline">DM-13   DM-13-(010) Location Key Plan</span>
+  <span class="viewline">DM-13   DM-13-(200) General Arrangement Layout</span>
+  <span class="viewline">DM-13   DM-13-(400) Landscape Cross Section</span>
+  <span class="case">+  E, already right: 6</span>
+  <span class="case dead">+  F, holds a different scope box: 0</span>
+  <div class="plain">Only C is written.</div>
+  <span class="btn">Assign Scope Boxes</span>
+
+</div>
+</div>
+
+</div>
+
+<h2>The three states of one case line</h2>
+
+<table class="key">
+  <tr><th>Line</th><th>What it means</th></tr>
+  <tr>
+    <td><span class="case" style="width:300px">+  C, ready to assign: 66</span></td>
+    <td>Closed and clickable. The tooltip says show the 66 views in this case, click one to
+    open it.</td>
+  </tr>
+  <tr>
+    <td><span class="case" style="width:300px">-  C, ready to assign: 66</span></td>
+    <td>Open. The 66 views are listed under it, indented, in plot order with the number read
+    as a number, so DM-2 comes before DM-100.</td>
+  </tr>
+  <tr>
+    <td><span class="case dead" style="width:300px">+  A, name does not parse: 0</span></td>
+    <td>Disabled, because there is nothing to open. The tooltip says nothing in this case.</td>
+  </tr>
+  <tr>
+    <td><span class="plain" style="display:inline-block;width:300px">B, cannot hold a scope
+    box: 102</span></td>
+    <td>Not a button at all. B is schedules and drafting views that have no scope box
+    parameter, and nobody acts on that number.</td>
+  </tr>
+</table>
+
+<p class="note">One case is open at a time. Opening a second closes the first, and clicking an
+open case closes it. Six lists at once inside a docked pane is a scroll rather than a view.</p>
+
+<h2>Where the panel says a report went</h2>
+
+<p class="caption">Every report now lands in two places under the same file name. The status
+line names both.</p>
+
+<div class="panel light" style="width:640px">
+  <div class="heading">MODEL</div>
+  <span class="btn small">Refresh</span><span class="btn small">Scan Model</span>
+  <div class="status">Report at C:\Users\bader\Desktop\RCRC-Green-Run_RCRC_NG05_2026-09-08_1407.txt
+  and C:\src\RCRC-Green\reports\RCRC-Green-Run_RCRC_NG05_2026-09-08_1407.txt.</div>
+</div>
+
+<p class="note">When <code>reports-folder.txt</code> is not next to the installed assembly, the
+add-in has no way to know where the repo is, and the line says so instead of naming a file that
+was never written.</p>
+
+<div class="panel light" style="width:640px">
+  <div class="heading">MODEL</div>
+  <span class="btn small">Refresh</span><span class="btn small">Scan Model</span>
+  <div class="status">Report at C:\Users\bader\Desktop\RCRC-Green-Run_RCRC_NG05_2026-09-08_1407.txt.
+  Not written into the repo, because reports-folder.txt is not next to the add-in. Run
+  install.ps1 again to put it there.</div>
+</div>
+
+<h2>When a delete is refused</h2>
+
+<p class="caption">A schedule that lost its plot filter is deleted again inside the same
+transaction. If Revit refuses that delete, the model holds a wrong schedule, and the status
+line says so before it says anything else.</p>
+
+<div class="panel light" style="width:640px">
+  <div class="heading">RUN</div>
+  <div class="runline"><span class="loud">1 WRONG SCHEDULE IS IN THE MODEL AND MUST BE DELETED
+  BY HAND.</span> 12 created, 1 not created. Press Refresh to see them. Report at
+  C:\Users\bader\Desktop\RCRC-Green-Run_RCRC_NG05_2026-09-08_1407.txt and
+  C:\src\RCRC-Green\reports\RCRC-Green-Run_RCRC_NG05_2026-09-08_1407.txt.</div>
+</div>
+
+<p class="note">The report opens with the same warning, because the section naming the
+schedule is a long way down and nobody should have to reach it to find out.</p>
+
+<pre class="report">RCRC GREEN, DRAWING SHEET RUN
+RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached
+2026-09-08 14:07:12
+
+The run was confirmed and written.
+This run would make 12 plan views and 2 schedules.
+
+READ THIS FIRST. 1 wrong schedule is in the model and could not
+be removed. Each one is named below and has to be deleted by hand.
+
+CREATED WRONG AND STILL IN THE MODEL, DELETE BY HAND, 1
+  DM-14 (600) HARDSCAPE SCHEDULE. STILL IN THE MODEL, named DM-14-(600) HARDSCAPE SCHEDULE. It is missing 1 of its filters, not applied: PRX_Ref Plot ID equals DM-14. Revit refused to delete it again, so it is there and it is wrong. It shows every plot's elements and will read as correct on a drawing. Delete it by hand.
+
+PLAN VIEWS, 12
+  ...</pre>
+
+<p class="note">One refusal is one line in the file, however long it runs. The report is read in
+a text editor with wrapping on, and breaking it here would have shown a shape the file does not
+have.</p>
+
+<h2>What changed from pull request 13</h2>
+
+<ul class="note">
+  <li>Five of the six scope box counts are buttons. Clicking one lists its views by plot and
+  by name, with the scope box each one holds where there is one.</li>
+  <li>Clicking a view in a list opens it in Revit, through the external event, the same route
+  the grid cells already use. The panel calls nothing itself.</li>
+  <li>B stays a plain line. It is 102 schedules with no scope box parameter.</li>
+  <li>A case with a count of 0 is drawn disabled rather than left looking clickable.</li>
+  <li>The counts and the lists both come from <code>ScopeBoxCounts</code>, so a list can never
+  be a different length from the number above it. There is a test that walks all six cases and
+  holds one against the other.</li>
+  <li>Assign is unchanged. It still acts on C alone, still asks first, still one transaction.</li>
+  <li>The status line after any report names every place the file really landed.</li>
+  <li>A run that left something wrong in the model says so in bold at the top of the status
+  line, before the count of what was made.</li>
+</ul>
+
+<h2>What this mockup cannot tell you</h2>
+
+<ul class="note">
+  <li>Whether a stretched Button reads as a row or as a control on either Revit theme. WPF
+  gives a Button its own chrome and <code>PanelTheme</code> does not paint it.</li>
+  <li>What a 66 entry list does to the height of a docked pane, and whether the scroll that
+  follows is usable.</li>
+  <li>Whether a full view name fits the width. The line is set to clip rather than wrap, and
+  that has not been seen.</li>
+  <li>Whether clicking a view in a case list activates it. The external event route is the one
+  the grid uses and the grid has been clicked in Revit, but these buttons have not.</li>
+  <li>Any of the report text above. The write path has never run.</li>
+</ul>
+
+</body>
+</html>
