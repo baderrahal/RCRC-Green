@@ -37,7 +37,7 @@ jobs:
             echo "No test result file was written. This gate is not protecting anything."
             exit 1
           fi
-          TOTAL=$(grep -o 'total="[0-9]*"' "$RESULTS" | head -1 | grep -o '[0-9]*')
+          TOTAL=$(grep -o '<Counters[^>]*total="[0-9]*"' "$RESULTS" | head -1 | grep -o '[0-9][0-9]*')
           if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
             echo "Zero tests ran. This gate is not protecting anything."
             exit 1

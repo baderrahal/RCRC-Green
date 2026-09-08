@@ -73,6 +73,15 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
+        public void AStrayNewlineDoesNotGetTrimmedAwayIntoAValidName()
+        {
+            ParsedViewName parsed;
+
+            Assert.False(ViewNameParser.TryParse("DM-41-(010) Location Key Plan\n", out parsed));
+            Assert.False(ViewNameParser.TryParse("\nDM-41-(010) Location Key Plan", out parsed));
+        }
+
+        [Fact]
         public void AViewNameHoldingBracketsOfItsOwnStillParses()
         {
             ParsedViewName parsed;

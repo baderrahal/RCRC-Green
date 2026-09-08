@@ -14,6 +14,8 @@ case "$COMMAND" in
   *) exit 0 ;;
 esac
 
+cd "$(git rev-parse --show-toplevel)"
+
 REQUIRED="steps/ai-max-state.md"
 
 if [ ! -f "$REQUIRED" ]; then
@@ -21,7 +23,9 @@ if [ ! -f "$REQUIRED" ]; then
   exit 2
 fi
 
-if ! git diff --cached --name-only | grep -qx "$REQUIRED"; then
+# -F and -x together, so the dots and the slash in the path are read as themselves and a
+# near miss such as steps/ai-max-state.md.bak does not count as the file being present.
+if ! git diff --cached --name-only | grep -qxF "$REQUIRED"; then
   echo "Refused. $REQUIRED is not in this commit. Update it, stage it, then commit." >&2
   exit 2
 fi

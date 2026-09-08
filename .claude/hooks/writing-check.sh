@@ -21,11 +21,6 @@ esac
 
 cd "$(git rev-parse --show-toplevel)"
 
-STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
-if [ -z "$STAGED" ]; then
-  exit 0
-fi
-
 read -r -d '' SCAN <<'PY' || true
 import re
 import subprocess
@@ -43,7 +38,11 @@ EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F]")
 
 
 def banned_words():
-    with open(RULES_FILE, encoding="utf-8") as rules:
+    try:
+        rules = open(RULES_FILE, encoding="utf-8")
+    except IOError:
+        return []
+    with rules:
         for line in rules:
             if not line.startswith("Avoid:"):
                 continue
@@ -56,16 +55,20 @@ def banned_words():
     return []
 
 
+UNREADABLE = object()
+BINARY = object()
+
+
 def staged_text(path):
     blob = subprocess.run(["git", "show", ":" + path], capture_output=True)
     if blob.returncode != 0:
-        return None
+        return UNREADABLE
     if b"\x00" in blob.stdout:
-        return None
+        return BINARY
     try:
         return blob.stdout.decode("utf-8")
     except UnicodeDecodeError:
-        return None
+        return BINARY
 
 
 words = banned_words()
@@ -83,7 +86,12 @@ for path in sys.argv[1:]:
     if path.startswith(SKIP_PREFIX):
         continue
     text = staged_text(path)
-    if text is None:
+    if text is BINARY:
+        continue
+    if text is UNREADABLE:
+        # Skipping in silence would let a file through unchecked, which is the one outcome
+        # this hook exists to prevent.
+        findings.append(path + " is staged but could not be read back out of the index.")
         continue
     for number, line in enumerate(text.splitlines(), start=1):
         where = path + ":" + str(number)
@@ -109,7 +117,9 @@ if findings:
     sys.exit(1)
 PY
 
-if printf '%s\n' "$STAGED" | xargs -d '\n' python3 -c "$SCAN" >&2; then
+# NUL separated, because a file name holding a space, a quote or a newline would otherwise
+# arrive at the scanner in pieces and the pieces would read as files that do not exist.
+if git diff --cached --name-only -z --diff-filter=ACMR | xargs -0 -r python3 -c "$SCAN" >&2; then
   exit 0
 fi
 

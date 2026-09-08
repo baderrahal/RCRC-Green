@@ -13,7 +13,7 @@ namespace RcrcGreen.Core
         /// </summary>
         public const string Pattern = "[A-Za-z]{2}-[0-9]+";
 
-        private static readonly Regex Whole = new Regex("^" + Pattern + "$", RegexOptions.CultureInvariant);
+        private static readonly Regex Whole = new Regex(@"\A" + Pattern + @"\z", RegexOptions.CultureInvariant);
 
         public static bool IsPlotId(string candidate)
         {

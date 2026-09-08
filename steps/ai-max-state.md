@@ -23,6 +23,11 @@ SessionStart hook that prints one line pointing at the skill.
 - `writing-check.sh` on Bash. Refuses a commit whose staged files hold an em dash, a
   generated-by footer, a co-author credit line, an emoji, or a banned word.
 
+All three were run by hand against crafted input before being trusted. The file list inside
+`writing-check.sh` is NUL separated, because a file name holding a space or a quote arrived
+at the scanner in pieces otherwise and the pieces read as files that do not exist, which is
+a file going through unchecked rather than a visible failure.
+
 **6, test gate.** `.github/workflows/tests.yml`. Runs on pull requests into main, on
 ubuntu-latest, over `tests/RcrcGreen.Core.Tests` only, and fails when the result file reports
 zero tests.

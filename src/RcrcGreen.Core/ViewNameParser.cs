@@ -9,7 +9,7 @@ namespace RcrcGreen.Core
     public static class ViewNameParser
     {
         private static readonly Regex Shape = new Regex(
-            "^(?<plot>" + PlotId.Pattern + ")-\\((?<code>[0-9]+)\\) (?<view>.+)$",
+            @"\A(?<plot>" + PlotId.Pattern + @")-\((?<code>[0-9]+)\) (?<view>.+)\z",
             RegexOptions.CultureInvariant);
 
         /// <summary>
