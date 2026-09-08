@@ -4,11 +4,24 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, seventeenth pass. The report for the split round
+
+Branch `claude/rcrc-green-setup-wf9ham`. Both log entries went in with their work, so neither
+could carry its own merge or runner count. Both carry them now.
+
+Pull request 22 merged as `ab83eb1` and the gate executed 352 tests against it. Pull request 23
+merged as `cd987d0` and the gate executed 361. 0 failed and 0 skipped on each, and both match
+the local run the entry already named.
+
+Nothing else changed. No code is touched here.
+
+---
+
 ## 2026-09-08, sixteenth pass. Sheets, rebuilt
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request 23, one commit, the second half of the
-round pull request 22 opened. This entry goes in with the work, so the merge and the runner
-count are written into it by the follow-up.
+round pull request 22 opened. Merged as `cd987d0` with 361 tests against it on the runner, 0
+failed and 0 skipped.
 
 ### What was there, and the fault it hid
 
@@ -95,15 +108,14 @@ The mockup is at `design/pr-23/panel.html`, in both themes, drawn by hand from
 `DrawingSheetPanel.cs`. It is not a screenshot and says so at the top.
 
 Locally, after the last file was written, `dotnet build RcrcGreen.sln` came back with 0 warnings
-and 0 errors and `dotnet test` with 361 passed and 0 failed. The runner count goes in with the
-follow-up, because the runner is what the gate reads.
+and 0 errors and `dotnet test` with 361 passed and 0 failed. The runner agreed on both counts.
 
 ---
 
 ## 2026-09-08, fifteenth pass. Four fixes off the first run that created anything
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 22, one commit. This entry goes in with
-the work, so the merge and the runner count are written into it by the follow-up.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 22, one commit. Merged as `ab83eb1` with
+352 tests against it on the runner, 0 failed and 0 skipped.
 
 **This round is split.** Items 1 to 4 are here. Item 5, sheets rebuilt, is a second pull
 request. It replaces the whole sheet route, adds layout maths to Core and rebuilds step 4, and
