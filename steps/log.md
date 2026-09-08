@@ -4,6 +4,158 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, ninth pass. The grid was reporting views that are not there
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 11, one commit.
+
+### The cause, and the evidence for it
+
+`DrawingSheetReader` took a view's plot from one place and its view type from another, and
+never checked the two agreed. The line was this:
+
+```
+present.Add(new PlotViewPresence(reading.PlotId, parsed.Type, view.Id.Value));
+```
+
+`reading.PlotId` is PRX_Plot_ID when the view carries one. `parsed.Type` is the code and view
+name out of the view's own name. So a view **named** `DM-12-(200) General Arrangement Layout`
+carrying **PRX_Plot_ID** `DM-11` was filed as DM-11 having a (200) General Arrangement Layout.
+Delete every DM-11 view and that cell stays filled, because the view holding it belongs to
+DM-12 and is still there. Clicking the cell opens a DM-12 view.
+
+That is candidate b in the brief, and it is code I can point at rather than a guess. It is
+also self inflicted, from the round that made PRX_Plot_ID the first source. The comment left
+there at the time considered the case where the parameter gives a plot and the name does not
+parse. It did not consider the case where both give a plot and they differ.
+
+The evidence is a test, not a reading of the code. `ViewReadingTests` feeds the disagreeing
+pair in and asserts on the plot that comes back. Before the fix that test would have got
+DM-11. It now gets DM-12, and 214 tests pass.
+
+### What I could not determine, and what would settle it
+
+Whether that is what the user actually hit. I cannot run Revit and I have no copy of the
+model, so I cannot see whether any view in it carries a PRX_Plot_ID that disagrees with its
+own name.
+
+Candidate a, the refresh never running, is not ruled out. What can be said about it from the
+code is this. A refresh that reached the panel called `_columns.Clear()` and `FillPrefixes`,
+which emptied the prefix, from and to dropdowns and blanked the grid. So a refresh that worked
+left nothing on screen to be stale. For the user to be looking at DM-11 with two filled columns
+afterwards, they must have re-picked the prefix and re-added both columns, and the presences
+then came from a fresh read, which points at b. If instead the grid did not change at all when
+Refresh was pressed, that is a and nothing in this round touches it.
+
+**What would settle it in one look.** The status line after pressing Refresh. It now reads the
+number of views, the time of the read, and how many views are named for one plot while
+carrying PRX_Plot_ID for another. Three answers come out of it:
+
+- the time does not change when Refresh is pressed. The request is not reaching Revit or its
+  result is not reaching the panel. Cause a, and still open
+- the time changes and the disagreement count is above zero. Cause b, and fixed here
+- the time changes, the disagreement count is zero, and a deleted view still shows. Neither,
+  and I would want the view name, its PRX_Plot_ID, and whether it appears in the Scan Model
+  report from the same session
+
+The time on the read was added for exactly this. The first time a refresh looked wrong there
+was no way to tell whether it had run.
+
+### The fix
+
+`ViewReading` in Core is now the one place that decides what a view contributes. The plot on a
+row still comes from PRX_Plot_ID first, because that is what recovers the 1,269 views whose
+names do not parse. The plot on a **cell** comes from the name and nothing else. A view whose
+name does not parse carries no view type and so fills no cell, which was already true. A view
+whose two sources disagree is counted, and the count is on screen.
+
+The rule, written into `.claude/rules/core-rules.md`: the grid must never show a view as
+existing when it is not in the model.
+
+### The stale read
+
+`Shown` returned early on `_readOnce && !_model.Empty`, so opening a second document left the
+first one's plots on screen. It now reads every time the pane is shown. The panel cannot tell
+from outside that the document changed, and the read is fast enough that reading again costs
+nothing.
+
+A refresh also no longer throws away what the user had picked. The prefix, the first plot and
+the last plot go back afterwards when the model still holds them. A refresh that emptied all
+three is a refresh nobody can check, which is most of why the last one looked broken.
+
+### Tick boxes on the plot rows
+
+`PlotSelection` in Core. Every plot in range carries a tick, all on when a range is set,
+changing the range builds a new one which is what resets them. Unticking takes a plot out of
+the scope box counts and out of anything that writes. The row stays on screen, dimmed, so it
+can be ticked again. The line above the grid reads ticked out of in range.
+
+A plot outside the range cannot be ticked. The first version of `IsTicked` returned true for
+anything not explicitly unticked, including plots that were never in the range at all, and the
+test caught it before the code was ever run.
+
+### Columns the right way round
+
+`GridColumns` in Core. Every view type the model holds is a column from the start, with a
+checklist for hiding and a count of how many are hidden. Add column is gone. Adding types one
+at a time was unusable on a model with dozens of them, and worse than unusable, because
+somebody opens the panel to find out what is missing and an empty grid answers nothing.
+
+Hiding survives a refresh for types the model still holds, and is forgotten for a type that
+has gone, so the hidden count can never name a column nothing could show again.
+
+### The ribbon
+
+One tab, one panel, one button. `ScanModelCommand` and `AssignScopeBoxCommand` are still
+classes and still do the work. Scan Model is a button inside the panel now, because it is the
+check the panel is measured against and it reads the whole model rather than the range.
+
+### Scope boxes, visible before anything is pressed
+
+`ScopeBoxCounts` in Core. All six case counts for the ticked plots, worked out from the
+snapshot with no trip to Revit, so they follow a tick straight away. The snapshot now carries
+the scope box state of every view and every scope box name, read in the same pass.
+
+The narrowing reads a view's plot from its name, which is the rule `ScopeBoxPlan` follows
+inside. The handler calls the same `ScopeBoxCounts.Narrow` before it writes. One narrowing,
+not two, so the number shown and the number written are the same number.
+
+Assign still re-reads the model before it writes, rather than trusting the snapshot. The
+snapshot is as old as the last refresh, and a write built on a stale read is how a model ends
+up with a scope box on a view somebody else already changed.
+
+### Tests
+
+214 pass, 0 failed, 0 skipped, from a run made after the last file was written. 38 are new,
+covering the plot a view fills, the tick boxes, the columns and the per selection case counts.
+
+### Not observed, because it needs Revit
+
+Nothing in this round has been run. Everything below is untested:
+
+- whether the fix is the fix. The mechanism is proved by a test, its presence in the user's
+  model is not
+- whether cause a is also happening. Nothing here would fix it
+- the tick boxes, the column checklist and the scope box counts have never been on screen
+- whether reading the model on every showing is fast enough to be invisible, or whether it
+  makes docking and undocking feel slow
+- whether the panel is now too tall to use. Five sections in a docked pane is more than it
+  held before and none of it has been seen at a real width
+- whether the Expander for the column list renders sensibly on either Revit theme
+- whether Scan Model from inside the panel produces the same file the ribbon button did. It
+  runs without the progress window, so a big model will hold the interface for the length of
+  the read with nothing to look at
+- whether `ScopeBoxCounts` over a real model's view list is fast enough to run on every tick
+- the numbers in `design/pr-11/panel.html` are made up to show the shape of the lines
+
+### What comes next
+
+Run it, delete a view, press Refresh, and read the status line. That answers the one question
+this round could not. Then creation, which now has its answers written into `CLAUDE.md`: a new
+view is created fresh and never duplicated, it carries no annotation, the user chooses how
+many views go on a sheet, and the user fills in the sheet number and the sheet name.
+
+---
+
 ## 2026-09-08, eighth pass. The panel was installed, and it was unusable
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request

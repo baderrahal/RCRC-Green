@@ -42,17 +42,20 @@ namespace RcrcGreen.Revit
         private readonly ComboBox _prefix = new ComboBox { Margin = new Thickness(0, 2, 0, 2) };
         private readonly ComboBox _from = new ComboBox { Margin = new Thickness(0, 2, 0, 2) };
         private readonly ComboBox _to = new ComboBox { Margin = new Thickness(0, 2, 0, 2) };
-        private readonly ComboBox _typeToAdd = new ComboBox { Margin = new Thickness(0, 2, 0, 2) };
         private readonly TextBlock _rangeCount = new TextBlock { Margin = new Thickness(0, 4, 0, 4), TextWrapping = TextWrapping.Wrap };
         private readonly TextBlock _said = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
         private readonly TextBlock _insteadOfTheGrid = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(4, 8, 4, 8) };
+        private readonly TextBlock _columnCount = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 2) };
+        private readonly TextBlock _caseCounts = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 4) };
         private readonly Grid _sheet = new Grid();
+        private readonly StackPanel _columnList = new StackPanel { Margin = new Thickness(4, 2, 0, 2) };
+        private readonly Expander _columnBox = new Expander { Header = "View types", Margin = new Thickness(0, 2, 0, 2) };
         private readonly Button _assign = new Button { Content = "Assign Scope Boxes", Margin = new Thickness(0, 4, 0, 2) };
-        private readonly Button _addType = new Button { Content = "Add column", Margin = new Thickness(4, 2, 0, 2) };
 
         private PanelTheme _theme = PanelTheme.Current();
         private DrawingSheetSnapshot _model = DrawingSheetSnapshot.Nothing;
-        private readonly List<ViewType> _columns = new List<ViewType>();
+        private GridColumns _columns = GridColumns.ShowingAll(null);
+        private PlotSelection _picked = PlotSelection.Nothing;
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
         private bool _filling;
         private bool _readOnce;
@@ -86,9 +89,12 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Reads the model on the way in, so the panel is never on screen with empty dropdowns
-        /// and no explanation. It reads again while it is still holding nothing, which covers
-        /// the pane being opened before a document is.
+        /// Reads the model every time the pane is shown.
+        ///
+        /// It used to return early once it had read anything, so opening a second document left
+        /// the first one's plots on screen with nothing saying so. There is no way for the panel
+        /// to know from the outside that the document changed, so the only safe answer is to
+        /// read again, and the read is fast enough that it costs nothing to.
         ///
         /// The theme is re-read at the same moment, because the user can switch Revit between
         /// light and dark while the pane sits closed.
@@ -98,11 +104,7 @@ namespace RcrcGreen.Revit
             if (!IsVisible) return;
 
             PaintFromTheTheme();
-
-            if (_readOnce && !_model.Empty) return;
-
-            Waiting("Reading the model.");
-            Ask(DrawingSheetRequest.Refresh);
+            AskedForARefresh();
         }
 
         private void PaintFromTheTheme()
@@ -133,6 +135,16 @@ namespace RcrcGreen.Revit
             _from.SelectionChanged += (sender, e) => RangeChosen();
             _to.SelectionChanged += (sender, e) => RangeChosen();
 
+            everything.Children.Add(Heading("COLUMNS"));
+            _columnBox.Content = new ScrollViewer
+            {
+                Content = _columnList,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                MaxHeight = 200
+            };
+            everything.Children.Add(_columnBox);
+            everything.Children.Add(_columnCount);
+
             everything.Children.Add(Heading("PLOTS AND VIEW TYPES"));
 
             // The grid and the line that stands in for it share one slot, so an empty grid is
@@ -150,22 +162,27 @@ namespace RcrcGreen.Revit
                 Margin = new Thickness(0, 2, 0, 6)
             });
 
-            everything.Children.Add(Heading("ACTIONS"));
-
-            var adding = new DockPanel { Margin = new Thickness(0, 2, 0, 2) };
-            DockPanel.SetDock(_addType, Dock.Right);
-            adding.Children.Add(_addType);
-            adding.Children.Add(_typeToAdd);
-            everything.Children.Add(adding);
-
-            _addType.Click += (sender, e) => AddChosenColumn();
+            everything.Children.Add(Heading("SCOPE BOXES"));
+            everything.Children.Add(_caseCounts);
             _assign.Click += (sender, e) => AskToAssign();
-
             everything.Children.Add(_assign);
+
+            everything.Children.Add(Heading("MODEL"));
 
             var refresh = new Button { Content = "Refresh", Margin = new Thickness(0, 2, 0, 2) };
             refresh.Click += (sender, e) => AskedForARefresh();
             everything.Children.Add(refresh);
+
+            var scan = new Button
+            {
+                Content = "Scan Model",
+                Margin = new Thickness(0, 2, 0, 2),
+                ToolTip = "Reads the whole document and writes a report to the Desktop. It reads "
+                    + "everything rather than the range, so it is the check this panel is "
+                    + "measured against."
+            };
+            scan.Click += (sender, e) => AskedForAScan();
+            everything.Children.Add(scan);
 
             everything.Children.Add(_said);
 
@@ -204,38 +221,53 @@ namespace RcrcGreen.Revit
 
         private void AskedForARefresh()
         {
-            Waiting("Reading the model.");
+            Say("Reading the model.");
             Ask(DrawingSheetRequest.Refresh);
+        }
+
+        private void AskedForAScan()
+        {
+            Say("Scanning the whole model. This one reads every element, so it takes longer.");
+            Ask(DrawingSheetRequest.ScanModel);
         }
 
         private void AskToAssign()
         {
-            IReadOnlyList<string> inRange = PlotsInRange();
-            if (inRange.Count == 0)
+            IReadOnlyList<string> ticked = _picked.Ticked;
+            if (ticked.Count == 0)
             {
-                Say("Set a plot range first.");
+                Say("No plots are ticked, so there is nothing to assign.");
                 return;
             }
 
-            _handler.AskToAssign(inRange);
+            _handler.AskToAssign(ticked);
             _asking.Raise();
         }
 
         /// <summary>
         /// The handler calls this from the Revit thread, so the hop to the panel's own thread
         /// happens here rather than being forgotten at each call site.
+        ///
+        /// The prefix, the first plot and the last plot are put back afterwards when the model
+        /// still holds them. A refresh that emptied all three left the user unable to see what
+        /// had changed, which is most of why the last one looked broken.
         /// </summary>
         private void Took(DrawingSheetSnapshot snapshot)
         {
             Dispatcher.Invoke(() =>
             {
+                string prefixWas = _prefix.SelectedItem as string;
+                string fromWas = _from.SelectedItem as string;
+                string toWas = _to.SelectedItem as string;
+
                 _model = snapshot ?? DrawingSheetSnapshot.Nothing;
                 _readOnce = true;
                 _marked.Clear();
-                _columns.Clear();
+                _columns = _columns.OverTheseTypes(_model.ViewTypes);
+
                 FillPrefixes();
-                FillTypesToAdd();
-                DrawSheet();
+                FillColumnList();
+                PutTheRangeBack(prefixWas, fromWas, toWas);
             });
         }
 
@@ -276,23 +308,67 @@ namespace RcrcGreen.Revit
             _to.Items.Clear();
 
             _filling = false;
-
-            WhenRangeIsSet(false);
-            _rangeCount.Text = _model.Empty
-                ? "No plots in this model."
-                : "0 plots in range, " + _model.PlotIds.Count + " in the model.";
         }
 
-        private void FillTypesToAdd()
+        /// <summary>
+        /// Puts back what the user had picked before the refresh, when the model still holds
+        /// it. A plot that has gone is not put back, and then the range is simply unset.
+        /// </summary>
+        private void PutTheRangeBack(string prefixWas, string fromWas, string toWas)
         {
-            _typeToAdd.Items.Clear();
-
-            // Only view types already found in the model. There is no free text here, and no
-            // way to name a type that does not exist.
-            foreach (ViewType viewType in _model.ViewTypes)
+            if (prefixWas != null && _prefix.Items.Contains(prefixWas))
             {
-                _typeToAdd.Items.Add(viewType);
+                // Triggers PrefixChosen, which refills From and To and picks both ends.
+                _prefix.SelectedItem = prefixWas;
+
+                _filling = true;
+                if (fromWas != null && _from.Items.Contains(fromWas)) _from.SelectedItem = fromWas;
+                if (toWas != null && _to.Items.Contains(toWas)) _to.SelectedItem = toWas;
+                _filling = false;
             }
+
+            RangeChosen();
+        }
+
+        private void FillColumnList()
+        {
+            _columnList.Children.Clear();
+
+            foreach (ViewType viewType in _columns.All)
+            {
+                ViewType which = viewType;
+                var tick = new CheckBox
+                {
+                    Content = which.ToString(),
+                    IsChecked = _columns.IsShown(which),
+                    Margin = new Thickness(0, 1, 0, 1)
+                };
+
+                tick.Checked += (sender, e) => ColumnShown(which, true);
+                tick.Unchecked += (sender, e) => ColumnShown(which, false);
+                _columnList.Children.Add(tick);
+            }
+
+            SayTheColumns();
+        }
+
+        private void ColumnShown(ViewType which, bool shown)
+        {
+            if (_filling) return;
+
+            _columns = _columns.Showing(which, shown);
+            SayTheColumns();
+            DrawSheet();
+        }
+
+        private void SayTheColumns()
+        {
+            int hidden = _columns.HiddenCount;
+            _columnBox.Header = _columns.All.Count + " view types";
+            _columnCount.Text = hidden == 0
+                ? _columns.All.Count + " view types, all shown."
+                : _columns.Shown.Count + " of " + _columns.All.Count + " view types shown, "
+                    + hidden + " hidden.";
         }
 
         private void PrefixChosen()
@@ -325,32 +401,19 @@ namespace RcrcGreen.Revit
             RangeChosen();
         }
 
+        /// <summary>
+        /// The range changing resets every tick to on, which is the rule. Somebody who has just
+        /// moved to a different block of plots is not still excluding two from the last one.
+        /// </summary>
         private void RangeChosen()
         {
             if (_filling) return;
 
-            IReadOnlyList<string> inRange = PlotsInRange();
+            _picked = PlotSelection.AllOf(PlotsInRange());
 
-            SayTheRange(inRange.Count);
-            WhenRangeIsSet(inRange.Count > 0);
+            SayTheRange();
+            WhenRangeIsSet(_picked.InRangeCount > 0);
             DrawSheet();
-        }
-
-        /// <summary>
-        /// The line directly above the grid, so what it says about the range sits next to the
-        /// grid it describes. A range with no columns draws plot names and nothing else, which
-        /// looks like a fault unless the line says what is missing.
-        /// </summary>
-        private void SayTheRange(int inRange)
-        {
-            string said = inRange + " plots in range, " + _model.PlotIds.Count + " in the model.";
-
-            if (inRange > 0 && _columns.Count == 0)
-            {
-                said += " No view types chosen yet. Add a column under ACTIONS.";
-            }
-
-            _rangeCount.Text = said;
         }
 
         private IReadOnlyList<string> PlotsInRange()
@@ -363,6 +426,22 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
+        /// The line directly above the grid, so what it says about the range sits next to the
+        /// grid it describes.
+        /// </summary>
+        private void SayTheRange()
+        {
+            if (_model.Empty)
+            {
+                _rangeCount.Text = "No plots in this model.";
+                return;
+            }
+
+            _rangeCount.Text = _picked.TickedCount + " of " + _picked.InRangeCount
+                + " plots in range ticked, " + _model.PlotIds.Count + " in the model.";
+        }
+
+        /// <summary>
         /// Nothing below the range is usable until a range exists, because every one of those
         /// controls acts on the plots in it.
         /// </summary>
@@ -370,28 +449,51 @@ namespace RcrcGreen.Revit
         {
             _sheet.IsEnabled = ready;
             _assign.IsEnabled = ready;
-            _addType.IsEnabled = ready;
-            _typeToAdd.IsEnabled = ready;
+            _columnBox.IsEnabled = ready;
         }
 
-        private void AddChosenColumn()
+        private void PlotTicked(string plotId, bool ticked)
         {
-            var chosen = _typeToAdd.SelectedItem as ViewType;
-            if (chosen == null)
-            {
-                Say("Choose a view type to add.");
-                return;
-            }
+            if (_filling) return;
 
-            if (_columns.Contains(chosen))
-            {
-                Say(chosen + " is already a column.");
-                return;
-            }
-
-            _columns.Add(chosen);
-            SayTheRange(PlotsInRange().Count);
+            _picked = _picked.Ticking(plotId, ticked);
+            SayTheRange();
+            SayTheCases();
             DrawSheet();
+        }
+
+        /// <summary>
+        /// The six cases for the ticked plots, worked out from the snapshot with no trip to
+        /// Revit, so they follow a tick straight away. What Assign does is decided again from a
+        /// fresh read, but by the same rule over the same plots.
+        /// </summary>
+        private void SayTheCases()
+        {
+            if (!_readOnce || _picked.TickedCount == 0)
+            {
+                _caseCounts.Text = "Tick at least one plot to see what Assign would do.";
+                return;
+            }
+
+            ScopeBoxCounts counts = ScopeBoxCounts.For(
+                _model.ViewStates, _model.ScopeBoxNames, _picked.Ticked);
+
+            _caseCounts.Text =
+                counts.Considered + " views across " + _picked.TickedCount + " ticked plots."
+                + Environment.NewLine
+                + "A, name does not parse: " + counts.Of(ScopeBoxCase.NameDoesNotParse)
+                + Environment.NewLine
+                + "B, cannot hold a scope box: " + counts.Of(ScopeBoxCase.CannotHoldAScopeBox)
+                + Environment.NewLine
+                + "C, ready to assign: " + counts.ReadyToAssign
+                + Environment.NewLine
+                + "D, no scope box for that plot: " + counts.Of(ScopeBoxCase.NoMatchingScopeBox)
+                + Environment.NewLine
+                + "E, already right: " + counts.Of(ScopeBoxCase.AlreadyRight)
+                + Environment.NewLine
+                + "F, holds a different scope box: " + counts.Of(ScopeBoxCase.HoldsADifferentScopeBox)
+                + Environment.NewLine
+                + "Only C is written.";
         }
 
         private void DrawSheet()
@@ -400,8 +502,10 @@ namespace RcrcGreen.Revit
             _sheet.ColumnDefinitions.Clear();
             _sheet.RowDefinitions.Clear();
 
+            SayTheCases();
+
             SheetGrid grid = SheetGrid.Build(
-                PlotsInRange(), _columns, _model.Present, _model.PlotsWithAScopeBox, _marked);
+                _picked.InRange, _columns.Shown, _model.Present, _model.PlotsWithAScopeBox, _marked);
 
             if (grid.Rows.Count == 0)
             {
@@ -411,6 +515,8 @@ namespace RcrcGreen.Revit
 
             ShowingTheGrid();
 
+            // A tick column, then the plot name, then one per view type.
+            _sheet.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             _sheet.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             foreach (ViewType ignored in grid.Columns)
             {
@@ -418,7 +524,8 @@ namespace RcrcGreen.Revit
             }
 
             _sheet.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            Place(new TextBlock { Text = "Plot", FontWeight = FontWeights.Bold, Margin = new Thickness(4, 2, 8, 2) }, 0, 0);
+            Place(new TextBlock { Text = "Use", FontWeight = FontWeights.Bold, Margin = new Thickness(4, 2, 4, 2) }, 0, 0);
+            Place(new TextBlock { Text = "Plot", FontWeight = FontWeights.Bold, Margin = new Thickness(4, 2, 8, 2) }, 0, 1);
 
             for (int column = 0; column < grid.Columns.Count; column++)
             {
@@ -432,31 +539,52 @@ namespace RcrcGreen.Revit
                         TextWrapping = TextWrapping.Wrap
                     },
                     0,
-                    column + 1);
+                    column + 2);
             }
 
             for (int row = 0; row < grid.Rows.Count; row++)
             {
                 SheetGridRow line = grid.Rows[row];
+                bool ticked = _picked.IsTicked(line.PlotId);
                 _sheet.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-                // The mark says the plot has no scope box named for it. A view without one
-                // is useless on this project, so it belongs on the row label. Only that case
-                // names a colour. Everything else inherits the panel's.
+                Place(TickFor(line.PlotId, ticked), row + 1, 0);
+
+                // The mark says the plot has no scope box named for it. A view without one is
+                // useless on this project, so it belongs on the row label. Only that case names
+                // a colour. Everything else inherits the panel's.
                 var label = new TextBlock
                 {
                     Text = line.HasScopeBox ? line.PlotId : line.PlotId + "  no scope box",
-                    Margin = new Thickness(4, 2, 8, 2)
+                    Margin = new Thickness(4, 2, 8, 2),
+                    Opacity = ticked ? 1.0 : 0.45
                 };
                 if (!line.HasScopeBox) label.Foreground = _theme.Warning;
 
-                Place(label, row + 1, 0);
+                Place(label, row + 1, 1);
 
                 for (int column = 0; column < line.Cells.Count; column++)
                 {
-                    Place(CellButton(line.PlotId, line.Cells[column]), row + 1, column + 1);
+                    Place(CellButton(line.PlotId, line.Cells[column], ticked), row + 1, column + 2);
                 }
             }
+        }
+
+        private CheckBox TickFor(string plotId, bool ticked)
+        {
+            string which = plotId;
+            var tick = new CheckBox
+            {
+                IsChecked = ticked,
+                Margin = new Thickness(4, 3, 4, 3),
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = "Untick " + which + " to leave it out of the scope box counts and out "
+                    + "of anything that writes."
+            };
+
+            tick.Checked += (sender, e) => PlotTicked(which, true);
+            tick.Unchecked += (sender, e) => PlotTicked(which, false);
+            return tick;
         }
 
         /// <summary>
@@ -481,7 +609,7 @@ namespace RcrcGreen.Revit
             return "No plots in that range. Widen From and To.";
         }
 
-        private Button CellButton(string plotId, SheetGridCell cell)
+        private Button CellButton(string plotId, SheetGridCell cell, bool ticked)
         {
             var button = new Button
             {
@@ -489,6 +617,7 @@ namespace RcrcGreen.Revit
                 FontSize = 14,
                 Margin = new Thickness(1),
                 MinWidth = 30,
+                Opacity = ticked ? 1.0 : 0.45,
                 ToolTip = plotId + " " + cell.ViewType + ", " + InWords(cell.State)
             };
 

@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drawing Sheet panel layout, pull request 11</title>
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #f4f4f4;
+    color: #1a1a1a;
+    font: 14px/1.5 "Segoe UI", Arial, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; }
+  .warning {
+    border: 2px solid #b22222;
+    background: #fff;
+    padding: 12px 16px;
+    max-width: 880px;
+    margin-bottom: 24px;
+  }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; }
+  .note { max-width: 880px; }
+
+  /* The two palettes below are the values in PanelTheme.cs, nothing else. */
+  .panel {
+    width: 380px;
+    padding: 8px;
+    border: 1px solid #999;
+    font: 12px/1.45 "Segoe UI", Arial, sans-serif;
+  }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .warn { color: #b22222; }
+  .dark  .warn { color: #ff8080; }
+
+  .heading { font-weight: bold; margin: 10px 0 4px; }
+  .heading:first-child { margin-top: 0; }
+  .row { display: flex; align-items: center; margin: 2px 0; }
+  .row .cap { width: 52px; flex: none; }
+  .combo {
+    flex: 1;
+    background: #fdfdfd;
+    color: #1a1a1a;
+    border: 1px solid #adadad;
+    padding: 2px 4px;
+  }
+  .count { margin: 4px 0; }
+  .slot {
+    border: 1px dashed #888;
+    padding: 4px;
+    margin: 2px 0 6px;
+    min-height: 40px;
+    overflow-x: auto;
+  }
+  .expander {
+    border: 1px solid #adadad;
+    padding: 3px 6px;
+    margin: 2px 0;
+  }
+  .expander .head { font-weight: bold; }
+  .expander ul { list-style: none; margin: 4px 0 0; padding: 0 0 0 4px; }
+  .expander li { margin: 2px 0; }
+  table { border-collapse: collapse; }
+  th, td { padding: 2px 8px 2px 4px; text-align: left; font-weight: normal; vertical-align: top; }
+  th { font-weight: bold; max-width: 110px; }
+  .off { opacity: 0.45; }
+  .cell {
+    display: inline-block;
+    min-width: 30px;
+    text-align: center;
+    font-size: 14px;
+    background: #ddd;
+    color: #1a1a1a;
+    border: 1px solid #adadad;
+    padding: 1px 0;
+    margin: 1px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ddd;
+    color: #1a1a1a;
+    border: 1px solid #adadad;
+    padding: 3px;
+    margin: 3px 0;
+    text-align: center;
+  }
+  .cases { margin: 2px 0 4px; }
+  .cases div { margin: 1px 0; }
+  .status { margin-top: 8px; }
+  .key td, .key th { border-bottom: 1px solid #ddd; padding: 4px 12px 4px 0; }
+  .mark { font-size: 15px; }
+</style>
+</head>
+<body>
+
+<h1>Drawing Sheet panel layout</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show how Revit's
+  theme will actually paint the panel, how the Windows control chrome will look on the dark
+  theme, what the real fonts and spacing come out as, or whether the box characters in the
+  grid have a glyph in the font Revit uses.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on
+  it. If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>Both themes, side by side</h2>
+
+<p class="caption">DM-11 to DM-16 in range with DM-13 and DM-15 unticked, and one of the four
+view types hidden.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme. Background #ffffff, text #1a1a1a, no scope box mark #b22222.</p>
+<div class="panel light">
+
+  <div class="heading">PLOT RANGE</div>
+  <div class="row"><span class="cap">Prefix</span><span class="combo">DM</span></div>
+  <div class="row"><span class="cap">From</span><span class="combo">DM-11</span></div>
+  <div class="row"><span class="cap">To</span><span class="combo">DM-16</span></div>
+  <div class="count">4 of 6 plots in range ticked, 160 in the model.</div>
+
+  <div class="heading">COLUMNS</div>
+  <div class="expander">
+    <div class="head">4 view types</div>
+    <ul>
+      <li><input type="checkbox" checked disabled> (010) Location Key Plan</li>
+      <li><input type="checkbox" disabled> (010) Overall Key Plan</li>
+      <li><input type="checkbox" checked disabled> (200) General Arrangement Layout</li>
+      <li><input type="checkbox" checked disabled> (400) Landscape Cross Section</li>
+    </ul>
+  </div>
+  <div class="count">3 of 4 view types shown, 1 hidden.</div>
+
+  <div class="heading">PLOTS AND VIEW TYPES</div>
+  <div class="slot">
+    <table>
+      <tr>
+        <th>Use</th>
+        <th>Plot</th>
+        <th>(010) Location Key Plan</th>
+        <th>(200) General Arrangement Layout</th>
+        <th>(400) Landscape Cross Section</th>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-11</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-12</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9679;</span></td>
+      </tr>
+      <tr class="off">
+        <td><input type="checkbox" disabled></td>
+        <td class="warn">DM-13&nbsp;&nbsp;no scope box</td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-14</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+      </tr>
+      <tr class="off">
+        <td><input type="checkbox" disabled></td>
+        <td>DM-15</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-16</td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="heading">SCOPE BOXES</div>
+  <div class="cases">
+    <div>14 views across 4 ticked plots.</div>
+    <div>A, name does not parse: 0</div>
+    <div>B, cannot hold a scope box: 1</div>
+    <div>C, ready to assign: 9</div>
+    <div>D, no scope box for that plot: 0</div>
+    <div>E, already right: 3</div>
+    <div>F, holds a different scope box: 1</div>
+    <div>Only C is written.</div>
+  </div>
+  <span class="btn">Assign Scope Boxes</span>
+
+  <div class="heading">MODEL</div>
+  <span class="btn">Refresh</span>
+  <span class="btn">Scan Model</span>
+  <div class="status">2,430 views read at 13:07:12. 160 plots, 1,204 found through PRX_Plot_ID,
+  910 through the name, 316 with no plot at all. 42 views are named for one plot and carry
+  PRX_Plot_ID for another. The grid follows the name.</div>
+
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme. Background #2e2e2e, text #e6e6e6, no scope box mark #ff8080.</p>
+<div class="panel dark">
+
+  <div class="heading">PLOT RANGE</div>
+  <div class="row"><span class="cap">Prefix</span><span class="combo">DM</span></div>
+  <div class="row"><span class="cap">From</span><span class="combo">DM-11</span></div>
+  <div class="row"><span class="cap">To</span><span class="combo">DM-16</span></div>
+  <div class="count">4 of 6 plots in range ticked, 160 in the model.</div>
+
+  <div class="heading">COLUMNS</div>
+  <div class="expander">
+    <div class="head">4 view types</div>
+    <ul>
+      <li><input type="checkbox" checked disabled> (010) Location Key Plan</li>
+      <li><input type="checkbox" disabled> (010) Overall Key Plan</li>
+      <li><input type="checkbox" checked disabled> (200) General Arrangement Layout</li>
+      <li><input type="checkbox" checked disabled> (400) Landscape Cross Section</li>
+    </ul>
+  </div>
+  <div class="count">3 of 4 view types shown, 1 hidden.</div>
+
+  <div class="heading">PLOTS AND VIEW TYPES</div>
+  <div class="slot">
+    <table>
+      <tr>
+        <th>Use</th>
+        <th>Plot</th>
+        <th>(010) Location Key Plan</th>
+        <th>(200) General Arrangement Layout</th>
+        <th>(400) Landscape Cross Section</th>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-11</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-12</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9679;</span></td>
+      </tr>
+      <tr class="off">
+        <td><input type="checkbox" disabled></td>
+        <td class="warn">DM-13&nbsp;&nbsp;no scope box</td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-14</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+      </tr>
+      <tr class="off">
+        <td><input type="checkbox" disabled></td>
+        <td>DM-15</td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" checked disabled></td>
+        <td>DM-16</td>
+        <td><span class="cell mark">&#9633;</span></td>
+        <td><span class="cell mark">&#9632;</span></td>
+        <td><span class="cell mark">&#9633;</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="heading">SCOPE BOXES</div>
+  <div class="cases">
+    <div>14 views across 4 ticked plots.</div>
+    <div>A, name does not parse: 0</div>
+    <div>B, cannot hold a scope box: 1</div>
+    <div>C, ready to assign: 9</div>
+    <div>D, no scope box for that plot: 0</div>
+    <div>E, already right: 3</div>
+    <div>F, holds a different scope box: 1</div>
+    <div>Only C is written.</div>
+  </div>
+  <span class="btn">Assign Scope Boxes</span>
+
+  <div class="heading">MODEL</div>
+  <span class="btn">Refresh</span>
+  <span class="btn">Scan Model</span>
+  <div class="status">2,430 views read at 13:07:12. 160 plots, 1,204 found through PRX_Plot_ID,
+  910 through the name, 316 with no plot at all. 42 views are named for one plot and carry
+  PRX_Plot_ID for another. The grid follows the name.</div>
+
+</div>
+</div>
+
+</div>
+
+<h2>What changed from pull request 9</h2>
+
+<ul class="note">
+  <li>A Use column of tick boxes down the left of the grid. Everything ticked when a range is
+  set, and changing the range sets them all back on. An unticked row is dimmed, stays on
+  screen, and drops out of the scope box counts and out of anything that writes.</li>
+  <li>The range line counts ticked out of in range, not just in range.</li>
+  <li>A COLUMNS section holding every view type the model has, all ticked, with a count of how
+  many are hidden. This replaces Add column, which started the grid empty and asked the user
+  to build it one type at a time.</li>
+  <li>A SCOPE BOXES section showing all six case counts for the ticked plots before anything is
+  pressed. It follows a tick straight away, because the counts come from the snapshot rather
+  than from a new read.</li>
+  <li>Scan Model moved into the panel, under MODEL, because the ribbon is down to one button.</li>
+  <li>The status line carries the time of the read, so it is possible to tell whether a refresh
+  actually ran.</li>
+  <li>The status line names how many views are titled for one plot and carry PRX_Plot_ID for
+  another. That mismatch is what used to put a view in the wrong row.</li>
+</ul>
+
+<h2>The cell marks</h2>
+
+<table class="key">
+  <tr><th>Mark</th><th>State</th><th>Click</th></tr>
+  <tr><td class="mark">&#9632;</td><td>exists</td><td>opens that view in Revit</td></tr>
+  <tr><td class="mark">&#9633;</td><td>missing</td><td>marks it</td></tr>
+  <tr><td class="mark">&#9679;</td><td>marked</td><td>unmarks it</td></tr>
+</table>
+
+<p class="note">The shape changes as well as the fill, so the three are apart at a glance. A
+mark records intent and writes nothing to the model.</p>
+
+<h2>What stands where the grid would be</h2>
+
+<div class="pair">
+
+<div>
+<p class="caption">Before the first read finishes.</p>
+<div class="panel light">
+  <div class="heading">PLOTS AND VIEW TYPES</div>
+  <div class="slot"><div style="padding:8px 4px">Reading the model.</div></div>
+</div>
+</div>
+
+<div>
+<p class="caption">A model that holds no plots at all.</p>
+<div class="panel light">
+  <div class="heading">PLOTS AND VIEW TYPES</div>
+  <div class="slot"><div style="padding:8px 4px">No plots in this model. No view carries a
+  PRX_Plot_ID and no view name gives one. Open the model you meant and press Refresh.</div></div>
+</div>
+</div>
+
+<div>
+<p class="caption">Plots found, no prefix picked yet.</p>
+<div class="panel light">
+  <div class="heading">PLOTS AND VIEW TYPES</div>
+  <div class="slot"><div style="padding:8px 4px">Pick a prefix above. From and To fill
+  themselves with the plots under it, and the grid follows.</div></div>
+</div>
+</div>
+
+<div>
+<p class="caption">Every plot unticked.</p>
+<div class="panel light">
+  <div class="heading">SCOPE BOXES</div>
+  <div class="cases"><div>Tick at least one plot to see what Assign would do.</div></div>
+  <span class="btn">Assign Scope Boxes</span>
+</div>
+</div>
+
+</div>
+
+<h2>What this page cannot tell you</h2>
+
+<ul class="note">
+  <li>Whether Revit paints anything of its own behind or around the pane that these colours
+  sit badly against.</li>
+  <li>How the tick boxes, the buttons and the dropdowns look. They keep the Windows control
+  chrome, which is drawn light on both Revit themes. Readable, and not a match for the dark
+  theme.</li>
+  <li>Whether the font Revit gives the pane has a glyph for the three box characters. If it
+  does not, they come out as empty rectangles and the tooltip is all that is left.</li>
+  <li>Real widths. The panel is docked right and the user can drag it to any width, so the
+  column headers wrap differently from anything shown here. With every view type a column by
+  default, a model holding dozens of types will need that horizontal scroll bar.</li>
+  <li>Whether the numbers in the case counts and the status line are anything like a real
+  model. They are made up to show the shape of the line.</li>
+</ul>
+
+</body>
+</html>
