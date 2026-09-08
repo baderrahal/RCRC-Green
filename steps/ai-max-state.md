@@ -36,7 +36,10 @@ zero tests.
 work is small enough that a split would cost more in shared file collisions than it saves.
 The add-in project can only be tested inside Revit, so it never splits.
 
-**8, check.** `breaker` and `claim-checker` in `.claude/agents/`, both read only.
+**8, check.** `breaker` and `claim-checker` in `.claude/agents/`, both read only. They were run
+over the repo along with four other reading passes, and the 53 findings are written up under
+Phase 8 review findings in `steps/log.md`. Nothing was fixed in response to them. The phase 8
+run is closed.
 
 **9, ship.** The scaffold, the Core logic, the tests and the harness on branch
 `claude/rcrc-green-setup-wf9ham`.
