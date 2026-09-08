@@ -5,11 +5,14 @@ using System.Text;
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// Names the file a scan is written to.
+    /// Names the file a command writes its report to. Both commands go through here so the
+    /// two files sort next to each other on the Desktop and clean up the same way.
     /// </summary>
     public static class ScanFileName
     {
-        public const string Prefix = "RCRC-Green-Scan_";
+        public const string ScanPrefix = "RCRC-Green-Scan_";
+
+        public const string ScopeBoxPrefix = "RCRC-Green-ScopeBox_";
 
         public const string Extension = ".txt";
 
@@ -21,7 +24,14 @@ namespace RcrcGreen.Core
         /// </summary>
         public static string For(string documentTitle, DateTime writtenAt)
         {
-            return Prefix
+            return For(ScanPrefix, documentTitle, writtenAt);
+        }
+
+        public static string For(string prefix, string documentTitle, DateTime writtenAt)
+        {
+            if (prefix == null) throw new ArgumentNullException("prefix");
+
+            return prefix
                 + Safe(documentTitle)
                 + "_"
                 + writtenAt.ToString("yyyy-MM-dd_HHmm", CultureInfo.InvariantCulture)

@@ -15,6 +15,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Both ship with .NET Framework 4.8, so this adds no package and nothing to install.
+         They are here for the progress window, which is the only way a user can see how far
+         a long read has got and stop it. -->
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Revit ships these assemblies itself. Copying them next to the add-in gives Revit two
          copies of the same types and it refuses to load, so the packages stay reference only. -->
     <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2024.*">

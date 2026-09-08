@@ -11,13 +11,20 @@ namespace RcrcGreen.Revit
     /// Reads a document and hands back plain numbers and strings. Nothing here opens a
     /// transaction, because nothing here writes.
     /// </summary>
-    public static class ModelScanner
+    internal static class ModelScanner
     {
         public const string PlotIdParameterName = "PRX_Plot_ID";
 
-        public static ModelScan Read(Document document)
+        /// <summary>
+        /// False when the user stopped it. The scan is then incomplete, so nothing is handed
+        /// back rather than a partial answer that reads like a whole one.
+        /// </summary>
+        public static bool TryRead(Document document, IScanWatcher watcher, out ModelScan scan)
         {
             if (document == null) throw new ArgumentNullException("document");
+            if (watcher == null) throw new ArgumentNullException("watcher");
+
+            scan = null;
 
             List<ViewSheet> sheets = new FilteredElementCollector(document)
                 .OfClass(typeof(ViewSheet))
@@ -61,9 +68,10 @@ namespace RcrcGreen.Revit
                     view.Name, view.ViewType.ToString(), view.IsTemplate, sheetNumber));
             }
 
-            PlotIdScan plotIds = ReadPlotIds(document);
+            PlotIdScan plotIds = ReadPlotIds(document, watcher);
+            if (plotIds == null) return false;
 
-            return new ModelScan(
+            scan = new ModelScan(
                 document.Title,
                 scannedSheets,
                 scannedViews,
@@ -71,6 +79,7 @@ namespace RcrcGreen.Revit
                 plotIds.Values,
                 plotIds.ElementsRead,
                 plotIds.Seconds);
+            return true;
         }
 
         /// <summary>
@@ -153,7 +162,7 @@ namespace RcrcGreen.Revit
         /// Looked up by name rather than by a known identifier, so it works whether the team
         /// set PRX_Plot_ID up as shared or project, and on an instance or a type.
         /// </summary>
-        private static PlotIdScan ReadPlotIds(Document document)
+        private static PlotIdScan ReadPlotIds(Document document, IScanWatcher watcher)
         {
             var counts = new Dictionary<string, int>(StringComparer.Ordinal);
             var byType = new Dictionary<ElementId, string>();
@@ -161,9 +170,21 @@ namespace RcrcGreen.Revit
 
             Stopwatch clock = Stopwatch.StartNew();
 
-            foreach (Element element in new FilteredElementCollector(document).WhereElementIsNotElementType())
+            // The identifiers are taken first so the total is known. Without a total the bar
+            // has nothing to fill and the user cannot tell a slow read from a stuck one.
+            ICollection<ElementId> everyElement =
+                new FilteredElementCollector(document).WhereElementIsNotElementType().ToElementIds();
+            int total = everyElement.Count;
+
+            foreach (ElementId id in everyElement)
             {
+                if (watcher.Cancelled) return null;
+
+                Element element = document.GetElement(id);
+                if (element == null) continue;
+
                 read++;
+                watcher.Report(read, total);
 
                 string value = ValueOf(element.LookupParameter(PlotIdParameterName));
 
