@@ -14,30 +14,21 @@ a cut through the middle of the plot.
 
 ## Running it
 
-One ribbon tab, one panel, one button. Everything happens inside the Drawing Sheet panel.
-
 **Drawing Sheet** is a dockable panel that stays open while the user works and reads the model
-every time it is shown. It is five numbered steps in the order somebody does them, one open at a
-time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step carries its own summary, and a step that
-cannot be used yet is greyed out with one line saying why. A filled square is a view that exists
-and opens on a click, an empty one is missing and can be marked. Every dropdown comes from the
-model, so no plot the model lacks can be chosen. It follows the Revit theme.
+every time it is shown. It is five numbered steps, one open at a time: PLOTS, VIEW TYPES, MARK,
+SHEETS, RUN. A shut step carries its own summary and an unusable one says why. A filled square
+is a view that exists and opens on a click, an empty one is missing and can be marked. Every
+dropdown comes from the model, so no plot the model lacks can be chosen. Step 5 also holds the
+six scope box counts, and Scan Model sits in the strip at the top and reads the whole document
+to a text file rather than the range, which is what makes it the check on the panel.
 
-**Run**, inside the panel, creates what the marked cells on the ticked plots ask for: plan
-views, sections, schedules and sheets. One confirmation, one transaction, one undo, a report
-either way, and every count in it is of what happened rather than of what was intended.
-
-**Scope boxes**, inside the panel. The six case counts are on screen before anything is
-pressed and every case but B opens on a click to list its views, each of which opens in Revit.
-Only a view with no box whose plot has one of exactly that name is written.
-
-**Scan Model**, also inside the panel, reads the whole document to a text file and changes
-nothing. It reads everything rather than a range, which is what makes it the check on the panel.
+**Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views,
+sections, schedules and sheets. One confirmation, one transaction, one undo, and a report whose
+every count is of what happened rather than what was intended.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
-layout the manifest asks for under `%APPDATA%\Autodesk\Revit\Addins\2024\`, which the build
-does not, so copying the output folder across by hand leaves Revit unable to find the assembly.
-`.\install\uninstall.ps1` takes it back out.
+layout under `%APPDATA%\Autodesk\Revit\Addins\2024\` that the build does not, so copying the
+output folder by hand leaves Revit unable to find the assembly.
 
 ## Running the tests
 
@@ -45,21 +36,21 @@ does not, so copying the output folder across by hand leaves Revit unable to fin
 dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
 ```
 
-That is the whole suite, it is what the pull request gate runs, and nothing in it needs Revit.
+The whole suite. It is what the pull request gate runs and nothing in it needs Revit.
 
 ## How this is laid out
 
 - `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation
 - `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panel
-- `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only, `install/` holds the two
-  PowerShell scripts, and `.claude/rules/` holds the rules for each project
+- `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/` holds the two
+  PowerShell scripts and `.claude/rules/` the rules for each project
 - `reports/` holds what a run wrote, the Desktop copy under the same name, and **nothing in it
   is ever committed.** This repository is public and a report carries client view names, sheet
-  numbers, plot identifiers and schedule fields. `reports/README.md` is the only tracked file
+  numbers and plot identifiers. `reports/README.md` is the only file in it that is tracked
 
 A command is split the same way. The Revit project reads the document into plain strings and
-numbers, and Core decides and formats. That is why every report layout, every count and every
-rule has a test and none needs Revit.
+numbers, and Core decides and formats. That is why every report layout, count and rule has a
+test and none needs Revit.
 
 ## The rule that keeps the tests possible
 
@@ -68,44 +59,45 @@ reference, no type from it in a signature. The moment Core touches the API, the 
 cannot load and the gate stops protecting anything.
 
 Anything that reads a `Document`, a `View`, an `Element` or a `BoundingBoxXYZ` belongs in
-`RcrcGreen.Revit`. Pull the plain values out there, hand them to Core, and put what Core
-returns back into the model.
+`RcrcGreen.Revit`. Pull the plain values out there, hand them to Core, and put what comes back
+into the model.
 
 ## Project facts
 
 These come from the team and from real models. They are not guesses.
 
-- Views and sheets are named `<PlotID>-(<code>) <View name>`
-- PlotID is two uppercase letters, a dash, then digits, as in DM-41. Lowercase is invalid
-- The code is digits inside round brackets, as in 010, 200, 400, and the view name is free text
-  after the closing bracket and one space
+- Views and sheets are named `<PlotID>-(<code>) <View name>`. PlotID is two uppercase letters,
+  a dash, then digits, as in DM-41, and lowercase is invalid. The code is digits in round
+  brackets and the view name is free text after the bracket and one space
 - Plots also exist as scope boxes named with the PlotID, for example a box named DM-41
 - **There are two plot parameters, not one.** `PRX_Plot_ID` sits on views and on sheets and the
   Sheet List filters on it. `PRX_Ref Plot ID`, with spaces rather than underscores, sits on
   model elements and every quantity schedule filters on that one. A schedule built against the
   wrong one comes back empty
 - On a view, PRX_Plot_ID is the first place to look for the plot. The name is the fallback
-- Cross sections are cut across the middle of the plot's scope box, the SHORT way, and look
-  10 metres, a starting value the team will change after a real placement
+- Cross sections are cut across the middle of the plot's scope box, the SHORT way
 - View names repeat word for word across plots, and nothing plot specific appears in one
 
 Six of the things under a plot are schedules, under Schedules and Quantities rather than Views.
-They are built by a different call and filter on PRX_Ref Plot ID. Category alone does not
-identify one, because HARDSCAPE and SHRUBS AND LAWN SCHEDULE are both Floors, told apart only by
-their second filter. Field names are copied exactly, PRX_Furniture Lenght included.
+They filter on PRX_Ref Plot ID. Category alone does not identify one, because HARDSCAPE and
+SHRUBS AND LAWN SCHEDULE are both Floors, told apart only by their second filter. Field names
+are copied exactly, PRX_Furniture Lenght included.
 
 **A view family type is not named after the view type.** DM-18-(200) General Arrangement Layout
 uses `(200) General Arrangement Layout`, which matches. DM-11-(010) Location Key Plan uses
 `(010) Key Location Plan`, words swapped, which does not. So nothing is matched on a name. A new
-view takes its family type, its level and its view template from a view of the same type the
-model already holds on another plot, and **(400) Landscape Cross Section is a section rather
-than a plan view**, which is read off that view's kind rather than off the code.
+view takes its family type, its level, its view template and, for a section, its far clip offset
+from ONE view of the same type the model already holds, and the report names that view.
+**(400) Landscape Cross Section is a section rather than a plan view**, read off that view's
+kind rather than off the code.
 
-Creation, answered by the team. A new view is CREATED FRESH, never copied from another plot,
-and carries no annotation, dimensions, tags or detailing. A sheet is COPIED: the user sets one
-plot's sheet up by hand and the title block, where each view sits and how several lay out are
-taken from it. The user types the sheet number and the sheet name, the tool invents neither,
-and a plot missing either gets no sheet.
+Read off DM-20-(400) Landscape Cross Section: far clip 42.1054 feet, which is 12.83 metres, and
+NO scope box while every plan view has one. A section takes its depth from its sibling and is
+left without a box, and the 10 metres in `SectionDefaults` is now only the fallback.
+
+A new view is CREATED FRESH, never copied from another plot, and carries no annotation,
+dimensions, tags or detailing. The user types every sheet number and sheet name and the tool
+invents neither.
 
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 
@@ -113,22 +105,24 @@ Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 - 1,385 sheets, 953 views on sheets, 2,430 not on sheets, 79 view templates
 - 406 scope boxes for 160 distinct PRX_Plot_ID values, so a box whose name is not a PlotID is
   ordinary rather than an error
-- 2,114 names parsed and 4,039 did not. Scope Box skipped 1,269 for that alone, which made the
-  parameter the first source rather than the only fallback
+- 2,114 names parsed and 4,039 did not, which made the parameter the first source for a view's
+  plot rather than the only fallback
 - Scope box cases over one range came back A 0, B 102, C 66, D 0, E 13, F 1
 - 6 views are named for one plot and carry PRX_Plot_ID for another. The scan names them
 - 8 templates start with (200) General Arrangement Layout, so a prefix match answers nothing
-- The first write ran on four plan views and created none. Every fault it found is fixed and
-  none of the fixes has been run
+- Only plot DM-11 has real sheet numbers. Other plots carry numbers like 010QE Copy 001, and a
+  group of sheets carries no PRX_Plot_ID at all. The scan counts both
+- Title blocks come from AR-PRX-Title_Block_A1, with types including KEYPLAN, LOD, SCHEDULES,
+  GA-DETAILED DESIGN and SECTION WITH KEYPLAN. Read them from the model, never hard coded
+- Three plan views and one sheet have now been created. The level, template, scope box and
+  plot parameter came out right. No section and no schedule has ever been created
 
 Real names are in `.claude/rules/core-rules.md`, next to the rule they illustrate.
 
 ## Conventions
 
 **Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots or
-geometry. Open questions are recorded in `steps/log.md` and answered by the team. The rest of
-the rules live next to the code they govern, in `.claude/rules/core-rules.md` and
-`.claude/rules/revit-commands.md`.
+geometry. Open questions go in `steps/log.md` and are answered by the team.
 
 ## Hooks
 
@@ -140,7 +134,7 @@ hooks read the command rather than the index, through `commit-scope.py`.
 - `writing-check.sh` refuses a commit whose message or files hold an em dash, a generated-by
   footer, a co-author credit line, an emoji, or a word from
   `.claude/skills/ai-max/references/writing-rules.md`. It skips `.claude/skills/`, where that
-  list lives as data, and keeps the word landscape, the discipline here
+  list is data, and keeps the word landscape, the discipline here
 
 A hook script that cannot be found blocks.
 
@@ -152,38 +146,45 @@ because it is the only part that cannot be rediscovered by reading the code.
 **A guard that fails open reads exactly like a guard that passed.** `writing-check.sh` split
 its file list on newlines, so a name holding a space reached the scanner in pieces that each
 read as a file that does not exist. It went through unchecked and reported success. Fixed in
-6f0cf1d, and the same shape came back twice in phase 8. A check that cannot see its subject has
-to refuse, which is the side `commit-scope.py` erred on reading the 2 of `2>&1` as a file.
+6f0cf1d, and the shape came back twice in phase 8. A check that cannot see its subject refuses.
 
 **An assumption held for five rounds because nobody ran the thing.** The naming pattern came
 from four examples, the read was assumed to need a progress window, and PRX_Plot_ID was assumed
-to be on elements only. One run corrected all three. Prefer measured numbers to reasoning.
+to be on elements only. One run corrected all three, and a later one corrected the section
+depth from 10 metres to 12.83. Prefer measured numbers to reasoning.
 
 **Code that is there is not code you can see.** The panel shipped with every heading and label
 written and none visible. A dockable pane on the dark theme is black, WPF defaults text to
 black, and nothing set a foreground.
 
-**Two sources for one fact is two facts.** The grid took a view's plot from PRX_Plot_ID and its
-type from the name without checking they agreed, so a view named for DM-12 carrying PRX_Plot_ID
-DM-11 filled a DM-11 cell that stayed full after every DM-11 view was deleted. Fixed in
-`ViewReading`, then again in `GridColumns`. The third was the run report, which made nothing
-and named the same four views under PLAN VIEWS and under NOT CREATED, because the created
-sections printed what the run set out to do. `RunOutcome` is what it did and the report reads
-that alone.
+**Two sources for one fact is two facts.** Five times now, always the same shape. The grid took
+a view's plot from PRX_Plot_ID and its type from the name without checking they agreed, so a
+view named for DM-12 carrying PRX_Plot_ID DM-11 filled a DM-11 cell that stayed full after every
+DM-11 view was deleted. Then the column count against its list. Then the run report, which made
+nothing and named the same four views under PLAN VIEWS and under NOT CREATED. Then a panel step
+that read the range off its arguments rather than off whether step 1 was usable. Then one method
+that filled both the view type code buttons and the Add row's dropdown, whose buttons were moved
+inline when the panel was rebuilt and whose dropdown fill was left behind, so no view type could
+be added at all while the same codes sat as buttons above the empty list.
 
 **A skip with nothing written down is a lie by omission.** `ModelWriter` dropped a schedule
 field it could not resolve, and a filter, both with a bare `continue`. A schedule short of a
-column looks finished. One short of its plot filter shows every plot and reads as correct on a
-drawing. Every skip is recorded now and a lost filter refuses the schedule.
+column looks finished. One short of its plot filter reads as correct on a drawing. Every skip is
+recorded now and a lost filter refuses the schedule.
 
 **Never report an action that might not have happened.** That refusal deletes the schedule
-again, unguarded, so a Revit refusal would leave a wrong schedule in the model while the report
-said it was gone. The delete is checked now and the report names what has to go by hand.
+again, unguarded, so a Revit refusal would have left a wrong schedule in the model while the
+report said it was gone. The delete is checked now and the report names what has to go by hand.
 
 **One example is not a rule.** The view family type was matched on the view type because one
 Properties panel showed a type named exactly that. The next plot's is `(010) Key Location Plan`
 against a view called Location Key Plan, which cost three of the four refusals in the first
 write and was invisible in a scan report that listed only templates.
+
+**A setting nobody recorded cannot be argued about.** A created view came out with a template
+that looked right and a family type that looked wrong. The code read both off one view four
+lines apart, so it could not have split them, but nothing said which view was the sibling, so
+the question was unanswerable. Record where a value came from as you use it, not afterwards.
 
 ## Writing
 
@@ -193,6 +194,6 @@ generated-by footer and no co-author credit line. Comments say why, not what. Fu
 
 ## Working agreements
 
-Never report a test result that did not come from a run made after the last file was written.
-When something cannot be checked, say UNKNOWN rather than filling the gap. Write what happened
-in `steps/log.md`, newest entry at the top.
+Never report a test result from a run made before the last file was written. When something
+cannot be checked, say UNKNOWN rather than filling the gap. Write what happened in
+`steps/log.md`, newest entry at the top.

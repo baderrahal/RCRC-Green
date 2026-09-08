@@ -21,6 +21,7 @@ namespace RcrcGreen.Core
         private readonly List<RunRefusal> _refused = new List<RunRefusal>();
         private readonly List<RunRefusal> _attention = new List<RunRefusal>();
         private readonly List<RunRefusal> _leftBehind = new List<RunRefusal>();
+        private readonly List<RunRefusal> _setUp = new List<RunRefusal>();
 
         /// <summary>
         /// A run that was never confirmed, or one that found nothing to do. Made is empty and
@@ -66,6 +67,25 @@ namespace RcrcGreen.Core
         {
             if (refusal == null) throw new ArgumentNullException("refusal");
             _leftBehind.Add(refusal);
+        }
+
+        /// <summary>
+        /// Where each new view took its family type, level, template and far clip from. Not a
+        /// problem and not a refusal, which is why it has a list of its own.
+        ///
+        /// A run created a view whose template and family type looked as though they had come
+        /// from two different places, and there was no way to check because nothing said which
+        /// view either came from. Now the report names it.
+        /// </summary>
+        public void NoteSetup(RunRefusal note)
+        {
+            if (note == null) throw new ArgumentNullException("note");
+            _setUp.Add(note);
+        }
+
+        public IReadOnlyList<RunRefusal> SetUp
+        {
+            get { return _setUp; }
         }
 
         public IReadOnlyList<RunItem> Created

@@ -44,10 +44,28 @@ namespace RcrcGreen.Core
             List<ScannedSheet> sheets = scan.Sheets
                 .OrderBy(sheet => sheet.SheetNumber, NaturalOrder.Comparer)
                 .ToList();
-            Heading(report, "SHEETS", sheets.Count, "sheet number | sheet name | views on sheet");
+            Heading(report, "SHEETS", sheets.Count,
+                "sheet number | sheet name | views on sheet | PRX_Plot_ID");
+
+            // Two counts about the shape of the set rather than about any one sheet. Only one
+            // plot in the first model has real sheet numbers, and a group of sheets carries no
+            // plot at all, so both are worth a number before anybody reads the list.
+            int copies = sheets.Count(sheet => sheet.NumberedAsACopy);
+            int noPlot = sheets.Count(sheet => !sheet.HasPlotId);
+
+            Line(report, copies + " of them are numbered as a duplicate, meaning the number holds "
+                + ScannedSheet.CopyMark + ".");
+            Line(report, noPlot + " of them carry no PRX_Plot_ID, so the Sheet List will not find "
+                + "them under any plot.");
+            Line(report, "Nothing here was changed. This is a count of what is there.");
+
             foreach (ScannedSheet sheet in sheets)
             {
-                Line(report, Join(sheet.SheetNumber, sheet.SheetName, Count(sheet.ViewsOnSheet, "view")));
+                Line(report, Join(
+                    sheet.SheetNumber,
+                    sheet.SheetName,
+                    Count(sheet.ViewsOnSheet, "view"),
+                    sheet.HasPlotId ? sheet.PlotId : "(none)"));
             }
             Line(report, string.Empty);
 

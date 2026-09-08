@@ -162,6 +162,22 @@ itself is. Reading the range off the arguments alone let every step open on a pa
 read no model at all, because the range fields still held what the last read put there. A test
 caught that, and it was the code that was wrong.
 
+## The settings a new view takes travel together on one object
+
+`SiblingView` holds the view name, the family type, the template, the level and the far clip
+offset of ONE view the model already has. `SiblingChoice.For` picks one and returns it whole.
+Nothing anywhere assembles a set of settings from more than one view, and a test goes red if
+anything starts to.
+
+A run produced a view whose template read `(010) Overall Plan` and whose family type read
+`(200) General Arrangement Layout`. The Revit code read both off the same local four lines
+apart, so it could not have split them, and nothing recorded which view either had come from,
+so the question could not be settled at all. The name is on the object now and in the report.
+
+`SectionDepthChoice.For` is the same shape for the far clip. It takes the sibling's offset
+where there is one and the value the team named where there is not, and it carries which of
+the two it used so the report can say.
+
 ## A test that reads the code back to itself proves nothing
 
 Write the expected value out by hand. Do not work it out with the same rule the code uses.

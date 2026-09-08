@@ -136,33 +136,35 @@ do not any more. Both read it from the view's own name, because the panel filing
 PRX_Plot_ID while taking the view type from the name is what put a view in the wrong row. The
 comparison that difference was kept for has been made, and it came out against it.
 
-## A new view is set up from the sibling, never from a name
+## A new view is set up from ONE sibling, read once
 
-The sibling is a view of the same view type that the model already holds on another plot. It
-is what the team built, so how it is set up is the answer to how a new one should be. Three
-things come off it and none of them is matched on a name:
+The sibling is a view of the same view type the model already holds. It is what the team
+built, so how it is set up is the answer to how a new one should be. Four things come off it
+and none is matched on a name: **family type**, **level** (a plan), **view template**, and
+**far clip offset** (a section).
 
-**Family type**, from `sibling.GetTypeId()`. **Level**, from its `GenLevel`, for a plan view.
-**View template**, from its `ViewTemplateId`.
+`SiblingReader.Of` reads every candidate into a Core `SiblingView` once per run, before
+anything is created, so no view this run makes can become the sibling of a later item.
+`SiblingChoice.For` picks one. The four settings travel together on that one object, so they
+cannot come from two views, and a Core test goes red if any future change pairs one view's
+family type with another's template.
 
-No sibling means the item is refused and the report says to make one by hand on any plot.
+**The report names the view they came from**, under WHERE EACH NEW VIEW WAS SET UP FROM, with
+the family type and the template printed next to it. A run produced a view whose template read
+`(010) Overall Plan` and whose family type read `(200) General Arrangement Layout`, and there
+was no way to tell whether they had come from the same view because nothing recorded it. That
+is not a state to be in twice.
 
-This replaced two name matches and both were wrong on the real model.
+The kind is preferred over the first match. A plan needs a level and a section needs a far
+clip, and the model holds view types drawn both ways. Taking the first view of the type
+regardless refused a plan because the first one happened to be a section, while a usable plan
+sat further down the list.
 
-The family type was matched on the view type, on the belief that a
-`(010) Location Key Plan` is made with a type of that name. It is made with
-`(010) Key Location Plan`. The words are swapped. Three of the four refusals in the first real
-run were that, and it took a Properties panel to find, which is why the scan now lists view
-family types.
-
-The template was matched on a prefix. Eight templates start with
-`(200) General Arrangement Layout`: Scale 250, 400, 500, 600, 1000 and 2500, plus
-`(Coordination)` and `(Streets)`. A prefix match found several and so applied none, which
-would have created every view with no template at all. The sibling already carries the one in
-use.
-
-`ViewTypeNaming` and `TemplateMatch` held both matches and are deleted. Two ways to answer one
-question is the shape this repo keeps getting caught by.
+This replaced two name matches, both wrong on the real model. The family type was matched on
+the view type, on the belief that a `(010) Location Key Plan` is made with a type of that name.
+It is made with `(010) Key Location Plan`, the words swapped. The template was matched on a
+prefix, and eight templates start with `(200) General Arrangement Layout`, so it found several
+and applied none. `ViewTypeNaming` and `TemplateMatch` held both and are deleted.
 
 ## A section is a different call from a plan view
 
@@ -175,21 +177,37 @@ records the view type of every `ViewSection` it passes, `RunPlan` turns those in
 `RunItemKind.Section`, and nothing anywhere says that 400 means section. That is a fact about
 this model and the next model may not share it.
 
-The maths was in Core and unused since it was written. `SectionPlacement.Across` takes the
-plot's scope box as a `PlotBox`, `SectionAxis.ShortSide` and a depth, and hands back the two
-ends of the line, the direction the view looks and the depth. `SectionDefaults` turns the ten
-metres into feet at the Revit boundary, because Revit holds every length in feet and passing
-the ten straight through would place a section ten feet deep.
+**How far it looks comes off the sibling section.** `SectionDefaults` held ten metres, named
+before anybody had opened a section in the model. A real one reads 42.1054 feet, which is
+12.83 metres. `SectionDepthChoice.For` takes the sibling's far clip offset when it has one and
+falls back to the named value when it does not, and the report says which of the two was used
+for each section. The named value is the fallback rather than the rule.
 
-`ModelWriter.SectionBoxFor` turns that into the `BoundingBoxXYZ` Revit wants. Its transform is
-the section's own frame, and the one thing worth knowing about it is that `BasisZ` points back
-at the viewer, so the view looks along the negative of it. That is why the direction Core hands
-back is negated there. Min and Max are in that frame: X is half the line either side of the
-middle, Y is the height of the scope box, and Z runs from the depth behind the cut up to zero
-at the cut.
+**A section is left with no scope box.** A real one in this model has none, and its own section
+box is what bounds it, so a scope box on top would crop it to something nobody asked for. The
+plot's box is still what says where to cut, and a plot without one is still refused. It is
+simply not set on the finished view. A plan view still gets one.
 
-A plot with no scope box has nowhere to cut, so the item is refused and says so in those words
-rather than repeating the plan view line.
+`SectionPlacement.Across` takes the plot's scope box as a `PlotBox`, `SectionAxis.ShortSide`
+and the depth, and hands back the two ends of the line, the direction the view looks and the
+depth. `ModelWriter.SectionBoxFor` turns that into the `BoundingBoxXYZ` Revit wants. Its
+transform is the section's own frame, and the one thing worth knowing is that `BasisZ` points
+back at the viewer, so the view looks along the negative of it, which is why the direction Core
+hands back is negated there.
+
+## One list, one fill
+
+The view type code buttons and the Add row's code dropdown are filled from `CodesInUse` in the
+same loop, in `InsideViewTypes`. They used to be filled by one method. The buttons were moved
+inline when the panel was rebuilt into steps and the dropdown half was left behind, so it
+opened empty and no view type could be added at all, while the same codes sat as buttons
+directly above it.
+
+One method serving two records of one fact is fine. Splitting it and taking only half is the
+same failure this repo keeps hitting, wearing different clothes.
+
+`FillTheCodes` compares before it clears, because the dropdown is one of the controls that
+outlives a redraw and clearing it under an open list takes the selection with it.
 
 ## A sheet is copied, never designed
 

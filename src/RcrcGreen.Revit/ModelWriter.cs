@@ -33,11 +33,15 @@ namespace RcrcGreen.Revit
         {
             var madeSoFar = new Dictionary<string, ElementId>(StringComparer.Ordinal);
 
+            // Read once, before anything is created, so no view this run makes can become the
+            // sibling another item is set up from.
+            SiblingReader siblings = SiblingReader.Of(document);
+
             // Views before sheets, always, because a sheet places views this run may only just
             // have created. The plan puts sheets last already and this does not rely on it.
             foreach (RunItem item in plan.Items.Where(one => one.Kind != RunItemKind.Sheet))
             {
-                MakeOne(document, item, outcome, definitions, boxIdByName, madeSoFar);
+                MakeOne(document, item, outcome, definitions, boxIdByName, madeSoFar, siblings);
             }
 
             foreach (RunItem item in plan.Items.Where(one => one.Kind == RunItemKind.Sheet))
@@ -67,7 +71,8 @@ namespace RcrcGreen.Revit
             RunOutcome outcome,
             Dictionary<ViewType, CapturedSchedule> definitions,
             Dictionary<string, ElementId> boxIdByName,
-            Dictionary<string, ElementId> madeSoFar)
+            Dictionary<string, ElementId> madeSoFar,
+            SiblingReader siblings)
         {
             try
             {
@@ -77,10 +82,10 @@ namespace RcrcGreen.Revit
                         MakeSchedule(document, item, outcome, definitions, madeSoFar);
                         break;
                     case RunItemKind.Section:
-                        MakeSection(document, item, outcome, boxIdByName, madeSoFar);
+                        MakeSection(document, item, outcome, boxIdByName, madeSoFar, siblings);
                         break;
                     default:
-                        MakePlanView(document, item, outcome, boxIdByName, madeSoFar);
+                        MakePlanView(document, item, outcome, boxIdByName, madeSoFar, siblings);
                         break;
                 }
             }
@@ -117,32 +122,34 @@ namespace RcrcGreen.Revit
             RunItem item,
             RunOutcome outcome,
             Dictionary<string, ElementId> boxIdByName,
-            Dictionary<string, ElementId> madeSoFar)
+            Dictionary<string, ElementId> madeSoFar,
+            SiblingReader siblings)
         {
-            View sibling = SiblingOfType(document, item.Type);
+            Sibling sibling = siblings.For(item.Type, SiblingKind.Plan);
             if (sibling == null)
             {
                 outcome.Refused(NoSibling(item));
                 return;
             }
 
-            var siblingPlan = sibling as ViewPlan;
+            var siblingPlan = sibling.View as ViewPlan;
             if (siblingPlan == null || siblingPlan.GenLevel == null)
             {
                 outcome.Refused(new RunRefusal(
                     item.PlotId,
                     item.Type,
-                    "The only " + item.Type + " in this model is a " + sibling.ViewType
-                    + " that sits on no level, so there is nothing to say which level a new one "
+                    "The nearest " + item.Type + " in this model is " + sibling.Facts.ViewName
+                    + ", which sits on no level, so there is nothing to say which level a new one "
                     + "belongs on. Picking one would be a guess."));
                 return;
             }
 
-            ElementId familyTypeId = sibling.GetTypeId();
+            ElementId familyTypeId = sibling.View.GetTypeId();
             if (familyTypeId == ElementId.InvalidElementId)
             {
                 outcome.Refused(new RunRefusal(
-                    item.PlotId, item.Type, "That view type's sibling has no view family type."));
+                    item.PlotId, item.Type,
+                    sibling.Facts.ViewName + " has no view family type to copy."));
                 return;
             }
 
@@ -153,10 +160,13 @@ namespace RcrcGreen.Revit
 
             ApplySiblingTemplate(made, sibling, item, outcome);
             SetPlotId(made, item, outcome);
+            SaySetUpFrom(item, outcome, sibling.Facts.InWords());
 
             ElementId boxId;
             if (boxIdByName.TryGetValue(item.PlotId, out boxId))
             {
+                // A plan view gets the scope box. A section does not, because a real one in this
+                // model has none and its own section box is what bounds it.
                 Parameter holder = made.get_Parameter(ScopeBoxScanner.ScopeBoxParameter);
                 if (holder == null || holder.IsReadOnly)
                 {
@@ -186,14 +196,21 @@ namespace RcrcGreen.Revit
             RunItem item,
             RunOutcome outcome,
             Dictionary<string, ElementId> boxIdByName,
-            Dictionary<string, ElementId> madeSoFar)
+            Dictionary<string, ElementId> madeSoFar,
+            SiblingReader siblings)
         {
-            View sibling = SiblingOfType(document, item.Type);
+            Sibling sibling = siblings.For(item.Type, SiblingKind.Section);
             if (sibling == null)
             {
                 outcome.Refused(NoSibling(item));
                 return;
             }
+
+            // The far clip comes off the sibling section wherever it has one. A real section in
+            // this model looks 42.1054 feet, which is 12.83 metres, against the 10 the team
+            // named before anybody had opened one.
+            SectionDepthChoice depth = SectionDepthChoice.For(
+                sibling.Facts, SectionDefaults.SectionDepthFeet);
 
             ElementId boxId;
             if (!boxIdByName.TryGetValue(item.PlotId, out boxId))
@@ -222,8 +239,7 @@ namespace RcrcGreen.Revit
                     extent.Min.X, extent.Min.Y, extent.Min.Z,
                     extent.Max.X, extent.Max.Y, extent.Max.Z);
 
-                across = SectionPlacement.Across(
-                    plot, SectionAxis.ShortSide, SectionDefaults.SectionDepthFeet);
+                across = SectionPlacement.Across(plot, SectionAxis.ShortSide, depth.Feet);
             }
             catch (ArgumentException refused)
             {
@@ -242,7 +258,7 @@ namespace RcrcGreen.Revit
             }
 
             ViewSection made = ViewSection.CreateSection(
-                document, sibling.GetTypeId(), SectionBoxFor(plot, across));
+                document, sibling.View.GetTypeId(), SectionBoxFor(plot, across));
 
             made.Name = item.Name;
             outcome.Made(item);
@@ -250,9 +266,12 @@ namespace RcrcGreen.Revit
 
             ApplySiblingTemplate(made, sibling, item, outcome);
             SetPlotId(made, item, outcome);
+            SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " " + depth.InWords());
 
-            // No scope box on a section. Its own section box is what bounds it, and a scope box
-            // on top would crop it to something nobody asked for.
+            // No scope box on a section. A real one in this model has none, its own section box
+            // is what bounds it, and a scope box on top would crop it to something nobody asked
+            // for. The plot's box is still what says where to cut, it is just not set on the
+            // finished view.
         }
 
         /// <summary>
@@ -432,22 +451,13 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Any view of the same type on any plot, template or sheet excluded. It is the view
-        /// the team built, so how it is set up is the answer to how a new one should be.
+        /// Where a new view was set up from, named in the report so it never again takes a
+        /// Properties panel to find out. It is not a problem, so it goes under the same heading
+        /// as everything else worth reading rather than under a refusal.
         /// </summary>
-        private static View SiblingOfType(Document document, ViewType type)
+        private static void SaySetUpFrom(RunItem item, RunOutcome outcome, string what)
         {
-            foreach (View view in new FilteredElementCollector(document)
-                .OfClass(typeof(View))
-                .Cast<View>()
-                .Where(view => !view.IsTemplate && !(view is ViewSheet)))
-            {
-                ParsedViewName parsed;
-                if (!ViewNameParser.TryParse(view.Name, out parsed)) continue;
-                if (parsed.Type.Equals(type)) return view;
-            }
-
-            return null;
+            outcome.NoteSetup(new RunRefusal(item.PlotId, item.Type, what));
         }
 
         private static RunRefusal NoSibling(RunItem item)
@@ -467,20 +477,20 @@ namespace RcrcGreen.Revit
         /// choice to make. The sibling has already made it.
         /// </summary>
         private static void ApplySiblingTemplate(
-            View made, View sibling, RunItem item, RunOutcome outcome)
+            View made, Sibling sibling, RunItem item, RunOutcome outcome)
         {
-            if (sibling.ViewTemplateId == ElementId.InvalidElementId)
+            if (sibling.View.ViewTemplateId == ElementId.InvalidElementId)
             {
                 outcome.NeedsAttention(new RunRefusal(
                     item.PlotId,
                     item.Type,
-                    "Created with no view template, because " + sibling.Name + " has none either. "
-                    + "The scale, detail level, discipline and phase filter are whatever a new "
-                    + "view gets by default."));
+                    "Created with no view template, because " + sibling.Facts.ViewName
+                    + " has none either. The scale, detail level, discipline and phase filter are "
+                    + "whatever a new view gets by default."));
                 return;
             }
 
-            made.ViewTemplateId = sibling.ViewTemplateId;
+            made.ViewTemplateId = sibling.View.ViewTemplateId;
         }
 
         private static void SetPlotId(View made, RunItem item, RunOutcome outcome)
