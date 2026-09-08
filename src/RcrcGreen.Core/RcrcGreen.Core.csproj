@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>RcrcGreen.Core</RootNamespace>
+    <AssemblyName>RcrcGreen.Core</AssemblyName>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Core is consumed by a net48 add-in and by net8.0 tests, so it stays on the
+         shared surface both can load. Nothing here may reference the Revit API. -->
+  </PropertyGroup>
+
+</Project>

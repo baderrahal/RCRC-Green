@@ -1,0 +1,33 @@
+# Build output
+bin/
+obj/
+dist/
+build/
+*.dll
+*.pdb
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets. Never commit these.
+.env
+*.key
+appsettings.local.json
+
+# Editor
+.vscode/settings.json
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Visual Studio and .NET
+.vs/
+*.user
+
+# Test output
+TestResults/

@@ -1,0 +1,45 @@
+# Runs the Core tests on every pull request into main.
+# Only tests/RcrcGreen.Core.Tests runs here. The add-in project targets .NET Framework 4.8
+# and needs Revit on the machine, so it is built in Visual Studio rather than on this runner.
+
+name: tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+
+      - name: Run tests
+        run: >
+          dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+          --no-restore
+          --logger "trx;LogFileName=results.trx"
+          --results-directory TestResults
+
+      # A gate that runs zero tests reports green forever, so read the count back out of the
+      # result file and fail when it is zero or the file never appeared.
+      - name: Fail if no tests ran
+        run: |
+          RESULTS=$(find TestResults -name '*.trx' | head -1)
+          if [ -z "$RESULTS" ]; then
+            echo "No test result file was written. This gate is not protecting anything."
+            exit 1
+          fi
+          TOTAL=$(grep -o 'total="[0-9]*"' "$RESULTS" | head -1 | grep -o '[0-9]*')
+          if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
+            echo "Zero tests ran. This gate is not protecting anything."
+            exit 1
+          fi
+          echo "$TOTAL tests ran."

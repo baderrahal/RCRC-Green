@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Per user install for Revit 2024. Copy this file to
+  %APPDATA%\Autodesk\Revit\Addins\2024\
+  and put the build output in the RcrcGreen folder beside it, so the layout is
+
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+
+  The Assembly path below is read relative to this file, which is why the per user
+  path never appears inside it and the same manifest works on every machine.
+-->
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RCRC Green</Name>
+    <Assembly>RcrcGreen\RcrcGreen.Revit.dll</Assembly>
+    <AddInId>51c9c81c-c2e2-4d7e-8301-1ccbb187a928</AddInId>
+    <FullClassName>RcrcGreen.Revit.RcrcGreenApplication</FullClassName>
+    <VendorId>RCRC</VendorId>
+    <VendorDescription>RCRC Green</VendorDescription>
+  </AddIn>
+</RevitAddIns>
