@@ -91,75 +91,95 @@ namespace RcrcGreen.Core.Tests
         }
     }
 
+    /// <summary>
+    /// A sheet is described once and repeated across every ticked plot that has a number.
+    ///
+    /// It used to be copied off a sheet that already existed. The user picked one with no views
+    /// on it and got an empty sheet, and copying was not how they wanted to work anyway.
+    /// </summary>
     public class RunPlanSheetTests
     {
         private static readonly ViewType General = new ViewType("200", "General Arrangement Layout");
+        private static readonly ViewType KeyPlan = new ViewType("010", "Location Key Plan");
 
         [Fact]
-        public void APlotWithBothBoxesFilledInGetsASheet()
+        public void OneSheetDescribedMakesOnePerPlotWithANumber()
         {
             RunPlan plan = RunFixture.WithSheets(
-                new[] { "DM-11" },
-                new[] { new SheetRequest("DM-11", "L-201", "General Arrangement") },
-                true);
+                new[] { "DM-11", "DM-12" },
+                RunFixture.Sheet("GENERAL ARRANGEMENT LAYOUT", new[] { General }, 1,
+                    "DM-11", "L-211", "DM-12", "L-212"));
 
-            RunItem sheet = Assert.Single(plan.Items);
-            Assert.Equal(RunItemKind.Sheet, sheet.Kind);
-            Assert.Equal("L-201 General Arrangement", sheet.Name);
-            Assert.Equal("DM-11", sheet.PlotId);
-            Assert.Null(sheet.Type);
+            Assert.Equal(2, plan.CountOf(RunItemKind.Sheet));
+            Assert.Equal(
+                new[] { "L-211 GENERAL ARRANGEMENT LAYOUT", "L-212 GENERAL ARRANGEMENT LAYOUT" },
+                plan.Items.Select(item => item.Name).ToArray());
         }
 
         /// <summary>
-        /// The tool invents neither half, so a half filled row is refused by name rather than
-        /// completed with something plausible.
+        /// The point of describing a sheet once. Two definitions over two plots make four
+        /// sheets, so one press gives a plot its list of drawings and its layout together.
         /// </summary>
         [Fact]
-        public void AHalfFilledRowIsRefusedAndSaysWhichHalf()
+        public void TwoSheetsDescribedMakeTwoEach()
         {
             RunPlan plan = RunFixture.WithSheets(
-                new[] { "DM-11" },
-                new[] { new SheetRequest("DM-11", "L-201", string.Empty) },
-                true);
+                new[] { "DM-11", "DM-12" },
+                RunFixture.Sheet("LIST OF DRAWINGS", new[] { KeyPlan }, 1,
+                    "DM-11", "L-201", "DM-12", "L-202"),
+                RunFixture.Sheet("GENERAL ARRANGEMENT LAYOUT", new[] { General }, 1,
+                    "DM-11", "L-211", "DM-12", "L-212"));
+
+            Assert.Equal(4, plan.CountOf(RunItemKind.Sheet));
+            Assert.Equal(
+                new[] { "L-201 LIST OF DRAWINGS", "L-202 LIST OF DRAWINGS",
+                        "L-211 GENERAL ARRANGEMENT LAYOUT", "L-212 GENERAL ARRANGEMENT LAYOUT" },
+                plan.Items.Select(item => item.Name).ToArray());
+        }
+
+        /// <summary>
+        /// The tool invents no number, so a plot without one is refused by name and told why.
+        /// </summary>
+        [Fact]
+        public void APlotWithNoNumberIsRefusedByName()
+        {
+            RunPlan plan = RunFixture.WithSheets(
+                new[] { "DM-11", "DM-12" },
+                RunFixture.Sheet("LIST OF DRAWINGS", null, 1, "DM-11", "L-201", "DM-12", ""));
+
+            Assert.Single(plan.Items);
+            RunRefusal only = Assert.Single(plan.Refusals);
+            Assert.Contains("no sheet number was typed in for it", only.Because);
+            Assert.Contains("invents neither", only.Because);
+            Assert.Equal("DM-12", only.PlotId);
+        }
+
+        [Fact]
+        public void APlotNotNamedAtAllIsRefusedTheSameWay()
+        {
+            RunPlan plan = RunFixture.WithSheets(
+                new[] { "DM-11", "DM-12" },
+                RunFixture.Sheet("LIST OF DRAWINGS", null, 1, "DM-11", "L-201"));
+
+            Assert.Single(plan.Items);
+            Assert.Single(plan.Refusals);
+        }
+
+        /// <summary>
+        /// A definition short of a type or a name is one thing to go and fix, not seventeen, so
+        /// it is refused once rather than once per plot.
+        /// </summary>
+        [Fact]
+        public void AnUnfinishedSheetIsRefusedOnceRatherThanOncePerPlot()
+        {
+            RunPlan plan = RunFixture.WithSheets(
+                new[] { "DM-11", "DM-12", "DM-13" },
+                RunFixture.SheetMissingAName("DM-11", "L-201", "DM-12", "L-202", "DM-13", "L-203"));
 
             Assert.Empty(plan.Items);
             RunRefusal only = Assert.Single(plan.Refusals);
             Assert.Contains("missing a sheet name", only.Because);
-            Assert.Contains("invents neither", only.Because);
-        }
-
-        [Fact]
-        public void APlotWithBothBoxesEmptyIsNotARefusal()
-        {
-            RunPlan plan = RunFixture.WithSheets(
-                new[] { "DM-11", "DM-12" },
-                new[]
-                {
-                    new SheetRequest("DM-11", null, null),
-                    new SheetRequest("DM-12", "L-202", "Layout")
-                },
-                true);
-
-            Assert.Single(plan.Items);
-            Assert.Empty(plan.Refusals);
-        }
-
-        /// <summary>
-        /// No source sheet means no title block and no layout. Nothing about the sheet can be
-        /// guessed, so the row is refused and the message says what to do about it.
-        /// </summary>
-        [Fact]
-        public void WithNoSourceSheetCapturedEveryRowIsRefused()
-        {
-            RunPlan plan = RunFixture.WithSheets(
-                new[] { "DM-11" },
-                new[] { new SheetRequest("DM-11", "L-201", "General Arrangement") },
-                false);
-
-            Assert.Empty(plan.Items);
-            RunRefusal only = Assert.Single(plan.Refusals);
-            Assert.Contains("No source sheet was captured", only.Because);
-            Assert.Equal("L-201 General Arrangement", only.Name);
+            Assert.Contains("No sheet of this kind was made on any plot", only.Because);
         }
 
         [Fact]
@@ -167,29 +187,49 @@ namespace RcrcGreen.Core.Tests
         {
             RunPlan plan = RunFixture.WithSheets(
                 new[] { "DM-11" },
-                new[] { new SheetRequest("DM-12", "L-202", "Layout") },
-                true);
+                RunFixture.Sheet("LIST OF DRAWINGS", null, 1, "DM-11", "L-201", "DM-99", "L-299"));
 
-            Assert.Empty(plan.Items);
+            Assert.Single(plan.Items);
             Assert.Empty(plan.Refusals);
         }
 
         /// <summary>
-        /// A sheet needs no scope box. It carries views, and whether those views could be made
-        /// is a question about them.
+        /// An empty sheet is a real thing to ask for. Nothing ticked still makes one.
         /// </summary>
         [Fact]
-        public void ASheetIsMadeOnAPlotWithNoScopeBox()
+        public void ASheetWithNoViewsTickedIsStillMade()
+        {
+            RunPlan plan = RunFixture.WithSheets(
+                new[] { "DM-11" },
+                RunFixture.Sheet("LIST OF DRAWINGS", null, 1, "DM-11", "L-201"));
+
+            RunItem sheet = Assert.Single(plan.Items);
+            Assert.Equal(RunItemKind.Sheet, sheet.Kind);
+            Assert.Empty(sheet.Sheet.Views);
+            Assert.Empty(plan.Refusals);
+        }
+
+        [Fact]
+        public void TheDefinitionTravelsWithTheItemSoTheWriterKnowsWhatGoesOnIt()
+        {
+            RunPlan plan = RunFixture.WithSheets(
+                new[] { "DM-11" },
+                RunFixture.Sheet("GA", new[] { General, KeyPlan }, 2, "DM-11", "L-211"));
+
+            RunItem sheet = Assert.Single(plan.Items);
+
+            Assert.Equal(2, sheet.Sheet.ViewsPerSheet);
+            Assert.Equal(2, sheet.Sheet.Placed.Count);
+            Assert.Equal("GA", sheet.Sheet.SheetName);
+            Assert.Null(sheet.Type);
+        }
+
+        [Fact]
+        public void ASheetNeedsNoScopeBox()
         {
             RunPlan plan = RunPlan.Of(
-                null,
-                new[] { "DM-13" },
-                new string[0],
-                null,
-                null,
-                null,
-                new[] { new SheetRequest("DM-13", "L-203", "Layout") },
-                true);
+                null, new[] { "DM-13" }, new string[0], null, null, null,
+                new[] { RunFixture.Sheet("LIST OF DRAWINGS", null, 1, "DM-13", "L-203") });
 
             Assert.Single(plan.Items);
             Assert.Empty(plan.Refusals);
@@ -202,15 +242,8 @@ namespace RcrcGreen.Core.Tests
                 new[] { new PlotViewKey("DM-11", General) },
                 new[] { "DM-11", "DM-12" },
                 new[] { "DM-11", "DM-12" },
-                null,
-                null,
-                null,
-                new[]
-                {
-                    new SheetRequest("DM-11", "L-201", "Layout"),
-                    new SheetRequest("DM-12", "L-202", "Layout")
-                },
-                true);
+                null, null, null,
+                new[] { RunFixture.Sheet("GA", null, 1, "DM-11", "L-211", "DM-12", "L-212") });
 
             Assert.Equal(1, plan.CountOf(RunItemKind.PlanView));
             Assert.Equal(2, plan.CountOf(RunItemKind.Sheet));
@@ -218,8 +251,8 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// Three kinds at once, because the joining word between the last two is the part that
-        /// reads wrong if nobody writes the expected string out by hand.
+        /// Three kinds at once, because the joining word between the last two reads wrong if
+        /// nobody writes the expected string out by hand.
         /// </summary>
         [Fact]
         public void ThreeKindsReadAsAList()
@@ -235,8 +268,7 @@ namespace RcrcGreen.Core.Tests
                 null,
                 new[] { new ViewType("400", "Landscape Cross Section") },
                 null,
-                new[] { new SheetRequest("DM-11", "L-201", "Layout") },
-                true);
+                new[] { RunFixture.Sheet("GA", null, 1, "DM-11", "L-211") });
 
             Assert.Equal(
                 "This run would make 1 plan view, 1 section and 1 sheet.",
@@ -250,11 +282,8 @@ namespace RcrcGreen.Core.Tests
                 new[] { new PlotViewKey("DM-11", General) },
                 new[] { "DM-11" },
                 new[] { "DM-11" },
-                null,
-                null,
-                null,
-                new[] { new SheetRequest("DM-11", "L-201", "Layout") },
-                true);
+                null, null, null,
+                new[] { RunFixture.Sheet("GA", null, 1, "DM-11", "L-211") });
 
             Assert.Equal(
                 new[] { RunItemKind.PlanView, RunItemKind.Sheet },

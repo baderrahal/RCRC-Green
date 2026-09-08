@@ -130,24 +130,24 @@ a file that contradicts itself has nothing else in it worth believing either.
 Needing attention is not the same as not being created. A schedule short of a column is in the
 model and it is wrong, and counting it as not created would be a second lie.
 
-## A sheet is captured, not designed
+## A sheet is described, not captured
 
-`SheetDefinition` holds the title block family and type, the sheet size, and one placement per
-view on the source sheet, each carrying a view type and a position in feet from the sheet
-origin. Plain strings and numbers, the same shape as `ScheduleDefinition` and for the same
-reason: capture and create are two halves that do not know about each other, and a definition
-loaded from a file is then a small round rather than a rewrite.
+`SheetDefinition` holds the title block family and type, the sheet name, the view types that go
+on it and how many per sheet. Plain strings, a list and a number, filled from what the user
+chose rather than read off a sheet that already exists.
 
-One placement per view type. A source sheet holding the same type twice gives no way to say
-which position a new one takes, and placing both would put two views on top of each other.
+The sheet number is not in it. It is the one thing that differs between the sheets one
+definition makes, so it comes per plot in a `SheetRequest`, and `SheetOrder` pairs a definition
+with the number every plot gets for it.
 
-A schedule on a sheet is a different element from a drawing on a sheet and is placed by a
-different call, so `IsASchedule` is captured rather than worked out later.
+`SheetLayout.For` is the maths: a title block's width and height and a count of 1, 2 or 4, back
+comes the centre of each viewport in reading order. It divides the sheet evenly, so the margin
+outside equals the gap between. Y counts up from the bottom, which is Revit's convention and
+the reason the first row back is the top one.
 
-The sheet number and the sheet name are not in here at all. They come one per plot in a
-`SheetRequest`, typed by the user, and `Blank` and `Complete` are different questions. Both
-boxes empty is a plot nobody asked for a sheet on. One box empty is a row that was meant and is
-short, and that one is refused by name and told which half is missing.
+More views ticked than fit is not an error. The first few are `Placed`, the rest are `LeftOff`
+and named, so nothing is dropped without being said. A definition with no views is usable and
+makes an empty sheet, which is a real thing to ask for.
 
 ## Every count the panel shows is worked out here
 

@@ -149,9 +149,12 @@ namespace RcrcGreen.Core
         /// <param name="typesTicked">How many view types are ticked.</param>
         /// <param name="typesInModel">How many the model holds, plus any added by hand.</param>
         /// <param name="marked">How many cells are marked.</param>
-        /// <param name="sheetsInModel">How many sheets there are to copy from.</param>
-        /// <param name="sourceSheet">The sheet picked to copy, empty when none is.</param>
-        /// <param name="sheetsAsked">How many plots have both a number and a name typed in.</param>
+        /// <param name="titleBlockTypes">How many title block types the model holds. A sheet is
+        /// created with one, so none means no sheet can be made at all.</param>
+        /// <param name="sheetsDescribed">How many sheet definitions the user has added.</param>
+        /// <param name="sheetsAsked">How many sheets a run would make, meaning every definition
+        /// against every ticked plot that has a number typed in.</param>
+        /// <param name="sheetsIncomplete">How many definitions are missing a type or a name.</param>
         /// <param name="plan">What a run would make right now.</param>
         public static PanelSteps Of(
             bool readOnce,
@@ -163,14 +166,14 @@ namespace RcrcGreen.Core
             int typesTicked,
             int typesInModel,
             int marked,
-            int sheetsInModel,
-            string sourceSheet,
+            int titleBlockTypes,
+            int sheetsDescribed,
             int sheetsAsked,
+            int sheetsIncomplete,
             RunPlan plan)
         {
             first = first ?? string.Empty;
             last = last ?? string.Empty;
-            sourceSheet = sourceSheet ?? string.Empty;
 
             bool haveARange = first.Length > 0 && last.Length > 0 && plotsInRange > 0;
 
@@ -184,8 +187,8 @@ namespace RcrcGreen.Core
                 Plots(readOnce, plotsInModel, first, last, plotsInRange, plotsTicked, plotsDone),
                 ViewTypes(plotsDone, typesTicked, typesInModel),
                 Mark(plotsDone, typesTicked, marked),
-                Sheets(plotsDone, sheetsInModel, sourceSheet, sheetsAsked),
-                Run(marked, sheetsAsked, sourceSheet, plan)
+                Sheets(plotsDone, titleBlockTypes, sheetsDescribed, sheetsAsked),
+                Run(marked, sheetsAsked, sheetsIncomplete, plan)
             };
 
             return new PanelSteps(steps);
@@ -252,7 +255,7 @@ namespace RcrcGreen.Core
         }
 
         private static StepState Sheets(
-            bool plotsDone, int sheetsInModel, string sourceSheet, int asked)
+            bool plotsDone, int titleBlockTypes, int described, int asked)
         {
             if (!plotsDone)
             {
@@ -260,41 +263,38 @@ namespace RcrcGreen.Core
                     "Pick a plot range and tick at least one plot first.", false);
             }
 
-            if (sheetsInModel == 0)
+            if (titleBlockTypes == 0)
             {
                 return new StepState(PanelStep.Sheets, "SHEETS", string.Empty, false,
-                    "This model holds no sheets, so there is none to copy. Set one plot's sheet "
-                    + "up by hand and press Refresh.", false);
+                    "This model holds no title block types, so there is nothing to make a sheet "
+                    + "with.", false);
             }
 
-            if (sourceSheet.Length == 0)
+            if (described == 0)
             {
                 return new StepState(PanelStep.Sheets, "SHEETS",
-                    "no sheet picked to copy", true, string.Empty, false);
+                    "none added", true, string.Empty, false);
             }
 
-            string filled = asked == 0
-                ? "no plot filled in"
-                : asked == 1 ? "1 plot filled in" : asked + " plots filled in";
+            string sheets = described == 1 ? "1 sheet" : described + " sheets";
+            string making = asked == 0
+                ? "none to make yet"
+                : asked == 1 ? "1 to make" : asked + " to make";
 
             return new StepState(PanelStep.Sheets, "SHEETS",
-                "copying " + sourceSheet + ", " + filled, true, string.Empty, asked > 0);
+                sheets + ", " + making, true, string.Empty, asked > 0);
         }
 
-        private static StepState Run(int marked, int sheetsAsked, string sourceSheet, RunPlan plan)
+        private static StepState Run(int marked, int sheetsAsked, int sheetsIncomplete, RunPlan plan)
         {
             if (marked == 0 && sheetsAsked == 0)
             {
                 return new StepState(PanelStep.Run, "RUN", string.Empty, false,
-                    "Mark a cell in step 3, or fill in a sheet number and name in step 4. "
-                    + "Nothing is created until you do.", false);
-            }
-
-            if (sheetsAsked > 0 && sourceSheet.Length == 0)
-            {
-                return new StepState(PanelStep.Run, "RUN", string.Empty, false,
-                    "Pick the sheet to copy in step 4. Without one there is no title block and "
-                    + "no layout.", false);
+                    sheetsIncomplete > 0
+                        ? "Every sheet in step 4 is missing a type or a name, so none can be "
+                            + "made. Mark a cell in step 3 or finish one off."
+                        : "Mark a cell in step 3, or add a sheet in step 4 and type a number for "
+                            + "a plot. Nothing is created until you do.", false);
             }
 
             string counts = plan == null ? "nothing to make" : plan.CountsInWords();

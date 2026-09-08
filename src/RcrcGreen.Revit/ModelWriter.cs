@@ -28,8 +28,7 @@ namespace RcrcGreen.Revit
             RunPlan plan,
             RunOutcome outcome,
             Dictionary<ViewType, CapturedSchedule> definitions,
-            Dictionary<string, ElementId> boxIdByName,
-            SheetDefinition sheetLayout)
+            Dictionary<string, ElementId> boxIdByName)
         {
             var madeSoFar = new Dictionary<string, ElementId>(StringComparer.Ordinal);
 
@@ -48,7 +47,7 @@ namespace RcrcGreen.Revit
             {
                 try
                 {
-                    MakeSheet(document, item, outcome, sheetLayout, madeSoFar);
+                    MakeSheet(document, item, outcome, madeSoFar);
                 }
                 catch (Autodesk.Revit.Exceptions.ApplicationException failed)
                 {
@@ -313,32 +312,30 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// A sheet built like one the user set up by hand.
+        /// A sheet the user described, made for one plot.
         ///
-        /// The title block, where a view sits and how several lay out were the three things
-        /// that stopped sheets being made. The team answered all three with the same answer:
-        /// copy the sheet somebody already got right. So none of it is decided here.
+        /// It used to copy a sheet that already existed, which meant somebody had to have laid
+        /// one out first and meant picking an empty one gave an empty sheet. The description is
+        /// four choices now: a title block type, a name, which of the ticked view types go on
+        /// it, and how many per sheet. Where each one sits is worked out by SheetLayout.
+        ///
+        /// The number comes off the item, typed per plot. The tool invents neither it nor the
+        /// name.
         /// </summary>
         private static void MakeSheet(
             Document document,
             RunItem item,
             RunOutcome outcome,
-            SheetDefinition layout,
             Dictionary<string, ElementId> madeSoFar)
         {
-            if (layout == null || !layout.CanBeUsed)
-            {
-                outcome.Refused(new RunRefusal(item.PlotId, null,
-                    item.Name + " was not made, because no usable source sheet was captured."));
-                return;
-            }
+            SheetDefinition wanted = item.Sheet;
 
-            FamilySymbol block = TitleBlock(document, layout);
+            FamilySymbol block = TitleBlock(document, wanted);
             if (block == null)
             {
                 outcome.Refused(new RunRefusal(item.PlotId, null,
                     item.Name + " was not made. This model has no title block type named "
-                    + layout.TitleBlockFamilyName + " " + layout.TitleBlockTypeName + "."));
+                    + wanted.TitleBlock + "."));
                 return;
             }
 
@@ -366,39 +363,64 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            sheet.Name = item.SheetName;
+            sheet.Name = wanted.SheetName;
             outcome.Made(item);
 
             Parameter plot = sheet.LookupParameter(ModelScanner.PlotIdParameterName);
             if (plot != null && !plot.IsReadOnly) plot.Set(item.PlotId);
 
-            PlaceViews(document, item, outcome, layout, sheet, madeSoFar);
+            PlaceViews(document, item, outcome, sheet, block, madeSoFar);
         }
 
+        /// <summary>
+        /// Every view the definition asks for, at the spot Core worked out for it.
+        ///
+        /// A definition with no views ticked makes an empty sheet on purpose, so nothing here
+        /// treats that as a fault. The run says so before it runs.
+        /// </summary>
         private static void PlaceViews(
             Document document,
             RunItem item,
             RunOutcome outcome,
-            SheetDefinition layout,
             ViewSheet sheet,
+            FamilySymbol block,
             Dictionary<string, ElementId> madeSoFar)
         {
-            foreach (SheetViewPlacement placement in layout.Views)
-            {
-                string wanted = item.PlotId + "-(" + placement.Type.Code + ") " + placement.Type.ViewName;
+            SheetDefinition wanted = item.Sheet;
+            IReadOnlyList<ViewType> placing = wanted.Placed;
+            if (placing.Count == 0) return;
 
-                ElementId viewId = ViewNamed(document, wanted, madeSoFar);
+            double width = Number(block.get_Parameter(BuiltInParameter.SHEET_WIDTH));
+            double height = Number(block.get_Parameter(BuiltInParameter.SHEET_HEIGHT));
+
+            if (width <= 0.0 || height <= 0.0)
+            {
+                outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
+                    item.Name + " was made empty. Its title block reports no width or height, so "
+                    + "there is nowhere worked out to put a view."));
+                return;
+            }
+
+            IReadOnlyList<ViewportSpot> spots =
+                SheetLayout.For(width, height, wanted.ViewsPerSheet);
+
+            for (int at = 0; at < placing.Count && at < spots.Count; at++)
+            {
+                ViewType type = placing[at];
+                string named = item.PlotId + "-(" + type.Code + ") " + type.ViewName;
+
+                ElementId viewId = ViewNamed(document, named, madeSoFar);
                 if (viewId == ElementId.InvalidElementId)
                 {
                     outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
-                        item.Name + " was made without " + wanted
-                        + ", because that view is not in the model and was not marked to be made."));
+                        item.Name + " was made without " + named + ", because that view is not in "
+                        + "the model and was not marked to be made."));
                     continue;
                 }
 
-                var point = new XYZ(placement.CentreX, placement.CentreY, 0.0);
+                var point = new XYZ(spots[at].CentreX, spots[at].CentreY, 0.0);
 
-                if (placement.IsASchedule)
+                if (document.GetElement(viewId) is ViewSchedule)
                 {
                     ScheduleSheetInstance.Create(document, sheet.Id, viewId, point);
                     continue;
@@ -409,7 +431,7 @@ namespace RcrcGreen.Revit
                     // Almost always because it is already on another sheet. Moving it would
                     // take it off a drawing somebody else made.
                     outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
-                        item.Name + " was made without " + wanted + ", because Revit will not put "
+                        item.Name + " was made without " + named + ", because Revit will not put "
                         + "that view on this sheet. A view already placed on another sheet cannot "
                         + "be placed twice."));
                     continue;
@@ -417,17 +439,35 @@ namespace RcrcGreen.Revit
 
                 Viewport.Create(document, sheet.Id, viewId, point);
             }
+
+            if (wanted.LeftOff.Count > 0)
+            {
+                outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
+                    item.Name + " holds " + wanted.ViewsPerSheet + " views, and "
+                    + wanted.LeftOff.Count + " more were ticked than fit, so these were left off: "
+                    + string.Join(", ", wanted.LeftOff.Select(one => one.ToString()).ToArray())
+                    + "."));
+            }
         }
 
-        private static FamilySymbol TitleBlock(Document document, SheetDefinition layout)
+        private static double Number(Parameter parameter)
+        {
+            if (parameter == null || !parameter.HasValue) return 0.0;
+            if (parameter.StorageType != StorageType.Double) return 0.0;
+
+            return parameter.AsDouble();
+        }
+
+        private static FamilySymbol TitleBlock(Document document, SheetDefinition wanted)
         {
             return new FilteredElementCollector(document)
                 .OfCategory(BuiltInCategory.OST_TitleBlocks)
                 .OfClass(typeof(FamilySymbol))
                 .Cast<FamilySymbol>()
                 .FirstOrDefault(symbol =>
-                    string.Equals(symbol.FamilyName, layout.TitleBlockFamilyName, StringComparison.Ordinal)
-                    && string.Equals(symbol.Name, layout.TitleBlockTypeName, StringComparison.Ordinal));
+                    string.Equals(symbol.Name, wanted.TitleBlockTypeName, StringComparison.Ordinal)
+                    && (wanted.TitleBlockFamilyName.Length == 0
+                        || string.Equals(symbol.FamilyName, wanted.TitleBlockFamilyName, StringComparison.Ordinal)));
         }
 
         /// <summary>

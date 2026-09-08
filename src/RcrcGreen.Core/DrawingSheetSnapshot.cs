@@ -17,8 +17,8 @@ namespace RcrcGreen.Core
     public sealed class DrawingSheetSnapshot
     {
         public static readonly DrawingSheetSnapshot Nothing = new DrawingSheetSnapshot(
-            string.Empty, default(DateTime), null, null, null, null, null, null, null, null,
-            0, 0, 0, 0, 0);
+            string.Empty, default(DateTime), null, null, null, null, null, null, null,
+            null, null, null, 0, 0, 0, 0, 0);
 
         public DrawingSheetSnapshot(
             string documentTitle,
@@ -30,7 +30,9 @@ namespace RcrcGreen.Core
             IEnumerable<ViewType> sectionTypes,
             IEnumerable<string> scopeBoxNames,
             IEnumerable<ViewScopeBoxState> viewStates,
-            IEnumerable<SheetInTheModel> sheets,
+            IEnumerable<TitleBlockType> titleBlockTypes,
+            IEnumerable<string> sheetNamesInUse,
+            IEnumerable<string> sheetNumbersInUse,
             int viewsRead,
             int fromParameter,
             int fromViewName,
@@ -69,9 +71,19 @@ namespace RcrcGreen.Core
                 .OrderBy(one => one)
                 .ToList();
 
-            Sheets = (sheets ?? Enumerable.Empty<SheetInTheModel>())
+            TitleBlockTypes = (titleBlockTypes ?? Enumerable.Empty<TitleBlockType>())
                 .Where(one => one != null)
                 .OrderBy(one => one)
+                .ToList();
+
+            SheetNamesInUse = Clean(sheetNamesInUse)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(name => name, NaturalOrder.Comparer)
+                .ToList();
+
+            SheetNumbersInUse = Clean(sheetNumbersInUse)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(number => number, NaturalOrder.Comparer)
                 .ToList();
 
             ScopeBoxNames = Clean(scopeBoxNames)
@@ -144,9 +156,19 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// Every sheet in the model, offered as the one to copy a new sheet from.
+        /// The title block types a new sheet can be made with. No sheet can be made without one,
+        /// and the list is read from the model rather than written down.
         /// </summary>
-        public IReadOnlyList<SheetInTheModel> Sheets { get; }
+        public IReadOnlyList<TitleBlockType> TitleBlockTypes { get; }
+
+        /// <summary>
+        /// The names and numbers already in use, offered as lists the user can pick from or type
+        /// past. They are a convenience and never a restriction, because a new sheet usually
+        /// carries a number no sheet has yet.
+        /// </summary>
+        public IReadOnlyList<string> SheetNamesInUse { get; }
+
+        public IReadOnlyList<string> SheetNumbersInUse { get; }
 
         /// <summary>
         /// Every scope box name in the model, whether or not it is shaped like a plot.

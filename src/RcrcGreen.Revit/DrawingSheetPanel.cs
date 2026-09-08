@@ -53,7 +53,7 @@ namespace RcrcGreen.Revit
         private readonly TextBox _search = new TextBox();
         private readonly ComboBox _newCode = new ComboBox { Width = PanelMetrics.LabelWidth };
         private readonly TextBox _newName = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
-        private readonly ComboBox _sheetToCopy = new ComboBox();
+
 
         private readonly StackPanel _steps = new StackPanel();
         private readonly TextBlock _modelName = new TextBlock();
@@ -79,11 +79,10 @@ namespace RcrcGreen.Revit
         private PlotSelection _picked = PlotSelection.Nothing;
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
 
-        // What the user typed, per plot, held here rather than read back off the text boxes.
-        // The table is rebuilt whenever the range changes, and a control that has been thrown
-        // away is not a place to keep the only copy of something the user typed.
-        private readonly Dictionary<string, string> _sheetNumbers = new Dictionary<string, string>(StringComparer.Ordinal);
-        private readonly Dictionary<string, string> _sheetNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        // The sheets the user has described, and what they typed for each plot. Held here
+        // rather than read back off the controls, because the step is thrown away and rebuilt
+        // on every change and a control that has gone is not a place to keep the only copy.
+        private readonly List<SheetBeingDescribed> _sheets = new List<SheetBeingDescribed>();
 
         private PanelStep _stepOpen = PanelStep.Plots;
 
@@ -109,7 +108,6 @@ namespace RcrcGreen.Revit
             _from.SelectionChanged += (sender, e) => RangeChosen();
             _to.SelectionChanged += (sender, e) => RangeChosen();
             _search.TextChanged += (sender, e) => Redraw();
-            _sheetToCopy.SelectionChanged += (sender, e) => SheetToCopyPicked();
 
             Content = Layout();
             PaintFromTheTheme();
@@ -252,8 +250,6 @@ namespace RcrcGreen.Revit
 
         private PanelSteps StepsNow()
         {
-            SheetInTheModel source = _sheetToCopy.SelectedItem as SheetInTheModel;
-
             return PanelSteps.Of(
                 _readOnce,
                 _model.PlotIds.Count,
@@ -264,9 +260,10 @@ namespace RcrcGreen.Revit
                 _columns.ShownCount,
                 _columns.All.Count,
                 _marked.Count,
-                _model.Sheets.Count,
-                source == null ? string.Empty : source.SheetNumber,
-                SheetsWanted().Count(one => one.Complete),
+                _model.TitleBlockTypes.Count,
+                _sheets.Count,
+                SheetsToMake(),
+                SheetsWanted().Count(one => !one.Definition.CanBeUsed),
                 PlanNow());
         }
 
@@ -718,40 +715,174 @@ namespace RcrcGreen.Revit
             return "   " + KindOf(type);
         }
 
+        /// <summary>
+        /// The sheets the user describes, and the number every plot gets for each.
+        ///
+        /// A sheet is described once and repeated across the ticked plots. It used to be copied
+        /// off a sheet that already existed, which meant one had to be laid out by hand first
+        /// and meant picking an empty one gave an empty sheet.
+        /// </summary>
         private UIElement InsideSheets()
         {
             var block = new StackPanel();
 
-            block.Children.Add(Labelled("Copy", _sheetToCopy));
+            if (_sheets.Count == 0)
+            {
+                block.Children.Add(Faint("No sheet added yet. A sheet is described once here and "
+                    + "made for every ticked plot that has a number typed in."));
+            }
 
-            block.Children.Add(Faint(PickedSheetId() == 0
-                ? "Pick the sheet to copy. A new sheet takes its title block and puts each view "
-                    + "where that sheet has it. Set one plot up by hand first."
-                : "Type a sheet number and a sheet name for every plot that wants one. Both are "
-                    + "yours to write and neither is invented. A plot with either box empty gets "
-                    + "no sheet."));
+            for (int at = 0; at < _sheets.Count; at++)
+            {
+                block.Children.Add(OneSheet(_sheets[at], at));
+            }
 
-            block.Children.Add(Scrolling(SheetTable(), PanelMetrics.ListHeight));
+            block.Children.Add(Secondary("Add a sheet", AddASheet,
+                "Describes another sheet. One run can give a plot its list of drawings and its "
+                + "general arrangement layout together."));
+
             block.Children.Add(NextButton(PanelStep.Sheets));
             return block;
         }
 
+        private UIElement OneSheet(SheetBeingDescribed sheet, int at)
+        {
+            var block = new StackPanel { Margin = PanelMetrics.StepInside };
+
+            var heading = new DockPanel { LastChildFill = true };
+            Button remove = Secondary("Remove", () => RemoveASheet(sheet), "Takes this sheet out.");
+            DockPanel.SetDock(remove, Dock.Right);
+            heading.Children.Add(remove);
+            heading.Children.Add(new TextBlock
+            {
+                Text = "Sheet " + (at + 1),
+                FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            block.Children.Add(heading);
+
+            var type = new ComboBox { Margin = PanelMetrics.Row };
+            foreach (TitleBlockType one in _model.TitleBlockTypes) type.Items.Add(one);
+            if (sheet.TitleBlock != null) type.SelectedItem = ChosenTitleBlock(sheet);
+            type.SelectionChanged += (sender, e) =>
+            {
+                if (_filling) return;
+                sheet.TitleBlock = type.SelectedItem as TitleBlockType;
+                RefreshHeaders();
+            };
+            block.Children.Add(Labelled("Type", type));
+
+            // Editable, because the list is the names already in use and a new sheet often wants
+            // one that is not. The list is an offer and never a restriction.
+            var name = new ComboBox { IsEditable = true, Margin = PanelMetrics.Row, Text = sheet.SheetName };
+            foreach (string one in _model.SheetNamesInUse) name.Items.Add(one);
+            name.Loaded += (sender, e) => name.Text = sheet.SheetName;
+            name.SelectionChanged += (sender, e) =>
+            {
+                if (_filling) return;
+                sheet.SheetName = (name.SelectedItem as string) ?? name.Text ?? string.Empty;
+                RefreshHeaders();
+            };
+            name.AddHandler(
+                System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
+                new TextChangedEventHandler((sender, e) =>
+                {
+                    if (_filling) return;
+                    sheet.SheetName = name.Text ?? string.Empty;
+                    RefreshHeaders();
+                }));
+            block.Children.Add(Labelled("Name", name));
+
+            var perSheet = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+            perSheet.Children.Add(new TextBlock
+            {
+                Text = "Views per sheet",
+                Width = PanelMetrics.ColumnWidth,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            foreach (int howMany in SheetLayout.Counts)
+            {
+                int which = howMany;
+                var pick = new RadioButton
+                {
+                    Content = which.ToString(),
+                    GroupName = "perSheet" + at,
+                    IsChecked = sheet.ViewsPerSheet == which,
+                    Margin = PanelMetrics.Gap,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                pick.Checked += (sender, e) =>
+                {
+                    if (_filling) return;
+                    sheet.ViewsPerSheet = which;
+                    Redraw();
+                };
+                perSheet.Children.Add(pick);
+            }
+            block.Children.Add(perSheet);
+
+            block.Children.Add(Faint("Tick the views that go on it, from the types ticked in "
+                + "step 2."));
+
+            var views = new StackPanel();
+            IReadOnlyList<ViewType> offered = _columns.Shown;
+            if (offered.Count == 0)
+            {
+                views.Children.Add(Faint("No view type is ticked in step 2, so this sheet will "
+                    + "be made empty."));
+            }
+
+            _filling = true;
+            foreach (ViewType viewType in offered)
+            {
+                ViewType which = viewType;
+                var tick = new CheckBox
+                {
+                    Content = which + KindWord(which),
+                    IsChecked = sheet.Carries(which),
+                    Margin = PanelMetrics.Row
+                };
+                tick.Checked += (sender, e) => SheetViewTicked(sheet, which, true);
+                tick.Unchecked += (sender, e) => SheetViewTicked(sheet, which, false);
+                views.Children.Add(tick);
+            }
+            _filling = false;
+
+            block.Children.Add(Scrolling(views, PanelMetrics.ListHeight));
+            block.Children.Add(Faint(sheet.Built(_columns.Shown).InWords()));
+            block.Children.Add(Scrolling(NumberTable(sheet), PanelMetrics.ListHeight));
+
+            return new Border
+            {
+                Background = _theme.StepHeader,
+                BorderBrush = _theme.Line,
+                BorderThickness = PanelMetrics.Hairline,
+                Margin = PanelMetrics.Row,
+                Child = block
+            };
+        }
+
+        private void SheetViewTicked(SheetBeingDescribed sheet, ViewType which, bool carried)
+        {
+            if (_filling) return;
+
+            sheet.Carry(which, carried);
+            Redraw();
+        }
+
         /// <summary>
-        /// One row per ticked plot. The values live in the two dictionaries rather than in the
-        /// boxes, because the table is thrown away and rebuilt every time the range changes.
+        /// One row per ticked plot, holding the number that plot gets for this sheet. Editable,
+        /// because a new sheet usually carries a number no sheet has yet.
         /// </summary>
-        private UIElement SheetTable()
+        private UIElement NumberTable(SheetBeingDescribed sheet)
         {
             var table = new Grid();
-
             table.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            table.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(PanelMetrics.ColumnWidth) });
             table.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(PanelMetrics.ColumnWidth) });
 
             table.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             Put(table, HeaderCell("Plot"), 0, 0);
             Put(table, HeaderCell("Sheet number"), 0, 1);
-            Put(table, HeaderCell("Sheet name"), 0, 2);
 
             int row = 1;
             foreach (string plotId in _picked.Ticked)
@@ -765,32 +896,76 @@ namespace RcrcGreen.Revit
                     VerticalAlignment = VerticalAlignment.Center
                 }, row, 0);
 
-                Put(table, SheetBox(plotId, _sheetNumbers), row, 1);
-                Put(table, SheetBox(plotId, _sheetNames), row, 2);
-
+                Put(table, NumberBox(sheet, plotId), row, 1);
                 row++;
             }
 
             return table;
         }
 
-        private TextBox SheetBox(string plotId, Dictionary<string, string> holding)
+        private UIElement NumberBox(SheetBeingDescribed sheet, string plotId)
         {
-            string already;
-            holding.TryGetValue(plotId, out already);
+            var box = new ComboBox
+            {
+                IsEditable = true,
+                Margin = PanelMetrics.Row,
+                Text = sheet.NumberFor(plotId)
+            };
 
-            var box = new TextBox { Text = already ?? string.Empty, Margin = PanelMetrics.Row };
+            foreach (string one in _model.SheetNumbersInUse) box.Items.Add(one);
+
             string forPlot = plotId;
+            box.Loaded += (sender, e) => box.Text = sheet.NumberFor(forPlot);
 
-            box.TextChanged += (sender, e) =>
+            // A keystroke changes what the headers say and nothing else, because rebuilding the
+            // tree under the cursor takes the cursor out of the box.
+            box.AddHandler(
+                System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
+                new TextChangedEventHandler((sender, e) =>
+                {
+                    if (_filling) return;
+                    sheet.SetNumber(forPlot, box.Text ?? string.Empty);
+                    RefreshHeaders();
+                }));
+
+            box.SelectionChanged += (sender, e) =>
             {
                 if (_filling) return;
-
-                holding[forPlot] = box.Text;
+                sheet.SetNumber(forPlot, (box.SelectedItem as string) ?? box.Text ?? string.Empty);
                 RefreshHeaders();
             };
 
             return box;
+        }
+
+        private TitleBlockType ChosenTitleBlock(SheetBeingDescribed sheet)
+        {
+            if (sheet.TitleBlock == null) return null;
+
+            foreach (TitleBlockType one in _model.TitleBlockTypes)
+            {
+                if (one.CompareTo(sheet.TitleBlock) == 0) return one;
+            }
+
+            return null;
+        }
+
+        private void AddASheet()
+        {
+            var sheet = new SheetBeingDescribed();
+
+            // The one title block type in the model is not a choice, so it is picked rather than
+            // left for somebody to pick from a list of one.
+            if (_model.TitleBlockTypes.Count == 1) sheet.TitleBlock = _model.TitleBlockTypes[0];
+
+            _sheets.Add(sheet);
+            Redraw();
+        }
+
+        private void RemoveASheet(SheetBeingDescribed sheet)
+        {
+            _sheets.Remove(sheet);
+            Redraw();
         }
 
         private UIElement InsideRun()
@@ -823,7 +998,7 @@ namespace RcrcGreen.Revit
         {
             return PlanNow().InWords()
                 + " Only marked cells on ticked plots are made, and nothing is copied from "
-                + "another plot. A sheet is made only for a plot with both boxes filled in.";
+                + "another plot. A sheet is made only for a plot with a sheet number typed in.";
         }
 
         /// <summary>
@@ -1076,63 +1251,26 @@ namespace RcrcGreen.Revit
                 _model.ScheduleTypes,
                 _model.SectionTypes,
                 _model.ScheduleTypes,
-                SheetsWanted(),
-                PickedSheetId() != 0);
+                SheetsWanted());
         }
 
-        private IReadOnlyList<SheetRequest> SheetsWanted()
+        private IReadOnlyList<SheetOrder> SheetsWanted()
         {
-            var asked = new List<SheetRequest>();
+            IReadOnlyList<ViewType> ticked = _columns.Shown;
+            IReadOnlyList<string> plots = _picked.Ticked;
 
-            foreach (string plotId in _picked.Ticked)
-            {
-                string number;
-                string name;
-                _sheetNumbers.TryGetValue(plotId, out number);
-                _sheetNames.TryGetValue(plotId, out name);
-
-                asked.Add(new SheetRequest(plotId, number, name));
-            }
-
-            return asked;
+            return _sheets.Select(one => one.Ordered(ticked, plots)).ToList();
         }
 
-        private long PickedSheetId()
+        /// <summary>
+        /// How many sheets a run would make right now: every usable definition against every
+        /// ticked plot with a number typed in.
+        /// </summary>
+        private int SheetsToMake()
         {
-            var picked = _sheetToCopy.SelectedItem as SheetInTheModel;
-            return picked == null ? 0L : picked.SheetId;
-        }
-
-        private void FillSheetsToCopy()
-        {
-            _filling = true;
-            try
-            {
-                var was = _sheetToCopy.SelectedItem as SheetInTheModel;
-
-                _sheetToCopy.Items.Clear();
-                foreach (SheetInTheModel sheet in _model.Sheets) _sheetToCopy.Items.Add(sheet);
-
-                if (was == null) return;
-
-                foreach (SheetInTheModel sheet in _model.Sheets)
-                {
-                    if (sheet.SheetId != was.SheetId) continue;
-                    _sheetToCopy.SelectedItem = sheet;
-                    break;
-                }
-            }
-            finally
-            {
-                _filling = false;
-            }
-        }
-
-        private void SheetToCopyPicked()
-        {
-            if (_filling) return;
-
-            Redraw();
+            return SheetsWanted()
+                .Where(one => one.Definition.CanBeUsed)
+                .Sum(one => one.FilledIn);
         }
 
         private void AskToRun()
@@ -1147,12 +1285,12 @@ namespace RcrcGreen.Revit
             if (PlanNow().MakesNothing)
             {
                 Say("Nothing is marked and no sheet is asked for. Click an empty cell in step 3, "
-                    + "or type a sheet number and name in step 4.");
+                    + "or add a sheet in step 4 and type a number for a plot.");
                 return;
             }
 
             Say("Working out the run.");
-            _handler.AskToRun(ticked, _marked.ToList(), SheetsWanted(), PickedSheetId());
+            _handler.AskToRun(ticked, _marked.ToList(), SheetsWanted());
             _asking.Raise();
         }
 
@@ -1192,7 +1330,6 @@ namespace RcrcGreen.Revit
                 _columns = _columns.OverTheseTypes(_model.ViewTypes);
 
                 FillPrefixes();
-                FillSheetsToCopy();
                 PutTheRangeBack(prefixWas, fromWas, toWas);
 
                 _stepOpen = StepsNow().FirstUnfinished;

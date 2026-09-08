@@ -141,13 +141,13 @@ namespace RcrcGreen.Core.Tests
                 new RunItem("DM-12", General, RunItemKind.PlanView),
                 new RunItem("DM-11", new ViewType("400", "Landscape Cross Section"), RunItemKind.Section),
                 new RunItem("DM-11", Hardscape, RunItemKind.Schedule),
-                RunItem.ForSheet(new SheetRequest("DM-11", "L-201", "General Arrangement"))
+                RunFixture.SheetItem("DM-11", "L-201", "General Arrangement")
             };
 
             var refused = new List<RunRefusal>
             {
                 new RunRefusal("DM-13", General, "Revit refused it."),
-                RunRefusal.ForSheet(new SheetRequest("DM-14", "L-204", string.Empty), "No sheet name.")
+                RunRefusal.ForSheet("DM-14", "L-204", string.Empty, "No sheet name.")
             };
 
             var leftBehind = new List<RunRefusal>
@@ -217,7 +217,7 @@ namespace RcrcGreen.Core.Tests
                 new RunItem("DM-11", new ViewType("400", "Landscape Cross Section"), RunItemKind.Section),
                 new RunItem("DM-11", Hardscape, RunItemKind.Schedule),
                 new RunItem("DM-12", Hardscape, RunItemKind.Schedule),
-                RunItem.ForSheet(new SheetRequest("DM-11", "L-201", "General Arrangement"))
+                RunFixture.SheetItem("DM-11", "L-201", "General Arrangement")
             };
 
             string written = RunReport.Write(

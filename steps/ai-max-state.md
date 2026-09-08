@@ -1,6 +1,27 @@
 # ai-max state
 
-Phase: 9, ship. Fourteenth pass, four fixes off the first run that created anything.
+Phase: 9, ship. Sixteenth pass, sheets rebuilt.
+
+**A sheet is described now, never copied.** The one sheet this tool has made came out empty,
+because it was built by copying a sheet the user picked and that sheet had no views on it.
+Nothing threw and the report said a sheet was created, which was true. Copying takes whatever
+state the thing is in, including nothing.
+
+`SheetCapture` is deleted. Four things are described once and shared across the ticked plots,
+the title block type, the sheet name, the view types and whether 1, 2 or 4 views go per sheet.
+One thing is per plot, the sheet number. All three lists come from the model, the name and the
+number are editable because a new sheet usually carries a number no sheet has yet, and the tool
+still invents neither. More than one sheet can be described in a run.
+
+`SheetLayout.For` in Core is the maths, with every expected number in its tests written out by
+hand from an 800 by 600 sheet. Views are made before sheets inside the one transaction, a view
+already on another sheet comes back as a refusal rather than a throw, and a description with
+nothing ticked makes an empty sheet and says so before it runs.
+
+No sheet has been created by this route, and no section and no schedule has ever been created
+by this tool at all.
+
+Before that, four fixes off the first run that created anything.
 
 Three plan views and one sheet were made in a real model. The level, the view template, the
 scope box and the plot parameter all came out right.

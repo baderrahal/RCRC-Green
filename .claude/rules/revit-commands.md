@@ -209,27 +209,48 @@ same failure this repo keeps hitting, wearing different clothes.
 `FillTheCodes` compares before it clears, because the dropdown is one of the controls that
 outlives a redraw and clearing it under an open list takes the selection with it.
 
-## A sheet is copied, never designed
+## A sheet is described, never copied
 
-The three questions that stopped sheets being made have one answer between them. The user sets
-one plot's sheet up by hand and that sheet is copied. So the title block is whichever one it
-carries, a view sits where it sits there, and several views lay out however it has them.
+It used to copy a sheet that already existed. The user picked one with no views on it and got
+an empty sheet, and copying was not how they wanted to work. `SheetCapture` is deleted rather
+than left as a second way to build the same thing.
 
-`SheetCapture` reads a sheet into a Core `SheetDefinition`: the title block family and type,
-the sheet size, and one placement per view on it holding the view type and the centre of its
-viewport in feet from the sheet origin. Viewports and `ScheduleSheetInstance` both, because
-they are different elements and reading only the first would drop every schedule off a copied
-layout without saying so.
+**A sheet is described once and repeated across every ticked plot.** Four things are shared:
+the title block type, read from the model and never written down here, the sheet name, the
+view types that go on it, and whether 1, 2 or 4 views go per sheet. One thing is per plot: the
+sheet number.
 
-`ModelWriter` creates the sheet with that title block and places each view at the captured
-position. Views are made before sheets in the same transaction, so a sheet can carry a view
-this run only just created.
+The name and the number are editable dropdowns. The lists are what the model already uses, and
+the user can type past them, because a new sheet usually carries a number no sheet has yet. The
+list is an offer and never a restriction. **The tool still invents neither.** A plot with no
+number gets no sheet and the report says which plot and which sheet.
 
-Two things it will not do. **The sheet number and the sheet name are typed by the user and are
-never invented**, so a row missing either gets no sheet and is named in the report. And a view
-already sitting on another sheet is refused rather than moved, because it belongs to whoever
-put it there. `Viewport.CanAddViewToSheet` is asked before every placement, so that comes back
-as a refusal rather than as a throw.
+More than one sheet can be described, so one run gives a plot its LIST OF DRAWINGS and its
+GENERAL ARRANGEMENT LAYOUT together. `SheetOrder` pairs one `SheetDefinition` with the number
+each plot gets for it, and `RunPlan` turns each pair into one item per ticked plot that has one.
+
+**Where the views sit is worked out, not read.** `SheetLayout.For` takes the title block's width
+and height and a count of 1, 2 or 4 and hands back the centre of each viewport in reading order.
+One is centred, two sit side by side, four make a two by two grid, and the margin round the
+outside is the same measurement as the gap down the middle. Y counts up from the bottom in
+Revit, so the first row back is the top one.
+
+`SheetBeingDescribed` in the Revit project is the mutable half the panel owns while somebody is
+still filling it in. What it hands out is the immutable Core `SheetDefinition`, narrowed to the
+view types still ticked in step 2, so a sheet cannot keep asking for a view the run no longer
+offers. The tick is remembered rather than dropped, so re-ticking the type in step 2 puts it
+back on the sheet.
+
+Three things it will not do. **A definition short of a type or a name is refused once**, not
+once per plot, because it is one thing to go and fix rather than seventeen. **A view already on
+another sheet is refused rather than moved**, because it belongs to whoever put it there, and
+`Viewport.CanAddViewToSheet` is asked before every placement so that comes back as a refusal
+rather than a throw. And **a definition with no views ticked still makes a sheet**, empty, which
+is a real thing to ask for. The confirmation says so before it runs, so nobody is surprised by
+one twice.
+
+Views are made before sheets inside the same transaction, so a sheet can carry a view this run
+only just created.
 
 ## A missing filter is not a missing field
 

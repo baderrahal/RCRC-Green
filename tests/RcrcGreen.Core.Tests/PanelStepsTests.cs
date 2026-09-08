@@ -28,14 +28,16 @@ namespace RcrcGreen.Core.Tests
             int typesTicked = 0,
             int typesInModel = 84,
             int marked = 0,
-            int sheetsInModel = 1385,
-            string sourceSheet = "",
+            int titleBlockTypes = 6,
+            int sheetsDescribed = 0,
             int sheetsAsked = 0,
+            int sheetsIncomplete = 0,
             RunPlan plan = null)
         {
             return PanelSteps.Of(
                 readOnce, plotsInModel, first, last, plotsInRange, plotsTicked,
-                typesTicked, typesInModel, marked, sheetsInModel, sourceSheet, sheetsAsked, plan);
+                typesTicked, typesInModel, marked, titleBlockTypes, sheetsDescribed,
+                sheetsAsked, sheetsIncomplete, plan);
         }
 
         [Fact]
@@ -92,22 +94,22 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
-        public void TheSheetHeaderNamesTheSheetBeingCopied()
+        public void TheSheetHeaderCountsWhatWasAddedAndWhatWillBeMade()
         {
             Assert.Equal(
-                "4  SHEETS   copying L-201, 3 plots filled in",
-                After(sourceSheet: "L-201", sheetsAsked: 3).For(PanelStep.Sheets).Header);
+                "4  SHEETS   1 sheet, 3 to make",
+                After(sheetsDescribed: 1, sheetsAsked: 3).For(PanelStep.Sheets).Header);
 
             Assert.Equal(
-                "4  SHEETS   copying L-201, 1 plot filled in",
-                After(sourceSheet: "L-201", sheetsAsked: 1).For(PanelStep.Sheets).Header);
+                "4  SHEETS   1 sheet, 1 to make",
+                After(sheetsDescribed: 1, sheetsAsked: 1).For(PanelStep.Sheets).Header);
 
             Assert.Equal(
-                "4  SHEETS   copying L-201, no plot filled in",
-                After(sourceSheet: "L-201", sheetsAsked: 0).For(PanelStep.Sheets).Header);
+                "4  SHEETS   1 sheet, none to make yet",
+                After(sheetsDescribed: 1, sheetsAsked: 0).For(PanelStep.Sheets).Header);
 
             Assert.Equal(
-                "4  SHEETS   no sheet picked to copy",
+                "4  SHEETS   none added",
                 After().For(PanelStep.Sheets).Header);
         }
 
@@ -174,12 +176,12 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
-        public void SheetsCannotBeUsedWhenTheModelHoldsNone()
+        public void SheetsCannotBeUsedWhenTheModelHoldsNoTitleBlockType()
         {
-            StepState sheets = After(sheetsInModel: 0).For(PanelStep.Sheets);
+            StepState sheets = After(titleBlockTypes: 0).For(PanelStep.Sheets);
 
             Assert.False(sheets.Usable);
-            Assert.Contains("holds no sheets", sheets.WhyNot);
+            Assert.Contains("holds no title block types", sheets.WhyNot);
         }
 
         [Fact]
@@ -192,16 +194,16 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// A sheet asked for with no source picked cannot be made, and saying so on the Run
-        /// step is better than letting somebody press it and read the refusal afterwards.
+        /// Every sheet added but none of them finished. Saying so on the Run step beats letting
+        /// somebody press it and read the refusal afterwards.
         /// </summary>
         [Fact]
-        public void RunSaysToPickASourceSheetWhenOneIsAskedForWithoutIt()
+        public void RunSaysWhenEverySheetIsMissingSomething()
         {
-            StepState run = After(sheetsAsked: 2).For(PanelStep.Run);
+            StepState run = After(sheetsDescribed: 2, sheetsIncomplete: 2).For(PanelStep.Run);
 
             Assert.False(run.Usable);
-            Assert.Contains("Pick the sheet to copy in step 4", run.WhyNot);
+            Assert.Contains("missing a type or a name", run.WhyNot);
         }
 
         [Fact]
@@ -228,7 +230,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void FinishingAStepOpensTheNextUsableOne()
         {
-            PanelSteps steps = After(typesTicked: 4, marked: 2, sourceSheet: "L-201", sheetsAsked: 1);
+            PanelSteps steps = After(typesTicked: 4, marked: 2, sheetsDescribed: 1, sheetsAsked: 1);
 
             Assert.Equal(PanelStep.ViewTypes, steps.OpenAfter(PanelStep.Plots));
             Assert.Equal(PanelStep.Mark, steps.OpenAfter(PanelStep.ViewTypes));
@@ -239,7 +241,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void AStepThatCannotBeUsedIsSkippedOver()
         {
-            PanelSteps steps = After(typesTicked: 4, marked: 2, sheetsInModel: 0);
+            PanelSteps steps = After(typesTicked: 4, marked: 2, titleBlockTypes: 0);
 
             Assert.False(steps.For(PanelStep.Sheets).Usable);
             Assert.Equal(PanelStep.Run, steps.OpenAfter(PanelStep.Mark));
@@ -253,7 +255,7 @@ namespace RcrcGreen.Core.Tests
         public void WithNothingFurtherToOpenTheAnswerIsNothing()
         {
             Assert.Null(After().OpenAfter(PanelStep.Run));
-            Assert.Null(After(typesTicked: 0, sheetsInModel: 0).OpenAfter(PanelStep.ViewTypes));
+            Assert.Null(After(typesTicked: 0, titleBlockTypes: 0).OpenAfter(PanelStep.ViewTypes));
         }
 
         /// <summary>
