@@ -13,6 +13,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen.addin
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
 
 .PARAMETER Configuration
 Which build to install. Release unless you are debugging.
@@ -82,8 +83,20 @@ foreach ($symbols in @('RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb')) {
     }
 }
 
+# Revit runs the add-in out of the Addins folder and has no idea where this repo is, so the
+# path is written down here. Without it the reports go to the Desktop only and nothing reading
+# the code can find them. The folder itself is in .gitignore and stays there, because a report
+# carries client view names, sheet numbers and plot identifiers and this repository is public.
+$reportsFolder = Join-Path $repoRoot 'reports'
+New-Item -ItemType Directory -Path $reportsFolder -Force | Out-Null
+
+$pointer = Join-Path $assemblyFolder 'reports-folder.txt'
+Set-Content -LiteralPath $pointer -Value $reportsFolder -Encoding UTF8 -NoNewline
+$copied.Add($pointer)
+
 Write-Host "Installed RCRC Green from $BuildOutput"
 foreach ($file in $copied) {
     Write-Host "  $file"
 }
 Write-Host "$($copied.Count) files copied. Restart Revit 2024 and look for the RCRC Green tab."
+Write-Host "Reports go to the Desktop and to $reportsFolder"

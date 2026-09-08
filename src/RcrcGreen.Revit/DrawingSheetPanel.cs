@@ -48,7 +48,7 @@ namespace RcrcGreen.Revit
         private readonly TextBlock _said = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
         private readonly TextBlock _insteadOfTheGrid = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(4, 8, 4, 8) };
         private readonly TextBlock _columnCount = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 2) };
-        private readonly TextBlock _caseCounts = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 4) };
+        private readonly StackPanel _caseCounts = new StackPanel { Margin = new Thickness(0, 2, 0, 4) };
         private readonly Grid _sheet = new Grid();
         private readonly StackPanel _columnList = new StackPanel { Margin = new Thickness(4, 2, 0, 2) };
         private readonly Expander _columnBox = new Expander { Header = "View types", Margin = new Thickness(0, 2, 0, 2), IsExpanded = true };
@@ -67,6 +67,7 @@ namespace RcrcGreen.Revit
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
         private bool _filling;
         private bool _readOnce;
+        private ScopeBoxCase? _caseOpen;
 
         public DrawingSheetPanel()
         {
@@ -643,33 +644,120 @@ namespace RcrcGreen.Revit
         /// Revit, so they follow a tick straight away. What Assign does is decided again from a
         /// fresh read, but by the same rule over the same plots.
         /// </summary>
+        /// <summary>
+        /// The six counts, with every case but B openable in one click.
+        ///
+        /// A count on its own is not enough. On the real model F was 1, one view carrying a
+        /// scope box that is not its plot's, and finding out which view that was meant opening
+        /// a text file on the Desktop. Clicking the count lists the views and clicking a view
+        /// opens it in Revit.
+        ///
+        /// B is left as a number. It is 102 schedules that cannot hold a scope box, which is
+        /// nothing anyone acts on.
+        /// </summary>
         private void SayTheCases()
         {
+            _caseCounts.Children.Clear();
+
             if (!_readOnce || _picked.TickedCount == 0)
             {
-                _caseCounts.Text = "Tick at least one plot to see what Assign would do.";
+                _caseCounts.Children.Add(new TextBlock
+                {
+                    Text = "Tick at least one plot to see what Assign would do.",
+                    TextWrapping = TextWrapping.Wrap
+                });
                 return;
             }
 
             ScopeBoxCounts counts = ScopeBoxCounts.For(
                 _model.ViewStates, _model.ScopeBoxNames, _picked.Ticked);
 
-            _caseCounts.Text =
-                counts.Considered + " views across " + _picked.TickedCount + " ticked plots."
-                + Environment.NewLine
-                + "A, name does not parse: " + counts.Of(ScopeBoxCase.NameDoesNotParse)
-                + Environment.NewLine
-                + "B, cannot hold a scope box: " + counts.Of(ScopeBoxCase.CannotHoldAScopeBox)
-                + Environment.NewLine
-                + "C, ready to assign: " + counts.ReadyToAssign
-                + Environment.NewLine
-                + "D, no scope box for that plot: " + counts.Of(ScopeBoxCase.NoMatchingScopeBox)
-                + Environment.NewLine
-                + "E, already right: " + counts.Of(ScopeBoxCase.AlreadyRight)
-                + Environment.NewLine
-                + "F, holds a different scope box: " + counts.Of(ScopeBoxCase.HoldsADifferentScopeBox)
-                + Environment.NewLine
-                + "Only C is written.";
+            _caseCounts.Children.Add(new TextBlock
+            {
+                Text = counts.Considered + " views across " + _picked.TickedCount + " ticked plots.",
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            AddCase(counts, ScopeBoxCase.NameDoesNotParse, "A, name does not parse");
+
+            _caseCounts.Children.Add(new TextBlock
+            {
+                Text = "B, cannot hold a scope box: " + counts.Of(ScopeBoxCase.CannotHoldAScopeBox),
+                Margin = new Thickness(0, 1, 0, 1)
+            });
+
+            AddCase(counts, ScopeBoxCase.ReadyToAssign, "C, ready to assign");
+            AddCase(counts, ScopeBoxCase.NoMatchingScopeBox, "D, no scope box for that plot");
+            AddCase(counts, ScopeBoxCase.AlreadyRight, "E, already right");
+            AddCase(counts, ScopeBoxCase.HoldsADifferentScopeBox, "F, holds a different scope box");
+
+            _caseCounts.Children.Add(new TextBlock
+            {
+                Text = "Only C is written.",
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 2, 0, 0)
+            });
+        }
+
+        private void AddCase(ScopeBoxCounts counts, ScopeBoxCase outcome, string label)
+        {
+            IReadOnlyList<ViewScopeBoxDecision> inIt = counts.In(outcome);
+            bool open = _caseOpen.HasValue && _caseOpen.Value == outcome;
+
+            var line = new Button
+            {
+                Content = (open ? "-  " : "+  ") + label + ": " + inIt.Count,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Padding = new Thickness(4, 1, 4, 1),
+                Margin = new Thickness(0, 1, 0, 1),
+                IsEnabled = inIt.Count > 0,
+                ToolTip = inIt.Count == 0
+                    ? "Nothing in this case."
+                    : "Show the " + inIt.Count + " views in this case. Click one to open it."
+            };
+
+            ScopeBoxCase which = outcome;
+            line.Click += (sender, e) => CaseOpened(which);
+            _caseCounts.Children.Add(line);
+
+            if (!open) return;
+
+            foreach (ViewScopeBoxDecision decision in inIt)
+            {
+                ViewScopeBoxDecision one = decision;
+                var view = new Button
+                {
+                    Content = one.PlotId + "   " + one.ViewName
+                        + (one.CurrentScopeBoxName.Length > 0 ? "   holds " + one.CurrentScopeBoxName : string.Empty),
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Padding = new Thickness(4, 0, 4, 0),
+                    Margin = new Thickness(16, 0, 0, 1),
+                    ToolTip = "Open " + one.ViewName + " in Revit."
+                };
+
+                view.Click += (sender, e) => OpenTheView(one.ViewId);
+                _caseCounts.Children.Add(view);
+            }
+        }
+
+        /// <summary>
+        /// One case open at a time. Six lists at once in a docked pane is a scroll, not a view.
+        /// </summary>
+        private void CaseOpened(ScopeBoxCase outcome)
+        {
+            _caseOpen = _caseOpen.HasValue && _caseOpen.Value == outcome
+                ? (ScopeBoxCase?)null
+                : outcome;
+
+            SayTheCases();
+        }
+
+        private void OpenTheView(long viewId)
+        {
+            _handler.AskToSelect(viewId);
+            _asking.Raise();
         }
 
         private void DrawSheet()

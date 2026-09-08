@@ -111,8 +111,43 @@ A schedule short of a FIELD is short of a column. Somebody looking at it can see
 created and named in the report under CREATED, BUT NEEDS ATTENTION.
 
 A schedule short of a FILTER is a different thing. A quantity schedule that lost its plot
-filter shows every plot's elements and reads as correct on a drawing. That one is deleted
-again inside the same transaction and reported as refused, so the model never holds it.
+filter shows every plot's elements and reads as correct on a drawing. That one is deleted again
+inside the same transaction and reported as refused.
+
+The delete is checked rather than assumed. `ModelWriter.Deleted` returns true only when Revit
+really removed the element, and a false there is not swallowed. The item moves to a third list
+and the report grows a section headed CREATED WRONG AND STILL IN THE MODEL, DELETE BY HAND,
+which names the schedule and what is missing from it, with a banner at the top of the report so
+nobody has to reach the end to find out.
+
+Deleting an element made moments earlier in the same transaction ought to work and has never
+been run, so the failing case is written down rather than assumed away. The rule is the one
+that costs nothing to keep. A report that says a thing was deleted when the model still holds
+it is worse than the wrong schedule, because the wrong schedule can still be found.
+
+## A report goes to two places and the panel names both
+
+`ReportFile.Write` writes the Desktop copy first and lets it throw, because a report that cannot
+be written at all is worth a message. The repo copy is guarded and never costs the first one.
+It comes back with the list of paths that really landed, and `ReportPlaces.Written` turns that
+list into the line the panel shows. One path means the repo folder was not found, and the line
+says so and says to run `install.ps1` again, rather than leaving somebody hunting for a file
+that was never written.
+
+Nothing in the Revit project knows where the repo is. `install.ps1` writes the absolute path
+into `reports-folder.txt` next to the installed assembly and `ReportFile` reads it from there.
+That folder is in `.gitignore` and never leaves the machine.
+
+## A count on the panel opens into the thing it counted
+
+Six numbers tell somebody how much is wrong and nothing about what. Every scope box case except
+B is a button, and clicking it lists its views by plot and name with the box each one holds.
+Clicking a view in that list goes through the external event like any other request, because
+the panel opens nothing itself.
+
+The lists come from `ScopeBoxCounts.In`, the same object the counts come from, so a case list
+can never be a different length from the number above it. Case B is 102 schedules that cannot
+hold a scope box at all, which is a count and nothing more.
 
 ## Building and installing
 

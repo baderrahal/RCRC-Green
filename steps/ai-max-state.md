@@ -1,6 +1,28 @@
 # ai-max state
 
-Phase: 9, ship. Tenth pass, the write path stopped skipping things quietly.
+Phase: 9, ship. Eleventh pass, a guarded delete, reports where the code can read them, and
+scope box cases that open.
+
+`ModelWriter` deletes a schedule that lost a filter, and that delete was unguarded. A Revit
+refusal there would have left a wrong schedule in the model while the report said it was gone.
+`ModelWriter.Deleted` now returns true only when the element really went, and a false moves the
+item to a third list that prints under CREATED WRONG AND STILL IN THE MODEL, DELETE BY HAND,
+with a banner at the top of the report and a loud prefix on the panel status line.
+
+Every report now lands in `reports/` inside the repo as well as on the Desktop, same file name
+in both, so anything reading the code can read a run. `install.ps1` writes the absolute path
+into `reports-folder.txt` beside the installed assembly, because Revit runs the add-in out of
+the Autodesk Addins folder and has no other way to know. No pointer file means the Desktop only
+and the panel says so. That folder is in `.gitignore` and stays there. This repository is
+public and a report carries client view names, sheet numbers, plot identifiers and schedule
+field lists. `reports/README.md` is the only tracked file in it and says why.
+
+The six scope box counts were six numbers and a button. Five of them open now. Clicking a count
+lists its views by plot and name with the scope box each one holds, and clicking a view opens it
+in Revit through the external event. Case B is 102 schedules and stays a count. Assign still
+acts only on case C, still confirms, still one transaction.
+
+Before that, the write path stopped skipping things quietly.
 
 `ModelWriter` skipped a schedule field it could not resolve and a filter it could not apply,
 both with a bare `continue` and nothing written down. Both are recorded now and the two are
@@ -185,10 +207,11 @@ a dockable pane, an external event and a WPF tree built in code can all compile 
 wrong the first time Revit loads them. That goes for the three failure paths added in the
 sixth pass as well. None of them has been made to happen.
 
-The seventh pass fixes two faults that were seen in Revit and confirmed from a screenshot.
-The fixes themselves have not been seen. Neither theme has been observed rendering, and the
-list of what that leaves unchecked is in the newest `steps/log.md` entry.
+**The write path has still never run.** Not one view, not one schedule, not one deletion. Every
+sentence about what Revit does when a filter will not go on, or when a delete is refused, is
+written from the API and not from a run. The reports folder has never been written to either,
+and `reports-folder.txt` has never been read by the add-in. The newest `steps/log.md` entry
+lists what that leaves unchecked, item by item.
 
-`design/pr-9/panel.html` and `design/pr-11/panel.html` are hand drawn mockups of the layout,
-not screenshots, and each says so at the top of the file. Every round that changes the panel
-writes one.
+The mockups under `design/` are hand drawn, not screenshots, and each says so at the top of the
+file. Every round that changes the panel writes one.

@@ -296,11 +296,13 @@ namespace RcrcGreen.Revit
                 applied = true;
             }
 
-            string path = AssignScopeBoxCommand.WriteReport(plan, document.Title, applied, refused);
+            string where = ReportPlaces.Written(
+                AssignScopeBoxCommand.WriteReport(plan, document.Title, applied, refused));
+
             Told?.Invoke(applied
                 ? (ready - refused.Count) + " views given a scope box over " + plotsTicked.Count
-                    + " ticked plots. Report at " + path
-                : "Nothing was changed. Report at " + path);
+                    + " ticked plots. " + where
+                : "Nothing was changed. " + where);
         }
 
         /// <summary>
@@ -324,12 +326,11 @@ namespace RcrcGreen.Revit
             }
 
             DateTime writtenAt = DateTime.Now;
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-                ScanFileName.For(scan.DocumentTitle, writtenAt));
+            IReadOnlyList<string> written = ReportFile.Write(
+                ScanFileName.For(scan.DocumentTitle, writtenAt),
+                ScanReport.Write(scan, writtenAt));
 
-            File.WriteAllText(path, ScanReport.Write(scan, writtenAt), new UTF8Encoding(false));
-            Told?.Invoke("Scan written to " + path);
+            Told?.Invoke("Scan written. " + ReportPlaces.Written(written));
         }
 
         /// <summary>
@@ -361,6 +362,7 @@ namespace RcrcGreen.Revit
             bool applied = false;
             var refused = new List<RunRefusal>();
             var attention = new List<RunRefusal>();
+            var leftBehind = new List<RunRefusal>();
 
             if (!plan.MakesNothing && Confirmed(plan))
             {
@@ -375,7 +377,8 @@ namespace RcrcGreen.Revit
                 using (var making = new Transaction(document, "Create drawing sheet views"))
                 {
                     making.Start();
-                    ModelWriter.Make(document, plan, definitions, boxIdByName, refused, attention);
+                    ModelWriter.Make(
+                        document, plan, definitions, boxIdByName, refused, attention, leftBehind);
                     making.Commit();
                 }
 
@@ -383,26 +386,31 @@ namespace RcrcGreen.Revit
             }
 
             DateTime writtenAt = DateTime.Now;
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-                ScanFileName.For(ScanFileName.RunPrefix, document.Title, writtenAt));
+            IReadOnlyList<string> written = ReportFile.Write(
+                ScanFileName.For(ScanFileName.RunPrefix, document.Title, writtenAt),
+                RunReport.Write(plan, document.Title, writtenAt, applied, refused, attention, leftBehind));
 
-            File.WriteAllText(
-                path,
-                RunReport.Write(plan, document.Title, writtenAt, applied, refused, attention),
-                new UTF8Encoding(false));
+            string where = ReportPlaces.Written(written);
 
             if (!applied)
             {
-                Told?.Invoke("Nothing was created. Report at " + path);
+                Told?.Invoke("Nothing was created. " + where);
                 return;
             }
 
-            int made = plan.Items.Count - refused.Count;
-            string said = made + " created, " + refused.Count + " not created.";
+            int made = plan.Items.Count - refused.Count - leftBehind.Count;
+            string said = made + " created, " + (refused.Count + leftBehind.Count) + " not created.";
             if (attention.Count > 0) said += " " + attention.Count + " need attention.";
 
-            Told?.Invoke(said + " Press Refresh to see them. Report at " + path);
+            // Loud, and first. A wrong schedule left in the model is not a footnote.
+            if (leftBehind.Count > 0)
+            {
+                said = leftBehind.Count
+                    + (leftBehind.Count == 1 ? " WRONG SCHEDULE IS" : " WRONG SCHEDULES ARE")
+                    + " IN THE MODEL AND MUST BE DELETED BY HAND. " + said;
+            }
+
+            Told?.Invoke(said + " Press Refresh to see them. " + where);
         }
 
         private static bool Confirmed(RunPlan plan)
