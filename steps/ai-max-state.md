@@ -93,8 +93,8 @@ runner against each and executed 48 tests, then 79, then 109, then 136, 0 failed
 skipped every time. Pull request 5 landed the Drawing Sheet panel as `999381c`, and the gate
 executed 176 tests against it, 0 failed and 0 skipped. Pull request 7 landed the three audit
 fixes on that panel as `20e214a`, and the gate executed 176 tests against it, the same count,
-because that round changed no Core code. Pull request 9 is the readability round, also Revit
-side only.
+because that round changed no Core code. Pull request 9 landed the readability round as
+`2b5361e`, also 176, because it too was Revit side only.
 
 That branch was asked to be deleted once merged and it could not be. The git proxy here
 refuses a ref deletion, and the log entry for that round records what was tried.
