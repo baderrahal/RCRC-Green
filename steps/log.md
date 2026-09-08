@@ -4,6 +4,139 @@ Newest entry first.
 
 ---
 
+## 2026-09-08, fifth pass. Scope Box, the first command that writes, merged into main
+
+Branch `claude/rcrc-green-setup-wf9ham`, restarted from main. Pull request
+[#4](https://github.com/baderrahal/RCRC-Green/pull/4), one commit, 18 files, merged into main
+as `c5b8c9a`.
+
+### What was built
+
+Scope Box, the second command on the Sheets panel, and the first thing in this repo that
+writes to a model. A new view with no scope box is useless on this project, so assigning one
+belongs to the Drawing Sheet work rather than being a tool of its own. It applies to every
+view that names a plot, not only newly created ones.
+
+Every view that is not a sheet and not a view template goes into exactly one case.
+
+| | Condition | What happens |
+|---|---|---|
+| A | name does not parse to a plot | counted and listed |
+| B | cannot hold a scope box | counted only, no list |
+| C | no scope box, and one exists named for the plot | assigned |
+| D | no scope box, and none matches the plot | reported, nothing changed |
+| E | already holds the scope box for its plot | counted |
+| F | already holds a different scope box | reported, nothing changed |
+
+C is the only case that writes. Matching is exact and case sensitive, the same rule the plot
+identifier follows. Templates are left out because a template's scope box would push onto
+every view using that template.
+
+Everything is decided with no transaction open, so the counts in the dialog cannot change
+between being shown and being acted on. On yes, one transaction named Assign scope boxes
+covers every assignment, so the whole run is one undo. On no, the report is written anyway
+and nothing changes. A view that refuses the assignment is recorded and named in the report
+rather than thrown, so one awkward view does not roll back every other assignment.
+
+Sorting the views into the six cases, ordering them, counting them and laying out the report
+are all Core work, fed plain strings and identifiers. That is why all of it has tests and none
+of the tests needs Revit.
+
+### The audit items
+
+| Item | State |
+|---|---|
+| 1, the scan sat outside the try | Fixed. Guarded on `Autodesk.Revit.Exceptions.ApplicationException` so a genuine programming error still crashes loudly, with a message naming the document |
+| 2, no progress and no way out on a long read | A progress window with a bar and a Cancel button, on both commands. How long a read takes on a real model is UNKNOWN |
+| 3, `CreateRibbonPanel` unguarded | Fixed. The existing panel is found through `GetRibbonPanels` and reused, so a second registration no longer gives a second Sheets panel |
+| 4, delete the merged branch | NOT DONE. See below |
+
+**Item 2 and the measurement.** The audit asked what the read was measured at. It was not
+measured, because there is no Revit here. The progress window pumps the message queue at most
+once every tenth of a second, which is a guess at a sensible interval and not a measured one.
+The pumping uses `Application.DoEvents`, which is the usual pattern in an add-in and is not
+free of risk, because it lets other clicks through while it runs. It is used only while
+reading and never while a transaction is open, so nothing half written can be reached that
+way.
+
+**Item 4 and why it did not happen.** `git push origin --delete` and the older
+`git push origin :branch` were both tried, five attempts in total with backoff between them.
+Every one failed identically with `send-pack: unexpected disconnect while reading sideband
+packet`, while ordinary fetches and pushes over the same connection kept working. That is the
+git proxy in this environment refusing a ref deletion rather than a network fault, and there
+is no branch delete in the GitHub tools available here. The branch still exists at `ec51119`,
+which is merged into main. Deleting it is one click on the Delete branch button on pull
+request 4, or one line locally.
+
+```
+git push origin --delete claude/rcrc-green-setup-wf9ham
+```
+
+### Checks that actually ran
+
+Local, on main at `c5b8c9a`, clean working tree, 2026-09-08 11:22:25 UTC:
+
+```
+dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+Passed!  Failed: 0, Passed: 136, Skipped: 0, Total: 136
+```
+
+On the runner, run
+[34220252821](https://github.com/baderrahal/RCRC-Green/actions/runs/34220252821) against
+commit `ec51119`, the tree that merged:
+
+```
+Passed!  Failed: 0, Passed: 136, Skipped: 0, Total: 136
+136 tests ran.
+```
+
+Both numbers are 136. The suite was 109 before this round.
+
+Also run: `dotnet build RcrcGreen.sln -c Release` succeeded with 0 warnings and 0 errors, and
+the add-in output still holds only the two project assemblies, their symbol files and the
+manifest. The source was searched for transactions and there is exactly one, in the one
+command that writes. Core was searched for a Revit reference and has none. The report was
+rendered once from a fixture and read by eye, which caught a line reading one views were given
+a scope box.
+
+### What is untested because it needs Revit
+
+All of the Revit side, and there is more of it this round than last, because this one writes.
+`dotnet build` against the Revit 2024 reference assemblies says the API calls exist and take
+the arguments given. It says nothing about behaviour.
+
+Named specifically, none of this has been observed:
+
+- the second button appearing beside Scan Model, and the panel being reused rather than doubled
+- the progress window showing above the Revit window, its bar moving, and Cancel answering
+- `VIEWER_VOLUME_OF_INTEREST_CROP` reading and writing the way this code assumes
+- `Parameter.Set` returning false on a view that refuses, rather than throwing
+- the single transaction showing up as one undo step
+- whether `Application.DoEvents` causes trouble inside a Revit command on a real model
+
+### Known bugs
+
+None seen in a run, and only Core has been run.
+
+### Left to do
+
+- Phase 10, packaging, has not started
+- Nothing creates a view, a sheet or a section
+- The grid and the missing view report exist in Core but no command uses them yet
+- Eight of the twelve open questions are still open
+- The merged branch is still on the remote, as above
+
+### Next
+
+Two runs on a real model, in this order. Scan Model first, because the parse summary decides
+whether the naming pattern needs replacing, and Scope Box reads plots through that same
+parser. Then Scope Box on a copy of the model, answering no the first time, so the six counts
+can be read before anything is written. Case D is the number to look at. A large D means the
+scope boxes are not named the way the project facts say they are, and that changes what the
+creation logic can assume.
+
+---
+
 ## 2026-09-08, fourth pass. Scan Model, the first command, merged into main
 
 The add-in was confirmed loading in Revit 2024.3 before this round started. The RCRC Green

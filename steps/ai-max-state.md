@@ -59,10 +59,14 @@ over the repo along with four other reading passes, and the 53 findings are writ
 Phase 8 review findings in `steps/log.md`. Nothing was fixed in response to them. The phase 8
 run is closed.
 
-**9, ship.** Merged three times, all from branch `claude/rcrc-green-setup-wf9ham`. Pull
-request 1 landed the scaffold as `17f1850`, pull request 2 the fix round as `57dd1ee`, and
-pull request 3 the Scan Model command as `04ff9fc`. The test gate ran on a real runner
-against each and executed 48 tests, then 79, then 109, 0 failed and 0 skipped every time.
+**9, ship.** Merged four times, all from branch `claude/rcrc-green-setup-wf9ham`. Pull request
+1 landed the scaffold as `17f1850`, 2 the fix round as `57dd1ee`, 3 the Scan Model command as
+`04ff9fc`, and 4 the Scope Box command as `c5b8c9a`. The test gate ran on a real runner
+against each and executed 48 tests, then 79, then 109, then 136, 0 failed and 0 skipped every
+time.
+
+That branch was asked to be deleted once merged and it could not be. The git proxy here
+refuses a ref deletion, and the log entry for that round records what was tried.
 
 Phase 10, packaging, has not started.
 
