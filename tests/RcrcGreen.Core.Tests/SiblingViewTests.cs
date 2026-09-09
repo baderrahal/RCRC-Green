@@ -18,17 +18,25 @@ namespace RcrcGreen.Core.Tests
         private static readonly ViewType General = new ViewType("200", "General Arrangement Layout");
         private static readonly ViewType CrossSection = new ViewType("400", "Landscape Cross Section");
 
+        /// <summary>
+        /// How DM-16 and DM-14 are really set: crop on, crop region hidden, annotation crop on.
+        /// </summary>
+        private static ViewCrop AsTheTeamBuildsThem()
+        {
+            return new ViewCrop(true, false, true);
+        }
+
         private static SiblingView Plan(string name, ViewType type, string familyType, string template)
         {
             return new SiblingView(
-                name, type, SiblingKind.Plan, familyType, template, "Level 1", 0.0, false);
+                name, type, SiblingKind.Plan, familyType, template, "Level 1", AsTheTeamBuildsThem());
         }
 
-        private static SiblingView Section(string name, ViewType type, string template, double farClip)
+        private static SiblingView Section(string name, ViewType type, string template)
         {
             return new SiblingView(
                 name, type, SiblingKind.Section, "(400) Section", template, string.Empty,
-                farClip, farClip > 0.0);
+                AsTheTeamBuildsThem());
         }
 
         /// <summary>
@@ -79,6 +87,41 @@ namespace RcrcGreen.Core.Tests
                 + chosen.TemplateName + ", which belong to two different views.");
         }
 
+        /// <summary>
+        /// The crop settings joined the family type and the template this round, so they are
+        /// held to the same rule. All five come off the one view or the object is wrong.
+        /// </summary>
+        [Fact]
+        public void TheCropSettingsComeFromTheSameViewAsEverythingElse()
+        {
+            var cropped = new SiblingView(
+                "DM-16-(200) General Arrangement Layout", General, SiblingKind.Plan,
+                "TYPE A", "TEMPLATE A", "Level 1", new ViewCrop(true, false, true));
+
+            var bare = new SiblingView(
+                "DM-20-(200) General Arrangement Layout", General, SiblingKind.Plan,
+                "TYPE B", "TEMPLATE B", "Level 2", new ViewCrop(false, true, false));
+
+            SiblingView chosen = SiblingChoice.For(General, SiblingKind.Plan, new[] { cropped, bare });
+
+            bool allFromCropped = chosen.FamilyTypeName == "TYPE A"
+                && chosen.TemplateName == "TEMPLATE A"
+                && chosen.LevelName == "Level 1"
+                && chosen.Crop.CropActive
+                && !chosen.Crop.CropRegionVisible
+                && chosen.Crop.AnnotationCrop;
+
+            bool allFromBare = chosen.FamilyTypeName == "TYPE B"
+                && chosen.TemplateName == "TEMPLATE B"
+                && chosen.LevelName == "Level 2"
+                && !chosen.Crop.CropActive
+                && chosen.Crop.CropRegionVisible
+                && !chosen.Crop.AnnotationCrop;
+
+            Assert.True(allFromCropped || allFromBare,
+                "the settings on " + chosen.ViewName + " came from more than one view.");
+        }
+
         [Fact]
         public void TheFirstOfThatViewTypeIsTheOneChosen()
         {
@@ -100,14 +143,14 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// A plan needs a level and a section needs a far clip, so the kind is preferred. Taking
-        /// the first match regardless refused a plan view because the first view of that type
-        /// happened to be a section, while a usable plan sat further down the list.
+        /// A plan needs a level, so the kind is preferred. Taking the first match regardless
+        /// refused a plan view because the first view of that type happened to be a section,
+        /// while a usable plan sat further down the list.
         /// </summary>
         [Fact]
         public void TheKindThatCanAnswerIsPreferredOverTheFirstMatch()
         {
-            var section = Section("DM-18-(010) Overall Plan", Overall, "TEMPLATE S", 42.1054);
+            var section = Section("DM-18-(010) Overall Plan", Overall, "TEMPLATE S");
             var plan = Plan("DM-20-(010) Overall Plan", Overall, "TYPE P", "TEMPLATE P");
 
             Assert.Equal("DM-20-(010) Overall Plan",
@@ -124,22 +167,39 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void WithNothingOfTheRightKindTheFirstOfThatTypeStillComesBack()
         {
-            var section = Section("DM-18-(010) Overall Plan", Overall, "TEMPLATE S", 42.1054);
+            var section = Section("DM-18-(010) Overall Plan", Overall, "TEMPLATE S");
 
             Assert.Equal("DM-18-(010) Overall Plan",
                 SiblingChoice.For(Overall, SiblingKind.Plan, new[] { section }).ViewName);
         }
 
         [Fact]
-        public void TheWordsNameTheViewAndBothSettings()
+        public void TheWordsNameTheViewAndEverySettingTakenOffIt()
         {
             var plan = Plan("DM-18-(010) Overall Plan", Overall,
                 "(200) General Arrangement Layout", "(010) Overall Plan");
 
             Assert.Equal(
                 "Set up from DM-18-(010) Overall Plan: family type (200) General Arrangement "
-                + "Layout, view template (010) Overall Plan, level Level 1.",
+                + "Layout, view template (010) Overall Plan, level Level 1, crop on, "
+                + "crop region hidden, annotation crop on.",
                 plan.InWords());
+        }
+
+        /// <summary>
+        /// How a view the tool created reads, so the two lines can be held against each other
+        /// in a report.
+        /// </summary>
+        [Fact]
+        public void TheWordsSayWhenAnnotationCropIsOff()
+        {
+            var made = new SiblingView(
+                "DM-11-(010) Overall Plan", Overall, SiblingKind.Plan,
+                "TYPE", "TEMPLATE", "Level 1", new ViewCrop(true, true, false));
+
+            Assert.Equal(
+                "crop on, crop region shown, annotation crop off", made.Crop.InWords());
+            Assert.Contains("annotation crop off", made.InWords());
         }
 
         [Fact]
@@ -156,83 +216,65 @@ namespace RcrcGreen.Core.Tests
         {
             Assert.DoesNotContain(
                 "level",
-                Section("DM-20-(400) Landscape Cross Section", CrossSection, "TEMPLATE S", 42.1054).InWords());
+                Section("DM-20-(400) Landscape Cross Section", CrossSection, "TEMPLATE S").InWords());
         }
 
         [Fact]
-        public void AFarClipThatIsNotANumberIsRefused()
+        public void ASiblingAlwaysHasANameAndAType()
         {
-            Assert.Throws<ArgumentException>(() => new SiblingView(
-                "DM-20-(400) Landscape Cross Section", CrossSection, SiblingKind.Section,
-                "TYPE", "TEMPLATE", string.Empty, double.NaN, true));
+            Assert.Throws<ArgumentNullException>(() => new SiblingView(
+                null, CrossSection, SiblingKind.Section, "TYPE", "TEMPLATE", string.Empty,
+                AsTheTeamBuildsThem()));
 
             Assert.Throws<ArgumentNullException>(() => new SiblingView(
-                null, CrossSection, SiblingKind.Section, "TYPE", "TEMPLATE", string.Empty, 1.0, true));
+                "DM-20-(400) Landscape Cross Section", null, SiblingKind.Section,
+                "TYPE", "TEMPLATE", string.Empty, AsTheTeamBuildsThem()));
         }
     }
 
     /// <summary>
-    /// How far a new section looks, and which of the two sources said so.
+    /// How deep a cross section is cut, and the conversions the reports print.
     /// </summary>
-    public class SectionDepthChoiceTests
+    public class SectionDepthTests
     {
-        private static readonly ViewType CrossSection = new ViewType("400", "Landscape Cross Section");
-
         /// <summary>
-        /// The real numbers. DM-20-(400) Landscape Cross Section reads 42.1054 feet, which is
-        /// 12.83 metres. SectionDefaults held 10, named before anybody had opened a section.
+        /// The team's decision, after four real sections came back disagreeing: DM-14 and NS-32
+        /// at 3.0480 feet, DM-16 at 5.0199, DM-20 at 42.1054. There is no rule in the model to
+        /// copy, so the tool sets one number.
         /// </summary>
-        private const double TenMetresInFeet = 32.8083989501312;
-
-        private static SiblingView WithFarClip(double feet)
-        {
-            return new SiblingView(
-                "DM-20-(400) Landscape Cross Section", CrossSection, SiblingKind.Section,
-                "(400) Section", "(400) Landscape Cross Section - Scale 100", string.Empty,
-                feet, feet > 0.0);
-        }
-
         [Fact]
-        public void TheModelBeatsTheValueTheTeamNamed()
+        public void TheDepthIsOneMetre()
         {
-            SectionDepthChoice depth = SectionDepthChoice.For(WithFarClip(42.1054), TenMetresInFeet);
-
-            Assert.True(depth.FromTheSibling);
-            Assert.Equal(42.1054, depth.Feet);
-            Assert.Equal(
-                "Looks 12.83 metres, taken from DM-20-(400) Landscape Cross Section.",
-                depth.InWords());
-        }
-
-        [Fact]
-        public void WithNoFarClipOnTheSiblingTheNamedValueIsUsedAndSaidSo()
-        {
-            SectionDepthChoice depth = SectionDepthChoice.For(WithFarClip(0.0), TenMetresInFeet);
-
-            Assert.False(depth.FromTheSibling);
-            Assert.Equal(TenMetresInFeet, depth.Feet);
-            Assert.Contains("Looks 10 metres, the value the team named", depth.InWords());
-            Assert.Contains("has no far clip offset set", depth.InWords());
-        }
-
-        [Fact]
-        public void WithNoSiblingAtAllTheNamedValueIsUsedAndSaidSo()
-        {
-            SectionDepthChoice depth = SectionDepthChoice.For(null, TenMetresInFeet);
-
-            Assert.False(depth.FromTheSibling);
-            Assert.Equal(TenMetresInFeet, depth.Feet);
-            Assert.Contains("no section of that type was found", depth.InWords());
+            Assert.Equal(1.0, SectionDepth.Metres);
         }
 
         /// <summary>
-        /// One foot is 0.3048 metres by definition, so this is exact rather than measured.
+        /// One foot is 0.3048 metres by definition, so every number here is exact rather than
+        /// measured, and each is written out by hand.
         /// </summary>
         [Fact]
-        public void FeetReadBackAsMetresForTheReport()
+        public void FeetReadBackAsMetresForAReport()
         {
-            Assert.Equal(12.83, Math.Round(SectionDepth.InMetres(42.1054), 2));
-            Assert.Equal(10.0, Math.Round(SectionDepth.InMetres(TenMetresInFeet), 6));
+            Assert.Equal(12.83, Math.Round(Lengths.InMetres(42.1054), 2));
+            Assert.Equal(0.93, Math.Round(Lengths.InMetres(3.0480), 2));
+            Assert.Equal(1.53, Math.Round(Lengths.InMetres(5.0199), 2));
+            Assert.Equal(10.0, Math.Round(Lengths.InMetres(32.8083989501312), 6));
+        }
+
+        /// <summary>
+        /// An A1 sheet is 841 by 594 millimetres, which is what a title block reports in feet.
+        /// </summary>
+        [Fact]
+        public void FeetReadBackAsMillimetres()
+        {
+            Assert.Equal(841.0, Math.Round(Lengths.InMillimetres(2.75919), 0));
+            Assert.Equal(594.0, Math.Round(Lengths.InMillimetres(1.94882), 0));
+        }
+
+        [Fact]
+        public void OneMetreIsThatManyFeet()
+        {
+            Assert.Equal(3.2808, Math.Round(Lengths.FeetFromMetres(1.0), 4));
         }
     }
 }

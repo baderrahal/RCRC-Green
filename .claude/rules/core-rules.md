@@ -100,9 +100,21 @@ before it writes, so there is one narrowing and not two.
 
 The code picks no default for either. The interface preselects ShortSide, because the default
 cut is the short way across the plot. The depth is a plain number in whatever unit the box
-numbers are in, so the 10 metres lives in `SectionDefaults` in the Revit project and is turned
-into feet there. Revit works in feet, and passing 10 straight through would place a ten foot
-section.
+numbers are in.
+
+`SectionDepth.Metres` is 1, the team's decision, and it is the only record of that number.
+`SectionDefaults` in the Revit project reads it and converts, because Revit works in feet and
+passing 1 straight through would place a one foot section. Holding a second copy of the metres
+there is the shape that has been the bug five times here.
+
+It used to come off the sibling section, on the reasoning that the model is the better answer.
+The model has no answer. Four real sections read 3.0480, 3.0480, 5.0199 and 42.1054 feet, which
+is 0.93, 0.93, 1.53 and 12.83 metres, so whichever sibling happened to be picked decided the
+depth. `SectionDepthChoice` and the far clip on `SiblingView` are both deleted.
+
+`Lengths` is the one place feet turn into metres or millimetres, because a report printing a
+number of feet with the word metres after it is the same class of fault as a report that says
+created and not created.
 
 ## A number that is not a number still looks like an answer
 
@@ -149,6 +161,11 @@ More views ticked than fit is not an error. The first few are `Placed`, the rest
 and named, so nothing is dropped without being said. A definition with no views is usable and
 makes an empty sheet, which is a real thing to ask for.
 
+`SheetSize` is the width and the height in feet AND which read produced them, because a size
+that came from nowhere reads exactly like a size that was measured. Three sheets were made
+empty on a real A1 title block. A size that is zero, negative, NaN or infinite is not a size,
+and the factory turns it into `NotRead` rather than letting it reach `SheetLayout.For`.
+
 ## Every count the panel shows is worked out here
 
 `PanelSteps` holds the five steps, what each says while it is shut, whether it can be used yet
@@ -164,9 +181,9 @@ caught that, and it was the code that was wrong.
 
 ## The settings a new view takes travel together on one object
 
-`SiblingView` holds the view name, the family type, the template, the level and the far clip
-offset of ONE view the model already has. `SiblingChoice.For` picks one and returns it whole.
-Nothing anywhere assembles a set of settings from more than one view, and a test goes red if
+`SiblingView` holds the view name, the family type, the template, the level and the three crop
+settings of ONE view the model already has. `SiblingChoice.For` picks one and returns it whole.
+Nothing anywhere assembles a set of settings from more than one view, and two tests go red if
 anything starts to.
 
 A run produced a view whose template read `(010) Overall Plan` and whose family type read
@@ -174,9 +191,22 @@ A run produced a view whose template read `(010) Overall Plan` and whose family 
 apart, so it could not have split them, and nothing recorded which view either had come from,
 so the question could not be settled at all. The name is on the object now and in the report.
 
-`SectionDepthChoice.For` is the same shape for the far clip. It takes the sibling's offset
-where there is one and the value the team named where there is not, and it carries which of
-the two it used so the report can say.
+`ViewCrop` is the three of them together: Crop View, Crop Region Visible and Annotation Crop.
+They are one object because Revit will not turn Annotation Crop on for a view whose crop is
+off, so copying the second without the first does nothing. Every view the tool created had
+Annotation Crop off while DM-16 and DM-14 have it on, which let neighbouring plots' section
+markers draw straight through a new view.
+
+## Which family type a view type is really built with
+
+`FamilyTypesInUse.Of` counts, per view type, every view family type in use and how many views
+use each. A view type with more than one has no answer for a new view to copy, and whichever
+sibling gets picked decides it.
+
+Three (010) views were created in one run with three different family types, each copied
+faithfully from a different sibling. That is the model's problem, so this counts and picks no
+winner. Choosing the most used one would put an answer on it that the team never gave, and the
+disagreement would stop being visible.
 
 ## A test that reads the code back to itself proves nothing
 

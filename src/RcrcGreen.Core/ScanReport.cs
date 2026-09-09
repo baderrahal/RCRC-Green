@@ -113,6 +113,8 @@ namespace RcrcGreen.Core
             }
             Line(report, string.Empty);
 
+            WhatEachViewTypeIsBuiltWith(report, scan);
+
             List<ScannedScopeBox> boxes = scan.ScopeBoxes
                 .OrderBy(box => box.Name, NaturalOrder.Comparer)
                 .ToList();
@@ -183,6 +185,42 @@ namespace RcrcGreen.Core
             }
 
             return report.ToString();
+        }
+
+        /// <summary>
+        /// Which view family type each view type is actually built with, and how many views use
+        /// each one.
+        ///
+        /// A run created three (010) views from three different siblings and got three
+        /// different family types, every one of them copied faithfully. The tool cannot settle
+        /// that and is not going to try, because picking the most used one would put a winner
+        /// on it that the team never chose. This is the section that makes it visible.
+        /// </summary>
+        private static void WhatEachViewTypeIsBuiltWith(StringBuilder report, ModelScan scan)
+        {
+            IReadOnlyList<FamilyTypesForViewType> inUse = FamilyTypesInUse.Of(scan.Views);
+            int disagreeing = FamilyTypesInUse.Disagreeing(inUse);
+
+            Heading(report, "VIEW FAMILY TYPE PER VIEW TYPE", inUse.Count,
+                "view type | view family type | views using it");
+            Line(report, "A view type built with more than one family type has no answer for a "
+                + "new view to copy, and whichever sibling gets picked decides it. "
+                + Count(disagreeing, "view type") + " here " + (disagreeing == 1 ? "is" : "are")
+                + " built more than one way, and " + (disagreeing == 0
+                    ? "nothing needs settling."
+                    : "each is listed first."));
+
+            foreach (FamilyTypesForViewType type in inUse)
+            {
+                foreach (FamilyTypeCount count in type.Counts)
+                {
+                    Line(report, Join(
+                        type.Type.ToString(),
+                        count.FamilyTypeName.Length == 0 ? "(none read)" : count.FamilyTypeName,
+                        Count(count.Views, "view")));
+                }
+            }
+            Line(report, string.Empty);
         }
 
         private static void Heading(StringBuilder report, string title, int count, string columns)

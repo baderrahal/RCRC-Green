@@ -1,10 +1,36 @@
 # ai-max state
 
-Phase: 9, ship. Seventeenth pass, the report for the split round.
+Phase: 9, ship. Eighteenth pass, off the first full run in Revit.
 
-Pull request 22 merged as `ab83eb1` with 352 tests on the runner, and pull request 23 as
-`cd987d0` with 361, 0 failed and 0 skipped on each. Both log entries carry their own merge and
-count now.
+10 created, 0 refused, 4 needing attention, so every path in this tool has now run at least
+once. Items 1 to 4 are here. Item 5, four interface faults, is a second pull request.
+
+**Sheet Width and Sheet Height are INSTANCE parameters and do not exist on a title block type.**
+They were being read off the type, `get_Parameter` returned null, null became 0.0, and three
+sheets were created empty while the report said a real A1 title block had no size. The size now
+comes off the title block Revit places on the new sheet, or is measured across it, and
+`SheetSize` carries which of the two answered. The size cannot be read until the sheet exists,
+so a sheet with views ticked that cannot be measured is created, found wanting and deleted
+again, with the delete checked.
+
+**Every view the tool made had Annotation Crop off**, so neighbouring plots' section markers drew
+through it. `ViewCrop` carries Crop View, Crop Region Visible and Annotation Crop on the sibling
+alongside the family type, the template and the level. Every property read off the sibling and
+every one not read is listed in `steps/log.md`.
+
+**The far clip no longer comes from the sibling.** Four real sections read 0.93, 0.93, 1.53 and
+12.83 metres, so the model had no rule and the sibling decided it by accident. One metre, the
+team's decision, held in `SectionDepth.Metres` and converted once in `SectionDefaults`.
+
+The scan counts every view family type per view type, disagreeing ones first, because three
+(010) views came out of one run with three different family types, all copied faithfully. It
+picks no winner.
+
+Nothing in this round has been through Revit. No section and no schedule has ever been created
+by this tool at all.
+
+Before that, the report for the split round. Pull request 22 merged as `ab83eb1` with 352 tests
+on the runner, and pull request 23 as `cd987d0` with 361, 0 failed and 0 skipped on each.
 
 Before that, sheets rebuilt.
 
