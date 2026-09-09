@@ -6,6 +6,15 @@ Newest entry first.
 
 ## 2026-09-09, thirty first pass. The shrubs and lawn shape, measured rather than guessed
 
+Pull request 38, merged into main as `82dd51d`. **The runner executed 789 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 789 ran, 0 failed and 0 skipped**, after
+the last file was written and after the four break watches were restored.
+
+The check run and the job endpoints both reported the gate in progress for several minutes
+after it had finished, the third round running. What settled it was the job LOG: it returns 404
+while a job is running, so a log that comes back at all is a job that has ended. That is the
+quickest honest way to tell a stuck gate from a stale endpoint.
+
 Two corrections from the team before this reaches Revit.
 
 ### The shape was measured and I guessed it anyway

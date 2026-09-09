@@ -1,6 +1,8 @@
 # ai-max state
 
 Phase: 9, ship. Thirty first pass, the shrubs and lawn shape measured rather than guessed.
+Pull request 38 is merged into main as `82dd51d`, 789 tests on the runner against its merged
+head and 789 locally, 0 failed and 0 skipped on each.
 
 The team supplied the real rows. The group heading sits on its own row with a phase row under
 it, and **the subtotal prints twice**, so adding a group's subtotal rows gives double. One is
