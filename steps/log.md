@@ -6,6 +6,15 @@ Newest entry first.
 
 ## 2026-09-09, the rule behind the last three rounds, written down
 
+Pull request 40, merged into main as `5a5ded0`. **The runner executed 804 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 804 ran, 0 failed and 0 skipped**, after
+the last file was written. No source file changed, so it is the suite that merged as `973c817`.
+
+**The 404 rule the entry below records only works one way.** A log that comes back is a job that
+has ended, and that held again. A 404 is not a job still running: every step of this job read
+completed with conclusion success while the log was still 404 more than a minute later. The step
+conclusions are the read that was right both times.
+
 No code change. One rule into `CLAUDE.md` and a pointer from each of the two rules files.
 
 **NEVER READ A SCHEDULE VALUE BY CELL POSITION. Ask the heading row which column it is. A
