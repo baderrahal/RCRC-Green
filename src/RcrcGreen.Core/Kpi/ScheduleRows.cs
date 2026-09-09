@@ -281,15 +281,23 @@ namespace RcrcGreen.Core.Kpi
                 int items;
                 CellNumber.WholeIn(ScheduleColumns.At(row, countColumn), out items);
 
-                if (string.IsNullOrWhiteSpace(ScheduleColumns.At(row, 0)))
+                // A species is a row the botanical column names, whatever its image cell holds,
+                // because an existing species prints with no photo. A subtotal names nothing
+                // anywhere. TOTAL names nothing botanical either and is kept out by its own
+                // first cell, which is the one thing it does carry.
+                bool named = nameColumn >= 0
+                    ? !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn))
+                    : !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, 0));
+
+                if (named)
                 {
-                    subtotals.Add(new GroupSubtotal(heading, area, items));
+                    species.Add(area);
                     continue;
                 }
 
-                if (nameColumn >= 0 && !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn)))
+                if (string.IsNullOrWhiteSpace(ScheduleColumns.At(row, 0)))
                 {
-                    species.Add(area);
+                    subtotals.Add(new GroupSubtotal(heading, area, items));
                 }
             }
 

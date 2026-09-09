@@ -130,6 +130,35 @@ shows, and its raw form, which is feet or square feet whatever the project displ
 is the difference between the two, and `AreaUnits` is the one place square feet turn into
 square metres.
 
+## A near miss whose values are all Yes or No is a switch
+
+`KPI COMPONENT S/H` holds No on 9 of 9 title block types. Its name holds COMPONENT, so it was
+offered in section 9 beside `PRX_Component` as another name the model might carry the component
+under. It is a show and hide toggle and it answers nothing.
+
+`KpiNames.EveryValueIsYesOrNo` decides it and both callers ask that one method. Section 9 leaves
+such a name out of the answer and section 3 keeps it, under its own tally and its own values and
+again by name in the component values block, which says why it is not counted there. **A name
+left out with nothing written down reads exactly like a name nobody found.**
+
+Two questions carry that near miss list and neither is question 8. It is questions 1 and 2,
+which are the two about where the component lives.
+
+## Every value of the component, with its sheets and its plots
+
+`PRX_Component` picks the workbook template and **its values are not template names.** Measured
+on the 1521 scan: FRIDAY MOSQUE, SCHOOL, HEALTH, EXISTING PARK, NH STRT 20m ROW, against
+templates named existing parks, future parks, healthcare, mosques, parking, schools and streets.
+No string rule turns HEALTH into healthcare or NH STRT 20m ROW into streets, and nothing in the
+tool tries.
+
+So section 3 ends with every distinct value the model holds, how many sheets carry each, and
+every plot those sheets are for, uncapped where the rest of the section shows twenty examples.
+Twenty sheets is not enough to build the mapping from and the mapping is what preselects the
+template. The plot beside each value is `PRX_Plot_ID` read off the sheet, said in the block, and
+a value on sheets carrying no plot is counted and named rather than dropped. A title block type
+is not a sheet, so a component name on one is named with that reason and left out of the counts.
+
 ## Three places a sheet value can live
 
 The title block instance, the title block type and the sheet itself are all read, with a full
@@ -293,6 +322,25 @@ both off the schedule's own heading row, and the softscape reader takes its bota
 its count the same way, because a name read off the first cell there would be an image file
 name.
 
+**A ROW IS A SPECIES ROW WHEN THE BOTANICAL COLUMN HOLDS TEXT, NOT WHEN THE FIRST CELL DOES.**
+The first cell is the image, and **an existing species prints with no photo**, so its first cell
+is a dash:
+
+```
+-                       | ACA FAR | NO BOQ CODE AVAILABLE | ACACIA / VACHELLIA FARNESIANA | 1
+Albizia lebbeck.jpg     | ALB LEB | M-329343-A18          | ALBIZIA LEBBECK               | 13
+```
+
+`ScheduleGroups` counted what sat under a group off that first cell and reported DM-12 Existing
+as 0 named rows of 6 and DM-13 Existing as 0 named rows of 2, while section 6 of the same file
+printed five species under DM-12 Existing totalling 10 trees. Both readers now ask the heading
+row which column is BOTANICAL NAME and read that one. The measured counts are DM-11 Proposed 3,
+DM-12 Existing 5 and Proposed 3, DM-13 Existing 1 and Proposed 2.
+
+`ShrubsAndLawnRows` had the same fault and no report had shown it, because DM-11's shrubs are
+all Proposed and every one of them prints with a photo. An existing shrub would have been read
+as a subtotal.
+
 **An area prints with its unit attached and a count does not.** 35 m² against 46. The unit comes
 off by reading as far as the number goes rather than by stripping characters. A real area can be
 nought: the hardscape schedule prints 0 m², which is the number and not an empty cell.
@@ -352,6 +400,11 @@ here. What each one turned out to be:
 
 Two the 1355 run raised in their place are in `steps/log.md`, both about matching a species by
 name, and nothing in the code picks an answer to either.
+
+The 1521 run raised a third and it is the one that stops the pane preselecting a template:
+**which template each value of PRX_Component means.** Five values are measured and none is a
+template name. The report now prints every value with its sheets and its plots so somebody can
+answer it from the model, and until they do nothing in the code maps one to the other.
 
 ## Do not name a KPI control Scan Model
 

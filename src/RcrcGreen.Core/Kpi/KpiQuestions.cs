@@ -140,6 +140,11 @@ namespace RcrcGreen.Core.Kpi
         /// contradicting itself, which is worse than either answer on its own. So a near miss
         /// holding values is named here, with where it lives and what it holds, and the
         /// question counts as answered because the file does hold the answer.
+        ///
+        /// A near miss whose every value reads Yes or No is left out. KPI COMPONENT S/H holds No
+        /// on 9 of 9 title block types and is a show and hide toggle, so it answers nothing about
+        /// the component name and standing beside PRX_Component here reads as a second candidate.
+        /// Section 3 still prints it with everything else the model carries.
         /// </summary>
         private static string NearMissesHoldingValues(KpiScan scan, string wanted, string[] words)
         {
@@ -155,6 +160,7 @@ namespace RcrcGreen.Core.Kpi
                         .Where(one => HasSomething(one.Value))
                         .ToList();
                     if (values.Count == 0) continue;
+                    if (KpiNames.EveryValueIsYesOrNo(values.Select(one => one.Value))) continue;
 
                     ParameterTally tally = home.TallyFor(name);
                     var samples = new List<string>();

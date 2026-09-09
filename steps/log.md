@@ -4,6 +4,116 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, thirty second pass. The group counter, the switch and the component values
+
+One bug and two report faults from the 1521 scan, and nothing else. The suite runs 804 tests
+locally, 0 failed and 0 skipped, after the last file was written and after the six break
+watches were restored byte for byte.
+
+### The group counter read the image column
+
+Question 8 reported DM-12 Existing with 0 named rows of 6 and DM-13 Existing with 0 named rows
+of 2, while section 6 of the same file printed five species under DM-12 Existing totalling 10
+trees. A file that contradicts itself twenty lines apart has nothing in it worth believing.
+
+**The first cell is the image and an existing species prints with no photo**, so its first cell
+is a dash. `ScheduleGroups` decided a row named something by looking at that cell. It now asks
+the heading row which column is BOTANICAL NAME and reads that one, falling back to the first
+cell only where the heading row names no botanical column at all.
+
+This is the same fault fixed in the softscape reader one round ago. The reader was corrected
+and the counter, which feeds the same report, was left on the old rule. **Two rules for one
+question is the shape this repo has now met seven times**, and `CLAUDE.md` records it as the
+seventh.
+
+Checked against the measured counts, each written out by hand in the test rather than worked
+out with the code's own rule: DM-11 Proposed 3, DM-12 Existing 5 and Proposed 3, DM-13
+Existing 1 and Proposed 2. A fifth test holds `SoftscapeRows.SpeciesIn` and `ScheduleGroups.Of`
+against each other on one schedule, because the two disagreeing is what produced the fault.
+
+### Every place that could hold the same shape, including the ones that were already right
+
+Four things in Core read a schedule's printed rows. All four were read line by line.
+
+- `ScheduleGroups.IsNamed`, the old `FirstCellHoldsText`. **THE BUG. Fixed**
+- `ShrubsAndLawnRows.SubtotalsIn`, the test telling a species row from a subtotal row.
+  **THE SAME BUG AND NO REPORT HAD SHOWN IT. Fixed**, because DM-11's shrubs are all Proposed
+  and every one of them prints with a photo. An existing shrub would have been read as a
+  subtotal, which would have gone into the workbook as an area
+- `ScheduleColumns.IsStructureRow`. Reads the first cell, already right. A group heading and a
+  phase row really do sit in the first cell with every other cell empty, which is measured off
+  the 1355 rows and written in `kpi-rules.md`
+- `ShrubsAndLawnRows`, the group name taken from `row[0]` after `IsStructureRow` has passed.
+  Already right. That row has exactly one cell with text in it and this is that cell
+- `ShrubsAndLawnRows`, the first cell tested again to keep TOTAL out of the subtotals. Already
+  right and still needed. A subtotal names nothing anywhere, and the first cell is the one
+  thing TOTAL does carry. It is reached only after the botanical test now
+- `SoftscapeRows.SpeciesIn`, the botanical name. Already right, fixed the round before
+- `SoftscapeRows.QuantityIn`, the last whole number in the row. Already right. It runs only
+  where the heading row names no COUNT column, and the schedules in this model all name one
+- `ScheduleGroups.GroupNameIn`. Already right and position independent: the one cell holding
+  text, wherever it sits
+- `KpiReport`, the rows as printed. Nothing to get wrong. It prints every cell in order and
+  picks no name and no number out of them
+
+`SpeciesMatching` also has a Rows, and it is the workbook's species list rather than a
+schedule's. Each of its rows carries a named BotanicalName, so it is not this shape at all.
+
+### KPI COMPONENT S/H is a switch, not a candidate
+
+Its name holds COMPONENT, so section 9 offered it beside PRX_Component as another name the
+model might carry the component under. It reads No on 9 of 9 title block types and is a show
+and hide toggle.
+
+`KpiNames.EveryValueIsYesOrNo` decides it, one method with both callers asking it. Section 9
+leaves such a name out of the answer. Section 3 keeps it, in its own tally, in its own values,
+and again by name in the new component values block, which says why it is not counted there.
+
+**The section that offers it is not question 8.** The near miss list feeds questions 1 and 2,
+the two about where the component lives, and question 8 never calls it. The fault is real and
+the number in the request is off by six, so it is written down here rather than fixed silently.
+
+### The component values do not match the template names
+
+Measured: FRIDAY MOSQUE, SCHOOL, HEALTH, EXISTING PARK, NH STRT 20m ROW. The templates are
+named existing parks, future parks, healthcare, mosques, parking, schools and streets. None of
+the five is a template name and no string rule turns HEALTH into healthcare or NH STRT 20m ROW
+into streets.
+
+Section 3 now ends with every distinct value of the component the model holds, how many sheets
+carry each, and every plot those sheets are for. Uncapped, where the rest of that section shows
+twenty examples, because twenty sheets is not enough to build the mapping from and the mapping
+is what preselects the template. The plot beside each value is PRX_Plot_ID read off the sheet
+and the block says so. A value on sheets carrying no plot is counted and named. A component
+name on a title block type is named with its reason and left out, because a type is not a sheet.
+
+**Nothing maps a value to a template and nothing guesses one.**
+
+### Open, and not to be guessed at in code
+
+**Which template each value of PRX_Component means.** Five values are measured and none is a
+template name. This is the question that stops the pane preselecting a template, and the new
+block is what somebody answers it from. Until it is answered, no code anywhere turns one into
+the other.
+
+### What was broken to see the tests go red
+
+Six, each restored byte for byte and checked with md5.
+
+- The group counter put back on the first cell. 3 red
+- The shrubs species test put back on the first cell. 2 red
+- `EveryValueIsYesOrNo` made to answer false always. 6 red
+- The component block made to find no plot for any sheet. 1 red
+- A title block type made to count as a sheet. 1 red
+- The nothing-found line made to print when something was found. 1 red
+
+### What has not been run
+
+Nothing here has been seen in Revit. The group counts, the switch rule and the component values
+block are all Core, all covered by tests, and none has been read off a real scan. The next 1521
+run is what confirms DM-12 Existing comes back as 5 named rows of 6.
+
+---
 ## 2026-09-09, thirty first pass. The shrubs and lawn shape, measured rather than guessed
 
 Pull request 38, merged into main as `82dd51d`. **The runner executed 789 tests against its

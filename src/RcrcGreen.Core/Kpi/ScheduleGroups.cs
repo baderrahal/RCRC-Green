@@ -12,6 +12,11 @@ namespace RcrcGreen.Core.Kpi
     /// holds, so the phase names read off the document decide it, and nothing here matches on
     /// the shape of a row or on the words Existing and Proposed. A model whose phases are
     /// named something else is read the same way.
+    ///
+    /// What sits UNDER a group is counted off the column the heading row names BOTANICAL NAME.
+    /// It used to be counted off the first cell, which is the image column, and an existing
+    /// species prints with no photo: DM-12 Existing came back as 0 named rows of 6 while
+    /// section 6 of the same file printed its five species.
     /// </summary>
     public static class ScheduleGroups
     {
@@ -31,6 +36,9 @@ namespace RcrcGreen.Core.Kpi
             if (!schedule.RowsWereRead || wanted.Count == 0) return found;
 
             List<IReadOnlyList<string>> rows = schedule.Rows.ToList();
+            if (rows.Count == 0) return found;
+
+            int nameColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.BotanicalWord);
             var at = new List<int>();
 
             for (int index = 0; index < rows.Count; index++)
@@ -47,7 +55,7 @@ namespace RcrcGreen.Core.Kpi
 
                 for (int row = index + 1; row < ends; row++)
                 {
-                    if (FirstCellHoldsText(rows[row])) named++;
+                    if (IsNamed(rows[row], nameColumn)) named++;
                 }
 
                 found.Add(new ScheduleGroup(GroupNameIn(rows[index], wanted), index, under, named));
@@ -80,9 +88,17 @@ namespace RcrcGreen.Core.Kpi
                 : null;
         }
 
-        private static bool FirstCellHoldsText(IReadOnlyList<string> row)
+        /// <summary>
+        /// A row that names something, read off the botanical column where the heading row
+        /// names one and off the first cell only where it does not.
+        /// </summary>
+        private static bool IsNamed(IReadOnlyList<string> row, int nameColumn)
         {
-            return row != null && row.Count > 0 && !string.IsNullOrWhiteSpace(row[0]);
+            if (row == null || row.Count == 0) return false;
+
+            if (nameColumn >= 0) return !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn));
+
+            return !string.IsNullOrWhiteSpace(row[0]);
         }
     }
 }

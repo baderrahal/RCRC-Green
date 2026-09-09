@@ -233,6 +233,145 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// The hardscape schedule prints 0 m2, which is the number nought rather than a cell
         /// holding nothing, so a group whose area is really zero comes back as zero.
         /// </summary>
+        /// <summary>
+        /// The real softscape shape, from the 1521 scan. An existing species prints with no
+        /// photo, so its image cell is empty, and a proposed one prints with a file name there.
+        ///
+        /// Counting what sits under a group off the first cell read the image column, so
+        /// DM-12 Existing came back as 0 named rows of 6 while section 6 of the same file
+        /// printed its five species.
+        /// </summary>
+        private static ScannedSchedule TheRealDm12WithImages()
+        {
+            return CreateFixture.Softscape(
+                "DM-12",
+                new[] { "IMAGE", "PLANT CODE", "BOQ CODE", "BOTANICAL NAME", "COUNT (n)" },
+                new[] { "TREES", "", "", "", "" },
+                new[] { "Existing", "", "", "", "" },
+                new[] { "", "ACA FAR", "NO BOQ CODE AVAILABLE", "ACACIA / VACHELLIA FARNESIANA", "1" },
+                new[] { "", "ALB LEB", "NO BOQ CODE AVAILABLE", "ALBIZIA LEBBECK", "1" },
+                new[] { "", "PHO DAC", "NO BOQ CODE AVAILABLE", "PHOENIX DACTYLIFERA", "5" },
+                new[] { "", "UNK", "NO BOQ CODE AVAILABLE", "UNKNOWN", "2" },
+                new[] { "", "WAS ROB", "NO BOQ CODE AVAILABLE", "WASHINGTONIA ROBUSTA", "1" },
+                new[] { "", "", "", "", "10" },
+                new[] { "Proposed", "", "", "", "" },
+                new[] { "Albizia lebbeck.jpg", "ALB LEB", "M-329343-A18", "ALBIZIA LEBBECK", "13" },
+                new[] { "Bauhinia purpurea.jpg", "BAU PUR", "M-329343-B22", "BAUHINIA PURPUREA", "6" },
+                new[] { "Cassia glauca.jpg", "CAS GLA", "M-329343-C09", "CASSIA GLAUCA", "10" },
+                new[] { "TOTAL", "", "", "", "39" });
+        }
+
+        /// <summary>
+        /// Measured: DM-12 Existing has 5 species and Proposed 3. Existing prints 6 rows under
+        /// it, the five species and a subtotal.
+        /// </summary>
+        [Fact]
+        public void AGroupCountsItsSpeciesOffTheBotanicalColumnAndNotTheImageColumn()
+        {
+            IReadOnlyList<ScheduleGroup> groups =
+                ScheduleGroups.Of(TheRealDm12WithImages(), Phases);
+
+            Assert.Equal(2, groups.Count);
+            Assert.Equal("Existing", groups[0].Name);
+            Assert.Equal(6, groups[0].RowsUnder);
+            Assert.Equal(5, groups[0].NamedRowsUnder);
+            Assert.Equal("Proposed", groups[1].Name);
+            Assert.Equal(3, groups[1].NamedRowsUnder);
+        }
+
+        /// <summary>
+        /// Measured: DM-13 Existing has 1 species and Proposed 2, and Existing prints 2 rows
+        /// under it, the species and a subtotal.
+        /// </summary>
+        [Fact]
+        public void TheMeasuredDm13CountsComeBackAsOneAndTwo()
+        {
+            ScannedSchedule schedule = CreateFixture.Softscape(
+                "DM-13",
+                new[] { "IMAGE", "PLANT CODE", "BOQ CODE", "BOTANICAL NAME", "COUNT (n)" },
+                new[] { "TREES", "", "", "", "" },
+                new[] { "Existing", "", "", "", "" },
+                new[] { "", "ALB LEB", "NO BOQ CODE AVAILABLE", "ALBIZIA LEBBECK", "5" },
+                new[] { "", "", "", "", "5" },
+                new[] { "Proposed", "", "", "", "" },
+                new[] { "Albizia lebbeck.jpg", "ALB LEB", "M-329343-A18", "ALBIZIA LEBBECK", "5" },
+                new[] { "Cassia glauca.jpg", "CAS GLA", "M-329343-C09", "CASSIA GLAUCA", "4" });
+
+            IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, Phases);
+
+            Assert.Equal(2, groups[0].RowsUnder);
+            Assert.Equal(1, groups[0].NamedRowsUnder);
+            Assert.Equal(2, groups[1].NamedRowsUnder);
+        }
+
+        /// <summary>
+        /// Measured: DM-11 Proposed has 3 species.
+        /// </summary>
+        [Fact]
+        public void TheMeasuredDm11ProposedCountComesBackAsThree()
+        {
+            ScannedSchedule schedule = CreateFixture.Softscape(
+                "DM-11",
+                new[] { "IMAGE", "PLANT CODE", "BOQ CODE", "BOTANICAL NAME", "COUNT (n)" },
+                new[] { "TREES", "", "", "", "" },
+                new[] { "Proposed", "", "", "", "" },
+                new[] { "Albizia lebbeck.jpg", "ALB LEB", "M-329343-A18", "ALBIZIA LEBBECK", "6" },
+                new[] { "Bauhinia purpurea.jpg", "BAU PUR", "M-329343-B22", "BAUHINIA PURPUREA", "2" },
+                new[] { "Cassia glauca.jpg", "CAS GLA", "M-329343-C09", "CASSIA GLAUCA", "4" },
+                new[] { "", "", "", "", "12" });
+
+            ScheduleGroup only = Assert.Single(ScheduleGroups.Of(schedule, Phases));
+
+            Assert.Equal("Proposed", only.Name);
+            Assert.Equal(3, only.NamedRowsUnder);
+            Assert.Equal(4, only.RowsUnder);
+        }
+
+        /// <summary>
+        /// The species reader and the group counter have to agree about what a species is, so
+        /// the same rows are read both ways and held against each other.
+        /// </summary>
+        [Fact]
+        public void TheSpeciesReaderAndTheGroupCounterAgreeOnTheSameRows()
+        {
+            ScannedSchedule schedule = TheRealDm12WithImages();
+
+            IReadOnlyList<SpeciesRow> species = SoftscapeRows.SpeciesIn(schedule, Phases, "DM-12");
+            IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, Phases);
+
+            Assert.Equal(
+                groups[0].NamedRowsUnder, species.Count(one => one.GroupName == "Existing"));
+            Assert.Equal(
+                groups[1].NamedRowsUnder, species.Count(one => one.GroupName == "Proposed"));
+            Assert.Equal(10, species.Where(one => one.GroupName == "Existing").Sum(one => one.Quantity));
+        }
+
+        /// <summary>
+        /// The same fault in the shrubs reader, which has not been seen because DM-11's shrubs
+        /// are all Proposed. An existing shrub prints with no photo, so telling a subtotal from
+        /// a species by the image cell would count the species as a subtotal.
+        /// </summary>
+        [Fact]
+        public void AnExistingShrubWithNoPhotoIsASpeciesRatherThanASubtotal()
+        {
+            ScannedSchedule schedule = CreateFixture.ShrubsAndLawn(
+                "DM-11",
+                new[] { "IMAGE", "BOTANICAL NAME", "AREA  (sqm)", "COUNT (n)" },
+                new[] { "GRASS", "", "", "" },
+                new[] { "Existing", "", "", "" },
+                new[] { "", "GRASS: PENNISETUM SETACEUM", "20 m\u00b2", "30" },
+                new[] { "", "", "35 m\u00b2", "46" },
+                new[] { "", "", "35 m\u00b2", "46" });
+
+            GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.SubtotalsIn(
+                schedule, new[] { KpiMerge.LawnHeading }));
+
+            Assert.Equal(35.0, only.SquareMetres);
+            Assert.Equal(2, only.Repeats);
+            Assert.True(only.Agrees);
+            Assert.Equal(20.0, only.SpeciesSum);
+        }
+
         [Fact]
         public void AZeroAreaIsANumberAndNotAnEmptyCell()
         {
