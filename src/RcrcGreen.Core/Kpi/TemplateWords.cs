@@ -38,7 +38,7 @@ namespace RcrcGreen.Core.Kpi
         /// What the pick would fill, line by line. This is the whole point of the round: a
         /// person checks the map against the annotated workbook before anything is written.
         /// </summary>
-        public static IReadOnlyList<string> WouldFill(KpiTemplate template)
+        public static IReadOnlyList<string> WouldFill(KpiTemplate template, ChosenParameters chosen)
         {
             if (template == null) throw new ArgumentNullException("template");
 
@@ -47,7 +47,7 @@ namespace RcrcGreen.Core.Kpi
 
             foreach (MappedCell cell in template.Cells)
             {
-                lines.Add("  " + cell.Cell + "  " + KpiTemplates.SourceOf(cell.Value));
+                lines.Add("  " + cell.Cell + "  " + KpiTemplates.SourceOf(cell.Value, chosen));
             }
 
             if (template.AreaIsTypedByHand)

@@ -222,13 +222,59 @@ KPI Checklist button saying why.
 
 `KpiPaneWords` holds every line the pane shows. The pane formats nothing of its own.
 
+## What the pane puts on a button is escaped
+
+WPF reads the first underscore in a button's text as an access key marker and swallows it, so
+the pane offered PRXComponent, PRXPlot_ID, PRXPlot_UID, PRXPlot_UID2 and PRXPlot_NH. Five names
+no model holds, on the one tool that turns on exact parameter names.
+
+`PaneLabel.Escaped` doubles every underscore, which is WPF's own escape, and every string that
+reaches a `Button` or a `CheckBox` goes through it. Only what is drawn: nothing compares the
+escaped form against anything. It has a test over every name `KpiNames` holds, because a name
+this misses is a name the pane shows wrongly.
+
+## A picker starts on the name the note asks for
+
+`Preselected.From` takes what the model offers and the name the workbook note asks for, and
+hands back that name where the model offers it and the first offered where it does not.
+
+Position alone put PRX_Plot_ID under Reference, first of the four plot parameters, where the
+note names `PRX_Plot_UID2`. It put whichever neighbourhood parameter sorted first under
+Location, where the answer is `Neighborhood Name` and Neighborhood Group sorts above it.
+
+**Nothing is ticked when the plot picker is first drawn**, which is the same rule the Drawing
+Sheet's view types follow. Adding every plot in a model into one workbook is one press of Select
+all away and is almost never wanted.
+
+## The pane says what it reads, not what the note asks for
+
+`KpiTemplates.SourceOf` used to print the workbook's note as though it were the tool's
+behaviour: PRX_COMPONENT and PRX_Plot_UID2 read off the title block. Every part of that was
+wrong. PRX_COMPONENT is in no model, the value is `PRX_Component` on the SHEET, and PRX_Plot_UID2
+sits on 1233 title block instances holding a value on none of them.
+
+It takes a `ChosenParameters` now and names the three parameters the pane's own pickers hold,
+because those are the ones that will be read. With nothing picked yet it names the picker to
+look at rather than a parameter nobody chose. A test walks every template and refuses any line
+holding PRX_COMPONENT or the words title block.
+
+## No model open and a model never saved are two refusals
+
+`CreateWords.CannotCreate` is given both, and a model that is not open is not asked whether it
+has been saved. It used to be handed the model's FOLDER and call it the model, so a detached
+model that has never been saved was refused with No model is open, next to a header counting its
+96,959 elements and directly under the line that already said the truth. The never saved words
+are `TemplateWords.NoModelPath`, the one that line uses, rather than a second sentence.
+
 ## Shared and not changed
 
 `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile` are shared with the Drawing
 Sheet and this tool changes none of them. A change one of them seems to need goes in
 `steps/log.md` with why, and the tool works round it. `PanelMetrics` is shared too and took
-one added value, `HairlineAbove`, because a number written in a pane file is the fault that
-made the first pane black on black.
+two added values, `HairlineAbove` and `WideLabelWidth`, because a number written in a pane file
+is the fault that made the first pane black on black. The second is for the KPI pane's typed
+boxes, where Prepared by came out as Prepared b running into its box at the shared 54, and it is
+added rather than a widening of `LabelWidth`, which the Drawing Sheet uses in two places.
 
 ## The tool carries the map, and the map is data
 

@@ -28,6 +28,16 @@ namespace RcrcGreen.Core.Kpi
 
         public const string NoModel = "No model is open.";
 
+        /// <summary>
+        /// A model that is open and has never been saved. It is a different refusal from no
+        /// model at all, and the pane said the wrong one of the two: the header read 96,959
+        /// elements while Create said no model was open, on a detached model with no path.
+        ///
+        /// The words are TemplateWords.NoModelPath, which the line above the button already
+        /// shows, because two sentences for one condition is two records of one fact.
+        /// </summary>
+        public const string NotSaved = TemplateWords.NoModelPath;
+
         public const string NoTemplate = "No template picked.";
 
         public const string NoPlotTicked = "No plot ticked.";
@@ -39,11 +49,18 @@ namespace RcrcGreen.Core.Kpi
         /// One refusal listing everything that is missing, rather than one per thing. Pressing
         /// Create three times to be told three separate halves of the same answer is worse than
         /// being told all of it once.
+        ///
+        /// **Whether a model is open and whether it has a folder are two facts.** The button
+        /// used to be handed the folder and call it the model, so a detached model that had
+        /// never been saved was reported as no model open, next to a header counting its
+        /// 96,959 elements. A model that is not open is not asked whether it has been saved.
         /// </summary>
-        public static string CannotCreate(bool hasModel, bool hasTemplate, bool hasAPlot)
+        public static string CannotCreate(
+            bool modelIsOpen, bool modelHasAFolder, bool hasTemplate, bool hasAPlot)
         {
             var missing = new List<string>();
-            if (!hasModel) missing.Add(NoModel);
+            if (!modelIsOpen) missing.Add(NoModel);
+            else if (!modelHasAFolder) missing.Add(NotSaved);
             if (!hasTemplate) missing.Add(NoTemplate);
             if (!hasAPlot) missing.Add(NoPlotTicked);
 

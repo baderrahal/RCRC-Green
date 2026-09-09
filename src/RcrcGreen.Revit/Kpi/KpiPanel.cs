@@ -60,6 +60,11 @@ namespace RcrcGreen.Revit.Kpi
         // under the name box reads it.
         private string _modelFolder = string.Empty;
 
+        // The open document's title, empty when nothing is open. Held apart from the folder
+        // because a detached model that has never been saved is open and has no folder, and
+        // Create was handed the folder and reported it as no model open.
+        private string _modelTitle = string.Empty;
+
         // The one picked workbook, and the template settled for it. For most files the two
         // arrive together. A file caught between the two park templates has a pick and no
         // template until the user chooses, and nothing is guessed meanwhile.
@@ -80,8 +85,11 @@ namespace RcrcGreen.Revit.Kpi
         // Drawing Sheet settled on after a count and its list drifted apart on a real model.
         private PlotTicks _ticks = new PlotTicks(PlotsInTheModel.Of(null, null));
 
+        // Preselected off Preselected.From, never the first name the model happens to offer.
+        // Reference came out as PRX_Plot_ID where the note names PRX_Plot_UID2, and Location
+        // came out on whichever neighbourhood parameter sorted first.
         private string _componentParameter = string.Empty;
-        private string _referenceParameter = KpiNames.PlotUid2;
+        private string _referenceParameter = string.Empty;
         private string _locationParameter = string.Empty;
 
         // Cleared by anything that could move a number, so a confirmation never carries over
@@ -202,7 +210,7 @@ namespace RcrcGreen.Revit.Kpi
 
             var scan = new Button
             {
-                Content = "KPI Scan",
+                Content = PaneLabel.Escaped("KPI Scan"),
                 Margin = PanelMetrics.Gap,
                 Padding = PanelMetrics.CellPad,
                 ToolTip = KpiPaneWords.ReadOnly
@@ -250,6 +258,7 @@ namespace RcrcGreen.Revit.Kpi
             Dispatcher.Invoke(() =>
             {
                 _modelName.Text = KpiPaneWords.ModelNamed(documentTitle);
+                _modelTitle = documentTitle ?? string.Empty;
                 _modelFolder = modelFolder ?? string.Empty;
 
                 if (!string.Equals(documentTitle, _scannedTitle, StringComparison.Ordinal))
@@ -270,6 +279,7 @@ namespace RcrcGreen.Revit.Kpi
             Dispatcher.Invoke(() =>
             {
                 _scannedTitle = scan.Document.Title;
+                _modelTitle = scan.Document.Title ?? string.Empty;
                 _modelName.Text = KpiPaneWords.ModelNamed(scan.Document.Title);
                 _readAt.Text = KpiPaneWords.ReadAt(readAt, scan.Document.ElementInstances, scan.Document.ReadSeconds);
             });
@@ -300,7 +310,7 @@ namespace RcrcGreen.Revit.Kpi
             var folderLine = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
             var browse = new Button
             {
-                Content = "Browse",
+                Content = PaneLabel.Escaped("Browse"),
                 Padding = PanelMetrics.CellPad,
                 Margin = PanelMetrics.Gap,
                 ToolTip = "Point at the folder holding the client's GRP KPI Checklist templates. "
@@ -351,7 +361,7 @@ namespace RcrcGreen.Revit.Kpi
                 bool pickable = which.IsMatched || which.NeedsAPick;
                 var row = new Button
                 {
-                    Content = which.FileName + "   " + which.InWords,
+                    Content = PaneLabel.Escaped(which.FileName + "   " + which.InWords),
                     HorizontalContentAlignment = HorizontalAlignment.Left,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     Padding = PanelMetrics.CellPad,
@@ -377,7 +387,7 @@ namespace RcrcGreen.Revit.Kpi
                     KpiTemplate chosen = candidate;
                     var choice = new Button
                     {
-                        Content = chosen.Name,
+                        Content = PaneLabel.Escaped(chosen.Name),
                         Padding = PanelMetrics.CellPad,
                         Margin = PanelMetrics.Gap
                     };
@@ -395,7 +405,7 @@ namespace RcrcGreen.Revit.Kpi
                 Margin = PanelMetrics.Row
             });
 
-            foreach (string line in TemplateWords.WouldFill(_pickedAs))
+            foreach (string line in TemplateWords.WouldFill(_pickedAs, Chosen()))
             {
                 _templates.Children.Add(new TextBlock
                 {
@@ -409,7 +419,7 @@ namespace RcrcGreen.Revit.Kpi
             var caption = new TextBlock
             {
                 Text = "Written as",
-                Width = PanelMetrics.LabelWidth,
+                Width = PanelMetrics.WideLabelWidth,
                 VerticalAlignment = VerticalAlignment.Center
             };
             DockPanel.SetDock(caption, Dock.Left);
@@ -450,9 +460,9 @@ namespace RcrcGreen.Revit.Kpi
             if (_facts.Plots.All.Count == 0) return;
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
-            var all = new Button { Content = CreateWords.SelectAll, Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
+            var all = new Button { Content = PaneLabel.Escaped(CreateWords.SelectAll), Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
             all.Click += (sender, e) => Ticked(_ticks.All());
-            var none = new Button { Content = CreateWords.Clear, Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
+            var none = new Button { Content = PaneLabel.Escaped(CreateWords.Clear), Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
             none.Click += (sender, e) => Ticked(_ticks.None());
             buttons.Children.Add(all);
             buttons.Children.Add(none);
@@ -471,7 +481,7 @@ namespace RcrcGreen.Revit.Kpi
                 string which = plotId;
                 var box = new CheckBox
                 {
-                    Content = which,
+                    Content = PaneLabel.Escaped(which),
                     IsChecked = _ticks.IsTicked(which),
                     Margin = PanelMetrics.Row
                 };
@@ -535,7 +545,7 @@ namespace RcrcGreen.Revit.Kpi
             _templates.Children.Add(Head(CreateWords.Create));
 
             string cannot = CreateWords.CannotCreate(
-                _modelFolder.Length > 0, _pickedAs != null, _ticks.Count > 0);
+                _modelTitle.Length > 0, _modelFolder.Length > 0, _pickedAs != null, _ticks.Count > 0);
 
             if (cannot.Length > 0) _templates.Children.Add(Faint(cannot));
 
@@ -562,7 +572,7 @@ namespace RcrcGreen.Revit.Kpi
 
                     var confirm = new Button
                     {
-                        Content = "These areas are right, write anyway",
+                        Content = PaneLabel.Escaped("These areas are right, write anyway"),
                         Padding = PanelMetrics.CellPad,
                         Margin = PanelMetrics.Row,
                         HorizontalAlignment = HorizontalAlignment.Left
@@ -574,7 +584,7 @@ namespace RcrcGreen.Revit.Kpi
 
             var create = new Button
             {
-                Content = CreateWords.Create,
+                Content = PaneLabel.Escaped(CreateWords.Create),
                 Padding = PanelMetrics.CellPad,
                 Margin = PanelMetrics.Row,
                 HorizontalAlignment = HorizontalAlignment.Left,
@@ -603,7 +613,7 @@ namespace RcrcGreen.Revit.Kpi
                     string typeName = region.TypeName;
                     var choice = new Button
                     {
-                        Content = typeName + "   " + region.Printed,
+                        Content = PaneLabel.Escaped(typeName + "   " + region.Printed),
                         Padding = PanelMetrics.CellPad,
                         Margin = PanelMetrics.Gap
                     };
@@ -672,6 +682,15 @@ namespace RcrcGreen.Revit.Kpi
             }
         }
 
+        /// <summary>
+        /// The three parameters the pickers hold, so a line saying where a value comes from
+        /// names the one that will really be read.
+        /// </summary>
+        private ChosenParameters Chosen()
+        {
+            return new ChosenParameters(_componentParameter, _referenceParameter, _locationParameter);
+        }
+
         private void AskedToCreate()
         {
             if (_pickedAs == null) return;
@@ -701,14 +720,20 @@ namespace RcrcGreen.Revit.Kpi
                 _ticks = new PlotTicks(facts.Plots, _ticks.Ticked);
                 _modelFolder = facts.ModelFolder;
 
-                if (_componentParameter.Length == 0 && facts.ComponentNames.Count > 0)
+                if (_componentParameter.Length == 0)
                 {
-                    _componentParameter = facts.ComponentNames[0];
+                    _componentParameter = Preselected.From(facts.ComponentNames, KpiNames.Component);
                 }
 
-                if (_locationParameter.Length == 0 && facts.LocationNames.Count > 0)
+                if (_referenceParameter.Length == 0)
                 {
-                    _locationParameter = facts.LocationNames[0];
+                    _referenceParameter = Preselected.From(
+                        facts.ReferenceChoices.Select(one => one.Name).ToList(), KpiNames.PlotUid2);
+                }
+
+                if (_locationParameter.Length == 0)
+                {
+                    _locationParameter = Preselected.From(facts.LocationNames, KpiNames.NeighbourhoodName);
                 }
 
                 RedrawTemplates();
@@ -751,7 +776,7 @@ namespace RcrcGreen.Revit.Kpi
             var label = new TextBlock
             {
                 Text = caption,
-                Width = PanelMetrics.LabelWidth,
+                Width = PanelMetrics.WideLabelWidth,
                 VerticalAlignment = VerticalAlignment.Center
             };
             DockPanel.SetDock(label, Dock.Left);
@@ -782,7 +807,7 @@ namespace RcrcGreen.Revit.Kpi
                 string which = name;
                 var choice = new Button
                 {
-                    Content = which,
+                    Content = PaneLabel.Escaped(which),
                     Padding = PanelMetrics.CellPad,
                     Margin = PanelMetrics.Gap,
                     FontWeight = string.Equals(which, chosen, StringComparison.Ordinal)

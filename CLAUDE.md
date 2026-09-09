@@ -179,14 +179,16 @@ written and none visible, black on black. Later it was correct and unusable: tic
 scrolled the list away, marking 136 cells took 136 clicks, and eight columns ran off the right
 edge. Neither round shows in a test or in a mockup.
 
-**Two sources for one fact is two facts.** Seven times now, always the same shape. A view named
+**Two sources for one fact is two facts.** Eight times now, always the same shape. A view named
 for DM-12 filled a DM-11 cell that stayed full after every DM-11 view was deleted. The column
 count against its list. The run report, which made nothing and named four views under PLAN VIEWS
 and under NOT CREATED. A panel step reading the range off its arguments. One method filling both
 the code buttons and the Add row's dropdown, split and half kept. A schedule category read one
 way on capture and looked up another way on create. The softscape reader taught to read the
 botanical name off the column the heading row names while the group counter that feeds the same
-report was left reading the first cell, which is the image.
+report was left reading the first cell, which is the image. Create handed the model's FOLDER to
+the words that say whether a model is open, so a detached model that has never been saved was
+refused with No model is open beside a header counting its 96,959 elements.
 
 **A skip with nothing written down is a lie by omission.** `ModelWriter` dropped a schedule
 field it could not resolve, and a filter, both with a bare `continue`. A schedule short of a
@@ -207,6 +209,19 @@ rounds, one shape. Ask the API what a thing IS rather than what it is called.
 **Copying takes whatever state the thing is in, including nothing.** The first sheet the tool
 made was empty, copied from one the user picked that had no views on it. Nothing failed and
 nothing was reported. A sheet is described now, so what goes on it is stated.
+
+**The interface can change a name on its way to the screen.** WPF reads the first underscore in
+a button's text as an access key marker, swallows it and underlines the next letter, so the KPI
+pane offered PRXComponent, PRXPlot_ID, PRXPlot_UID, PRXPlot_UID2 and PRXPlot_NH. Five names no
+model holds, in a tool whose whole job is exact parameter names. The strings were right in the
+code and wrong on screen, which no test of the code would ever have caught. What goes on a
+button is escaped now and the escape has a test. **The Drawing Sheet has the same fault and is
+not fixed.**
+
+**A description of the tool is not the tool.** The pane said it reads PRX_COMPONENT and
+PRX_Plot_UID2 off the title block. That was the workbook's own note copied onto the screen: the
+reader had been corrected rounds before, PRX_COMPONENT is in no model, and neither value is read
+off a title block anywhere. A line about what the tool does is checked against what it does.
 
 **A setting nobody recorded cannot be argued about.** A created view came out with a template
 that looked right and a family type that looked wrong. The code read both off one view four

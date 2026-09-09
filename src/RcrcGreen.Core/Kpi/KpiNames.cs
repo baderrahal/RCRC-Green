@@ -60,6 +60,13 @@ namespace RcrcGreen.Core.Kpi
 
         public static readonly string[] NeighbourhoodNearMisses = { "NEIGH", "DISTRICT", "COMMUNITY", "LOCATION", "ZONE" };
 
+        /// <summary>
+        /// The neighbourhood parameter on Project Information, spelt the American way without a
+        /// u, measured holding KING FAHD. It is what the Location picker starts on. Neighborhood
+        /// Group sits beside it holding GROUP 5 and is not it.
+        /// </summary>
+        public const string NeighbourhoodName = "Neighborhood Name";
+
         public static readonly string[] InterventionNearMisses = { "INTERVENTION", "AREA" };
 
         /// <summary>

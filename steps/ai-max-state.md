@@ -1,6 +1,19 @@
 # ai-max state
 
-Phase: 9, ship. Thirty third pass, the component to template mapping. Pull request 41 is merged
+Phase: 9, ship. Thirty fourth pass, five faults off the first real run of the KPI pane. Pull
+request 42 is open, 849 tests locally, 0 failed and 0 skipped, after five break watches were
+restored byte for byte.
+
+Every one of the five is about what reaches the screen rather than what the code computes.
+Create was handed the model's folder and called it the model, so a detached model read as no
+model open. WPF ate the first underscore of every parameter name on a button, so the pane
+offered five names no model holds. The pane described itself reading PRX_COMPONENT off the title
+block, which is the workbook's note rather than anything the tool does. Reference and Location
+preselected by position. Prepared by was cut to Prepared b. A sixth was reported, all 155 plots
+ticked by default, and the code does not do that: the state is pinned by three tests and the
+report is unexplained rather than closed.
+
+Before that, the thirty third pass, the component to template mapping. Pull request 41 is merged
 into main as `a0d3d3b`, 823 tests on the runner against its merged head and 823 locally, 0 failed
 and 0 skipped on each.
 

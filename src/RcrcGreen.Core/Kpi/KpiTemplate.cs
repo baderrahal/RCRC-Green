@@ -18,6 +18,37 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
+    /// The three parameters the user picks on the pane, so a line saying where a value comes
+    /// from can name the one that will really be read rather than the one the workbook note
+    /// asks for.
+    ///
+    /// The note names PRX_COMPONENT and this model has no such parameter. The pane offers what
+    /// the model holds and the user picks, so the pane is the only place that knows.
+    /// </summary>
+    public sealed class ChosenParameters
+    {
+        public ChosenParameters(string component, string reference, string location)
+        {
+            Component = component ?? string.Empty;
+            Reference = reference ?? string.Empty;
+            Location = location ?? string.Empty;
+        }
+
+        public string Component { get; }
+
+        public string Reference { get; }
+
+        public string Location { get; }
+
+        /// <summary>
+        /// Before a model has been read there is nothing to name, and each line says so rather
+        /// than naming a parameter nobody has chosen.
+        /// </summary>
+        public static readonly ChosenParameters NonePicked =
+            new ChosenParameters(string.Empty, string.Empty, string.Empty);
+    }
+
+    /// <summary>
     /// One cell the map names on the main sheet: which value goes in it and where it sits.
     /// </summary>
     public sealed class MappedCell

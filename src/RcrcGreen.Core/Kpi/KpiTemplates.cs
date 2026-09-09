@@ -121,20 +121,48 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Where each value comes from, as the pane says it beside the cell. The words are the
-        /// map's second half: a person checks D3 against PRX_COMPONENT, not against a guess.
+        /// Where each value really comes from, as the pane says it beside the cell.
+        ///
+        /// **This used to be the workbook's note shown as if it were the tool's behaviour.** It
+        /// read PRX_COMPONENT and PRX_Plot_UID2 read off the title block, and all three parts of
+        /// that were wrong. PRX_COMPONENT exists nowhere in the model, the value is PRX_Component
+        /// on the sheet, and PRX_Plot_UID2 sits on the title block on 1233 instances holding a
+        /// value on none of them while the sheet holds 1384 of them. The reader was corrected
+        /// rounds ago and this text was not.
+        ///
+        /// The first three name the parameter the user picked on the pane, because that is the
+        /// one that will be read.
         /// </summary>
-        public static string SourceOf(KpiValue value)
+        public static string SourceOf(KpiValue value, ChosenParameters chosen)
         {
+            ChosenParameters picked = chosen ?? ChosenParameters.NonePicked;
+
             switch (value)
             {
-                case KpiValue.Component: return "PRX_COMPONENT, read off the title block";
-                case KpiValue.Reference: return "PRX_Plot_UID2, read off the title block";
-                case KpiValue.Location: return "the neighbourhood name from Project Information";
-                case KpiValue.Area: return "PRX_Intervention Area, totalled off the 00 link's filled regions";
-                case KpiValue.Shrubs: return "SHRUBS & GROUND COVER TOTAL AREA from the shrubs and lawn schedule";
-                default: return "LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule";
+                case KpiValue.Component:
+                    return Picked(picked.Component, "Component") + ", read off the plot's first sheet";
+                case KpiValue.Reference:
+                    return Picked(picked.Reference, "Reference") + ", read off the plot's first sheet";
+                case KpiValue.Location:
+                    return Picked(picked.Location, "Location") + ", read off Project Information";
+                case KpiValue.Area:
+                    return "PRX_Intervention Area, totalled off the chosen filled regions in the 00 link";
+                case KpiValue.Shrubs:
+                    return "SHRUBS & GROUND COVER TOTAL AREA from the shrubs and lawn schedule";
+                default:
+                    return "LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule";
             }
+        }
+
+        /// <summary>
+        /// The chosen parameter by name, or the picker to look at when nothing is chosen yet.
+        /// Never a name nobody picked.
+        /// </summary>
+        private static string Picked(string name, string picker)
+        {
+            return string.IsNullOrWhiteSpace(name)
+                ? "the parameter picked under " + picker
+                : name;
         }
     }
 }
