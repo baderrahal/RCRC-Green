@@ -171,6 +171,18 @@ namespace RcrcGreen.Core
         public IReadOnlyList<string> SheetNumbersInUse { get; }
 
         /// <summary>
+        /// Numbers no sheet in this model carries, which is what the dropdown offers.
+        ///
+        /// It used to offer the numbers already in use, so every entry in it was certain to be
+        /// refused. Three sheets were lost to that in one run. Worked out here rather than in
+        /// the panel, like every other list it shows.
+        /// </summary>
+        public IReadOnlyList<string> FreeSheetNumbers
+        {
+            get { return SheetNumbers.Free(SheetNumbersInUse); }
+        }
+
+        /// <summary>
         /// Every scope box name in the model, whether or not it is shaped like a plot.
         /// <see cref="ScopeBoxPlan"/> matches on the whole name, so it needs all of them.
         /// </summary>

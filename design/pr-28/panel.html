@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sheet numbers, pull request 28</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .card   { background: #e4e4e4; border: 1px solid #c8c8c8; }
+  .dark  .card   { background: #3a3a3a; border: 1px solid #4a4a4a; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #ff8080; }
+  .light .primary { background: #1f5c2e; color: #ffffff; }
+  .dark  .primary { background: #6eb083; color: #1a1a1a; }
+
+  .body { padding: 8px; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .step { margin-bottom: 4px; }
+  .card { padding: 6px 6px 8px 10px; margin: 3px 0; }
+  .cardtop { display: flex; justify-content: space-between; align-items: center;
+             font-weight: bold; margin-bottom: 4px; }
+
+  .row { display: flex; align-items: center; margin: 3px 0; }
+  .row .cap { width: 150px; flex: none; }
+  .combo { flex: 1; background: #fdfdfd; color: #1a1a1a;
+           border: 1px solid #adadad; padding: 2px 4px; }
+  .combo::after { content: " \25BC"; float: right; color: #666; }
+  .btn { display: inline-block; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+         padding: 2px 6px; margin: 0 6px 0 0; }
+  .primary { display: block; border: 0; padding: 5px 8px; margin: 3px 0;
+             text-align: center; font-weight: bold; }
+  .open { border: 1px solid #adadad; background: #fdfdfd; color: #1a1a1a; width: 150px;
+          margin-left: 150px; }
+  .open div { padding: 2px 4px; }
+  .open div.on { background: #cde3d3; }
+
+  table.grid { border-collapse: collapse; width: 100%; }
+  table.grid td, table.grid th { padding: 2px 6px; text-align: left; font-weight: normal;
+                                 vertical-align: top; }
+  table.grid th { font-weight: bold; }
+  table.grid td.numbercell { width: 160px; }
+</style>
+</head>
+<body>
+
+<h1>Sheet numbers that will work</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show what a real
+  editable ComboBox drops down like, whether a warning line under a box pushes the rows of the
+  number table out of step, how long the list of free numbers actually is on a model with 1,385
+  sheets, or what the real fonts and spacing come out as.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on it.
+  If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>What changed</h2>
+
+<p class="caption">Three sheets were refused in one run, every one with
+<em>a sheet numbered 010EA is already in this model</em>. The refusal was right. The offer was
+wrong: the dropdown listed the sheet numbers already in use, so every entry in it was certain to
+be rejected. It lists free ones now, a number that will be refused says so under the box as it
+is typed, and step 5 counts them before the confirmation.</p>
+
+<h2>The dropdown, before and after</h2>
+
+<div class="pair">
+
+<div>
+<p class="caption">Before. Every one of these is taken.</p>
+<div class="panel light">
+  <div class="body">
+    <div class="inside">
+      <div class="row"><span class="cap">DM-11</span><span class="combo">010EA</span></div>
+      <div class="open">
+        <div class="on">010EA</div>
+        <div>010QE Copy 001</div>
+        <div>010QE Copy 002</div>
+        <div>L-211</div>
+      </div>
+      <p class="caption" style="margin-top:8px">Picking any of them ends in a refusal.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<p class="caption">After. None of these is taken.</p>
+<div class="panel light">
+  <div class="body">
+    <div class="inside">
+      <div class="row"><span class="cap">DM-11</span><span class="combo">011EA</span></div>
+      <div class="open">
+        <div class="on">011EA</div>
+        <div>010QE Copy 003</div>
+        <div>L-212</div>
+      </div>
+      <p class="caption" style="margin-top:8px">Each is a number in use with its last run of
+      digits stepped on until it is free, so every offer is shaped like something the project
+      already does. Typing past the list still works.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>Step 4, with two numbers that will be refused</h2>
+
+<p class="caption">The line under a box is the reason, not a warning triangle. DM-11 asks for a
+number a sheet in the model already has. DM-13 and DM-14 have been given the same one as each
+other, which is the same fault a second later. Both lines refresh on every keystroke in any box,
+because a duplicate is about two boxes and neither knows about the other on its own.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme.</p>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 sheet, 4 to make</div>
+      <div class="inside">
+        <div class="card">
+          <div class="cardtop"><span>Sheet 1</span><span class="btn">Remove</span></div>
+          <div class="row"><span class="cap">Type</span><span class="combo">AR-PRX-Title_Block_A1&nbsp;&nbsp;&nbsp;GA-DETAILED DESIGN</span></div>
+          <div class="row"><span class="cap">Name</span><span class="combo">GENERAL ARRANGEMENT LAYOUT</span></div>
+          <div class="faint">GENERAL ARRANGEMENT LAYOUT on AR-PRX-Title_Block_A1 GA-DETAILED
+          DESIGN, 1 view per sheet: (200) General Arrangement Layout.</div>
+          <table class="grid">
+            <tr><th>Plot</th><th>Sheet number</th></tr>
+            <tr>
+              <td>DM-11</td>
+              <td class="numbercell">
+                <span class="combo">010EA</span>
+                <div class="warn">a sheet in this model already has that number</div>
+              </td>
+            </tr>
+            <tr><td>DM-12</td><td class="numbercell"><span class="combo">011EA</span></td></tr>
+            <tr>
+              <td>DM-13</td>
+              <td class="numbercell">
+                <span class="combo">L-500</span>
+                <div class="warn">another sheet in this run asks for the same number</div>
+              </td>
+            </tr>
+            <tr>
+              <td>DM-14</td>
+              <td class="numbercell">
+                <span class="combo">L-500</span>
+                <div class="warn">another sheet in this run asks for the same number</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <span class="btn">Add a sheet</span>
+        <span class="btn">Next: 5&nbsp;&nbsp;RUN</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme, and step 5 counting them.</p>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 sheet, 4 to make</div>
+      <div class="inside">
+        <table class="grid">
+          <tr><th>Plot</th><th>Sheet number</th></tr>
+          <tr>
+            <td>DM-11</td>
+            <td class="numbercell">
+              <span class="combo">010EA</span>
+              <div class="warn">a sheet in this model already has that number</div>
+            </td>
+          </tr>
+          <tr><td>DM-12</td><td class="numbercell"><span class="combo">011EA</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">-</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;3 plan views and 4 sheets</div>
+      <div class="inside">
+        <div>This run would make 3 plan views and 4 sheets. Only marked cells on ticked plots
+        are made, and nothing is copied from another plot. A sheet is made only for a plot with
+        a sheet number typed in. 3 sheet numbers will be refused, and those sheets will not be
+        made. They are marked in step 4.</div>
+        <div class="primary">Run</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>Where the numbers come from</h2>
+
+<p class="caption">All of it is <code>SheetNumbers</code> in Core. The dropdown list, the line
+under the box and the count in step 5 come from one place, so the panel can never say a number
+is fine while the run summary counts it. The count in step 5 and the line in step 4 are the same
+answer read twice, not two answers.</p>
+
+<p class="caption">Three rules, each with a test. A number a sheet in the model already carries
+is refused. Two ticked plots given one number are both refused, and so are two separately
+described sheets that ask for one number, because they all go into one model. Already in the
+model is said before used twice, since both can be true at once and the model is the one
+somebody goes and looks at.</p>
+
+<h2>Nothing else in the panel changed</h2>
+
+<p class="caption">The grid, the sweeps, the shortened column headers and the legend are exactly
+as pull request 26 left them. This round is the number box and the run line.</p>
+
+</body>
+</html>

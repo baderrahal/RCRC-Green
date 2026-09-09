@@ -58,11 +58,11 @@ namespace RcrcGreen.Revit
             Autodesk.Revit.DB.ScheduleDefinition definition = schedule.Definition;
             if (definition == null) return null;
 
-            var fields = new List<string>();
+            var fields = new List<ScheduleFieldEntry>();
             foreach (ScheduleFieldId fieldId in definition.GetFieldOrder())
             {
                 ScheduleField field = definition.GetField(fieldId);
-                if (field != null) fields.Add(field.GetName());
+                if (field != null) fields.Add(new ScheduleFieldEntry(field.GetName(), KindOf(field)));
             }
 
             var rules = new List<ScheduleFilterRule>();
@@ -71,7 +71,7 @@ namespace RcrcGreen.Revit
                 ScheduleField field = definition.GetField(filter.FieldId);
                 if (field == null) continue;
 
-                string value = ValueIn(filter);
+                FilterValue value = ValueIn(filter);
                 if (value == null) continue;
 
                 rules.Add(new ScheduleFilterRule(field.GetName(), value));
@@ -85,23 +85,71 @@ namespace RcrcGreen.Revit
                 fields,
                 rules,
                 definition.IncludeLinkedFiles,
-                definition.CategoryId == new ElementId(BuiltInCategory.OST_Sheets));
+                definition.CategoryId == new ElementId(BuiltInCategory.OST_Sheets),
+                BuiltInValueOf(category));
+        }
+
+        /// <summary>
+        /// Revit's own number for the category, which is what a new schedule is built from.
+        ///
+        /// KERBS is built on Slab Edges. Looking that name up in Document.Settings.Categories
+        /// found nothing and the schedule was refused with "this model has no category named
+        /// Slab Edges", on a model that plainly has it. Its number is OST_EdgeSlab and that
+        /// resolves whatever the name reads as, in any language, at either level of the
+        /// category tree.
+        /// </summary>
+        private static long BuiltInValueOf(Category category)
+        {
+            if (category == null) return 0L;
+
+            BuiltInCategory builtIn = category.BuiltInCategory;
+            return builtIn == BuiltInCategory.INVALID ? 0L : (long)builtIn;
+        }
+
+        /// <summary>
+        /// Whether a field is a parameter of the scheduled elements or something the schedule
+        /// works out for itself.
+        ///
+        /// A calculated field is defined inside the schedule that holds it, so it never appears
+        /// in GetSchedulableFields and no amount of name matching will find it. Three schedules
+        /// came out short of one and the report blamed the category, which sends somebody to
+        /// look in the wrong place.
+        /// </summary>
+        private static ScheduleFieldKind KindOf(ScheduleField field)
+        {
+            switch (field.FieldType)
+            {
+                case ScheduleFieldType.Formula:
+                case ScheduleFieldType.Percentage:
+                case ScheduleFieldType.Count:
+                case ScheduleFieldType.CombinedParameter:
+                    return ScheduleFieldKind.Calculated;
+
+                default:
+                    return ScheduleFieldKind.AParameter;
+            }
         }
 
         /// <summary>
         /// A schedule filter holds its value in whichever of four typed getters matches the
-        /// parameter, and asking the wrong one throws. Only the string form is of any use for
-        /// naming a plot, and the others come back as text so a rule telling two schedules
-        /// apart is not lost.
+        /// parameter, and asking the wrong one throws.
+        ///
+        /// The kind travels with the value now. Flattening all four to text lost two schedules:
+        /// both filter on PRX_Included In Budget equals Yes, which is a Yes/No parameter that
+        /// Revit holds as the integer 1, and handing back the word made Revit answer that the
+        /// filter value is not valid for the field and filter type.
         /// </summary>
-        private static string ValueIn(ScheduleFilter filter)
+        private static FilterValue ValueIn(ScheduleFilter filter)
         {
             try
             {
-                if (filter.IsStringValue) return filter.GetStringValue();
-                if (filter.IsIntegerValue) return filter.GetIntegerValue().ToString();
-                if (filter.IsDoubleValue) return filter.GetDoubleValue().ToString();
-                if (filter.IsElementIdValue) return filter.GetElementIdValue().ToString();
+                if (filter.IsStringValue) return FilterValue.Text(filter.GetStringValue());
+                if (filter.IsIntegerValue) return FilterValue.OfWholeNumber(filter.GetIntegerValue());
+                if (filter.IsDoubleValue) return FilterValue.OfNumber(filter.GetDoubleValue());
+                if (filter.IsElementIdValue)
+                {
+                    return FilterValue.OfElementReference(filter.GetElementIdValue().Value);
+                }
             }
             catch (Autodesk.Revit.Exceptions.ApplicationException)
             {

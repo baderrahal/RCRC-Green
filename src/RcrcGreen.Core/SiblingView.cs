@@ -24,9 +24,9 @@ namespace RcrcGreen.Core
     /// The three crop settings a view carries, which travel together because Revit will not let
     /// the second two mean anything without the first.
     ///
-    /// Annotation Crop is the one that matters on a drawing. With it off, section markers
-    /// belonging to neighbouring plots draw straight through the view, and every view this tool
-    /// created had it off while every view the team built had it on.
+    /// Two of the three are copied off the sibling. Annotation Crop is not, any more. Copying it
+    /// was tried and did not fix anything, because PL-17-(010) Overall Plan has it off and the
+    /// new view inherited the fault faithfully. See <see cref="AnnotationCropChoice"/>.
     /// </summary>
     public sealed class ViewCrop
     {
@@ -47,16 +47,75 @@ namespace RcrcGreen.Core
 
         public bool AnnotationCrop { get; }
 
-        public string InWords()
+        /// <summary>
+        /// The two settings a new view really does take from the sibling. Annotation Crop is
+        /// said separately, because it is the tool's own and printing it here as though it had
+        /// been read off a view is the kind of line that cost this repo two rounds.
+        /// </summary>
+        public string CopiedInWords()
         {
             return (CropActive ? "crop on" : "crop off")
-                + ", " + (CropRegionVisible ? "crop region shown" : "crop region hidden")
-                + ", " + (AnnotationCrop ? "annotation crop on" : "annotation crop off");
+                + ", " + (CropRegionVisible ? "crop region shown" : "crop region hidden");
         }
 
         public override string ToString()
         {
-            return InWords();
+            return CopiedInWords()
+                + ", " + (AnnotationCrop ? "annotation crop on" : "annotation crop off");
+        }
+    }
+
+    /// <summary>
+    /// Annotation Crop on a new plan view. It is on, always, whatever the sibling has.
+    ///
+    /// Copying it from the sibling was the last round's answer and it did not work. The report
+    /// said it plainly: DM-11-(010) Overall Plan was set up from PL-17-(010) Overall Plan, which
+    /// has annotation crop off, so the new view got it off and every neighbouring plot's section
+    /// marker drew straight through it.
+    ///
+    /// The model is inconsistent, so there is nothing to copy. This is the same shape as the
+    /// section depth: the team named a value, the tool applies it, and the report says whose it
+    /// is rather than letting it read as something found in the model.
+    /// </summary>
+    public sealed class AnnotationCropChoice
+    {
+        private AnnotationCropChoice(string siblingName, bool theSiblingHadItOn)
+        {
+            SiblingName = siblingName ?? string.Empty;
+            TheSiblingHadItOn = theSiblingHadItOn;
+        }
+
+        public static AnnotationCropChoice ForAPlanView(SiblingView sibling)
+        {
+            return sibling == null
+                ? new AnnotationCropChoice(string.Empty, false)
+                : new AnnotationCropChoice(sibling.ViewName, sibling.Crop.AnnotationCrop);
+        }
+
+        /// <summary>
+        /// Always true. It is a property rather than a constant so the writer reads the decision
+        /// from here rather than holding a second copy of it.
+        /// </summary>
+        public bool On
+        {
+            get { return true; }
+        }
+
+        public bool TheSiblingHadItOn { get; }
+
+        public string SiblingName { get; }
+
+        public string InWords()
+        {
+            string whose = "Annotation crop is on, which is the tool's setting on every plan "
+                + "view rather than anything read off a view.";
+
+            if (SiblingName.Length == 0) return whose;
+
+            return TheSiblingHadItOn
+                ? whose + " " + SiblingName + " has it on as well."
+                : whose + " " + SiblingName + " has it off, and a view with it off draws the "
+                    + "section markers of neighbouring plots through itself.";
         }
     }
 
@@ -135,7 +194,7 @@ namespace RcrcGreen.Core
             return "Set up from " + ViewName + ": family type " + Named(FamilyTypeName)
                 + ", view template " + Named(TemplateName)
                 + (Kind == SiblingKind.Plan ? ", level " + Named(LevelName) : string.Empty)
-                + ", " + Crop.InWords() + ".";
+                + ", " + Crop.CopiedInWords() + ".";
         }
 
         private static string Named(string what)
