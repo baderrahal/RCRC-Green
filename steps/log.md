@@ -4,6 +4,19 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, the report for the KPI scanner round
+
+Pull request 28 merged into main as `f40b40a`, a squash of four commits, and the gate executed
+579 tests against its head on the runner, 0 failed and 0 skipped, which matches the local run.
+It was the first pull request off branch `claude/inspiring-allen-xs113f`, and it merged the
+current main first, because pull requests 29 and 30 landed while it was open. That merge touched
+only Drawing Sheet files and no KPI file, so the two tools did not collide in code, only in the
+mockup folder number and the pass count, both settled in the entry below.
+
+Nothing else changed. No code is touched here.
+
+---
+
 ## 2026-09-09, twenty third pass. KPI, first round: the scanner
 
 Branch `claude/inspiring-allen-xs113f`. Pull request 28, three commits. The first round of the

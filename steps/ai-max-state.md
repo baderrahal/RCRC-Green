@@ -1,11 +1,14 @@
 # ai-max state
 
-Phase: 9, ship. Twenty-third pass, the KPI scanner, first round of the second tool.
+Phase: 9, ship. The report for the KPI scanner round.
 
-Branch `claude/inspiring-allen-xs113f`, pull request 28, waiting on a click. It sits on top of
-pull requests 29 and 30, merged into main while it was open, which touched only Drawing Sheet files.
-Locally, after the last file was written, the build came back with 0 warnings and 0 errors and
-the tests with 541 passed and 0 failed, up from 398.
+Pull request 28 merged into main as `f40b40a`, a squash of four commits, and the gate executed
+579 tests against it on the runner, 0 failed and 0 skipped. It merged the current main first,
+because pull requests 29 and 30 landed while it was open, touching only Drawing Sheet files.
+
+Before that, the twenty-third pass, the KPI scanner, first round of the second tool. Locally,
+after the last file was written, the build came back with 0 warnings and 0 errors and the tests
+with 541 passed and 0 failed, up from 398, then 579 with the current main merged in.
 
 **The KPI tool** will one day fill the client's GRP KPI Checklist workbook from a model and will
 never create anything in it. This round is the scanner: a second ribbon panel, KPI, with one
