@@ -6,6 +6,15 @@ Newest entry first.
 
 ## 2026-09-09, thirtieth pass. The plot picker, several plots at once, and Create
 
+Pull request 37, merged into main as `ce825b1`. **The runner executed 781 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 781 ran, 0 failed and 0 skipped**, after
+the last file was written and after the four break watches were restored. The squash carries no
+co-author line and no generated-by footer, the message having gone through the API.
+
+The check run endpoint reported the gate in progress for twelve minutes after it had finished.
+Listing the run's jobs showed the truth, completed and successful 40 seconds in. The same lag
+appeared last round. Read the job rather than the check run when a gate looks stuck.
+
 The button the last four rounds deliberately did not add. It does something now.
 
 ### One checklist can cover more than one plot

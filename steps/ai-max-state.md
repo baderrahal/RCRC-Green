@@ -1,6 +1,8 @@
 # ai-max state
 
 Phase: 9, ship. Thirtieth pass, the plot picker, several plots at once, and the Create button.
+Pull request 37 is merged into main as `ce825b1`, 781 tests on the runner against its merged
+head and 781 locally, 0 failed and 0 skipped on each.
 
 The button the last four rounds deliberately did not add. The pane gains a plot picker offering
 one plot, several or all of them, the three choices the model cannot make, three typed boxes,
