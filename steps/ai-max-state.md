@@ -3,6 +3,9 @@
 Phase: 9, ship. Twenty eighth pass, recognition fixed, the scan gaps, one check against the
 real workbooks, and the review of that work folded back in.
 
+Pull request 35 is merged into main as `1b78c91`, 711 tests on the runner against its merged
+head and 711 locally, 0 failed and 0 skipped on each.
+
 A five lens review of the round below raised 58 findings, 24 were put to a reader whose job was
 to refute them, 14 survived and those are six distinct faults, all fixed. A plot's regions were
 counted off the area values so a region with no area vanished from its plot. A filled region

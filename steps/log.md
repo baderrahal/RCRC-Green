@@ -6,6 +6,16 @@ Newest entry first.
 
 ## 2026-09-09, the review of the twenty eighth pass. Six faults it found in its own work
 
+Pull request 35, merged into main as `1b78c91`. **The runner executed 711 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 711 ran, 0 failed and 0 skipped**, after
+the last file was written and after the four break watches were restored. The two counts are
+the same number arrived at twice and are stated apart on purpose.
+
+The squash carries no co-author line and no generated-by footer this time. The one on `e343fe1`
+got in through the GitHub squash button, which the commit hook cannot see. Supplying the commit
+message through the API instead keeps it inside the rules the hook enforces, so that is how
+this one was merged and how the next should be.
+
 A five lens review over the round below, each finding then handed to a separate reader whose
 job was to refute it. 58 raised, 24 reached the refuting step, 14 survived it, 10 were refuted
 and 34 were never adjudicated. The 14 are six distinct faults once the lenses that found the
