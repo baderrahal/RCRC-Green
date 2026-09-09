@@ -139,6 +139,96 @@ file showing 44 errors is correct.
 Riyadh KPI targets, neighbourhood names and the plant palette. `*.xlsx` is ignored and tests
 build their own small workbook in the temp folder.
 
+## What the first real scan measured
+
+All of it from one run on RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached, 96,959 elements in 5.4
+seconds, six of the nine questions answered. These are measurements, not guesses.
+
+**The main sheet name carries angle brackets.** `<Park Name>`, `<Healthcare>`, `<Mosques>`,
+`<Parking Plots>`, `<Schools>`, `<Streets>`. The brackets are part of the name and not
+placeholder notation. They were stripped when the map was written, so all seven real workbooks
+came back unrecognised the first time the pane saw the client's folder. A test asserts every
+entry opens with < and closes with >.
+
+**PRX_COMPONENT does not exist in this model.** The sheet carries `PRX_Component`, capital C
+only, on all 1385 sheets with 1384 values. So a near miss that is named is now also shown, with
+the same columns and the same cap the exact name would have used. A near miss named and never
+shown is the answer withheld.
+
+**Four plot parameters sit on the sheet**, `PRX_Plot_ID`, `PRX_Plot_UID`, `PRX_Plot_UID2` and
+`PRX_Plot_NH`, all with values, and the report prints them side by side one row per sheet
+because nothing showing one of the four can say which the workbook wants. `PRX_Plot_UID2` is on
+the SHEET, not the title block: on the title block it is on 1233 instances and holds a value on
+none of them, and on the sheet it holds 1384 values reading like ANH-007-MO-100019, which is
+nothing like a plot identifier such as DM-41.
+
+**THE ELEMENTS A SCHEDULE LISTS ARE NOT THE SCHEDULED THINGS.** Asking Revit for the elements
+of DM-11-(600) SOFTSCAPE SCHEDULE returns six RVT Link instances, because the plants live in
+the linked component models. Section 8 came back empty for exactly that reason. The printed
+rows are not the better route to these numbers, they are the ONLY route, and nothing is ever
+recomputed from elements.
+
+**Schedules are per plot**, 155 of each, named `<PlotID>-(600) NAME` and filtered on
+PRX_Ref Plot ID Equal `<PlotID>`. Eight distinct names once the plot is off. Three plots of
+each name are read in full rather than one, because one plot cannot show whether the group
+headings repeat or whether an Existing group ever appears.
+
+- SHRUBS & LAWN SCHEDULE, category Floors, prints in groups. DM-11 gives GRASS 35 m² 46, then
+  SHRUBS & GROUND COVER 70 m² 58, then TOTAL 105 m² 104. The workbook wants the two group
+  subtotals and not the total
+- SOFTSCAPE SCHEDULE, category Planting, prints TREES, then a phase row, then one row per
+  species. DM-11 gives ALBIZIA LEBBECK 6, BAUHINIA PURPUREA 2, CASSIA GLAUCA 4, total 12. Its
+  fields are BOTANICAL NAME, which is PRX_Softscape Botanical Name, and COUNT (n), a Count field
+- Two phases, Existing and Proposed. The split shows as a group row inside the printed
+  schedule, not as a separate schedule
+
+**The 00 link** is RCRC_NG05_NU_MAIN_RVT24_00.rvt, loaded, 279 filled regions all in a view
+called Intervention Limits. Types RCRC_CADASTRAL LIMIT 124 and RCRC_OUT OF SCOPE
+(PRESENTATION) 155. PRX_Intervention Area is on all 279 with 266 values and every region
+carries PRX_Ref Plot ID, so the report prints the plot beside each region and counts how many
+regions of each type carry one.
+
+**Neighborhood Name**, spelt the American way without a u, is a shared parameter on Project
+Information holding KING FAHD. Neighborhood Group holds GROUP 5.
+
+**Units.** Raw areas are square feet whatever the project shows. Printed areas are the project
+unit, square metres rounded to 1. 12496.8999938 raw prints as 1161 m².
+
+1385 sheets, every one with a title block, 11 title block types across two families.
+
+## What the two real workbooks measured, once
+
+A one-off check on 2026-09-09 against two EXISTING PARKS files supplied in a chat session, the
+production copy and the annotated one. **It cannot be re-run and no gate repeats it.** The
+files are not in this repository and never will be. What is committed is what it taught.
+
+Every mapped cell agreed with the annotation, D3, C5, E4, D8, F11 and H11, and E5, G5 and H5
+read DATE OF THE DAY, EMPLOYEE NAME and EMPLOYEE POSITION, which the team types.
+
+Two things the check found that reading the map could not:
+
+- **The annotation writes the shrubs and lawn note in row 10 AND row 11.** Row 11 is the
+  input. In the production file F10 is `=F11` and H10 is `=H11`, so writing into row 10 would
+  destroy a formula. The map's F11 and H11 are right, and now proven right
+- **`Area` is a defined name pointing at `<Park Name>`!$D$8**, so D8 is the area the whole
+  sheet computes from, and `H9` is `=H8/Area`, which is the divide by zero that goes away when
+  the area is filled
+
+Species stop where the map says: existing rows 4 to 92, proposed 4 to 84, header row 3, and the
+total at row 93 is `SUM(B4:B92)` on both sheets.
+
+## Open, and not to be guessed at in code
+
+Five questions the first real scan raised and could not settle. Every one of them is a fact
+about the project rather than about the tool, so nothing in the code picks an answer.
+
+1. Is PRX_Component on the sheet the component name the workbook wants
+2. Which of the four plot parameters on the sheet is the workbook's Ref
+3. Which filled region type is the plot's intervention area, RCRC_CADASTRAL LIMIT or
+   RCRC_OUT OF SCOPE (PRESENTATION)
+4. Are the two group headings in SHRUBS & LAWN the same on every plot
+5. Does an Existing group ever appear in SOFTSCAPE SCHEDULE
+
 ## Do not name a KPI control Scan Model
 
 Scan Model is a button inside the Drawing Sheet pane. Two buttons with one name doing

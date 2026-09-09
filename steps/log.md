@@ -4,6 +4,121 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twenty eighth pass. Recognition fixed, the scan gaps, and the real workbooks
+
+Branch `claude/inspiring-allen-xs113f`, restarted from main. The KPI scanner ran on the real
+model for the first time, 96,959 elements in 5.4 seconds, six of the nine questions answered.
+Everything here comes out of that run or out of using the tool on the seven real workbooks.
+
+### Recognition was broken, and it is the first thing fixed
+
+The pane read 7 workbooks in the folder, 0 recognised. `KpiTemplates` held the main sheet names
+with the angle brackets stripped, on the reading that they were placeholder notation. They are
+part of the name. The real ones are `<Park Name>`, `<Healthcare>`, `<Mosques>`,
+`<Parking Plots>`, `<Schools>` and `<Streets>`, all seven fixed, and a test now asserts every
+entry opens with < and closes with >. Another asserts the four fixed sheet names.
+
+This is the seventh time this repo has been bitten by a name that is not what it looks like,
+and the first that a check against the real file would have caught before an install.
+
+### The one-off check against two real workbooks
+
+**2026-09-09, against two EXISTING PARKS files supplied in this chat session, the production
+copy the team fills and the annotated copy carrying the source in each mapped cell. It was run
+once, IT CANNOT BE RE-RUN, and no gate will ever repeat it.** Neither file is in this
+repository and neither ever will be. The ignore rule was checked before anything else: `*.xlsx`
+catches a workbook at any depth, and `git add` on one at the repo root and one buried under
+`src/RcrcGreen.Core/Kpi/` was refused outright by git. What is committed is what the check
+taught, never the files.
+
+**The map against the annotation, cell by cell. Six of six agree.** The annotated file holds
+the note in the mapped cell itself, so the check is exact:
+
+```
+D3   REVIT SHEETS /TITLE BLOCK/PRX_COMPONENT                                    agrees
+C5   REVIT SHEETS /TITLE BLOCK/PRX_Plot_UID2                                    agrees
+E4   Project information / neighbourhood name                                   agrees
+D8   REVIT 00 LINK / ID FILLED REGION/ PRX_Intervention Area                    agrees
+F11  REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/SHRUBS & ...     agrees
+H11  REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/LAWN (GRASS)...  agrees
+E5   DATE OF THE DAY, G5 EMPLOYEE NAME, H5 EMPLOYEE POSITION             typed by the team
+```
+
+The COPONENTS misspelling and the ampersand written two ways are both there in the real file,
+which is why the tool carries the map and never reads it out of a workbook.
+
+**Two things the check found that reading the map could not.** The annotation writes the shrubs
+and lawn note in row 10 AND row 11, so the map could have taken either. Row 11 is the input:
+in the production file F10 is `=F11` and H10 is `=H11`, so writing into row 10 would have
+destroyed a formula. The map was right and is now right for a reason. And `Area` is a defined
+name pointing at `<Park Name>`!$D$8, with `H9` reading `=H8/Area`, which is the divide by zero
+that goes away when the area is filled.
+
+**Recognition against the production copy.** Its first sheet reads `<Park Name>` and under its
+real file name it comes back EXISTING PARKS. Under a name holding neither park word it asks the
+user to pick, which is correct.
+
+**The patcher against a copy of the production file**, nine cells written across three sheets:
+
+```
+parts in 37, parts out 37, none lost, none added
+parts changed 4: worksheets/sheet1, sheet2, sheet3 and workbook.xml
+every written cell read back off the output as what was sent
+calcPr gained fullCalcOnLoad=1 and kept calcId 191029
+D7, D9, H9, F10 and H10 kept their formulas, D3 kept style 302, F11 kept style 493
+```
+
+Every number matches what the brief had measured, independently.
+
+**The object model failure, reproduced rather than taken on trust.** Loading the same file into
+an object model and saving it back gives 20 parts out of 37, losing 21 and adding 4. The 21 are
+the embedded image, all five printer settings, both threaded comment parts, both comment parts,
+all three VML drawings, the array metadata, the persons part, the calculation chain, the shared
+strings and three sheet relationship parts. The file still opens. That is the failure this repo
+must never ship, and it is now measured here rather than believed.
+
+**The tree rows.** Species stop exactly where the map says: existing 4 to 92, proposed 4 to 84,
+header row 3, and both sheets total at row 93 with `SUM(B4:B92)`.
+
+### The four scan additions
+
+**A near miss that is named is now shown.** PRX_COMPONENT does not exist in this model. The
+sheet carries PRX_Component, capital C only, on all 1385 sheets with 1384 values, and the first
+report named that near miss while printing not one of them. Values of every near miss now print
+with the same columns and the same twenty cap the exact name would have used. A near miss named
+and never shown is the answer withheld.
+
+**The four plot parameters print side by side**, PRX_Plot_ID, PRX_Plot_UID, PRX_Plot_UID2 and
+PRX_Plot_NH, one row per sheet, the fullest rows first. All four exist with values and the
+report showed one, so the four could not be told apart from the file.
+
+**Every filled region prints its plot** beside its type and its area, with a count per type of
+how many regions carry one, and up to three plots' regions listed together. One plot's regions
+read together is what settles which type is the intervention area.
+
+**Three plots per schedule name are read in full**, not one. One plot cannot show whether the
+group headings repeat across plots or whether an Existing group ever appears.
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln -c Release` and `dotnet test`, both after the last file was
+written. Build 0 warnings and 0 errors across all three projects.
+
+### Never observed
+
+- No filled workbook has been opened in Excel. The 44 errors against 45 is the brief's
+  measurement, not reproduced here, because nothing in this session can recalculate a workbook
+- The scan has not been run again since these four additions, so not one of them has ever
+  appeared in a real report. Every line of them is written and unseen
+- The recognition fix has not been seen in the pane. That 7 of 7 are recognised is proven
+  against one real workbook through a harness, not through Revit
+- The near miss values, the four plot columns, the region plot column and the three plot reads
+  have never run against a document
+- The five open questions are open. The report was extended to put the evidence for each in
+  front of somebody, and nobody has read it yet
+
+---
+
 ## 2026-09-09, twenty seventh pass. The template picker and the workbook writer
 
 Branch `claude/inspiring-allen-xs113f`, restarted from main because pull request 31 is merged.

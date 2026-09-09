@@ -222,6 +222,8 @@ namespace RcrcGreen.Core.Kpi
             {
                 TheHome(report, home);
             }
+
+            PlotNamesSideBySide(report, facts.OnSheets);
         }
 
         /// <summary>
@@ -250,31 +252,118 @@ namespace RcrcGreen.Core.Kpi
                 if (!home.Holds(wanted))
                 {
                     Line(report, wanted + " on the " + home.Where + ": " + NotFound);
-                    NearMisses(report, home.NamesHolding(KpiNames.SheetNearMisses),
+                    IReadOnlyList<string> near = home.NamesHolding(KpiNames.SheetNearMisses);
+                    NearMisses(report, near,
                         "No name on the " + home.Where + " holds " + Words(KpiNames.SheetNearMisses) + ".",
                         "Names on the " + home.Where + " holding " + Words(KpiNames.SheetNearMisses) + ": ");
+
+                    // A near miss named and never shown is the answer withheld. PRX_COMPONENT
+                    // does not exist on the first real model, the sheet carries PRX_Component,
+                    // and the report named it while printing not one of its 1384 values.
+                    foreach (string missed in near)
+                    {
+                        Values(report, home, missed, "  ");
+                    }
+
                     Line(report, string.Empty);
                     continue;
                 }
 
-                // The ones with a value first, so twenty examples show what a value looks like
-                // wherever any sheet has one, rather than twenty blanks off the first sheets.
-                List<SheetValue> values = home.ValuesOf(wanted)
-                    .OrderBy(one => string.IsNullOrWhiteSpace(one.Value) ? 1 : 0)
-                    .ThenBy(one => one.SheetNumber, NaturalOrder.Comparer)
-                    .ToList();
-
-                Line(report, wanted + " on the " + home.Where + ", showing " + Math.Min(ShownExamples, values.Count)
-                    + " of " + values.Count + ", the ones with a value first:");
-                Line(report, string.Equals(home.Where, TitleBlockFacts.OnTypesWhere, StringComparison.Ordinal)
-                    ? "family : type | used on | value"
-                    : "sheet number | sheet name | value");
-                foreach (SheetValue value in values.Take(ShownExamples))
-                {
-                    Line(report, Join(value.SheetNumber, value.SheetName, Shown(value.Value)));
-                }
+                Values(report, home, wanted, string.Empty);
                 Line(report, string.Empty);
             }
+        }
+
+        /// <summary>
+        /// Up to twenty values of one name, the ones with a value first so twenty examples show
+        /// what a value looks like wherever any sheet has one rather than twenty blanks off the
+        /// first sheets. The exact name and a near miss print through here alike, because a
+        /// name worth naming is a name worth showing.
+        /// </summary>
+        private static void Values(StringBuilder report, ParameterHome home, string name, string indent)
+        {
+            List<SheetValue> values = home.ValuesOf(name)
+                .OrderBy(one => string.IsNullOrWhiteSpace(one.Value) ? 1 : 0)
+                .ThenBy(one => one.SheetNumber, NaturalOrder.Comparer)
+                .ToList();
+
+            if (values.Count == 0)
+            {
+                Line(report, indent + name + " on the " + home.Where + ": no value was read for it.");
+                return;
+            }
+
+            Line(report, indent + name + " on the " + home.Where + ", showing "
+                + Math.Min(ShownExamples, values.Count) + " of " + values.Count
+                + ", the ones with a value first:");
+            Line(report, indent + (string.Equals(home.Where, TitleBlockFacts.OnTypesWhere, StringComparison.Ordinal)
+                ? "family : type | used on | value"
+                : "sheet number | sheet name | value"));
+            foreach (SheetValue value in values.Take(ShownExamples))
+            {
+                Line(report, indent + Join(value.SheetNumber, value.SheetName, Shown(value.Value)));
+            }
+        }
+
+        /// <summary>
+        /// The four plot parameters on one row per sheet.
+        ///
+        /// All four exist with values on the first real model and the report showed values for
+        /// one of them, so the four could not be told apart from the file. The workbook asks
+        /// for one Ref and this is the section that lets somebody pick which.
+        /// </summary>
+        private static void PlotNamesSideBySide(StringBuilder report, ParameterHome home)
+        {
+            var bySheet = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+            var order = new List<string>();
+
+            foreach (SheetValue value in home.Values)
+            {
+                if (!KpiNames.PlotNamesOnSheets.Contains(value.ParameterName, StringComparer.Ordinal)) continue;
+
+                Dictionary<string, string> row;
+                if (!bySheet.TryGetValue(value.SheetNumber, out row))
+                {
+                    row = new Dictionary<string, string>(StringComparer.Ordinal);
+                    bySheet[value.SheetNumber] = row;
+                    order.Add(value.SheetNumber);
+                }
+
+                row[value.ParameterName] = value.Value;
+            }
+
+            Line(report, "THE FOUR PLOT PARAMETERS ON THE " + home.Where.ToUpperInvariant()
+                + ", SIDE BY SIDE, " + bySheet.Count + " sheets, showing "
+                + Math.Min(ShownExamples, bySheet.Count));
+
+            if (bySheet.Count == 0)
+            {
+                Line(report, "  None of " + string.Join(", ", KpiNames.PlotNamesOnSheets)
+                    + " was read on the " + home.Where + ".");
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  sheet number | " + string.Join(" | ", KpiNames.PlotNamesOnSheets));
+
+            // The sheets carrying the most of the four first, so a reader sees a full row
+            // before an empty one and can tell the four apart on it.
+            foreach (string sheetNumber in order
+                .OrderByDescending(number => bySheet[number].Values.Count(one => !string.IsNullOrWhiteSpace(one)))
+                .ThenBy(number => number, NaturalOrder.Comparer)
+                .Take(ShownExamples))
+            {
+                Dictionary<string, string> row = bySheet[sheetNumber];
+                var cells = new List<string> { sheetNumber };
+                foreach (string name in KpiNames.PlotNamesOnSheets)
+                {
+                    string held;
+                    cells.Add(row.TryGetValue(name, out held) ? Shown(held) : "(not on it)");
+                }
+                Line(report, "  " + Join(cells.ToArray()));
+            }
+
+            Line(report, string.Empty);
         }
 
         private static void NearMisses(StringBuilder report, IReadOnlyList<string> names, string none, string some)
@@ -385,12 +474,46 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  " + KpiNames.InterventionArea + ": on " + tally.Carrying + " of "
                 + Count(link.FilledRegionCount, "filled region") + ", " + tally.WithValue + " with a value, showing "
                 + Math.Min(ShownExamples, link.InterventionAreas.Count) + " of " + link.InterventionAreas.Count + ":");
-            Line(report, "  region type | measures | raw | printed");
+            Line(report, "  region type | plot | measures | raw | printed");
             Line(report, "  The raw number is square feet only where measures reads Area. A number typed by "
                 + "hand measures nothing and prints with no unit.");
             foreach (MeasuredValue value in link.InterventionAreas.Take(ShownExamples))
             {
-                Line(report, "  " + Join(value.Label, value.Spec.Length == 0 ? "-" : value.Spec, value.Raw, value.Printed));
+                Line(report, "  " + Join(value.Label, Shown(value.PlotId),
+                    value.Spec.Length == 0 ? "-" : value.Spec, value.Raw, value.Printed));
+            }
+            Line(report, string.Empty);
+
+            // One plot's regions read together is what settles which type is its intervention
+            // area. A type whose regions all carry a plot is a candidate and one whose regions
+            // carry none is not.
+            Line(report, "  REGIONS OF EACH TYPE CARRYING " + KpiNames.RefPlotId + ", "
+                + link.TypesCarryingAPlot.Count + " types");
+            Line(report, "  filled region type | regions with a plot | regions of that type");
+            foreach (NameCount carrying in link.TypesCarryingAPlot.OrderBy(one => one.Name, NaturalOrder.Comparer))
+            {
+                NameCount all = link.TypeCounts.FirstOrDefault(
+                    one => string.Equals(one.Name, carrying.Name, StringComparison.Ordinal));
+                Line(report, "  " + Join(carrying.Name, carrying.Count.ToString(CultureInfo.InvariantCulture),
+                    (all == null ? 0 : all.Count).ToString(CultureInfo.InvariantCulture)));
+            }
+            Line(report, string.Empty);
+
+            List<IGrouping<string, MeasuredValue>> perPlot = link.InterventionAreas
+                .Where(one => one.PlotId.Length > 0)
+                .GroupBy(one => one.PlotId, StringComparer.Ordinal)
+                .OrderBy(group => group.Key, NaturalOrder.Comparer)
+                .ToList();
+
+            Line(report, "  ONE PLOT'S REGIONS TOGETHER, first " + Math.Min(3, perPlot.Count)
+                + " of " + perPlot.Count + " plots");
+            foreach (IGrouping<string, MeasuredValue> plot in perPlot.Take(3))
+            {
+                Line(report, "  " + plot.Key + ", " + Count(plot.Count(), "region") + ":");
+                foreach (MeasuredValue value in plot)
+                {
+                    Line(report, "    " + Join(value.Label, value.Raw, value.Printed));
+                }
             }
             Line(report, string.Empty);
         }

@@ -96,6 +96,7 @@ namespace RcrcGreen.Revit.Kpi
             var perView = new Dictionary<string, int>(StringComparer.Ordinal);
             var first = new List<FilledRegionRead>();
             var areas = new List<MeasuredValue>();
+            var carryingAPlot = new Dictionary<string, int>(StringComparer.Ordinal);
             int twiceNamed = 0;
 
             foreach (FilledRegion region in regions)
@@ -111,6 +112,16 @@ namespace RcrcGreen.Revit.Kpi
                     first.Add(new FilledRegionRead(typeName, viewName, ParameterReading.ReadAll(region)));
                 }
 
+                // The plot the region carries, read the same way, because one plot's regions
+                // read together is what settles which type is its intervention area.
+                int plotNamed;
+                Parameter plot = ParameterReading.Named(region, KpiNames.RefPlotId, out plotNamed);
+                string plotId = ParameterReading.HoldsAValue(plot) ? ParameterReading.Printed(plot) : string.Empty;
+                if (plotId.Length > 0)
+                {
+                    ParameterReading.Bump(carryingAPlot, typeName.Length == 0 ? "(no type name)" : typeName);
+                }
+
                 // Read the way the tally counts, so the count of regions with a value and
                 // the list of values cannot be two different numbers.
                 int howMany;
@@ -119,7 +130,8 @@ namespace RcrcGreen.Revit.Kpi
                 if (ParameterReading.HoldsAValue(area))
                 {
                     areas.Add(new MeasuredValue(
-                        typeName, ParameterReading.Spec(area), ParameterReading.Raw(area), ParameterReading.Printed(area)));
+                        typeName, ParameterReading.Spec(area), ParameterReading.Raw(area),
+                        ParameterReading.Printed(area), plotId));
                 }
             }
 
@@ -137,7 +149,8 @@ namespace RcrcGreen.Revit.Kpi
                 ParameterReading.Counted(perView),
                 first,
                 ParameterReading.Tally(regions.Cast<Element>()),
-                areas);
+                areas,
+                ParameterReading.Counted(carryingAPlot));
         }
     }
 }

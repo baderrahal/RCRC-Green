@@ -1,6 +1,20 @@
 # ai-max state
 
-Phase: 9, ship. Twenty seventh pass, the template picker and the workbook writer. Pull
+Phase: 9, ship. Twenty eighth pass, recognition fixed, the scan gaps, and one check against
+the real workbooks.
+
+The KPI scanner ran on the real model for the first time. Recognition was reading 0 of 7,
+because the map held the main sheet names with the angle brackets stripped and the brackets are
+part of the name. Fixed for all seven with a test that asserts the shape. A one-off check
+against two real EXISTING PARKS workbooks supplied in a chat session, unrepeatable and covered
+by no gate, agreed with the map on all six cells, proved the patcher keeps 37 of 37 parts while
+an object model loses 21, and confirmed the tree rows. Four scan gaps closed: a near miss is
+now shown as well as named, the four plot parameters print side by side, every filled region
+prints its plot, and three plots per schedule name are read rather than one. The measured facts
+and the five open questions are in `.claude/rules/kpi-rules.md`, because CLAUDE.md is at its
+200 line ceiling.
+
+Before that, the twenty seventh pass, the template picker and the workbook writer. Pull
 request 33 merged into main as `c88083f` with 696 tests on the runner, 0 failed and 0
 skipped, 657 locally before the merge that brought the divided sheets rounds in and 696
 after it.

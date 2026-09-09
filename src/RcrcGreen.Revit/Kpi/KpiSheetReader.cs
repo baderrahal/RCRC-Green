@@ -74,6 +74,33 @@ namespace RcrcGreen.Revit.Kpi
                 OnSheets(sheets));
         }
 
+        /// <summary>
+        /// The names whose values are collected off an element: the two the workbook asks for,
+        /// the four plot parameters the report prints side by side, and every name on the
+        /// element holding one of the near miss words.
+        ///
+        /// PRX_COMPONENT does not exist on the first real model. The sheet carries
+        /// PRX_Component, capital C only, on all 1385 sheets with 1384 values, and the report
+        /// named that near miss while printing not one of its values. A near miss named and
+        /// never shown is the answer withheld.
+        /// </summary>
+        private static IEnumerable<string> NamesToCollect(Element element)
+        {
+            var wanted = new List<string>(KpiNames.OnSheets);
+            wanted.AddRange(KpiNames.PlotNamesOnSheets);
+
+            foreach (Parameter parameter in element.Parameters)
+            {
+                Definition definition = parameter.Definition;
+                string name = definition == null ? string.Empty : definition.Name;
+                if (name.Length == 0) continue;
+                if (!KpiNames.HoldsAny(name, KpiNames.SheetNearMisses)) continue;
+                wanted.Add(name);
+            }
+
+            return wanted.Distinct(StringComparer.Ordinal);
+        }
+
         private static ParameterHome OnInstances(List<FamilyInstance> blocks, Dictionary<ElementId, ViewSheet> sheetById)
         {
             var values = new List<SheetValue>();
@@ -85,7 +112,7 @@ namespace RcrcGreen.Revit.Kpi
                 string number = sheet == null ? KpiQuestions.NoSheet : sheet.SheetNumber;
                 string name = sheet == null ? string.Empty : sheet.Name;
 
-                foreach (string wanted in KpiNames.OnSheets)
+                foreach (string wanted in NamesToCollect(block))
                 {
                     int howMany;
                     Parameter found = ParameterReading.Named(block, wanted, out howMany);
@@ -116,7 +143,7 @@ namespace RcrcGreen.Revit.Kpi
                 HashSet<ElementId> sheetsUsing;
                 int used = sheetsPerType.TryGetValue(type.Id, out sheetsUsing) ? sheetsUsing.Count : 0;
 
-                foreach (string wanted in KpiNames.OnSheets)
+                foreach (string wanted in NamesToCollect(type))
                 {
                     int howMany;
                     Parameter found = ParameterReading.Named(type, wanted, out howMany);
@@ -143,7 +170,7 @@ namespace RcrcGreen.Revit.Kpi
 
             foreach (ViewSheet sheet in sheets)
             {
-                foreach (string wanted in KpiNames.OnSheets)
+                foreach (string wanted in NamesToCollect(sheet))
                 {
                     int howMany;
                     Parameter found = ParameterReading.Named(sheet, wanted, out howMany);

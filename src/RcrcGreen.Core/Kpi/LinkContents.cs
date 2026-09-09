@@ -18,7 +18,8 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<NameCount> viewCounts,
             IEnumerable<FilledRegionRead> firstRegions,
             IEnumerable<ParameterTally> regionParameters,
-            IEnumerable<MeasuredValue> interventionAreas)
+            IEnumerable<MeasuredValue> interventionAreas,
+            IEnumerable<NameCount> typesCarryingAPlot = null)
         {
             if (linkName == null) throw new ArgumentNullException("linkName");
             if (filledRegionCount < 0) throw new ArgumentOutOfRangeException("filledRegionCount");
@@ -31,6 +32,7 @@ namespace RcrcGreen.Core.Kpi
             FirstRegions = Held(firstRegions);
             RegionParameters = Held(regionParameters);
             InterventionAreas = Held(interventionAreas);
+            TypesCarryingAPlot = Held(typesCarryingAPlot);
         }
 
         public string LinkName { get; }
@@ -56,6 +58,13 @@ namespace RcrcGreen.Core.Kpi
         /// report caps what it prints.
         /// </summary>
         public IReadOnlyList<MeasuredValue> InterventionAreas { get; }
+
+        /// <summary>
+        /// How many regions of each type carry PRX_Ref Plot ID. A type whose regions all carry
+        /// a plot is a candidate for the plot's intervention area, and one whose regions carry
+        /// none is not, which is the question the report exists to put in front of somebody.
+        /// </summary>
+        public IReadOnlyList<NameCount> TypesCarryingAPlot { get; }
 
         public ParameterTally InterventionTally
         {

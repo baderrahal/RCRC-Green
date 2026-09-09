@@ -7,11 +7,11 @@ namespace RcrcGreen.Core.Tests.Kpi
     public class RecognisedWorkbookTests
     {
         [Theory]
-        [InlineData("Healthcare", "HEALTHCARE")]
-        [InlineData("Mosques", "MOSQUES")]
-        [InlineData("Parking Plots", "PARKING")]
-        [InlineData("Schools", "SCHOOLS")]
-        [InlineData("Streets", "STREETS")]
+        [InlineData("<Healthcare>", "HEALTHCARE")]
+        [InlineData("<Mosques>", "MOSQUES")]
+        [InlineData("<Parking Plots>", "PARKING")]
+        [InlineData("<Schools>", "SCHOOLS")]
+        [InlineData("<Streets>", "STREETS")]
         public void TheFirstSheetSettlesFiveTemplatesWhateverTheFileNameSays(string firstSheet, string expected)
         {
             // The file name says EXISTING PARKS on purpose, so a match here proves the sheet won.
@@ -28,7 +28,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AParkNameSheetWithExistingInTheFileNameIsTheExistingParks()
         {
             RecognisedWorkbook book = RecognisedWorkbook.Recognise(
-                "GRP KPI Checklist - EXISTING PARKS.xlsx", new[] { "Park Name" }, null);
+                "GRP KPI Checklist - EXISTING PARKS.xlsx", new[] { "<Park Name>" }, null);
 
             Assert.True(book.IsMatched);
             Assert.Equal("EXISTING PARKS", book.Template.Name);
@@ -39,7 +39,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AParkNameSheetWithFutureInTheFileNameIsTheFutureParks()
         {
             RecognisedWorkbook book = RecognisedWorkbook.Recognise(
-                "GRP KPI Checklist - FUTURE PARKS.xlsx", new[] { "Park Name" }, null);
+                "GRP KPI Checklist - FUTURE PARKS.xlsx", new[] { "<Park Name>" }, null);
 
             Assert.True(book.IsMatched);
             Assert.Equal("FUTURE PARKS", book.Template.Name);
@@ -49,7 +49,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void LowercaseExistingInTheFileNameStillMatches()
         {
             RecognisedWorkbook book = RecognisedWorkbook.Recognise(
-                "grp kpi checklist - existing parks.xlsx", new[] { "Park Name" }, null);
+                "grp kpi checklist - existing parks.xlsx", new[] { "<Park Name>" }, null);
 
             Assert.True(book.IsMatched);
             Assert.Equal("EXISTING PARKS", book.Template.Name);
@@ -59,7 +59,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AParkNameSheetNamedForNeitherParkNeedsAPick()
         {
             RecognisedWorkbook book = RecognisedWorkbook.Recognise(
-                "GRP KPI Checklist - PARKS.xlsx", new[] { "Park Name" }, null);
+                "GRP KPI Checklist - PARKS.xlsx", new[] { "<Park Name>" }, null);
 
             Assert.False(book.IsMatched);
             Assert.True(book.NeedsAPick);
@@ -74,7 +74,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AFileNameHoldingBothParkWordsNeedsAPickToo()
         {
             RecognisedWorkbook book = RecognisedWorkbook.Recognise(
-                "GRP KPI Checklist - EXISTING AND FUTURE PARKS.xlsx", new[] { "Park Name" }, null);
+                "GRP KPI Checklist - EXISTING AND FUTURE PARKS.xlsx", new[] { "<Park Name>" }, null);
 
             Assert.True(book.NeedsAPick);
             Assert.Null(book.Template);
@@ -85,7 +85,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             // The letter-run rule in KpiNames.Holds, so REFURBISHED does not hold FUTURE.
             RecognisedWorkbook book = RecognisedWorkbook.Recognise(
-                "REFURBISHED.xlsx", new[] { "Park Name" }, null);
+                "REFURBISHED.xlsx", new[] { "<Park Name>" }, null);
 
             Assert.False(book.IsMatched);
             Assert.True(book.NeedsAPick);
@@ -107,7 +107,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             RecognisedWorkbook book = RecognisedWorkbook.Recognise(
                 "GRP KPI Checklist - MOSQUES.xlsx",
-                new[] { "Mosques" },
+                new[] { "<Mosques>" },
                 "The file is open in another program.");
 
             Assert.False(book.IsMatched);

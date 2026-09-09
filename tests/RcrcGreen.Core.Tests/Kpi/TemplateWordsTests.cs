@@ -12,7 +12,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "Main sheet Park Name:",
+                    "Main sheet <Park Name>:",
                     "  D3  PRX_COMPONENT, read off the title block",
                     "  C5  PRX_Plot_UID2, read off the title block",
                     "  E4  the neighbourhood name from Project Information",

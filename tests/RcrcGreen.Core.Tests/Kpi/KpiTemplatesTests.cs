@@ -55,7 +55,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "EXISTING PARKS", "FUTURE PARKS", "HEALTHCARE", "MOSQUES", "PARKING", "SCHOOLS", "STREETS" },
                 KpiTemplates.All.Select(template => template.Name));
             Assert.Equal(
-                new[] { "Park Name", "Park Name", "Healthcare", "Mosques", "Parking Plots", "Schools", "Streets" },
+                new[] { "<Park Name>", "<Park Name>", "<Healthcare>", "<Mosques>", "<Parking Plots>", "<Schools>", "<Streets>" },
                 KpiTemplates.All.Select(template => template.MainSheetName));
         }
 
@@ -167,6 +167,38 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static KpiTemplate Named(string name)
         {
             return KpiTemplates.All.Single(template => template.Name == name);
+        }
+
+        /// <summary>
+        /// The brackets are part of the sheet name, not placeholder notation. They were
+        /// stripped when the map was first written, so all seven real workbooks came back
+        /// unrecognised the first time the pane was pointed at the client's folder. Measured
+        /// on the real EXISTING PARKS file: its first sheet is named exactly "&lt;Park Name&gt;".
+        /// </summary>
+        [Fact]
+        public void EveryMainSheetNameIsWrappedInAngleBrackets()
+        {
+            Assert.Equal(7, KpiTemplates.All.Count);
+
+            foreach (KpiTemplate template in KpiTemplates.All)
+            {
+                Assert.StartsWith("<", template.MainSheetName, StringComparison.Ordinal);
+                Assert.EndsWith(">", template.MainSheetName, StringComparison.Ordinal);
+                Assert.True(template.MainSheetName.Length > 2,
+                    template.Name + " has a name between its brackets");
+            }
+        }
+
+        /// <summary>
+        /// The four sheet names that do not change, measured off the real workbook.
+        /// </summary>
+        [Fact]
+        public void TheFourFixedSheetNamesAreTheOnesTheRealWorkbookCarries()
+        {
+            Assert.Equal("Tree List - Existing", KpiTemplates.ExistingTreesSheet);
+            Assert.Equal("Tree List - Proposed", KpiTemplates.ProposedTreesSheet);
+            Assert.Equal("Criteria", KpiTemplates.CriteriaSheet);
+            Assert.Equal("Green Strategy KPI's", KpiTemplates.GreenStrategySheet);
         }
     }
 }

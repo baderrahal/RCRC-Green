@@ -27,6 +27,13 @@ namespace RcrcGreen.Revit.Kpi
         public const int CopiesTried = 10;
 
         /// <summary>
+        /// How many plots of one name are read in full. One plot cannot show whether the group
+        /// headings are the same on every plot, or whether an Existing group ever appears, and
+        /// both are open questions the printed rows are the only route to.
+        /// </summary>
+        public const int PlotsReadInFull = 3;
+
+        /// <summary>
         /// How many elements per schedule have their areas measured. Ten is enough to see
         /// the raw number and the printed one side by side.
         /// </summary>
@@ -154,14 +161,16 @@ namespace RcrcGreen.Revit.Kpi
             foreach (IGrouping<string, ViewSchedule> group in byName)
             {
                 List<ViewSchedule> copies = group.OrderBy(schedule => schedule.Name, NaturalOrder.Comparer).ToList();
-                ViewSchedule picked = null;
+                var picked = new List<ViewSchedule>();
 
                 foreach (ViewSchedule copy in copies.Take(CopiesTried))
                 {
+                    if (picked.Count == PlotsReadInFull) break;
+
                     if (CountListed(document, copy) > 0)
                     {
-                        picked = copy;
-                        break;
+                        picked.Add(copy);
+                        continue;
                     }
 
                     // Named, so the file records that DM-11's copy exists and was passed
@@ -169,14 +178,15 @@ namespace RcrcGreen.Revit.Kpi
                     skipped.Add(copy.Name + " lists no element, so it was not read in full.");
                 }
 
-                if (picked == null)
+                if (picked.Count == 0)
                 {
-                    picked = copies[0];
+                    picked.Add(copies[0]);
                     skipped.Add("None of the first " + Math.Min(CopiesTried, copies.Count) + " copies of "
-                        + group.Key + " lists an element, so " + picked.Name + " was read in full with nothing in it.");
+                        + group.Key + " lists an element, so " + copies[0].Name
+                        + " was read in full with nothing in it.");
                 }
 
-                chosen.Add(picked.Id);
+                foreach (ViewSchedule one in picked) chosen.Add(one.Id);
             }
 
             return chosen;

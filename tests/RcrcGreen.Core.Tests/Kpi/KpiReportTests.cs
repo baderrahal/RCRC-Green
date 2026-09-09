@@ -219,8 +219,20 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             string[] lines = RealLines();
 
+            // A near miss named and never shown is the answer withheld. PRX_COMPONENT does not
+            // exist on the real model, the sheet carries PRX_Component, and the first report
+            // named that near miss while printing not one of its 1384 values.
             Assert.Equal(
-                new[] { "  Names on the title block instance holding COMPONENT, PLOT or UID: PRX_COMPONENT, PRX_Plot_ID" },
+                new[]
+                {
+                    "  Names on the title block instance holding COMPONENT, PLOT or UID: PRX_COMPONENT, PRX_Plot_ID",
+                    "  PRX_COMPONENT on the title block instance, showing 3 of 3, the ones with a value first:",
+                    "  sheet number | sheet name | value",
+                    "  DM-11-600QD | SOFTSCAPE SCHEDULES | SOFTSCAPE",
+                    "  DM-11-610QD | HARDSCAPE SCHEDULES | HARDSCAPE",
+                    "  010QE Copy 001 | Copy of key plan | (empty)",
+                    "  PRX_Plot_ID on the title block instance: no value was read for it."
+                },
                 UntilBlank(lines, "PRX_Plot_UID2 on the title block instance: NOT FOUND"));
         }
 
@@ -319,7 +331,11 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 UntilBlank(lines, "ON EVERY SHEET, 3 parameter names over 1385 sheets"));
             Assert.Equal(
-                new[] { "  Names on the sheet holding COMPONENT, PLOT or UID: PRX_Plot_ID" },
+                new[]
+                {
+                    "  Names on the sheet holding COMPONENT, PLOT or UID: PRX_Plot_ID",
+                    "  PRX_Plot_ID on the sheet: no value was read for it."
+                },
                 UntilBlank(lines, "PRX_Plot_UID2 on the sheet: NOT FOUND"));
         }
 
@@ -392,10 +408,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "  region type | measures | raw | printed",
+                    "  region type | plot | measures | raw | printed",
                     "  The raw number is square feet only where measures reads Area. A number typed by hand measures nothing and prints with no unit.",
-                    "  ID Intervention Area | Area | 10763.91 | 1000.00 m²",
-                    "  ID Intervention Area | Area | 5381.96 | 500.00 m²"
+                    "  ID Intervention Area | (empty) | Area | 10763.91 | 1000.00 m²",
+                    "  ID Intervention Area | (empty) | Area | 5381.96 | 500.00 m²"
                 },
                 UntilBlank(lines, "  PRX_Intervention Area: on 412 of 412 filled regions, 398 with a value, showing 2 of 2:"));
         }
