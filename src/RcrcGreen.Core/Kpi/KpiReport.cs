@@ -58,6 +58,14 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const int ShownRows = 200;
 
+        /// <summary>
+        /// How many plots of one schedule name are read in full. The Revit reader reads this
+        /// rather than holding its own copy, because the report states the rule and a second
+        /// copy of a number is the fault this repo has hit seven times. One plot cannot show
+        /// whether the group headings repeat across plots or whether an Existing group appears.
+        /// </summary>
+        public const int PlotsReadInFull = 3;
+
         public const int ShownValues = 30;
 
         public const int ShownFamilyTypes = 40;
@@ -488,7 +496,7 @@ namespace RcrcGreen.Core.Kpi
             // area. A type whose regions all carry a plot is a candidate and one whose regions
             // carry none is not.
             Line(report, "  REGIONS OF EACH TYPE CARRYING " + KpiNames.RefPlotId + ", "
-                + link.TypesCarryingAPlot.Count + " types");
+                + Count(link.TypesCarryingAPlot.Count, "type"));
             Line(report, "  filled region type | regions with a plot | regions of that type");
             foreach (NameCount carrying in link.TypesCarryingAPlot.OrderBy(one => one.Name, NaturalOrder.Comparer))
             {
@@ -560,8 +568,8 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
 
             List<ScannedSchedule> readInFull = all.Where(one => one.ReadInFull).ToList();
-            Line(report, "READ IN FULL, " + readInFull.Count + ", one per name the workbook draws from, "
-                + "the first in name order that lists an element");
+            Line(report, "READ IN FULL, " + readInFull.Count + ", up to " + PlotsReadInFull
+                + " plots per name the workbook draws from, the first in name order that list an element");
             foreach (ScannedSchedule schedule in readInFull)
             {
                 Line(report, string.Empty);

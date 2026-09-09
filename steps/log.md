@@ -102,7 +102,22 @@ group headings repeat across plots or whether an Existing group ever appears.
 ### What was checked, and how
 
 `dotnet build RcrcGreen.sln -c Release` and `dotnet test`, both after the last file was
-written. Build 0 warnings and 0 errors across all three projects.
+written. Build 0 warnings and 0 errors across all three projects. 710 tests, 0 failed and 0
+skipped, locally, up from 698 before this round's new test file and 657 before the round.
+
+Three breaks were watched failing before the tests were trusted. **Stripping the angle
+brackets off all seven sheet names again**, which is exactly the bug this round fixes, turned
+the bracket guard, the five sheet-settled recognition cases, the two park tie-break cases and
+the would-fill literal red, eight tests, and nothing else. **Reordering the four plot names**
+turned the three side-by-side tests red. **Dropping the near-miss values call** turned the
+three new near-miss tests red along with the two older ones that print through the same path.
+Each file was restored from a copy taken before the break and checked byte for byte.
+
+Two faults the test writing found in this round's own report wording, both fixed here. Section
+5 still said the reader takes one plot per name while it now takes three, which is this repo's
+two-records fault in a sentence, so `PlotsReadInFull` moved into Core and the Revit reader
+reads it from there rather than holding a second copy. And the regions-per-type heading printed
+"1 types", which now goes through the same `Count` helper the rest of the report uses.
 
 ### Never observed
 

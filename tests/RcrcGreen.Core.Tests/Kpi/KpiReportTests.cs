@@ -491,7 +491,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  PRX_Ref Plot ID | Equals | DM-11",
                     ""
                 },
-                Following(lines, "READ IN FULL, 1, one per name the workbook draws from, the first in name order that lists an element", 11));
+                Following(lines, "READ IN FULL, 1, up to 3 plots per name the workbook draws from, the first in name order that list an element", 11));
         }
 
         [Fact]
@@ -855,7 +855,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Contains("  rows as printed: not read. READS THAT DID NOT HAPPEN at the top says why. The elements it lists were read and follow.", lines);
             Assert.Contains("  elements listed: 4, categories: Planting 4", lines);
-            Assert.Contains("READ IN FULL, 1, one per name the workbook draws from, the first in name order that lists an element", lines);
+            Assert.Contains("READ IN FULL, 1, up to 3 plots per name the workbook draws from, the first in name order that list an element", lines);
             Assert.Contains("  The rows of DM-11-(610) SOFTSCAPE SCHEDULE were not read. The table refused.", lines);
         }
 

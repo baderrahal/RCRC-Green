@@ -336,7 +336,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  PRX_Ref Plot ID | Equals | DM-41"
                 },
                 Following(lines,
-                    "READ IN FULL, 3, one per name the workbook draws from, the first in name order that lists an element",
+                    "READ IN FULL, 3, up to 3 plots per name the workbook draws from, the first in name order that list an element",
                     18));
         }
 

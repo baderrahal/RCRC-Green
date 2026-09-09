@@ -12,7 +12,7 @@ an object model loses 21, and confirmed the tree rows. Four scan gaps closed: a 
 now shown as well as named, the four plot parameters print side by side, every filled region
 prints its plot, and three plots per schedule name are read rather than one. The measured facts
 and the five open questions are in `.claude/rules/kpi-rules.md`, because CLAUDE.md is at its
-200 line ceiling.
+200 line ceiling. 710 tests locally, 0 failed, up from 657, with three breaks watched red.
 
 Before that, the twenty seventh pass, the template picker and the workbook writer. Pull
 request 33 merged into main as `c88083f` with 696 tests on the runner, 0 failed and 0

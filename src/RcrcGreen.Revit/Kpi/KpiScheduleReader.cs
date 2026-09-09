@@ -27,11 +27,13 @@ namespace RcrcGreen.Revit.Kpi
         public const int CopiesTried = 10;
 
         /// <summary>
-        /// How many plots of one name are read in full. One plot cannot show whether the group
-        /// headings are the same on every plot, or whether an Existing group ever appears, and
-        /// both are open questions the printed rows are the only route to.
+        /// How many plots of one name are read in full, read from Core so the report's own
+        /// sentence and this loop can never describe two different rules.
         /// </summary>
-        public const int PlotsReadInFull = 3;
+        public static int PlotsReadInFull
+        {
+            get { return KpiReport.PlotsReadInFull; }
+        }
 
         /// <summary>
         /// How many elements per schedule have their areas measured. Ten is enough to see
