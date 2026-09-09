@@ -17,8 +17,9 @@ question saying FOUND or NOT FOUND and where to look.
 
 The brief arrived cut off partway through section 4 of the report. Sections 1 to 4 are as
 specified and 5 to 9 were designed here from questions 6 to 9. The choices made without a rule
-are numbered in `steps/log.md`. Nothing in this round has been through Revit, no KPI file has
-ever been written, and the review started over the code had not reported when it was committed.
+are numbered in `steps/log.md`. Nothing in this round has been through Revit and no KPI file has
+ever been written. Three of the new tests were watched failing against broken Core, in the
+second commit. The five lens review over the code is running and has not reported yet.
 `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile` are unchanged.
 
 Before that, the twentieth pass, the report for the first full run round.

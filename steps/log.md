@@ -123,11 +123,18 @@ errors across all three projects, the Revit project included, against the Revit 
 assemblies. `dotnet test`, after the last file was written, 525 passed, 0 failed and 0
 skipped, up from 398. 127 are new, all under `tests/RcrcGreen.Core.Tests/Kpi/`.
 
-Which of the new tests were watched failing against deliberately broken code is UNKNOWN. The
-tests were written by a second session whose report had not come back when this was committed,
-and three of them failed on the first run here because the rows note in the report had changed
-after they were written. The three expected strings were aligned to the report and the suite went
-green. Watching them fail is owed and is the first thing the next pass does.
+The tests were written by a second session that was interrupted before it reported, and three
+of them failed on the first run here because the rows note in the report had changed after they
+were written. The three expected strings were aligned to the report and the suite went green.
+
+Three of them were then watched failing against deliberately broken Core, in a second commit on
+the same pull request. Lifting the twenty example cap in `KpiReport` turned
+`SectionThreeShowsTwentyExamplesAndSaysHowManyThereWere` red and nothing else. Dropping the
+ones-with-a-value-first ordering turned `SectionThreePrintsTheOnesWithAValueBeforeTheEmptyOnes`
+red and nothing else. Making question 1 count as answered with a name missing turned nine red:
+the two question 1 tests, five headline tests and the section heading test, which is right,
+because the headline and the section 9 heading both read the answered flags rather than keeping
+a count of their own. Restored, 525 passed.
 
 Every changed file was scanned for the banned words, em dashes and emoji before the commit and
 the hook checked the commit again.
