@@ -1,6 +1,12 @@
 # ai-max state
 
-Phase: 9, ship. Nineteenth pass, four faults found by using the grid.
+Phase: 9, ship. Twentieth pass, the report for the first full run round.
+
+Pull request 25 merged as `281056e` with 379 tests on the runner, and pull request 26 as
+`6e64c73` with 398, 0 failed and 0 skipped on each. Both log entries carry their own merge and
+count now.
+
+Before that, four faults found by using the grid.
 
 None of them is a bug in the sense the last five rounds have been. The grid was correct and it
 was unusable, which only shows when somebody works in it rather than reads it.

@@ -4,11 +4,24 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twentieth pass. The report for the first full run round
+
+Branch `claude/rcrc-green-setup-wf9ham`. Both log entries went in with their work, so neither
+could carry its own merge or runner count. Both carry them now.
+
+Pull request 25 merged as `281056e` and the gate executed 379 tests against it. Pull request 26
+merged as `6e64c73` and the gate executed 398. 0 failed and 0 skipped on each, and both match the
+local run the entry already named.
+
+Nothing else changed. No code is touched here.
+
+---
+
 ## 2026-09-09, nineteenth pass. Four faults found by using the grid
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request 26, one commit. Item 5 of the round, the
-second half. Items 1 to 4 went in as pull request 25. This entry goes in with the work, so the
-merge and the runner count are written into it by the follow-up.
+second half. Items 1 to 4 went in as pull request 25. Merged as `6e64c73` with 398 tests against
+it on the runner, 0 failed and 0 skipped.
 
 None of these four is a bug in the sense the last five rounds have been. The grid was correct
 and it was unusable, which is a different fault and one that only appears when somebody works in
@@ -90,8 +103,8 @@ and the shared code, were watched failing against deliberately broken code befor
 
 ## 2026-09-09, eighteenth pass. The empty sheets, the annotation crop, and a depth the model never had
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 25, one commit. This entry goes in with the
-work, so the merge and the runner count are written into it by the follow-up.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 25, one commit. Merged as `281056e` with
+379 tests against it on the runner, 0 failed and 0 skipped.
 
 **This round is split.** Items 1 to 4 are here, the write path and the scan. Item 5, the four
 interface faults, is a second pull request. Item 1 is the reason both sheet attempts have made
