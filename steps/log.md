@@ -4,6 +4,80 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twenty ninth pass. Two report faults from the 1355 scan, and the facts
+
+The scan ran on the 1355 model. Two things in the report were wrong in the same way, both
+answering a question from the wrong place while the right answer sat a screen above in the same
+file.
+
+**Section 9 contradicted section 3.** Questions 1 and 2 read NOT FOUND for PRX_COMPONENT while
+section 3 printed PRX_Component on the sheet with 1384 values reading FRIDAY MOSQUE and SCHOOL.
+The exact name is not in the model and the near miss is, with the answer in it. Section 9 now
+names a near miss that holds values, says which of the three homes it sits on and what its first
+values are, and counts the question as answered, because the file does hold the answer. A near
+miss with no value in it still reads NOT FOUND, which is the honest half of the old behaviour.
+The near miss word for these two questions is COMPONENT alone, not the sheet list of COMPONENT,
+PLOT and UID, because a question about the component is not answered by a plot name.
+
+**Question 8 was answered by the wrong evidence.** It reported the elements by phase created,
+which came back (none) 6, because the elements a softscape schedule lists are RVT Link instances
+and their phase is the link's. The answer is in the printed rows. `ScheduleGroups` in Core finds
+the rows that name a phase the document holds and nothing else, and question 8 is answered from
+those, naming the plot that showed it. DM-12 prints a TREES row, an Existing group of five
+species with a subtotal of 10, a Proposed group of three, then TOTAL 39.
+
+A group row and a subtotal row are the same shape, one cell with text and the rest empty. Only
+the text tells them apart, so the phase names read off the document decide it. Nothing matches
+on the shape of a row, and the words Existing and Proposed are not in the code: a project whose
+phases are named anything else reads the same way. TREES is a group row for the category rather
+than the phase, so it is not counted, and nothing anywhere knows the word TREES.
+
+The element phases are still printed, said plainly as the link instances the schedule lists
+rather than the plants, and they no longer make the question count as answered. The test that
+asserted they did is reversed and says why.
+
+### The facts
+
+Six measured facts from the 1355 run are in `CLAUDE.md`: PRX_Component on the sheet is the asset
+type and picks the template, PRX_Plot_ID is the plot every schedule filters on with prefixes
+tracking the asset type, what the other three plot parameters really hold, how the softscape
+schedule prints and that a species appears under both groups, what an existing species prints
+with, and that every plot has two filled regions in the 00 link with the area on either one.
+
+`CLAUDE.md` was at its 200 line ceiling, so the room came from the Drawing Sheet prose that
+`.claude/rules/core-rules.md` already holds in full. Two facts thinned in that pass were checked
+first: PRX_Furniture Lenght is in `core-rules.md` verbatim, and Schedules and Quantities was in
+no other file, so it was written into `core-rules.md` next to the schedule rules rather than
+lost. The run history that came out is in this log in full.
+
+Four of the five open questions in `kpi-rules.md` are settled by these facts and now read as
+settled rather than open, which is the same contradiction the two report faults were. Question 3
+was wrongly put: neither region type is the intervention area, it varies by plot.
+
+### Open, and not to be guessed at in code
+
+- **The workbook holds four rows all named Unknown Tree and the model prints a species called
+  UNKNOWN.** Nothing can match those on name. Four identical row labels cannot be told apart by
+  a name lookup, and a model species called UNKNOWN is not the same thing as an unknown row
+- **Species names carry slashes and apostrophes.** ACACIA / VACHELLIA FARNESIANA and
+  BOUGAINVILLEA GLABRA 'PINK PIXIE'. A match on an exact string will fail on both, and nothing
+  written down says how the workbook spells them
+
+### Checked
+
+`dotnet build RcrcGreen.sln -c Release`, 0 warnings and 0 errors. The suite after the last file
+was written. Five breaks watched red first and each file restored byte for byte, checked by md5:
+matching group rows on shape alone turned the subtotal test and the two group row tests red,
+dropping the near miss from question 2 and then from question 1 turned one test each red,
+letting the element phases answer question 8 turned the reversed test red, and dropping the plot
+name from the answer turned the two group row tests red.
+
+The shared real model fixture now prints the grouped shape rather than four flat rows, because a
+fixture calling itself the real model while printing something the real model does not is the
+next round's wrong answer.
+
+---
+
 ## 2026-09-09, the review of the twenty eighth pass. Six faults it found in its own work
 
 Pull request 35, merged into main as `1b78c91`. **The runner executed 711 tests against its

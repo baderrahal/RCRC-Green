@@ -74,6 +74,15 @@ namespace RcrcGreen.Core.Kpi
 
             if (!both)
             {
+                string instead = NearMissesHoldingValues(scan, KpiNames.Component, KpiNames.ComponentNearMisses);
+                if (instead.Length > 0)
+                {
+                    return new KpiAnswer(1, Questions[0],
+                        said + "The model carries it under another name, and that name holds values: "
+                        + instead + ". Section 3 prints them.",
+                        true);
+                }
+
                 return new KpiAnswer(1, Questions[0], said + "Section 3 lists the near misses.", false);
             }
 
@@ -121,6 +130,50 @@ namespace RcrcGreen.Core.Kpi
             return !string.IsNullOrWhiteSpace(value);
         }
 
+        /// <summary>
+        /// The names the model really carries where a wanted one is absent, with values in
+        /// them, said as one sentence. Empty when there is none.
+        ///
+        /// PRX_COMPONENT is not in the first real model. PRX_Component is, on the sheet, with
+        /// 1384 values of 1385 reading FRIDAY MOSQUE and SCHOOL. Section 9 reporting nothing
+        /// found while section 3 prints those values twenty lines above it is the file
+        /// contradicting itself, which is worse than either answer on its own. So a near miss
+        /// holding values is named here, with where it lives and what it holds, and the
+        /// question counts as answered because the file does hold the answer.
+        /// </summary>
+        private static string NearMissesHoldingValues(KpiScan scan, string wanted, string[] words)
+        {
+            var said = new List<string>();
+
+            foreach (ParameterHome home in scan.TitleBlocks.Homes)
+            {
+                foreach (string name in home.NamesHolding(words))
+                {
+                    if (string.Equals(name, wanted, StringComparison.Ordinal)) continue;
+
+                    List<SheetValue> values = home.ValuesOf(name)
+                        .Where(one => HasSomething(one.Value))
+                        .ToList();
+                    if (values.Count == 0) continue;
+
+                    ParameterTally tally = home.TallyFor(name);
+                    var samples = new List<string>();
+                    foreach (SheetValue value in values)
+                    {
+                        string held = value.Value.Trim();
+                        if (samples.Count < 3 && !samples.Contains(held)) samples.Add(held);
+                    }
+
+                    said.Add(name + " on the " + home.Where + ", "
+                        + (tally == null ? values.Count : tally.Carrying) + " carrying it and "
+                        + (tally == null ? values.Count : tally.WithValue) + " with a value, first values "
+                        + string.Join(", ", samples.ToArray()));
+                }
+            }
+
+            return said.Count == 0 ? string.Empty : string.Join(". ", said.ToArray());
+        }
+
         private static KpiAnswer InstanceOrSheet(KpiScan scan)
         {
             if (!scan.TitleBlocks.WasRead) return NotRead(2, KpiReport.TitleBlocksAndSheets);
@@ -144,6 +197,22 @@ namespace RcrcGreen.Core.Kpi
             }
 
             string said = KpiNames.Component + " is " + string.Join(", ", parts.ToArray()) + ".";
+
+            if (!anywhere)
+            {
+                // The question asks which of the three homes it sits on. A near miss holding
+                // values answers exactly that, and section 3 prints those values a screen
+                // above, so saying nothing was found here contradicts the same file.
+                string instead = NearMissesHoldingValues(scan, KpiNames.Component, KpiNames.ComponentNearMisses);
+                if (instead.Length > 0)
+                {
+                    return new KpiAnswer(2, Questions[1],
+                        said + " Not under that name anywhere. The model carries " + instead
+                        + ". Section 3 prints them.",
+                        true);
+                }
+            }
+
             return new KpiAnswer(2, Questions[1], said, anywhere);
         }
 
@@ -399,6 +468,26 @@ namespace RcrcGreen.Core.Kpi
 
             bool anything = false;
 
+            // The printed rows are the answer. A grouped schedule prints a row holding only the
+            // phase, then the species under it, then a subtotal, and that group row is the only
+            // place the split shows. The elements cannot show it: the softscape schedule lists
+            // RVT Link instances, because the plants live in the linked component models, so
+            // they all come back on one phase and the first report answered this question with
+            // (none) 6 while the rows a screen above held the real answer.
+            foreach (ScannedSchedule schedule in scan.Schedules.Softscape.Where(one => one.ReadInFull))
+            {
+                IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, scan.Schedules.Phases);
+                if (groups.Count == 0) continue;
+
+                anything = true;
+                parts.Add("THE PRINTED ROWS SEPARATE THEM. " + schedule.Name + " prints "
+                    + Count(groups.Count, "group row") + ": " + string.Join(", ", groups
+                        .Select(group => group.Name + " with " + Count(group.NamedRowsUnder, "named row")
+                            + " under it, of " + group.RowsUnder + " before the next")
+                        .ToArray())
+                    + ". The plot is " + PlotOf(schedule));
+            }
+
             foreach (ScannedSchedule schedule in scan.Schedules.Softscape.Where(one => one.ReadInFull))
             {
                 parts.Add(schedule.Name + " is on phase " + Shown(schedule.PhaseName)
@@ -410,8 +499,10 @@ namespace RcrcGreen.Core.Kpi
 
                 if (elements.CreatedPhases.Count > 0)
                 {
-                    anything |= elements.CreatedPhases.Count > 1;
-                    parts.Add("its elements by phase created: " + string.Join(", ",
+                    // Printed and never counted as the answer. These are the phases of the link
+                    // instances the schedule lists, not of the plants inside them.
+                    parts.Add("its elements by phase created, which are the link instances it "
+                        + "lists rather than the plants: " + string.Join(", ",
                         elements.CreatedPhases.Select(one => one.Name + " " + one.Count).ToArray()));
                 }
 
@@ -471,6 +562,19 @@ namespace RcrcGreen.Core.Kpi
             if (words.Length == 1) return words[0];
 
             return string.Join(", ", words.Take(words.Length - 1).ToArray()) + " or " + words[words.Length - 1];
+        }
+
+        /// <summary>
+        /// The plot the schedule is named for, or a plain saying so when the name does not
+        /// follow the pattern. The answer names it because one plot is what was read, and a
+        /// group row seen on DM-12 is not a statement about all 160 plots.
+        /// </summary>
+        private static string PlotOf(ScannedSchedule schedule)
+        {
+            ParsedViewName parsed;
+            return ViewNameParser.TryParse(schedule.Name, out parsed) && parsed.PlotId.Length > 0
+                ? parsed.PlotId
+                : "not in the name";
         }
 
         private static string Shown(string value)

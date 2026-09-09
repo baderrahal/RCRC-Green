@@ -637,15 +637,25 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.True(answer.Answered);
             Assert.Equal(
-                "2 phases: Existing, Proposed. DM-11-(610) SOFTSCAPE SCHEDULE is on phase New Construction with "
-                + "phase filter Show All. its elements by phase created: Existing 12, Proposed 45. parameters on them "
+                "2 phases: Existing, Proposed. THE PRINTED ROWS SEPARATE THEM. DM-11-(610) SOFTSCAPE SCHEDULE prints "
+                + "2 group rows: Existing with 1 named row under it, of 2 before the next, Proposed with 1 named row "
+                + "under it, of 2 before the next. The plot is DM-11. DM-11-(610) SOFTSCAPE SCHEDULE is on phase New "
+                + "Construction with phase filter Show All. its elements by phase created, which are the link "
+                + "instances it lists rather than the plants: Existing 12, Proposed 45. parameters on them "
                 + "holding EXIST, PROPOS, STATUS, RETAIN, REMOV, NEW, PHASE or CONDITION: Phase Created. column "
                 + "headings holding EXISTING or PROPOSED: ENTER EACH PROPOSED TREE QUANTITY. Section 7 has the counts.",
                 answer.Answer);
         }
 
+        /// <summary>
+        /// The elements a softscape schedule lists are RVT Link instances, because the plants
+        /// live in the linked component models. Their phases are the links' phases and say
+        /// nothing about a tree, so a split across two of them is not the answer. This test
+        /// asserted the opposite until the 1355 run printed (none) 6 here while the rows a
+        /// screen above held the real answer.
+        /// </summary>
         [Fact]
-        public void QuestionEightIsAnsweredWhenTheElementsSplitAcrossMoreThanOnePhaseCreated()
+        public void QuestionEightIsNotAnsweredByTheElementsSplittingAcrossPhasesCreated()
         {
             KpiScan scan = KpiFixture.Build(schedules: KpiFixture.Schedules(
                 new[]
@@ -661,10 +671,11 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             KpiAnswer answer = Answer(scan, 8);
 
-            Assert.True(answer.Answered);
+            Assert.False(answer.Answered);
             Assert.Equal(
                 "No phase read. DM-11-(610) SOFTSCAPE SCHEDULE is on phase (empty) with phase filter (empty). its "
-                + "elements by phase created: Existing 1, Proposed 2. no parameter on them holds EXIST, PROPOS, STATUS, "
+                + "elements by phase created, which are the link instances it lists rather than the plants: "
+                + "Existing 1, Proposed 2. no parameter on them holds EXIST, PROPOS, STATUS, "
                 + "RETAIN, REMOV, NEW, PHASE or CONDITION. Section 7 has the counts.",
                 answer.Answer);
         }
@@ -690,7 +701,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(answer.Answered);
             Assert.Equal(
                 "No phase read. DM-11-(610) SOFTSCAPE SCHEDULE is on phase (empty) with phase filter (empty). its "
-                + "elements by phase created: Proposed 3. parameters on them holding EXIST, PROPOS, STATUS, RETAIN, "
+                + "elements by phase created, which are the link instances it lists rather than the plants: "
+                + "Proposed 3. parameters on them holding EXIST, PROPOS, STATUS, RETAIN, "
                 + "REMOV, NEW, PHASE or CONDITION: PRX_Status. Section 7 has the counts.",
                 answer.Answer);
         }
@@ -739,8 +751,118 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(answer.Answered);
             Assert.Equal(
                 "1 phase: Proposed. DM-11-(610) SOFTSCAPE SCHEDULE is on phase (empty) with phase filter (empty). its "
-                + "elements by phase created: Proposed 3. parameters on them holding EXIST, PROPOS, STATUS, RETAIN, "
+                + "elements by phase created, which are the link instances it lists rather than the plants: "
+                + "Proposed 3. parameters on them holding EXIST, PROPOS, STATUS, RETAIN, "
                 + "REMOV, NEW, PHASE or CONDITION: Phase Created, Phase Demolished. Section 7 has the counts.",
+                answer.Answer);
+        }
+
+        /// <summary>
+        /// The 1355 run printed PRX_Component on the sheet with 1384 values reading FRIDAY
+        /// MOSQUE and SCHOOL in section 3, and section 9 reported nothing found for questions 1
+        /// and 2 twenty lines below it. One file cannot say both.
+        /// </summary>
+        private static KpiScan ComponentUnderAnotherName()
+        {
+            return KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 1385,
+                titleBlockInstances: 1383,
+                onInstances: KpiFixture.OnInstances(1383, new[] { KpiFixture.Tally("Sheet Width", 1383, 1383) }),
+                onTypes: KpiFixture.OnTypes(2, new[] { KpiFixture.Tally("Keynote", 2, 0) }),
+                onSheets: KpiFixture.OnSheets(
+                    1385,
+                    new[] { KpiFixture.Tally("PRX_Component", 1385, 1384) },
+                    new[]
+                    {
+                        KpiFixture.Value("PRX_Component", "010QE", "KEY PLAN", "FRIDAY MOSQUE"),
+                        KpiFixture.Value("PRX_Component", "200QE", "LAYOUT", "SCHOOL"),
+                        KpiFixture.Value("PRX_Component", "600QD", "SCHEDULES", "FRIDAY MOSQUE")
+                    })));
+        }
+
+        [Fact]
+        public void QuestionOneNamesTheNearMissHoldingValuesRatherThanReportingNothingFound()
+        {
+            KpiAnswer answer = Answer(ComponentUnderAnotherName(), 1);
+
+            Assert.True(answer.Answered);
+            Assert.Equal(
+                "PRX_COMPONENT NOT FOUND on any title block instance. PRX_Plot_UID2 NOT FOUND on any title block "
+                + "instance. The model carries it under another name, and that name holds values: PRX_Component on "
+                + "the sheet, 1385 carrying it and 1384 with a value, first values FRIDAY MOSQUE, SCHOOL. "
+                + "Section 3 prints them.",
+                answer.Answer);
+        }
+
+        [Fact]
+        public void QuestionTwoAnswersInstanceOrSheetFromTheNearMissThatHoldsValues()
+        {
+            KpiAnswer answer = Answer(ComponentUnderAnotherName(), 2);
+
+            Assert.True(answer.Answered);
+            Assert.Equal(
+                "PRX_COMPONENT is not on the title block instance, not on the title block type, not on the sheet. "
+                + "Not under that name anywhere. The model carries PRX_Component on the sheet, 1385 carrying it and "
+                + "1384 with a value, first values FRIDAY MOSQUE, SCHOOL. Section 3 prints them.",
+                answer.Answer);
+        }
+
+        [Fact]
+        public void ANearMissWithNoValueInItLeavesQuestionTwoNotFound()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 3,
+                onSheets: KpiFixture.OnSheets(3, new[] { KpiFixture.Tally("PRX_Component", 3, 0) })));
+
+            KpiAnswer answer = Answer(scan, 2);
+
+            Assert.False(answer.Answered);
+            Assert.Equal(
+                "PRX_COMPONENT is not on the title block instance, not on the title block type, not on the sheet.",
+                answer.Answer);
+        }
+
+        /// <summary>
+        /// DM-12 on the 1355 run. TREES, then an Existing group of five species with a subtotal
+        /// of 10, then a Proposed group of three, then TOTAL 39. ALBIZIA LEBBECK appears under
+        /// both groups, which is why a species row is worth nothing without its group row.
+        /// </summary>
+        [Fact]
+        public void QuestionEightIsAnsweredByTheGroupRowsAndNamesThePlotThatShowedIt()
+        {
+            KpiScan scan = KpiFixture.Build(schedules: KpiFixture.Schedules(
+                new[]
+                {
+                    KpiFixture.Schedule("DM-12-(600) SOFTSCAPE SCHEDULE",
+                        fields: new[] { KpiFixture.Field("BOTANICAL NAME"), KpiFixture.Field("COUNT", "Count", "Count") },
+                        rowsWereRead: true,
+                        bodyRowCount: 12,
+                        rows: new[]
+                        {
+                            new[] { "BOTANICAL NAME", "COUNT (n)" },
+                            new[] { "TREES", "" },
+                            new[] { "Existing", "" },
+                            new[] { "ALBIZIA LEBBECK", "1" },
+                            new[] { "CONOCARPUS LANCIFOLIUS", "3" },
+                            new[] { "PHOENIX DACTYLIFERA", "2" },
+                            new[] { "UNKNOWN", "2" },
+                            new[] { "ZIZIPHUS SPINA-CHRISTI", "2" },
+                            new[] { "", "10" },
+                            new[] { "Proposed", "" },
+                            new[] { "ALBIZIA LEBBECK", "13" },
+                            new[] { "", "39" }
+                        })
+                },
+                phases: new[] { "Existing", "Proposed" }));
+
+            KpiAnswer answer = Answer(scan, 8);
+
+            Assert.True(answer.Answered);
+            Assert.Equal(
+                "2 phases: Existing, Proposed. THE PRINTED ROWS SEPARATE THEM. DM-12-(600) SOFTSCAPE SCHEDULE prints "
+                + "2 group rows: Existing with 5 named rows under it, of 6 before the next, Proposed with 1 named row "
+                + "under it, of 2 before the next. The plot is DM-12. DM-12-(600) SOFTSCAPE SCHEDULE is on phase "
+                + "(empty) with phase filter (empty). Section 7 has the counts.",
                 answer.Answer);
         }
 

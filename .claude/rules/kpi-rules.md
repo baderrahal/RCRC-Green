@@ -181,9 +181,10 @@ each name are read in full is the rule above, and it is stated there and nowhere
 - SHRUBS & LAWN SCHEDULE, category Floors, prints in groups. DM-11 gives GRASS 35 m² 46, then
   SHRUBS & GROUND COVER 70 m² 58, then TOTAL 105 m² 104. The workbook wants the two group
   subtotals and not the total
-- SOFTSCAPE SCHEDULE, category Planting, prints TREES, then a phase row, then one row per
-  species. DM-11 gives ALBIZIA LEBBECK 6, BAUHINIA PURPUREA 2, CASSIA GLAUCA 4, total 12. Its
-  fields are BOTANICAL NAME, which is PRX_Softscape Botanical Name, and COUNT (n), a Count field
+- SOFTSCAPE SCHEDULE, category Planting. Its fields are BOTANICAL NAME, which is
+  PRX_Softscape Botanical Name, and COUNT (n), a Count field. DM-11 gives ALBIZIA LEBBECK 6,
+  BAUHINIA PURPUREA 2, CASSIA GLAUCA 4, total 12. How it prints is the rule in `CLAUDE.md`,
+  stated there and nowhere else, because the group row is what question 8 is answered from
 - Two phases, Existing and Proposed. The split shows as a group row inside the printed
   schedule, not as a separate schedule
 
@@ -191,7 +192,9 @@ each name are read in full is the rule above, and it is stated there and nowhere
 called Intervention Limits. Types RCRC_CADASTRAL LIMIT 124 and RCRC_OUT OF SCOPE
 (PRESENTATION) 155. PRX_Intervention Area is on all 279 with 266 values and every region
 carries PRX_Ref Plot ID, so the report prints the plot beside each region and counts how many
-regions of each type carry one.
+regions of each type carry one. **Which of a plot's two regions carries the area varies by
+plot**, which is the rule in `CLAUDE.md`, and it is why the report reads one plot's regions
+together rather than picking a type.
 
 **Neighborhood Name**, spelt the American way without a u, is a shared parameter on Project
 Information holding KING FAHD. Neighborhood Group holds GROUP 5.
@@ -224,15 +227,19 @@ total at row 93 is `SUM(B4:B92)` on both sheets.
 
 ## Open, and not to be guessed at in code
 
-Five questions the first real scan raised and could not settle. Every one of them is a fact
-about the project rather than about the tool, so nothing in the code picks an answer.
+The first real scan raised five. The 1355 run settled four of them, and the answers are facts
+about the project rather than about the tool, so they are in `CLAUDE.md` and are not repeated
+here. What each one turned out to be:
 
-1. Is PRX_Component on the sheet the component name the workbook wants
-2. Which of the four plot parameters on the sheet is the workbook's Ref
-3. Which filled region type is the plot's intervention area, RCRC_CADASTRAL LIMIT or
-   RCRC_OUT OF SCOPE (PRESENTATION)
-4. Are the two group headings in SHRUBS & LAWN the same on every plot
-5. Does an Existing group ever appear in SOFTSCAPE SCHEDULE
+1. Is PRX_Component the component the workbook wants. **Yes**, and it is the asset type
+2. Which of the four plot parameters is the workbook's Ref. **PRX_Plot_ID**
+3. Which filled region type is the plot's intervention area. **Neither. It varies by plot**,
+   so the question was wrongly put and no type name can answer it
+4. Are the two group headings in SHRUBS & LAWN the same on every plot. **STILL OPEN**
+5. Does an Existing group ever appear in SOFTSCAPE SCHEDULE. **Yes**, DM-12 has one
+
+Two the 1355 run raised in their place are in `steps/log.md`, both about matching a species by
+name, and nothing in the code picks an answer to either.
 
 ## Do not name a KPI control Scan Model
 

@@ -34,6 +34,12 @@ namespace RcrcGreen.Core.Kpi
         public static readonly string[] SheetNearMisses = { "COMPONENT", "PLOT", "UID" };
 
         /// <summary>
+        /// Looked for when PRX_COMPONENT is not there. Narrower than the sheet near misses,
+        /// because a question about the component is not answered by a plot name.
+        /// </summary>
+        public static readonly string[] ComponentNearMisses = { "COMPONENT" };
+
+        /// <summary>
         /// The four plot parameters the sheet really carries, all with values on the first
         /// model. The report prints them side by side because the workbook asks for one Ref
         /// and nothing in a report showing only one of the four can say which it is.
