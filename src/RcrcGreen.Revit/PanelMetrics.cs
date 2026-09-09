@@ -51,6 +51,14 @@ namespace RcrcGreen.Revit
 
         public static readonly Thickness CellPad = new Thickness(6.0, 2.0, 6.0, 2.0);
 
+        /// <summary>
+        /// No padding and no border, for a control that has to sit exactly where the label it
+        /// replaced sat. A button's own chrome would push the frozen plot column out of step
+        /// with the scrolling cells beside it, and the two lining up is the only thing making
+        /// the grid readable.
+        /// </summary>
+        public static readonly Thickness Nothing = new Thickness(0.0);
+
         public static readonly Thickness Gap = new Thickness(0.0, 0.0, 6.0, 0.0);
 
         public static readonly Thickness Hairline = new Thickness(0.0, 0.0, 0.0, 1.0);

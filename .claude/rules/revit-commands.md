@@ -71,6 +71,46 @@ it is in the same place whatever is open above it. Both are built once and repai
 than redrawn, which is why `PaintFromTheTheme` sets their brushes by hand: a colour set once,
 before the theme it follows is read, is how the panel came up black on black the first time.
 
+## Marking a lot of cells at once
+
+17 plots by 8 view types is 136 clicks, and the first person to use the grid did exactly that.
+Three ways in: **Mark every missing**, a **plot name** for its row, a **column header** for its
+column, and **Clear all marks** to undo the lot.
+
+All of them go through `BulkMarking` in Core, which hands back only cells a single click on the
+grid would have marked. A square holding a view is never swept up, because marking says a view
+is wanted and that one is there. An unticked plot is never swept up either, because the run does
+not act on it and the marks would be dropped without a word. A single click on one square is
+still allowed anywhere, because that is a deliberate act rather than a sweep.
+
+A plot name and a column header are labels sitting inside a borderless button. `Flat` builds
+them with `PanelTheme.Clear` and `PanelMetrics.Nothing`, so the frozen column stays in step with
+the scrolling cells beside it. A real button there would put chrome down the side and across the
+top of a grid that is already dense.
+
+## A column header is the code, not the whole name
+
+`(200) General Arrangement Layout` is thirty characters over a column one square wide, and eight
+ticked view types ran the headers off the right edge with sideways scrolling the only way to
+reach the last of them.
+
+`GridColumnLabels.For` gives each column the shortest header that still says which it is: the
+code alone, and where a code is shared, the code plus as many leading words of the view name as
+it takes to tell the sharers apart. Code 010 appears twice on the real model, which is why the
+code alone can never be the whole answer. The full name is on the tooltip, and the key under the
+grid lists every header that lost something, so a grid of plain codes carries no key at all.
+
+## A list that is rebuilt comes back where it was left
+
+Ticking a view type near the bottom of 84 threw the list back to the top, so the user scrolled
+down again for every tick. The step is thrown away and built again on every change and a new
+ScrollViewer starts at nothing.
+
+`Scrolling` keeps the offset by name across the rebuild. It restores on the first layout pass
+rather than on Loaded, because a ScrollViewer that has not measured its content clamps any
+offset to zero, and that reads exactly like a restore that worked. Step 1's plot list has the
+same fault and gets the same treatment.
+
 ## A control that outlives a redraw has to be taken out of its old parent
 
 The steps are thrown away and built again on every change. A handful of controls do not go with

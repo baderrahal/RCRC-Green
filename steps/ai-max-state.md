@@ -1,6 +1,21 @@
 # ai-max state
 
-Phase: 9, ship. Eighteenth pass, off the first full run in Revit.
+Phase: 9, ship. Nineteenth pass, four faults found by using the grid.
+
+None of them is a bug in the sense the last five rounds have been. The grid was correct and it
+was unusable, which only shows when somebody works in it rather than reads it.
+
+A rebuilt list comes back where it was left, restored on the first layout pass because a
+ScrollViewer that has not measured its content clamps an offset to zero. `BulkMarking` in Core
+marks every missing cell, a whole row from the plot name, or a whole column from the header, and
+hands back only cells a single click would have marked, so a square holding a view and an
+unticked plot are both left alone. `GridColumnLabels.For` cuts a header down to the code, or the
+code plus the fewest words that tell two sharers of one code apart. The legend is untouched.
+
+None of it has been rendered. Whether a borderless button still reads as a label, whether the
+frozen column stays in step, and whether eight headers fit across a docked pane are all UNKNOWN.
+
+Before that, the eighteenth pass, off the first full run in Revit.
 
 10 created, 0 refused, 4 needing attention, so every path in this tool has now run at least
 once. Items 1 to 4 are here. Item 5, four interface faults, is a second pull request.
