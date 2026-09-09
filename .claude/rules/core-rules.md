@@ -208,6 +208,30 @@ faithfully from a different sibling. That is the model's problem, so this counts
 winner. Choosing the most used one would put an answer on it that the team never gave, and the
 disagreement would stop being visible.
 
+## Marking in bulk follows the rule a single click follows
+
+`BulkMarking` hands back only cells a single click on the grid would have marked: missing, and
+on a ticked plot. Two rules would mean the sweep and the click meant different things, which is
+the shape that has been the bug five times here.
+
+An unticked plot is left out because the run does not act on it, so a sweep that marked one
+would leave marks the run silently drops. A single click on one square is still allowed
+anywhere, because it is a deliberate act rather than a sweep.
+
+The words are here too. `InWords` and `ClearedInWords` are what the status line says, so the
+panel formats no count of its own.
+
+## A column header is as short as it can be and no shorter
+
+`GridColumnLabels.For` gives each column the code alone, and where a code is shared, the code
+plus as many leading words of the view name as it takes to tell the sharers apart. Code 010
+appears twice on the real model with two different view names, which is why `ViewType` holds
+both and why a code on its own cannot be the answer.
+
+Where one name is the whole start of another, nothing shorter than the full name separates them
+and the full name is what the header carries. A header that lies by half is worse than a wide
+one.
+
 ## A test that reads the code back to itself proves nothing
 
 Write the expected value out by hand. Do not work it out with the same rule the code uses.

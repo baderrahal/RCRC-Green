@@ -92,6 +92,20 @@ namespace RcrcGreen.Revit
         /// </summary>
         public Brush Warning { get; }
 
+        /// <summary>
+        /// Nothing at all, for a control that has to take a click without looking like a button.
+        /// A plot name and a column header both mark a whole row or column now, and both are
+        /// still labels to read rather than buttons to press.
+        ///
+        /// It is the same in both themes, which is the point: a transparent brush shows
+        /// whatever is behind it, so it cannot be the wrong colour for the theme. It lives here
+        /// because a brush written into the panel file is how the panel came up black on black.
+        /// </summary>
+        public Brush Clear
+        {
+            get { return Brushes.Transparent; }
+        }
+
         public static PanelTheme Current()
         {
             return UIThemeManager.CurrentTheme == UITheme.Dark ? Dark() : Light();

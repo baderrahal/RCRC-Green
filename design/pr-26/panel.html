@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drawing Sheet step 3, pull request 26</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .shade  { background: #f6f6f6; }
+  .dark  .shade  { background: #343434; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #ff8080; }
+
+  .body { padding: 8px; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .step { margin-bottom: 4px; }
+
+  .btn { display: inline-block; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+         padding: 2px 6px; margin: 0 6px 3px 0; }
+  .legend { display: flex; flex-wrap: wrap; margin: 3px 0; }
+  .legend span { margin-right: 6px; }
+  .glyph { font-size: 14px; }
+
+  table.grid { border-collapse: collapse; }
+  table.grid td, table.grid th { padding: 2px 6px; text-align: left; font-weight: normal;
+                                 height: 24px; vertical-align: middle; }
+  table.grid th { font-weight: bold; vertical-align: bottom; height: 40px; }
+  table.grid th .kind { font-weight: normal; display: block; }
+  .hot { text-decoration: underline dotted; }
+  .cell { display: inline-block; min-width: 24px; text-align: center; font-size: 14px;
+          background: #ddd; color: #1a1a1a; border: 1px solid #adadad; margin: 1px; }
+  .off { opacity: 0.45; }
+  .key { font-size: 11px; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Drawing Sheet, step 3 after the four interface faults</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show whether a
+  borderless button really reads as a label, whether the frozen plot column stays in step with
+  the scrolling cells once those buttons are in it, how a restored scroll offset behaves under a
+  real mouse, what the real fonts come out as, or whether the box characters in the grid have a
+  glyph in the font Revit uses.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on it.
+  If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>What changed</h2>
+
+<p class="caption">Four faults, found by using the panel rather than by reading it. Ticking a
+view type near the bottom of the list threw the list back to the top. There was no way to mark
+more than one cell, and 17 plots by 8 view types is 136 clicks. Eight ticked view types ran the
+column headers off the right edge. The legend was the one part that read well, so it is
+untouched.</p>
+
+<h2>Step 3 open, eight view types ticked</h2>
+
+<p class="caption">The header is the code alone wherever the code is unique, so eight columns fit
+across a docked pane. Code 010 is used twice in this model with two different view names, so
+those two headers carry the first word that tells them apart, and the key under the grid says
+what each shortened one stands for. The full name is on the tooltip as well.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme.</p>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;12 marked</div>
+      <div class="inside">
+        <div class="legend">
+          <span class="glyph">&#9632;</span><span class="faint">exists, click to open it&nbsp;&nbsp;</span>
+          <span class="glyph">&#9633;</span><span class="faint">missing, click to mark it&nbsp;&nbsp;</span>
+          <span class="glyph">&#9679;</span><span class="faint">marked to be made</span>
+        </div>
+        <div>
+          <span class="btn">Mark every missing</span>
+          <span class="btn">Clear all marks</span>
+        </div>
+        <table class="grid">
+          <tr>
+            <th>Use</th><th>Plot</th>
+            <th><span class="hot">(010) Location</span><span class="kind faint">plan</span></th>
+            <th><span class="hot">(010) Overall</span><span class="kind faint">plan</span></th>
+            <th><span class="hot">(200)</span><span class="kind faint">plan</span></th>
+            <th><span class="hot">(400)</span><span class="kind faint">section</span></th>
+            <th><span class="hot">(600)</span><span class="kind faint">schedule</span></th>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked disabled></td><td><span class="hot">DM-11</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+          </tr>
+          <tr class="shade">
+            <td><input type="checkbox" checked disabled></td><td><span class="hot">DM-12</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+          </tr>
+          <tr class="off">
+            <td><input type="checkbox" disabled></td>
+            <td class="warn"><span class="hot">DM-13&nbsp;&nbsp;no scope box</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+          </tr>
+          <tr class="shade">
+            <td><input type="checkbox" checked disabled></td><td><span class="hot">DM-14</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+          </tr>
+        </table>
+        <div class="key faint">(010) Location is (010) Location Key Plan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(010) Overall is (010) Overall Key Plan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(200) is (200) General Arrangement Layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(400) is (400) Landscape Cross Section&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(600) is (600) HARDSCAPE SCHEDULE</div>
+        <span class="btn">Next: 4&nbsp;&nbsp;SHEETS</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme.</p>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;12 marked</div>
+      <div class="inside">
+        <div class="legend">
+          <span class="glyph">&#9632;</span><span class="faint">exists, click to open it&nbsp;&nbsp;</span>
+          <span class="glyph">&#9633;</span><span class="faint">missing, click to mark it&nbsp;&nbsp;</span>
+          <span class="glyph">&#9679;</span><span class="faint">marked to be made</span>
+        </div>
+        <div>
+          <span class="btn">Mark every missing</span>
+          <span class="btn">Clear all marks</span>
+        </div>
+        <table class="grid">
+          <tr>
+            <th>Use</th><th>Plot</th>
+            <th><span class="hot">(010) Location</span><span class="kind faint">plan</span></th>
+            <th><span class="hot">(010) Overall</span><span class="kind faint">plan</span></th>
+            <th><span class="hot">(200)</span><span class="kind faint">plan</span></th>
+            <th><span class="hot">(400)</span><span class="kind faint">section</span></th>
+            <th><span class="hot">(600)</span><span class="kind faint">schedule</span></th>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked disabled></td><td><span class="hot">DM-11</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+          </tr>
+          <tr class="shade">
+            <td><input type="checkbox" checked disabled></td><td><span class="hot">DM-12</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+          </tr>
+          <tr class="off">
+            <td><input type="checkbox" disabled></td>
+            <td class="warn"><span class="hot">DM-13&nbsp;&nbsp;no scope box</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+            <td><span class="cell">&#9633;</span></td>
+          </tr>
+          <tr class="shade">
+            <td><input type="checkbox" checked disabled></td><td><span class="hot">DM-14</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9632;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+            <td><span class="cell">&#9679;</span></td>
+          </tr>
+        </table>
+        <div class="key faint">(010) Location is (010) Location Key Plan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(010) Overall is (010) Overall Key Plan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(200) is (200) General Arrangement Layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(400) is (400) Landscape Cross Section&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(600) is (600) HARDSCAPE SCHEDULE</div>
+        <span class="btn">Next: 4&nbsp;&nbsp;SHEETS</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>The three ways to mark more than one cell</h2>
+
+<p class="caption">The dotted underline above marks what takes a click. It is not drawn in the
+panel, where a plot name and a column header are ordinary labels sitting inside a borderless
+button with the pointer set to a hand. Both were labels before and both still read as labels.</p>
+
+<ul class="caption">
+  <li><strong>Mark every missing</strong> takes every empty square on every ticked plot.</li>
+  <li><strong>A plot name</strong> takes that plot's whole row.</li>
+  <li><strong>A column header</strong> takes that view type down every ticked plot.</li>
+</ul>
+
+<p class="caption">All three go through <code>BulkMarking</code> in Core, which returns only
+cells a single click on the grid would have marked. A square holding a view is never swept up,
+because marking says a view is wanted and that one is there. An unticked plot is never swept up
+either, because the run does not act on it and the marks would be dropped without a word.
+DM-13 above is unticked, so none of the three touches it, and its squares stay empty.</p>
+
+<p class="caption">The status line afterwards reads
+<em>12 cells marked, 12 in total. Marking records intent and changes nothing until Run.</em> A
+sweep that finds nothing says so rather than going quiet.</p>
+
+<h2>The list that stays where it was left</h2>
+
+<p class="caption">Not drawable here, because it is a behaviour rather than a layout. Step 2 is
+thrown away and built again on every tick, and a new ScrollViewer starts at the top, so ticking
+the eightieth view type of 84 threw the list back to the first. The offset is now kept by name
+across the rebuild and restored on the first layout pass. It is restored then rather than on
+Loaded because a ScrollViewer that has not measured its content clamps any offset to zero, which
+would read exactly like a restore that worked. Step 1's plot list had the same fault and gets
+the same treatment.</p>
+
+</body>
+</html>

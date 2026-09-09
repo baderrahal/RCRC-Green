@@ -16,9 +16,9 @@ and creates them with correct names and, for a cross section, a cut across the m
 **Drawing Sheet** is a dockable panel that stays open while the user works and reads the model
 every time it is shown. It is five numbered steps, one open at a time: PLOTS, VIEW TYPES, MARK,
 SHEETS, RUN. A shut step carries its own summary and an unusable one says why. A filled square is
-a view that exists and opens on a click, an empty one is missing and can be marked, and every
-dropdown comes from the model. Step 5 holds the six scope box counts, and Scan Model, in the top
-strip, reads the whole document to a text file rather than the range, the check on the panel.
+a view that exists and opens on a click, an empty one is missing and can be marked, one at a
+time or by row, by column or all at once. Every dropdown comes from the model. Step 5 holds the
+scope box counts, and Scan Model, in the top strip, reads the whole document not just the range.
 
 **Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
 schedules and sheets. One confirmation, one transaction, one undo, and a report whose every count
@@ -150,9 +150,11 @@ has to refuse.
 from four examples, the read was assumed to need a progress window, and PRX_Plot_ID was assumed
 to be on elements only. One run corrected all three. Prefer measured numbers to reasoning.
 
-**Code that is there is not code you can see.** The panel shipped with every heading and label
-written and none visible. A dockable pane on the dark theme is black, WPF defaults text to
-black, and nothing set a foreground.
+**Some faults only show when somebody uses the thing.** The panel shipped with every heading
+written and none visible, because a dockable pane on the dark theme is black and WPF defaults
+text to black. Later it was correct and unusable: ticking a view type scrolled the list away,
+marking 136 cells took 136 clicks, and eight columns ran off the right edge. Neither round
+shows in a test or in a mockup.
 
 **Two sources for one fact is two facts.** Five times now, always the same shape. The grid took
 a view's plot from PRX_Plot_ID and its type from the name without checking they agreed, so a
@@ -188,12 +190,10 @@ lines apart, but nothing said which view. Record where a value came from as you 
 
 ## Writing
 
-No em dash, no semicolon in prose, no emoji anywhere, including commit messages. No
-generated-by footer and no co-author credit line. Comments say why, not what. Full list in
-`.claude/skills/ai-max/references/writing-rules.md`.
+No em dash, no semicolon in prose, no emoji anywhere, commit messages included. No generated-by
+footer and no co-author line. Comments say why, not what. Full list in the ai-max writing rules.
 
 ## Working agreements
 
-Never report a test result from a run made before the last file was written. When something
-cannot be checked, say UNKNOWN rather than filling the gap. Write what happened in
-`steps/log.md`, newest entry at the top.
+Never report a test result from a run made before the last file was written. Say UNKNOWN rather
+than filling a gap. Write what happened in `steps/log.md`, newest entry at the top.

@@ -4,6 +4,90 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, nineteenth pass. Four faults found by using the grid
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 26, one commit. Item 5 of the round, the
+second half. Items 1 to 4 went in as pull request 25. This entry goes in with the work, so the
+merge and the runner count are written into it by the follow-up.
+
+None of these four is a bug in the sense the last five rounds have been. The grid was correct
+and it was unusable, which is a different fault and one that only appears when somebody works in
+it rather than reads it.
+
+### The list that threw itself back to the top
+
+Ticking a view type near the bottom of 84 scrolled the list back to the first one, so the user
+scrolled down again for every single tick. Step 2 is thrown away and built again on every
+change, which is the rule that keeps one record of what is ticked, and a brand new ScrollViewer
+starts at nothing.
+
+`Scrolling` keeps the offset by name across the rebuild. **It restores on the first layout pass
+rather than on Loaded**, because a ScrollViewer that has not measured its content yet clamps any
+offset to zero, and a restore that silently clamps reads exactly like one that worked. Step 1's
+plot list had the same fault and gets the same treatment.
+
+### 136 clicks
+
+17 plots by 8 view types. Three ways in now: Mark every missing, a plot name for its row, a
+column header for its column, and Clear all marks to undo the lot.
+
+`BulkMarking` in Core decides all of it and hands back only cells a single click on the grid
+would have marked. **A square holding a view is never swept up**, because marking says a view is
+wanted and that one is there. **An unticked plot is never swept up either**, because the run does
+not act on it and the marks would be dropped without a word. A single click on one square is
+still allowed anywhere, because that is a deliberate act rather than a sweep.
+
+The words are in Core with the counts, so the status line reads `12 cells marked, 12 in total.`
+and a sweep that finds nothing says why rather than going quiet.
+
+A plot name and a column header are still labels. `Flat` puts each inside a button with
+`PanelTheme.Clear` and `PanelMetrics.Nothing`, so the frozen plot column stays in step with the
+scrolling cells beside it. A real button there would put chrome down the side and across the top
+of a grid that is already dense.
+
+### Headers off the right edge
+
+`(200) General Arrangement Layout` is thirty characters over a column one square wide.
+
+`GridColumnLabels.For` gives each column the shortest header that still says which it is: the
+code alone, and where a code is shared, the code plus as many leading words of the view name as
+it takes to tell the sharers apart. Code 010 appears twice on this model with two different view
+names, which is the whole reason `ViewType` holds both, so the code alone could never have been
+the answer. `(010) Location` and `(010) Overall` are what those two come out as.
+
+Where one name is the whole start of another, nothing shorter than the full name separates them
+and the full name is what the header carries. A header that lies by half is worse than a wide
+one, and there is a test for it.
+
+The full name is on the tooltip, and a key under the grid lists every header that lost
+something, so a grid of plain codes carries no key at all.
+
+### The legend
+
+Left exactly as it was, which is what was asked.
+
+### What has not been run
+
+Nothing in this round has been through Revit, and none of it is drawable in a mockup either:
+
+- no list has been scrolled and rebuilt, so the restore on first layout has never executed
+- no cell has been marked in bulk by any of the three routes
+- no borderless button has been rendered, so whether a plot name still reads as a label rather
+  than a button is UNKNOWN
+- whether the frozen column stays in step with the scrolling cells now that both hold buttons
+  is UNKNOWN
+- no shortened column header has been rendered, so whether eight of them really fit across a
+  docked pane is UNKNOWN
+
+The mockup is at `design/pr-26/panel.html`, both themes, and says at the top that it cannot
+answer any of those.
+
+Locally, after the last file was written, `dotnet build RcrcGreen.sln` came back with 0 warnings
+and 0 errors and `dotnet test` with 398 passed and 0 failed. Both new guards, the unticked plot
+and the shared code, were watched failing against deliberately broken code before being trusted.
+
+---
+
 ## 2026-09-09, eighteenth pass. The empty sheets, the annotation crop, and a depth the model never had
 
 Branch `claude/rcrc-green-setup-wf9ham`. Pull request 25, one commit. This entry goes in with the

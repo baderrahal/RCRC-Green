@@ -79,6 +79,13 @@ namespace RcrcGreen.Revit
         private PlotSelection _picked = PlotSelection.Nothing;
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
 
+        /// <summary>
+        /// How far down each rebuilt list was scrolled, by name. The lists themselves cannot
+        /// hold it, because every one of them is thrown away on each change.
+        /// </summary>
+        private readonly Dictionary<string, double> _scrolledTo =
+            new Dictionary<string, double>(StringComparer.Ordinal);
+
         // The sheets the user has described, and what they typed for each plot. Held here
         // rather than read back off the controls, because the step is thrown away and rebuilt
         // on every change and a control that has gone is not a place to keep the only copy.
@@ -422,7 +429,7 @@ namespace RcrcGreen.Revit
                 ticks.Children.Add(tick);
             }
 
-            block.Children.Add(Scrolling(ticks, PanelMetrics.ListHeight));
+            block.Children.Add(Scrolling(ticks, PanelMetrics.ListHeight, "plots"));
             block.Children.Add(NextButton(PanelStep.Plots));
             return block;
         }
@@ -474,7 +481,7 @@ namespace RcrcGreen.Revit
             }
             _filling = false;
 
-            block.Children.Add(Scrolling(list, PanelMetrics.ListHeight));
+            block.Children.Add(Scrolling(list, PanelMetrics.ListHeight, "view types"));
 
             block.Children.Add(Faint(showing.Count == _columns.All.Count
                 ? _columns.ShownCount + " of " + _columns.All.Count + " ticked."
@@ -546,9 +553,82 @@ namespace RcrcGreen.Revit
                 return block;
             }
 
+            block.Children.Add(Sweeps(grid));
             block.Children.Add(TheGrid(grid));
+            block.Children.Add(TheColumnKey(grid));
             block.Children.Add(NextButton(PanelStep.Mark));
             return block;
+        }
+
+        /// <summary>
+        /// Marking a lot of cells at once. 17 plots by 8 view types is 136 clicks, which is
+        /// what the first person to use the grid actually did.
+        ///
+        /// The other two ways in are the grid itself: the plot name marks its row and the
+        /// column header marks its column. Every one of them goes through
+        /// <see cref="BulkMarking"/>, so a sweep can never mean something a single click does
+        /// not.
+        /// </summary>
+        private UIElement Sweeps(SheetGrid grid)
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+
+            row.Children.Add(Secondary(
+                "Mark every missing",
+                () => MarkThese(BulkMarking.EveryMissing(grid, _picked.Ticked)),
+                "Marks every empty square on every ticked plot. A plot name marks its row and a "
+                + "column header marks its column."));
+
+            row.Children.Add(Secondary("Clear all marks", ClearTheMarks,
+                "Takes every mark off. Nothing in the model changes either way."));
+
+            return row;
+        }
+
+        /// <summary>
+        /// What each shortened column header stands for.
+        ///
+        /// The header is the code alone wherever the code is unique, because
+        /// (200) General Arrangement Layout is thirty characters over a column one square wide
+        /// and eight of them ran off the right edge. Only the columns that lost something are
+        /// listed, so a grid of plain codes carries no key at all.
+        /// </summary>
+        private UIElement TheColumnKey(SheetGrid grid)
+        {
+            var key = new WrapPanel { Margin = PanelMetrics.Row };
+
+            foreach (GridColumnLabel label in GridColumnLabels.For(grid.Columns))
+            {
+                if (!label.Shortened) continue;
+
+                key.Children.Add(new TextBlock
+                {
+                    Text = label.Short + " is " + label.Full + "      ",
+                    Foreground = _theme.Faint
+                });
+            }
+
+            return key;
+        }
+
+        private void MarkThese(IReadOnlyList<PlotViewKey> cells)
+        {
+            foreach (PlotViewKey one in cells) _marked.Add(one);
+
+            Redraw();
+
+            // Every cell handed back was missing, so the count is what was really added rather
+            // than what was asked for.
+            Say(BulkMarking.InWords(cells.Count, _marked.Count));
+        }
+
+        private void ClearTheMarks()
+        {
+            int had = _marked.Count;
+            _marked.Clear();
+
+            Redraw();
+            Say(BulkMarking.ClearedInWords(had));
         }
 
         private UIElement Legend()
@@ -605,9 +685,10 @@ namespace RcrcGreen.Revit
             Put(frozen, HeaderCell("Use"), 0, 0);
             Put(frozen, HeaderCell("Plot"), 0, 1);
 
-            for (int column = 0; column < grid.Columns.Count; column++)
+            IReadOnlyList<GridColumnLabel> headers = GridColumnLabels.For(grid.Columns);
+            for (int column = 0; column < headers.Count; column++)
             {
-                Put(scrolling, ColumnHeader(grid.Columns[column]), 0, column);
+                Put(scrolling, ColumnHeader(headers[column], grid), 0, column);
             }
 
             for (int row = 0; row < grid.Rows.Count; row++)
@@ -640,7 +721,9 @@ namespace RcrcGreen.Revit
                 };
                 if (!line.HasScopeBox) label.Foreground = _theme.Warning;
 
-                Put(frozen, label, row + 1, 1);
+                Put(frozen, Flat(label, line.PlotId + ", click to mark every missing view on it",
+                    () => MarkThese(BulkMarking.WholeRow(grid, _picked.Ticked, line.PlotId))),
+                    row + 1, 1);
 
                 for (int column = 0; column < line.Cells.Count; column++)
                 {
@@ -683,13 +766,14 @@ namespace RcrcGreen.Revit
         /// call again. The kind is a word under the name rather than italics alone, because
         /// italics is not something anyone reads off a column header.
         /// </summary>
-        private UIElement ColumnHeader(ViewType type)
+        private UIElement ColumnHeader(GridColumnLabel label, SheetGrid grid)
         {
+            ViewType type = label.Type;
             var stack = new StackPanel { Margin = PanelMetrics.CellPad, MaxWidth = PanelMetrics.ColumnWidth };
 
             stack.Children.Add(new TextBlock
             {
-                Text = type.ToString(),
+                Text = label.Short,
                 FontWeight = FontWeights.Bold,
                 TextWrapping = TextWrapping.Wrap
             });
@@ -700,7 +784,34 @@ namespace RcrcGreen.Revit
                 Foreground = _theme.Faint
             });
 
-            return stack;
+            return Flat(stack, label.Full + ", click to mark it on every ticked plot",
+                () => MarkThese(BulkMarking.WholeColumn(grid, _picked.Ticked, type)));
+        }
+
+        /// <summary>
+        /// Something that takes a click without becoming a button to look at.
+        ///
+        /// A plot name and a column header are labels, and turning either into an ordinary
+        /// button would put chrome down the frozen column and across the top of a grid that is
+        /// already dense. The padding is nothing so the frozen column stays in step with the
+        /// scrolling cells beside it, which is the only thing making the two halves line up.
+        /// </summary>
+        private Button Flat(UIElement what, string why, Action clicked)
+        {
+            var button = new Button
+            {
+                Content = what,
+                Background = _theme.Clear,
+                BorderThickness = PanelMetrics.Nothing,
+                Padding = PanelMetrics.Nothing,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                ToolTip = why
+            };
+
+            button.Click += (sender, e) => clicked();
+            return button;
         }
 
         private string KindOf(ViewType type)
@@ -1199,6 +1310,46 @@ namespace RcrcGreen.Revit
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
             };
+        }
+
+        /// <summary>
+        /// A scrolling list that comes back where it was left.
+        ///
+        /// Ticking a view type near the bottom of 84 threw the list back to the top, so the
+        /// user scrolled down again for every single tick. The step is thrown away and built
+        /// again on every change, and a brand new ScrollViewer starts at nothing.
+        ///
+        /// The offset is restored on the first layout pass rather than on Loaded, because a
+        /// ScrollViewer that has not measured its content yet clamps any offset to zero and
+        /// the restore reads as though it worked.
+        /// </summary>
+        private UIElement Scrolling(UIElement what, double tall, string remembered)
+        {
+            var view = new ScrollViewer
+            {
+                Content = what,
+                MaxHeight = tall,
+                Margin = PanelMetrics.Row,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            };
+
+            string key = remembered;
+            double already;
+            if (_scrolledTo.TryGetValue(key, out already) && already > 0.0)
+            {
+                EventHandler once = null;
+                once = (sender, e) =>
+                {
+                    view.LayoutUpdated -= once;
+                    view.ScrollToVerticalOffset(already);
+                };
+                view.LayoutUpdated += once;
+            }
+
+            view.ScrollChanged += (sender, e) => _scrolledTo[key] = view.VerticalOffset;
+
+            return view;
         }
 
         private static TextBlock HeaderCell(string text)
