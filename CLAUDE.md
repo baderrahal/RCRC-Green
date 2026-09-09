@@ -123,10 +123,13 @@ Measured on the 1355 run. These are what pick a workbook and fill it:
 
 - **PRX_Component on the sheet is the ASSET TYPE, not a park name.** FRIDAY MOSQUE and SCHOOL,
   on 1,384 of 1,385 sheets. It is what picks the workbook template. **Its values are not the
-  template names.** Five measured: FRIDAY MOSQUE, SCHOOL, HEALTH, EXISTING PARK, NH STRT 20m
-  ROW, against templates named existing parks, future parks, healthcare, mosques, parking,
-  schools and streets. Nothing turns HEALTH into healthcare, so the mapping is an open question
-  and the scan prints every value with its sheets and its plots for somebody to answer it from
+  template names and no string rule turns one into the other**, so the mapping is A TABLE,
+  measured on the 1548 scan, 11 values over 1,384 sheets: DAILY MOSQUE and FRIDAY MOSQUE mean
+  MOSQUES, SCHOOL SCHOOLS, HEALTH HEALTHCARE, PARKING LOT PARKING, EXISTING PARK EXISTING PARKS,
+  FUTURE PARK FUTURE PARKS, and NH STRT LESS 20m ROW, NH STRT 20m ROW, STREET 30m ROW and
+  STREET 36m ROW all mean STREETS. It is many to one, the two park values break the park tie, and
+  a value the table does not hold preselects nothing and says so. **Never the plot prefix**:
+  STREET 36m ROW covers MM and ST plots and NS carries two street widths
 - KPI COMPONENT S/H is a show and hide toggle, No on 9 of 9 title block types. Its name holds
   COMPONENT and it is not a candidate for anything
 - **PRX_Plot_ID is the plot** and the thing every schedule filters on. FM-05, SC-03. Plot

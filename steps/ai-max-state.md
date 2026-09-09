@@ -1,6 +1,15 @@
 # ai-max state
 
-Phase: 9, ship. Pull request 40 is merged into main as `5a5ded0`, 804 tests on the runner
+Phase: 9, ship. Thirty third pass, the component to template mapping. Pull request 41 is open,
+823 tests locally, 0 failed and 0 skipped, after six break watches were restored byte for byte.
+
+The question open since the 1355 run is answered. `ComponentTemplates` is a table of the eleven
+values the 1548 scan measured, many to one, and the word matching it replaces is gone. The two
+park values break the park tie so each preselects its own template, the plot prefix is read
+nowhere, and a value the table does not hold preselects nothing and now says so on the pane. The
+road width inside a street value is recorded in `steps/log.md` and nothing reads it.
+
+Before that, pull request 40 is merged into main as `5a5ded0`, 804 tests on the runner
 against its merged head and 804 locally, 0 failed and 0 skipped on each. The rule behind the
 last three rounds is written into `CLAUDE.md`: never read a
 schedule value by cell position, ask the heading row which column it is, and a reader that

@@ -4,6 +4,98 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, thirty third pass. The component to template mapping, as a table
+
+The question that has been open since the 1355 run is answered. The team measured it on the
+1548 scan, 11 distinct values over 1384 sheets, off the component values block the round before
+last added to the end of section 3, and it is now a table in Core.
+
+```
+DAILY MOSQUE           MOSQUES          NH STRT LESS 20m ROW   STREETS
+FRIDAY MOSQUE          MOSQUES          NH STRT 20m ROW        STREETS
+SCHOOL                 SCHOOLS          STREET 30m ROW         STREETS
+HEALTH                 HEALTHCARE       STREET 36m ROW         STREETS
+PARKING LOT            PARKING
+EXISTING PARK          EXISTING PARKS
+FUTURE PARK            FUTURE PARKS
+```
+
+### A table, never a string rule
+
+`ComponentTemplates` holds the eleven and `TemplateForComponent` reads it and nothing else.
+Matching is the whole value compared without case and with surrounding whitespace off, the same
+plainness species matching keeps. No part of a value matches anything.
+
+**The rule it replaces was wrong twice over.** It matched a word of the component against a word
+of the template name, so PARKING LOT looked like a park because PARKING begins with PARK, and
+all four street values answered nothing at all. A test in the round that wrote it asserted PARK
+offered EXISTING PARKS, FUTURE PARKS and PARKING and called offering all three the honest
+answer. It was honest about a rule that should not have existed.
+
+It is many to one. Two values mean MOSQUES and four mean STREETS, and a test says so in those
+numbers. Another says every one of the eleven resolves, written out by hand. Another says every
+one of the seven templates is reached by at least one value, because a template no value reaches
+could never be preselected and nothing on screen would show the hole.
+
+### The park tie is broken by the model
+
+EXISTING PARK and FUTURE PARK are separate values, so each preselects its own template. The pane
+used to put that pair to the user always, and the file name was the only thing that could tell
+the two workbooks apart. Recognising a workbook FILE is still the sheet name then the file name.
+That is a different job and it did not change.
+
+### The plot prefix is read nowhere
+
+STREET 36m ROW covers MM and ST plots and NS carries two different street widths, so a rule on
+the prefix would answer three of the eleven wrongly. A test preselects STREETS for one value
+across MM and ST and for two different values on NS.
+
+### A value the table does not hold
+
+It preselects nothing, the pane says which value and that the table does not know it, and the
+user picks. **The pane used to say nothing at all**, because `Preselect` returned on
+`NeedsAPick` without showing the reason, so a tool that had looked and found nothing read exactly
+like a tool that never looked. The line is `TemplateChoice.Why`, built in Core, and it is cleared
+by every path that makes it untrue: a hand pick, a folder change and the next preselection.
+
+The same move found one more. `_pickedAs` survived a preselection that failed, so ticking a
+mosque plot and then an unmapped one left Create armed with MOSQUES under a line saying nothing
+was preselected. Nothing is picked by hand on that path, because `Preselect` returns above when
+something is, so what it held can only have come from plots that are no longer ticked. It is
+cleared. Nobody would have seen it while the pane said nothing.
+
+Section 3 of the report gains a template column, which is this table read back. Its closing line
+used to read that nothing in the tool turns a value into a template name, and that is no longer
+true, so it says what the table is instead. A value the model grows later prints as one the
+table does not hold, which is the whole reason the block prints every value rather than a sample.
+
+### Recorded rather than built
+
+**The road width the STREETS template asks for by hand is inside the component value.** 20m in
+NH STRT 20m ROW, 30m and 36m in the two STREET values, and less than 20m in NH STRT LESS 20m ROW.
+`TemplateWords` already says the road width and the total length are typed by hand and the sheet
+works the area out, which is why STREETS is the one template with no area cell. Nothing reads the
+width out of the value and nothing here started to. It is written down because the value carries
+it and somebody will want it.
+
+### What was broken to see the tests go red
+
+Six, each restored byte for byte and checked with md5.
+
+- The table made to match on part of a value again. 3 red
+- STREET 36m ROW dropped from the table. 4 red
+- FUTURE PARK pointed at EXISTING PARKS. 3 red
+- An unmapped value made to fall back to the first template. 2 red
+- The report's template column made to print the value. 2 red
+- A template the caller does not offer preselected anyway. 1 red
+
+### What has not been run
+
+The table and the reader are Core and covered. **The pane change is not.** The line saying why
+nothing was preselected has never been seen in Revit, and neither has a preselected FUTURE PARKS.
+Nothing in `RcrcGreen.Revit` has been run on this machine.
+
+---
 ## 2026-09-09, the rule behind the last three rounds, written down
 
 Pull request 40, merged into main as `5a5ded0`. **The runner executed 804 tests against its
@@ -150,6 +242,9 @@ name on a title block type is named with its reason and left out, because a type
 template name. This is the question that stops the pane preselecting a template, and the new
 block is what somebody answers it from. Until it is answered, no code anywhere turns one into
 the other.
+
+**SETTLED the round above.** The 1548 scan read eleven values off this block and the team turned
+them into a table. It is `ComponentTemplates` and the entry at the top of this file has it.
 
 ### What was broken to see the tests go red
 

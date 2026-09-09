@@ -144,20 +144,51 @@ left out with nothing written down reads exactly like a name nobody found.**
 Two questions carry that near miss list and neither is question 8. It is questions 1 and 2,
 which are the two about where the component lives.
 
-## Every value of the component, with its sheets and its plots
+## The component picks the template, and the mapping is a table
 
-`PRX_Component` picks the workbook template and **its values are not template names.** Measured
-on the 1521 scan: FRIDAY MOSQUE, SCHOOL, HEALTH, EXISTING PARK, NH STRT 20m ROW, against
-templates named existing parks, future parks, healthcare, mosques, parking, schools and streets.
-No string rule turns HEALTH into healthcare or NH STRT 20m ROW into streets, and nothing in the
-tool tries.
+`PRX_Component` picks the workbook template and **its values are not template names.** No string
+rule turns HEALTH into HEALTHCARE or NH STRT 20m ROW into STREETS. So the mapping is data.
+`ComponentTemplates` is that table, measured on the 1548 scan, 11 distinct values over 1384
+sheets, off the component values block at the end of section 3 of that report:
 
-So section 3 ends with every distinct value the model holds, how many sheets carry each, and
-every plot those sheets are for, uncapped where the rest of the section shows twenty examples.
-Twenty sheets is not enough to build the mapping from and the mapping is what preselects the
-template. The plot beside each value is `PRX_Plot_ID` read off the sheet, said in the block, and
-a value on sheets carrying no plot is counted and named rather than dropped. A title block type
-is not a sheet, so a component name on one is named with that reason and left out of the counts.
+```
+DAILY MOSQUE           MOSQUES          NH STRT LESS 20m ROW   STREETS
+FRIDAY MOSQUE          MOSQUES          NH STRT 20m ROW        STREETS
+SCHOOL                 SCHOOLS          STREET 30m ROW         STREETS
+HEALTH                 HEALTHCARE       STREET 36m ROW         STREETS
+PARKING LOT            PARKING
+EXISTING PARK          EXISTING PARKS
+FUTURE PARK            FUTURE PARKS
+```
+
+Four things hold it up.
+
+**It is many to one.** Two values mean MOSQUES and four mean STREETS, and a test says so in
+those numbers rather than leaving them to be read off the list. Another says every one of the
+eleven resolves and another that every one of the seven templates is reached.
+
+**EXISTING PARK and FUTURE PARK are separate values, so the model breaks the park tie.** Each
+preselects its own template. That pair used to be the user's choice always, because the file
+name was the only thing that could separate the two workbooks and no rule on a name could
+separate the components. The table can. Recognising a WORKBOOK FILE is still the sheet name then
+the file name, which is a different job and unchanged.
+
+**The plot prefix decides nothing and is read nowhere.** STREET 36m ROW covers MM and ST plots
+and NS carries two different street widths, so a rule on the prefix would answer three of them
+wrongly.
+
+**A value the table does not hold preselects nothing, says so on the pane, and the user picks.**
+Nothing guesses and nothing falls back to matching a word of the value against a word of the
+template name. That old rule made PARKING LOT look like a park, because PARKING begins with
+PARK, and answered nothing at all for the four street values.
+
+Section 3 still ends with every distinct value the model holds, how many sheets carry each, the
+template it means and every plot those sheets are for, uncapped where the rest of the section
+shows twenty examples. The template column is this table read back, so a value the model grows
+later prints as one the table does not hold. The plot beside each value is `PRX_Plot_ID` read
+off the sheet, said in the block, and a value on sheets carrying no plot is counted and named
+rather than dropped. A title block type is not a sheet, so a component name on one is named with
+that reason and left out of the counts.
 
 ## Three places a sheet value can live
 
@@ -400,10 +431,9 @@ here. What each one turned out to be:
 Two the 1355 run raised in their place are in `steps/log.md`, both about matching a species by
 name, and nothing in the code picks an answer to either.
 
-The 1521 run raised a third and it is the one that stops the pane preselecting a template:
-**which template each value of PRX_Component means.** Five values are measured and none is a
-template name. The report now prints every value with its sheets and its plots so somebody can
-answer it from the model, and until they do nothing in the code maps one to the other.
+The 1521 run raised a third, which template each value of PRX_Component means. **The 1548 run
+settled it.** Eleven values came off the report's own component block and the team turned them
+into the table above. It is not repeated here.
 
 ## Do not name a KPI control Scan Model
 

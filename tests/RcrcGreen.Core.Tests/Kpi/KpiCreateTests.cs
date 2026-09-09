@@ -77,6 +77,90 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
     }
 
+    public class ComponentTemplatesTests
+    {
+        /// <summary>
+        /// The eleven measured on the 1548 scan, each written out by hand rather than worked out
+        /// with the table's own rule. Two mean MOSQUES and four mean STREETS.
+        /// </summary>
+        [Theory]
+        [InlineData("DAILY MOSQUE", "MOSQUES")]
+        [InlineData("FRIDAY MOSQUE", "MOSQUES")]
+        [InlineData("SCHOOL", "SCHOOLS")]
+        [InlineData("HEALTH", "HEALTHCARE")]
+        [InlineData("PARKING LOT", "PARKING")]
+        [InlineData("EXISTING PARK", "EXISTING PARKS")]
+        [InlineData("FUTURE PARK", "FUTURE PARKS")]
+        [InlineData("NH STRT LESS 20m ROW", "STREETS")]
+        [InlineData("NH STRT 20m ROW", "STREETS")]
+        [InlineData("STREET 30m ROW", "STREETS")]
+        [InlineData("STREET 36m ROW", "STREETS")]
+        public void EveryMeasuredComponentValueResolves(string component, string templateName)
+        {
+            KpiTemplate found = ComponentTemplates.For(component);
+
+            Assert.NotNull(found);
+            Assert.Equal(templateName, found.Name);
+        }
+
+        [Fact]
+        public void TheTableHoldsTheElevenAndNothingElse()
+        {
+            Assert.Equal(11, ComponentTemplates.All.Count);
+            Assert.Equal(11, ComponentTemplates.All.Select(one => one.Component).Distinct().Count());
+            Assert.All(ComponentTemplates.All,
+                one => Assert.Contains(one.Template, KpiTemplates.All));
+        }
+
+        /// <summary>
+        /// Many to one, said as counts rather than left to be read off the list.
+        /// </summary>
+        [Fact]
+        public void TwoValuesMeanMosquesAndFourMeanStreets()
+        {
+            Assert.Equal(
+                new[] { "DAILY MOSQUE", "FRIDAY MOSQUE" },
+                ComponentTemplates.ValuesFor(KpiTemplates.Mosques));
+            Assert.Equal(
+                new[] { "NH STRT LESS 20m ROW", "NH STRT 20m ROW", "STREET 30m ROW", "STREET 36m ROW" },
+                ComponentTemplates.ValuesFor(KpiTemplates.Streets));
+        }
+
+        /// <summary>
+        /// A template no value reaches could never be preselected, so the map would have a hole
+        /// nothing on screen would show.
+        /// </summary>
+        [Fact]
+        public void EveryTemplateIsReachedByAtLeastOneValue()
+        {
+            Assert.All(KpiTemplates.All, one => Assert.NotEmpty(ComponentTemplates.ValuesFor(one)));
+        }
+
+        /// <summary>
+        /// The whole value is compared and no part of one matches. PARK is not a value, and
+        /// finding it inside PARKING LOT is the string rule this table replaced.
+        /// </summary>
+        [Fact]
+        public void NoPartOfAValueMatches()
+        {
+            Assert.Null(ComponentTemplates.For("PARK"));
+            Assert.Null(ComponentTemplates.For("PARKING"));
+            Assert.Null(ComponentTemplates.For("STREET"));
+            Assert.Null(ComponentTemplates.For("MOSQUE"));
+            Assert.Null(ComponentTemplates.For("NH STRT 20m ROW AND MORE"));
+        }
+
+        [Fact]
+        public void TheCaseAndTheSurroundingSpaceComeOffAndNothingElseDoes()
+        {
+            Assert.Equal("HEALTHCARE", ComponentTemplates.For("  health  ").Name);
+            Assert.Equal("STREETS", ComponentTemplates.For("street 36M row").Name);
+            Assert.Null(ComponentTemplates.For("STREET36m ROW"));
+            Assert.Null(ComponentTemplates.For(null));
+            Assert.Null(ComponentTemplates.For("   "));
+        }
+    }
+
     public class TemplateForComponentTests
     {
         private static AgreedValue Holding(params string[] components)
@@ -84,9 +168,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             return new AgreedValue(components.Select((one, at) => new PlotText("P-" + at, one)));
         }
 
-        /// <summary>
-        /// FRIDAY MOSQUE on the chosen plots preselects MOSQUES, because MOSQUES holds MOSQUE.
-        /// </summary>
+        private static AgreedValue OnPlots(string component, params string[] plotIds)
+        {
+            return new AgreedValue(plotIds.Select(plotId => new PlotText(plotId, component)));
+        }
+
         [Fact]
         public void FridayMosquePreselectsMosques()
         {
@@ -94,6 +180,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.False(choice.NeedsAPick);
             Assert.Equal("MOSQUES", choice.Preselected.Name);
+            Assert.Equal(
+                "FRIDAY MOSQUE on the chosen plots preselects MOSQUES. Change it if it is wrong.",
+                choice.Why);
         }
 
         [Fact]
@@ -103,21 +192,31 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// EXISTING PARKS and FUTURE PARKS both answer to a park, so that pair is always the
-        /// user's choice and nothing here breaks the tie.
-        ///
-        /// PARKING is offered beside them, because PARKING begins with PARK and no rule on a
-        /// name can tell a park from a parking plot. Offering it is the honest answer: the tool
-        /// cannot separate them, so it says so rather than dropping one behind the user's back.
+        /// The park tie is broken by the model, not by the tool and not by the user. EXISTING
+        /// PARK and FUTURE PARK are separate values on the sheets, so each preselects its own
+        /// template. PARKING LOT is a third value and never stands beside them.
         /// </summary>
         [Fact]
-        public void AParkAlwaysPutsThePickToTheUser()
+        public void TheTwoParkValuesEachPreselectTheirOwnTemplate()
         {
-            TemplateChoice choice = TemplateForComponent.For(Holding("PARK"), null);
+            Assert.Equal("EXISTING PARKS", TemplateForComponent.For(Holding("EXISTING PARK"), null).Preselected.Name);
+            Assert.Equal("FUTURE PARKS", TemplateForComponent.For(Holding("FUTURE PARK"), null).Preselected.Name);
+            Assert.Equal("PARKING", TemplateForComponent.For(Holding("PARKING LOT"), null).Preselected.Name);
+        }
 
-            Assert.True(choice.NeedsAPick);
-            Assert.Equal(new[] { "EXISTING PARKS", "FUTURE PARKS", "PARKING" },
-                choice.Candidates.Select(one => one.Name));
+        /// <summary>
+        /// The plot is not read. STREET 36m ROW covers MM and ST plots, and NS carries two
+        /// different street widths, so a rule on the prefix would answer three of them wrongly.
+        /// </summary>
+        [Fact]
+        public void ThePlotPrefixChangesNothing()
+        {
+            Assert.Equal("STREETS",
+                TemplateForComponent.For(OnPlots("STREET 36m ROW", "MM-03", "ST-11"), null).Preselected.Name);
+            Assert.Equal("STREETS",
+                TemplateForComponent.For(OnPlots("NH STRT 20m ROW", "NS-06"), null).Preselected.Name);
+            Assert.Equal("STREETS",
+                TemplateForComponent.For(OnPlots("NH STRT LESS 20m ROW", "NS-19"), null).Preselected.Name);
         }
 
         [Fact]
@@ -130,13 +229,34 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(7, choice.Candidates.Count);
         }
 
+        /// <summary>
+        /// A value the table does not hold preselects nothing, names itself, and offers all
+        /// seven. Nothing guesses and nothing falls back to matching on a name.
+        /// </summary>
         [Fact]
-        public void AComponentAnsweringNoTemplatePutsThePickToTheUserAndNamesIt()
+        public void AComponentNotInTheTablePutsThePickToTheUserAndNamesIt()
         {
             TemplateChoice choice = TemplateForComponent.For(Holding("PUMP STATION"), null);
 
             Assert.True(choice.NeedsAPick);
-            Assert.Contains("PUMP STATION", choice.Why);
+            Assert.Equal(7, choice.Candidates.Count);
+            Assert.Equal(
+                "PUMP STATION is not one of the component values this tool knows. Pick the "
+                + "template. The eleven it knows are in ComponentTemplates, measured off the 1548 scan.",
+                choice.Why);
+        }
+
+        /// <summary>
+        /// PARK on its own was the value that used to offer three templates, because PARKING
+        /// begins with PARK. It is not a component value, so it now preselects nothing.
+        /// </summary>
+        [Fact]
+        public void ParkOnItsOwnIsNotAComponentValue()
+        {
+            TemplateChoice choice = TemplateForComponent.For(Holding("PARK"), null);
+
+            Assert.True(choice.NeedsAPick);
+            Assert.Contains("PARK is not one of the component values", choice.Why);
         }
 
         [Fact]
@@ -146,6 +266,20 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.True(choice.NeedsAPick);
             Assert.Equal(TemplateForComponent.NoComponent, choice.Why);
+        }
+
+        /// <summary>
+        /// A caller offering a shorter list gets the pick back rather than a preselection it
+        /// does not show. Nothing on screen would say why the highlighted one was not there.
+        /// </summary>
+        [Fact]
+        public void ATemplateTheCallerDoesNotOfferIsNotPreselected()
+        {
+            TemplateChoice choice = TemplateForComponent.For(
+                Holding("SCHOOL"), new[] { KpiTemplates.Mosques, KpiTemplates.Streets });
+
+            Assert.True(choice.NeedsAPick);
+            Assert.Contains("SCHOOL means SCHOOLS, which is not among the templates offered", choice.Why);
         }
     }
 

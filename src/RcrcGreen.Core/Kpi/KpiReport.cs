@@ -77,6 +77,13 @@ namespace RcrcGreen.Core.Kpi
 
         public const int ShownFamilyTypes = 40;
 
+        /// <summary>
+        /// Printed against a component value <see cref="ComponentTemplates"/> does not hold. It
+        /// is a finding rather than a fault: the model has grown a value since the 1548 scan and
+        /// somebody has to say which template it means.
+        /// </summary>
+        public const string NotInTheTable = "(not in the table)";
+
         public static string Write(KpiScan scan, DateTime writtenAt)
         {
             if (scan == null) throw new ArgumentNullException("scan");
@@ -319,11 +326,16 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// One row per distinct value: how many sheets carry it, how many plots those sheets are
-        /// for, and every one of those plots by name.
+        /// for, the template it means, and every one of those plots by name.
         ///
         /// Uncapped, unlike the twenty examples the rest of this section prints, because twenty
-        /// sheets is not enough to build the template mapping from. The plot list is bounded by
+        /// sheets was not enough to build the template mapping from. The plot list is bounded by
         /// the plots in the model.
+        ///
+        /// The mapping was built from this block and is now `ComponentTemplates`, measured off
+        /// the 1548 scan. The template column is that table read back, so a value the model has
+        /// grown since prints as one the table does not hold, which is the whole reason to keep
+        /// printing every value rather than a sample.
         /// </summary>
         private static void ValuesAndPlots(
             StringBuilder report,
@@ -365,22 +377,25 @@ namespace RcrcGreen.Core.Kpi
                 + home.Where.ToUpperInvariant() + ", " + Count(order.Count, "distinct value")
                 + " over " + Count(everySheet.Count, "sheet") + ". The plot beside each is "
                 + KpiNames.PlotId + " read off the " + TitleBlockFacts.OnSheetsWhere + ".");
-            Line(report, "value | sheets carrying it | plots | the plots");
+            Line(report, "value | sheets carrying it | plots | template | the plots");
 
             foreach (string held in order
                 .OrderByDescending(one => carrying[one].Count)
                 .ThenBy(one => one, NaturalOrder.Comparer))
             {
                 List<string> named = plots[held].OrderBy(one => one, NaturalOrder.Comparer).ToList();
+                KpiTemplate means = ComponentTemplates.For(held);
                 Line(report, Join(
                     held,
                     carrying[held].Count.ToString(CultureInfo.InvariantCulture),
                     named.Count.ToString(CultureInfo.InvariantCulture),
+                    means == null ? NotInTheTable : means.Name,
                     named.Count == 0 ? "(no plot on those sheets)" : string.Join(", ", named.ToArray())));
             }
 
-            Line(report, "The value is the asset type. It is not a template name and nothing in the tool "
-                + "turns one into the other, so this list is the whole of what the model says.");
+            Line(report, "The value is the asset type and it is not a template name. Which template each "
+                + "one means is a table measured off the 1548 scan, read back in the column above. A value "
+                + NotInTheTable + " preselects nothing and the user picks.");
             Line(report, string.Empty);
         }
 

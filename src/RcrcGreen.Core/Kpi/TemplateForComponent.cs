@@ -51,27 +51,27 @@ namespace RcrcGreen.Core.Kpi
     /// <summary>
     /// Reads the component off the chosen plots and preselects the template that answers to it.
     ///
-    /// PRX_Component on the sheet is the asset type rather than a park name, measured as
-    /// FRIDAY MOSQUE and SCHOOL on 1384 of 1385 sheets, and the plot prefixes agree. A word of
-    /// the component held by a template's name is what matches, so MOSQUE finds MOSQUES and
-    /// SCHOOL finds SCHOOLS.
+    /// PRX_Component on the sheet is the asset type rather than a park name. Which template each
+    /// of its values means is <see cref="ComponentTemplates"/>, a table measured off the 1548
+    /// scan, and this reads that table and nothing else.
     ///
-    /// EXISTING PARKS and FUTURE PARKS both answer to a park, so that pair is always the user's
-    /// choice and nothing here ever breaks the tie between them.
+    /// It used to match a word of the component against a word of the template name. **That rule
+    /// is gone.** It made PARKING LOT look like a park, because PARKING begins with PARK, and it
+    /// answered nothing at all for the four street values. A value the table does not hold now
+    /// preselects nothing and says so, rather than falling back to a name.
+    ///
+    /// **EXISTING PARK and FUTURE PARK are separate values**, so the model breaks the park tie
+    /// and each preselects its own template. That pair used to be the user's choice always,
+    /// because no rule on a name could separate them. The table can.
     /// </summary>
     public static class TemplateForComponent
     {
-        /// <summary>
-        /// A word shorter than this matches too much. THE and OF hold nothing worth matching.
-        /// </summary>
-        public const int ShortestWord = 3;
-
         public const string NoComponent =
             "No component was read off the chosen plots, so nothing preselects a template.";
 
         public const string PlotsDisagree = "The chosen plots hold different components";
 
-        public const string NothingMatches = "No template answers to";
+        public const string NotInTheTable = "is not one of the component values this tool knows";
 
         public static TemplateChoice For(AgreedValue component, IReadOnlyList<KpiTemplate> templates)
         {
@@ -89,44 +89,26 @@ namespace RcrcGreen.Core.Kpi
             }
 
             string held = component.Value;
-            List<KpiTemplate> matching = all.Where(one => Answers(one, held)).ToList();
+            KpiTemplate meant = ComponentTemplates.For(held);
 
-            if (matching.Count == 0)
+            if (meant == null)
             {
-                return TemplateChoice.Between(all, NothingMatches + " " + held + ". Pick the template.");
+                return TemplateChoice.Between(all, held + " " + NotInTheTable
+                    + ". Pick the template. The eleven it knows are in ComponentTemplates, "
+                    + "measured off the 1548 scan.");
             }
 
-            if (matching.Count > 1)
+            // The template the table names may not be among the ones offered, which happens when
+            // a caller hands in a shorter list. Preselecting one that is not on offer would show
+            // a pick the user cannot see, so the pick goes back to them with the reason.
+            if (!all.Any(one => ReferenceEquals(one, meant)))
             {
-                return TemplateChoice.Between(matching, held + " answers to "
-                    + string.Join(" and ", matching.Select(one => one.Name).ToArray())
-                    + ". Pick the template.");
+                return TemplateChoice.Between(all, held + " means " + meant.Name
+                    + ", which is not among the templates offered. Pick the template.");
             }
 
-            return TemplateChoice.Preselecting(matching[0],
-                held + " on the chosen plots preselects " + matching[0].Name + ". Change it if it is wrong.");
-        }
-
-        private static bool Answers(KpiTemplate template, string component)
-        {
-            return WordsIn(component).Any(word => KpiNames.Holds(template.Name, word));
-        }
-
-        private static IEnumerable<string> WordsIn(string component)
-        {
-            var word = new List<char>();
-
-            foreach (char letter in component + " ")
-            {
-                if (char.IsLetter(letter))
-                {
-                    word.Add(letter);
-                    continue;
-                }
-
-                if (word.Count >= ShortestWord) yield return new string(word.ToArray());
-                word.Clear();
-            }
+            return TemplateChoice.Preselecting(meant,
+                held + " on the chosen plots preselects " + meant.Name + ". Change it if it is wrong.");
         }
     }
 }
