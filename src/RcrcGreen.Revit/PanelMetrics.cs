@@ -61,6 +61,13 @@ namespace RcrcGreen.Revit
 
         public static readonly Thickness Gap = new Thickness(0.0, 0.0, 6.0, 0.0);
 
+        /// <summary>
+        /// Above a block heading in the KPI pane, which scrolls as one long column rather than
+        /// as numbered steps, so the headings need the air the Drawing Sheet gets from its
+        /// step borders. Added for the KPI pane and used by nothing on the Drawing Sheet.
+        /// </summary>
+        public static readonly Thickness Heading = new Thickness(0.0, 10.0, 0.0, 4.0);
+
         public static readonly Thickness Hairline = new Thickness(0.0, 0.0, 0.0, 1.0);
 
         /// <summary>

@@ -66,12 +66,44 @@ namespace RcrcGreen.Revit.Kpi
         private RecognisedWorkbook _picked;
         private KpiTemplate _pickedAs;
 
+        // What the model holds, read through the external event when the pane is shown. Plain
+        // values only, so the pane still names no Revit type.
+        private KpiPlotFacts _facts;
+
+        // The one record of which plots are ticked. The list is drawn from it every time it
+        // changes rather than letting a tick box remember its own state, which is the rule the
+        // Drawing Sheet settled on after a count and its list drifted apart on a real model.
+        private PlotTicks _ticks = new PlotTicks(PlotsInTheModel.Of(null, null));
+
+        private string _componentParameter = string.Empty;
+        private string _referenceParameter = KpiNames.PlotUid2;
+        private string _locationParameter = string.Empty;
+
+        // Cleared by anything that could move a number, so a confirmation never carries over
+        // onto a different set of plots.
+        private bool _confirmedIdentical;
+
+        private readonly Dictionary<string, string> _chosenRegions =
+            new Dictionary<string, string>(StringComparer.Ordinal);
+
+        // What the last press of Create really did, so the pane can offer the region choices
+        // a refusal asked for without reading anything itself.
+        private KpiCreateRun _lastRun;
+
+        // These three outlive every redraw, because each carries what somebody is halfway
+        // through typing. None of them comes from Revit.
+        private readonly TextBox _date = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
+        private readonly TextBox _preparedBy = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
+        private readonly TextBox _position = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
+
         public KpiPanel()
         {
             _handler = new KpiRequestHandler
             {
                 Named = Took,
                 Scanned = Scanned,
+                FoundPlots = Found,
+                Created = Made,
                 Told = Say
             };
             _asking = ExternalEvent.Create(_handler);
@@ -81,6 +113,9 @@ namespace RcrcGreen.Revit.Kpi
 
             _modelName.Text = KpiPaneWords.NoModelName;
             _readAt.Text = KpiPaneWords.NotScanned;
+            _date.Text = DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            _preparedBy.Text = RememberedNames.PreparedBy();
+            _position.Text = RememberedNames.Position();
             Say(KpiPaneWords.Waiting);
 
             // Not the constructor. A dockable pane is built during OnStartup, when no document
@@ -107,6 +142,7 @@ namespace RcrcGreen.Revit.Kpi
 
             PaintFromTheTheme();
             Ask(KpiRequest.WhichModel);
+            Ask(KpiRequest.Plots);
             RedrawTemplates();
         }
 
@@ -376,6 +412,370 @@ namespace RcrcGreen.Revit.Kpi
             _templates.Children.Add(Faint(_modelFolder.Length == 0
                 ? TemplateWords.NoModelPath
                 : TemplateWords.Output(_modelFolder)));
+            _templates.Children.Add(Faint(CreateWords.Overwrite));
+
+            ThePlots();
+            TheChoices();
+            TheCreateButton();
+        }
+
+        /// <summary>
+        /// The plot picker. Every plot the model holds, ticked one at a time, in a run, or all
+        /// at once, with the count showing at all times. There is no free text box: a plot the
+        /// model does not hold cannot be chosen, the same rule the Drawing Sheet follows.
+        /// </summary>
+        private void ThePlots()
+        {
+            _templates.Children.Add(Head(CreateWords.Heading));
+
+            if (_facts == null)
+            {
+                _templates.Children.Add(Faint(KpiPaneWords.Waiting));
+                return;
+            }
+
+            foreach (string line in CreateWords.PlotSources(_facts.Plots))
+            {
+                _templates.Children.Add(Faint(line));
+            }
+
+            if (_facts.Plots.All.Count == 0) return;
+
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+            var all = new Button { Content = CreateWords.SelectAll, Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
+            all.Click += (sender, e) => Ticked(_ticks.All());
+            var none = new Button { Content = CreateWords.Clear, Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
+            none.Click += (sender, e) => Ticked(_ticks.None());
+            buttons.Children.Add(all);
+            buttons.Children.Add(none);
+            _templates.Children.Add(buttons);
+
+            _templates.Children.Add(new TextBlock
+            {
+                Text = _ticks.InWords,
+                FontWeight = FontWeights.Bold,
+                Margin = PanelMetrics.Row
+            });
+
+            var list = new StackPanel();
+            foreach (string plotId in _facts.Plots.All)
+            {
+                string which = plotId;
+                var box = new CheckBox
+                {
+                    Content = which,
+                    IsChecked = _ticks.IsTicked(which),
+                    Margin = PanelMetrics.Row
+                };
+                box.Click += (sender, e) => Ticked(_ticks.Toggled(which));
+                list.Children.Add(box);
+            }
+
+            _templates.Children.Add(new ScrollViewer
+            {
+                Content = list,
+                MaxHeight = PanelMetrics.ListHeight,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Margin = PanelMetrics.Row
+            });
+        }
+
+        /// <summary>
+        /// The three choices the model cannot make and the three boxes it knows nothing about.
+        /// Both dropdowns are built from the model, and the reference shows each parameter's
+        /// value beside its name so the user picks by looking at the value.
+        /// </summary>
+        private void TheChoices()
+        {
+            if (_facts == null) return;
+
+            _templates.Children.Add(Head("What the values come from"));
+
+            _templates.Children.Add(Picker(
+                "Component", _facts.ComponentNames, _componentParameter,
+                chosen => { _componentParameter = chosen; Changed(); }));
+
+            IReadOnlyList<string> references = _ticks.Count == 0
+                ? KpiNames.PlotNamesOnSheets.ToList()
+                : _facts.ReferenceChoices.Select(one => one.Name).ToList();
+
+            _templates.Children.Add(Picker(
+                "Reference", references, _referenceParameter,
+                chosen => { _referenceParameter = chosen; Changed(); }));
+
+            foreach (PlotParameterValue value in _facts.ReferenceChoices)
+            {
+                _templates.Children.Add(Faint("   " + value.InWords));
+            }
+
+            _templates.Children.Add(Picker(
+                "Location", _facts.LocationNames, _locationParameter,
+                chosen => { _locationParameter = chosen; Changed(); }));
+
+            _templates.Children.Add(Boxed("Date", _date));
+            _templates.Children.Add(Boxed("Prepared by", _preparedBy));
+            _templates.Children.Add(Boxed("Position", _position));
+        }
+
+        /// <summary>
+        /// Create, and everything standing between the pane and pressing it. A refusal lists
+        /// every missing thing at once rather than one per press.
+        /// </summary>
+        private void TheCreateButton()
+        {
+            _templates.Children.Add(Head(CreateWords.Create));
+
+            string cannot = CreateWords.CannotCreate(
+                _modelFolder.Length > 0, _pickedAs != null, _ticks.Count > 0);
+
+            if (cannot.Length > 0) _templates.Children.Add(Faint(cannot));
+
+            if (_pickedAs != null && _pickedAs.AreaIsTypedByHand)
+            {
+                _templates.Children.Add(Faint(CreateWords.AreaTypedByHand));
+            }
+
+            if (_lastRun != null && !_lastRun.Reconciliation.AddsUp)
+            {
+                foreach (string refusal in _lastRun.Reconciliation.Refusals)
+                {
+                    _templates.Children.Add(Warned(refusal));
+                }
+
+                TheRegionChoices();
+
+                if (_lastRun.Reconciliation.IdenticalAreas.Count > 0 && !_confirmedIdentical)
+                {
+                    foreach (string line in CreateWords.ConfirmIdentical(_lastRun.Reconciliation.IdenticalAreas))
+                    {
+                        _templates.Children.Add(Warned(line));
+                    }
+
+                    var confirm = new Button
+                    {
+                        Content = "These areas are right, write anyway",
+                        Padding = PanelMetrics.CellPad,
+                        Margin = PanelMetrics.Row,
+                        HorizontalAlignment = HorizontalAlignment.Left
+                    };
+                    confirm.Click += (sender, e) => { _confirmedIdentical = true; RedrawTemplates(); };
+                    _templates.Children.Add(confirm);
+                }
+            }
+
+            var create = new Button
+            {
+                Content = CreateWords.Create,
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Row,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                IsEnabled = cannot.Length == 0
+            };
+            create.Click += (sender, e) => AskedToCreate();
+            _templates.Children.Add(create);
+        }
+
+        /// <summary>
+        /// One row of buttons per plot whose regions left the answer open. Which of a plot's
+        /// two regions carries the area varies by plot, so the tool asks rather than picking.
+        /// </summary>
+        private void TheRegionChoices()
+        {
+            foreach (PlotReading reading in _lastRun.Readings)
+            {
+                if (reading.ChosenRegion != null || reading.RegionsHoldingAnArea.Count < 2) continue;
+
+                _templates.Children.Add(Faint("   " + reading.PlotId + ", pick its intervention area:"));
+
+                var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+                foreach (RegionArea region in reading.RegionsHoldingAnArea)
+                {
+                    string plotId = reading.PlotId;
+                    string typeName = region.TypeName;
+                    var choice = new Button
+                    {
+                        Content = typeName + "   " + region.Printed,
+                        Padding = PanelMetrics.CellPad,
+                        Margin = PanelMetrics.Gap
+                    };
+                    choice.Click += (sender, e) =>
+                    {
+                        _chosenRegions[plotId] = typeName;
+                        AskedToCreate();
+                    };
+                    row.Children.Add(choice);
+                }
+
+                _templates.Children.Add(row);
+            }
+        }
+
+        private void Ticked(PlotTicks next)
+        {
+            _ticks = next;
+            Changed();
+        }
+
+        /// <summary>
+        /// Anything that could move a number throws away the last run and the confirmation
+        /// with it, so a confirmed pair of areas never carries over onto a different set of
+        /// plots and a refusal never sits under a choice that has since changed.
+        /// </summary>
+        private void Changed()
+        {
+            _lastRun = null;
+            _confirmedIdentical = false;
+            _chosenRegions.Clear();
+            Preselect();
+            RedrawTemplates();
+        }
+
+        /// <summary>
+        /// The component on the ticked plots preselects a template. A component matching none,
+        /// matching more than one, or plots that disagree all leave the pick to the user, and
+        /// a template the user has already picked by hand is never moved.
+        /// </summary>
+        private void Preselect()
+        {
+            if (_facts == null || _ticks.Count == 0 || _picked != null) return;
+
+            AgreedValue component = new AgreedValue(_ticks.Ticked
+                .Select(plotId => new PlotText(plotId, _facts.ComponentOn(plotId))));
+
+            TemplateChoice choice = TemplateForComponent.For(component, null);
+            if (choice.NeedsAPick) return;
+
+            _pickedAs = choice.Preselected;
+            if (_outputName.Text.Length == 0)
+            {
+                _outputName.Text = CreateWords.SuggestedName(_pickedAs, component.Value, _ticks.Ticked);
+            }
+        }
+
+        private void AskedToCreate()
+        {
+            if (_pickedAs == null) return;
+
+            RememberedNames.Remember(_preparedBy.Text, _position.Text);
+
+            _handler.Asked = new KpiCreateAsk(
+                _ticks.Ticked,
+                _pickedAs,
+                _picked == null ? string.Empty : Path.Combine(TemplateFolder.Read(), _picked.FileName),
+                _outputName.Text,
+                _componentParameter,
+                _referenceParameter,
+                _locationParameter,
+                _confirmedIdentical,
+                _chosenRegions);
+
+            Say("Creating.");
+            Ask(KpiRequest.Create);
+        }
+
+        private void Found(KpiPlotFacts facts)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _facts = facts;
+                _ticks = new PlotTicks(facts.Plots, _ticks.Ticked);
+                _modelFolder = facts.ModelFolder;
+
+                if (_componentParameter.Length == 0 && facts.ComponentNames.Count > 0)
+                {
+                    _componentParameter = facts.ComponentNames[0];
+                }
+
+                if (_locationParameter.Length == 0 && facts.LocationNames.Count > 0)
+                {
+                    _locationParameter = facts.LocationNames[0];
+                }
+
+                RedrawTemplates();
+            });
+        }
+
+        private void Made(KpiCreateRun run, string reportWhere)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _lastRun = run;
+                RedrawTemplates();
+            });
+        }
+
+        private TextBlock Head(string text)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                FontWeight = FontWeights.Bold,
+                Margin = PanelMetrics.Heading
+            };
+        }
+
+        private TextBlock Warned(string text)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = _theme.Warning,
+                Margin = PanelMetrics.Row
+            };
+        }
+
+        private UIElement Boxed(string caption, TextBox box)
+        {
+            var row = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+            var label = new TextBlock
+            {
+                Text = caption,
+                Width = PanelMetrics.LabelWidth,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(label, Dock.Left);
+            row.Children.Add(label);
+            row.Children.Add(Reparented(box));
+            return row;
+        }
+
+        /// <summary>
+        /// A row of buttons rather than a ComboBox, because a combo box carries its own item
+        /// list across a redraw and this block is thrown away and built again on every change.
+        /// </summary>
+        private UIElement Picker(
+            string caption, IReadOnlyList<string> names, string chosen, Action<string> pick)
+        {
+            var row = new StackPanel { Margin = PanelMetrics.Row };
+            row.Children.Add(new TextBlock { Text = caption, VerticalAlignment = VerticalAlignment.Center });
+
+            if (names.Count == 0)
+            {
+                row.Children.Add(Faint("   nothing in this model holds that word"));
+                return row;
+            }
+
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal };
+            foreach (string name in names)
+            {
+                string which = name;
+                var choice = new Button
+                {
+                    Content = which,
+                    Padding = PanelMetrics.CellPad,
+                    Margin = PanelMetrics.Gap,
+                    FontWeight = string.Equals(which, chosen, StringComparison.Ordinal)
+                        ? FontWeights.Bold
+                        : FontWeights.Normal
+                };
+                choice.Click += (sender, e) => pick(which);
+                buttons.Children.Add(choice);
+            }
+
+            row.Children.Add(buttons);
+            return row;
         }
 
         private void Picked(RecognisedWorkbook workbook)
