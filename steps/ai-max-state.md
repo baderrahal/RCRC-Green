@@ -1,6 +1,30 @@
 # ai-max state
 
-Phase: 9, ship. Twentieth pass, the report for the first full run round.
+Phase: 9, ship. Twenty first pass, off the second full run in Revit.
+
+8 created, 6 refused, 3 needing attention. Five items, and the two schedule faults are the same
+shape as each other.
+
+**A category is a number, not a display name.** KERBS is built on Slab Edges. Capture read the
+name with `Category.GetCategory`, which resolves any category id, and create looked it up in
+`Document.Settings.Categories`, which is the top of the Object Styles tree and does not hold it.
+Two lookups over two different sets for one fact, the sixth time that shape has been the bug.
+`Category.BuiltInCategory` is captured now and no name is matched anywhere.
+
+**A Yes is the integer 1.** Every captured filter value was flattened to text and handed back to
+the string constructor, so the two schedules filtering on PRX_Included In Budget equals Yes were
+refused as an invalid value for the field and filter type. `FilterValue` carries its kind and
+all four survive a round trip.
+
+Annotation crop is forced on for every plan view rather than copied, because the sibling had it
+off and copying passed the fault straight on. The sheet number dropdown offers numbers NOT in
+use, a number that will be refused says so under the box, and step 5 counts them. A calculated
+field is named as one rather than blamed on the category.
+
+Nothing in this round has been through Revit, and no schedule has ever been created by this tool
+at all.
+
+Before that, the twentieth pass, the report for the first full run round.
 
 Pull request 25 merged as `281056e` with 379 tests on the runner, and pull request 26 as
 `6e64c73` with 398, 0 failed and 0 skipped on each. Both log entries carry their own merge and

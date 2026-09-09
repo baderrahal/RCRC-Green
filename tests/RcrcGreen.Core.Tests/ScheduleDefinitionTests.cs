@@ -7,6 +7,15 @@ namespace RcrcGreen.Core.Tests
     public class ScheduleDefinitionTests
     {
         /// <summary>
+        /// Plain parameter fields, which is what almost every field is. A calculated one is
+        /// built with ScheduleFieldEntry.Calculated where a test wants one.
+        /// </summary>
+        private static ScheduleFieldEntry[] Fields(params string[] names)
+        {
+            return names.Select(ScheduleFieldEntry.Parameter).ToArray();
+        }
+
+        /// <summary>
         /// The real HARDSCAPE SCHEDULE on plot DM-11, read off the user's screenshot. Two
         /// filters, and only one of them names the plot.
         /// </summary>
@@ -15,15 +24,13 @@ namespace RcrcGreen.Core.Tests
             return new ScheduleDefinition(
                 new ViewType("600", "HARDSCAPE SCHEDULE"),
                 "Floors",
-                new[]
-                {
+                Fields(
                     "PRX_Hardscape Image", "PRX_Hardscape Code", "Description",
                     "PRX_Hardscape Material", "PRX_Hardscape Finish", "PRX_Hardscape Pattern",
                     "PRX_Hardscape Color", "PRX_Hardscape Joint", "PRX_Hardscape Size", "Area",
                     "PRX_Hardscape Specification", "PRX_Hardscape Detail Ref.", "Area Conversion",
                     "Cost", "TOTAL SAR", "PRX_Ref Plot ID", "PRX_Included In Budget",
-                    "PRX_Element Grouping", "Phase Created"
-                },
+                    "PRX_Element Grouping", "Phase Created"),
                 new[]
                 {
                     new ScheduleFilterRule("PRX_Ref Plot ID", "DM-11"),
@@ -38,7 +45,7 @@ namespace RcrcGreen.Core.Tests
             return new ScheduleDefinition(
                 new ViewType("010", "LIST OF DRAWINGS"),
                 "Sheets",
-                new[] { "Sheet Numbering", "Sheet Name", "PRX_Sheet_Scale" },
+                Fields("Sheet Numbering", "Sheet Name", "PRX_Sheet_Scale"),
                 new[] { new ScheduleFilterRule("PRX_Plot_ID", "DM-11") },
                 true,
                 true);
@@ -91,8 +98,8 @@ namespace RcrcGreen.Core.Tests
         {
             ScheduleDefinition made = Hardscape().ForPlot("DM-28");
 
-            Assert.Equal("PRX_Hardscape Image", made.FieldsInOrder[0]);
-            Assert.Equal("Phase Created", made.FieldsInOrder[18]);
+            Assert.Equal("PRX_Hardscape Image", made.FieldsInOrder[0].Name);
+            Assert.Equal("Phase Created", made.FieldsInOrder[18].Name);
             Assert.Equal(19, made.FieldsInOrder.Count);
         }
 
@@ -106,12 +113,12 @@ namespace RcrcGreen.Core.Tests
             var furniture = new ScheduleDefinition(
                 new ViewType("600", "FURNITURE SCHEDULE"),
                 "Furniture",
-                new[] { "PRX_Ref Plot ID", "PRX_Furniture Lenght" },
+                Fields("PRX_Ref Plot ID", "PRX_Furniture Lenght"),
                 new[] { new ScheduleFilterRule("PRX_Ref Plot ID", "DM-11") },
                 true,
                 false);
 
-            Assert.Equal("PRX_Furniture Lenght", furniture.ForPlot("DM-28").FieldsInOrder[1]);
+            Assert.Equal("PRX_Furniture Lenght", furniture.ForPlot("DM-28").FieldsInOrder[1].Name);
         }
 
         [Fact]
@@ -139,7 +146,7 @@ namespace RcrcGreen.Core.Tests
             var everything = new ScheduleDefinition(
                 new ViewType("600", "ALL FURNITURE"),
                 "Furniture",
-                new[] { "Description" },
+                Fields("Description"),
                 new[] { new ScheduleFilterRule("PRX_Element Grouping", "HARDSCAPE") },
                 true,
                 false);

@@ -137,12 +137,14 @@ namespace RcrcGreen.Core
         {
             Line(report, "A plan view is created fresh. Nothing is copied or duplicated, and a");
             Line(report, "new view carries no annotation, dimensions, tags or detailing. Its view");
-            Line(report, "family type, its view template, its level and its three crop settings all");
-            Line(report, "come from ONE view of the same type that this model already holds on");
-            Line(report, "another plot, named above, so they are what the team built rather than");
-            Line(report, "anything matched on a name. Crop View, Crop Region Visible and Annotation");
-            Line(report, "Crop are copied because a view with Annotation Crop off draws the section");
-            Line(report, "markers of neighbouring plots straight through itself.");
+            Line(report, "family type, its view template, its level, Crop View and Crop Region");
+            Line(report, "Visible all come from ONE view of the same type that this model already");
+            Line(report, "holds on another plot, named above, so they are what the team built rather");
+            Line(report, "than anything matched on a name.");
+            Line(report, "ANNOTATION CROP IS NOT COPIED. It is on, on every plan view, and that is the");
+            Line(report, "tool's setting. Copying it was tried and did not work, because the siblings");
+            Line(report, "themselves disagree and one with it off passes the fault straight on. A view");
+            Line(report, "with it off draws the section markers of neighbouring plots through itself.");
             Line(report, "Where the model uses more than one view family type for one view type,");
             Line(report, "which sibling gets picked decides which one a new view gets. Run Scan Model");
             Line(report, "and read VIEW FAMILY TYPE PER VIEW TYPE to see where that is happening.");
@@ -158,7 +160,16 @@ namespace RcrcGreen.Core
             Line(report, "says where to cut. Whether a view type needs a section rather than a plan is");
             Line(report, "read off the kind of the view the model already holds for it.");
             Line(report, "A schedule is captured from a plot that already has it and rebuilt for");
-            Line(report, "the target plot, with only the filter naming the plot changed.");
+            Line(report, "the target plot, with only the filter naming the plot changed. It is built");
+            Line(report, "on Revit's own number for the category rather than on the category name,");
+            Line(report, "because Slab Edges could not be found by name and KERBS was refused on a");
+            Line(report, "model that holds it. A filter value goes back as the kind it came out as,");
+            Line(report, "so a Yes/No parameter goes back as 1 or 0 and not as the word, which is");
+            Line(report, "what Revit stores and what it will take.");
+            Line(report, "A field the new schedule could not take is named above with the reason. A");
+            Line(report, "calculated field, meaning a formula, a percentage, a count or a combined");
+            Line(report, "parameter, is defined inside the schedule that holds it, so Revit never");
+            Line(report, "offers it to a new one and it has to be written again by hand.");
             Line(report, "A schedule that lost a FILTER is deleted again inside the same");
             Line(report, "transaction, because it would show every plot's elements and read as");
             Line(report, "correct on a drawing. When Revit refuses that delete, the schedule is in");

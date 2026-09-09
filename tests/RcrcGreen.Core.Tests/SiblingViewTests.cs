@@ -182,7 +182,7 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(
                 "Set up from DM-18-(010) Overall Plan: family type (200) General Arrangement "
                 + "Layout, view template (010) Overall Plan, level Level 1, crop on, "
-                + "crop region hidden, annotation crop on.",
+                + "crop region hidden.",
                 plan.InWords());
         }
 
@@ -197,9 +197,12 @@ namespace RcrcGreen.Core.Tests
                 "DM-11-(010) Overall Plan", Overall, SiblingKind.Plan,
                 "TYPE", "TEMPLATE", "Level 1", new ViewCrop(true, true, false));
 
-            Assert.Equal(
-                "crop on, crop region shown, annotation crop off", made.Crop.InWords());
-            Assert.Contains("annotation crop off", made.InWords());
+            Assert.Equal("crop on, crop region shown", made.Crop.CopiedInWords());
+            Assert.Equal("crop on, crop region shown, annotation crop off", made.Crop.ToString());
+
+            // The setup line says only what was copied. Annotation crop is said separately,
+            // because it is the tool's own and not read off any view.
+            Assert.DoesNotContain("annotation crop", made.InWords());
         }
 
         [Fact]

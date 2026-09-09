@@ -255,12 +255,18 @@ namespace RcrcGreen.Core.Tests
         {
             string written = Report();
 
-            Assert.Contains("come from ONE view of the same type that this model already holds on", written);
+            Assert.Contains("all come from ONE view of the same type that this model already", written);
             Assert.DoesNotContain("No sheet was created and none can be yet", written);
 
-            // The three crop settings joined the family type, the template and the level this
-            // round, because every view the tool made had Annotation Crop off.
-            Assert.Contains("Crop are copied because a view with Annotation Crop off draws", written);
+            // Annotation crop stopped being copied this round. The sibling had it off, so
+            // copying it passed the fault straight on.
+            Assert.Contains("ANNOTATION CROP IS NOT COPIED", written);
+            Assert.Contains("Crop View and Crop Region", written);
+
+            // A schedule builds on the category number now, and a filter goes back as its kind.
+            Assert.Contains("Revit's own number for the category", written);
+            Assert.Contains("goes back as 1 or 0 and not as the word", written);
+            Assert.Contains("a formula, a percentage, a count or a combined", written);
 
             // The depth is the tool's own setting now. Four real sections disagreed with each
             // other, so there was never a rule in the model to copy.

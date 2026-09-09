@@ -86,6 +86,15 @@ namespace RcrcGreen.Revit
         private readonly Dictionary<string, double> _scrolledTo =
             new Dictionary<string, double>(StringComparer.Ordinal);
 
+        /// <summary>
+        /// One for every sheet number box on screen, called whenever any of them changes.
+        ///
+        /// A number typed into one box can make a second box wrong, because two plots given the
+        /// same number is a clash and neither of them knows about the other. Refreshing only the
+        /// box being typed in would leave the other reading as fine.
+        /// </summary>
+        private readonly List<Action> _numberWarnings = new List<Action>();
+
         // The sheets the user has described, and what they typed for each plot. Held here
         // rather than read back off the controls, because the step is thrown away and rebuilt
         // on every change and a control that has gone is not a place to keep the only copy.
@@ -245,6 +254,7 @@ namespace RcrcGreen.Revit
 
             _steps.Children.Clear();
             _headerText.Clear();
+            ForgetTheNumberWarnings();
 
             _modelName.Text = _model.DocumentTitle.Length == 0
                 ? "No model read yet" : _model.DocumentTitle;
@@ -289,6 +299,10 @@ namespace RcrcGreen.Revit
             }
 
             if (_runLine != null) _runLine.Text = RunLine();
+
+            // Every number box, not only the one being typed in. Two plots given one number is
+            // a clash neither box knows about on its own.
+            foreach (Action said in _numberWarnings) said();
         }
 
         private UIElement Step(StepState step)
@@ -973,6 +987,11 @@ namespace RcrcGreen.Revit
             };
         }
 
+        private void ForgetTheNumberWarnings()
+        {
+            _numberWarnings.Clear();
+        }
+
         private void SheetViewTicked(SheetBeingDescribed sheet, ViewType which, bool carried)
         {
             if (_filling) return;
@@ -1023,13 +1042,27 @@ namespace RcrcGreen.Revit
                 Text = sheet.NumberFor(plotId)
             };
 
-            foreach (string one in _model.SheetNumbersInUse) box.Items.Add(one);
+            // Numbers no sheet in this model carries. It used to offer the ones in use, so every
+            // entry in it was certain to be refused, and three sheets were lost to that in one
+            // run. Free typing stays, because the list is an offer and never a restriction.
+            foreach (string one in _model.FreeSheetNumbers) box.Items.Add(one);
+
+            var wrong = new TextBlock
+            {
+                Foreground = _theme.Warning,
+                TextWrapping = TextWrapping.Wrap,
+                Visibility = Visibility.Collapsed
+            };
 
             string forPlot = plotId;
             box.Loaded += (sender, e) => box.Text = sheet.NumberFor(forPlot);
 
-            // A keystroke changes what the headers say and nothing else, because rebuilding the
-            // tree under the cursor takes the cursor out of the box.
+            Action saidHere = () => ShowNumberFault(sheet, forPlot, wrong);
+            _numberWarnings.Add(saidHere);
+            saidHere();
+
+            // A keystroke changes what the headers and these lines say and nothing else, because
+            // rebuilding the tree under the cursor takes the cursor out of the box.
             box.AddHandler(
                 System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
                 new TextChangedEventHandler((sender, e) =>
@@ -1046,7 +1079,34 @@ namespace RcrcGreen.Revit
                 RefreshHeaders();
             };
 
-            return box;
+            var stacked = new StackPanel();
+            stacked.Children.Add(box);
+            stacked.Children.Add(wrong);
+            return stacked;
+        }
+
+        /// <summary>
+        /// What is wrong with one plot's number, said next to the box as it is typed rather than
+        /// found out from a refusal after Run.
+        /// </summary>
+        private void ShowNumberFault(SheetBeingDescribed sheet, string plotId, TextBlock wrong)
+        {
+            IReadOnlyList<SheetOrder> orders = SheetsWanted();
+            int which = _sheets.IndexOf(sheet);
+
+            IReadOnlyList<IReadOnlyDictionary<string, SheetNumberFault>> faults =
+                SheetNumbers.Faults(orders, _picked.Ticked, _model.SheetNumbersInUse);
+
+            SheetNumberFault fault;
+            if (which < 0 || which >= faults.Count
+                || !faults[which].TryGetValue(plotId, out fault))
+            {
+                wrong.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            wrong.Text = SheetNumbers.FaultInWords(fault);
+            wrong.Visibility = Visibility.Visible;
         }
 
         private TitleBlockType ChosenTitleBlock(SheetBeingDescribed sheet)
@@ -1107,9 +1167,23 @@ namespace RcrcGreen.Revit
 
         private string RunLine()
         {
+            string clashes = SheetNumbers.InWords(SheetNumbersThatWillBeRefused());
+
             return PlanNow().InWords()
                 + " Only marked cells on ticked plots are made, and nothing is copied from "
-                + "another plot. A sheet is made only for a plot with a sheet number typed in.";
+                + "another plot. A sheet is made only for a plot with a sheet number typed in."
+                + (clashes.Length == 0 ? string.Empty : " " + clashes);
+        }
+
+        /// <summary>
+        /// How many sheets this run would ask Revit for under a number it will not take. Three
+        /// sheets were refused that way in one run and nothing said so until afterwards.
+        /// </summary>
+        private int SheetNumbersThatWillBeRefused()
+        {
+            return SheetNumbers
+                .Problems(SheetsWanted(), _picked.Ticked, _model.SheetNumbersInUse)
+                .Count;
         }
 
         /// <summary>
