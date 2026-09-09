@@ -1,8 +1,8 @@
 # RCRC Green
 
-A Revit 2024 add-in for the landscape production team. The first tool in it is Drawing
-Sheet, which reads the model, shows a grid of which views exist per plot, and will create the
-missing ones.
+A Revit 2024 add-in for the landscape production team. Two tools. Drawing Sheet reads the
+model, shows a grid of which views exist per plot, and creates the missing ones. KPI will fill
+the client's GRP KPI Checklist workbook from a model, and this round it only scans.
 
 Read `.claude/skills/ai-max/SKILL.md` before doing any work in this repo. It sets the phase
 order, the writing rules and the reporting rules that everything here follows. The current phase
@@ -13,15 +13,19 @@ and creates them with correct names and, for a cross section, a cut across the m
 
 ## Running it
 
-**Drawing Sheet** is a dockable panel that stays open while the user works and reads the model
-every time it is shown. It is five numbered steps, one open at a time: PLOTS, VIEW TYPES, MARK,
-SHEETS, RUN. A shut step carries its own summary and an unusable one says why. A filled square is
-a view that exists and opens on a click, an empty one is missing and can be marked, one at a
-time or by row, by column or all at once. Every dropdown comes from the model. Step 5 holds the
-scope box counts, and Scan Model, in the top strip, reads the whole document not just the range.
+**Drawing Sheet** is a dockable panel that reads the model every time it is shown. It is five
+numbered steps, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step carries its
+own summary and an unusable one says why. A filled square is a view that exists and opens on a
+click, an empty one is missing and can be marked, one at a time, by row, by column or all at
+once. Every dropdown comes from the model. Step 5 holds the scope box counts, and Scan Model,
+in the top strip, reads the whole document not just the range.
 
 **Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
 schedules and sheets. One confirmation, one transaction, one undo, one report of what happened.
+
+**KPI Checklist**, the one button on the KPI panel, opens a pane of the model name, when it was
+read, KPI Scan and a status line. KPI Scan reads the whole document into a text file of nine
+sections, one per question the workbook raises, and creates nothing. Rules in `kpi-rules.md`.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
 `Addins\2024\` layout the build does not, so copying the output folder by hand leaves Revit
@@ -38,9 +42,9 @@ The whole suite. It is what the pull request gate runs and nothing in it needs R
 ## How this is laid out
 
 - `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation, and
-  `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panel
-- `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/` holds the two
-  PowerShell scripts and `.claude/rules/` the rules for each project
+  `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panes, each tool
+  under its own folder. `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/`
+  holds the PowerShell scripts and `.claude/rules/` the rules per project
 - `reports/` holds what a run wrote and **nothing in it is ever committed.** This repository is
   public and a report carries client view names, sheet numbers and plot identifiers, so
   `reports/README.md` is the only file in it that is tracked
@@ -140,13 +144,13 @@ index, through `commit-scope.py`, and a hook script that cannot be found blocks.
 
 ## Things that have gone wrong before
 
-Add to this whenever something breaks. Over time it is the most valuable part of this file,
-because it is the only part that cannot be rediscovered by reading the code.
+Add to this whenever something breaks. It is the only part that cannot be rediscovered by
+reading the code.
 
 **A guard that fails open reads exactly like a guard that passed.** `writing-check.sh` split
 its file list on newlines, so a name holding a space reached the scanner in pieces that each
 read as a file that is not there. It passed unchecked. A check that cannot see its own subject
-has to refuse.
+has to refuse. The KPI scan names every read that did not happen at the top of its file.
 
 **An assumption held for five rounds because nobody ran the thing.** The naming pattern came
 from four examples, the read was assumed to need a progress window, and PRX_Plot_ID was assumed
@@ -181,19 +185,16 @@ that has the category. A Yes/No filter was handed back the word Yes when Revit s
 rounds, one shape. Ask the API what a thing IS rather than what it is called.
 
 **Copying takes whatever state the thing is in, including nothing.** The first sheet the tool
-made was empty. It was built by copying one the user picked, and that one had no views on it.
-Nothing failed and nothing was reported. A sheet is described now, so what goes on it is stated.
+made was empty, copied from one the user picked that had no views on it. Nothing failed and
+nothing was reported. A sheet is described now, so what goes on it is stated.
 
 **A setting nobody recorded cannot be argued about.** A created view came out with a template
 that looked right and a family type that looked wrong. The code read both off one view four
 lines apart, but nothing said which view. Record where a value came from as you use it.
 
-## Writing
+## Writing and working agreements
 
 No em dash, no semicolon in prose, no emoji anywhere, commit messages included. No generated-by
 footer and no co-author line. Comments say why, not what. Full list in the ai-max writing rules.
-
-## Working agreements
-
 Never report a test result from a run made before the last file was written. Say UNKNOWN rather
 than filling a gap. Write what happened in `steps/log.md`, newest entry at the top.

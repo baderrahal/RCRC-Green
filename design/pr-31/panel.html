@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI pane and the ribbon, pull request 28</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  pre { background: #fff; border: 1px solid #ccc; padding: 10px 12px; max-width: 900px;
+        font-size: 12px; overflow-x: auto; }
+
+  /* The ribbon, drawn only to show the two panels side by side. Revit draws the real one. */
+  .ribbon { background: #e9e9e9; border: 1px solid #adadad; display: inline-block; }
+  .ribbon .tabs { background: #d8d8d8; padding: 3px 10px; font-size: 12px; }
+  .ribbon .tabs .on { background: #e9e9e9; padding: 3px 8px; border: 1px solid #adadad;
+                      border-bottom: none; }
+  .ribbon .panels { display: flex; padding: 6px 8px 0; }
+  .ribbon .panel { border-right: 1px solid #c8c8c8; padding: 0 12px 4px; text-align: center;
+                   font-size: 11px; }
+  .ribbon .panel:last-child { border-right: none; }
+  .ribbon .button { width: 62px; height: 52px; margin: 0 auto 4px; border: 1px solid #adadad;
+                    background: #f6f6f6; display: flex; align-items: flex-end;
+                    justify-content: center; padding-bottom: 4px; font-size: 11px;
+                    line-height: 1.2; white-space: pre-line; }
+  .ribbon .name { color: #444; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .pane { width: 420px; height: 260px; border: 1px solid #999; display: flex;
+          flex-direction: column; font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .strip  { background: #ececec; }
+  .dark  .strip  { background: #262626; }
+  .light .status { background: #ececec; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #262626; border-top: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+
+  .strip { padding: 6px 8px; display: flex; align-items: flex-start; }
+  .strip .named { flex: 1; min-width: 0; }
+  .strip .model { font-weight: bold; white-space: nowrap; overflow: hidden;
+                  text-overflow: ellipsis; }
+  .btn { display: inline-block; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+         padding: 2px 6px; margin: 0 6px 0 0; white-space: nowrap; }
+  .middle { flex: 1; margin: 8px; }
+  .status { padding: 6px 8px; }
+</style>
+</head>
+<body>
+
+<h1>KPI, first round: the ribbon and the pane</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/Kpi/KpiPanel.cs</code> and
+  <code>src/RcrcGreen.Revit/RcrcGreenApplication.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show whether the
+  second ribbon panel sits beside the first or wraps, how a two line button label breaks, what
+  the real fonts come out as, whether a pane with an empty middle reads as finished or as
+  broken, or whether the pane docks beside the Drawing Sheet pane or on top of it as a tab.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on it.
+  If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>The ribbon</h2>
+
+<p class="caption">One tab, two panels side by side. Drawing Sheet keeps its single button and
+is not touched. KPI is a new panel built to carry several buttons later and carries one this
+round. The Drawing Sheet button label is the one already shipped. Both are text only, no icon,
+which is how the first one shipped as well.</p>
+
+<div class="ribbon">
+  <div class="tabs">Architecture&nbsp;&nbsp;&nbsp;Annotate&nbsp;&nbsp;&nbsp;View&nbsp;&nbsp;&nbsp;
+    <span class="on">RCRC Green</span></div>
+  <div class="panels">
+    <div class="panel"><div class="button">Drawing
+Sheet</div><div class="name">Drawing Sheet</div></div>
+    <div class="panel"><div class="button">KPI
+Checklist</div><div class="name">KPI</div></div>
+  </div>
+</div>
+
+<h2>The pane, three states</h2>
+
+<p class="caption">Three things and no more: the model name with when it was last read, one
+button reading KPI Scan, and one status line. The middle is empty on purpose. The pane asks for
+the model name through its own external event the moment it is shown, so the first state lasts
+only until Revit answers. The words are all in <code>KpiPaneWords</code> in Core, with tests.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme, just shown, before Revit has answered with the model name.</p>
+<div class="pane light">
+  <div class="strip">
+    <div class="named">
+      <div class="model">No model open</div>
+      <div class="faint">Not scanned yet. Press KPI Scan.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle"></div>
+  <div class="status">Open a model. This pane reads its name as soon as it is shown.</div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme, model named, no scan yet.</p>
+<div class="pane dark">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Not scanned yet. Press KPI Scan.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle"></div>
+  <div class="status">Open a model. This pane reads its name as soon as it is shown.</div>
+</div>
+</div>
+
+</div>
+
+<div class="pair" style="margin-top: 24px;">
+
+<div>
+<p class="caption">Light theme, while the scan runs.</p>
+<div class="pane light">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Not scanned yet. Press KPI Scan.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle"></div>
+  <div class="status">Scanning the whole model. It reads every sheet, link and schedule, so it
+  takes longer than the Drawing Sheet read.</div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme, after a scan. Every number here is invented for the drawing. The
+real ones come from the file.</p>
+<div class="pane dark">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Read at 14:05:12, 96934 elements in 6.2 seconds.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle"></div>
+  <div class="status">1385 sheets, 1385 title blocks, 2 links with 1 loaded, 960 schedules, 412
+  filled regions read. 7 of 9 questions have something in the file. Report at
+  C:\Users\name\Desktop\RCRC-Green-KPI_RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached_2026-09-09_1405.txt
+  and C:\repo\RCRC-Green\reports\RCRC-Green-KPI_RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached_2026-09-09_1405.txt.</div>
+</div>
+</div>
+
+</div>
+
+<h2>The button that cannot open its pane</h2>
+
+<p class="caption">When the KPI pane fails to register at startup, the button stays on the
+ribbon and Revit shows this when it is pressed. The Drawing Sheet pane goes through the same
+guard on its own, so neither can cost the other.</p>
+
+<pre>The KPI pane did not register when Revit started, so it cannot be opened. The Drawing Sheet
+panel is unaffected. Restart Revit to try again.</pre>
+
+<h2>The file the scan writes</h2>
+
+<p class="caption">Nine numbered sections, each heading carrying its own count, and a block
+above section 1 naming every read that did not happen. This is the shape, with the counts
+invented. The wording of every line is in <code>KpiReport</code> in Core, with tests.</p>
+
+<pre>RCRC Green KPI scan
+Document: RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached
+Written: 2026-09-09 14:05
+Read only. Nothing in the model was changed and no workbook was touched.
+
+== READS THAT DID NOT HAPPEN (0) ==
+what was skipped, and why
+Every read ran. A zero anywhere below is a real zero.
+
+== 1 DOCUMENT (96934) ==
+== 2 PROJECT INFORMATION (41) ==
+== 3 TITLE BLOCKS AND SHEETS (1385) ==
+== 4 LINKED MODELS (2) ==
+== 5 SCHEDULES (960) ==
+== 6 SOFTSCAPE SCHEDULE FIELDS (160) ==
+== 7 EXISTING AND PROPOSED (2) ==
+== 8 AREAS AND UNITS (20) ==
+== 9 THE NINE QUESTIONS (7) ==
+of 9 have something in this file. The rest say NOT FOUND and where the near misses are.
+
+1. Which sheet holds the title block carrying PRX_COMPONENT and PRX_Plot_UID2?
+   FOUND. PRX_COMPONENT on 1385 title block instances, 1380 with a value. ...</pre>
+
+</body>
+</html>

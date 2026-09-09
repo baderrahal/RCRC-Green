@@ -30,6 +30,7 @@ it back.
 - `RCRC-Green-Scan_<model>_<date>_<time>.txt` from Scan Model
 - `RCRC-Green-ScopeBox_<model>_<date>_<time>.txt` from Assign Scope Boxes
 - `RCRC-Green-Run_<model>_<date>_<time>.txt` from Run
+- `RCRC-Green-KPI_<model>_<date>_<time>.txt` from KPI Scan
 
 A run report is worth reading top to bottom even when it went well, because the section headed
 CREATED WRONG AND STILL IN THE MODEL is the only place a schedule that has to be deleted by

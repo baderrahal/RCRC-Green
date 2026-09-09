@@ -157,13 +157,19 @@ It says at the top, in the file itself, that it is a mockup and not a screenshot
 cannot show how Revit will render it. That line is the whole point. A mockup passed off as a
 screenshot is worse than no mockup, because it answers a question it never asked.
 
-## One tab, one panel, one button
+## One tab, two panels
 
-The RCRC Green tab holds the Drawing Sheet panel and nothing else. Scan Model and Scope Box
-were buttons of their own and are not any more. `ScanModelCommand` and `AssignScopeBoxCommand`
-are still classes and still do the work, reached through the external event from inside the
-panel, because somebody deciding what to do is already in the panel and should not be hunting
-along a ribbon for the next step.
+The RCRC Green tab holds two panels side by side. Drawing Sheet holds its one button. KPI is
+built to carry several buttons later and carries one, KPI Checklist, which shows the KPI pane.
+Scan Model and Scope Box were buttons of their own and are not any more. `ScanModelCommand`
+and `AssignScopeBoxCommand` are still classes and still do the work, reached through the
+external event from inside the Drawing Sheet panel, because somebody deciding what to do is
+already in the panel and should not be hunting along a ribbon for the next step.
+
+Each pane has its own identifier, its own `ExternalEvent` and its own handler, and each is
+registered through the one guarded `Registered` in `RcrcGreenApplication`, so a pane that
+will not register costs its own button its pane and nothing else. The KPI pane's rules are in
+`kpi-rules.md`.
 
 ## Scan Model is the check on the panel
 
