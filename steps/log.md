@@ -8,9 +8,10 @@ Newest entry first.
 
 Branch `claude/inspiring-allen-xs113f`, restarted from main because pull request 28 is merged.
 Pull request 31, merged into main as `b9559ea`, and the gate executed 580 tests against it on
-the runner, 0 failed and 0 skipped, which matches the local run. Two fixes and nothing else. Both numbers were choices I made without a rule
-when the brief arrived cut off partway through section 4, both were written down as open
-questions in the twenty third pass entry, and this is the team's correction.
+the runner, 0 failed and 0 skipped, which matches the local run. Two fixes and nothing else.
+Both numbers were choices I made without a rule when the brief arrived cut off partway through
+section 4, both were written down as open questions in the twenty third pass entry, and this
+is the team's correction.
 
 **The row cap goes from 30 to 200.** The softscape lists in the client workbook run 80 to 89
 species, so a cap of 30 lost about 55 of them from section 6, and section 6 printing that

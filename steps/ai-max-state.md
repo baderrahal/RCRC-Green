@@ -5,8 +5,8 @@ Phase: 9, ship. Twenty fourth pass, two numbers the cut-off brief left to a gues
 The KPI row cap goes from 30 to 200, because the workbook's softscape lists run 80 to 89
 species and a cap of 30 lost about 55 of them from the section this round exists to fill. TREE
 joins the workbook words beside SOFTSCAPE, SHRUB, LAWN and HARDSCAPE. Both numbers were choices
-made without a rule when the brief arrived cut off, both were logged as open, and this is the
-team's correction. Pull request 31 merged as `b9559ea` with 580 tests on the runner, 0 failed
+made without a rule when the brief arrived cut off, both were logged as open questions, and
+this is the team's correction. Pull request 31 merged as `b9559ea` with 580 tests on the runner, 0 failed
 and 0 skipped, matching the local run. Nothing else changed.
 
 Before that, the report for the KPI scanner round.
