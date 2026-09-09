@@ -1,8 +1,8 @@
 # ai-max state
 
 Phase: 9, ship. Thirty fourth pass, five faults off the first real run of the KPI pane. Pull
-request 42 is open, 849 tests locally, 0 failed and 0 skipped, after five break watches were
-restored byte for byte.
+request 42 is merged into main as `36dc0f8`, 849 tests on the runner against its merged head and
+849 locally, 0 failed and 0 skipped on each.
 
 Every one of the five is about what reaches the screen rather than what the code computes.
 Create was handed the model's folder and called it the model, so a detached model read as no

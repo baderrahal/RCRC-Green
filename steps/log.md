@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-09, thirty fourth pass. Five faults off the first real run of the KPI pane
 
+Pull request 42, merged into main as `36dc0f8`. **The runner executed 849 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 849 ran, 0 failed and 0 skipped**, after
+the last file was written and after the five break watches were restored byte for byte.
+
 The pane reached Revit and five things were wrong with it. **Every one of them is a fault
 nothing in the suite could have caught**, because each is about what reaches the screen rather
 than about what the code computes. 849 tests locally, 0 failed and 0 skipped, after the last
