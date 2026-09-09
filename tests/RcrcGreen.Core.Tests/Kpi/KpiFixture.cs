@@ -42,10 +42,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             TitleBlockFacts titleBlocks = null,
             LinkFacts links = null,
             ScheduleFacts schedules = null,
-            string[] skipped = null)
+            string[] skipped = null,
+            bool projectInformationRead = true)
         {
             var document = new DocumentFacts(title, path, elementInstances, elementTypes, readSeconds, area, length);
-            return new KpiScan(document, projectInformation, titleBlocks, links, schedules, skipped);
+            return new KpiScan(document, projectInformation, titleBlocks, links, schedules, skipped, projectInformationRead);
         }
 
         /// <summary>
@@ -172,10 +173,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             string phaseFilterName = "",
             bool rowsWereRead = false,
             int bodyRowCount = 0,
-            string[][] rows = null)
+            string[][] rows = null,
+            bool rowsRefused = false)
         {
+            // rowsWereRead is the ordinary full read. rowsRefused is a full read whose rows
+            // Revit refused, so the schedule is read in full and holds no rows.
             return new ScannedSchedule(name, categoryName, onASheet, fields, filters, phaseName, phaseFilterName,
-                rowsWereRead, bodyRowCount, rows);
+                rowsWereRead || rowsRefused, rowsWereRead, bodyRowCount, rows);
         }
 
         public static ScheduleElements Elements(
@@ -257,11 +261,11 @@ namespace RcrcGreen.Core.Tests.Kpi
                 designOptions: new[] { Counted("Main Model", 57) },
                 wordValues: new[]
                 {
-                    new ParameterValueCount("PRX_Botanical Name", "Acacia tortilis", 30),
-                    new ParameterValueCount("PRX_Botanical Name", "Ziziphus spina-christi", 27),
-                    new ParameterValueCount("PRX_Tree Size", "3 m", 57),
-                    new ParameterValueCount("Phase Created", "Existing", 12),
-                    new ParameterValueCount("Phase Created", "Proposed", 45)
+                    new ParameterValueCount("PRX_Botanical Name", "Acacia tortilis", 30, false),
+                    new ParameterValueCount("PRX_Botanical Name", "Ziziphus spina-christi", 27, false),
+                    new ParameterValueCount("PRX_Tree Size", "3 m", 57, true),
+                    new ParameterValueCount("Phase Created", "Existing", 12, false),
+                    new ParameterValueCount("Phase Created", "Proposed", 45, false)
                 });
         }
 
@@ -329,8 +333,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 interventionAreas: new[]
                 {
-                    new MeasuredValue("ID Intervention Area", "10763.91", "1000.00 m²"),
-                    new MeasuredValue("ID Intervention Area", "5381.96", "500.00 m²")
+                    new MeasuredValue("ID Intervention Area", "Area", "10763.91", "1000.00 m²"),
+                    new MeasuredValue("ID Intervention Area", "Area", "5381.96", "500.00 m²")
                 });
 
             var links = Links(

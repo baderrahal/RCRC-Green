@@ -6,8 +6,8 @@ namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
     /// One schedule in the model. Every schedule gets its name, category, fields and filters.
-    /// The ones the workbook draws from also get their rows as printed, read once per view
-    /// type from the first plot that has it, and the report says which.
+    /// One copy per name the workbook draws from is read in full, the first in name order that
+    /// lists an element, and the report says which.
     /// </summary>
     public sealed class ScannedSchedule
     {
@@ -19,6 +19,7 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<ScheduleFilterRead> filters,
             string phaseName,
             string phaseFilterName,
+            bool readInFull,
             bool rowsWereRead,
             int bodyRowCount,
             IEnumerable<IReadOnlyList<string>> rows)
@@ -33,7 +34,8 @@ namespace RcrcGreen.Core.Kpi
             Filters = Held(filters);
             PhaseName = phaseName ?? string.Empty;
             PhaseFilterName = phaseFilterName ?? string.Empty;
-            RowsWereRead = rowsWereRead;
+            ReadInFull = readInFull;
+            RowsWereRead = readInFull && rowsWereRead;
             BodyRowCount = bodyRowCount;
             Rows = Held(rows);
         }
@@ -53,8 +55,16 @@ namespace RcrcGreen.Core.Kpi
         public string PhaseFilterName { get; }
 
         /// <summary>
-        /// False for a schedule whose rows were not read, which is most of them. Rows are read
-        /// for one schedule per view type, so a thousand plot copies are not all regenerated.
+        /// True for the one copy per workbook name the reader chose to read in full: rows,
+        /// elements and areas. False for the rest, which is most of them, so a thousand plot
+        /// copies are not all regenerated. This is the one flag every section prints from.
+        /// </summary>
+        public bool ReadInFull { get; }
+
+        /// <summary>
+        /// True when the rows came back. A schedule read in full whose rows Revit refused still
+        /// prints its block, with no rows and the skip named at the top of the file, because
+        /// its elements were read and are worth having.
         /// </summary>
         public bool RowsWereRead { get; }
 

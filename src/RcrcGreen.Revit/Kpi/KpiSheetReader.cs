@@ -38,7 +38,7 @@ namespace RcrcGreen.Revit.Kpi
 
             var perType = new Dictionary<string, int>(StringComparer.Ordinal);
             var typeById = new Dictionary<ElementId, FamilySymbol>();
-            var sheetsPerType = new Dictionary<ElementId, int>();
+            var sheetsPerType = new Dictionary<ElementId, HashSet<ElementId>>();
 
             foreach (FamilyInstance block in blocks)
             {
@@ -48,9 +48,16 @@ namespace RcrcGreen.Revit.Kpi
                 ParameterReading.Bump(perType, FamilyAndType(symbol));
                 typeById[symbol.Id] = symbol;
 
-                int already;
-                sheetsPerType.TryGetValue(symbol.Id, out already);
-                sheetsPerType[symbol.Id] = already + 1;
+                // Sheets, not instances. A sheet carrying a main block and a key plan family
+                // made in the title block category is ordinary, and counting instances read
+                // as more sheets than the model holds.
+                HashSet<ElementId> sheetsUsing;
+                if (!sheetsPerType.TryGetValue(symbol.Id, out sheetsUsing))
+                {
+                    sheetsUsing = new HashSet<ElementId>();
+                    sheetsPerType[symbol.Id] = sheetsUsing;
+                }
+                if (sheetById.ContainsKey(block.OwnerViewId)) sheetsUsing.Add(block.OwnerViewId);
             }
 
             List<TitleBlockCount> counts = perType
@@ -75,12 +82,13 @@ namespace RcrcGreen.Revit.Kpi
             {
                 ViewSheet sheet;
                 sheetById.TryGetValue(block.OwnerViewId, out sheet);
-                string number = sheet == null ? "(no sheet)" : sheet.SheetNumber;
+                string number = sheet == null ? KpiQuestions.NoSheet : sheet.SheetNumber;
                 string name = sheet == null ? string.Empty : sheet.Name;
 
                 foreach (string wanted in KpiNames.OnSheets)
                 {
-                    Parameter found = block.LookupParameter(wanted);
+                    int howMany;
+                    Parameter found = ParameterReading.Named(block, wanted, out howMany);
                     if (found == null) continue;
 
                     values.Add(new SheetValue(wanted, number, name, ParameterReading.Printed(found)));
@@ -98,19 +106,20 @@ namespace RcrcGreen.Revit.Kpi
         /// A type has no sheet number, so the two columns carry the family and type and how
         /// many sheets use it instead. The report labels them that way for this home.
         /// </summary>
-        private static ParameterHome OnTypes(IEnumerable<FamilySymbol> types, Dictionary<ElementId, int> sheetsPerType)
+        private static ParameterHome OnTypes(IEnumerable<FamilySymbol> types, Dictionary<ElementId, HashSet<ElementId>> sheetsPerType)
         {
             List<FamilySymbol> all = types.ToList();
             var values = new List<SheetValue>();
 
             foreach (FamilySymbol type in all)
             {
-                int used;
-                sheetsPerType.TryGetValue(type.Id, out used);
+                HashSet<ElementId> sheetsUsing;
+                int used = sheetsPerType.TryGetValue(type.Id, out sheetsUsing) ? sheetsUsing.Count : 0;
 
                 foreach (string wanted in KpiNames.OnSheets)
                 {
-                    Parameter found = type.LookupParameter(wanted);
+                    int howMany;
+                    Parameter found = ParameterReading.Named(type, wanted, out howMany);
                     if (found == null) continue;
 
                     values.Add(new SheetValue(
@@ -136,7 +145,8 @@ namespace RcrcGreen.Revit.Kpi
             {
                 foreach (string wanted in KpiNames.OnSheets)
                 {
-                    Parameter found = sheet.LookupParameter(wanted);
+                    int howMany;
+                    Parameter found = ParameterReading.Named(sheet, wanted, out howMany);
                     if (found == null) continue;
 
                     values.Add(new SheetValue(wanted, sheet.SheetNumber, sheet.Name, ParameterReading.Printed(found)));

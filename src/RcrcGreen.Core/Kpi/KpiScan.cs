@@ -21,7 +21,8 @@ namespace RcrcGreen.Core.Kpi
             TitleBlockFacts titleBlocks,
             LinkFacts links,
             ScheduleFacts schedules,
-            IEnumerable<string> skipped)
+            IEnumerable<string> skipped,
+            bool projectInformationRead)
         {
             if (document == null) throw new ArgumentNullException("document");
 
@@ -35,6 +36,7 @@ namespace RcrcGreen.Core.Kpi
             Skipped = (skipped ?? Enumerable.Empty<string>())
                 .Where(one => !string.IsNullOrEmpty(one))
                 .ToList();
+            ProjectInformationRead = projectInformationRead;
         }
 
         public DocumentFacts Document { get; }
@@ -43,6 +45,12 @@ namespace RcrcGreen.Core.Kpi
         /// Every parameter on the ProjectInfo element, no cap.
         /// </summary>
         public IReadOnlyList<ReadParameter> ProjectInformation { get; }
+
+        /// <summary>
+        /// False when the Project Information read threw, so an empty list is a read that
+        /// did not happen rather than a model with no parameters.
+        /// </summary>
+        public bool ProjectInformationRead { get; }
 
         public TitleBlockFacts TitleBlocks { get; }
 

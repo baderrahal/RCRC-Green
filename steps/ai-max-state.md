@@ -2,9 +2,9 @@
 
 Phase: 9, ship. Twenty-first pass, the KPI scanner, first round of the second tool.
 
-Branch `claude/inspiring-allen-xs113f`, pull request 28, waiting on a click. Locally, after the
-last file was written, the build came back with 0 warnings and 0 errors and the tests with 525
-passed and 0 failed, up from 398.
+Branch `claude/inspiring-allen-xs113f`, pull request 28, three commits, waiting on a click.
+Locally, after the last file was written, the build came back with 0 warnings and 0 errors and
+the tests with 541 passed and 0 failed, up from 398.
 
 **The KPI tool** will one day fill the client's GRP KPI Checklist workbook from a model and will
 never create anything in it. This round is the scanner: a second ribbon panel, KPI, with one
@@ -18,8 +18,10 @@ question saying FOUND or NOT FOUND and where to look.
 The brief arrived cut off partway through section 4 of the report. Sections 1 to 4 are as
 specified and 5 to 9 were designed here from questions 6 to 9. The choices made without a rule
 are numbered in `steps/log.md`. Nothing in this round has been through Revit and no KPI file has
-ever been written. Three of the new tests were watched failing against broken Core, in the
-second commit. The five lens review over the code is running and has not reported yet.
+ever been written. A five lens review raised 76 findings, 28 were sent to a skeptic each, 23
+were confirmed, 21 distinct, and all 21 are fixed in the third commit with the two report fixes
+queued before it. The 5 refuted and the 48 unverified are listed in the log entry, one line
+each, and stay out of the code.
 `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile` are unchanged.
 
 Before that, the twentieth pass, the report for the first full run round.

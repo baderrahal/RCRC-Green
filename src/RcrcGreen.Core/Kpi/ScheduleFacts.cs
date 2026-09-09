@@ -52,9 +52,21 @@ namespace RcrcGreen.Core.Kpi
             get { return Schedules.Where(schedule => schedule.IsSoftscape); }
         }
 
+        /// <summary>
+        /// False when the read threw and this is the empty fallback.
+        /// </summary>
+        public bool WasRead { get; private set; } = true;
+
+        public string WhyNotRead { get; private set; } = string.Empty;
+
         public static ScheduleFacts Nothing()
         {
             return new ScheduleFacts(null, 0, null, null, null);
+        }
+
+        public static ScheduleFacts NotRead(string why)
+        {
+            return new ScheduleFacts(null, 0, null, null, null) { WasRead = false, WhyNotRead = why ?? string.Empty };
         }
 
         private static IReadOnlyList<T> Held<T>(IEnumerable<T> items) where T : class

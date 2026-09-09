@@ -50,6 +50,8 @@ namespace RcrcGreen.Core.Kpi
 
         private static KpiAnswer WhichSheet(KpiScan scan)
         {
+            if (!scan.TitleBlocks.WasRead) return NotRead(1, KpiReport.TitleBlocksAndSheets);
+
             ParameterHome instances = scan.TitleBlocks.OnInstances;
             var parts = new List<string>();
             bool both = true;
@@ -69,15 +71,60 @@ namespace RcrcGreen.Core.Kpi
             }
 
             string said = string.Join(". ", parts.ToArray()) + ". ";
-            said += both
-                ? "Section 3 lists up to twenty sheets for each."
-                : "Section 3 lists the near misses.";
 
-            return new KpiAnswer(1, Questions[0], said, both);
+            if (!both)
+            {
+                return new KpiAnswer(1, Questions[0], said + "Section 3 lists the near misses.", false);
+            }
+
+            // The question asks for the sheet holding a title block that carries BOTH names.
+            // Two families each carrying one would satisfy the two tallies and answer nothing,
+            // so the two lists of sheets are intersected and the first is named.
+            HashSet<string> withUid2 = new HashSet<string>(
+                instances.ValuesOf(KpiNames.PlotUid2).Select(one => one.SheetNumber), StringComparer.Ordinal);
+
+            List<SheetValue> together = instances.ValuesOf(KpiNames.Component)
+                .Where(one => one.SheetNumber != NoSheet && withUid2.Contains(one.SheetNumber))
+                .OrderBy(one => HasSomething(one.Value) ? 0 : 1)
+                .ThenBy(one => one.SheetNumber, NaturalOrder.Comparer)
+                .ToList();
+
+            if (together.Count == 0)
+            {
+                return new KpiAnswer(1, Questions[0],
+                    said + "No title block instance carries both names on one sheet. Section 3 lists each on its own.",
+                    false);
+            }
+
+            SheetValue first = together[0];
+            return new KpiAnswer(1, Questions[0],
+                said + "Both on " + Count(together.Count, "sheet") + ", the first " + first.SheetNumber
+                + (first.SheetName.Length == 0 ? string.Empty : " " + first.SheetName)
+                + ". Section 3 lists up to twenty sheets for each.",
+                true);
+        }
+
+        /// <summary>
+        /// The sheet number the readers put on a title block found on no sheet.
+        /// </summary>
+        public const string NoSheet = "(no sheet)";
+
+        private static KpiAnswer NotRead(int number, string section)
+        {
+            return new KpiAnswer(number, Questions[number - 1],
+                "NOT READ. Section " + section + " was not read, see READS THAT DID NOT HAPPEN at the top.",
+                false);
+        }
+
+        private static bool HasSomething(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value);
         }
 
         private static KpiAnswer InstanceOrSheet(KpiScan scan)
         {
+            if (!scan.TitleBlocks.WasRead) return NotRead(2, KpiReport.TitleBlocksAndSheets);
+
             var parts = new List<string>();
             bool anywhere = false;
 
@@ -102,6 +149,8 @@ namespace RcrcGreen.Core.Kpi
 
         private static KpiAnswer WhatIsPlotUid2(KpiScan scan)
         {
+            if (!scan.TitleBlocks.WasRead) return NotRead(3, KpiReport.TitleBlocksAndSheets);
+
             var parts = new List<string>();
             var samples = new List<string>();
             int withValue = 0;
@@ -117,7 +166,7 @@ namespace RcrcGreen.Core.Kpi
 
                 foreach (SheetValue value in home.ValuesOf(KpiNames.PlotUid2))
                 {
-                    if (value.Value.Length == 0) continue;
+                    if (!HasSomething(value.Value)) continue;
 
                     withValue++;
                     if (PlotId.IsPlotId(value.Value)) plotShaped++;
@@ -143,6 +192,8 @@ namespace RcrcGreen.Core.Kpi
 
         private static KpiAnswer Neighbourhood(KpiScan scan)
         {
+            if (!scan.ProjectInformationRead) return NotRead(4, KpiReport.ProjectInformation);
+
             List<ReadParameter> near = scan.ProjectInformation
                 .Where(one => KpiNames.HoldsAny(one.Name, KpiNames.NeighbourhoodNearMisses))
                 .OrderBy(one => one.Name, NaturalOrder.Comparer)
@@ -168,6 +219,8 @@ namespace RcrcGreen.Core.Kpi
 
         private static KpiAnswer TheLink(KpiScan scan)
         {
+            if (!scan.Links.WasRead) return NotRead(5, KpiReport.LinkedModels);
+
             List<string> marked = scan.Links.NamesHoldingTheMark.ToList();
 
             if (marked.Count == 0)
@@ -188,9 +241,7 @@ namespace RcrcGreen.Core.Kpi
 
             if (contents.Count == 0)
             {
-                return new KpiAnswer(5, Questions[4],
-                    said + "None of them is loaded, so no filled region was read. Load it and scan again.",
-                    false);
+                return new KpiAnswer(5, Questions[4], said + NoDocumentToRead(scan.Links, true), false);
             }
 
             var found = new List<string>();
@@ -203,9 +254,9 @@ namespace RcrcGreen.Core.Kpi
                 parameter |= link.HoldsInterventionArea;
 
                 List<string> idTypes = link.TypeCounts.Select(one => one.Name)
-                    .Where(name => KpiNames.Holds(name, "ID")).ToList();
+                    .Where(name => KpiNames.Holds(name, KpiNames.RegionMark)).ToList();
                 List<string> idViews = link.ViewCounts.Select(one => one.Name)
-                    .Where(name => KpiNames.Holds(name, "ID")).ToList();
+                    .Where(name => KpiNames.Holds(name, KpiNames.RegionMark)).ToList();
 
                 string line = link.LinkName + " holds " + Count(link.FilledRegionCount, "filled region");
                 line += idTypes.Count > 0
@@ -228,8 +279,34 @@ namespace RcrcGreen.Core.Kpi
                 regions && parameter);
         }
 
+        /// <summary>
+        /// Why no filled region was read, built from the reads rather than asserted. A link
+        /// type can read Loaded while no placed instance hands back a document, and telling
+        /// somebody to load a link that is loaded sends them the wrong way.
+        /// </summary>
+        public static string NoDocumentToRead(LinkFacts links, bool markedOnly)
+        {
+            IEnumerable<ScannedLinkType> types = markedOnly ? links.Types.Where(type => type.HoldsTheMark) : links.Types;
+            IEnumerable<ScannedLinkInstance> instances = markedOnly ? links.Instances.Where(one => one.HoldsTheMark) : links.Instances;
+
+            int loadedTypes = types.Count(type => type.IsLoaded);
+            int placed = instances.Count();
+            int loadedInstances = instances.Count(one => one.IsLoaded);
+
+            if (loadedTypes == 0)
+            {
+                return "None is loaded, so no filled region was read. Load the link and scan again.";
+            }
+
+            return Count(loadedTypes, "link type") + " read" + (loadedTypes == 1 ? "s" : string.Empty)
+                + " Loaded and " + loadedInstances + " of " + Count(placed, "placed instance")
+                + " handed back a document, so no filled region was read. Place an instance and scan again.";
+        }
+
         private static KpiAnswer ScheduleNames(KpiScan scan)
         {
+            if (!scan.Schedules.WasRead) return NotRead(6, KpiReport.Schedules);
+
             List<ScannedSchedule> schedules = scan.Schedules.Schedules.ToList();
             int distinct = schedules.Select(one => one.NameWithoutThePlot).Distinct(StringComparer.Ordinal).Count();
 
@@ -261,41 +338,60 @@ namespace RcrcGreen.Core.Kpi
 
         private static KpiAnswer SoftscapeFields(KpiScan scan)
         {
-            ScannedSchedule read = scan.Schedules.Softscape.FirstOrDefault(one => one.RowsWereRead);
+            if (!scan.Schedules.WasRead) return NotRead(7, KpiReport.Schedules);
 
-            if (read == null)
+            List<ScannedSchedule> read = scan.Schedules.Softscape
+                .Where(one => one.ReadInFull)
+                .OrderBy(one => one.Name, NaturalOrder.Comparer)
+                .ToList();
+
+            if (read.Count == 0)
             {
                 bool named = scan.Schedules.Softscape.Any();
                 return new KpiAnswer(7, Questions[6],
                     named
-                        ? "A schedule named for SOFTSCAPE exists and its rows were not read. Section 5 has its name."
+                        ? "A schedule named for SOFTSCAPE exists and none was read in full. Section 5 has the names."
                         : "No schedule name holds SOFTSCAPE, so no field could be read. Section 5 lists every name.",
                     false);
             }
 
-            ScheduleElements elements = scan.Schedules.Elements
-                .FirstOrDefault(one => string.Equals(one.ScheduleName, read.Name, StringComparison.Ordinal));
+            // Every softscape schedule read in full, one part each, because the reader reads
+            // one copy per name and two names holding SOFTSCAPE both arrive here.
+            var parts = new List<string>();
+            bool anything = false;
 
-            List<string> counts = read.Fields.Where(field => field.IsCount).Select(field => field.Heading).ToList();
-            List<string> nameLike = elements == null
-                ? new List<string>()
-                : elements.ParameterNamesHolding("BOTANIC", "LATIN", "SPECIES").ToList();
+            foreach (ScannedSchedule schedule in read)
+            {
+                ScheduleElements elements = scan.Schedules.Elements
+                    .FirstOrDefault(one => string.Equals(one.ScheduleName, schedule.Name, StringComparison.Ordinal));
 
-            string said = read.Name + " has " + Count(read.Fields.Count, "field") + ", headed "
-                + string.Join(" | ", read.Fields.Select(field => field.Heading).ToArray()) + ". ";
-            said += counts.Count > 0
-                ? "Count fields, which is the quantity on a schedule with one row per tree: " + string.Join(", ", counts.ToArray()) + ". "
-                : "No Count field, so the quantity is a parameter rather than a row count. ";
-            said += nameLike.Count > 0
-                ? "Parameters on its elements holding BOTANIC, LATIN or SPECIES: " + string.Join(", ", nameLike.ToArray()) + ". "
-                : "No parameter on its elements holds BOTANIC, LATIN or SPECIES. ";
-            said += "Section 6 has the rows as printed and every value.";
+                List<string> counts = schedule.Fields.Where(field => field.IsCount).Select(field => field.Heading).ToList();
+                List<string> nameLike = elements == null
+                    ? new List<string>()
+                    : elements.ParameterNamesHolding("BOTANIC", "LATIN", "SPECIES").ToList();
 
-            return new KpiAnswer(7, Questions[6], said, true);
+                anything |= counts.Count > 0 || nameLike.Count > 0;
+
+                string said = schedule.Name + " has " + Count(schedule.Fields.Count, "field") + ", headed "
+                    + string.Join(" | ", schedule.Fields.Select(field => field.Heading).ToArray()) + ". ";
+                said += counts.Count > 0
+                    ? "Count fields: " + string.Join(", ", counts.ToArray()) + ". "
+                    : "No Count field. ";
+                said += nameLike.Count > 0
+                    ? "Parameters on its elements holding BOTANIC, LATIN or SPECIES: " + string.Join(", ", nameLike.ToArray())
+                    : "No parameter on its elements holds BOTANIC, LATIN or SPECIES";
+                parts.Add(said);
+            }
+
+            return new KpiAnswer(7, Questions[6],
+                string.Join(". ", parts.ToArray()) + ". Section 6 has the rows as printed and every value.",
+                anything);
         }
 
         private static KpiAnswer ExistingAndProposed(KpiScan scan)
         {
+            if (!scan.Schedules.WasRead) return NotRead(8, KpiReport.Schedules);
+
             var parts = new List<string>();
             parts.Add(scan.Schedules.Phases.Count == 0
                 ? "No phase read"
@@ -303,7 +399,7 @@ namespace RcrcGreen.Core.Kpi
 
             bool anything = false;
 
-            foreach (ScannedSchedule schedule in scan.Schedules.Softscape.Where(one => one.RowsWereRead))
+            foreach (ScannedSchedule schedule in scan.Schedules.Softscape.Where(one => one.ReadInFull))
             {
                 parts.Add(schedule.Name + " is on phase " + Shown(schedule.PhaseName)
                     + " with phase filter " + Shown(schedule.PhaseFilterName));
@@ -322,7 +418,9 @@ namespace RcrcGreen.Core.Kpi
                 List<string> statusNames = elements.ParameterNamesHolding(KpiNames.StatusWords).ToList();
                 if (statusNames.Count > 0)
                 {
-                    anything = true;
+                    // Phase Created and Phase Demolished are on every phased element, so they
+                    // are printed and never count as the thing that separates the trees.
+                    anything |= statusNames.Any(name => !KpiNames.BuiltInPhaseNames.Contains(name, StringComparer.Ordinal));
                     parts.Add("parameters on them holding " + Words(KpiNames.StatusWords) + ": "
                         + string.Join(", ", statusNames.ToArray()));
                 }
@@ -352,12 +450,14 @@ namespace RcrcGreen.Core.Kpi
 
         private static KpiAnswer Units(KpiScan scan)
         {
+            if (!scan.Schedules.WasRead) return NotRead(9, KpiReport.Schedules);
+
             ProjectUnit area = scan.Document.Area;
             int measured = scan.Schedules.Areas.Count;
 
             string said = "Raw areas come back in square feet, which is what Revit holds whatever the project "
                 + "shows. Printed areas come back in the project unit, " + area.Label
-                + (double.IsNaN(area.Accuracy) ? string.Empty : ", rounded to " + Number(area.Accuracy))
+                + (double.IsNaN(area.Accuracy) ? string.Empty : ", rounded to " + KpiReport.Step(area.Accuracy))
                 + ". " + Count(measured, "area") + (measured == 1 ? " was" : " were") + " measured both ways";
 
             said += measured > 0 ? " in section 8." : ", so section 8 has nothing to show the difference on.";
@@ -376,11 +476,6 @@ namespace RcrcGreen.Core.Kpi
         private static string Shown(string value)
         {
             return string.IsNullOrEmpty(value) ? "(empty)" : value;
-        }
-
-        private static string Number(double value)
-        {
-            return value.ToString("0.####", CultureInfo.InvariantCulture);
         }
 
         private static string Count(int howMany, string thing)

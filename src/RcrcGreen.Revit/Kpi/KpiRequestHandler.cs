@@ -41,10 +41,17 @@ namespace RcrcGreen.Revit.Kpi
 
         public Action<string> Told { get; set; }
 
+        /// <summary>
+        /// One slot. A Scan already waiting is kept when the pane asks for the model name,
+        /// because the pane asks every time it is shown and Revit can take a while to get to
+        /// the event, and a scan that the name request had overwritten left the status line
+        /// reading Scanning with nothing written. A scan names the model on its own.
+        /// </summary>
         public void Ask(KpiRequest wanted)
         {
             lock (_asking)
             {
+                if (_wanted == KpiRequest.Scan && wanted == KpiRequest.WhichModel) return;
                 _wanted = wanted;
             }
         }

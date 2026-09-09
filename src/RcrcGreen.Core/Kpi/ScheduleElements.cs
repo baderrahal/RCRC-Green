@@ -85,6 +85,18 @@ namespace RcrcGreen.Core.Kpi
             return WordValues.Where(one => KpiNames.HoldsAny(one.ParameterName, words));
         }
 
+        /// <summary>
+        /// The values of one name on one side, instances or types, so the two are never summed
+        /// under one heading.
+        /// </summary>
+        public IReadOnlyList<ParameterValueCount> ValuesOf(string parameterName, bool onType)
+        {
+            return WordValues
+                .Where(one => one.OnType == onType
+                    && string.Equals(one.ParameterName, parameterName, StringComparison.Ordinal))
+                .ToList();
+        }
+
         private static IReadOnlyList<T> Held<T>(IEnumerable<T> items) where T : class
         {
             if (items == null) return new List<T>();

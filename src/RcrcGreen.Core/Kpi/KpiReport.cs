@@ -40,6 +40,12 @@ namespace RcrcGreen.Core.Kpi
         public const string NotFound = "NOT FOUND";
 
         /// <summary>
+        /// Printed under a heading whose read threw, in place of its body, so an empty section
+        /// never reads as a model that holds nothing.
+        /// </summary>
+        public const string NotReadLine = "NOT READ. This section's read did not happen. READS THAT DID NOT HAPPEN at the top says why.";
+
+        /// <summary>
         /// The brief's cap on examples per name. A list of twenty says what a value looks
         /// like, and the count beside it says how many there were.
         /// </summary>
@@ -124,8 +130,17 @@ namespace RcrcGreen.Core.Kpi
 
             string said = unit.Label;
             if (unit.Id.Length > 0) said += ", id " + unit.Id;
-            if (!double.IsNaN(unit.Accuracy)) said += ", rounded to " + Number(unit.Accuracy);
+            if (!double.IsNaN(unit.Accuracy)) said += ", rounded to " + Step(unit.Accuracy);
             return said;
+        }
+
+        /// <summary>
+        /// A rounding step printed with every place it has. Revit rounds finer than four
+        /// places, and 0.00001 printed through the four place format read as rounded to 0.
+        /// </summary>
+        public static string Step(double accuracy)
+        {
+            return accuracy.ToString("0.############", CultureInfo.InvariantCulture);
         }
 
         private static void TheProjectInformation(StringBuilder report, KpiScan scan)
@@ -135,6 +150,14 @@ namespace RcrcGreen.Core.Kpi
                 .ToList();
 
             Heading(report, ProjectInformation, all.Count, "name | shared, built-in, or project or family | storage | GUID | value");
+
+            if (!scan.ProjectInformationRead)
+            {
+                Line(report, NotReadLine);
+                Line(report, string.Empty);
+                return;
+            }
+
             Line(report, "Every parameter on the Project Information element, no cap. The neighbourhood "
                 + "name is one of these.");
 
@@ -164,6 +187,14 @@ namespace RcrcGreen.Core.Kpi
             TitleBlockFacts facts = scan.TitleBlocks;
 
             Heading(report, TitleBlocksAndSheets, facts.SheetCount, "sheets");
+
+            if (!facts.WasRead)
+            {
+                Line(report, NotReadLine + " " + facts.WhyNotRead);
+                Line(report, string.Empty);
+                return;
+            }
+
             Line(report, Count(facts.SheetCount, "sheet") + ", of which " + facts.PlaceholderCount
                 + (facts.PlaceholderCount == 1 ? " is a placeholder" : " are placeholders")
                 + " with no title block.");
@@ -224,7 +255,7 @@ namespace RcrcGreen.Core.Kpi
                 // The ones with a value first, so twenty examples show what a value looks like
                 // wherever any sheet has one, rather than twenty blanks off the first sheets.
                 List<SheetValue> values = home.ValuesOf(wanted)
-                    .OrderBy(one => one.Value.Length == 0 ? 1 : 0)
+                    .OrderBy(one => string.IsNullOrWhiteSpace(one.Value) ? 1 : 0)
                     .ThenBy(one => one.SheetNumber, NaturalOrder.Comparer)
                     .ToList();
 
@@ -257,6 +288,14 @@ namespace RcrcGreen.Core.Kpi
             LinkFacts facts = scan.Links;
 
             Heading(report, LinkedModels, facts.Types.Count, "link types, " + Count(facts.Instances.Count, "placed instance"));
+
+            if (!facts.WasRead)
+            {
+                Line(report, NotReadLine + " " + facts.WhyNotRead);
+                Line(report, string.Empty);
+                return;
+            }
+
             Line(report, "link type | status | nested | name holds 00");
             foreach (ScannedLinkType type in facts.Types.OrderBy(one => one.Name, NaturalOrder.Comparer))
             {
@@ -281,7 +320,9 @@ namespace RcrcGreen.Core.Kpi
 
             if (facts.Contents.Count == 0)
             {
-                Line(report, "No link is loaded, so no filled region could be read. Load the link and scan again.");
+                Line(report, facts.Types.Count == 0 && facts.Instances.Count == 0
+                    ? "No link in the model, so there is no filled region to read."
+                    : KpiQuestions.NoDocumentToRead(facts, false));
                 Line(report, string.Empty);
                 return;
             }
@@ -339,10 +380,12 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  " + KpiNames.InterventionArea + ": on " + tally.Carrying + " of "
                 + Count(link.FilledRegionCount, "filled region") + ", " + tally.WithValue + " with a value, showing "
                 + Math.Min(ShownExamples, link.InterventionAreas.Count) + " of " + link.InterventionAreas.Count + ":");
-            Line(report, "  region type | raw, feet based | printed with its unit");
+            Line(report, "  region type | measures | raw | printed");
+            Line(report, "  The raw number is square feet only where measures reads Area. A number typed by "
+                + "hand measures nothing and prints with no unit.");
             foreach (MeasuredValue value in link.InterventionAreas.Take(ShownExamples))
             {
-                Line(report, "  " + Join(value.Label, value.Raw, value.Printed));
+                Line(report, "  " + Join(value.Label, value.Spec.Length == 0 ? "-" : value.Spec, value.Raw, value.Printed));
             }
             Line(report, string.Empty);
         }
@@ -355,6 +398,14 @@ namespace RcrcGreen.Core.Kpi
                 .ToList();
 
             Heading(report, Schedules, all.Count, "schedules, " + Count(facts.TemplateCount, "schedule template") + " not listed");
+
+            if (!facts.WasRead)
+            {
+                Line(report, NotReadLine + " " + facts.WhyNotRead);
+                Line(report, string.Empty);
+                return;
+            }
+
             Line(report, "name | category | fields | filters | on a sheet | workbook words in the name");
             foreach (ScannedSchedule schedule in all)
             {
@@ -380,9 +431,9 @@ namespace RcrcGreen.Core.Kpi
             }
             Line(report, string.Empty);
 
-            List<ScannedSchedule> readInFull = all.Where(one => one.RowsWereRead).ToList();
+            List<ScannedSchedule> readInFull = all.Where(one => one.ReadInFull).ToList();
             Line(report, "READ IN FULL, " + readInFull.Count + ", one per name the workbook draws from, "
-                + "from the first plot that has it");
+                + "the first in name order that lists an element");
             foreach (ScannedSchedule schedule in readInFull)
             {
                 Line(report, string.Empty);
@@ -410,9 +461,16 @@ namespace RcrcGreen.Core.Kpi
             List<ScannedSchedule> softscape = scan.Schedules.Softscape
                 .OrderBy(one => one.Name, NaturalOrder.Comparer)
                 .ToList();
-            List<ScannedSchedule> read = softscape.Where(one => one.RowsWereRead).ToList();
+            List<ScannedSchedule> read = softscape.Where(one => one.ReadInFull).ToList();
 
             Heading(report, SoftscapeFields, softscape.Count, "schedules named for SOFTSCAPE, " + read.Count + " read in full");
+
+            if (!scan.Schedules.WasRead)
+            {
+                Line(report, NotReadLine + " " + scan.Schedules.WhyNotRead);
+                Line(report, string.Empty);
+                return;
+            }
 
             if (softscape.Count == 0)
             {
@@ -433,9 +491,8 @@ namespace RcrcGreen.Core.Kpi
 
                 List<string> counts = schedule.Fields.Where(field => field.IsCount).Select(field => field.Heading).ToList();
                 Line(report, counts.Count == 0
-                    ? "  No Count field. The quantity is a parameter rather than a row count."
-                    : "  Count fields, which is the quantity on a schedule with one row per tree: "
-                        + string.Join(", ", counts.ToArray()));
+                    ? "  No Count field."
+                    : "  Count fields: " + string.Join(", ", counts.ToArray()));
 
                 TheRows(report, schedule);
 
@@ -448,12 +505,21 @@ namespace RcrcGreen.Core.Kpi
 
         private static void TheRows(StringBuilder report, ScannedSchedule schedule)
         {
+            if (!schedule.RowsWereRead)
+            {
+                Line(report, "  rows as printed: not read. READS THAT DID NOT HAPPEN at the top says why. The "
+                    + "elements it lists were read and follow.");
+                return;
+            }
+
             Line(report, "  rows as printed, showing " + Math.Min(ShownRows, schedule.Rows.Count) + " of "
                 + schedule.BodyRowCount + ". The first row is usually the headings and the last usually the "
                 + "total. When fewer are shown than there are, the last one shown is the schedule's last row.");
+            Line(report, "  The rows are as the schedule last regenerated, which can be older than the elements "
+                + "listed count below it when the model changed since and the schedule was not opened.");
             foreach (IReadOnlyList<string> row in schedule.Rows.Take(ShownRows))
             {
-                Line(report, "  " + Join(row.Select(cell => cell.Length == 0 ? "-" : cell).ToArray()));
+                Line(report, "  " + Join(row.Select(cell => cell == null || cell.Length == 0 ? "-" : cell).ToArray()));
             }
         }
 
@@ -494,17 +560,25 @@ namespace RcrcGreen.Core.Kpi
 
             foreach (string name in names)
             {
-                List<ParameterValueCount> values = elements.WordValues
-                    .Where(one => string.Equals(one.ParameterName, name, StringComparison.Ordinal))
-                    .OrderByDescending(one => one.Count)
-                    .ThenBy(one => one.Value, NaturalOrder.Comparer)
-                    .ToList();
-
-                Line(report, "  " + name + ", " + Count(values.Count, "distinct value")
-                    + (values.Count > ShownValues ? ", showing " + ShownValues : string.Empty) + ":");
-                foreach (ParameterValueCount value in values.Take(ShownValues))
+                // Instances and types apart. One name bound to both put the same tree under
+                // two values and counted 114 over 57 listed.
+                foreach (bool onType in new[] { false, true })
                 {
-                    Line(report, "    " + Join(Shown(value.Value), Count(value.Count, "element")));
+                    List<ParameterValueCount> values = elements.ValuesOf(name, onType)
+                        .OrderByDescending(one => one.Count)
+                        .ThenBy(one => one.Value, NaturalOrder.Comparer)
+                        .ToList();
+                    if (values.Count == 0) continue;
+
+                    Line(report, "  " + name + " on " + (onType ? "types" : "instances") + ", "
+                        + Count(values.Count, "distinct value")
+                        + (values.Count > ShownValues ? ", showing " + ShownValues : string.Empty)
+                        + ", counts add to " + values.Sum(one => one.Count) + " over "
+                        + Count(elements.ElementCount, "element") + " listed:");
+                    foreach (ParameterValueCount value in values.Take(ShownValues))
+                    {
+                        Line(report, "    " + Join(Shown(value.Value), Count(value.Count, "element")));
+                    }
                 }
             }
         }
@@ -514,6 +588,14 @@ namespace RcrcGreen.Core.Kpi
             ScheduleFacts facts = scan.Schedules;
 
             Heading(report, ExistingAndProposed, facts.Phases.Count, "phases in the model, in order");
+
+            if (!facts.WasRead)
+            {
+                Line(report, NotReadLine + " " + facts.WhyNotRead);
+                Line(report, string.Empty);
+                return;
+            }
+
             int number = 0;
             foreach (string phase in facts.Phases)
             {
@@ -522,7 +604,7 @@ namespace RcrcGreen.Core.Kpi
             }
             Line(report, string.Empty);
 
-            foreach (ScannedSchedule schedule in facts.Softscape.Where(one => one.RowsWereRead).OrderBy(one => one.Name, NaturalOrder.Comparer))
+            foreach (ScannedSchedule schedule in facts.Softscape.Where(one => one.ReadInFull).OrderBy(one => one.Name, NaturalOrder.Comparer))
             {
                 Line(report, schedule.Name + ": phase " + Shown(schedule.PhaseName) + ", phase filter "
                     + Shown(schedule.PhaseFilterName) + ", filters "
@@ -545,9 +627,12 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, string.Empty);
             }
 
+            // Matched on the heading alone, then labelled with the schedule, so nothing in a
+            // schedule name can put a heading on this list.
             List<string> headings = facts.Schedules
-                .SelectMany(schedule => schedule.Fields.Select(field => schedule.NameWithoutThePlot + ": " + field.Heading))
-                .Where(line => KpiNames.HoldsAny(line.Substring(line.IndexOf(": ", StringComparison.Ordinal) + 2), "EXISTING", "PROPOSED"))
+                .SelectMany(schedule => schedule.Fields
+                    .Where(field => KpiNames.HoldsAny(field.Heading, "EXISTING", "PROPOSED"))
+                    .Select(field => schedule.NameWithoutThePlot + ": " + field.Heading))
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(line => line, NaturalOrder.Comparer)
                 .ToList();
@@ -565,6 +650,14 @@ namespace RcrcGreen.Core.Kpi
             ScheduleFacts facts = scan.Schedules;
 
             Heading(report, AreasAndUnits, facts.Areas.Count, "areas measured off elements the marked schedules list");
+
+            if (!facts.WasRead)
+            {
+                Line(report, NotReadLine + " " + facts.WhyNotRead);
+                Line(report, string.Empty);
+                return;
+            }
+
             Line(report, "Project area unit: " + Unit(scan.Document.Area));
             Line(report, "schedule | parameter | element | raw, square feet | square metres worked out from the raw | as printed");
             foreach (MeasuredArea area in facts.Areas)
@@ -575,7 +668,7 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
 
             List<ScannedSchedule> read = facts.Marked
-                .Where(one => one.RowsWereRead && !one.IsSoftscape)
+                .Where(one => one.ReadInFull && !one.IsSoftscape)
                 .OrderBy(one => one.Name, NaturalOrder.Comparer)
                 .ToList();
 
@@ -620,7 +713,8 @@ namespace RcrcGreen.Core.Kpi
 
         private static string Shown(string value)
         {
-            return string.IsNullOrEmpty(value) ? "(empty)" : value;
+            if (string.IsNullOrEmpty(value)) return "(empty)";
+            return string.IsNullOrWhiteSpace(value) ? "(whitespace only)" : value;
         }
 
         private static string Words(string[] words)

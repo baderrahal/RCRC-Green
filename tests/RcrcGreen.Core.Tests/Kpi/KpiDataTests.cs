@@ -59,11 +59,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Throws<ArgumentOutOfRangeException>(() => new DocumentFacts("NG05", "", 0, 0, double.NaN, null, null));
             Assert.Throws<ArgumentNullException>(() => new DocumentFacts(null, "", 0, 0, 0.0, null, null));
             Assert.Throws<ArgumentNullException>(() => new ProjectUnit(null, "", 0.01));
-            Assert.Throws<ArgumentNullException>(() => new KpiScan(null, null, null, null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new KpiScan(null, null, null, null, null, null, true));
             Assert.Throws<ArgumentNullException>(() => new ParameterHome(null, 0, null, null));
             Assert.Throws<ArgumentOutOfRangeException>(() => new ParameterHome("sheet", -1, null, null));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new ParameterValueCount("Phase Created", "Existing", -1));
-            Assert.Throws<ArgumentNullException>(() => new ParameterValueCount(null, "Existing", 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ParameterValueCount("Phase Created", "Existing", -1, false));
+            Assert.Throws<ArgumentNullException>(() => new ParameterValueCount(null, "Existing", 1, false));
             Assert.Throws<ArgumentNullException>(() => new ReadParameter(null, "shared", "String", "", false, "", ""));
             Assert.Throws<ArgumentNullException>(() => new SheetValue(null, "001", "A", "DM-41"));
             Assert.Throws<ArgumentNullException>(() => new TitleBlockCount(null, "A1", 1));
@@ -76,9 +76,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Throws<ArgumentNullException>(() => new LinkContents(null, "", 0, null, null, null, null, null));
             Assert.Throws<ArgumentOutOfRangeException>(() => new LinkContents("link", "", -1, null, null, null, null, null));
             Assert.Throws<ArgumentNullException>(
-                () => new ScannedSchedule(null, "Planting", false, null, null, "", "", false, 0, null));
+                () => new ScannedSchedule(null, "Planting", false, null, null, "", "", false, false, 0, null));
             Assert.Throws<ArgumentOutOfRangeException>(
-                () => new ScannedSchedule("Sheet List", "Sheets", false, null, null, "", "", false, -1, null));
+                () => new ScannedSchedule("Sheet List", "Sheets", false, null, null, "", "", false, false, -1, null));
             Assert.Throws<ArgumentNullException>(
                 () => new ScheduleElements(null, 0, null, null, null, null, null, null, null, null, null));
             Assert.Throws<ArgumentOutOfRangeException>(
@@ -106,7 +106,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             var scan = new KpiScan(
                 new DocumentFacts("NG05", null, 0, 0, 0.0, null, null),
-                null, null, null, null, null);
+                null, null, null, null, null, true);
 
             Assert.Empty(scan.ProjectInformation);
             Assert.Empty(scan.Skipped);
@@ -129,7 +129,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             var home = new ParameterHome("sheet", 0, null, null);
             var contents = new LinkContents("link", null, 0, null, null, null, null, null);
-            var schedule = new ScannedSchedule("Sheet List", null, false, null, null, null, null, false, 0, null);
+            var schedule = new ScannedSchedule("Sheet List", null, false, null, null, null, null, false, false, 0, null);
             var elements = new ScheduleElements("Sheet List", 0, null, null, null, null, null, null, null, null, null);
             var region = new FilledRegionRead(null, null, null);
 
@@ -348,8 +348,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "DM-11-(610) SOFTSCAPE SCHEDULE",
                 wordValues: new[]
                 {
-                    new ParameterValueCount("Phase Created", "Existing", 12),
-                    new ParameterValueCount("PRX_Botanical Name", "Acacia tortilis", 30)
+                    new ParameterValueCount("Phase Created", "Existing", 12, false),
+                    new ParameterValueCount("PRX_Botanical Name", "Acacia tortilis", 30, false)
                 });
 
             Assert.Equal(
@@ -390,6 +390,26 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "DM-11-(610) SOFTSCAPE SCHEDULE", "DM-11-(600) HARDSCAPE SCHEDULE" },
                 facts.Marked.Select(one => one.Name));
             Assert.Equal(new[] { "DM-11-(610) SOFTSCAPE SCHEDULE" }, facts.Softscape.Select(one => one.Name));
+        }
+
+        /// <summary>
+        /// A word is held when a run of letters starts with it. Solid Fill holds the letters
+        /// ID and is not it, PRX_COMPONENTS holds COMPONENT, and the 00 of the link, which has
+        /// no letter, is looked for anywhere.
+        /// </summary>
+        [Fact]
+        public void AWordIsHeldByARunOfLettersStartingWithItAndNotByLettersInsideAnother()
+        {
+            Assert.False(KpiNames.Holds("Solid Fill", "ID"));
+            Assert.False(KpiNames.Holds("Grid Plan", "ID"));
+            Assert.False(KpiNames.Holds("Guide Grid", "UID"));
+            Assert.True(KpiNames.Holds("ID Intervention Area", "ID"));
+            Assert.True(KpiNames.Holds("PRX_Plot_UID2", "UID"));
+            Assert.True(KpiNames.Holds("PRX_COMPONENTS", "COMPONENT"));
+            Assert.True(KpiNames.Holds("Neighbourhood Name", "NEIGH"));
+            Assert.True(KpiNames.Holds("SHRUBS&LAWN SCHEDULE", "LAWN"));
+            Assert.True(KpiNames.Holds("RCRC_NG05_00_LINK", "00"));
+            Assert.False(KpiNames.Holds("RCRC_NG05_01_LINK", "00"));
         }
     }
 }

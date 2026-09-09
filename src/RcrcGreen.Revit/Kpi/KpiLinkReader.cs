@@ -67,7 +67,7 @@ namespace RcrcGreen.Revit.Kpi
                 }
 
                 documentsSeen[key] = instance.Name;
-                contents.Add(Contents(instance.Name, linked));
+                contents.Add(Contents(instance.Name, linked, skipped));
             }
 
             return new LinkFacts(types, instances, contents);
@@ -85,7 +85,7 @@ namespace RcrcGreen.Revit.Kpi
             }
         }
 
-        private static LinkContents Contents(string instanceName, Document linked)
+        private static LinkContents Contents(string instanceName, Document linked, List<string> skipped)
         {
             List<FilledRegion> regions = new FilteredElementCollector(linked)
                 .OfClass(typeof(FilledRegion))
@@ -96,6 +96,7 @@ namespace RcrcGreen.Revit.Kpi
             var perView = new Dictionary<string, int>(StringComparer.Ordinal);
             var first = new List<FilledRegionRead>();
             var areas = new List<MeasuredValue>();
+            int twiceNamed = 0;
 
             foreach (FilledRegion region in regions)
             {
@@ -110,11 +111,22 @@ namespace RcrcGreen.Revit.Kpi
                     first.Add(new FilledRegionRead(typeName, viewName, ParameterReading.ReadAll(region)));
                 }
 
-                Parameter area = region.LookupParameter(KpiNames.InterventionArea);
+                // Read the way the tally counts, so the count of regions with a value and
+                // the list of values cannot be two different numbers.
+                int howMany;
+                Parameter area = ParameterReading.Named(region, KpiNames.InterventionArea, out howMany);
+                if (howMany > 1) twiceNamed++;
                 if (ParameterReading.HoldsAValue(area))
                 {
-                    areas.Add(new MeasuredValue(typeName, ParameterReading.Raw(area), ParameterReading.Printed(area)));
+                    areas.Add(new MeasuredValue(
+                        typeName, ParameterReading.Spec(area), ParameterReading.Raw(area), ParameterReading.Printed(area)));
                 }
+            }
+
+            if (twiceNamed > 0)
+            {
+                skipped.Add(twiceNamed + " filled regions in " + instanceName + " carry more than one parameter named "
+                    + KpiNames.InterventionArea + ". The first holding a value was read on each.");
             }
 
             return new LinkContents(

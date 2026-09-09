@@ -26,43 +26,46 @@ namespace RcrcGreen.Revit.Kpi
             var skipped = new List<string>();
             Stopwatch clock = Stopwatch.StartNew();
 
+            // Each fallback says it was never filled, so a section whose read threw prints
+            // NOT READ and never NOT FOUND. An empty list read as a model holding nothing.
             IReadOnlyList<ReadParameter> projectInformation = Guarded(
                 skipped, KpiReport.ProjectInformation,
                 () => ProjectInformation(document),
-                new List<ReadParameter>());
+                why => null);
 
             TitleBlockFacts titleBlocks = Guarded(
                 skipped, KpiReport.TitleBlocksAndSheets,
                 () => KpiSheetReader.Read(document),
-                TitleBlockFacts.Nothing());
+                TitleBlockFacts.NotRead);
 
             LinkFacts links = Guarded(
                 skipped, KpiReport.LinkedModels,
                 () => KpiLinkReader.Read(document, skipped),
-                LinkFacts.Nothing());
+                LinkFacts.NotRead);
 
             ScheduleFacts schedules = Guarded(
                 skipped, KpiReport.Schedules + " to " + KpiReport.AreasAndUnits,
                 () => KpiScheduleReader.Read(document, skipped),
-                ScheduleFacts.Nothing());
+                ScheduleFacts.NotRead);
 
             clock.Stop();
 
             DocumentFacts facts = Guarded(
                 skipped, KpiReport.Document,
                 () => Facts(document, clock.Elapsed.TotalSeconds, skipped),
-                new DocumentFacts(document.Title, string.Empty, 0, 0, clock.Elapsed.TotalSeconds, null, null));
+                why => new DocumentFacts(document.Title, string.Empty, 0, 0, clock.Elapsed.TotalSeconds, null, null));
 
-            return new KpiScan(facts, projectInformation, titleBlocks, links, schedules, skipped);
+            return new KpiScan(
+                facts, projectInformation, titleBlocks, links, schedules, skipped, projectInformation != null);
         }
 
         /// <summary>
-        /// Runs one section's read and hands back the fallback with the failure named when
+        /// Runs one section's read and hands back the fallback, built from the failure, when
         /// it throws. Every exception type is caught here on purpose, which this repo
         /// otherwise avoids: the section name, the exception type and its message all go in
         /// the file, and a partial report that says what is missing is the point of the guard.
         /// </summary>
-        private static T Guarded<T>(List<string> skipped, string section, Func<T> read, T fallback)
+        private static T Guarded<T>(List<string> skipped, string section, Func<T> read, Func<string, T> fallback)
         {
             try
             {
@@ -70,8 +73,9 @@ namespace RcrcGreen.Revit.Kpi
             }
             catch (Exception failed)
             {
-                skipped.Add("Section " + section + " was not read. " + failed.GetType().Name + ": " + failed.Message);
-                return fallback;
+                string why = failed.GetType().Name + ": " + failed.Message;
+                skipped.Add("Section " + section + " was not read. " + why);
+                return fallback(why);
             }
         }
 

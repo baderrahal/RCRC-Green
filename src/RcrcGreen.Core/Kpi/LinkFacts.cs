@@ -36,9 +36,27 @@ namespace RcrcGreen.Core.Kpi
             }
         }
 
+        /// <summary>
+        /// False when the read threw and this is the empty fallback, so no line can say no
+        /// link exists when the truth is that none was looked for.
+        /// </summary>
+        public bool WasRead { get; private set; } = true;
+
+        public string WhyNotRead { get; private set; } = string.Empty;
+
+        public bool AnyLoaded
+        {
+            get { return Types.Any(type => type.IsLoaded) || Instances.Any(one => one.IsLoaded); }
+        }
+
         public static LinkFacts Nothing()
         {
             return new LinkFacts(null, null, null);
+        }
+
+        public static LinkFacts NotRead(string why)
+        {
+            return new LinkFacts(null, null, null) { WasRead = false, WhyNotRead = why ?? string.Empty };
         }
 
         private static IReadOnlyList<T> Held<T>(IEnumerable<T> items) where T : class

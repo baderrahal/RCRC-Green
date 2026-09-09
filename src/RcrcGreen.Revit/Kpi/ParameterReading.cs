@@ -15,6 +15,12 @@ namespace RcrcGreen.Revit.Kpi
     internal static class ParameterReading
     {
         /// <summary>
+        /// Printed in place of a value Revit refused to give. Named so a tally never counts it
+        /// as a value, which it did when it was a bare string of nineteen characters.
+        /// </summary>
+        public const string CouldNotBeRead = "(could not be read)";
+
+        /// <summary>
         /// One parameter as plain values. The printed form is what a Properties panel shows
         /// and the raw form is the number underneath, both kept because one of the nine
         /// questions is the difference between them.
@@ -94,11 +100,11 @@ namespace RcrcGreen.Revit.Kpi
             }
             catch (Autodesk.Revit.Exceptions.ApplicationException)
             {
-                return "(could not be read)";
+                return CouldNotBeRead;
             }
             catch (InvalidOperationException)
             {
-                return "(could not be read)";
+                return CouldNotBeRead;
             }
         }
 
@@ -125,20 +131,82 @@ namespace RcrcGreen.Revit.Kpi
             }
             catch (Autodesk.Revit.Exceptions.ApplicationException)
             {
-                return "(could not be read)";
+                return CouldNotBeRead;
             }
             catch (InvalidOperationException)
             {
-                return "(could not be read)";
+                return CouldNotBeRead;
             }
         }
 
         /// <summary>
-        /// True when the parameter is there and holds something other than an empty string.
+        /// True when the parameter is there and holds something other than whitespace. A
+        /// single space is how a label is blanked in a title block family, and it is not a
+        /// value. Neither is the text printed for a read Revit refused.
         /// </summary>
         public static bool HoldsAValue(Parameter parameter)
         {
-            return parameter != null && parameter.HasValue && Printed(parameter).Length > 0;
+            if (parameter == null || !parameter.HasValue) return false;
+
+            string printed = Printed(parameter);
+            return !string.IsNullOrWhiteSpace(printed)
+                && !string.Equals(printed, CouldNotBeRead, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// The parameter of that name whose value is read, chosen the way <see cref="Tally"/>
+        /// counts: the first that holds a value, or the first there is. An element can carry
+        /// two parameters of one name, a family parameter and a shared one, and reading the
+        /// first while counting the other put a tally of 1385 with a value over a list of
+        /// none. Null when the element carries no parameter of that name.
+        /// </summary>
+        public static Parameter Named(Element element, string name, out int howMany)
+        {
+            howMany = 0;
+            if (element == null) return null;
+
+            IList<Parameter> all = element.GetParameters(name);
+            howMany = all == null ? 0 : all.Count;
+            if (howMany == 0) return null;
+
+            foreach (Parameter one in all)
+            {
+                if (HoldsAValue(one)) return one;
+            }
+
+            return all[0];
+        }
+
+        /// <summary>
+        /// What the parameter measures, in Revit's words, or empty for text and for a plain
+        /// number. Read off the definition so an area is known to be one without reading a
+        /// heading.
+        /// </summary>
+        public static string Spec(Parameter parameter)
+        {
+            try
+            {
+                Definition definition = parameter == null ? null : parameter.Definition;
+                if (definition == null) return string.Empty;
+
+                ForgeTypeId type = definition.GetDataType();
+                if (type == null || type.Empty()) return string.Empty;
+                if (!UnitUtils.IsMeasurableSpec(type)) return string.Empty;
+
+                return LabelUtils.GetLabelForSpec(type);
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            {
+                return string.Empty;
+            }
+            catch (InvalidOperationException)
+            {
+                return string.Empty;
+            }
+            catch (ArgumentException)
+            {
+                return string.Empty;
+            }
         }
 
         /// <summary>

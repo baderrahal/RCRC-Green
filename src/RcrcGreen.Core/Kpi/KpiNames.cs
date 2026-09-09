@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
@@ -64,17 +65,57 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const string LinkMark = "00";
 
+        /// <summary>
+        /// The word the workbook puts before FILLED REGION. Looked for as a whole run of
+        /// letters, because Solid Fill, Grid and Hidden all hold the letters and none of them
+        /// is it, and Solid Fill is the filled region type every Revit template ships with.
+        /// </summary>
+        public const string RegionMark = "ID";
+
+        /// <summary>
+        /// On every phased element in Revit, so their presence separates nothing. They are
+        /// still printed, and they never make question 8 count as answered.
+        /// </summary>
+        public static readonly string[] BuiltInPhaseNames = { "Phase Created", "Phase Demolished" };
+
         public static bool HoldsAny(string name, params string[] words)
         {
             if (string.IsNullOrEmpty(name) || words == null) return false;
 
-            return words.Any(word => !string.IsNullOrEmpty(word)
-                && CultureInfo.InvariantCulture.CompareInfo.IndexOf(name, word, CompareOptions.IgnoreCase) >= 0);
+            return words.Any(word => Holds(name, word));
         }
 
+        /// <summary>
+        /// A name holds a word when one of its runs of letters starts with the word, compared
+        /// without case. So PRX_COMPONENTS holds COMPONENT and Neighbourhood holds NEIGH, while
+        /// Solid Fill does not hold ID and Guide Grid does not hold UID. A word with no letter
+        /// in it, such as the 00 of the link, is looked for anywhere in the name.
+        /// </summary>
         public static bool Holds(string name, string word)
         {
-            return HoldsAny(name, word);
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(word)) return false;
+
+            if (!word.Any(char.IsLetter))
+            {
+                return CultureInfo.InvariantCulture.CompareInfo.IndexOf(name, word, CompareOptions.IgnoreCase) >= 0;
+            }
+
+            return LetterRuns(name).Any(run => run.StartsWith(word, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static IEnumerable<string> LetterRuns(string name)
+        {
+            int start = -1;
+            for (int at = 0; at <= name.Length; at++)
+            {
+                bool letter = at < name.Length && char.IsLetter(name[at]);
+                if (letter && start < 0) start = at;
+                if (!letter && start >= 0)
+                {
+                    yield return name.Substring(start, at - start);
+                    start = -1;
+                }
+            }
         }
 
         /// <summary>

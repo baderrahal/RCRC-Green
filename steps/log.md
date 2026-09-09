@@ -6,7 +6,7 @@ Newest entry first.
 
 ## 2026-09-09, twenty-first pass. KPI, first round: the scanner
 
-Branch `claude/inspiring-allen-xs113f`. Pull request 28, one commit. The first round of the
+Branch `claude/inspiring-allen-xs113f`. Pull request 28, three commits. The first round of the
 second tool, entered at the build phase inside a repo whose harness already exists. Nothing in
 the harness was rebuilt and nothing in the Drawing Sheet was touched.
 
@@ -120,8 +120,9 @@ ninth pass. It is in a file this round was told not to touch, so it is written d
 
 `dotnet build RcrcGreen.sln -c Release`, after the last file was written, 0 warnings and 0
 errors across all three projects, the Revit project included, against the Revit 2024 reference
-assemblies. `dotnet test`, after the last file was written, 525 passed, 0 failed and 0
-skipped, up from 398. 127 are new, all under `tests/RcrcGreen.Core.Tests/Kpi/`.
+assemblies. `dotnet test`, after the last file was written, 541 passed, 0 failed and 0
+skipped, up from 398. 143 are new, all under `tests/RcrcGreen.Core.Tests/Kpi/`. The first
+commit carried 525 and the third, with the review fixes and their tests, 541.
 
 The tests were written by a second session that was interrupted before it reported, and three
 of them failed on the first run here because the rows note in the report had changed after they
@@ -139,9 +140,135 @@ a count of their own. Restored, 525 passed.
 Every changed file was scanned for the banned words, em dashes and emoji before the commit and
 the hook checked the commit again.
 
-A review of the new code from five lenses, with a refuter on each finding, was started and had
-not finished when this was committed. Its findings are not in this entry and nothing in this
-round has been changed in response to it. The next pass reads them.
+The review from five lenses is written up below, under The review, and what was done with it.
+
+### The review, and what was done with it
+
+A five lens review ran over the new code after the first commit, each lens a separate session
+reading only, then one skeptic per finding prompted to refute it. 76 findings came back and
+28 were sent to the skeptics, the 48 past the cap being the ones the lenses had marked style
+and left unverified.
+
+Findings per lens:
+
+- core breaker: 14
+- Revit breaker: 9
+- two records of one fact: 16
+- spec coverage against the brief: 17
+- writing rules: 20
+
+Of the 28 verified, 23 were confirmed and 5 refuted. Two confirmed findings were raised twice by
+two lenses, the ID substring match and the Phase Created status word, so 21 distinct findings
+were confirmed. All 21 are fixed in the third commit, together with the two report fixes queued
+before the review reported, and nothing else was changed in response to it.
+
+**Fixed, the 21 confirmed.** A word is now held by a name when a run of letters starts with it,
+so Solid Fill and Grid no longer hold ID and Guide Grid no longer holds UID, while
+PRX_COMPONENTS still holds COMPONENT. Phase Created and Phase Demolished are printed and never
+make question 8 count as answered. Values of one parameter name are kept apart by whether they
+sat on the instance or the type, each side with its own sum against the elements listed. Question
+7 describes every softscape schedule read in full, counts as answered only when a Count field or a
+botanical parameter was found, and no longer deduces what the quantity is. A rounding step prints
+every place it has. A whitespace-only value, and the text printed for a read Revit refused, are
+not values, in the tally, in the ordering and in question 3, and a whitespace value prints as
+what it is. Used on N sheets counts sheets rather than title block instances. A Scan waiting on
+the external event is no longer replaced by the name request the pane raises when shown. The
+pane's read line belongs to the model that was scanned and drops when another model is named. A
+sheet value and an intervention area are read off the same parameter the tally counted, chosen
+the same way, so the count with a value and the list of values cannot disagree, and a region
+carrying two parameters of the name is counted once at the top of the file. Read in full is one
+flag on the schedule, decided by the reader, and a schedule whose rows Revit refused still prints
+its block with the reason named. The rows line says the rows are as the schedule last regenerated
+and can be older than the elements listed count, because refreshing them needs a transaction the
+rules forbid. The choosing rule is printed as the reader follows it, the first in name order that
+lists an element, and every copy passed over is named at the top of the file. No link loaded is
+built from the type and instance reads rather than from an empty list, so a loaded type with no
+placed instance says so. A section whose read threw prints NOT READ under its heading and every
+question drawing on it says NOT READ, never NOT FOUND. Question 1 is answered only when one title
+block instance carries both names on one sheet, and names the first such sheet. Section 4 prints
+what PRX_Intervention Area measures beside each value, and says the raw number is square feet
+only where that reads Area.
+
+**Fixed, the two queued.** The list of headings holding EXISTING or PROPOSED is matched on the
+heading alone. The read in full flag is as above.
+
+**Reported and unfixed, the 5 refuted and the 48 unverified.** None of these is in the code. One
+line each, worst first as the lenses ranked them:
+
+- refuted, core-breaker, src/RcrcGreen.Core/Kpi/KpiReport.cs:550: Section 7 headings list tests the schedule name when the name holds a colon
+- refuted, core-breaker, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:76: Questions 1 and 3 decide FOUND from two different records of one parameter
+- refuted, core-breaker, src/RcrcGreen.Core/Kpi/KpiReport.cs:454: Rows beyond ShownRows are dropped while the file promises the last row is the total
+- refuted, revit-breaker, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:451: Word values are counted twice for any name that sits on both the instance and its type
+- refuted, two-records, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:76: Q1 and Q3 apply two different rules for 'found' to one parameter in one state, so section 9 says FOUND and NOT FOUND about the same thing
+- unverified, spec-coverage, silent-wrong-answer, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:516: Areas skips every field it cannot resolve on the instance with a bare continue
+- unverified, spec-coverage, silent-wrong-answer, src/RcrcGreen.Revit/Kpi/KpiRequestHandler.cs:44: A WhichModel raised after KPI Scan and before Execute replaces the scan and leaves the status saying Scanning
+- unverified, writing, silent-wrong-answer, src/RcrcGreen.Core/Kpi/KpiReport.cs:64: Report header says nine sections, one per question, and the file is not laid out that way
+- unverified, writing, silent-wrong-answer, src/RcrcGreen.Core/Kpi/KpiReport.cs:93: "Every read ran. A zero anywhere below is a real zero." prints when reads were swallowed
+- unverified, core-breaker, crash, src/RcrcGreen.Core/Kpi/KpiReport.cs:456: A null cell in a schedule row throws NullReferenceException
+- unverified, spec-coverage, crash, src/RcrcGreen.Revit/RcrcGreenApplication.cs:46: The KPI pane is built before the Drawing Sheet button is placed, and the guard catches three exception types
+- unverified, revit-breaker, missing-from-brief, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:521: Areas skips every field it cannot resolve on the instance and writes nothing down
+- unverified, two-records, missing-from-brief, src/RcrcGreen.Core/Kpi/KpiReport.cs:415: Section 6 with schedules named but none read prints a heading of 160 and no body line
+- unverified, spec-coverage, missing-from-brief, src/RcrcGreen.Core/Kpi/KpiNames.cs:43: HARDSCAPE is treated as a workbook word though no workbook note names it
+- unverified, spec-coverage, missing-from-brief, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:159: Copies passed over as empty are not recorded, and the report describes the rule wrongly
+- unverified, spec-coverage, missing-from-brief, src/RcrcGreen.Core/Kpi/KpiReport.cs:639: A heading carries only a count, so a skipped section's (0) is the same text as a measured zero
+- unverified, core-breaker, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:424: Section 6 prints nothing under its heading when no softscape schedule was read in full, and nothing when elements are missing
+- unverified, core-breaker, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:610: An empty schedule's elements print as none read
+- unverified, core-breaker, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:582: Fixed plurals and one hardcoded nine
+- unverified, core-breaker, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:284: A model with no links is told to load the link and scan again
+- unverified, revit-breaker, style, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:202: The one-per-name cap holds only while schedule names parse, and the rule is a second copy of Core's
+- unverified, revit-breaker, style, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:69: Scanned runs unguarded for every schedule while one guard covers sections 5 to 8 together
+- unverified, revit-breaker, style, src/RcrcGreen.Revit/Kpi/ParameterReading.cs:36: The catch round Parameter.GUID is the .NET InvalidOperationException, which the Revit API never throws
+- unverified, two-records, style, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:199: WithoutThePlot is a verbatim copy of ScannedSchedule.NameWithoutThePlot
+- unverified, two-records, style, src/RcrcGreen.Core/Kpi/KpiNames.cs:45: IsSoftscape implies IsMarked only while SoftscapeWords is a subset of ScheduleWords, held in two arrays with no test
+- unverified, two-records, style, src/RcrcGreen.Core/Kpi/KpiPaneWords.cs:64: Nine is written three times: a literal 'of 9' here, KpiQuestions.HowMany, and the KpiAnswer guard
+- unverified, two-records, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:452: The report asserts what the Revit reader does with the last row, which Core cannot see
+- unverified, two-records, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:233: The column header for the type home is chosen by string match on Where, while what the columns hold is decided in the reader
+- unverified, two-records, style, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:171: The skipped list carries a note about a read that happened, and the pane counts it as a read that did not
+- unverified, two-records, style, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:264: Q7 describes the first softscape schedule in collector order and does not say there are others
+- unverified, two-records, style, src/RcrcGreen.Revit/Kpi/KpiSheetReader.cs:119: 'used on N sheets' is an instance count labelled as a sheet count
+- unverified, spec-coverage, style, src/RcrcGreen.Revit/Kpi/KpiScheduleReader.cs:49: Revision and keynote schedules are dropped from "the exact schedule names" with no line in the report or the log
+- unverified, spec-coverage, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:226: The value-first ordering of the twenty examples is a choice the brief did not make and the log does not record
+- unverified, spec-coverage, style, src/RcrcGreen.Revit/Kpi/KpiPanel.cs:124: The KPI Scan button label is a literal in the pane file
+- unverified, spec-coverage, style, src/RcrcGreen.Revit/Kpi/KpiReader.cs:49: The elapsed read time stops before the element count and unit reads
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiPaneWords.cs:16: Status line keeps saying "Open a model" after the model has been named
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:287: Question 7 decides which field is the quantity, against the rule that it decides nothing
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:159: Semicolons inside the question 4 answer shown to the user
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/ScannedSchedule.cs:109: FilteredOn joins filters with semicolons into the printed report
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiPaneWords.cs:26: Tooltip "KPI Scan reads and writes a text file" reads as if the scan reads a text file
+- unverified, writing, style, src/RcrcGreen.Revit/Kpi/KpiPanel.cs:15: Comment says the pane touches no Revit API, and the file uses Autodesk.Revit.UI throughout
+- unverified, writing, style, .claude/rules/kpi-rules.md:98: Rule says KpiPaneWords holds every line the pane shows, and the button label is in the pane
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:9: Summary says every section 9 line names where the detail is, and three answers name no section
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiReport.cs:384: "from the first plot that has it" describes a rule the reader does not follow
+- unverified, writing, style, .claude/rules/kpi-rules.md:83: Rule says areas are read for one copy per workbook name, and the softscape copy is skipped
+- unverified, writing, style, src/RcrcGreen.Revit/Kpi/ParameterReading.cs:136: Docstrings on one-line members that restate the line under them
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/NameCount.cs:5: Every Core Kpi class carries the same shape of summary, and the small holders restate their property lists
+- unverified, writing, style, design/pr-28/panel.html:36: Mockup claims every CSS value comes from PanelTheme or PanelMetrics, and several do not
+- unverified, writing, style, src/RcrcGreen.Revit/RcrcGreenApplication.cs:76: Long tooltip says the file answers where each value lives, and the file decides nothing
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:131: Question 3 not-found line asserts what the rules say nothing assumes
+- unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiPaneWords.cs:22: Scanning line asserts a timing the log records as UNKNOWN
+- unverified, writing, style, .claude/rules/revit-commands.md:60: Banned word "unlocks" on an unchanged line of a file this PR changed
+- unverified, writing, style, CLAUDE.md:9: Two sentences in CLAUDE.md now read oddly with two tools
+
+Three of the new tests were watched failing against deliberately broken Core before the third
+commit: the word match put back to a substring turned the letter run test and the two Solid Fill
+tests red, the built-in phase names counting as a status word turned the one phase test red, and
+a not-read section printing as one that found nothing turned the NOT READ test red. Each was
+restored from a copy taken before the break, checked byte for byte, and the suite ran green.
+
+### Where the lines went
+
+8044 lines added and 57 removed against main over the three commits, which is large for a
+read-only scan and splits like this:
+
+- Core: 2837 added, 0 removed
+- Revit: 1842 added, 17 removed
+- tests: 2672 added, 0 removed
+- rules, docs, mockup and steps: 693 added, 40 removed
+
+The tests are the largest single part after Core, because every section of the report and every
+one of the nine answers has its expected text written out by hand. Core is the data model, 24
+small files holding one type each, the report and the nine answers. The Revit side is four
+readers, the pane, the handler and the button.
 
 ### What has not been run
 

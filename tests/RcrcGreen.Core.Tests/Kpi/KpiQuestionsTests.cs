@@ -62,17 +62,102 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Fact]
-        public void QuestionOneIsAnsweredWhenBothNamesAreOnTheTitleBlockInstance()
+        public void QuestionOneIsAnsweredWhenBothNamesAreOnOneTitleBlockInstance()
         {
-            KpiAnswer answer = Answer(WithInstances(1383,
-                KpiFixture.Tally("PRX_COMPONENT", 1383, 1201),
-                KpiFixture.Tally("PRX_Plot_UID2", 1383, 160)), 1);
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 1383,
+                titleBlockInstances: 1383,
+                onInstances: KpiFixture.OnInstances(1383,
+                    new[]
+                    {
+                        KpiFixture.Tally("PRX_COMPONENT", 1383, 1201),
+                        KpiFixture.Tally("PRX_Plot_UID2", 1383, 160)
+                    },
+                    new[]
+                    {
+                        KpiFixture.Value("PRX_COMPONENT", "010QE Copy 001", "Copy of key plan", ""),
+                        KpiFixture.Value("PRX_COMPONENT", "DM-11-600QD", "SOFTSCAPE SCHEDULES", "SOFTSCAPE"),
+                        KpiFixture.Value("PRX_Plot_UID2", "DM-11-600QD", "SOFTSCAPE SCHEDULES", "DM-11"),
+                        KpiFixture.Value("PRX_Plot_UID2", "010QE Copy 001", "Copy of key plan", "")
+                    })));
+
+            KpiAnswer answer = Answer(scan, 1);
 
             Assert.True(answer.Answered);
             Assert.Equal(
                 "PRX_COMPONENT on 1383 title block instances, 1201 with a value. PRX_Plot_UID2 on 1383 title block "
-                + "instances, 160 with a value. Section 3 lists up to twenty sheets for each.",
+                + "instances, 160 with a value. Both on 2 sheets, the first DM-11-600QD SOFTSCAPE SCHEDULES. "
+                + "Section 3 lists up to twenty sheets for each.",
                 answer.Answer);
+        }
+
+        /// <summary>
+        /// Two families each carrying one of the names satisfy both tallies and answer nothing,
+        /// because the question asks for the sheet whose title block carries both.
+        /// </summary>
+        [Fact]
+        public void QuestionOneIsNotAnsweredWhenTheTwoNamesSitOnDifferentSheets()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 2,
+                titleBlockInstances: 2,
+                onInstances: KpiFixture.OnInstances(2,
+                    new[]
+                    {
+                        KpiFixture.Tally("PRX_COMPONENT", 1, 1),
+                        KpiFixture.Tally("PRX_Plot_UID2", 1, 1)
+                    },
+                    new[]
+                    {
+                        KpiFixture.Value("PRX_COMPONENT", "S1", "one", "HARDSCAPE"),
+                        KpiFixture.Value("PRX_Plot_UID2", "S2", "two", "DM-11")
+                    })));
+
+            KpiAnswer answer = Answer(scan, 1);
+
+            Assert.False(answer.Answered);
+            Assert.EndsWith("No title block instance carries both names on one sheet. Section 3 lists each on its own.", answer.Answer);
+        }
+
+        [Fact]
+        public void QuestionThreeDoesNotCountAWhitespaceValue()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 1,
+                titleBlockInstances: 1,
+                onInstances: KpiFixture.OnInstances(1,
+                    new[] { KpiFixture.Tally("PRX_Plot_UID2", 1, 1) },
+                    new[] { KpiFixture.Value("PRX_Plot_UID2", "S1", "one", " ") })));
+
+            KpiAnswer answer = Answer(scan, 3);
+
+            Assert.False(answer.Answered);
+            Assert.Contains("0 values, 0 of them shaped like a plot identifier", answer.Answer);
+        }
+
+        /// <summary>
+        /// A section whose read threw is not a measured absence. Every question that draws on
+        /// it says NOT READ and points at the top of the file.
+        /// </summary>
+        [Fact]
+        public void EveryQuestionOnASectionThatWasNotReadSaysNotReadAndNeverNotFound()
+        {
+            KpiScan scan = new KpiScan(
+                new DocumentFacts("NG05", "", 0, 0, 0.0, null, null),
+                null,
+                TitleBlockFacts.NotRead("refused"),
+                LinkFacts.NotRead("refused"),
+                ScheduleFacts.NotRead("refused"),
+                null,
+                false);
+
+            IReadOnlyList<KpiAnswer> answers = KpiQuestions.Answers(scan);
+
+            Assert.All(answers, answer => Assert.False(answer.Answered));
+            Assert.All(answers, answer => Assert.StartsWith("NOT READ. Section ", answer.Answer));
+            Assert.All(answers, answer => Assert.DoesNotContain("NOT FOUND", answer.Answer));
+            Assert.Equal("NOT READ. Section 2 PROJECT INFORMATION was not read, see READS THAT DID NOT HAPPEN at the top.", answers[3].Answer);
+            Assert.Equal("NOT READ. Section 4 LINKED MODELS was not read, see READS THAT DID NOT HAPPEN at the top.", answers[4].Answer);
         }
 
         [Fact]
@@ -84,7 +169,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Equal(
                 "PRX_COMPONENT on 1 title block instance, 1 with a value. PRX_Plot_UID2 on 1 title block instance, "
-                + "0 with a value. Section 3 lists up to twenty sheets for each.",
+                + "0 with a value. No title block instance carries both names on one sheet. Section 3 lists each on its own.",
                 answer.Answer);
         }
 
@@ -312,9 +397,69 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.False(answer.Answered);
             Assert.Equal(
-                "1 link name holds 00: RCRC_NG05_NU_00_SITE_RVT24.rvt. None of them is loaded, so no filled region "
-                + "was read. Load it and scan again.",
+                "1 link name holds 00: RCRC_NG05_NU_00_SITE_RVT24.rvt. None is loaded, so no filled region "
+                + "was read. Load the link and scan again.",
                 answer.Answer);
+        }
+
+        [Fact]
+        public void QuestionFiveSaysWhenTheMarkedTypeIsLoadedAndNoInstanceHandedBackADocument()
+        {
+            KpiScan scan = KpiFixture.Build(links: KpiFixture.Links(
+                new[] { KpiFixture.LinkType(SiteLink, "Loaded", isLoaded: true) },
+                new[] { KpiFixture.LinkInstance(SiteLink + " : 1", SiteLink, isLoaded: false) }));
+
+            KpiAnswer answer = Answer(scan, 5);
+
+            Assert.False(answer.Answered);
+            Assert.Equal(
+                "2 link names hold 00: RCRC_NG05_NU_00_SITE_RVT24.rvt, RCRC_NG05_NU_00_SITE_RVT24.rvt : 1. 1 link "
+                + "type reads Loaded and 0 of 1 placed instance handed back a document, so no filled region was "
+                + "read. Place an instance and scan again.",
+                answer.Answer);
+        }
+
+        /// <summary>
+        /// Solid Fill is the filled region type every Revit template ships with and it holds
+        /// the letters ID. So does Grid. Neither is the word, and naming Solid Fill first on
+        /// the question 5 line would send the reader to the wrong region type.
+        /// </summary>
+        [Fact]
+        public void QuestionFiveDoesNotTakeSolidFillOrGridForTheWordId()
+        {
+            KpiScan scan = KpiFixture.Build(links: KpiFixture.Links(
+                new[] { KpiFixture.LinkType(SiteLink) },
+                new[] { KpiFixture.LinkInstance(SiteLink + " : 1", SiteLink) },
+                new[]
+                {
+                    KpiFixture.Contents(SiteLink + " : 1", "RCRC_NG05_NU_00_SITE_RVT24", 3,
+                        typeCounts: new[] { KpiFixture.Counted("Solid Fill", 3) },
+                        viewCounts: new[] { KpiFixture.Counted("Grid Plan", 2), KpiFixture.Counted("Hidden Line Export", 1) },
+                        regionParameters: new[] { KpiFixture.Tally("PRX_Intervention Area", 3, 3) })
+                }));
+
+            KpiAnswer answer = Answer(scan, 5);
+
+            Assert.Contains(", no region type name holds ID, no view name holds ID, ", answer.Answer);
+        }
+
+        [Fact]
+        public void QuestionFiveStillFindsIdWhenItIsAWordOfItsOwn()
+        {
+            KpiScan scan = KpiFixture.Build(links: KpiFixture.Links(
+                new[] { KpiFixture.LinkType(SiteLink) },
+                new[] { KpiFixture.LinkInstance(SiteLink + " : 1", SiteLink) },
+                new[]
+                {
+                    KpiFixture.Contents(SiteLink + " : 1", "RCRC_NG05_NU_00_SITE_RVT24", 3,
+                        typeCounts: new[] { KpiFixture.Counted("ID Intervention Area", 2), KpiFixture.Counted("Solid Fill", 1) },
+                        viewCounts: new[] { KpiFixture.Counted("00 ID PLAN", 3) },
+                        regionParameters: new[] { KpiFixture.Tally("PRX_Intervention Area", 3, 3) })
+                }));
+
+            KpiAnswer answer = Answer(scan, 5);
+
+            Assert.Contains(", region types holding ID: ID Intervention Area, views holding ID: 00 ID PLAN, ", answer.Answer);
         }
 
         [Fact]
@@ -398,10 +543,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(answer.Answered);
             Assert.Equal(
                 "DM-11-(610) SOFTSCAPE SCHEDULE has 5 fields, headed BOTANICAL NAME | COMMON NAME | SIZE | "
-                + "ENTER EACH PROPOSED TREE QUANTITY | PRX_Ref Plot ID. Count fields, which is the quantity on a "
-                + "schedule with one row per tree: ENTER EACH PROPOSED TREE QUANTITY. Parameters on its elements "
-                + "holding BOTANIC, LATIN or SPECIES: PRX_Botanical Name. Section 6 has the rows as printed and "
-                + "every value.",
+                + "ENTER EACH PROPOSED TREE QUANTITY | PRX_Ref Plot ID. Count fields: ENTER EACH PROPOSED TREE "
+                + "QUANTITY. Parameters on its elements holding BOTANIC, LATIN or SPECIES: PRX_Botanical Name. "
+                + "Section 6 has the rows as printed and every value.",
                 answer.Answer);
         }
 
@@ -416,11 +560,45 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             KpiAnswer answer = Answer(scan, 7);
 
+            // Rows were read and nothing in them says which field is the name or the quantity,
+            // so the question is not answered and the line says what is there without deciding.
+            Assert.False(answer.Answered);
+            Assert.Equal(
+                "DM-11-(610) SOFTSCAPE SCHEDULE has 2 fields, headed BOTANICAL NAME | QTY. No Count field. No "
+                + "parameter on its elements holds BOTANIC, LATIN or SPECIES. Section 6 has the rows as printed and "
+                + "every value.",
+                answer.Answer);
+        }
+
+        /// <summary>
+        /// The reader reads one copy per name, so two names holding SOFTSCAPE both arrive. A
+        /// line describing only the first hid a second schedule with a SPECIES field.
+        /// </summary>
+        [Fact]
+        public void QuestionSevenNamesEverySoftscapeScheduleReadInFull()
+        {
+            KpiScan scan = KpiFixture.Build(schedules: KpiFixture.Schedules(
+                new[]
+                {
+                    KpiFixture.Schedule("DM-11-(610) SOFTSCAPE SCHEDULE", rowsWereRead: true,
+                        fields: new[] { KpiFixture.Field("BOTANICAL NAME") }),
+                    KpiFixture.Schedule("DM-11-(611) SOFTSCAPE TREES", rowsWereRead: true,
+                        fields: new[] { KpiFixture.Field("SPECIES", "PRX_Species") })
+                },
+                elements: new[]
+                {
+                    KpiFixture.Elements("DM-11-(611) SOFTSCAPE TREES",
+                        instanceParameters: new[] { KpiFixture.Tally("PRX_Species", 4, 4) })
+                }));
+
+            KpiAnswer answer = Answer(scan, 7);
+
             Assert.True(answer.Answered);
             Assert.Equal(
-                "DM-11-(610) SOFTSCAPE SCHEDULE has 2 fields, headed BOTANICAL NAME | QTY. No Count field, so the "
-                + "quantity is a parameter rather than a row count. No parameter on its elements holds BOTANIC, LATIN "
-                + "or SPECIES. Section 6 has the rows as printed and every value.",
+                "DM-11-(610) SOFTSCAPE SCHEDULE has 1 field, headed BOTANICAL NAME. No Count field. No parameter on "
+                + "its elements holds BOTANIC, LATIN or SPECIES. DM-11-(611) SOFTSCAPE TREES has 1 field, headed "
+                + "SPECIES. No Count field. Parameters on its elements holding BOTANIC, LATIN or SPECIES: "
+                + "PRX_Species. Section 6 has the rows as printed and every value.",
                 answer.Answer);
         }
 
@@ -434,7 +612,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.False(answer.Answered);
             Assert.Equal(
-                "A schedule named for SOFTSCAPE exists and its rows were not read. Section 5 has its name.",
+                "A schedule named for SOFTSCAPE exists and none was read in full. Section 5 has the names.",
                 answer.Answer);
         }
 
@@ -546,17 +724,23 @@ namespace RcrcGreen.Core.Tests.Kpi
                 elements: new[]
                 {
                     KpiFixture.Elements(KpiFixture.Softscape,
-                        instanceParameters: new[] { KpiFixture.Tally("Comments", 3, 0) },
+                        instanceParameters: new[]
+                        {
+                            KpiFixture.Tally("Phase Created", 3, 3),
+                            KpiFixture.Tally("Phase Demolished", 3, 0)
+                        },
                         createdPhases: new[] { KpiFixture.Counted("Proposed", 3) })
                 }));
 
             KpiAnswer answer = Answer(scan, 8);
 
+            // Phase Created and Phase Demolished are on every phased element, so they are
+            // printed and they separate nothing.
             Assert.False(answer.Answered);
             Assert.Equal(
                 "1 phase: Proposed. DM-11-(610) SOFTSCAPE SCHEDULE is on phase (empty) with phase filter (empty). its "
-                + "elements by phase created: Proposed 3. no parameter on them holds EXIST, PROPOS, STATUS, RETAIN, "
-                + "REMOV, NEW, PHASE or CONDITION. Section 7 has the counts.",
+                + "elements by phase created: Proposed 3. parameters on them holding EXIST, PROPOS, STATUS, RETAIN, "
+                + "REMOV, NEW, PHASE or CONDITION: Phase Created, Phase Demolished. Section 7 has the counts.",
                 answer.Answer);
         }
 

@@ -32,6 +32,11 @@ namespace RcrcGreen.Revit.Kpi
 
         private PanelTheme _theme = PanelTheme.Current();
 
+        // The title the read line and the status line describe. Null until a scan. The name
+        // and the read line used to be set by two callbacks, so model B's name sat over model
+        // A's read line after a document switch.
+        private string _scannedTitle;
+
         public KpiPanel()
         {
             _handler = new KpiRequestHandler
@@ -169,7 +174,13 @@ namespace RcrcGreen.Revit.Kpi
             Dispatcher.Invoke(() =>
             {
                 _modelName.Text = KpiPaneWords.ModelNamed(documentTitle);
-                if (string.IsNullOrEmpty(documentTitle)) _readAt.Text = KpiPaneWords.NotScanned;
+
+                if (!string.Equals(documentTitle, _scannedTitle, StringComparison.Ordinal))
+                {
+                    _scannedTitle = null;
+                    _readAt.Text = KpiPaneWords.NotScanned;
+                    if (!string.IsNullOrEmpty(documentTitle)) _said.Text = KpiPaneWords.NotScanned;
+                }
             });
         }
 
@@ -177,6 +188,7 @@ namespace RcrcGreen.Revit.Kpi
         {
             Dispatcher.Invoke(() =>
             {
+                _scannedTitle = scan.Document.Title;
                 _modelName.Text = KpiPaneWords.ModelNamed(scan.Document.Title);
                 _readAt.Text = KpiPaneWords.ReadAt(readAt, scan.Document.ElementInstances, scan.Document.ReadSeconds);
             });

@@ -66,9 +66,22 @@ namespace RcrcGreen.Core.Kpi
             }
         }
 
+        /// <summary>
+        /// False when the read threw and this is the empty fallback. A section that was never
+        /// filled in must not print NOT FOUND, because that reads as a measured absence.
+        /// </summary>
+        public bool WasRead { get; private set; } = true;
+
+        public string WhyNotRead { get; private set; } = string.Empty;
+
         public static TitleBlockFacts Nothing()
         {
             return new TitleBlockFacts(0, 0, 0, null, null, null, null);
+        }
+
+        public static TitleBlockFacts NotRead(string why)
+        {
+            return new TitleBlockFacts(0, 0, 0, null, null, null, null) { WasRead = false, WhyNotRead = why ?? string.Empty };
         }
     }
 }

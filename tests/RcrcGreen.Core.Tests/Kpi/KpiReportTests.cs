@@ -351,8 +351,34 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { KpiFixture.LinkType("RCRC_NG05_NU_00_SITE_RVT24.rvt", "Unloaded", isLoaded: false) }));
             string[] lines = LinesOf(KpiReport.Write(scan, Noon));
 
-            Assert.Contains("No link is loaded, so no filled region could be read. Load the link and scan again.", lines);
+            Assert.Contains("None is loaded, so no filled region was read. Load the link and scan again.", lines);
             Assert.DoesNotContain(lines, line => line.StartsWith("LOADED LINK ", StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// A link type can read Loaded while no placed instance hands back a document. Telling
+        /// somebody to load a link that is loaded sends them the wrong way, so the sentence is
+        /// built from the two reads rather than asserted from an empty list.
+        /// </summary>
+        [Fact]
+        public void SectionFourSaysWhenALoadedLinkTypeHasNoInstanceToRead()
+        {
+            KpiScan scan = KpiFixture.Build(links: KpiFixture.Links(
+                new[] { KpiFixture.LinkType("RCRC_NG05_NU_00_SITE_RVT24.rvt", "Loaded", isLoaded: true) }));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Contains(
+                "1 link type reads Loaded and 0 of 0 placed instances handed back a document, so no filled region "
+                + "was read. Place an instance and scan again.",
+                lines);
+        }
+
+        [Fact]
+        public void SectionFourSaysWhenTheModelHoldsNoLinkAtAll()
+        {
+            string[] lines = LinesOf(KpiReport.Write(KpiFixture.Build(), Noon));
+
+            Assert.Contains("No link in the model, so there is no filled region to read.", lines);
         }
 
         [Fact]
@@ -366,9 +392,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "  region type | raw, feet based | printed with its unit",
-                    "  ID Intervention Area | 10763.91 | 1000.00 m²",
-                    "  ID Intervention Area | 5381.96 | 500.00 m²"
+                    "  region type | measures | raw | printed",
+                    "  The raw number is square feet only where measures reads Area. A number typed by hand measures nothing and prints with no unit.",
+                    "  ID Intervention Area | Area | 10763.91 | 1000.00 m²",
+                    "  ID Intervention Area | Area | 5381.96 | 500.00 m²"
                 },
                 UntilBlank(lines, "  PRX_Intervention Area: on 412 of 412 filled regions, 398 with a value, showing 2 of 2:"));
         }
@@ -448,7 +475,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  PRX_Ref Plot ID | Equals | DM-11",
                     ""
                 },
-                Following(lines, "READ IN FULL, 1, one per name the workbook draws from, from the first plot that has it", 11));
+                Following(lines, "READ IN FULL, 1, one per name the workbook draws from, the first in name order that lists an element", 11));
         }
 
         [Fact]
@@ -459,12 +486,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
+                    "  The rows are as the schedule last regenerated, which can be older than the elements listed count below it when the model changed since and the schedule was not opened.",
                     "  BOTANICAL NAME | COMMON NAME | SIZE | ENTER EACH PROPOSED TREE QUANTITY",
                     "  Acacia tortilis | Umbrella thorn | 3 m | 30",
                     "  Ziziphus spina-christi | Sidr | 3 m | 27",
                     "  - | - | - | 57"
                 },
-                Following(lines, "  rows as printed, showing 4 of 4. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.", 4));
+                Following(lines, "  rows as printed, showing 4 of 4. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.", 5));
         }
 
         [Fact]
@@ -484,17 +512,15 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] shown = UntilBlank(lines,
                 "  rows as printed, showing 30 of 35. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.");
 
-            Assert.Equal(30, shown.Length);
-            Assert.Equal("  Tree 1 | 1", shown[0]);
-            Assert.Equal("  Tree 30 | 30", shown[29]);
+            Assert.Equal(31, shown.Length);
+            Assert.Equal("  Tree 1 | 1", shown[1]);
+            Assert.Equal("  Tree 30 | 30", shown[30]);
         }
 
         [Fact]
         public void SectionSixNamesTheCountFields()
         {
-            Assert.Contains(
-                "  Count fields, which is the quantity on a schedule with one row per tree: ENTER EACH PROPOSED TREE QUANTITY",
-                RealLines());
+            Assert.Contains("  Count fields: ENTER EACH PROPOSED TREE QUANTITY", RealLines());
         }
 
         [Fact]
@@ -508,7 +534,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             }));
             string[] lines = LinesOf(KpiReport.Write(scan, Noon));
 
-            Assert.Contains("  No Count field. The quantity is a parameter rather than a row count.", lines);
+            Assert.Contains("  No Count field.", lines);
         }
 
         [Fact]
@@ -519,10 +545,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "  PRX_Botanical Name, 2 distinct values:",
+                    "  PRX_Botanical Name on instances, 2 distinct values, counts add to 57 over 57 elements listed:",
                     "    Acacia tortilis | 30 elements",
                     "    Ziziphus spina-christi | 27 elements",
-                    "  PRX_Tree Size, 1 distinct value:",
+                    "  PRX_Tree Size on types, 1 distinct value, counts add to 57 over 57 elements listed:",
                     "    3 m | 57 elements"
                 },
                 UntilBlank(lines, "  Values of every parameter whose name holds BOTANIC, LATIN, SPECIES, NAME, QTY, QUANT, COUNT, NUMBER, SIZE or TREE:"));
@@ -575,7 +601,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  elements by workset: Planting 57",
                     "  elements by design option: Main Model 57",
                     "  Values of every parameter whose name holds EXIST, PROPOS, STATUS, RETAIN, REMOV, NEW, PHASE or CONDITION:",
-                    "  Phase Created, 2 distinct values:",
+                    "  Phase Created on instances, 2 distinct values, counts add to 57 over 57 elements listed:",
                     "    Proposed | 45 elements",
                     "    Existing | 12 elements"
                 },
@@ -626,10 +652,11 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "",
                     "DM-11-(600) HARDSCAPE SCHEDULE",
                     "  rows as printed, showing 2 of 2. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.",
+                    "  The rows are as the schedule last regenerated, which can be older than the elements listed count below it when the model changed since and the schedule was not opened.",
                     "  Type | Area",
                     "  Paving | 92.90 m²"
                 },
-                Following(lines, "ROWS AS PRINTED, 1 schedules, the totals as a sheet shows them", 5));
+                Following(lines, "ROWS AS PRINTED, 1 schedules, the totals as a sheet shows them", 6));
         }
 
         [Fact]
@@ -682,6 +709,162 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void ANullScanIsRefused()
         {
             Assert.Throws<ArgumentNullException>(() => KpiReport.Write(null, Noon));
+        }
+
+        /// <summary>
+        /// One name bound to the family and to the project puts the same tree under a value on
+        /// the instance and a value on the type. Summed under one heading that counted 114
+        /// values over 57 trees, so the two sides print apart with their own sums.
+        /// </summary>
+        [Fact]
+        public void SectionSixKeepsInstanceValuesAndTypeValuesOfOneNameApart()
+        {
+            KpiScan scan = KpiFixture.Build(schedules: KpiFixture.Schedules(
+                new[]
+                {
+                    KpiFixture.Schedule(KpiFixture.Softscape, rowsWereRead: true,
+                        fields: new[] { KpiFixture.Field("BOTANICAL NAME") })
+                },
+                elements: new[]
+                {
+                    KpiFixture.Elements(KpiFixture.Softscape,
+                        elementCount: 57,
+                        instanceParameters: new[] { KpiFixture.Tally("Botanical Name", 57, 0) },
+                        typeParameters: new[] { KpiFixture.Tally("Botanical Name", 2, 2) },
+                        wordValues: new[]
+                        {
+                            new ParameterValueCount("Botanical Name", "", 57, false),
+                            new ParameterValueCount("Botanical Name", "Acacia tortilis", 30, true),
+                            new ParameterValueCount("Botanical Name", "Ziziphus spina-christi", 27, true)
+                        })
+                }));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Equal(
+                new[]
+                {
+                    "  Botanical Name on instances, 1 distinct value, counts add to 57 over 57 elements listed:",
+                    "    (empty) | 57 elements",
+                    "  Botanical Name on types, 2 distinct values, counts add to 57 over 57 elements listed:",
+                    "    Acacia tortilis | 30 elements",
+                    "    Ziziphus spina-christi | 27 elements"
+                },
+                UntilBlank(lines, "  Values of every parameter whose name holds BOTANIC, LATIN, SPECIES, NAME, QTY, QUANT, COUNT, NUMBER, SIZE or TREE:"));
+        }
+
+        [Fact]
+        public void ARoundingFinerThanFourPlacesPrintsEveryPlace()
+        {
+            KpiScan scan = KpiFixture.Build(
+                area: new ProjectUnit("Square meters", "autodesk.unit.unit:squareMeters-1.0.1", 0.00001));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Contains("Area unit: Square meters, id autodesk.unit.unit:squareMeters-1.0.1, rounded to 0.00001", lines);
+        }
+
+        /// <summary>
+        /// A single space is how a label is blanked in a title block family. It is not a value,
+        /// so it sorts after the real ones and prints as what it is rather than as a blank column.
+        /// </summary>
+        [Fact]
+        public void AWhitespaceOnlyValueSortsAfterRealValuesAndSaysWhatItIs()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 3,
+                titleBlockInstances: 3,
+                onInstances: KpiFixture.OnInstances(3,
+                    new[] { KpiFixture.Tally("PRX_COMPONENT", 3, 1) },
+                    new[]
+                    {
+                        KpiFixture.Value("PRX_COMPONENT", "S1", "one", "   "),
+                        KpiFixture.Value("PRX_COMPONENT", "S2", "two", "HARDSCAPE"),
+                        KpiFixture.Value("PRX_COMPONENT", "S3", "three", "")
+                    })));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Equal(
+                new[]
+                {
+                    "sheet number | sheet name | value",
+                    "S2 | two | HARDSCAPE",
+                    "S1 | one | (whitespace only)",
+                    "S3 | three | (empty)"
+                },
+                UntilBlank(lines, "PRX_COMPONENT on the title block instance, showing 3 of 3, the ones with a value first:"));
+        }
+
+        /// <summary>
+        /// A schedule chosen for a full read whose rows Revit refused still prints its block,
+        /// because its elements were read and are the answer to two questions. Its rows line
+        /// says where the reason is rather than printing zero of zero.
+        /// </summary>
+        [Fact]
+        public void AScheduleWhoseRowsWereRefusedStillPrintsItsBlockWithoutRows()
+        {
+            KpiScan scan = KpiFixture.Build(
+                schedules: KpiFixture.Schedules(
+                    new[]
+                    {
+                        KpiFixture.Schedule(KpiFixture.Softscape, rowsRefused: true,
+                            fields: new[] { KpiFixture.Field("BOTANICAL NAME") })
+                    },
+                    elements: new[] { KpiFixture.Elements(KpiFixture.Softscape, elementCount: 4,
+                        categories: new[] { KpiFixture.Counted("Planting", 4) }) }),
+                skipped: new[] { "The rows of DM-11-(610) SOFTSCAPE SCHEDULE were not read. The table refused." });
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Contains("  rows as printed: not read. READS THAT DID NOT HAPPEN at the top says why. The elements it lists were read and follow.", lines);
+            Assert.Contains("  elements listed: 4, categories: Planting 4", lines);
+            Assert.Contains("READ IN FULL, 1, one per name the workbook draws from, the first in name order that lists an element", lines);
+            Assert.Contains("  The rows of DM-11-(610) SOFTSCAPE SCHEDULE were not read. The table refused.", lines);
+        }
+
+        /// <summary>
+        /// A section whose read threw prints NOT READ and nothing that reads as a measured
+        /// absence. NOT FOUND with the near misses was printed for an empty fallback, which
+        /// said the model holds nothing when the truth was that nothing was looked for.
+        /// </summary>
+        [Fact]
+        public void ASectionWhoseReadThrewPrintsNotReadAndNeverNotFound()
+        {
+            KpiScan scan = new KpiScan(
+                new DocumentFacts("NG05", "", 0, 0, 0.0, null, null),
+                null,
+                TitleBlockFacts.NotRead("InvalidOperationException: refused"),
+                LinkFacts.NotRead("InvalidOperationException: refused"),
+                ScheduleFacts.NotRead("InvalidOperationException: refused"),
+                new[] { "Section 3 TITLE BLOCKS AND SHEETS was not read. InvalidOperationException: refused" },
+                false);
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Equal(7, lines.Count(line => line.StartsWith(KpiReport.NotReadLine, StringComparison.Ordinal)));
+            // The section 9 column line always says what NOT FOUND means, so the check is on
+            // the answer lines and the section body lines, which are the two places a measured
+            // absence would be claimed.
+            Assert.DoesNotContain(lines, line => line.StartsWith("   NOT FOUND.", StringComparison.Ordinal) && !line.Contains("NOT READ"));
+            Assert.DoesNotContain(lines, line => line.EndsWith(": NOT FOUND", StringComparison.Ordinal));
+            Assert.Contains("   NOT FOUND. NOT READ. Section 3 TITLE BLOCKS AND SHEETS was not read, see READS THAT DID NOT HAPPEN at the top.", lines);
+        }
+
+        /// <summary>
+        /// The list of headings holding EXISTING or PROPOSED is matched on the heading alone.
+        /// A schedule named for PROPOSED with no such heading has nothing on it.
+        /// </summary>
+        [Fact]
+        public void SectionSevenMatchesTheHeadingAloneAndNotTheScheduleName()
+        {
+            KpiScan scan = KpiFixture.Build(schedules: KpiFixture.Schedules(new[]
+            {
+                KpiFixture.Schedule("PROPOSED TREES: COUNT",
+                    fields: new[] { KpiFixture.Field("BOTANICAL NAME"), KpiFixture.Field("QTY") }),
+                KpiFixture.Schedule("DM-11-(610) SOFTSCAPE SCHEDULE",
+                    fields: new[] { KpiFixture.Field("ENTER EACH EXISTING TREE QUANTITY") })
+            }));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Equal(
+                new[] { "  (610) SOFTSCAPE SCHEDULE: ENTER EACH EXISTING TREE QUANTITY" },
+                UntilBlank(lines, "COLUMN HEADINGS HOLDING EXISTING OR PROPOSED, 1, plot taken off"));
         }
     }
 }

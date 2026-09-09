@@ -163,6 +163,10 @@ namespace RcrcGreen.Revit.Kpi
                         picked = copy;
                         break;
                     }
+
+                    // Named, so the file records that DM-11's copy exists and was passed
+                    // over rather than reading as if DM-14's were the first.
+                    skipped.Add(copy.Name + " lists no element, so it was not read in full.");
                 }
 
                 if (picked == null)
@@ -255,6 +259,8 @@ namespace RcrcGreen.Revit.Kpi
                 if (!rowsRead) bodyRows = 0;
             }
 
+            // Read in full is decided once, here, whether or not the rows came back. The
+            // elements and areas of a chosen schedule are read either way and print either way.
             return new ScannedSchedule(
                 schedule.Name,
                 category,
@@ -263,6 +269,7 @@ namespace RcrcGreen.Revit.Kpi
                 filters,
                 ParameterReading.Printed(schedule.get_Parameter(BuiltInParameter.VIEW_PHASE)),
                 ParameterReading.Printed(schedule.get_Parameter(BuiltInParameter.VIEW_PHASE_FILTER)),
+                inFull,
                 rowsRead,
                 bodyRows,
                 rows);
@@ -419,7 +426,8 @@ namespace RcrcGreen.Revit.Kpi
             var demolished = new Dictionary<string, int>(StringComparer.Ordinal);
             var worksets = new Dictionary<string, int>(StringComparer.Ordinal);
             var options = new Dictionary<string, int>(StringComparer.Ordinal);
-            var wordValues = new Dictionary<string, Dictionary<string, int>>(StringComparer.Ordinal);
+            var onInstances = new Dictionary<string, Dictionary<string, int>>(StringComparer.Ordinal);
+            var onTypes = new Dictionary<string, Dictionary<string, int>>(StringComparer.Ordinal);
             var typesSeen = new Dictionary<ElementId, Element>();
 
             string[] words = KpiNames.PlantingWords.Concat(KpiNames.StatusWords).ToArray();
@@ -447,16 +455,25 @@ namespace RcrcGreen.Revit.Kpi
 
                 // Counted per element for the type's parameters too, so a value on the type
                 // counts once for every tree of that type and the counts add up to the trees.
-                WordValuesOf(element, words, wordValues);
-                if (type != null) WordValuesOf(type, words, wordValues);
+                // Kept apart from the instance values, because one name bound to both put a
+                // tree under two values.
+                WordValuesOf(element, words, onInstances);
+                if (type != null) WordValuesOf(type, words, onTypes);
             }
 
             var values = new List<ParameterValueCount>();
-            foreach (KeyValuePair<string, Dictionary<string, int>> byName in wordValues)
+            foreach (KeyValuePair<string, Dictionary<string, int>> byName in onInstances)
             {
                 foreach (KeyValuePair<string, int> byValue in byName.Value)
                 {
-                    values.Add(new ParameterValueCount(byName.Key, byValue.Key, byValue.Value));
+                    values.Add(new ParameterValueCount(byName.Key, byValue.Key, byValue.Value, false));
+                }
+            }
+            foreach (KeyValuePair<string, Dictionary<string, int>> byName in onTypes)
+            {
+                foreach (KeyValuePair<string, int> byValue in byName.Value)
+                {
+                    values.Add(new ParameterValueCount(byName.Key, byValue.Key, byValue.Value, true));
                 }
             }
 
