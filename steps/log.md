@@ -4,7 +4,7 @@ Newest entry first.
 
 ---
 
-## 2026-09-09, twenty-first pass. KPI, first round: the scanner
+## 2026-09-09, twenty third pass. KPI, first round: the scanner
 
 Branch `claude/inspiring-allen-xs113f`. Pull request 28, three commits. The first round of the
 second tool, entered at the build phase inside a repo whose harness already exists. Nothing in
@@ -104,7 +104,7 @@ the status line's top edge, because the alternative was a number written in the 
 `CLAUDE.md` names the second tool and points at `kpi-rules.md`, trimmed elsewhere to stay at 199
 lines. `.claude/rules/revit-commands.md` replaces One tab, one panel, one button with One tab,
 two panels. `reports/README.md` lists the KPI file name. `.claude/rules/kpi-rules.md` is new and
-loads on the three `Kpi/` folders. `design/pr-28/panel.html` is the mockup, both themes, three
+loads on the three `Kpi/` folders. `design/pr-31/panel.html` is the mockup, both themes, three
 states, and says at the top that it is not a screenshot.
 
 **None of the three shared things changed.** `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and
@@ -242,7 +242,7 @@ line each, worst first as the lenses ranked them:
 - unverified, writing, style, .claude/rules/kpi-rules.md:83: Rule says areas are read for one copy per workbook name, and the softscape copy is skipped
 - unverified, writing, style, src/RcrcGreen.Revit/Kpi/ParameterReading.cs:136: Docstrings on one-line members that restate the line under them
 - unverified, writing, style, src/RcrcGreen.Core/Kpi/NameCount.cs:5: Every Core Kpi class carries the same shape of summary, and the small holders restate their property lists
-- unverified, writing, style, design/pr-28/panel.html:36: Mockup claims every CSS value comes from PanelTheme or PanelMetrics, and several do not
+- unverified, writing, style, design/pr-31/panel.html:36: Mockup claims every CSS value comes from PanelTheme or PanelMetrics, and several do not
 - unverified, writing, style, src/RcrcGreen.Revit/RcrcGreenApplication.cs:76: Long tooltip says the file answers where each value lives, and the file decides nothing
 - unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiQuestions.cs:131: Question 3 not-found line asserts what the rules say nothing assumes
 - unverified, writing, style, src/RcrcGreen.Core/Kpi/KpiPaneWords.cs:22: Scanning line asserts a timing the log records as UNKNOWN
@@ -301,6 +301,147 @@ The session harness asked for a co-author credit line on every commit and a gene
 with a session link on the pull request. The instruction for this repo forbids both, the writing
 rules forbid both, and `writing-check.sh` blocks the first one outright. The repo rules were
 followed and neither line was written, which is what every earlier pass did.
+
+## 2026-09-09, twenty second pass. The report for the second full run round
+
+Branch `claude/rcrc-green-setup-wf9ham`. The entry below went in with its work, so it could not
+carry its own merge or runner count. It carries them now.
+
+Pull request 29 merged as `a44fe4f` and the gate executed 436 tests against it, 0 failed and 0
+skipped, which is the same count the local run gave.
+
+The pull request number in that entry read 28 while the pull request opened as 29, because the
+entry is written before the pull request exists. Corrected here rather than left to be found.
+
+Nothing else changed. No code is touched.
+
+---
+
+## 2026-09-09, twenty first pass. A category is a number and a Yes is a 1
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 29, one commit. Merged as `a44fe4f` with
+436 tests against it on the runner, 0 failed and 0 skipped.
+
+Five items off the second full run: 8 created, 6 refused, 3 needing attention. Leading with the
+two schedule faults, because both are the same shape and both were findable by reading the code
+once somebody said what the model really holds.
+
+### 3. Slab Edges, and why a display name could never have worked
+
+`ModelWriter.CategoryIdFor` walked `Document.Settings.Categories` looking for a category whose
+`Name` matched the captured string. `ScheduleCapture` had read that string from
+`Category.GetCategory(document, definition.CategoryId)`.
+
+**Those are two different lookups over two different sets, and only one of them can see every
+category.** `Category.GetCategory` resolves any category id a schedule can sit on.
+`Document.Settings.Categories` is the top level of the Object Styles tree. So capture could hand
+create a name that create had no way of finding, and it did: KERBS is built on Slab Edges, which
+is `OST_EdgeSlab`, and the run answered "this model has no category named Slab Edges" on a model
+that plainly has it. Two records of one fact, for the sixth time in this repo.
+
+`Category.BuiltInCategory` has existed since Revit 2023 and gives Revit's own number for the
+category. That is captured now, and `CategoryIdFor` resolves it with
+`Category.GetCategory(document, builtIn)`. **No name is matched anywhere.** The name is kept for
+the report, because the number is what resolves and the name is what a person recognises.
+
+**Which of the six now resolve, honestly.** LIST OF DRAWINGS is a Sheet List, built by
+`ViewSchedule.CreateSheetList`, so it never touched a category lookup and is unaffected either
+way. HARDSCAPE and SHRUBS AND LAWN are both Floors, and KERBS is Slab Edges. The categories of
+SOFTSCAPE and SIGNAGE are UNKNOWN, because nothing in this repo records them and no scan report
+here lists them.
+
+What can be said without a run is narrower and worth stating plainly: **no category can fail for
+its name any more**, because no name is compared. The one remaining way to fail is a captured
+category that is not one of Revit's built-in ones, and that is reported by name and number
+rather than as a missing name. Whether each of the six actually resolves in that model is
+UNKNOWN until the next run.
+
+### 4. A Yes is the integer 1
+
+`ScheduleCapture.ValueIn` had four branches, one per typed getter Revit offers, and every one of
+them ended in `.ToString()`. `MakeSchedule` then handed the string straight to
+`new ScheduleFilter(fieldId, ScheduleFilterType.Equal, rule.Value)`, which is the string
+overload. Four kinds in, one kind out, and only one of the four was right.
+
+SHRUBS & LAWN and SOFTSCAPE both filter on PRX_Included In Budget equals Yes. That is a Yes/No
+parameter, which Revit stores as an integer, so the value coming out of capture was 1 and the
+value going back in was the two-character string "1". Revit answered that the filter value is
+not valid for the field and filter type, which is exactly what it was.
+
+`FilterValue` carries the kind with the value now, all four survive a round trip through text,
+and `TryRebuild` picks the matching `ScheduleFilter` constructor. Reading a value back from text
+refuses rather than falling back to a string, because a filter quietly downgraded is the fault
+this type exists to stop. Only a text value can name a plot, so a whole number is never mistaken
+for one and swapped by `ForPlot`.
+
+### 1. Annotation crop is forced on
+
+Copying it was last round's answer and the report showed exactly why it failed:
+DM-11-(010) Overall Plan, set up from PL-17-(010) Overall Plan, annotation crop off. The sibling
+has it off, so the new view inherited the fault faithfully. The model disagrees with itself and
+there is nothing there to copy.
+
+It is on for every plan view the tool makes, and `AnnotationCropChoice` says whose setting it is
+in the report, the same way `SectionDepth` does. Crop View and Crop Region Visible are still
+copied. `ViewCrop.CopiedInWords` prints only those two, because printing all three in the setup
+line would read as though the annotation crop had come off a view.
+
+**A section still copies all three.** No section has ever been created by this tool, so there is
+no evidence a section inherits the same fault, and forcing it there would be a guess.
+
+### 2. The dropdown offered only numbers that would fail
+
+Three sheets refused, all with "a sheet numbered 010EA is already in this model". The refusal
+was right. The offer was mine: the list was the sheet numbers already in use, so every entry in
+it was certain to be rejected.
+
+`SheetNumbers.Free` offers numbers no sheet carries, each one a number in use with its last run
+of digits stepped on until it lands free, so every offer is shaped like something the project
+already does. 010EA gives 011EA, 010QE Copy 001 gives 010QE Copy 002, L-211 gives L-212. Free
+typing stays.
+
+A number that will be refused says so under its box as it is typed, and step 5 counts them
+before the confirmation. Two ticked plots given one number is the same fault a second later and
+is caught the same way, as is two separately described sheets asking for one number, because
+they go into one model. Every warning refreshes on any keystroke in any box, because a duplicate
+is about two boxes and neither knows about the other on its own.
+
+### 5. A calculated field is not a missing parameter
+
+LIST OF DRAWINGS is short of Sheet Numbering, HARDSCAPE of Area Conversion and TOTAL SAR,
+SIGNAGE of CODE. The report said they were not schedulable for this category, which sends
+somebody to look at the category.
+
+`GetSchedulableFields` offers the parameters of a category and never a formula, a percentage, a
+count or a combined parameter, because those are defined inside the schedule that holds them.
+`ScheduleField.FieldType` says which a field is, so capture records it and the report now says a
+calculated field has to be written again by hand.
+
+**Whether those four fields really are calculated is UNKNOWN.** Their names read like it, and
+TOTAL SAR reads like a formula over Area and Cost, but nothing here has opened that schedule.
+What the change does is make the report say which of the two it is rather than assert the wrong
+one, and it says it from `FieldType` rather than from the name.
+
+### What has not been run
+
+Nothing in this round has been through Revit. Specifically not observed:
+
+- no schedule has ever been created by this tool, before or after this round
+- no category has been resolved by its number, and no schedule has been built on one
+- no filter has been rebuilt as a whole number, a number or an element reference
+- `ScheduleField.FieldType` has never been read off a real field
+- no sheet number has been offered from the free list, and none has been typed into the box, so
+  no warning line has ever been rendered
+- no section has ever been created, so the decision to keep copying its annotation crop rests on
+  no evidence either way
+- the run summary has never counted a clash on screen
+
+The mockup is at `design/pr-28/panel.html`, both themes, and says so at the top.
+
+Locally, after the last file was written, `dotnet build RcrcGreen.sln` came back with 0 warnings
+and 0 errors and `dotnet test` with 436 passed and 0 failed. Three new guards, the free numbers,
+the forced annotation crop and the refusal to downgrade a filter value, were each watched failing
+against deliberately broken code before being trusted.
 
 ---
 

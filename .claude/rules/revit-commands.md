@@ -189,11 +189,19 @@ built, so how it is set up is the answer to how a new one should be. Five things
 and none is matched on a name: **family type**, **level** (a plan), **view template**, and the
 three crop settings, **Crop View**, **Crop Region Visible** and **Annotation Crop**.
 
-The crop settings joined this round. Every view the first full run created had Annotation Crop
-off while DM-16 and DM-14 have it on, so the section markers of neighbouring plots drew
-straight through the new views and none was usable as a drawing. Crop View is set first because
-Revit will not turn Annotation Crop on for a view whose crop is off, and Annotation Crop comes
-off `VIEWER_ANNOTATION_CROP_ACTIVE` because it is a parameter rather than a property.
+**Annotation Crop is not one of them.** It is forced on for every plan view, whatever the
+sibling has. Copying it was tried for one round and the next report showed why it failed:
+DM-11-(010) Overall Plan was set up from PL-17-(010) Overall Plan, which has it off, so the new
+view inherited the fault and neighbouring plots' section markers still drew through it. The
+model disagrees with itself and there is nothing there to copy.
+
+`AnnotationCropChoice` in Core decides it and says whose setting it is in the report, the same
+way `SectionDepth` does. Crop View is still set first because Revit will not turn Annotation
+Crop on for a view whose crop is off, and Annotation Crop comes off
+`VIEWER_ANNOTATION_CROP_ACTIVE` because it is a parameter rather than a property.
+
+A SECTION still copies all three. No section has ever been created by this tool, so there is no
+evidence that a section inherits the same fault, and forcing it on there would be a guess.
 
 `ApplySiblingCrop` runs after the template, so a template controlling any of the three refuses
 and is reported rather than quietly losing to it.
@@ -279,10 +287,19 @@ the title block type, read from the model and never written down here, the sheet
 view types that go on it, and whether 1, 2 or 4 views go per sheet. One thing is per plot: the
 sheet number.
 
-The name and the number are editable dropdowns. The lists are what the model already uses, and
-the user can type past them, because a new sheet usually carries a number no sheet has yet. The
+The name and the number are editable dropdowns and the user can type past both, because the
 list is an offer and never a restriction. **The tool still invents neither.** A plot with no
 number gets no sheet and the report says which plot and which sheet.
+
+**The number list is the numbers NOT in use.** It used to be the ones in use, so every entry in
+it was certain to be refused, and three sheets were lost to that in one run with "a sheet
+numbered 010EA is already in this model". `SheetNumbers.Free` steps the last run of digits in
+each number in use until it lands on a free one, so every offer is shaped like something the
+project already does.
+
+A number that will be refused says so under its box as it is typed, and step 5 counts them
+before the confirmation. Every number warning refreshes on any keystroke in any box, because two
+plots given one number is a clash and neither box knows about the other on its own.
 
 More than one sheet can be described, so one run gives a plot its LIST OF DRAWINGS and its
 GENERAL ARRANGEMENT LAYOUT together. `SheetOrder` pairs one `SheetDefinition` with the number
@@ -326,6 +343,30 @@ one twice.
 
 Views are made before sheets inside the same transaction, so a sheet can carry a view this run
 only just created.
+
+## A schedule is built on a category number and typed filter values
+
+Three things were being flattened on the way out of a schedule and could not be rebuilt.
+
+**The category.** `CategoryIdFor` walked `Document.Settings.Categories` looking for a matching
+display name. KERBS is built on Slab Edges, that walk found nothing, and the schedule was
+refused with "this model has no category named Slab Edges" on a model that has it. Capture used
+a third lookup, `Category.GetCategory`, which resolves any category id, so it could hand create
+a name create could never find. `ScheduleCapture.BuiltInValueOf` records
+`Category.BuiltInCategory` and `ModelWriter.CategoryIdFor` resolves that number. No name is
+matched anywhere.
+
+**The filter value.** `ScheduleFilter` holds its value in one of four typed getters and asking
+the wrong one throws. Every value was captured as text and handed back as a string, so the two
+schedules filtering on PRX_Included In Budget equals Yes were refused: that is a Yes/No
+parameter, Revit holds it as the integer 1, and a string is only right for one of the four
+kinds. `ValueIn` returns a Core `FilterValue` with its kind, and `TryRebuild` puts it back as
+the same kind. A value Revit still refuses is a lost filter, which deletes the schedule again.
+
+**The field kind.** `GetSchedulableFields` offers the parameters of a category and never a
+formula, a percentage, a count or a combined parameter, because those are defined inside the
+schedule that holds them. `KindOf` records which a field is, so the report says a calculated
+field has to be written again by hand rather than blaming the category.
 
 ## A missing filter is not a missing field
 

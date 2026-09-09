@@ -21,13 +21,11 @@ once. Every dropdown comes from the model. Step 5 holds the scope box counts, an
 in the top strip, reads the whole document not just the range.
 
 **Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
-schedules and sheets. One confirmation, one transaction, one undo, and a report whose every count
-is of what happened rather than what was intended.
+schedules and sheets. One confirmation, one transaction, one undo, one report of what happened.
 
-**KPI Checklist**, the one button on the KPI ribbon panel, opens a pane holding the model name,
-when it was last read, KPI Scan and a status line. KPI Scan reads the whole document into a
-text file of nine sections, one per question the workbook raises, and creates nothing. Its
-rules are in `.claude/rules/kpi-rules.md`. Its scan is not called Scan Model, on purpose.
+**KPI Checklist**, the one button on the KPI panel, opens a pane of the model name, when it was
+read, KPI Scan and a status line. KPI Scan reads the whole document into a text file of nine
+sections, one per question the workbook raises, and creates nothing. Rules in `kpi-rules.md`.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
 `Addins\2024\` layout the build does not, so copying the output folder by hand leaves Revit
@@ -44,9 +42,9 @@ The whole suite. It is what the pull request gate runs and nothing in it needs R
 ## How this is laid out
 
 - `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation, and
-  `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panes. Each tool
-  has a `Kpi/` or top level folder in both. `tests/RcrcGreen.Core.Tests` is net8.0 and covers
-  Core only. `install/` holds the two PowerShell scripts and `.claude/rules/` the rules
+  `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panes, each tool
+  under its own folder. `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/`
+  holds the PowerShell scripts and `.claude/rules/` the rules per project
 - `reports/` holds what a run wrote and **nothing in it is ever committed.** This repository is
   public and a report carries client view names, sheet numbers and plot identifiers, so
   `reports/README.md` is the only file in it that is tracked
@@ -82,28 +80,34 @@ These come from the team and from real models. They are not guesses.
 Six of the things under a plot are schedules, under Schedules and Quantities rather than Views.
 They filter on PRX_Ref Plot ID. Category alone does not identify one, because HARDSCAPE and
 SHRUBS AND LAWN SCHEDULE are both Floors, told apart by their second filter. Field names are
-copied exactly, PRX_Furniture Lenght included.
+copied exactly, PRX_Furniture Lenght included. A schedule is built on Revit's NUMBER for the
+category, never the display name, because KERBS is built on Slab Edges and that name is not in
+`Document.Settings.Categories`. A filter value goes back as its own kind, so a Yes/No parameter
+goes back as 1. A calculated field cannot be added to a new schedule at all.
 
 **A view family type is not named after the view type, and one view type is not built one way.**
 DM-18-(200) General Arrangement Layout uses `(200) General Arrangement Layout`, which matches.
 DM-11-(010) Location Key Plan uses `(010) Key Location Plan`, words swapped, which does not. So
-nothing is matched on a name. A new view takes its family type, its level, its view template and
-its three crop settings from ONE view of the same type the model already holds, and the report
-names that view. Three (010) views made in one run got three different family types that way,
-each copied faithfully, so the scan counts them per view type and nothing picks a winner.
+nothing is matched on a name. A new view takes its family type, its level, its view template,
+Crop View and Crop Region Visible from ONE view of the same type the model already holds, and
+the report names that view. Three (010) views made in one run got three different family types
+that way, each copied faithfully, so the scan counts them per view type and picks no winner.
 **(400) Landscape Cross Section is a section rather than a plan view**, read off that view's
 kind rather than off the code.
 
-Cross sections look 1 METRE, the team's decision rather than a number read off a view. Four real
-ones read 0.93, 0.93, 1.53 and 12.83 metres, so there was nothing to copy. A section is left
-with no scope box while every plan view has one.
+Two settings are the tool's own rather than the model's, because the model disagrees with
+itself. Cross sections look 1 METRE, where four real ones read 0.93, 0.93, 1.53 and 12.83.
+ANNOTATION CROP IS ALWAYS ON for a plan view, where copying it off PL-17 passed the fault on and
+left neighbouring plots' section markers drawing through. The report says whose setting each is.
+A section is left with no scope box while every plan view has one.
 
 A new view is CREATED FRESH, never copied from another plot, and carries no annotation,
 dimensions, tags or detailing. A SHEET IS DESCRIBED rather than copied. The title block type,
 the sheet name, the view types and whether 1, 2 or 4 views go on it are shared across the ticked
 plots, and the sheet number is the only thing per plot. The user types every number and every
-name and the tool invents neither. A sheet's size is read off the title block PLACED ON IT,
-because Sheet Width and Sheet Height are instance parameters and do not exist on the type.
+name and the tool invents neither, and the number dropdown offers numbers NOT in use. A sheet's
+size is read off the title block PLACED ON IT, because Sheet Width and Sheet Height are instance
+parameters and do not exist on the type.
 
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 
@@ -117,21 +121,20 @@ Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 - Only plot DM-11 has real sheet numbers. Other plots carry numbers like 010QE Copy 001, and a
   group of sheets carries no PRX_Plot_ID at all. The scan counts both
 - Title blocks are AR-PRX-Title_Block_A1, several types. Read them from the model, never fix them
-- A full run made 10 things, 0 refused and 4 needing attention, so every path has now run at
-  least once. Three sheets came out empty and every new view had Annotation Crop off, both fixed
+- Two full runs. The first made 10 with 0 refused, the second 8 with 6 refused and 3 needing
+  attention, so every path has run. Empty sheets, annotation crop off, sheet numbers certain to
+  clash, a category looked up by name and a Yes handed back as a word were the faults, all fixed
 
 Real names are in `.claude/rules/core-rules.md`, next to the rule they illustrate.
 
 ## Conventions
 
-**Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots,
-geometry or a workbook cell. Open questions go in `steps/log.md` and the team answers them.
+**Anything not written down is UNKNOWN.** Never invent a rule. Open questions go in the log.
 
 ## Hooks
 
-Three of them, wired in `.claude/settings.json`. They are walls, a hook script that cannot be
-found blocks, and both commit hooks read the command rather than the index, through
-`commit-scope.py`.
+Three, wired in `.claude/settings.json`. Both commit hooks read the command rather than the
+index, through `commit-scope.py`, and a hook script that cannot be found blocks.
 
 - `block-paths.sh` refuses any write that resolves outside this repo
 - `require-file-on-commit.sh` refuses a commit not carrying `steps/ai-max-state.md`
@@ -154,34 +157,32 @@ from four examples, the read was assumed to need a progress window, and PRX_Plot
 to be on elements only. One run corrected all three. Prefer measured numbers to reasoning.
 
 **Some faults only show when somebody uses the thing.** The panel shipped with every heading
-written and none visible, because a dockable pane on the dark theme is black and WPF defaults
-text to black. Later it was correct and unusable: ticking a view type scrolled the list away,
-marking 136 cells took 136 clicks, and eight columns ran off the right edge. Neither shows in a
-test or in a mockup.
+written and none visible, black on black. Later it was correct and unusable: ticking a view type
+scrolled the list away, marking 136 cells took 136 clicks, and eight columns ran off the right
+edge. Neither round shows in a test or in a mockup.
 
-**Two sources for one fact is two facts.** Five times now, always the same shape. The grid took
-a view's plot from PRX_Plot_ID and its type from the name without checking they agreed, so a
-view named for DM-12 filled a cell that stayed full after every DM-11 view was deleted. Then the
-column count against its list. Then the run report, which made nothing and named four views
-under PLAN VIEWS and under NOT CREATED. Then a panel step reading the range off its arguments
-rather than off whether step 1 was usable. Then one method filling both the code buttons and the
-Add row's dropdown, split when the panel was rebuilt, half of it kept.
+**Two sources for one fact is two facts.** Six times now, always the same shape. A view named
+for DM-12 filled a DM-11 cell that stayed full after every DM-11 view was deleted. The column
+count against its list. The run report, which made nothing and named four views under PLAN VIEWS
+and under NOT CREATED. A panel step reading the range off its arguments. One method filling both
+the code buttons and the Add row's dropdown, split and half kept. A schedule category read one
+way on capture and looked up another way on create.
 
 **A skip with nothing written down is a lie by omission.** `ModelWriter` dropped a schedule
 field it could not resolve, and a filter, both with a bare `continue`. A schedule short of a
 column looks finished. One short of its plot filter reads as correct on a drawing. Every skip is
-recorded now, a lost filter refuses the schedule, and the delete that refusal does is checked,
-because a report saying a thing was removed while the model still holds it is worse again.
+recorded now, a lost filter refuses the schedule, and that delete is checked.
 
 **One example is not a rule, and the model may hold no rule at all.** The family type was
 matched on the view type because one Properties panel showed a type named exactly that. The next
-plot's is `(010) Key Location Plan`. Matching was replaced by copying a sibling, and then three
-(010) views copied three different family types from three different siblings.
+plot's is `(010) Key Location Plan`. Copying a sibling replaced it, and then three (010) views
+copied three different family types. Annotation crop went the same way one round later.
 
-**A parameter that does not exist reads as a value of zero.** Sheet Width and Sheet Height were
-read off the title block TYPE. They are instance parameters, so `get_Parameter` returned null,
-null became 0.0, the guard fired, and three sheets were made empty on a real A1 block. Ask what
-the API attaches a parameter to before deciding the model is wrong.
+**A name is not an identity and a word is not a value.** Sheet Width was read off a title block
+TYPE, where that instance parameter does not exist, so null became 0.0 and three sheets came out
+empty. Slab Edges was looked up by display name in a collection that does not hold it, on a model
+that has the category. A Yes/No filter was handed back the word Yes when Revit stores 1. Three
+rounds, one shape. Ask the API what a thing IS rather than what it is called.
 
 **Copying takes whatever state the thing is in, including nothing.** The first sheet the tool
 made was empty, copied from one the user picked that had no views on it. Nothing failed and

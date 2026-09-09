@@ -1,8 +1,9 @@
 # ai-max state
 
-Phase: 9, ship. Twenty-first pass, the KPI scanner, first round of the second tool.
+Phase: 9, ship. Twenty-third pass, the KPI scanner, first round of the second tool.
 
-Branch `claude/inspiring-allen-xs113f`, pull request 28, three commits, waiting on a click.
+Branch `claude/inspiring-allen-xs113f`, pull request 28, waiting on a click. It sits on top of
+pull requests 29 and 30, merged into main while it was open, which touched only Drawing Sheet files.
 Locally, after the last file was written, the build came back with 0 warnings and 0 errors and
 the tests with 541 passed and 0 failed, up from 398.
 
@@ -21,8 +22,35 @@ are numbered in `steps/log.md`. Nothing in this round has been through Revit and
 ever been written. A five lens review raised 76 findings, 28 were sent to a skeptic each, 23
 were confirmed, 21 distinct, and all 21 are fixed in the third commit with the two report fixes
 queued before it. The 5 refuted and the 48 unverified are listed in the log entry, one line
-each, and stay out of the code.
-`RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile` are unchanged.
+each, and stay out of the code. `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile`
+are unchanged.
+
+Before that, the twenty second pass, the report for the second full run round. Pull request 29
+merged as `a44fe4f` with 436 tests on the runner, 0 failed and 0 skipped.
+
+Before that, the twenty first pass, off the second full run in Revit.
+
+8 created, 6 refused, 3 needing attention. Five items, and the two schedule faults are the same
+shape as each other.
+
+**A category is a number, not a display name.** KERBS is built on Slab Edges. Capture read the
+name with `Category.GetCategory`, which resolves any category id, and create looked it up in
+`Document.Settings.Categories`, which is the top of the Object Styles tree and does not hold it.
+Two lookups over two different sets for one fact, the sixth time that shape has been the bug.
+`Category.BuiltInCategory` is captured now and no name is matched anywhere.
+
+**A Yes is the integer 1.** Every captured filter value was flattened to text and handed back to
+the string constructor, so the two schedules filtering on PRX_Included In Budget equals Yes were
+refused as an invalid value for the field and filter type. `FilterValue` carries its kind and
+all four survive a round trip.
+
+Annotation crop is forced on for every plan view rather than copied, because the sibling had it
+off and copying passed the fault straight on. The sheet number dropdown offers numbers NOT in
+use, a number that will be refused says so under the box, and step 5 counts them. A calculated
+field is named as one rather than blamed on the category.
+
+Nothing in this round has been through Revit, and no schedule has ever been created by this tool
+at all.
 
 Before that, the twentieth pass, the report for the first full run round.
 

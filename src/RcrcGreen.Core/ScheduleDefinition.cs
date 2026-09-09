@@ -1,20 +1,179 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace RcrcGreen.Core
 {
     /// <summary>
+    /// How a schedule filter holds its value.
+    ///
+    /// Revit stores a filter value in one of four ways and rebuilding it as the wrong one is
+    /// refused. Two schedules were lost to that: both filter on PRX_Included In Budget equals
+    /// Yes, which is a Yes/No parameter, so Revit holds it as the integer 1. Capture flattened
+    /// every value to text and create handed the text back, and Revit answered that the filter
+    /// value is not valid for the field and filter type.
+    /// </summary>
+    public enum FilterValueKind
+    {
+        Text = 0,
+
+        /// <summary>
+        /// Includes every Yes/No parameter, which Revit holds as 1 or 0 rather than as words.
+        /// </summary>
+        WholeNumber = 1,
+
+        Number = 2,
+
+        /// <summary>
+        /// A reference to another element, held as its id.
+        /// </summary>
+        ElementReference = 3
+    }
+
+    /// <summary>
+    /// One filter value, with the kind it has to go back as.
+    ///
+    /// The text form is kept alongside the typed value rather than derived on demand, because
+    /// the text is what the report prints and what a plot swap replaces, and re-deriving it in
+    /// two places is how this repo has produced a bug five times.
+    /// </summary>
+    public sealed class FilterValue
+    {
+        private FilterValue(FilterValueKind kind, string asText, long whole, double number)
+        {
+            Kind = kind;
+            AsText = asText ?? string.Empty;
+            WholeNumber = whole;
+            Number = number;
+        }
+
+        public static FilterValue Text(string value)
+        {
+            return new FilterValue(FilterValueKind.Text, value ?? string.Empty, 0L, 0.0);
+        }
+
+        public static FilterValue OfWholeNumber(int value)
+        {
+            return new FilterValue(
+                FilterValueKind.WholeNumber,
+                value.ToString(CultureInfo.InvariantCulture),
+                value,
+                value);
+        }
+
+        public static FilterValue OfNumber(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+            {
+                throw new ArgumentException("That filter value is not a real number.", "value");
+            }
+
+            return new FilterValue(
+                FilterValueKind.Number,
+                value.ToString("R", CultureInfo.InvariantCulture),
+                (long)value,
+                value);
+        }
+
+        public static FilterValue OfElementReference(long elementId)
+        {
+            return new FilterValue(
+                FilterValueKind.ElementReference,
+                elementId.ToString(CultureInfo.InvariantCulture),
+                elementId,
+                elementId);
+        }
+
+        /// <summary>
+        /// The other half of the round trip, for a definition read back from text. It refuses
+        /// rather than falling back to text, because a filter silently downgraded to a string
+        /// is exactly the fault this type exists to stop.
+        /// </summary>
+        public static bool TryParse(FilterValueKind kind, string asText, out FilterValue value)
+        {
+            value = null;
+            string text = asText ?? string.Empty;
+
+            switch (kind)
+            {
+                case FilterValueKind.Text:
+                    value = Text(text);
+                    return true;
+
+                case FilterValueKind.WholeNumber:
+                {
+                    int whole;
+                    if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out whole))
+                    {
+                        return false;
+                    }
+
+                    value = OfWholeNumber(whole);
+                    return true;
+                }
+
+                case FilterValueKind.Number:
+                {
+                    double number;
+                    if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out number)
+                        || double.IsNaN(number) || double.IsInfinity(number))
+                    {
+                        return false;
+                    }
+
+                    value = OfNumber(number);
+                    return true;
+                }
+
+                default:
+                {
+                    long id;
+                    if (!long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out id))
+                    {
+                        return false;
+                    }
+
+                    value = OfElementReference(id);
+                    return true;
+                }
+            }
+        }
+
+        public FilterValueKind Kind { get; }
+
+        public string AsText { get; }
+
+        /// <summary>
+        /// The integer form, for a whole number or an element reference.
+        /// </summary>
+        public long WholeNumber { get; }
+
+        public double Number { get; }
+
+        public override string ToString()
+        {
+            return AsText;
+        }
+    }
+
+    /// <summary>
     /// One filter row on a schedule, as plain values.
     /// </summary>
     public sealed class ScheduleFilterRule
     {
-        public ScheduleFilterRule(string parameterName, string value)
+        public ScheduleFilterRule(string parameterName, FilterValue value)
         {
             if (parameterName == null) throw new ArgumentNullException("parameterName");
+            if (value == null) throw new ArgumentNullException("value");
 
             ParameterName = parameterName;
-            Value = value ?? string.Empty;
+            Held = value;
+        }
+
+        public ScheduleFilterRule(string parameterName, string value)
+            : this(parameterName, FilterValue.Text(value))
+        {
         }
 
         /// <summary>
@@ -24,7 +183,17 @@ namespace RcrcGreen.Core
         /// </summary>
         public string ParameterName { get; }
 
-        public string Value { get; }
+        public FilterValue Held { get; }
+
+        public string Value
+        {
+            get { return Held.AsText; }
+        }
+
+        public FilterValueKind Kind
+        {
+            get { return Held.Kind; }
+        }
 
         /// <summary>
         /// True when this rule is the one naming the plot, so create knows which value to swap
@@ -33,17 +202,92 @@ namespace RcrcGreen.Core
         /// </summary>
         public bool NamesThePlot
         {
-            get { return PlotId.IsPlotId(Value); }
+            get { return Held.Kind == FilterValueKind.Text && PlotId.IsPlotId(Value); }
         }
 
         public ScheduleFilterRule ForPlot(string plotId)
         {
-            return NamesThePlot ? new ScheduleFilterRule(ParameterName, plotId) : this;
+            return NamesThePlot
+                ? new ScheduleFilterRule(ParameterName, FilterValue.Text(plotId))
+                : this;
         }
 
         public override string ToString()
         {
             return ParameterName + " equals " + Value;
+        }
+    }
+
+    /// <summary>
+    /// What a schedule field is, which decides whether it can be added to a new schedule at all.
+    /// </summary>
+    public enum ScheduleFieldKind
+    {
+        /// <summary>
+        /// A parameter of the scheduled elements. It appears in GetSchedulableFields and can be
+        /// added by name.
+        /// </summary>
+        AParameter = 0,
+
+        /// <summary>
+        /// A formula, a percentage, a count or a combined parameter. It is defined inside the
+        /// schedule that holds it rather than read off the model, so it is not in
+        /// GetSchedulableFields and no amount of name matching will find it.
+        /// </summary>
+        Calculated = 1
+    }
+
+    /// <summary>
+    /// One field on a schedule, in the order it appears.
+    ///
+    /// Three schedules came out short of a field and the report said they were not schedulable
+    /// for the category, which sends somebody to look at the category. The kind is captured now,
+    /// so a calculated field is named as one.
+    /// </summary>
+    public sealed class ScheduleFieldEntry
+    {
+        public ScheduleFieldEntry(string name, ScheduleFieldKind kind)
+        {
+            if (name == null) throw new ArgumentNullException("name");
+
+            Name = name;
+            Kind = kind;
+        }
+
+        public static ScheduleFieldEntry Parameter(string name)
+        {
+            return new ScheduleFieldEntry(name, ScheduleFieldKind.AParameter);
+        }
+
+        public static ScheduleFieldEntry Calculated(string name)
+        {
+            return new ScheduleFieldEntry(name, ScheduleFieldKind.Calculated);
+        }
+
+        public string Name { get; }
+
+        public ScheduleFieldKind Kind { get; }
+
+        public bool IsCalculated
+        {
+            get { return Kind == ScheduleFieldKind.Calculated; }
+        }
+
+        /// <summary>
+        /// What the report says when this field could not be added. The two cases send somebody
+        /// to two different places, so they do not share a sentence.
+        /// </summary>
+        public string WhyItIsMissing()
+        {
+            return IsCalculated
+                ? Name + ", a calculated field defined inside the source schedule, which Revit "
+                    + "does not offer to a new one and which has to be written again by hand"
+                : Name + ", which this category does not offer as a field here";
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
     }
 
@@ -62,20 +306,22 @@ namespace RcrcGreen.Core
         public ScheduleDefinition(
             ViewType type,
             string categoryName,
-            IEnumerable<string> fieldsInOrder,
+            IEnumerable<ScheduleFieldEntry> fieldsInOrder,
             IEnumerable<ScheduleFilterRule> filters,
             bool includesLinkedFiles,
-            bool isASheetList)
+            bool isASheetList,
+            long categoryBuiltInValue = 0L)
         {
             if (type == null) throw new ArgumentNullException("type");
             if (categoryName == null) throw new ArgumentNullException("categoryName");
 
             Type = type;
             CategoryName = categoryName;
+            CategoryBuiltInValue = categoryBuiltInValue;
 
             // Order is the whole point of the field list, so it is kept exactly as read and
             // never sorted or deduplicated into something tidier.
-            FieldsInOrder = (fieldsInOrder ?? Enumerable.Empty<string>())
+            FieldsInOrder = (fieldsInOrder ?? Enumerable.Empty<ScheduleFieldEntry>())
                 .Where(field => field != null)
                 .ToList();
 
@@ -89,9 +335,26 @@ namespace RcrcGreen.Core
 
         public ViewType Type { get; }
 
+        /// <summary>
+        /// What the category is called, for the report. It is not what a new schedule is built
+        /// from any more. KERBS is built on Slab Edges, and looking that name up in
+        /// Document.Settings.Categories found nothing, so the schedule could not be made while
+        /// the model plainly held the category.
+        /// </summary>
         public string CategoryName { get; }
 
-        public IReadOnlyList<string> FieldsInOrder { get; }
+        /// <summary>
+        /// Revit's own number for the category, which is what a new schedule is built from. Zero
+        /// when the source schedule sits on a category that is not one of Revit's built-in ones.
+        /// </summary>
+        public long CategoryBuiltInValue { get; }
+
+        public bool HasBuiltInCategory
+        {
+            get { return CategoryBuiltInValue != 0L; }
+        }
+
+        public IReadOnlyList<ScheduleFieldEntry> FieldsInOrder { get; }
 
         public IReadOnlyList<ScheduleFilterRule> Filters { get; }
 
@@ -141,7 +404,8 @@ namespace RcrcGreen.Core
                 FieldsInOrder,
                 Filters.Select(rule => rule.ForPlot(plotId)),
                 IncludesLinkedFiles,
-                IsASheetList);
+                IsASheetList,
+                CategoryBuiltInValue);
         }
 
         /// <summary>
@@ -150,6 +414,23 @@ namespace RcrcGreen.Core
         public string NameFor(string plotId)
         {
             return plotId + "-(" + Type.Code + ") " + Type.ViewName;
+        }
+
+        /// <summary>
+        /// What the report says when a schedule cannot be built at all. It names the category
+        /// both ways, because the name is what a person recognises and the number is what
+        /// actually failed to resolve.
+        /// </summary>
+        public string WhyTheCategoryIsNoGood()
+        {
+            return HasBuiltInCategory
+                ? "This model does not hold category " + CategoryName + ", number "
+                    + CategoryBuiltInValue.ToString(CultureInfo.InvariantCulture)
+                    + ", so that schedule cannot be built."
+                : CategoryName.Length == 0
+                    ? "The source schedule sits on a category this tool could not read at all."
+                    : CategoryName + " is not one of Revit's own categories, so there is no "
+                        + "number to build a new schedule from and the name alone is not enough.";
         }
     }
 }

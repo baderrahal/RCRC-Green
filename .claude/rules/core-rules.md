@@ -88,6 +88,41 @@ carried across untouched, because HARDSCAPE and SHRUBS AND LAWN are both categor
 that second rule is the only thing telling them apart. Field names are copied exactly,
 including the one spelled PRX_Furniture Lenght in the model, or the field is not found.
 
+**A filter value carries the kind it has to go back as.** `FilterValue` is text, a whole number,
+a number or an element reference, and all four survive a round trip through text. Flattening
+them all to a string lost two schedules: both filter on PRX_Included In Budget equals Yes, which
+is a Yes/No parameter Revit holds as the integer 1, and handing the word back was answered with
+"the filter value is not valid for the field and filter type". Only a text value can name a
+plot, so a whole number is never mistaken for one and swapped.
+
+**A field carries what kind of field it is.** `ScheduleFieldEntry` is a parameter or a
+calculated field, meaning a formula, a percentage, a count or a combined parameter. A calculated
+field is defined inside the schedule that holds it, so Revit never offers it to a new one and no
+name matching will find it. Three schedules came out short of one and the report blamed the
+category, which sends somebody to look in the wrong place.
+
+**The category is a number, not a name.** `CategoryBuiltInValue` is Revit's own number for it.
+KERBS is built on Slab Edges, a name lookup found nothing, and the schedule was refused with
+"this model has no category named Slab Edges" on a model that has it. `CategoryName` is kept for
+the report only.
+
+## A sheet number that will be refused says so before Run
+
+`SheetNumbers.Free` offers numbers no sheet in the model carries, each one a number in use with
+its last run of digits stepped on until it is free, so every offer is shaped like something the
+project already does. The dropdown used to list the numbers already in use, which meant every
+entry in it was certain to be rejected, and three sheets were lost to that in one run.
+
+`Faults` and `Problems` answer the same question twice over: the line under one box, and the
+count in the run summary. One place decides, so the panel can never say a number is fine while
+the summary counts it.
+
+Two ways to be refused. A sheet in the model already carries it, or two of the sheets this run
+would make carry it, which is the same fault a second later. Two separately described sheets
+asking for one number clash as hard as two plots do, because they go into one model. Already in
+the model is said first when both are true, since the model is the one somebody goes and looks
+at.
+
 ## What is counted is what gets written
 
 `ScopeBoxCounts` narrows views to a set of plots by the plot in the view's own name, which is
@@ -193,9 +228,17 @@ so the question could not be settled at all. The name is on the object now and i
 
 `ViewCrop` is the three of them together: Crop View, Crop Region Visible and Annotation Crop.
 They are one object because Revit will not turn Annotation Crop on for a view whose crop is
-off, so copying the second without the first does nothing. Every view the tool created had
-Annotation Crop off while DM-16 and DM-14 have it on, which let neighbouring plots' section
-markers draw straight through a new view.
+off, so copying the second without the first does nothing.
+
+**Only two of the three are copied.** `AnnotationCropChoice.ForAPlanView` says on, always.
+Copying it was tried for one round and did not work: the report showed DM-11-(010) Overall Plan
+set up from PL-17-(010) Overall Plan, which has it off, so the new view inherited the fault. The
+model disagrees with itself, so there is nothing there to copy. This is the same shape as
+`SectionDepth`: the team named a value, the tool applies it, and the words say whose it is so
+nobody reads it as something found in the model.
+
+`ViewCrop.CopiedInWords` prints the two that really were copied. Printing all three in the
+setup line would read as though the annotation crop had come off a view.
 
 ## Which family type a view type is really built with
 

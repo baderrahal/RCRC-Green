@@ -159,9 +159,15 @@ namespace RcrcGreen.Revit
             madeSoFar[item.Name] = made.Id;
 
             ApplySiblingTemplate(made, sibling, item, outcome);
-            ApplySiblingCrop(made, sibling, item, outcome);
+
+            // Annotation crop is forced on rather than copied. Copying it was the last round's
+            // answer and it did not work: PL-17-(010) Overall Plan has it off, so the new view
+            // inherited the fault and every neighbouring plot's section marker drew through it.
+            AnnotationCropChoice annotation = AnnotationCropChoice.ForAPlanView(sibling.Facts);
+            ApplySiblingCrop(made, sibling, item, outcome, annotation.On);
+
             SetPlotId(made, item, outcome);
-            SaySetUpFrom(item, outcome, sibling.Facts.InWords());
+            SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " " + annotation.InWords());
 
             ElementId boxId;
             if (boxIdByName.TryGetValue(item.PlotId, out boxId))
@@ -264,7 +270,11 @@ namespace RcrcGreen.Revit
             madeSoFar[item.Name] = made.Id;
 
             ApplySiblingTemplate(made, sibling, item, outcome);
-            ApplySiblingCrop(made, sibling, item, outcome);
+
+            // A section still copies all three. No section has ever been created by this tool,
+            // so there is no evidence that a section inherits the same fault a plan view did.
+            ApplySiblingCrop(made, sibling, item, outcome, sibling.Facts.Crop.AnnotationCrop);
+
             SetPlotId(made, item, outcome);
             SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " Looks "
                 + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture)
@@ -608,7 +618,7 @@ namespace RcrcGreen.Revit
         /// reported rather than silently losing to it.
         /// </summary>
         private static void ApplySiblingCrop(
-            View made, Sibling sibling, RunItem item, RunOutcome outcome)
+            View made, Sibling sibling, RunItem item, RunOutcome outcome, bool annotationCrop)
         {
             ViewCrop wanted = sibling.Facts.Crop;
             var refused = new List<string>();
@@ -632,7 +642,7 @@ namespace RcrcGreen.Revit
             }
             else
             {
-                annotation.Set(wanted.AnnotationCrop ? 1 : 0);
+                annotation.Set(annotationCrop ? 1 : 0);
             }
 
             if (refused.Count == 0) return;
@@ -700,9 +710,23 @@ namespace RcrcGreen.Revit
 
             CapturedSchedule wanted = captured.ForPlot(item.PlotId);
 
-            ViewSchedule made = wanted.IsASheetList
-                ? ViewSchedule.CreateSheetList(document)
-                : ViewSchedule.CreateSchedule(document, CategoryIdFor(document, wanted.CategoryName));
+            ViewSchedule made;
+            if (wanted.IsASheetList)
+            {
+                made = ViewSchedule.CreateSheetList(document);
+            }
+            else
+            {
+                ElementId category = CategoryIdFor(document, wanted);
+                if (category == ElementId.InvalidElementId)
+                {
+                    outcome.Refused(new RunRefusal(
+                        item.PlotId, item.Type, wanted.WhyTheCategoryIsNoGood()));
+                    return;
+                }
+
+                made = ViewSchedule.CreateSchedule(document, category);
+            }
 
             made.Name = wanted.NameFor(item.PlotId);
 
@@ -716,20 +740,20 @@ namespace RcrcGreen.Revit
             // Added in the captured order, because the order is what the schedule looks like and
             // a field list in a different order is a different schedule to the person reading it.
             var fieldByName = new Dictionary<string, ScheduleField>(StringComparer.Ordinal);
-            var missingFields = new List<string>();
+            var missingFields = new List<ScheduleFieldEntry>();
 
-            foreach (string name in wanted.FieldsInOrder)
+            foreach (ScheduleFieldEntry entry in wanted.FieldsInOrder)
             {
-                if (fieldByName.ContainsKey(name)) continue;
+                if (fieldByName.ContainsKey(entry.Name)) continue;
 
                 SchedulableField schedulable;
-                if (!available.TryGetValue(name, out schedulable))
+                if (!available.TryGetValue(entry.Name, out schedulable))
                 {
-                    missingFields.Add(name);
+                    missingFields.Add(entry);
                     continue;
                 }
 
-                fieldByName.Add(name, definition.AddField(schedulable));
+                fieldByName.Add(entry.Name, definition.AddField(schedulable));
             }
 
             var missingFilters = new List<string>();
@@ -742,7 +766,14 @@ namespace RcrcGreen.Revit
                     continue;
                 }
 
-                definition.AddFilter(new ScheduleFilter(field.FieldId, ScheduleFilterType.Equal, rule.Value));
+                ScheduleFilter rebuilt;
+                if (!TryRebuild(field.FieldId, rule, out rebuilt))
+                {
+                    missingFilters.Add(rule.ToString());
+                    continue;
+                }
+
+                definition.AddFilter(rebuilt);
             }
 
             if (missingFilters.Count > 0)
@@ -781,13 +812,70 @@ namespace RcrcGreen.Revit
 
             if (missingFields.Count > 0)
             {
+                int calculated = missingFields.Count(one => one.IsCalculated);
+
                 outcome.NeedsAttention(new RunRefusal(
                     item.PlotId,
                     item.Type,
-                    "Created without " + missingFields.Count + " of its fields, because they are "
-                    + "not schedulable for this category here. Missing: "
-                    + string.Join(", ", missingFields.ToArray())
-                    + ". The schedule is short of those columns."));
+                    "Created without " + missingFields.Count + " of its fields, so it is short of "
+                    + "those columns. Missing: "
+                    + string.Join("; ", missingFields.Select(one => one.WhyItIsMissing()).ToArray())
+                    + "." + (calculated == 0
+                        ? string.Empty
+                        : " A calculated field has to be written again in the new schedule by "
+                            + "hand, because Revit keeps it inside the schedule that defines it "
+                            + "rather than offering it to a new one.")));
+            }
+        }
+
+        /// <summary>
+        /// A filter rebuilt as the kind it was captured as.
+        ///
+        /// Two schedules were refused with "the filter value is not valid for the field and
+        /// filter type". Both filter on PRX_Included In Budget equals Yes, which is a Yes/No
+        /// parameter that Revit holds as the integer 1. Every captured value used to be handed
+        /// back as a string, and a string is only right for one of the four kinds.
+        /// </summary>
+        private static bool TryRebuild(
+            ScheduleFieldId fieldId, ScheduleFilterRule rule, out ScheduleFilter rebuilt)
+        {
+            rebuilt = null;
+
+            try
+            {
+                switch (rule.Kind)
+                {
+                    case FilterValueKind.WholeNumber:
+                        rebuilt = new ScheduleFilter(
+                            fieldId, ScheduleFilterType.Equal, (int)rule.Held.WholeNumber);
+                        return true;
+
+                    case FilterValueKind.Number:
+                        rebuilt = new ScheduleFilter(
+                            fieldId, ScheduleFilterType.Equal, rule.Held.Number);
+                        return true;
+
+                    case FilterValueKind.ElementReference:
+                        rebuilt = new ScheduleFilter(
+                            fieldId,
+                            ScheduleFilterType.Equal,
+                            new ElementId(rule.Held.WholeNumber));
+                        return true;
+
+                    default:
+                        rebuilt = new ScheduleFilter(fieldId, ScheduleFilterType.Equal, rule.Value);
+                        return true;
+                }
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            {
+                // Revit refuses a value that does not suit the field. It is reported as a lost
+                // filter, which deletes the schedule again, rather than left half applied.
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return false;
             }
         }
 
@@ -817,18 +905,24 @@ namespace RcrcGreen.Revit
             }
         }
 
-        private static ElementId CategoryIdFor(Document document, string categoryName)
+        /// <summary>
+        /// The category a new schedule is built on, found by Revit's own number for it.
+        ///
+        /// It used to be found by walking Document.Settings.Categories looking for a matching
+        /// display name. KERBS is built on Slab Edges, that walk found nothing, and the schedule
+        /// was refused with "this model has no category named Slab Edges" on a model that has
+        /// it. Two lookups for one fact, and the capture side used a third: Category.GetCategory
+        /// resolves any category id, so it could produce a name the create side could never find.
+        /// </summary>
+        private static ElementId CategoryIdFor(Document document, CapturedSchedule wanted)
         {
-            foreach (Category category in document.Settings.Categories.Cast<Category>())
-            {
-                if (string.Equals(category.Name, categoryName, StringComparison.Ordinal))
-                {
-                    return category.Id;
-                }
-            }
+            if (!wanted.HasBuiltInCategory) return ElementId.InvalidElementId;
 
-            throw new InvalidOperationException(
-                "This model has no category named " + categoryName + ", so that schedule cannot be built.");
+            var builtIn = (BuiltInCategory)wanted.CategoryBuiltInValue;
+            if (!Enum.IsDefined(typeof(BuiltInCategory), builtIn)) return ElementId.InvalidElementId;
+
+            Category found = Category.GetCategory(document, builtIn);
+            return found == null ? ElementId.InvalidElementId : found.Id;
         }
     }
 }
