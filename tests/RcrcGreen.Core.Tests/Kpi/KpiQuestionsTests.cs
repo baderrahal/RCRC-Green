@@ -807,6 +807,92 @@ namespace RcrcGreen.Core.Tests.Kpi
                 answer.Answer);
         }
 
+        /// <summary>
+        /// The same model with the switch on it. The 1521 scan carries KPI COMPONENT S/H on 9 of
+        /// 9 title block types, reading No on every one, and the title block type home is asked
+        /// before the sheet, so the switch printed first and PRX_Component second.
+        /// </summary>
+        private static KpiScan TheComponentAndTheSwitch()
+        {
+            return KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 1385,
+                titleBlockInstances: 1383,
+                onInstances: KpiFixture.OnInstances(1383, new[] { KpiFixture.Tally("Sheet Width", 1383, 1383) }),
+                onTypes: KpiFixture.OnTypes(
+                    9,
+                    new[] { KpiFixture.Tally("KPI COMPONENT S/H", 9, 9) },
+                    new[]
+                    {
+                        KpiFixture.Value("KPI COMPONENT S/H", "AR-PRX-Title_Block_A1 : A1 Metric", "used on 1300 sheets", "No"),
+                        KpiFixture.Value("KPI COMPONENT S/H", "AR-PRX-Title_Block_A1 : A1 Metric Key Plan", "used on 83 sheets", "No")
+                    }),
+                onSheets: KpiFixture.OnSheets(
+                    1385,
+                    new[] { KpiFixture.Tally("PRX_Component", 1385, 1384) },
+                    new[]
+                    {
+                        KpiFixture.Value("PRX_Component", "010QE", "KEY PLAN", "FRIDAY MOSQUE"),
+                        KpiFixture.Value("PRX_Component", "200QE", "LAYOUT", "SCHOOL"),
+                        KpiFixture.Value("PRX_Component", "600QD", "SCHEDULES", "FRIDAY MOSQUE")
+                    })));
+        }
+
+        /// <summary>
+        /// A show and hide toggle is not a candidate for the component name. Offering it beside
+        /// PRX_Component in the section meant to be read first says the model holds two answers
+        /// when it holds one.
+        /// </summary>
+        [Fact]
+        public void ASwitchIsNotOfferedAsTheComponentNameInQuestionOne()
+        {
+            KpiAnswer answer = Answer(TheComponentAndTheSwitch(), 1);
+
+            Assert.True(answer.Answered);
+            Assert.Equal(
+                "PRX_COMPONENT NOT FOUND on any title block instance. PRX_Plot_UID2 NOT FOUND on any title block "
+                + "instance. The model carries it under another name, and that name holds values: PRX_Component on "
+                + "the sheet, 1385 carrying it and 1384 with a value, first values FRIDAY MOSQUE, SCHOOL. "
+                + "Section 3 prints them.",
+                answer.Answer);
+            Assert.DoesNotContain("KPI COMPONENT S/H", answer.Answer);
+        }
+
+        [Fact]
+        public void ASwitchIsNotOfferedAsTheComponentNameInQuestionTwoEither()
+        {
+            KpiAnswer answer = Answer(TheComponentAndTheSwitch(), 2);
+
+            Assert.True(answer.Answered);
+            Assert.Equal(
+                "PRX_COMPONENT is not on the title block instance, not on the title block type, not on the sheet. "
+                + "Not under that name anywhere. The model carries PRX_Component on the sheet, 1385 carrying it and "
+                + "1384 with a value, first values FRIDAY MOSQUE, SCHOOL. Section 3 prints them.",
+                answer.Answer);
+            Assert.DoesNotContain("KPI COMPONENT S/H", answer.Answer);
+        }
+
+        /// <summary>
+        /// A model whose only near miss is the switch answers nothing, and says so, rather than
+        /// counting the toggle as the component found under another name.
+        /// </summary>
+        [Fact]
+        public void ASwitchOnItsOwnLeavesQuestionTwoNotFound()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 9,
+                onTypes: KpiFixture.OnTypes(
+                    9,
+                    new[] { KpiFixture.Tally("KPI COMPONENT S/H", 9, 9) },
+                    new[] { KpiFixture.Value("KPI COMPONENT S/H", "AR-PRX-Title_Block_A1 : A1 Metric", "used on 9 sheets", "No") })));
+
+            KpiAnswer answer = Answer(scan, 2);
+
+            Assert.False(answer.Answered);
+            Assert.Equal(
+                "PRX_COMPONENT is not on the title block instance, not on the title block type, not on the sheet.",
+                answer.Answer);
+        }
+
         [Fact]
         public void ANearMissWithNoValueInItLeavesQuestionTwoNotFound()
         {

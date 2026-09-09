@@ -1,6 +1,21 @@
 # ai-max state
 
-Phase: 9, ship. Thirty first pass, the shrubs and lawn shape measured rather than guessed.
+Phase: 9, ship. Thirty second pass, the group counter, the switch and the component values.
+Pull request 39 is open, 804 tests locally, 0 failed and 0 skipped, after the last file was
+written and after six break watches were restored byte for byte.
+
+The group counter counted what sat under a phase off the first cell, which is the image column,
+and an existing species prints with no photo, so DM-12 Existing came back as 0 named rows of 6
+while the same file printed its five species. Both readers now read the botanical column the
+heading row names. The shrubs reader held the same fault unseen. Every place in Core that reads
+a printed row is listed in `steps/log.md`, the ones already right included.
+
+A near miss whose values all read Yes or No is a switch and is left out of the section 9 answer
+and kept in section 3. And section 3 now prints every distinct value of PRX_Component with its
+sheets and its plots, because the five measured values are not template names and **which
+template each one means is open**.
+
+Before that, the thirty first pass, the shrubs and lawn shape measured rather than guessed.
 Pull request 38 is merged into main as `82dd51d`, 789 tests on the runner against its merged
 head and 789 locally, 0 failed and 0 skipped on each.
 

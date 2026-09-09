@@ -922,5 +922,153 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "  (610) SOFTSCAPE SCHEDULE: ENTER EACH EXISTING TREE QUANTITY" },
                 UntilBlank(lines, "COLUMN HEADINGS HOLDING EXISTING OR PROPOSED, 1, plot taken off"));
         }
+
+        /// <summary>
+        /// The component picks the workbook template and its values are not template names. The
+        /// five the 1521 scan measured are FRIDAY MOSQUE, SCHOOL, HEALTH, EXISTING PARK and
+        /// NH STRT 20m ROW, against templates named existing parks, future parks, healthcare,
+        /// mosques, parking, schools and streets. Nobody can build that mapping off twenty
+        /// example sheets, so section 3 prints every value with its sheets and its plots.
+        ///
+        /// One sheet here carries a component and no plot, which is what the 1385 run found: a
+        /// group of sheets has no PRX_Plot_ID on it at all.
+        /// </summary>
+        private static KpiScan TheComponentValues()
+        {
+            return KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 7,
+                onTypes: KpiFixture.OnTypes(
+                    9,
+                    new[] { KpiFixture.Tally("KPI COMPONENT S/H", 9, 9) },
+                    new[]
+                    {
+                        KpiFixture.Value("KPI COMPONENT S/H", "AR-PRX-Title_Block_A1 : A1 Metric", "used on 4 sheets", "No"),
+                        KpiFixture.Value("KPI COMPONENT S/H", "AR-PRX-Title_Block_A1 : A1 Metric Key Plan", "used on 2 sheets", "No"),
+                        KpiFixture.Value("KPI COMPONENT S/H", "AR-PRX-Title_Block_A0 : A0 Metric", "used on 1 sheet", "No")
+                    }),
+                onSheets: KpiFixture.OnSheets(
+                    7,
+                    new[] { KpiFixture.Tally("PRX_Component", 7, 7), KpiFixture.Tally("PRX_Plot_ID", 7, 6) },
+                    new[]
+                    {
+                        KpiFixture.Value("PRX_Component", "010QE", "KEY PLAN", "FRIDAY MOSQUE"),
+                        KpiFixture.Value("PRX_Plot_ID", "010QE", "KEY PLAN", "FM-05"),
+                        KpiFixture.Value("PRX_Component", "200QE", "LAYOUT", "FRIDAY MOSQUE"),
+                        KpiFixture.Value("PRX_Plot_ID", "200QE", "LAYOUT", "FM-05"),
+                        KpiFixture.Value("PRX_Component", "010RA", "KEY PLAN", "SCHOOL"),
+                        KpiFixture.Value("PRX_Plot_ID", "010RA", "KEY PLAN", "SC-03"),
+                        KpiFixture.Value("PRX_Component", "010VE", "KEY PLAN", "SCHOOL"),
+                        KpiFixture.Value("PRX_Component", "010SB", "KEY PLAN", "HEALTH"),
+                        KpiFixture.Value("PRX_Plot_ID", "010SB", "KEY PLAN", "NS-19"),
+                        KpiFixture.Value("PRX_Component", "010TC", "KEY PLAN", "EXISTING PARK"),
+                        KpiFixture.Value("PRX_Plot_ID", "010TC", "KEY PLAN", "EP-02"),
+                        KpiFixture.Value("PRX_Component", "010UD", "KEY PLAN", "NH STRT 20m ROW"),
+                        KpiFixture.Value("PRX_Plot_ID", "010UD", "KEY PLAN", "NS-06")
+                    })));
+        }
+
+        [Fact]
+        public void SectionThreePrintsEveryComponentValueWithItsSheetsAndItsPlots()
+        {
+            string[] lines = LinesOf(KpiReport.Write(TheComponentValues(), Noon));
+
+            Assert.Equal(
+                new[]
+                {
+                    "value | sheets carrying it | plots | the plots",
+                    "FRIDAY MOSQUE | 2 | 1 | FM-05",
+                    "SCHOOL | 2 | 1 | SC-03",
+                    "EXISTING PARK | 1 | 1 | EP-02",
+                    "HEALTH | 1 | 1 | NS-19",
+                    "NH STRT 20m ROW | 1 | 1 | NS-06",
+                    "The value is the asset type. It is not a template name and nothing in the tool "
+                        + "turns one into the other, so this list is the whole of what the model says."
+                },
+                UntilBlank(lines, "EVERY VALUE OF PRX_Component ON THE SHEET, 5 distinct values over 7 sheets. "
+                    + "The plot beside each is PRX_Plot_ID read off the sheet."));
+        }
+
+        /// <summary>
+        /// A switch is not a component value. It stays in this section under its own tally and
+        /// its values, and it is named here rather than dropped, because a switch left out with
+        /// nothing written down reads exactly like a switch nobody found.
+        /// </summary>
+        [Fact]
+        public void SectionThreeKeepsTheSwitchAndSaysWhyItIsNotAComponentValue()
+        {
+            string[] lines = LinesOf(KpiReport.Write(TheComponentValues(), Noon));
+
+            Assert.Contains("KPI COMPONENT S/H | 9 | 9", lines);
+            Assert.Contains(
+                "KPI COMPONENT S/H on the title block type is not a component value here: every one of the "
+                + "3 values read for it reads Yes or No, so it is a switch and not a name. Its tally and its "
+                + "values are above.",
+                lines);
+            Assert.DoesNotContain(lines, line => line.StartsWith("No | ", StringComparison.Ordinal));
+            Assert.DoesNotContain(lines, line => line.Contains("EVERY VALUE OF KPI COMPONENT S/H"));
+        }
+
+        /// <summary>
+        /// A component name on the title block type is named and left out with its reason, even
+        /// where its values are real. A type is not a sheet and this block counts sheets.
+        /// </summary>
+        [Fact]
+        public void AComponentNameOnATypeIsNamedAndNotCountedInSheets()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 2,
+                onTypes: KpiFixture.OnTypes(
+                    1,
+                    new[] { KpiFixture.Tally("PRX_Component", 1, 1) },
+                    new[] { KpiFixture.Value("PRX_Component", "AR-PRX-Title_Block_A1 : A1 Metric", "used on 2 sheets", "SCHOOL") })));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Contains(
+                "PRX_Component on the title block type is not a component value here: a title block type is "
+                + "not a sheet, so what it holds can be counted in neither sheets nor plots. Its tally and its "
+                + "values are above.",
+                lines);
+            Assert.DoesNotContain(lines, line => line.StartsWith("SCHOOL | ", StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// A component value on sheets that carry no plot is counted and named, never dropped,
+        /// because a value with nowhere to sit is the one a mapping cannot be built for.
+        /// </summary>
+        [Fact]
+        public void AComponentValueWithNoPlotOnAnySheetSaysSo()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 2,
+                onSheets: KpiFixture.OnSheets(
+                    2,
+                    new[] { KpiFixture.Tally("PRX_Component", 2, 2) },
+                    new[]
+                    {
+                        KpiFixture.Value("PRX_Component", "010QE", "KEY PLAN", "PARKING"),
+                        KpiFixture.Value("PRX_Component", "200QE", "LAYOUT", "PARKING")
+                    })));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Contains("PARKING | 2 | 0 | (no plot on those sheets)", lines);
+        }
+
+        /// <summary>
+        /// A model carrying no component name at all says there is nothing to pick a template
+        /// from, rather than printing an empty table that reads as a model with no values.
+        /// </summary>
+        [Fact]
+        public void SectionThreeSaysWhenThereIsNoComponentValueAtAll()
+        {
+            KpiScan scan = KpiFixture.Build(titleBlocks: KpiFixture.TitleBlocks(
+                sheetCount: 1,
+                onSheets: KpiFixture.OnSheets(1, new[] { KpiFixture.Tally("Sheet Number", 1, 1) })));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Contains(
+                "COMPONENT VALUES: nothing on the title block instance or the sheet holds a component value, "
+                + "so there is nothing here to pick a workbook template from.",
+                lines);
+        }
     }
 }

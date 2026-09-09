@@ -308,6 +308,33 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(string.Empty, KpiNames.WordsIn("Sheet List", null));
         }
 
+        /// <summary>
+        /// KPI COMPONENT S/H reads No on 9 of 9 title block types on the 1521 scan. It is a show
+        /// and hide toggle, so it is a switch rather than a candidate for the component name.
+        /// </summary>
+        [Fact]
+        public void AParameterWhoseEveryValueReadsYesOrNoIsASwitch()
+        {
+            Assert.True(KpiNames.EveryValueIsYesOrNo(new[] { "No", "No", "No" }));
+            Assert.True(KpiNames.EveryValueIsYesOrNo(new[] { "Yes", "No" }));
+            Assert.True(KpiNames.EveryValueIsYesOrNo(new[] { " no ", "YES" }));
+            Assert.True(KpiNames.EveryValueIsYesOrNo(new[] { "No", "  ", null }));
+        }
+
+        /// <summary>
+        /// Nothing seen is not a switch. A list holding one real value is not one either, however
+        /// many Yes and No sit beside it, because that one value is an answer.
+        /// </summary>
+        [Fact]
+        public void AnythingElseInTheValuesMeansItIsNotASwitch()
+        {
+            Assert.False(KpiNames.EveryValueIsYesOrNo(new[] { "FRIDAY MOSQUE", "No" }));
+            Assert.False(KpiNames.EveryValueIsYesOrNo(new[] { "Yes", "No", "SCHOOL" }));
+            Assert.False(KpiNames.EveryValueIsYesOrNo(new string[0]));
+            Assert.False(KpiNames.EveryValueIsYesOrNo(new[] { "  ", string.Empty }));
+            Assert.False(KpiNames.EveryValueIsYesOrNo(null));
+        }
+
         [Fact]
         public void TheInterventionTallyIsMatchedExactlyAndTheNearMissesWithoutCase()
         {

@@ -104,6 +104,31 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static readonly string[] BuiltInPhaseNames = { "Phase Created", "Phase Demolished" };
 
+        /// <summary>
+        /// The two words Revit prints for a Yes/No parameter. A near miss every one of whose
+        /// values is one of them is a switch and not a name.
+        ///
+        /// KPI COMPONENT S/H holds No on 9 of 9 title block types in the first real model. It is
+        /// a show and hide toggle, so offering it beside PRX_Component as a candidate for the
+        /// component name is noise in the section meant to be read first.
+        /// </summary>
+        public static readonly string[] YesAndNo = { "Yes", "No" };
+
+        /// <summary>
+        /// True when there is at least one value and every one of them reads Yes or No. An
+        /// empty list is not a switch, because nothing was seen either way.
+        /// </summary>
+        public static bool EveryValueIsYesOrNo(IEnumerable<string> values)
+        {
+            if (values == null) return false;
+
+            var seen = values.Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
+            if (seen.Count == 0) return false;
+
+            return seen.All(one => YesAndNo.Any(
+                word => string.Equals(one.Trim(), word, StringComparison.OrdinalIgnoreCase)));
+        }
+
         public static bool HoldsAny(string name, params string[] words)
         {
             if (string.IsNullOrEmpty(name) || words == null) return false;

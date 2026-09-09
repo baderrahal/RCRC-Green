@@ -114,7 +114,13 @@ Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 Measured on the 1355 run. These are what pick a workbook and fill it:
 
 - **PRX_Component on the sheet is the ASSET TYPE, not a park name.** FRIDAY MOSQUE and SCHOOL,
-  on 1,384 of 1,385 sheets. It is what picks the workbook template
+  on 1,384 of 1,385 sheets. It is what picks the workbook template. **Its values are not the
+  template names.** Five measured: FRIDAY MOSQUE, SCHOOL, HEALTH, EXISTING PARK, NH STRT 20m
+  ROW, against templates named existing parks, future parks, healthcare, mosques, parking,
+  schools and streets. Nothing turns HEALTH into healthcare, so the mapping is an open question
+  and the scan prints every value with its sheets and its plots for somebody to answer it from
+- KPI COMPONENT S/H is a show and hide toggle, No on 9 of 9 title block types. Its name holds
+  COMPONENT and it is not a candidate for anything
 - **PRX_Plot_ID is the plot** and the thing every schedule filters on. FM-05, SC-03. Plot
   prefixes track the asset type: FM, SC, EP, FP, PL, MM, DM, NS
 - PRX_Plot_UID is numeric with nulls. PRX_Plot_UID2 reads ANH-007-MO-100019. PRX_Plot_NH is the
@@ -122,7 +128,9 @@ Measured on the 1355 run. These are what pick a workbook and fill it:
 - **The softscape schedule prints TREES, then a group row per phase, then the species under it,
   then a subtotal per group, then TOTAL.** A species can appear under BOTH groups: ALBIZIA
   LEBBECK is 1 existing and 13 proposed on DM-12. THE GROUP ROW MUST TRAVEL WITH THE SPECIES ROW
-- Existing species print with no image and often NO BOQ CODE AVAILABLE. One is called UNKNOWN
+- **Existing species print with no image and often NO BOQ CODE AVAILABLE.** One is called
+  UNKNOWN. The image is the FIRST cell, so an existing species row starts with a dash and a row
+  is a species row when the BOTANICAL NAME column holds text, never when the first cell does
 - **Every plot has two filled regions in the 00 link**, one CADASTRAL LIMIT and one OUT OF SCOPE
   (PRESENTATION), and WHICH OF THEM CARRIES THE AREA VARIES BY PLOT. DM-11, DM-12 and DM-13 hold
   it on OUT OF SCOPE with cadastral at 0. NS-19 and NS-06 hold it on cadastral. The type name
@@ -160,12 +168,14 @@ written and none visible, black on black. Later it was correct and unusable: tic
 scrolled the list away, marking 136 cells took 136 clicks, and eight columns ran off the right
 edge. Neither round shows in a test or in a mockup.
 
-**Two sources for one fact is two facts.** Six times now, always the same shape. A view named
+**Two sources for one fact is two facts.** Seven times now, always the same shape. A view named
 for DM-12 filled a DM-11 cell that stayed full after every DM-11 view was deleted. The column
 count against its list. The run report, which made nothing and named four views under PLAN VIEWS
 and under NOT CREATED. A panel step reading the range off its arguments. One method filling both
 the code buttons and the Add row's dropdown, split and half kept. A schedule category read one
-way on capture and looked up another way on create.
+way on capture and looked up another way on create. The softscape reader taught to read the
+botanical name off the column the heading row names while the group counter that feeds the same
+report was left reading the first cell, which is the image.
 
 **A skip with nothing written down is a lie by omission.** `ModelWriter` dropped a schedule
 field it could not resolve, and a filter, both with a bare `continue`. A schedule short of a

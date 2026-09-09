@@ -239,6 +239,168 @@ namespace RcrcGreen.Core.Kpi
             }
 
             PlotNamesSideBySide(report, facts.OnSheets);
+            ComponentValues(report, facts);
+        }
+
+        /// <summary>
+        /// Every distinct value of the component parameter, with how many sheets carry each and
+        /// the plots those sheets are for.
+        ///
+        /// The component picks the workbook template and the values are not template names.
+        /// Measured on the 1521 scan: FRIDAY MOSQUE, SCHOOL, HEALTH, EXISTING PARK and
+        /// NH STRT 20m ROW, against templates named existing parks, future parks, healthcare,
+        /// mosques, parking, schools and streets. No string rule turns HEALTH into healthcare or
+        /// NH STRT 20m ROW into streets, so nothing here maps one to the other. The mapping is an
+        /// open question in steps/log.md and this block is what somebody builds it from.
+        /// </summary>
+        private static void ComponentValues(StringBuilder report, TitleBlockFacts facts)
+        {
+            Dictionary<string, string> plotOf = PlotBySheet(facts.OnSheets);
+            bool printed = false;
+
+            foreach (ParameterHome home in facts.Homes)
+            {
+                bool perSheet = !string.Equals(home.Where, TitleBlockFacts.OnTypesWhere, StringComparison.Ordinal);
+
+                foreach (string name in home.NamesHolding(KpiNames.ComponentNearMisses))
+                {
+                    List<SheetValue> values = home.ValuesOf(name)
+                        .Where(one => !string.IsNullOrWhiteSpace(one.Value))
+                        .ToList();
+                    if (values.Count == 0) continue;
+
+                    string why = WhyItIsNotAComponentValue(values, perSheet);
+                    if (why.Length > 0)
+                    {
+                        // Named rather than dropped. A name left out with nothing written down
+                        // reads exactly like a name nobody found.
+                        Line(report, name + " on the " + home.Where + " is not a component value here: "
+                            + why + ". Its tally and its values are above.");
+                        Line(report, string.Empty);
+                        continue;
+                    }
+
+                    ValuesAndPlots(report, home, name, values, plotOf);
+                    printed = true;
+                }
+            }
+
+            if (printed) return;
+
+            Line(report, "COMPONENT VALUES: nothing on the " + TitleBlockFacts.OnInstancesWhere
+                + " or the " + TitleBlockFacts.OnSheetsWhere + " holds a component value, so there is "
+                + "nothing here to pick a workbook template from.");
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// Why a name holding COMPONENT is not counted as the component, or empty when it is.
+        ///
+        /// Two reasons, and the switch is said first because it is the one about the name rather
+        /// than about where it lives. KPI COMPONENT S/H is both on the 1521 scan: it sits on the
+        /// title block type AND reads No on every one of them.
+        /// </summary>
+        private static string WhyItIsNotAComponentValue(List<SheetValue> values, bool perSheet)
+        {
+            if (KpiNames.EveryValueIsYesOrNo(values.Select(one => one.Value)))
+            {
+                return "every one of the " + Count(values.Count, "value") + " read for it reads Yes or No, "
+                    + "so it is a switch and not a name";
+            }
+
+            if (!perSheet)
+            {
+                return "a title block type is not a sheet, so what it holds can be counted in neither "
+                    + "sheets nor plots";
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// One row per distinct value: how many sheets carry it, how many plots those sheets are
+        /// for, and every one of those plots by name.
+        ///
+        /// Uncapped, unlike the twenty examples the rest of this section prints, because twenty
+        /// sheets is not enough to build the template mapping from. The plot list is bounded by
+        /// the plots in the model.
+        /// </summary>
+        private static void ValuesAndPlots(
+            StringBuilder report,
+            ParameterHome home,
+            string name,
+            List<SheetValue> values,
+            Dictionary<string, string> plotOf)
+        {
+            var carrying = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+            var plots = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            var order = new List<string>();
+            var everySheet = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (SheetValue value in values)
+            {
+                string held = value.Value.Trim();
+
+                HashSet<string> sheets;
+                if (!carrying.TryGetValue(held, out sheets))
+                {
+                    sheets = new HashSet<string>(StringComparer.Ordinal);
+                    carrying[held] = sheets;
+                    plots[held] = new List<string>();
+                    order.Add(held);
+                }
+
+                sheets.Add(value.SheetNumber);
+                everySheet.Add(value.SheetNumber);
+
+                string plot;
+                if (!plotOf.TryGetValue(value.SheetNumber, out plot)) continue;
+                if (!plots[held].Contains(plot)) plots[held].Add(plot);
+            }
+
+            // The name prints exactly as the model spells it. Upper casing it here would turn
+            // PRX_Component into PRX_COMPONENT, which is a different name that this model does
+            // not have, and telling the two apart is what section 3 is for.
+            Line(report, "EVERY VALUE OF " + name + " ON THE "
+                + home.Where.ToUpperInvariant() + ", " + Count(order.Count, "distinct value")
+                + " over " + Count(everySheet.Count, "sheet") + ". The plot beside each is "
+                + KpiNames.PlotId + " read off the " + TitleBlockFacts.OnSheetsWhere + ".");
+            Line(report, "value | sheets carrying it | plots | the plots");
+
+            foreach (string held in order
+                .OrderByDescending(one => carrying[one].Count)
+                .ThenBy(one => one, NaturalOrder.Comparer))
+            {
+                List<string> named = plots[held].OrderBy(one => one, NaturalOrder.Comparer).ToList();
+                Line(report, Join(
+                    held,
+                    carrying[held].Count.ToString(CultureInfo.InvariantCulture),
+                    named.Count.ToString(CultureInfo.InvariantCulture),
+                    named.Count == 0 ? "(no plot on those sheets)" : string.Join(", ", named.ToArray())));
+            }
+
+            Line(report, "The value is the asset type. It is not a template name and nothing in the tool "
+                + "turns one into the other, so this list is the whole of what the model says.");
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// The plot each sheet is for, off PRX_Plot_ID on the sheet, which is where CLAUDE.md
+        /// records it. One source, said in the block that uses it, because a plot read one way
+        /// here and another way in the next block is two facts.
+        /// </summary>
+        private static Dictionary<string, string> PlotBySheet(ParameterHome sheets)
+        {
+            var found = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            foreach (SheetValue value in sheets.ValuesOf(KpiNames.PlotId))
+            {
+                if (string.IsNullOrWhiteSpace(value.Value)) continue;
+
+                found[value.SheetNumber] = value.Value.Trim();
+            }
+
+            return found;
         }
 
         /// <summary>
