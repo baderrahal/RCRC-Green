@@ -4,6 +4,81 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, thirty first pass. The shrubs and lawn shape, measured rather than guessed
+
+Two corrections from the team before this reaches Revit.
+
+### The shape was measured and I guessed it anyway
+
+`kpi-rules.md` recorded DM-11 as GRASS 35 m² 46 then SHRUBS & GROUND COVER 70 m² 58, and the
+round above read that as the heading sitting beside its numbers on one row. It does not. The
+1355 scan report has the real rows and that report is not in this repository, because nothing
+under `reports/` is ever committed, so it had never been read here. **The numbers were on record
+and the shape was not, and a reader written to the numbers alone found no subtotal at all.**
+
+The real thing is eleven columns wide and three things follow from it.
+
+**The group heading is on its own row**, first cell only, every other cell empty. A phase row,
+Proposed, sits under it in the same shape, so a structure row naming no wanted heading opens no
+group.
+
+**THE SUBTOTAL PRINTS TWICE.** 35 then 35, and 70 then 70. Adding a group's subtotal rows gives
+70 and 140. One is taken, and two that disagree are named and refuse the write rather than being
+chosen between.
+
+**The species rows add up to the subtotal**, 36 plus 34 is 70, so the two are held against each
+other and both are printed. That one is recorded rather than enforced: every number there is
+already rounded to the metre on the way out of Revit, and a sum of rounded numbers need not
+equal a rounded sum, so a refusal on it would fire on correct data.
+
+TOTAL needed no special case in the end. It carries numbers, so it is not a structure row, and
+its first cell holds text, so it is not a subtotal. It falls out on its own.
+
+### Neither column sits where it could be assumed
+
+Eleven columns wide, the first number in a subtotal row is the area and the last is L/DAY. So
+`ScheduleColumns` finds the area, the count and the botanical name off the schedule's own
+heading row.
+
+**The softscape reader was changed too, which is one more than the two corrections asked for.**
+It read the botanical name off the first cell and the quantity off the last number in the row.
+On a schedule shaped like this one the first cell is an image file name and the last number is
+L/DAY, so both would have been wrong. It now prefers the columns the heading row names and
+falls back to the old behaviour only where it names neither. Whether the real softscape schedule
+carries an image column is UNKNOWN and nothing here assumes either way. Say so if that change
+was unwanted, it is one file.
+
+### The unit, and nought
+
+An area prints with its unit attached, 35 m², and a count does not. The unit comes off by
+reading as far as the number goes rather than by stripping characters. **A real area can be
+nought**: the hardscape schedule prints 0 m², which is the number and not an empty cell, and
+that case is tested.
+
+### Checked
+
+`dotnet build RcrcGreen.sln -c Release`, 0 warnings and 0 errors. The suite after the last file
+was written. Four breaks watched red first and each file restored byte for byte, checked by md5:
+
+- adding every subtotal row instead of taking one turned the two real row tests red
+- letting a phase row open a group of its own turned the group test and the phase test red
+- assuming the area column rather than reading the heading row turned five tests red
+- dropping the disagreement refusal from `Reconciliation` turned its own test red
+
+### The five workbooks
+
+Five client templates arrived with the brief and **none is in this repository.** `*.xlsx` is
+ignored at line 44 of `.gitignore` and `git add` was made to refuse a real one before anything
+else was done. Nothing in these two corrections needed to read them.
+
+### Still never observed
+
+Everything the round above listed still stands except the shrubs and lawn shape, which is now
+measured. Nothing here has been through Revit either: the new reader is tested against
+transcribed rows rather than run against a schedule.
+
+---
+
 ## 2026-09-09, thirtieth pass. The plot picker, several plots at once, and Create
 
 Pull request 37, merged into main as `ce825b1`. **The runner executed 781 tests against its
@@ -98,10 +173,10 @@ not been run, not because it is expected to fail.
 - **The schedule filter route has never run.** Schedules are found by the plot their filter
   names rather than by the plot in their own name. That is the more correct source by
   `CLAUDE.md`, and it has not been run once
-- **The shrubs and lawn row shape is inferred, not measured.** `kpi-rules.md` records DM-11 as
-  GRASS 35 m2 46 then SHRUBS & GROUND COVER 70 m2 58, which reads as the heading and its
-  numbers on one row. The reader is written for that shape. If the real schedule puts the
-  heading on its own row the subtotals come back empty and the report says so per plot
+- **The shrubs and lawn row shape is inferred, not measured.** CORRECTED BY THE ROUND ABOVE.
+  The shape was measured all along, in the 1355 scan report, which is not in this repository
+  because reports are never committed, so it had never been read here. Guessing it from the
+  numbers put the heading beside them and the reader found no subtotal at all
 - **The softscape total row's shape has never been seen.** A subtotal has an empty first cell
   on the fixture and is skipped. A grand total row carrying its own word in the first cell would
   read as a species here, come out as one the workbook's list does not hold, and be named in the

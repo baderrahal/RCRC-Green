@@ -157,6 +157,17 @@ namespace RcrcGreen.Core.Kpi
                     + ". Pick the one that is its intervention area.");
             }
 
+            // The shrubs and lawn schedule prints each group's subtotal twice. Two that
+            // disagree are not a number to pick between, so the write is refused and both are
+            // named. Picking the first quietly would put a made up area in the workbook.
+            foreach (PlotReading reading in held.OrderBy(one => one.PlotId, NaturalOrder.Comparer))
+            {
+                foreach (GroupSubtotal subtotal in reading.Subtotals.Where(one => !one.Agrees))
+                {
+                    refusals.Add(reading.PlotId + ", " + subtotal.Heading + ": " + subtotal.Disagreement + ".");
+                }
+            }
+
             IReadOnlyList<IdenticalArea> identical = KpiMerge.IdenticalAreas(held);
             if (identical.Count > 0 && !identicalAreasConfirmed)
             {
