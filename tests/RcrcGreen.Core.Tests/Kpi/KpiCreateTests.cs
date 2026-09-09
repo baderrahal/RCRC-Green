@@ -313,6 +313,66 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// What the team types on the pane reaches the cells. E5, G5 and H5 came out of the
+        /// first real workbook holding the template's own &lt;Date&gt;, &lt;Name&gt; and
+        /// &lt;Position&gt;, with the report saying nobody typed them, on a run where all three
+        /// boxes were filled in: the pane collected them and handed none of the three on.
+        ///
+        /// **The three are required arguments now**, so a caller that forgets them does not
+        /// compile. That is what a default of null was hiding.
+        /// </summary>
+        [Fact]
+        public void WhatIsTypedOnThePaneReachesTheWrite()
+        {
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
+                "2026-09-09", "xx", "bb");
+
+            Assert.Equal("2026-09-09", Written(plan, "E5"));
+            Assert.Equal("xx", Written(plan, "G5"));
+            Assert.Equal("bb", Written(plan, "H5"));
+            Assert.DoesNotContain(plan.Skipped, one => one.Cell == "E5");
+            Assert.DoesNotContain(plan.Skipped, one => one.Cell == "G5");
+            Assert.DoesNotContain(plan.Skipped, one => one.Cell == "H5");
+        }
+
+        /// <summary>
+        /// A box left empty is still recorded with its reason, so a workbook short of the date
+        /// says so rather than reading as one nobody looked at.
+        /// </summary>
+        [Fact]
+        public void ABoxLeftEmptyIsRecordedWithItsReason()
+        {
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
+                "2026-09-09", "   ", null);
+
+            Assert.Equal("2026-09-09", Written(plan, "E5"));
+            Assert.Equal(KpiCreatePlan.TypedByTheTeam, plan.Skipped.Single(one => one.Cell == "G5").Why);
+            Assert.Equal(KpiCreatePlan.TypedByTheTeam, plan.Skipped.Single(one => one.Cell == "H5").Why);
+        }
+
+        /// <summary>
+        /// Surrounding space comes off and nothing else does, the same plainness everything
+        /// else here keeps.
+        /// </summary>
+        [Fact]
+        public void TheSurroundingSpaceComesOffAndNothingElseDoes()
+        {
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
+                "  2026-09-09  ", "B RAHAL", "BIM COORDINATOR");
+
+            Assert.Equal("2026-09-09", Written(plan, "E5"));
+            Assert.Equal("BIM COORDINATOR", Written(plan, "H5"));
+        }
+
+        private static string Written(KpiCreatePlan plan, string cell)
+        {
+            return plan.Writes.Single(one => one.Cell.ToString() == cell).Stored;
+        }
+
+        /// <summary>
         /// STREETS takes no area at all. The sheet works it out from the road width and the
         /// total length, which the team types.
         /// </summary>
@@ -350,7 +410,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null,
                 null,
                 null,
-                null);
+                null,
+                null, null, null);
 
             NotWritten component = plan.Skipped.Single(one => one.What == "Component");
             Assert.Equal("D3", component.Cell);
@@ -362,7 +423,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AValueNoChosenPlotHeldIsSkippedAsNotFound()
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
-                KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null, null);
+                KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null, null,
+                null, null, null);
 
             Assert.Empty(plan.Writes);
             Assert.Equal(9, plan.Skipped.Count);
@@ -375,7 +437,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null,
-                new[] { Matched("Albizia lebbeck", "Proposed", 18, 7) });
+                new[] { Matched("Albizia lebbeck", "Proposed", 18, 7) }, null, null, null);
 
             CellWrite write = Assert.Single(plan.Writes);
             Assert.Equal(KpiTemplates.ProposedTreesSheet, write.SheetName);
@@ -392,7 +454,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null,
-                new[] { unmatched });
+                new[] { unmatched }, null, null, null);
 
             Assert.Empty(plan.Writes);
             NotWritten skipped = plan.Skipped.Single(one => one.What.StartsWith("UNKNOWN"));

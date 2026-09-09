@@ -38,6 +38,44 @@ namespace RcrcGreen.Core.Tests.Kpi
                 squareMetres.ToString("0.##") + " m2");
         }
 
+        /// <summary>
+        /// One press of Create as the handler would hand it over, with the DM-12 numbers the
+        /// first real run measured. Enough of it to write the report against.
+        /// </summary>
+        public static KpiCreateRun Run(PlotReading[] readings = null, string outputPath = null)
+        {
+            IReadOnlyList<PlotReading> held = readings ?? new[]
+            {
+                Plot("DM-12", regions: new[] { Region(OutOfScope, 3728.7570000000005, 40136.006313679296) })
+            };
+
+            var area = Totalled.Adding(held
+                .Select(one => new PlotNumber(one.PlotId,
+                    one.ChosenRegion == null ? 0.0 : one.ChosenRegion.SquareMetres))
+                .ToList());
+
+            return new KpiCreateRun(
+                "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
+                KpiTemplates.Mosques,
+                @"C:\templates\MOSQUES.xlsx",
+                outputPath ?? @"C:\models\MOSQUES DM-12.xlsx",
+                "PRX_Component",
+                "PRX_Plot_UID2",
+                "KING FAHD",
+                held,
+                Reconciliation.Of(held.Select(one => one.PlotId).ToList(), held, null, false),
+                KpiCreatePlan.Of(KpiTemplates.Mosques, null, null, "KING FAHD", area, null, null,
+                    null, "2026-09-09", "xx", "bb"),
+                area,
+                Totalled.Nothing,
+                Totalled.Nothing,
+                null,
+                null,
+                null,
+                null,
+                null);
+        }
+
         public static PlotReading Plot(
             string plotId,
             string component = "FRIDAY MOSQUE",

@@ -307,7 +307,8 @@ namespace RcrcGreen.Revit.Kpi
 
                 plan = KpiCreatePlan.Of(
                     asked.Template, component, reference, location, area, shrubs, lawn,
-                    SpeciesMatching.Against(merged, asked.Template, existing, proposed));
+                    SpeciesMatching.Against(merged, asked.Template, existing, proposed),
+                    asked.Date, asked.PreparedBy, asked.Position);
 
                 outputPath = Path.Combine(FolderOf(document), OutputName.Final(asked.OutputName));
                 outcome = Patched(asked.TemplatePath, outputPath, plan.Writes);
@@ -315,7 +316,8 @@ namespace RcrcGreen.Revit.Kpi
             else
             {
                 plan = KpiCreatePlan.Of(
-                    asked.Template, component, reference, location, area, shrubs, lawn, null);
+                    asked.Template, component, reference, location, area, shrubs, lawn, null,
+                    asked.Date, asked.PreparedBy, asked.Position);
             }
 
             var run = new KpiCreateRun(

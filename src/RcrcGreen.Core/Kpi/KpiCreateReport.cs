@@ -275,13 +275,19 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
-            Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF");
-            Line(report, "  plot | chosen type | offered");
+            Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF, AND WHAT IT READ");
+            Line(report, "  plot | chosen type | raw square feet | written square metres | "
+                + "as the model prints it | offered");
             foreach (PlotReading reading in run.Readings)
             {
+                RegionArea chosen = reading.ChosenRegion;
+
                 Line(report, "  " + Join(
                     reading.PlotId,
                     reading.ChosenRegionTypeName.Length == 0 ? "(none)" : reading.ChosenRegionTypeName,
+                    chosen == null ? "(none)" : Exactly(chosen.RawSquareFeet),
+                    chosen == null ? "(none)" : Exactly(chosen.SquareMetres),
+                    chosen == null ? "(none)" : Shown(chosen.Printed),
                     reading.Regions.Count == 0
                         ? "(none)"
                         : string.Join(", ", reading.Regions
@@ -289,9 +295,28 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
-            Line(report, "  Every number above came off a row the schedule printed. Nothing anywhere is");
-            Line(report, "  worked out from the elements a schedule lists, because on this model those");
-            Line(report, "  elements are RVT Link instances and the plants live inside them.");
+            Line(report, "  The shrubs, the lawn and every tree quantity came off a row the schedule");
+            Line(report, "  printed. Nothing anywhere is worked out from the elements a schedule lists,");
+            Line(report, "  because on this model those elements are RVT Link instances and the plants");
+            Line(report, "  live inside them.");
+            Line(report, string.Empty);
+            Line(report, "  THE AREA IS NOT A SCHEDULE ROW. It is " + KpiNames.InterventionArea
+                + " read off the");
+            Line(report, "  chosen filled region in the 00 link, raw in square feet, converted here to");
+            Line(report, "  square metres. Both are in the row above with the value the model prints");
+            Line(report, "  beside them, which is rounded to the metre, so the two can be held against");
+            Line(report, "  each other: what was written is that same measurement at full precision and");
+            Line(report, "  not a different number.");
+        }
+
+        /// <summary>
+        /// A number with nothing taken off it, so a raw square foot reading can be compared
+        /// against what the model prints beside it. <see cref="Number"/> rounds for reading and
+        /// would hide the difference this row exists to show.
+        /// </summary>
+        private static string Exactly(double value)
+        {
+            return value.ToString("R", CultureInfo.InvariantCulture);
         }
 
         private static string Working(MergedSpecies species)
