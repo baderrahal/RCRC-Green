@@ -403,47 +403,85 @@ namespace RcrcGreen.Core.Tests.Kpi
 
     public class CreateWordsTests
     {
+        /// <summary>
+        /// The three states the open document can be in, each written out by hand. This is the
+        /// whole of what decides Create's refusal, and it is decided against the live document
+        /// on the Revit thread. **The Revit half has never worked and no test here covers it:
+        /// this is a test over the decision, not over Revit.**
+        /// </summary>
+        private static readonly OpenModel NoDocument = OpenModel.Nothing;
+
+        private static readonly OpenModel NeverSaved = OpenModel.Of("NG05_detached", string.Empty);
+
+        private static readonly OpenModel Saved = OpenModel.Of("NG05", @"C:\models");
+
+        [Fact]
+        public void NoDocumentSaysNoModelIsOpen()
+        {
+            Assert.Equal(
+                "Cannot create. No model is open.",
+                CreateWords.CannotCreate(NoDocument, true, true));
+        }
+
+        /// <summary>
+        /// A model open and never saved is not no model. The pane's header read 96,959 elements
+        /// at 16:08:14 while Create said no model was open, on a detached model with no path.
+        /// This line has to say to save the model, because that is the whole of what to do.
+        /// </summary>
+        [Fact]
+        public void ADocumentWithNoPathSaysToSaveTheModel()
+        {
+            string said = CreateWords.CannotCreate(NeverSaved, true, true);
+
+            Assert.Equal(
+                "Cannot create. The open model has never been saved, so there is no folder to "
+                + "write beside. Save the model first.",
+                said);
+            Assert.Contains("Save the model first", said);
+        }
+
+        [Fact]
+        public void ADocumentWithAPathRefusesNothing()
+        {
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, true, true));
+        }
+
+        /// <summary>
+        /// The three lines are three different lines. Two of them reading the same would leave
+        /// somebody with no way to tell which state they are in.
+        /// </summary>
+        [Fact]
+        public void EachOfTheThreeStatesGivesItsOwnLine()
+        {
+            string none = CreateWords.CannotCreate(NoDocument, true, true);
+            string never = CreateWords.CannotCreate(NeverSaved, true, true);
+            string saved = CreateWords.CannotCreate(Saved, true, true);
+
+            Assert.Equal(3, new[] { none, never, saved }.Distinct().Count());
+            Assert.DoesNotContain(CreateWords.NotSaved, none);
+            Assert.DoesNotContain(CreateWords.NoModel, never);
+        }
+
+        /// <summary>
+        /// Saving the model is the only thing that changes between these two, and it is what
+        /// arms Create. The pane held the answer from before the save and never asked again.
+        /// </summary>
+        [Fact]
+        public void SavingTheModelIsWhatArmsCreate()
+        {
+            Assert.NotEqual(string.Empty, CreateWords.CannotCreate(NeverSaved, true, true));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, true, true));
+        }
+
         [Fact]
         public void OneRefusalListsEverythingMissingRatherThanOnePerThing()
         {
             Assert.Equal(
                 "Cannot create. No model is open. No template picked. No plot ticked.",
-                CreateWords.CannotCreate(false, false, false, false));
+                CreateWords.CannotCreate(NoDocument, false, false));
 
-            Assert.Equal("Cannot create. No plot ticked.", CreateWords.CannotCreate(true, true, true, false));
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(true, true, true, true));
-        }
-
-        /// <summary>
-        /// A model open and never saved is not no model. The pane's header read 96,959 elements
-        /// at 16:08:14 while Create said no model was open, on a detached model with no path,
-        /// and the line directly above the button already had the truth.
-        /// </summary>
-        [Fact]
-        public void AModelOpenAndNeverSavedIsADifferentRefusalFromNoModel()
-        {
-            Assert.Equal(
-                "Cannot create. The open model has never been saved, so there is no folder to "
-                + "write beside. Save the model first.",
-                CreateWords.CannotCreate(true, false, true, true));
-
-            Assert.Equal(
-                "Cannot create. No model is open.",
-                CreateWords.CannotCreate(false, false, true, true));
-        }
-
-        /// <summary>
-        /// The two never print together. A model that is not open is not asked whether it has
-        /// been saved, and reading both at once would be the pane saying two things about one
-        /// state.
-        /// </summary>
-        [Fact]
-        public void NoModelAndNeverSavedAreNeverSaidTogether()
-        {
-            string said = CreateWords.CannotCreate(false, false, false, false);
-
-            Assert.Contains(CreateWords.NoModel, said);
-            Assert.DoesNotContain(CreateWords.NotSaved, said);
+            Assert.Equal("Cannot create. No plot ticked.", CreateWords.CannotCreate(Saved, true, false));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, true, true));
         }
 
         /// <summary>
@@ -454,6 +492,77 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheNeverSavedRefusalIsTheLineTheOutputBlockAlreadyShows()
         {
             Assert.Equal(TemplateWords.NoModelPath, CreateWords.NotSaved);
+        }
+
+        /// <summary>
+        /// Nothing answered yet reads as no model, which is what the pane holds before Revit
+        /// has said anything and what Revit says when the document is closed under it.
+        /// </summary>
+        [Fact]
+        public void NothingAnsweredIsNoModel()
+        {
+            Assert.False(OpenModel.Nothing.IsOpen);
+            Assert.False(OpenModel.Nothing.HasAFolder);
+            Assert.Equal(
+                "Cannot create. No model is open.",
+                CreateWords.CannotCreate(null, true, true));
+        }
+
+        /// <summary>
+        /// Both come off one answer, so a caller cannot hand them over the wrong way round.
+        /// That swap is the fault this type exists for.
+        /// </summary>
+        [Fact]
+        public void TheTitleAndTheFolderComeOffOneAnswer()
+        {
+            OpenModel model = OpenModel.Of("NG05", @"C:\models");
+
+            Assert.True(model.IsOpen);
+            Assert.True(model.HasAFolder);
+            Assert.True(model.Is(OpenModel.Of("NG05", @"C:\models")));
+            Assert.False(model.Is(OpenModel.Of("NG05", string.Empty)));
+            Assert.False(model.Is(OpenModel.Of("NG06", @"C:\models")));
+            Assert.False(model.Is(null));
+        }
+
+        /// <summary>
+        /// A folder arriving without a title is still no model. A document is what makes a
+        /// model open and the folder says nothing about that.
+        /// </summary>
+        [Fact]
+        public void AFolderWithNoTitleIsStillNoModel()
+        {
+            Assert.Equal(
+                "Cannot create. No model is open.",
+                CreateWords.CannotCreate(OpenModel.Of(string.Empty, @"C:\models"), true, true));
+        }
+
+        /// <summary>
+        /// The four values under Reference belong to a plot, so the block names which. It was
+        /// printing DM-11's four with DM-12 ticked.
+        /// </summary>
+        [Fact]
+        public void TheReferenceValuesNameThePlotTheyBelongTo()
+        {
+            Assert.Equal(
+                "What each holds on DM-12, the first ticked plot:",
+                CreateWords.ReferenceValuesOn("DM-12"));
+            Assert.Equal(
+                "What each holds on NS-06, the first ticked plot:",
+                CreateWords.ReferenceValuesOn("  NS-06  "));
+        }
+
+        [Fact]
+        public void WithNoPlotTickedTheReferenceBlockSaysThereIsNothingToShow()
+        {
+            Assert.Equal(
+                "No plot is ticked, so there is no value to show here. Tick a plot to see what "
+                + "each of the four holds on it.",
+                CreateWords.NoPlotForTheReferenceValues);
+
+            Assert.Equal(
+                "What each holds on (no plot), the first ticked plot:",
+                CreateWords.ReferenceValuesOn(string.Empty));
         }
 
         [Fact]

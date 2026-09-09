@@ -218,6 +218,14 @@ code and wrong on screen, which no test of the code would ever have caught. What
 button is escaped now and the escape has a test. **The Drawing Sheet has the same fault and is
 not fixed.**
 
+**A copy taken once and never refreshed reads exactly like a fact.** The KPI pane held the
+model's folder from the one read that happened when it was shown. The model was then saved to a
+real folder and Create stayed grey saying No model is open, and a second scan did not shift it,
+because nothing re-read the folder. The rule now: **A PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
+FOR.** What a button refuses on is read off the live document at the moment it is pressed, and
+what the pane shows about the model is asked for again every time it draws. Greying a button out
+on a fact the pane does not own is what turned one stale string into a dead end.
+
 **A description of the tool is not the tool.** The pane said it reads PRX_COMPONENT and
 PRX_Plot_UID2 off the title block. That was the workbook's own note copied onto the screen: the
 reader had been corrected rounds before, PRX_COMPONENT is in no model, and neither value is read
