@@ -1,6 +1,12 @@
 # ai-max state
 
-Phase: 9, ship. Thirty second pass, the group counter, the switch and the component values.
+Phase: 9, ship. The rule behind the last three rounds is written into `CLAUDE.md`: never read a
+schedule value by cell position, ask the heading row which column it is, and a reader that
+cannot find its column says so rather than falling back to a position. Both rules files point at
+it. No code change, so the second half of it is open: four readers still fall back to a position
+and `steps/log.md` names them.
+
+Before that, the thirty second pass, the group counter, the switch and the component values.
 Pull request 39 is merged into main as `973c817`, 804 tests on the runner against its merged
 head and 804 locally, 0 failed and 0 skipped on each.
 

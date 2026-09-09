@@ -316,11 +316,10 @@ to the metre on the way out of Revit and a sum of rounded numbers need not equal
 TOTAL needs no special case. It carries numbers, so it is not a structure row, and its first
 cell holds text, so it is not a subtotal.
 
-**Neither the area nor the count sits at a position that can be assumed.** Eleven columns wide,
-the first number in a subtotal row is the area and the last is L/DAY. `ScheduleColumns` finds
-both off the schedule's own heading row, and the softscape reader takes its botanical name and
-its count the same way, because a name read off the first cell there would be an image file
-name.
+Never read a schedule value by cell position, which is the rule in `CLAUDE.md` and is stated
+there and nowhere else. `ScheduleColumns` is what asks the heading row. What these schedules
+measure is why: eleven columns wide, the first number in a subtotal row is the area and the last
+is L/DAY, so both ends are wrong.
 
 **A ROW IS A SPECIES ROW WHEN THE BOTANICAL COLUMN HOLDS TEXT, NOT WHEN THE FIRST CELL DOES.**
 The first cell is the image, and **an existing species prints with no photo**, so its first cell

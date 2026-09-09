@@ -62,6 +62,14 @@ load and the gate stops protecting anything.
 Anything that reads a `Document`, a `View` or a `BoundingBoxXYZ` belongs in `RcrcGreen.Revit`.
 Pull the plain values out there and put what Core hands back into the model.
 
+## Never read a schedule value by cell position
+
+Ask the heading row which column it is. **A reader that cannot find its column says so rather
+than falling back to a position.** Three rounds running, the same fault: the botanical name off
+cell 0 and the count off the last number, then a named row off cell 0, then a species row off
+cell 0. The first column is the image and an existing species prints with none, so every one of
+them was invisible on a plot whose rows all carry photos. The two rules files point here.
+
 ## Project facts
 
 These come from the team and from real models. They are not guesses.
