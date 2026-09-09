@@ -136,10 +136,16 @@ namespace RcrcGreen.Core.Tests.Kpi
             NameCount[] viewCounts = null,
             FilledRegionRead[] firstRegions = null,
             ParameterTally[] regionParameters = null,
-            MeasuredValue[] interventionAreas = null)
+            MeasuredValue[] interventionAreas = null,
+            NameCount[] typesCarryingAPlot = null,
+            MeasuredValue[] regionsCarryingAPlot = null,
+            int plotWithValue = 0,
+            int plotCarriedBlank = 0,
+            int plotNotCarried = 0)
         {
             return new LinkContents(linkName, documentTitle, filledRegionCount, typeCounts, viewCounts,
-                firstRegions, regionParameters, interventionAreas);
+                firstRegions, regionParameters, interventionAreas, typesCarryingAPlot, regionsCarryingAPlot,
+                plotWithValue, plotCarriedBlank, plotNotCarried);
         }
 
         public static NameCount Counted(string name, int count)
@@ -333,9 +339,18 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 interventionAreas: new[]
                 {
-                    new MeasuredValue("ID Intervention Area", "Area", "10763.91", "1000.00 m²"),
-                    new MeasuredValue("ID Intervention Area", "Area", "5381.96", "500.00 m²")
-                });
+                    new MeasuredValue("ID Intervention Area", "Area", "10763.91", "1000.00 m²", "DM-11"),
+                    new MeasuredValue("ID Intervention Area", "Area", "5381.96", "500.00 m²", "DM-12")
+                },
+                // Every region in the real 00 link carries PRX_Ref Plot ID, so none is blank
+                // and none is missing it. The two rows are a sample the way the areas are.
+                typesCarryingAPlot: new[] { Counted("Diagonal Hatch", 300), Counted("ID Intervention Area", 112) },
+                regionsCarryingAPlot: new[]
+                {
+                    new MeasuredValue("ID Intervention Area", "Area", "10763.91", "1000.00 m²", "DM-11"),
+                    new MeasuredValue("ID Intervention Area", "Area", "5381.96", "500.00 m²", "DM-12")
+                },
+                plotWithValue: 412);
 
             var links = Links(
                 new[]

@@ -4,6 +4,89 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, the review of the twenty eighth pass. Six faults it found in its own work
+
+A five lens review over the round below, each finding then handed to a separate reader whose
+job was to refute it. 58 raised, 24 reached the refuting step, 14 survived it, 10 were refuted
+and 34 were never adjudicated. The 14 are six distinct faults once the lenses that found the
+same one are put together, and all six are fixed here. Every one of them is this repo's oldest
+shape: a count and the thing it counts read from two different places.
+
+**A plot's regions were counted off the area values.** `ONE PLOT'S REGIONS TOGETHER` grouped
+`InterventionAreas`, which the reader fills only where PRX_Intervention Area holds a value. A
+region carrying a plot and no area was not in that list, so it vanished from its plot, and a
+plot whose every region was blank was not a plot at all. The same page could say 279 regions
+carry a plot and then group 266 of them under a heading claiming to show a plot's regions.
+`LinkContents` now carries `RegionsCarryingAPlot`, every region with a plot whatever its area
+holds, and the section groups that. A region with no area prints `(no value)` rather than
+disappearing.
+
+**A type carrying no plot had no row, so the answer none could not print.** The per type table
+was driven by the types that carry a plot, and the reader only creates a key for a type when
+one of its regions carries one. So RCRC_OUT OF SCOPE, carrying none, was absent from a table
+whose own comment says telling a candidate from a non candidate is what it exists for. The
+table is driven by every type in the link now and looks the carrying count up, so a type with
+none prints a zero. A name in one list and not the other prints a line saying the tool is
+contradicting itself, rather than a fabricated zero.
+
+**Absent and blank both printed as an empty plot.** Nothing said which. PRX_Ref Plot ID now
+has its own line counting the three states apart, the same shape the intervention area line
+has, and a region carrying two parameters of that name is counted the way the area already was.
+
+**The near misses printed once per missing name.** The list is a property of the home, not of
+whichever wanted name went missing, and both wanted names are missing on the sheet, so the
+whole block printed twice under two headings. Worse, `PRX_Plot_UID2` holds the word Plot, so it
+was a near miss of itself and its values printed a second time under PRX_COMPONENT. The list is
+worked out once and still names every name, because that line is a statement about the home.
+The values print under the first NOT FOUND only, and a wanted name the home really holds is not
+among them, because it prints under its own heading a few lines above.
+
+**One schedule was recorded as passed over and read in full.** When no copy of a name lists an
+element the reader falls back to the first, which it had already written into READS THAT DID
+NOT HAPPEN as passed over. Two lines, one schedule, opposite meanings, every time the fallback
+fired. The passed over lines are held back until the fallback has decided.
+
+**The rules file told the next round to read one schedule per name.** `kpi-rules.md` held both
+the old rule and this round's new one, in a file that loads as instructions whenever anything
+under `Kpi/` is touched. `ChooseOnePerName` and its comments said one as well. One statement
+stands now and it names `KpiReport.PlotsReadInFull` as the only home of the number.
+
+**And the log entry below was wrong about its own test run.** It said stripping the brackets
+turned eight tests red. Reproduced at `c370325` in a throwaway worktree, it turns 14 red across
+10 methods, 696 passing. The eight was counted off the method names on screen instead of off
+the run's own total, which is the thing this repo says never to do. Corrected in place.
+
+### Checked
+
+`dotnet build RcrcGreen.sln -c Release`, 0 warnings and 0 errors. `dotnet test` after the last
+file was written: 711 passed, 0 failed, 0 skipped, up from 710. Four breaks watched red first
+and each file restored byte for byte, checked by md5: driving the per type table off the
+carrying list again turned the type table test red, grouping the plots off the area values
+again turned the per plot test red, letting the near miss values repeat turned the sheet block
+test red, and dropping the carried blank count turned the new plot tally test red.
+
+### Not fixed, and why
+
+The 34 findings that never reached the refuting step are not acted on, the same rule as the
+last review round. They were mostly wording and naming: the unused `MainSheetOpens` and
+`MainSheetCloses` constants, the run order pulling main before this round is on it, the
+`RealShaped` fixture's numbers against the newer real scan, and the title block size measured
+in millimetres that came out of CLAUDE.md when it hit its line ceiling. They stay reported and
+unfixed rather than folded in unverified.
+
+Two of the 10 refuted are worth recording because the refutation taught something. A filled
+region is a system element with no loadable family, so it cannot carry a family parameter
+beside a shared one of the same name, which is the mechanism that put a 1385 tally over an
+empty list on title blocks. And a Revit category binding is project wide, so every sheet
+carries a bound parameter or none does, which is why the side by side heading cannot be
+counting a subset of sheets.
+
+**The schedule reader fix has no test.** It is in `RcrcGreen.Revit`, which the suite does not
+cover and cannot, because the test project must never load the Revit API. It is read and
+reasoned about and not exercised, and the next real scan is the first thing that will run it.
+
+---
+
 ## 2026-09-09, twenty eighth pass. Recognition fixed, the scan gaps, and the real workbooks
 
 Branch `claude/inspiring-allen-xs113f`, restarted from main. The KPI scanner ran on the real
@@ -107,8 +190,10 @@ skipped, locally, up from 698 before this round's new test file and 657 before t
 
 Three breaks were watched failing before the tests were trusted. **Stripping the angle
 brackets off all seven sheet names again**, which is exactly the bug this round fixes, turned
-the bracket guard, the five sheet-settled recognition cases, the two park tie-break cases and
-the would-fill literal red, eight tests, and nothing else. **Reordering the four plot names**
+the two template map guards, every recognition case and the would-fill literal red, 14 failing
+cases across 10 test methods. The eight written here first was wrong, counted off the method
+names on screen rather than off the run's own total, and the run said 14 failed, 696 passed.
+**Reordering the four plot names**
 turned the three side-by-side tests red. **Dropping the near-miss values call** turned the
 three new near-miss tests red along with the two older ones that print through the same path.
 Each file was restored from a copy taken before the break and checked byte for byte.

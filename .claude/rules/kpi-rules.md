@@ -79,13 +79,19 @@ parameter tally and up to twenty examples per wanted name each. Sheet Width turn
 instance parameter that a type cannot be asked for, and a parameter that is not on the element
 asked reads as a value of zero. Asking all three is cheaper than guessing once.
 
-## One schedule per name is read in full
+## A few plots of each schedule name are read in full
 
 The real model holds six schedules per plot over 160 plots. Every schedule gets its name,
 category, fields and filters. Rows as printed, the elements listed and the areas off them are
-read for one copy per name the workbook draws from, the first in name order that lists
-anything, and the report says which. Regenerating a thousand schedules is a read nobody waits
-for.
+read for the first few copies per name the workbook draws from, in name order, skipping any
+that list nothing, and the report says which were read. Regenerating a thousand schedules is a
+read nobody waits for.
+
+**How many is `KpiReport.PlotsReadInFull`, and it is three.** Core holds the number and the
+Revit reader reads it from there, because the report states the rule in a sentence and a second
+copy of the number is the fault this repo keeps meeting. One plot cannot show whether the group
+headings repeat across plots or whether an Existing group ever appears, which is why it is not
+one.
 
 ## The pane reaches Revit through its own door
 
@@ -169,9 +175,8 @@ rows are not the better route to these numbers, they are the ONLY route, and not
 recomputed from elements.
 
 **Schedules are per plot**, 155 of each, named `<PlotID>-(600) NAME` and filtered on
-PRX_Ref Plot ID Equal `<PlotID>`. Eight distinct names once the plot is off. Three plots of
-each name are read in full rather than one, because one plot cannot show whether the group
-headings repeat or whether an Existing group ever appears.
+PRX_Ref Plot ID Equal `<PlotID>`. Eight distinct names once the plot is off. How many plots of
+each name are read in full is the rule above, and it is stated there and nowhere else.
 
 - SHRUBS & LAWN SCHEDULE, category Floors, prints in groups. DM-11 gives GRASS 35 m² 46, then
   SHRUBS & GROUND COVER 70 m² 58, then TOTAL 105 m² 104. The workbook wants the two group

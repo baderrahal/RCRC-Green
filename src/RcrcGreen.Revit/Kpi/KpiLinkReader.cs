@@ -22,6 +22,16 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         public const int RegionsReadInFull = 10;
 
+        /// <summary>
+        /// What a region carrying a plot and no intervention area prints in the raw and
+        /// printed columns. Core holds the word so the reader and the report cannot spell the
+        /// same absence two ways.
+        /// </summary>
+        private static string NoAreaValue
+        {
+            get { return LinkContents.NoAreaValue; }
+        }
+
         public static LinkFacts Read(Document document, List<string> skipped)
         {
             if (document == null) throw new ArgumentNullException("document");
@@ -96,8 +106,12 @@ namespace RcrcGreen.Revit.Kpi
             var perView = new Dictionary<string, int>(StringComparer.Ordinal);
             var first = new List<FilledRegionRead>();
             var areas = new List<MeasuredValue>();
+            var withAPlot = new List<MeasuredValue>();
             var carryingAPlot = new Dictionary<string, int>(StringComparer.Ordinal);
             int twiceNamed = 0;
+            int plotTwiceNamed = 0;
+            int plotNotCarried = 0;
+            int plotBlank = 0;
 
             foreach (FilledRegion region in regions)
             {
@@ -113,25 +127,42 @@ namespace RcrcGreen.Revit.Kpi
                 }
 
                 // The plot the region carries, read the same way, because one plot's regions
-                // read together is what settles which type is its intervention area.
+                // read together is what settles which type is its intervention area. Not
+                // carried and carried blank are counted apart, because both read as (empty)
+                // in a row and only one of them is a model somebody has to go and fix.
                 int plotNamed;
                 Parameter plot = ParameterReading.Named(region, KpiNames.RefPlotId, out plotNamed);
                 string plotId = ParameterReading.HoldsAValue(plot) ? ParameterReading.Printed(plot) : string.Empty;
-                if (plotId.Length > 0)
-                {
-                    ParameterReading.Bump(carryingAPlot, typeName.Length == 0 ? "(no type name)" : typeName);
-                }
+                if (plotNamed > 1) plotTwiceNamed++;
+                if (plotNamed == 0) plotNotCarried++;
+                else if (plotId.Length == 0) plotBlank++;
 
                 // Read the way the tally counts, so the count of regions with a value and
                 // the list of values cannot be two different numbers.
                 int howMany;
                 Parameter area = ParameterReading.Named(region, KpiNames.InterventionArea, out howMany);
                 if (howMany > 1) twiceNamed++;
-                if (ParameterReading.HoldsAValue(area))
+                bool areaHoldsAValue = ParameterReading.HoldsAValue(area);
+                if (areaHoldsAValue)
                 {
                     areas.Add(new MeasuredValue(
                         typeName, ParameterReading.Spec(area), ParameterReading.Raw(area),
                         ParameterReading.Printed(area), plotId));
+                }
+
+                // Every region carrying a plot, whether or not its area holds a value. The
+                // areas list above is a list of area values, so grouping it by plot loses the
+                // regions that carry a plot and no area and calls what is left the plot's
+                // regions. This list is what the per plot section groups.
+                if (plotId.Length > 0)
+                {
+                    ParameterReading.Bump(carryingAPlot, typeName.Length == 0 ? "(no type name)" : typeName);
+                    withAPlot.Add(new MeasuredValue(
+                        typeName,
+                        areaHoldsAValue ? ParameterReading.Spec(area) : string.Empty,
+                        areaHoldsAValue ? ParameterReading.Raw(area) : NoAreaValue,
+                        areaHoldsAValue ? ParameterReading.Printed(area) : NoAreaValue,
+                        plotId));
                 }
             }
 
@@ -139,6 +170,12 @@ namespace RcrcGreen.Revit.Kpi
             {
                 skipped.Add(twiceNamed + " filled regions in " + instanceName + " carry more than one parameter named "
                     + KpiNames.InterventionArea + ". The first holding a value was read on each.");
+            }
+
+            if (plotTwiceNamed > 0)
+            {
+                skipped.Add(plotTwiceNamed + " filled regions in " + instanceName + " carry more than one parameter named "
+                    + KpiNames.RefPlotId + ". The first holding a value was read on each.");
             }
 
             return new LinkContents(
@@ -150,7 +187,11 @@ namespace RcrcGreen.Revit.Kpi
                 first,
                 ParameterReading.Tally(regions.Cast<Element>()),
                 areas,
-                ParameterReading.Counted(carryingAPlot));
+                ParameterReading.Counted(carryingAPlot),
+                withAPlot,
+                withAPlot.Count,
+                plotBlank,
+                plotNotCarried);
         }
     }
 }

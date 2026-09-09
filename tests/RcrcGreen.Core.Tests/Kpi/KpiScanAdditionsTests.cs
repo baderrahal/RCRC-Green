@@ -198,30 +198,54 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Six filled regions over four plots, two types, and one region carrying no plot at
-        /// all. Which type is a plot's intervention area is settled by reading one plot's
-        /// regions together, so the plot travels on every row.
+        /// Nine filled regions of three types over four plots. Which type is a plot's
+        /// intervention area is settled by reading one plot's regions together, so the plot
+        /// travels on every row.
+        ///
+        /// Four of the nine are here for cases the report used to be unable to show. DM-41's
+        /// one region carries a plot and NO intervention area, so it is not in the list of
+        /// area values and the per plot section used to lose the whole plot with it. Solid
+        /// Black's two regions carry no plot at all, so the type used to have no row rather
+        /// than a row reading zero. And one Diagonal Hatch carries the plot blank while
+        /// another does not carry it at all, which print the same way in a row and are counted
+        /// apart on the line above.
         /// </summary>
         private static KpiScan RegionsCarryingTheirPlot()
         {
             var link = new LinkContents(
                 KpiFixture.LinkInstanceName,
                 "RCRC_NG05_NU_00_SITE_RVT24",
-                6,
-                new[] { KpiFixture.Counted("ID Intervention Area", 4), KpiFixture.Counted("Diagonal Hatch", 2) },
-                new[] { KpiFixture.Counted("Site Plan", 6) },
+                9,
+                new[]
+                {
+                    KpiFixture.Counted("ID Intervention Area", 4),
+                    KpiFixture.Counted("Diagonal Hatch", 3),
+                    KpiFixture.Counted("Solid Black", 2)
+                },
+                new[] { KpiFixture.Counted("Site Plan", 9) },
                 null,
-                new[] { KpiFixture.Tally("PRX_Intervention Area", 6, 5), KpiFixture.Tally("Area", 6, 6) },
+                new[] { KpiFixture.Tally("PRX_Intervention Area", 7, 6), KpiFixture.Tally("Area", 9, 9) },
                 new[]
                 {
                     new MeasuredValue("ID Intervention Area", "Area", "10763.91", "1000.00 m²", "DM-11"),
                     new MeasuredValue("ID Intervention Area", "Area", "5381.96", "500.00 m²", "DM-11"),
                     new MeasuredValue("ID Intervention Area", "Area", "3229.17", "300.00 m²", "DM-12"),
-                    new MeasuredValue("ID Intervention Area", "Area", "2152.78", "200.00 m²", "DM-41"),
                     new MeasuredValue("Diagonal Hatch", "Area", "1076.39", "100.00 m²", "PF-12"),
-                    new MeasuredValue("Diagonal Hatch", "Area", "538.20", "50.00 m²", "")
+                    new MeasuredValue("Diagonal Hatch", "Area", "538.20", "50.00 m²", ""),
+                    new MeasuredValue("Diagonal Hatch", "Area", "215.28", "20.00 m²", "")
                 },
-                new[] { KpiFixture.Counted("ID Intervention Area", 4), KpiFixture.Counted("Diagonal Hatch", 1) });
+                new[] { KpiFixture.Counted("ID Intervention Area", 4), KpiFixture.Counted("Diagonal Hatch", 1) },
+                new[]
+                {
+                    new MeasuredValue("ID Intervention Area", "Area", "10763.91", "1000.00 m²", "DM-11"),
+                    new MeasuredValue("ID Intervention Area", "Area", "5381.96", "500.00 m²", "DM-11"),
+                    new MeasuredValue("ID Intervention Area", "Area", "3229.17", "300.00 m²", "DM-12"),
+                    new MeasuredValue("ID Intervention Area", string.Empty, "(no value)", "(no value)", "DM-41"),
+                    new MeasuredValue("Diagonal Hatch", "Area", "1076.39", "100.00 m²", "PF-12")
+                },
+                5,
+                1,
+                3);
 
             return KpiFixture.Build(links: KpiFixture.Links(
                 new[] { KpiFixture.LinkType(KpiFixture.LinkTypeName) },
@@ -242,11 +266,28 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  ID Intervention Area | DM-11 | Area | 10763.91 | 1000.00 m²",
                     "  ID Intervention Area | DM-11 | Area | 5381.96 | 500.00 m²",
                     "  ID Intervention Area | DM-12 | Area | 3229.17 | 300.00 m²",
-                    "  ID Intervention Area | DM-41 | Area | 2152.78 | 200.00 m²",
                     "  Diagonal Hatch | PF-12 | Area | 1076.39 | 100.00 m²",
-                    "  Diagonal Hatch | (empty) | Area | 538.20 | 50.00 m²"
+                    "  Diagonal Hatch | (empty) | Area | 538.20 | 50.00 m²",
+                    "  Diagonal Hatch | (empty) | Area | 215.28 | 20.00 m²"
                 },
-                UntilBlank(lines, "  PRX_Intervention Area: on 6 of 6 filled regions, 5 with a value, showing 6 of 6:"));
+                UntilBlank(lines, "  PRX_Intervention Area: on 7 of 9 filled regions, 6 with a value, showing 6 of 6:"));
+        }
+
+        /// <summary>
+        /// The two (empty) plots in the table above are not the same state. One region carries
+        /// PRX_Ref Plot ID with nothing typed in it and the other does not carry the parameter
+        /// at all, and only the first is a value somebody forgot. Nothing in a row can tell
+        /// them apart, so the count says which.
+        /// </summary>
+        [Fact]
+        public void TheRefPlotIdLineCountsCarriedBlankApartFromNotCarriedAtAll()
+        {
+            string[] lines = LinesOf(KpiReport.Write(RegionsCarryingTheirPlot(), Noon));
+
+            Assert.Contains(
+                "  PRX_Ref Plot ID: on 6 of 9 filled regions, 5 with a value, 1 carrying it blank, "
+                    + "3 not carrying it at all.",
+                lines);
         }
 
         [Fact]
@@ -254,14 +295,18 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             string[] lines = LinesOf(KpiReport.Write(RegionsCarryingTheirPlot(), Noon));
 
+            // Solid Black is the row the table exists for. None of its regions carries a plot,
+            // so it is not a candidate for the intervention area, and the table used to be
+            // driven by the types that carry one, which left the answer none unable to print.
             Assert.Equal(
                 new[]
                 {
                     "  filled region type | regions with a plot | regions of that type",
-                    "  Diagonal Hatch | 1 | 2",
-                    "  ID Intervention Area | 4 | 4"
+                    "  Diagonal Hatch | 1 | 3",
+                    "  ID Intervention Area | 4 | 4",
+                    "  Solid Black | 0 | 2"
                 },
-                UntilBlank(lines, "  REGIONS OF EACH TYPE CARRYING PRX_Ref Plot ID, 2 types"));
+                UntilBlank(lines, "  REGIONS OF EACH TYPE CARRYING PRX_Ref Plot ID, 3 types"));
         }
 
         [Fact]
@@ -269,6 +314,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             string[] lines = LinesOf(KpiReport.Write(RegionsCarryingTheirPlot(), Noon));
 
+            // DM-41's one region carries no intervention area. The section used to group the
+            // area values, so that region was not in the list, DM-41 was not a plot at all,
+            // and the plots counted here were the plots holding at least one area.
             Assert.Equal(
                 new[]
                 {
@@ -278,7 +326,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  DM-12, 1 region:",
                     "    ID Intervention Area | 3229.17 | 300.00 m²",
                     "  DM-41, 1 region:",
-                    "    ID Intervention Area | 2152.78 | 200.00 m²"
+                    "    ID Intervention Area | (no value) | (no value)"
                 },
                 UntilBlank(lines, "  ONE PLOT'S REGIONS TOGETHER, first 3 of 4 plots"));
             Assert.DoesNotContain(lines, line => line.StartsWith("  PF-12, ", StringComparison.Ordinal));

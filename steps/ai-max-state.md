@@ -1,7 +1,17 @@
 # ai-max state
 
-Phase: 9, ship. Twenty eighth pass, recognition fixed, the scan gaps, and one check against
-the real workbooks.
+Phase: 9, ship. Twenty eighth pass, recognition fixed, the scan gaps, one check against the
+real workbooks, and the review of that work folded back in.
+
+A five lens review of the round below raised 58 findings, 24 were put to a reader whose job was
+to refute them, 14 survived and those are six distinct faults, all fixed. A plot's regions were
+counted off the area values so a region with no area vanished from its plot. A filled region
+type carrying no plot had no row, so the answer none could not print. Absent and blank both
+printed as an empty plot with nothing saying which. The near miss block printed once per
+missing name and listed a wanted name as a near miss of itself. One schedule was recorded as
+both passed over and read in full. And `kpi-rules.md` held both the old one per name rule and
+the new one. The log entry's own claim of eight red tests was wrong as well, reproduced at 14,
+and is corrected. 711 tests locally, 0 failed, with four breaks watched red.
 
 The KPI scanner ran on the real model for the first time. Recognition was reading 0 of 7,
 because the map held the main sheet names with the angle brackets stripped and the brackets are

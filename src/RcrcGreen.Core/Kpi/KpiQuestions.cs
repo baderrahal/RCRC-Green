@@ -356,7 +356,7 @@ namespace RcrcGreen.Core.Kpi
             }
 
             // Every softscape schedule read in full, one part each, because the reader reads
-            // one copy per name and two names holding SOFTSCAPE both arrive here.
+            // several plots per name and two names holding SOFTSCAPE both arrive here.
             var parts = new List<string>();
             bool anything = false;
 

@@ -222,15 +222,16 @@ namespace RcrcGreen.Core.Tests.Kpi
             // A near miss named and never shown is the answer withheld. PRX_COMPONENT does not
             // exist on the real model, the sheet carries PRX_Component, and the first report
             // named that near miss while printing not one of its 1384 values.
+            //
+            // The list names every name holding one of the words, PRX_COMPONENT included,
+            // because that line is a statement about the home. PRX_COMPONENT's own values are
+            // not repeated under here: it is a wanted name this home holds, so it prints under
+            // its own heading a few lines above, and printing it twice made one parameter look
+            // like two readings.
             Assert.Equal(
                 new[]
                 {
                     "  Names on the title block instance holding COMPONENT, PLOT or UID: PRX_COMPONENT, PRX_Plot_ID",
-                    "  PRX_COMPONENT on the title block instance, showing 3 of 3, the ones with a value first:",
-                    "  sheet number | sheet name | value",
-                    "  DM-11-600QD | SOFTSCAPE SCHEDULES | SOFTSCAPE",
-                    "  DM-11-610QD | HARDSCAPE SCHEDULES | HARDSCAPE",
-                    "  010QE Copy 001 | Copy of key plan | (empty)",
                     "  PRX_Plot_ID on the title block instance: no value was read for it."
                 },
                 UntilBlank(lines, "PRX_Plot_UID2 on the title block instance: NOT FOUND"));
@@ -330,11 +331,22 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "Sheet Number | 1385 | 1385"
                 },
                 UntilBlank(lines, "ON EVERY SHEET, 3 parameter names over 1385 sheets"));
+            // Both wanted names are missing from the sheet, so the near misses are printed
+            // under the first of them and pointed at under the second. They used to print in
+            // full under both, which on the real model is five names at up to twenty rows each
+            // said twice under two different headings.
             Assert.Equal(
                 new[]
                 {
                     "  Names on the sheet holding COMPONENT, PLOT or UID: PRX_Plot_ID",
                     "  PRX_Plot_ID on the sheet: no value was read for it."
+                },
+                UntilBlank(lines, "PRX_COMPONENT on the sheet: NOT FOUND"));
+            Assert.Equal(
+                new[]
+                {
+                    "  Names on the sheet holding COMPONENT, PLOT or UID: PRX_Plot_ID",
+                    "  Their values are shown above."
                 },
                 UntilBlank(lines, "PRX_Plot_UID2 on the sheet: NOT FOUND"));
         }
@@ -410,8 +422,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 {
                     "  region type | plot | measures | raw | printed",
                     "  The raw number is square feet only where measures reads Area. A number typed by hand measures nothing and prints with no unit.",
-                    "  ID Intervention Area | (empty) | Area | 10763.91 | 1000.00 m²",
-                    "  ID Intervention Area | (empty) | Area | 5381.96 | 500.00 m²"
+                    "  ID Intervention Area | DM-11 | Area | 10763.91 | 1000.00 m²",
+                    "  ID Intervention Area | DM-12 | Area | 5381.96 | 500.00 m²"
                 },
                 UntilBlank(lines, "  PRX_Intervention Area: on 412 of 412 filled regions, 398 with a value, showing 2 of 2:"));
         }

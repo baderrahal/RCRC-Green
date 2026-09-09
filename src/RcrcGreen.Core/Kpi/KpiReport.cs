@@ -66,6 +66,13 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const int PlotsReadInFull = 3;
 
+        /// <summary>
+        /// How many plots of filled regions print with their regions listed under them. Named
+        /// rather than typed twice, because the heading counts and the loop takes, and two
+        /// literals holding one rule is the fault this repo keeps meeting.
+        /// </summary>
+        public const int ShownPlots = 3;
+
         public const int ShownValues = 30;
 
         public const int ShownFamilyTypes = 40;
@@ -255,24 +262,48 @@ namespace RcrcGreen.Core.Kpi
             }
             Line(report, string.Empty);
 
+            // The near misses belong to the home rather than to whichever wanted name went
+            // missing, so they are worked out once. The list names every one of them, because
+            // that line is a statement about the home. What is dropped from the values below
+            // it is a wanted name the home really holds, which prints under its own heading a
+            // few lines away: PRX_Plot_UID2 holds the word Plot, so PRX_COMPONENT's NOT FOUND
+            // was printing all of PRX_Plot_UID2's values a second time.
+            IReadOnlyList<string> near = home.NamesHolding(KpiNames.SheetNearMisses);
+            List<string> toShow = near
+                .Where(name => !KpiNames.OnSheets.Any(
+                    wanted => string.Equals(wanted, name, StringComparison.Ordinal) && home.Holds(wanted)))
+                .ToList();
+            bool valuesShown = false;
+
             foreach (string wanted in KpiNames.OnSheets)
             {
                 if (!home.Holds(wanted))
                 {
                     Line(report, wanted + " on the " + home.Where + ": " + NotFound);
-                    IReadOnlyList<string> near = home.NamesHolding(KpiNames.SheetNearMisses);
                     NearMisses(report, near,
                         "No name on the " + home.Where + " holds " + Words(KpiNames.SheetNearMisses) + ".",
                         "Names on the " + home.Where + " holding " + Words(KpiNames.SheetNearMisses) + ": ");
 
+                    if (valuesShown)
+                    {
+                        // Said once. Repeating twenty rows per near miss under a second
+                        // NOT FOUND on the same home says nothing the first block did not.
+                        Line(report, "  Their values are shown above.");
+                        Line(report, string.Empty);
+                        continue;
+                    }
+
                     // A near miss named and never shown is the answer withheld. PRX_COMPONENT
                     // does not exist on the first real model, the sheet carries PRX_Component,
                     // and the report named it while printing not one of its 1384 values.
-                    foreach (string missed in near)
+                    foreach (string missed in toShow)
                     {
                         Values(report, home, missed, "  ");
                     }
 
+                    // Only what was really printed can be pointed at. A home with no near
+                    // miss to show has nothing above for a second NOT FOUND to refer to.
+                    valuesShown = toShow.Count > 0;
                     Line(report, string.Empty);
                     continue;
                 }
@@ -492,30 +523,52 @@ namespace RcrcGreen.Core.Kpi
             }
             Line(report, string.Empty);
 
+            // Carried blank and not carried at all read the same way in a row, as an empty
+            // plot, and only the first is a value somebody forgot to type.
+            Line(report, "  " + KpiNames.RefPlotId + ": on "
+                + (link.PlotWithValue + link.PlotCarriedBlank) + " of "
+                + Count(link.FilledRegionCount, "filled region") + ", "
+                + link.PlotWithValue + " with a value, "
+                + link.PlotCarriedBlank + " carrying it blank, "
+                + link.PlotNotCarried + " not carrying it at all.");
+            Line(report, string.Empty);
+
             // One plot's regions read together is what settles which type is its intervention
             // area. A type whose regions all carry a plot is a candidate and one whose regions
-            // carry none is not.
+            // carry none is not, so the table is driven by every type in the link. Driving it
+            // by the types that carry one meant the answer none could not print at all.
             Line(report, "  REGIONS OF EACH TYPE CARRYING " + KpiNames.RefPlotId + ", "
-                + Count(link.TypesCarryingAPlot.Count, "type"));
+                + Count(link.TypeCounts.Count, "type"));
             Line(report, "  filled region type | regions with a plot | regions of that type");
-            foreach (NameCount carrying in link.TypesCarryingAPlot.OrderBy(one => one.Name, NaturalOrder.Comparer))
+            foreach (NameCount all in link.TypeCounts.OrderBy(one => one.Name, NaturalOrder.Comparer))
             {
-                NameCount all = link.TypeCounts.FirstOrDefault(
-                    one => string.Equals(one.Name, carrying.Name, StringComparison.Ordinal));
-                Line(report, "  " + Join(carrying.Name, carrying.Count.ToString(CultureInfo.InvariantCulture),
-                    (all == null ? 0 : all.Count).ToString(CultureInfo.InvariantCulture)));
+                NameCount carrying = link.TypesCarryingAPlot.FirstOrDefault(
+                    one => string.Equals(one.Name, all.Name, StringComparison.Ordinal));
+                Line(report, "  " + Join(all.Name,
+                    (carrying == null ? 0 : carrying.Count).ToString(CultureInfo.InvariantCulture),
+                    all.Count.ToString(CultureInfo.InvariantCulture)));
+            }
+
+            // Both lists come off one loop over one set of regions, so a name in one and not
+            // the other is the tool contradicting itself rather than anything about the model.
+            foreach (NameCount carrying in link.TypesCarryingAPlot
+                .Where(one => !link.TypeCounts.Any(all => string.Equals(all.Name, one.Name, StringComparison.Ordinal)))
+                .OrderBy(one => one.Name, NaturalOrder.Comparer))
+            {
+                Line(report, "  " + carrying.Name + " carries a plot on " + Count(carrying.Count, "region")
+                    + " and is not a type in the link at all. That is a bug in this tool.");
             }
             Line(report, string.Empty);
 
-            List<IGrouping<string, MeasuredValue>> perPlot = link.InterventionAreas
+            List<IGrouping<string, MeasuredValue>> perPlot = link.RegionsCarryingAPlot
                 .Where(one => one.PlotId.Length > 0)
                 .GroupBy(one => one.PlotId, StringComparer.Ordinal)
                 .OrderBy(group => group.Key, NaturalOrder.Comparer)
                 .ToList();
 
-            Line(report, "  ONE PLOT'S REGIONS TOGETHER, first " + Math.Min(3, perPlot.Count)
+            Line(report, "  ONE PLOT'S REGIONS TOGETHER, first " + Math.Min(ShownPlots, perPlot.Count)
                 + " of " + perPlot.Count + " plots");
-            foreach (IGrouping<string, MeasuredValue> plot in perPlot.Take(3))
+            foreach (IGrouping<string, MeasuredValue> plot in perPlot.Take(ShownPlots))
             {
                 Line(report, "  " + plot.Key + ", " + Count(plot.Count(), "region") + ":");
                 foreach (MeasuredValue value in plot)
