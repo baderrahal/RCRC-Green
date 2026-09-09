@@ -4,6 +4,43 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twenty fourth pass. Two numbers the cut-off brief left to a guess, corrected
+
+Branch `claude/inspiring-allen-xs113f`, restarted from main because pull request 28 is merged.
+One pull request, two fixes and nothing else. Both numbers were choices I made without a rule
+when the brief arrived cut off partway through section 4, both were written down as open
+questions in the twenty third pass entry, and this is the team's correction.
+
+**The row cap goes from 30 to 200.** The softscape lists in the client workbook run 80 to 89
+species, so a cap of 30 lost about 55 of them from section 6, and section 6 printing that
+schedule is the reason the scanner round exists. The rule that the last row read is the
+schedule's last row is kept, so a schedule past the cap still shows its total. `ShownRows` in
+`KpiReport` is the one copy of the number and the Revit reader already reads it from there, so
+the reader changed by nothing.
+
+**TREE joins the workbook words.** `KpiNames.ScheduleWords` is now SOFTSCAPE, SHRUB, LAWN,
+HARDSCAPE, TREE, for the two tree quantity notes. HARDSCAPE stays, it is a real schedule in
+this model. A schedule named for TREE is now marked, read in full and measured like the others.
+
+The Drawing Sheet is untouched and nothing else changed.
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln -c Release` and `dotnet test`, both after the last file was
+written. Build 0 warnings and 0 errors across all three projects. 580 tests, 0 failed and 0
+skipped, locally, up from 579. The cap test now feeds 205 rows and expects 200, a new test
+holds an 89 species list printing whole, and the marked schedule test gained a TREE name.
+Both fixes were watched failing against the old values: the cap put back to 30 turned the two
+row tests red and nothing else, and TREE dropped from the words turned the marked schedule
+test and the two question 6 tests red and nothing else.
+
+### What has not been run
+
+Nothing here has been through Revit. No schedule of more than 30 rows has ever been printed by
+a real scan, and no schedule named for TREE has ever been read from a real model.
+
+---
+
 ## 2026-09-09, the report for the KPI scanner round
 
 Pull request 28 merged into main as `f40b40a`, a squash of four commits, and the gate executed

@@ -507,7 +507,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "7 schedules, 4 distinct once the plot is taken off, all in section 5. Names holding each workbook "
                 + "word, plot taken off. SOFTSCAPE: (610) SOFTSCAPE SCHEDULE. SHRUB: (620) SHRUBS AND LAWN SCHEDULE. "
-                + "LAWN: (620) SHRUBS AND LAWN SCHEDULE. HARDSCAPE: (600) HARDSCAPE SCHEDULE.",
+                + "LAWN: (620) SHRUBS AND LAWN SCHEDULE. HARDSCAPE: (600) HARDSCAPE SCHEDULE. TREE: none.",
                 answer.Answer);
         }
 
@@ -531,7 +531,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(answer.Answered);
             Assert.Equal(
                 "1 schedule, 1 distinct once the plot is taken off, all in section 5. Names holding each workbook "
-                + "word, plot taken off. SOFTSCAPE: none. SHRUB: none. LAWN: none. HARDSCAPE: none.",
+                + "word, plot taken off. SOFTSCAPE: none. SHRUB: none. LAWN: none. HARDSCAPE: none. TREE: none.",
                 answer.Answer);
         }
 

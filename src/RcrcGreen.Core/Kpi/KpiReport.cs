@@ -51,7 +51,12 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const int ShownExamples = 20;
 
-        public const int ShownRows = 30;
+        /// <summary>
+        /// The softscape lists in the client workbook run 80 to 89 species, so a cap of 30
+        /// lost about 55 of them from the one section this round exists to fill. When fewer
+        /// rows print than exist, the last row read is still the schedule's last row.
+        /// </summary>
+        public const int ShownRows = 200;
 
         public const int ShownValues = 30;
 
