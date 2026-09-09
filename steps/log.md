@@ -7,7 +7,8 @@ Newest entry first.
 ## 2026-09-09, twenty fourth pass. Two numbers the cut-off brief left to a guess, corrected
 
 Branch `claude/inspiring-allen-xs113f`, restarted from main because pull request 28 is merged.
-One pull request, two fixes and nothing else. Both numbers were choices I made without a rule
+Pull request 31, merged into main as `b9559ea`, and the gate executed 580 tests against it on
+the runner, 0 failed and 0 skipped, which matches the local run. Two fixes and nothing else. Both numbers were choices I made without a rule
 when the brief arrived cut off partway through section 4, both were written down as open
 questions in the twenty third pass entry, and this is the team's correction.
 

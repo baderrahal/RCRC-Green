@@ -6,7 +6,8 @@ The KPI row cap goes from 30 to 200, because the workbook's softscape lists run 
 species and a cap of 30 lost about 55 of them from the section this round exists to fill. TREE
 joins the workbook words beside SOFTSCAPE, SHRUB, LAWN and HARDSCAPE. Both numbers were choices
 made without a rule when the brief arrived cut off, both were logged as open, and this is the
-team's correction. 580 tests locally, 0 failed, up from 579. Nothing else changed.
+team's correction. Pull request 31 merged as `b9559ea` with 580 tests on the runner, 0 failed
+and 0 skipped, matching the local run. Nothing else changed.
 
 Before that, the report for the KPI scanner round.
 
