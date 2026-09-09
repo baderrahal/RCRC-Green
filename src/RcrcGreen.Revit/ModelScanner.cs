@@ -81,8 +81,12 @@ namespace RcrcGreen.Revit
                     sheetNumber = string.Empty;
                 }
 
+                // The family type is on every view because the scan is what shows where one view
+                // type is built more than one way. A run made three (010) views with three
+                // different family types and nothing in this file would have said so.
                 scannedViews.Add(new ScannedView(
-                    view.Name, view.ViewType.ToString(), view.IsTemplate, sheetNumber));
+                    view.Name, view.ViewType.ToString(), view.IsTemplate, sheetNumber,
+                    NameOfElement(document, view.GetTypeId())));
 
                 if (view.IsTemplate) continue;
 
@@ -292,6 +296,14 @@ namespace RcrcGreen.Revit
             }
 
             return parameter.AsValueString() ?? string.Empty;
+        }
+
+        private static string NameOfElement(Document document, ElementId id)
+        {
+            if (id == null || id == ElementId.InvalidElementId) return string.Empty;
+
+            Element found = document.GetElement(id);
+            return found == null ? string.Empty : found.Name;
         }
     }
 }

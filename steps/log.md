@@ -4,6 +4,146 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, eighteenth pass. The empty sheets, the annotation crop, and a depth the model never had
+
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 25, one commit. This entry goes in with the
+work, so the merge and the runner count are written into it by the follow-up.
+
+**This round is split.** Items 1 to 4 are here, the write path and the scan. Item 5, the four
+interface faults, is a second pull request. Item 1 is the reason both sheet attempts have made
+nothing, and putting it behind a panel rebuild would hold it up for no reason.
+
+### 1. The empty sheets, and what the cause actually is
+
+**`SHEET_WIDTH` and `SHEET_HEIGHT` are read-only INSTANCE parameters. They do not exist on a
+title block type at all.** `ModelWriter.PlaceViews` read them off `block`, which is the
+`FamilySymbol` the sheet was created from. `get_Parameter` returns null for a parameter that is
+not on the element, `Number` turns a null parameter into 0.0, the guard on `width <= 0.0` fired,
+and the report said the title block reports no width or height. AR-PRX-Title_Block_A1 is a real
+A1 and every word of that message was wrong about it.
+
+This is not reasoning from the symptom. It is what Autodesk's own material says. The Building
+Coder's sheet size sample reads both off the `FamilyInstance` and states that the sheet itself
+carries no width or height. A Dynamo thread asking for the size from a title block family with
+no instance placed ends the same way: instance parameters only exist in an instance, and a type
+cannot be asked.
+
+So the size comes off the title block Revit places on the new sheet. `ModelWriter.SizeOf`
+regenerates, finds that instance in the sheet's own view and reads the two parameters off it. A
+title block family that does not drive them is measured across instead, because a block drawn at
+A1 is still A1, and `SheetSize` carries which of the two reads answered so the report can print
+it. In millimetres, because that is what somebody calls an A1.
+
+The ordering this forces is the part worth remembering. **The size cannot be read until the
+sheet exists**, because the title block has to be placed before it has one. So a sheet that has
+views ticked and cannot be measured is created, found wanting, and deleted again, with the
+delete checked the way the schedule delete is and the sheet never recorded as made until that is
+settled. A definition with no views ticked is not measured at all and still makes an empty sheet
+on purpose.
+
+`SheetSize.Of` refuses a zero, a negative, a NaN and an infinity, so the guard that was doing the
+work in the writer now sits where `SheetLayout.For` cannot be reached around it. That test was
+watched failing against a `SheetSize` that let a zero through.
+
+### 2. Annotation crop, and the full list of what is copied
+
+`ViewCrop` holds Crop View, Crop Region Visible and Annotation Crop, and travels on
+`SiblingView` with the family type, the template and the level. Crop View is set first because
+Revit will not turn Annotation Crop on for a view whose crop is off, which is why it is copied
+even though it was not asked for by name. Annotation Crop is a parameter rather than a property,
+so it comes off `VIEWER_ANNOTATION_CROP_ACTIVE`.
+
+`ApplySiblingCrop` runs after the template, so a template controlling any of the three refuses
+and is reported rather than quietly losing.
+
+**Read off the sibling, all from the one view:**
+
+- view family type
+- view template
+- level, on a plan view
+- Crop View
+- Crop Region Visible
+- Annotation Crop
+
+**Set by the tool, deliberately not from the sibling:**
+
+- the view name, built from the plot and the view type
+- PRX_Plot_ID, set to the plot being made
+- the scope box, the plot's own, on a plan view only
+- far clip offset, on a section, now one metre
+- the section box, worked out from the plot's scope box
+
+**Not read at all.** A new view gets whatever the view template says, and whatever Revit gives a
+new view where the template says nothing:
+
+- scale, detail level, discipline, phase and phase filter, visual style
+- view range: top, cut plane, bottom and view depth
+- the crop rectangle itself, and the annotation crop offset around it
+- underlay
+- graphic overrides, view filters, workset visibility
+- sun, shadows and orientation
+- title on sheet, and the referencing sheet
+- colour scheme and colour fill
+- every project and shared parameter on the view except PRX_Plot_ID
+
+That list is the answer to the item, and it is also the list of the next things likely to come
+back off a real drawing.
+
+### 3. One metre, and the label
+
+The far clip no longer comes from the sibling. `SectionDepthChoice` is deleted and so is
+`FarClipFeet` on `SiblingView`. `SectionDepth.Metres` is 1, `SectionDefaults` reads that one
+constant and converts it to feet, and the report says the depth is the tool's setting rather
+than anything read off a view. The two copies of the metres, one in Core and one in the Revit
+project, are down to one, which is the fifth time that shape has come up here.
+
+**On the label, I could not reproduce the fault and I am not going to pretend otherwise.**
+`SectionDepthChoice.InWords` printed `SectionDepth.InMetres(Feet)`, which multiplies feet by
+0.3048, and a test asserting the exact string `Looks 12.83 metres, taken from
+DM-20-(400) Landscape Cross Section.` for an input of 42.1054 feet was green on the runner for
+both pull request 22 and pull request 23. There is only one place in the whole repository that
+prints the word metres next to a number, and it converts.
+
+What 42.11 metres is consistent with is a sibling whose far clip is about 138.1 feet, which
+converts to 42.11. The report names the view every line came from, so the sibling that was
+actually picked can be held against it. Two numbers that look alike is a thin thing to build a
+fix on, and the whole line is gone now regardless.
+
+The conversions moved into `Lengths` so there is one place feet turn into metres or
+millimetres, which is the fix that survives whatever the cause was.
+
+### 4. Where one view type is built more than one way
+
+`FamilyTypesInUse.Of` counts, per view type, every view family type in use and how many views
+use each, and the scan report prints it under VIEW FAMILY TYPE PER VIEW TYPE with the
+disagreeing ones first. `ModelScanner` reads the family type off every view to feed it.
+
+Nothing picks a winner and nothing changes how the sibling is chosen. Three (010) views came out
+of one run with three different family types, all copied faithfully. That is the model's answer
+and the tool's job is to show it.
+
+### What has not been run
+
+Nothing in this round has been through Revit. Specifically not observed:
+
+- no sheet has been created by the fixed size read, at any of 1, 2 or 4 views per sheet
+- no sheet has been refused for an unreadable size, and that path deletes a sheet it just made
+- `document.Regenerate` inside the run transaction has never executed
+- measuring a title block across its bounding box has never executed
+- no view has been created with the crop settings copied, and no template has refused them
+- no section has ever been created by this tool at all, at one metre or at any other depth
+- no schedule has ever been created by this tool at all
+- the scan has not been run since the family type per view type section was added
+
+The panel is untouched in this pull request, so there is no new mockup. Item 5 brings one.
+
+Locally, after the last file was written, `dotnet build RcrcGreen.sln` came back with 0 warnings
+and 0 errors and `dotnet test` with 379 passed and 0 failed. Both new guards, the sheet size and
+the ordering of the disagreeing view types, were watched failing against deliberately broken
+code before being trusted.
+
+---
+
 ## 2026-09-08, seventeenth pass. The report for the split round
 
 Branch `claude/rcrc-green-setup-wf9ham`. Both log entries went in with their work, so neither

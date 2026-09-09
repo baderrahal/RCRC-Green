@@ -79,18 +79,6 @@ namespace RcrcGreen.Revit
                 ? SiblingKind.Plan
                 : section != null ? SiblingKind.Section : SiblingKind.Other;
 
-            double farClip = 0.0;
-            bool hasFarClip = false;
-            if (section != null)
-            {
-                Parameter offset = view.get_Parameter(BuiltInParameter.VIEWER_BOUND_OFFSET_FAR);
-                if (offset != null && offset.HasValue && offset.StorageType == StorageType.Double)
-                {
-                    farClip = offset.AsDouble();
-                    hasFarClip = !double.IsNaN(farClip) && !double.IsInfinity(farClip) && farClip > 0.0;
-                }
-            }
-
             return new SiblingView(
                 view.Name,
                 type,
@@ -98,8 +86,27 @@ namespace RcrcGreen.Revit
                 NameOf(document, view.GetTypeId()),
                 NameOf(document, view.ViewTemplateId),
                 plan == null || plan.GenLevel == null ? string.Empty : plan.GenLevel.Name,
-                farClip,
-                hasFarClip);
+                CropOf(view));
+        }
+
+        /// <summary>
+        /// Crop View, Crop Region Visible and Annotation Crop.
+        ///
+        /// The first two are properties. Annotation Crop is not, so it comes off the parameter,
+        /// and a view that does not carry it reads as off rather than throwing. Every view the
+        /// tool created had it off while DM-16 and DM-14 both have it on, which is what lets a
+        /// neighbouring plot's section markers draw through a new view.
+        /// </summary>
+        private static ViewCrop CropOf(View view)
+        {
+            Parameter annotation = view.get_Parameter(BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE);
+
+            return new ViewCrop(
+                view.CropBoxActive,
+                view.CropBoxVisible,
+                annotation != null
+                    && annotation.StorageType == StorageType.Integer
+                    && annotation.AsInteger() == 1);
         }
 
         private static string NameOf(Document document, ElementId id)

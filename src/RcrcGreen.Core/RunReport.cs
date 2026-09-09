@@ -41,7 +41,7 @@ namespace RcrcGreen.Core
 
         public const string NeedsAttention = "CREATED, BUT NEEDS ATTENTION";
 
-        public const string SetUpFrom = "WHERE EACH NEW VIEW WAS SET UP FROM";
+        public const string SetUpFrom = "WHERE EACH NEW VIEW AND SHEET WAS SET UP FROM";
 
         public static readonly IReadOnlyList<string> CreatedHeadings = new List<string>
         {
@@ -137,14 +137,22 @@ namespace RcrcGreen.Core
         {
             Line(report, "A plan view is created fresh. Nothing is copied or duplicated, and a");
             Line(report, "new view carries no annotation, dimensions, tags or detailing. Its view");
-            Line(report, "family type, its level and its view template all come from a view of the");
-            Line(report, "same type that this model already holds on another plot, so they are what");
-            Line(report, "the team built rather than anything matched on a name.");
-            Line(report, "A section is cut across the middle of the plot's scope box, the short way.");
-            Line(report, "How far it looks is the far clip offset of the sibling section, and only");
-            Line(report, "when that sibling has none does it fall back to the "
-                + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture) + " metres the team");
-            Line(report, "named. The section listed above says which of the two was used for each one.");
+            Line(report, "family type, its view template, its level and its three crop settings all");
+            Line(report, "come from ONE view of the same type that this model already holds on");
+            Line(report, "another plot, named above, so they are what the team built rather than");
+            Line(report, "anything matched on a name. Crop View, Crop Region Visible and Annotation");
+            Line(report, "Crop are copied because a view with Annotation Crop off draws the section");
+            Line(report, "markers of neighbouring plots straight through itself.");
+            Line(report, "Where the model uses more than one view family type for one view type,");
+            Line(report, "which sibling gets picked decides which one a new view gets. Run Scan Model");
+            Line(report, "and read VIEW FAMILY TYPE PER VIEW TYPE to see where that is happening.");
+            Line(report, "A section is cut across the middle of the plot's scope box, the short way,");
+            Line(report, "and looks "
+                + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture)
+                + " metre. That is the tool's own setting and not a number read");
+            Line(report, "off any view. It used to come from the sibling section. Four real ones in");
+            Line(report, "this model read 0.93, 0.93, 1.53 and 12.83 metres, so there was no rule to");
+            Line(report, "copy and the depth turned on which sibling happened to be picked.");
             Line(report, "A section is left with no scope box, because a real one in this model has");
             Line(report, "none and its own section box is what bounds it. The plot's box is still what");
             Line(report, "says where to cut. Whether a view type needs a section rather than a plan is");
@@ -156,10 +164,17 @@ namespace RcrcGreen.Core
             Line(report, "correct on a drawing. When Revit refuses that delete, the schedule is in");
             Line(report, "the model and is named at the top of this report. A schedule short of a");
             Line(report, "FIELD is created and named above, because a missing column can be seen.");
-            Line(report, "A sheet copies the title block and the layout of the sheet the user");
-            Line(report, "picked. The sheet number and the sheet name are typed by the user and");
-            Line(report, "are never invented. A view already sitting on another sheet is refused");
-            Line(report, "rather than moved, because it belongs to whoever put it there.");
+            Line(report, "A sheet is described rather than copied. The title block type, the sheet");
+            Line(report, "name, the views and how many go per sheet are the same on every plot, and");
+            Line(report, "the sheet number is typed per plot. Neither the number nor the name is");
+            Line(report, "ever invented. Where a view sits is worked out from the size of the title");
+            Line(report, "block placed on the sheet, which is read off that placed block and not off");
+            Line(report, "the type, because Sheet Width and Sheet Height only exist once one is");
+            Line(report, "placed. Reading the type is why three sheets came out empty. A sheet whose");
+            Line(report, "size still cannot be read is refused rather than made empty, and a sheet");
+            Line(report, "with no views ticked is made empty on purpose. A view already sitting on");
+            Line(report, "another sheet is refused rather than moved, because it belongs to whoever");
+            Line(report, "put it there.");
         }
 
         private static void Section(StringBuilder report, string heading, IEnumerable<string> lines)

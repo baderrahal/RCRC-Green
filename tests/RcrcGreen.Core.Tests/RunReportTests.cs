@@ -255,13 +255,18 @@ namespace RcrcGreen.Core.Tests
         {
             string written = Report();
 
-            Assert.Contains("family type, its level and its view template all come from a view of the", written);
+            Assert.Contains("come from ONE view of the same type that this model already holds on", written);
             Assert.DoesNotContain("No sheet was created and none can be yet", written);
 
-            // The depth is the sibling section's far clip offset now, and the 10 the team named
-            // is only what happens when there is no sibling section to read one off.
-            Assert.Contains("the far clip offset of the sibling section", written);
-            Assert.Contains("fall back to the 10 metres the team", written);
+            // The three crop settings joined the family type, the template and the level this
+            // round, because every view the tool made had Annotation Crop off.
+            Assert.Contains("Crop are copied because a view with Annotation Crop off draws", written);
+
+            // The depth is the tool's own setting now. Four real sections disagreed with each
+            // other, so there was never a rule in the model to copy.
+            Assert.Contains("looks 1 metre. That is the tool's own setting", written);
+            Assert.Contains("read 0.93, 0.93, 1.53 and 12.83 metres", written);
+            Assert.DoesNotContain("the far clip offset of the sibling section", written);
         }
 
         [Fact]

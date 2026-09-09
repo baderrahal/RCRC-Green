@@ -139,9 +139,20 @@ comparison that difference was kept for has been made, and it came out against i
 ## A new view is set up from ONE sibling, read once
 
 The sibling is a view of the same view type the model already holds. It is what the team
-built, so how it is set up is the answer to how a new one should be. Four things come off it
-and none is matched on a name: **family type**, **level** (a plan), **view template**, and
-**far clip offset** (a section).
+built, so how it is set up is the answer to how a new one should be. Five things come off it
+and none is matched on a name: **family type**, **level** (a plan), **view template**, and the
+three crop settings, **Crop View**, **Crop Region Visible** and **Annotation Crop**.
+
+The crop settings joined this round. Every view the first full run created had Annotation Crop
+off while DM-16 and DM-14 have it on, so the section markers of neighbouring plots drew
+straight through the new views and none was usable as a drawing. Crop View is set first because
+Revit will not turn Annotation Crop on for a view whose crop is off, and Annotation Crop comes
+off `VIEWER_ANNOTATION_CROP_ACTIVE` because it is a parameter rather than a property.
+
+`ApplySiblingCrop` runs after the template, so a template controlling any of the three refuses
+and is reported rather than quietly losing to it.
+
+**The far clip is no longer one of them.** See the section below.
 
 `SiblingReader.Of` reads every candidate into a Core `SiblingView` once per run, before
 anything is created, so no view this run makes can become the sibling of a later item.
@@ -177,11 +188,13 @@ records the view type of every `ViewSection` it passes, `RunPlan` turns those in
 `RunItemKind.Section`, and nothing anywhere says that 400 means section. That is a fact about
 this model and the next model may not share it.
 
-**How far it looks comes off the sibling section.** `SectionDefaults` held ten metres, named
-before anybody had opened a section in the model. A real one reads 42.1054 feet, which is
-12.83 metres. `SectionDepthChoice.For` takes the sibling's far clip offset when it has one and
-falls back to the named value when it does not, and the report says which of the two was used
-for each section. The named value is the fallback rather than the rule.
+**How far it looks is one metre, and it is the tool's own setting.** It came off the sibling
+section for one round, on the reasoning that the model is the better answer. The model has no
+answer: DM-14 and NS-32 read 3.0480 feet, DM-16 reads 5.0199 and DM-20 reads 42.1054, which is
+0.93, 0.93, 1.53 and 12.83 metres. Whichever sibling happened to be picked decided the depth,
+so the team chose one number instead. `SectionDepth.Metres` in Core holds it, `SectionDefaults`
+converts it to feet, and the report says it is the tool's setting rather than anything read off
+a view.
 
 **A section is left with no scope box.** A real one in this model has none, and its own section
 box is what bounds it, so a scope box on top would crop it to something nobody asked for. The
@@ -234,6 +247,22 @@ and height and a count of 1, 2 or 4 and hands back the centre of each viewport i
 One is centred, two sit side by side, four make a two by two grid, and the margin round the
 outside is the same measurement as the gap down the middle. Y counts up from the bottom in
 Revit, so the first row back is the top one.
+
+**The size comes off the title block PLACED ON THE SHEET, never off the type.** Sheet Width and
+Sheet Height are read-only INSTANCE parameters. On a `FamilySymbol` `get_Parameter` returns
+null for both, null became zero, and three sheets were created empty on a real A1 title block
+while the report said the block had no size.
+
+So `ModelWriter.SizeOf` regenerates, finds the title block instance on the new sheet and reads
+those two parameters off it. A title block family that does not drive them is measured across
+instead, because a block drawn at A1 is still A1. `SheetSize` carries which of the two reads
+answered and the report prints it in millimetres.
+
+The order this forces is worth knowing. The size cannot be read until the sheet exists, so a
+sheet that has views ticked and cannot be measured is created, found wanting, and deleted
+again. The delete is checked like every other one here, and the sheet is never recorded as made
+before that is settled. A definition with no views ticked is not measured at all and still
+makes an empty sheet, which is a real thing to ask for.
 
 `SheetBeingDescribed` in the Revit project is the mutable half the panel owns while somebody is
 still filling it in. What it hands out is the immutable Core `SheetDefinition`, narrowed to the

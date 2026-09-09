@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Autodesk.Revit.DB;
 using RcrcGreen.Core;
@@ -158,6 +159,7 @@ namespace RcrcGreen.Revit
             madeSoFar[item.Name] = made.Id;
 
             ApplySiblingTemplate(made, sibling, item, outcome);
+            ApplySiblingCrop(made, sibling, item, outcome);
             SetPlotId(made, item, outcome);
             SaySetUpFrom(item, outcome, sibling.Facts.InWords());
 
@@ -205,12 +207,6 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            // The far clip comes off the sibling section wherever it has one. A real section in
-            // this model looks 42.1054 feet, which is 12.83 metres, against the 10 the team
-            // named before anybody had opened one.
-            SectionDepthChoice depth = SectionDepthChoice.For(
-                sibling.Facts, SectionDefaults.SectionDepthFeet);
-
             ElementId boxId;
             if (!boxIdByName.TryGetValue(item.PlotId, out boxId))
             {
@@ -238,7 +234,11 @@ namespace RcrcGreen.Revit
                     extent.Min.X, extent.Min.Y, extent.Min.Z,
                     extent.Max.X, extent.Max.Y, extent.Max.Z);
 
-                across = SectionPlacement.Across(plot, SectionAxis.ShortSide, depth.Feet);
+                // One depth on every section the tool makes. It used to come off the sibling,
+                // and four real sections in this model read 0.93, 0.93, 1.53 and 12.83 metres,
+                // so the model had no rule to copy and the sibling decided it by accident.
+                across = SectionPlacement.Across(
+                    plot, SectionAxis.ShortSide, SectionDefaults.SectionDepthFeet);
             }
             catch (ArgumentException refused)
             {
@@ -264,8 +264,11 @@ namespace RcrcGreen.Revit
             madeSoFar[item.Name] = made.Id;
 
             ApplySiblingTemplate(made, sibling, item, outcome);
+            ApplySiblingCrop(made, sibling, item, outcome);
             SetPlotId(made, item, outcome);
-            SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " " + depth.InWords());
+            SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " Looks "
+                + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture)
+                + " metre, which is the tool's setting rather than anything read off a view.");
 
             // No scope box on a section. A real one in this model has none, its own section box
             // is what bounds it, and a scope box on top would crop it to something nobody asked
@@ -364,12 +367,77 @@ namespace RcrcGreen.Revit
             }
 
             sheet.Name = wanted.SheetName;
+
+            // The size can only be read after the sheet exists, because Sheet Width and Sheet
+            // Height live on the title block Revit places on it. So the sheet is made, measured,
+            // and taken away again when it cannot be measured and views were ticked for it.
+            SheetSize size = SheetSize.NotRead(wanted.TitleBlock);
+            if (wanted.Placed.Count > 0)
+            {
+                size = SizeOf(document, sheet, wanted);
+
+                if (!size.CanBeUsed)
+                {
+                    string kept = Deleted(document, sheet.Id)
+                        ? " It was deleted again."
+                        : " IT IS STILL IN THE MODEL, empty, and has to be deleted by hand.";
+
+                    outcome.Refused(new RunRefusal(
+                        item.PlotId, null, size.WhyNotInWords(item.Name) + kept));
+                    return;
+                }
+
+                SaySheetSetUpFrom(item, outcome, size.InWords());
+            }
+
             outcome.Made(item);
 
             Parameter plot = sheet.LookupParameter(ModelScanner.PlotIdParameterName);
             if (plot != null && !plot.IsReadOnly) plot.Set(item.PlotId);
 
-            PlaceViews(document, item, outcome, sheet, block, madeSoFar);
+            PlaceViews(document, item, outcome, sheet, size, madeSoFar);
+        }
+
+        /// <summary>
+        /// How big the new sheet is.
+        ///
+        /// Three sheets were created empty because this was read off the title block TYPE.
+        /// Sheet Width and Sheet Height are read-only INSTANCE parameters, so on a FamilySymbol
+        /// get_Parameter returns nothing at all, nothing became zero, and the guard below fired
+        /// on a real A1 sheet. They are read off the block placed on the sheet now.
+        ///
+        /// A title block family that does not drive those two parameters is measured instead,
+        /// because a block that is drawn at A1 is still A1.
+        /// </summary>
+        private static SheetSize SizeOf(Document document, ViewSheet sheet, SheetDefinition wanted)
+        {
+            // The placed block is not findable by a collector until the document catches up.
+            document.Regenerate();
+
+            FamilyInstance placed = new FilteredElementCollector(document, sheet.Id)
+                .OfCategory(BuiltInCategory.OST_TitleBlocks)
+                .WhereElementIsNotElementType()
+                .OfType<FamilyInstance>()
+                .FirstOrDefault();
+
+            if (placed == null) return SheetSize.NotRead(wanted.TitleBlock);
+
+            SheetSize fromParameters = SheetSize.Of(
+                SheetSizeSource.TitleBlockParameters,
+                Number(placed.get_Parameter(BuiltInParameter.SHEET_WIDTH)),
+                Number(placed.get_Parameter(BuiltInParameter.SHEET_HEIGHT)),
+                wanted.TitleBlock);
+
+            if (fromParameters.CanBeUsed) return fromParameters;
+
+            BoundingBoxXYZ across = placed.get_BoundingBox(sheet);
+            if (across == null) return SheetSize.NotRead(wanted.TitleBlock);
+
+            return SheetSize.Of(
+                SheetSizeSource.TitleBlockOutline,
+                across.Max.X - across.Min.X,
+                across.Max.Y - across.Min.Y,
+                wanted.TitleBlock);
         }
 
         /// <summary>
@@ -383,26 +451,15 @@ namespace RcrcGreen.Revit
             RunItem item,
             RunOutcome outcome,
             ViewSheet sheet,
-            FamilySymbol block,
+            SheetSize size,
             Dictionary<string, ElementId> madeSoFar)
         {
             SheetDefinition wanted = item.Sheet;
             IReadOnlyList<ViewType> placing = wanted.Placed;
             if (placing.Count == 0) return;
 
-            double width = Number(block.get_Parameter(BuiltInParameter.SHEET_WIDTH));
-            double height = Number(block.get_Parameter(BuiltInParameter.SHEET_HEIGHT));
-
-            if (width <= 0.0 || height <= 0.0)
-            {
-                outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
-                    item.Name + " was made empty. Its title block reports no width or height, so "
-                    + "there is nowhere worked out to put a view."));
-                return;
-            }
-
             IReadOnlyList<ViewportSpot> spots =
-                SheetLayout.For(width, height, wanted.ViewsPerSheet);
+                SheetLayout.For(size.WidthFeet, size.HeightFeet, wanted.ViewsPerSheet);
 
             for (int at = 0; at < placing.Count && at < spots.Count; at++)
             {
@@ -495,6 +552,11 @@ namespace RcrcGreen.Revit
         /// Properties panel to find out. It is not a problem, so it goes under the same heading
         /// as everything else worth reading rather than under a refusal.
         /// </summary>
+        private static void SaySheetSetUpFrom(RunItem item, RunOutcome outcome, string what)
+        {
+            outcome.NoteSetup(new RunRefusal(item.PlotId, null, item.Name + ". " + what));
+        }
+
         private static void SaySetUpFrom(RunItem item, RunOutcome outcome, string what)
         {
             outcome.NoteSetup(new RunRefusal(item.PlotId, item.Type, what));
@@ -531,6 +593,58 @@ namespace RcrcGreen.Revit
             }
 
             made.ViewTemplateId = sibling.View.ViewTemplateId;
+        }
+
+        /// <summary>
+        /// Crop View, Crop Region Visible and Annotation Crop, all off the same sibling.
+        ///
+        /// Every view the first full run created had Annotation Crop off while the views the
+        /// team built have it on, so the section markers of neighbouring plots drew straight
+        /// through the new views and none of them was usable as a drawing.
+        ///
+        /// Crop View is set first because Revit will not turn Annotation Crop on for a view
+        /// whose crop is off. It is copied rather than forced on, like everything else here.
+        /// This runs after the template, so anything the template controls refuses and is
+        /// reported rather than silently losing to it.
+        /// </summary>
+        private static void ApplySiblingCrop(
+            View made, Sibling sibling, RunItem item, RunOutcome outcome)
+        {
+            ViewCrop wanted = sibling.Facts.Crop;
+            var refused = new List<string>();
+
+            try
+            {
+                made.CropBoxActive = wanted.CropActive;
+                made.CropBoxVisible = wanted.CropRegionVisible;
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            {
+                refused.Add("Crop View and Crop Region Visible");
+            }
+
+            Parameter annotation =
+                made.get_Parameter(BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE);
+
+            if (annotation == null || annotation.IsReadOnly)
+            {
+                refused.Add("Annotation Crop");
+            }
+            else
+            {
+                annotation.Set(wanted.AnnotationCrop ? 1 : 0);
+            }
+
+            if (refused.Count == 0) return;
+
+            outcome.NeedsAttention(new RunRefusal(
+                item.PlotId,
+                item.Type,
+                "Created, but " + string.Join(" and ", refused.ToArray())
+                + " could not be set from " + sibling.Facts.ViewName
+                + ". The view template it inherited may be controlling that. Set it by hand. "
+                + "A view with Annotation Crop off draws the section markers of neighbouring "
+                + "plots through itself."));
         }
 
         private static void SetPlotId(View made, RunItem item, RunOutcome outcome)

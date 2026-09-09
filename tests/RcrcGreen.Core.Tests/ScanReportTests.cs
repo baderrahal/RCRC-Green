@@ -82,6 +82,7 @@ namespace RcrcGreen.Core.Tests
                     "== VIEWS NOT ON SHEETS (2) ==",
                     "== VIEW TEMPLATES (1) ==",
                     "== VIEW FAMILY TYPES (0) ==",
+                    "== VIEW FAMILY TYPE PER VIEW TYPE (2) ==",
                     "== SCOPE BOXES (2) ==",
                     "== PRX_Plot_ID VALUES (2) ==",
                     "== VIEWS THAT DISAGREE WITH THEMSELVES (0) ==",
