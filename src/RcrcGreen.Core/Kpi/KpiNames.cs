@@ -39,9 +39,10 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// A schedule whose name holds any of these is one the workbook draws from, so it gets
-        /// its fields, filters and rows printed rather than only its name.
+        /// its fields, filters and rows printed rather than only its name. TREE is here for the
+        /// two tree quantity notes, and HARDSCAPE is a real schedule in this model.
         /// </summary>
-        public static readonly string[] ScheduleWords = { "SOFTSCAPE", "SHRUB", "LAWN", "HARDSCAPE" };
+        public static readonly string[] ScheduleWords = { "SOFTSCAPE", "SHRUB", "LAWN", "HARDSCAPE", "TREE" };
 
         public static readonly string[] SoftscapeWords = { "SOFTSCAPE" };
 

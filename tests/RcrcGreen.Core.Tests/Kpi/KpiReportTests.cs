@@ -495,26 +495,50 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Following(lines, "  rows as printed, showing 4 of 4. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.", 5));
         }
 
+        /// <summary>
+        /// The cap is 200 because the workbook's softscape lists run 80 to 89 species and a
+        /// cap of 30 lost about 55 of them from the one section this round exists to fill.
+        /// </summary>
         [Fact]
-        public void SectionSixShowsThirtyRowsAndSaysHowManyThereWere()
+        public void SectionSixShowsTwoHundredRowsAndSaysHowManyThereWere()
         {
-            string[][] rows = Enumerable.Range(1, 35)
+            string[][] rows = Enumerable.Range(1, 205)
                 .Select(n => new[] { "Tree " + n, n.ToString() })
                 .ToArray();
             KpiScan scan = KpiFixture.Build(schedules: KpiFixture.Schedules(new[]
             {
                 KpiFixture.Schedule("DM-11-(610) SOFTSCAPE SCHEDULE",
                     fields: new[] { KpiFixture.Field("BOTANICAL NAME"), KpiFixture.Field("COUNT", "Count", "Count") },
-                    rowsWereRead: true, bodyRowCount: 35, rows: rows)
+                    rowsWereRead: true, bodyRowCount: 205, rows: rows)
             }));
             string[] lines = LinesOf(KpiReport.Write(scan, Noon));
 
             string[] shown = UntilBlank(lines,
-                "  rows as printed, showing 30 of 35. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.");
+                "  rows as printed, showing 200 of 205. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.");
 
-            Assert.Equal(31, shown.Length);
+            Assert.Equal(201, shown.Length);
             Assert.Equal("  Tree 1 | 1", shown[1]);
-            Assert.Equal("  Tree 30 | 30", shown[30]);
+            Assert.Equal("  Tree 200 | 200", shown[200]);
+        }
+
+        [Fact]
+        public void AListOfEightyNineSpeciesPrintsWhole()
+        {
+            string[][] rows = Enumerable.Range(1, 89)
+                .Select(n => new[] { "Species " + n, n.ToString() })
+                .ToArray();
+            KpiScan scan = KpiFixture.Build(schedules: KpiFixture.Schedules(new[]
+            {
+                KpiFixture.Schedule("DM-11-(610) SOFTSCAPE SCHEDULE",
+                    fields: new[] { KpiFixture.Field("BOTANICAL NAME") },
+                    rowsWereRead: true, bodyRowCount: 89, rows: rows)
+            }));
+            string[] lines = LinesOf(KpiReport.Write(scan, Noon));
+
+            Assert.Contains("  rows as printed, showing 89 of 89. The first row is usually the headings and the "
+                + "last usually the total. When fewer are shown than there are, the last one shown is the "
+                + "schedule's last row.", lines);
+            Assert.Contains("  Species 89 | 89", lines);
         }
 
         [Fact]

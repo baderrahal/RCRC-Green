@@ -229,6 +229,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.True(shrubs.IsMarked);
             Assert.Equal("SHRUB, LAWN", shrubs.MarkedFor);
+            Assert.Equal("TREE", KpiFixture.Schedule("DM-11-(630) TREE SURVEY").MarkedFor);
             Assert.False(shrubs.IsSoftscape);
             Assert.True(KpiFixture.Schedule("DM-11-(610) SOFTSCAPE SCHEDULE").IsSoftscape);
             Assert.False(sheets.IsMarked);

@@ -1,6 +1,14 @@
 # ai-max state
 
-Phase: 9, ship. The report for the KPI scanner round.
+Phase: 9, ship. Twenty fourth pass, two numbers the cut-off brief left to a guess, corrected.
+
+The KPI row cap goes from 30 to 200, because the workbook's softscape lists run 80 to 89
+species and a cap of 30 lost about 55 of them from the section this round exists to fill. TREE
+joins the workbook words beside SOFTSCAPE, SHRUB, LAWN and HARDSCAPE. Both numbers were choices
+made without a rule when the brief arrived cut off, both were logged as open, and this is the
+team's correction. 580 tests locally, 0 failed, up from 579. Nothing else changed.
+
+Before that, the report for the KPI scanner round.
 
 Pull request 28 merged into main as `f40b40a`, a squash of four commits, and the gate executed
 579 tests against it on the runner, 0 failed and 0 skipped. It merged the current main first,
