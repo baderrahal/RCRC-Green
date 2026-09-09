@@ -219,8 +219,21 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             string[] lines = RealLines();
 
+            // A near miss named and never shown is the answer withheld. PRX_COMPONENT does not
+            // exist on the real model, the sheet carries PRX_Component, and the first report
+            // named that near miss while printing not one of its 1384 values.
+            //
+            // The list names every name holding one of the words, PRX_COMPONENT included,
+            // because that line is a statement about the home. PRX_COMPONENT's own values are
+            // not repeated under here: it is a wanted name this home holds, so it prints under
+            // its own heading a few lines above, and printing it twice made one parameter look
+            // like two readings.
             Assert.Equal(
-                new[] { "  Names on the title block instance holding COMPONENT, PLOT or UID: PRX_COMPONENT, PRX_Plot_ID" },
+                new[]
+                {
+                    "  Names on the title block instance holding COMPONENT, PLOT or UID: PRX_COMPONENT, PRX_Plot_ID",
+                    "  PRX_Plot_ID on the title block instance: no value was read for it."
+                },
                 UntilBlank(lines, "PRX_Plot_UID2 on the title block instance: NOT FOUND"));
         }
 
@@ -318,8 +331,23 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "Sheet Number | 1385 | 1385"
                 },
                 UntilBlank(lines, "ON EVERY SHEET, 3 parameter names over 1385 sheets"));
+            // Both wanted names are missing from the sheet, so the near misses are printed
+            // under the first of them and pointed at under the second. They used to print in
+            // full under both, which on the real model is five names at up to twenty rows each
+            // said twice under two different headings.
             Assert.Equal(
-                new[] { "  Names on the sheet holding COMPONENT, PLOT or UID: PRX_Plot_ID" },
+                new[]
+                {
+                    "  Names on the sheet holding COMPONENT, PLOT or UID: PRX_Plot_ID",
+                    "  PRX_Plot_ID on the sheet: no value was read for it."
+                },
+                UntilBlank(lines, "PRX_COMPONENT on the sheet: NOT FOUND"));
+            Assert.Equal(
+                new[]
+                {
+                    "  Names on the sheet holding COMPONENT, PLOT or UID: PRX_Plot_ID",
+                    "  Their values are shown above."
+                },
                 UntilBlank(lines, "PRX_Plot_UID2 on the sheet: NOT FOUND"));
         }
 
@@ -392,10 +420,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "  region type | measures | raw | printed",
+                    "  region type | plot | measures | raw | printed",
                     "  The raw number is square feet only where measures reads Area. A number typed by hand measures nothing and prints with no unit.",
-                    "  ID Intervention Area | Area | 10763.91 | 1000.00 m²",
-                    "  ID Intervention Area | Area | 5381.96 | 500.00 m²"
+                    "  ID Intervention Area | DM-11 | Area | 10763.91 | 1000.00 m²",
+                    "  ID Intervention Area | DM-12 | Area | 5381.96 | 500.00 m²"
                 },
                 UntilBlank(lines, "  PRX_Intervention Area: on 412 of 412 filled regions, 398 with a value, showing 2 of 2:"));
         }
@@ -475,7 +503,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  PRX_Ref Plot ID | Equals | DM-11",
                     ""
                 },
-                Following(lines, "READ IN FULL, 1, one per name the workbook draws from, the first in name order that lists an element", 11));
+                Following(lines, "READ IN FULL, 1, up to 3 plots per name the workbook draws from, the first in name order that list an element", 11));
         }
 
         [Fact]
@@ -839,7 +867,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Contains("  rows as printed: not read. READS THAT DID NOT HAPPEN at the top says why. The elements it lists were read and follow.", lines);
             Assert.Contains("  elements listed: 4, categories: Planting 4", lines);
-            Assert.Contains("READ IN FULL, 1, one per name the workbook draws from, the first in name order that lists an element", lines);
+            Assert.Contains("READ IN FULL, 1, up to 3 plots per name the workbook draws from, the first in name order that list an element", lines);
             Assert.Contains("  The rows of DM-11-(610) SOFTSCAPE SCHEDULE were not read. The table refused.", lines);
         }
 

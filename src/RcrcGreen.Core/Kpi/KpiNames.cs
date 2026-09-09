@@ -33,6 +33,25 @@ namespace RcrcGreen.Core.Kpi
 
         public static readonly string[] SheetNearMisses = { "COMPONENT", "PLOT", "UID" };
 
+        /// <summary>
+        /// The four plot parameters the sheet really carries, all with values on the first
+        /// model. The report prints them side by side because the workbook asks for one Ref
+        /// and nothing in a report showing only one of the four can say which it is.
+        /// </summary>
+        public const string PlotId = "PRX_Plot_ID";
+
+        public const string PlotUid = "PRX_Plot_UID";
+
+        public const string PlotNh = "PRX_Plot_NH";
+
+        public static readonly string[] PlotNamesOnSheets = { PlotId, PlotUid, PlotUid2, PlotNh };
+
+        /// <summary>
+        /// The plot on a model element, and on a filled region in the 00 link. One plot's
+        /// regions read together is what settles which region type is its intervention area.
+        /// </summary>
+        public const string RefPlotId = "PRX_Ref Plot ID";
+
         public static readonly string[] NeighbourhoodNearMisses = { "NEIGH", "DISTRICT", "COMMUNITY", "LOCATION", "ZONE" };
 
         public static readonly string[] InterventionNearMisses = { "INTERVENTION", "AREA" };

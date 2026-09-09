@@ -58,6 +58,21 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const int ShownRows = 200;
 
+        /// <summary>
+        /// How many plots of one schedule name are read in full. The Revit reader reads this
+        /// rather than holding its own copy, because the report states the rule and a second
+        /// copy of a number is the fault this repo has hit seven times. One plot cannot show
+        /// whether the group headings repeat across plots or whether an Existing group appears.
+        /// </summary>
+        public const int PlotsReadInFull = 3;
+
+        /// <summary>
+        /// How many plots of filled regions print with their regions listed under them. Named
+        /// rather than typed twice, because the heading counts and the loop takes, and two
+        /// literals holding one rule is the fault this repo keeps meeting.
+        /// </summary>
+        public const int ShownPlots = 3;
+
         public const int ShownValues = 30;
 
         public const int ShownFamilyTypes = 40;
@@ -222,6 +237,8 @@ namespace RcrcGreen.Core.Kpi
             {
                 TheHome(report, home);
             }
+
+            PlotNamesSideBySide(report, facts.OnSheets);
         }
 
         /// <summary>
@@ -245,36 +262,147 @@ namespace RcrcGreen.Core.Kpi
             }
             Line(report, string.Empty);
 
+            // The near misses belong to the home rather than to whichever wanted name went
+            // missing, so they are worked out once. The list names every one of them, because
+            // that line is a statement about the home. What is dropped from the values below
+            // it is a wanted name the home really holds, which prints under its own heading a
+            // few lines away: PRX_Plot_UID2 holds the word Plot, so PRX_COMPONENT's NOT FOUND
+            // was printing all of PRX_Plot_UID2's values a second time.
+            IReadOnlyList<string> near = home.NamesHolding(KpiNames.SheetNearMisses);
+            List<string> toShow = near
+                .Where(name => !KpiNames.OnSheets.Any(
+                    wanted => string.Equals(wanted, name, StringComparison.Ordinal) && home.Holds(wanted)))
+                .ToList();
+            bool valuesShown = false;
+
             foreach (string wanted in KpiNames.OnSheets)
             {
                 if (!home.Holds(wanted))
                 {
                     Line(report, wanted + " on the " + home.Where + ": " + NotFound);
-                    NearMisses(report, home.NamesHolding(KpiNames.SheetNearMisses),
+                    NearMisses(report, near,
                         "No name on the " + home.Where + " holds " + Words(KpiNames.SheetNearMisses) + ".",
                         "Names on the " + home.Where + " holding " + Words(KpiNames.SheetNearMisses) + ": ");
+
+                    if (valuesShown)
+                    {
+                        // Said once. Repeating twenty rows per near miss under a second
+                        // NOT FOUND on the same home says nothing the first block did not.
+                        Line(report, "  Their values are shown above.");
+                        Line(report, string.Empty);
+                        continue;
+                    }
+
+                    // A near miss named and never shown is the answer withheld. PRX_COMPONENT
+                    // does not exist on the first real model, the sheet carries PRX_Component,
+                    // and the report named it while printing not one of its 1384 values.
+                    foreach (string missed in toShow)
+                    {
+                        Values(report, home, missed, "  ");
+                    }
+
+                    // Only what was really printed can be pointed at. A home with no near
+                    // miss to show has nothing above for a second NOT FOUND to refer to.
+                    valuesShown = toShow.Count > 0;
                     Line(report, string.Empty);
                     continue;
                 }
 
-                // The ones with a value first, so twenty examples show what a value looks like
-                // wherever any sheet has one, rather than twenty blanks off the first sheets.
-                List<SheetValue> values = home.ValuesOf(wanted)
-                    .OrderBy(one => string.IsNullOrWhiteSpace(one.Value) ? 1 : 0)
-                    .ThenBy(one => one.SheetNumber, NaturalOrder.Comparer)
-                    .ToList();
-
-                Line(report, wanted + " on the " + home.Where + ", showing " + Math.Min(ShownExamples, values.Count)
-                    + " of " + values.Count + ", the ones with a value first:");
-                Line(report, string.Equals(home.Where, TitleBlockFacts.OnTypesWhere, StringComparison.Ordinal)
-                    ? "family : type | used on | value"
-                    : "sheet number | sheet name | value");
-                foreach (SheetValue value in values.Take(ShownExamples))
-                {
-                    Line(report, Join(value.SheetNumber, value.SheetName, Shown(value.Value)));
-                }
+                Values(report, home, wanted, string.Empty);
                 Line(report, string.Empty);
             }
+        }
+
+        /// <summary>
+        /// Up to twenty values of one name, the ones with a value first so twenty examples show
+        /// what a value looks like wherever any sheet has one rather than twenty blanks off the
+        /// first sheets. The exact name and a near miss print through here alike, because a
+        /// name worth naming is a name worth showing.
+        /// </summary>
+        private static void Values(StringBuilder report, ParameterHome home, string name, string indent)
+        {
+            List<SheetValue> values = home.ValuesOf(name)
+                .OrderBy(one => string.IsNullOrWhiteSpace(one.Value) ? 1 : 0)
+                .ThenBy(one => one.SheetNumber, NaturalOrder.Comparer)
+                .ToList();
+
+            if (values.Count == 0)
+            {
+                Line(report, indent + name + " on the " + home.Where + ": no value was read for it.");
+                return;
+            }
+
+            Line(report, indent + name + " on the " + home.Where + ", showing "
+                + Math.Min(ShownExamples, values.Count) + " of " + values.Count
+                + ", the ones with a value first:");
+            Line(report, indent + (string.Equals(home.Where, TitleBlockFacts.OnTypesWhere, StringComparison.Ordinal)
+                ? "family : type | used on | value"
+                : "sheet number | sheet name | value"));
+            foreach (SheetValue value in values.Take(ShownExamples))
+            {
+                Line(report, indent + Join(value.SheetNumber, value.SheetName, Shown(value.Value)));
+            }
+        }
+
+        /// <summary>
+        /// The four plot parameters on one row per sheet.
+        ///
+        /// All four exist with values on the first real model and the report showed values for
+        /// one of them, so the four could not be told apart from the file. The workbook asks
+        /// for one Ref and this is the section that lets somebody pick which.
+        /// </summary>
+        private static void PlotNamesSideBySide(StringBuilder report, ParameterHome home)
+        {
+            var bySheet = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+            var order = new List<string>();
+
+            foreach (SheetValue value in home.Values)
+            {
+                if (!KpiNames.PlotNamesOnSheets.Contains(value.ParameterName, StringComparer.Ordinal)) continue;
+
+                Dictionary<string, string> row;
+                if (!bySheet.TryGetValue(value.SheetNumber, out row))
+                {
+                    row = new Dictionary<string, string>(StringComparer.Ordinal);
+                    bySheet[value.SheetNumber] = row;
+                    order.Add(value.SheetNumber);
+                }
+
+                row[value.ParameterName] = value.Value;
+            }
+
+            Line(report, "THE FOUR PLOT PARAMETERS ON THE " + home.Where.ToUpperInvariant()
+                + ", SIDE BY SIDE, " + bySheet.Count + " sheets, showing "
+                + Math.Min(ShownExamples, bySheet.Count));
+
+            if (bySheet.Count == 0)
+            {
+                Line(report, "  None of " + string.Join(", ", KpiNames.PlotNamesOnSheets)
+                    + " was read on the " + home.Where + ".");
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  sheet number | " + string.Join(" | ", KpiNames.PlotNamesOnSheets));
+
+            // The sheets carrying the most of the four first, so a reader sees a full row
+            // before an empty one and can tell the four apart on it.
+            foreach (string sheetNumber in order
+                .OrderByDescending(number => bySheet[number].Values.Count(one => !string.IsNullOrWhiteSpace(one)))
+                .ThenBy(number => number, NaturalOrder.Comparer)
+                .Take(ShownExamples))
+            {
+                Dictionary<string, string> row = bySheet[sheetNumber];
+                var cells = new List<string> { sheetNumber };
+                foreach (string name in KpiNames.PlotNamesOnSheets)
+                {
+                    string held;
+                    cells.Add(row.TryGetValue(name, out held) ? Shown(held) : "(not on it)");
+                }
+                Line(report, "  " + Join(cells.ToArray()));
+            }
+
+            Line(report, string.Empty);
         }
 
         private static void NearMisses(StringBuilder report, IReadOnlyList<string> names, string none, string some)
@@ -385,12 +513,68 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  " + KpiNames.InterventionArea + ": on " + tally.Carrying + " of "
                 + Count(link.FilledRegionCount, "filled region") + ", " + tally.WithValue + " with a value, showing "
                 + Math.Min(ShownExamples, link.InterventionAreas.Count) + " of " + link.InterventionAreas.Count + ":");
-            Line(report, "  region type | measures | raw | printed");
+            Line(report, "  region type | plot | measures | raw | printed");
             Line(report, "  The raw number is square feet only where measures reads Area. A number typed by "
                 + "hand measures nothing and prints with no unit.");
             foreach (MeasuredValue value in link.InterventionAreas.Take(ShownExamples))
             {
-                Line(report, "  " + Join(value.Label, value.Spec.Length == 0 ? "-" : value.Spec, value.Raw, value.Printed));
+                Line(report, "  " + Join(value.Label, Shown(value.PlotId),
+                    value.Spec.Length == 0 ? "-" : value.Spec, value.Raw, value.Printed));
+            }
+            Line(report, string.Empty);
+
+            // Carried blank and not carried at all read the same way in a row, as an empty
+            // plot, and only the first is a value somebody forgot to type.
+            Line(report, "  " + KpiNames.RefPlotId + ": on "
+                + (link.PlotWithValue + link.PlotCarriedBlank) + " of "
+                + Count(link.FilledRegionCount, "filled region") + ", "
+                + link.PlotWithValue + " with a value, "
+                + link.PlotCarriedBlank + " carrying it blank, "
+                + link.PlotNotCarried + " not carrying it at all.");
+            Line(report, string.Empty);
+
+            // One plot's regions read together is what settles which type is its intervention
+            // area. A type whose regions all carry a plot is a candidate and one whose regions
+            // carry none is not, so the table is driven by every type in the link. Driving it
+            // by the types that carry one meant the answer none could not print at all.
+            Line(report, "  REGIONS OF EACH TYPE CARRYING " + KpiNames.RefPlotId + ", "
+                + Count(link.TypeCounts.Count, "type"));
+            Line(report, "  filled region type | regions with a plot | regions of that type");
+            foreach (NameCount all in link.TypeCounts.OrderBy(one => one.Name, NaturalOrder.Comparer))
+            {
+                NameCount carrying = link.TypesCarryingAPlot.FirstOrDefault(
+                    one => string.Equals(one.Name, all.Name, StringComparison.Ordinal));
+                Line(report, "  " + Join(all.Name,
+                    (carrying == null ? 0 : carrying.Count).ToString(CultureInfo.InvariantCulture),
+                    all.Count.ToString(CultureInfo.InvariantCulture)));
+            }
+
+            // Both lists come off one loop over one set of regions, so a name in one and not
+            // the other is the tool contradicting itself rather than anything about the model.
+            foreach (NameCount carrying in link.TypesCarryingAPlot
+                .Where(one => !link.TypeCounts.Any(all => string.Equals(all.Name, one.Name, StringComparison.Ordinal)))
+                .OrderBy(one => one.Name, NaturalOrder.Comparer))
+            {
+                Line(report, "  " + carrying.Name + " carries a plot on " + Count(carrying.Count, "region")
+                    + " and is not a type in the link at all. That is a bug in this tool.");
+            }
+            Line(report, string.Empty);
+
+            List<IGrouping<string, MeasuredValue>> perPlot = link.RegionsCarryingAPlot
+                .Where(one => one.PlotId.Length > 0)
+                .GroupBy(one => one.PlotId, StringComparer.Ordinal)
+                .OrderBy(group => group.Key, NaturalOrder.Comparer)
+                .ToList();
+
+            Line(report, "  ONE PLOT'S REGIONS TOGETHER, first " + Math.Min(ShownPlots, perPlot.Count)
+                + " of " + perPlot.Count + " plots");
+            foreach (IGrouping<string, MeasuredValue> plot in perPlot.Take(ShownPlots))
+            {
+                Line(report, "  " + plot.Key + ", " + Count(plot.Count(), "region") + ":");
+                foreach (MeasuredValue value in plot)
+                {
+                    Line(report, "    " + Join(value.Label, value.Raw, value.Printed));
+                }
             }
             Line(report, string.Empty);
         }
@@ -437,8 +621,8 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
 
             List<ScannedSchedule> readInFull = all.Where(one => one.ReadInFull).ToList();
-            Line(report, "READ IN FULL, " + readInFull.Count + ", one per name the workbook draws from, "
-                + "the first in name order that lists an element");
+            Line(report, "READ IN FULL, " + readInFull.Count + ", up to " + PlotsReadInFull
+                + " plots per name the workbook draws from, the first in name order that list an element");
             foreach (ScannedSchedule schedule in readInFull)
             {
                 Line(report, string.Empty);

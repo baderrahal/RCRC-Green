@@ -8,15 +8,16 @@ using RcrcGreen.Core.Kpi;
 namespace RcrcGreen.Revit.Kpi
 {
     /// <summary>
-    /// Sections 5 to 8. Every schedule by name, category, fields and filters. Then, for one
-    /// schedule per name the workbook draws from, the rows exactly as a sheet prints them,
-    /// the elements it lists with every parameter they carry, and the areas read off those
+    /// Sections 5 to 8. Every schedule by name, category, fields and filters. Then, for a few
+    /// plots of each name the workbook draws from, the rows exactly as a sheet prints them,
+    /// the elements each lists with every parameter they carry, and the areas read off those
     /// elements raw and printed.
     ///
-    /// One per name and not every copy, because the real model holds six schedules per plot
-    /// over 160 plots and regenerating a thousand schedules to print their rows is a read
-    /// nobody waits for. The copy read is the first in name order that lists anything, and the
-    /// report says which.
+    /// A few copies per name and not every copy, because the real model holds six schedules
+    /// per plot over 160 plots and regenerating a thousand schedules to print their rows is a
+    /// read nobody waits for. How many is KpiReport.PlotsReadInFull, Core's number, because
+    /// the report states the rule. The copies read are the first in name order that list
+    /// anything, and the report says which.
     /// </summary>
     internal static class KpiScheduleReader
     {
@@ -25,6 +26,15 @@ namespace RcrcGreen.Revit.Kpi
         /// whether or not it lists anything.
         /// </summary>
         public const int CopiesTried = 10;
+
+        /// <summary>
+        /// How many plots of one name are read in full, read from Core so the report's own
+        /// sentence and this loop can never describe two different rules.
+        /// </summary>
+        public static int PlotsReadInFull
+        {
+            get { return KpiReport.PlotsReadInFull; }
+        }
 
         /// <summary>
         /// How many elements per schedule have their areas measured. Ten is enough to see
@@ -57,7 +67,7 @@ namespace RcrcGreen.Revit.Kpi
                 schedules.Add(schedule);
             }
 
-            HashSet<ElementId> readInFull = ChooseOnePerName(document, schedules, skipped);
+            HashSet<ElementId> readInFull = ChooseCopiesPerName(document, schedules, skipped);
 
             var scanned = new List<ScannedSchedule>();
             var elements = new List<ScheduleElements>();
@@ -138,12 +148,13 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// For each name the workbook draws from, once the plot is taken off, the first copy
-        /// in name order that lists at least one element. A plot with the schedule and no
-        /// planting would otherwise be the one read, and a schedule with no rows answers
-        /// nothing about its fields' values.
+        /// For each name the workbook draws from, once the plot is taken off, the first
+        /// PlotsReadInFull copies in name order that list at least one element. A plot with the
+        /// schedule and no planting would otherwise be the one read, and a schedule with no
+        /// rows answers nothing about its fields' values. How many copies is Core's number,
+        /// read from KpiReport.PlotsReadInFull, because the report states the rule.
         /// </summary>
-        private static HashSet<ElementId> ChooseOnePerName(Document document, List<ViewSchedule> schedules, List<string> skipped)
+        private static HashSet<ElementId> ChooseCopiesPerName(Document document, List<ViewSchedule> schedules, List<string> skipped)
         {
             var chosen = new HashSet<ElementId>();
 
@@ -154,29 +165,41 @@ namespace RcrcGreen.Revit.Kpi
             foreach (IGrouping<string, ViewSchedule> group in byName)
             {
                 List<ViewSchedule> copies = group.OrderBy(schedule => schedule.Name, NaturalOrder.Comparer).ToList();
-                ViewSchedule picked = null;
+                var picked = new List<ViewSchedule>();
+
+                // Held back rather than written straight into skipped, because the fallback
+                // below reads the first copy after all. Recorded both ways, one schedule was
+                // named as passed over and as read in full, two lines saying opposite things.
+                var passedOver = new List<string>();
 
                 foreach (ViewSchedule copy in copies.Take(CopiesTried))
                 {
+                    if (picked.Count == PlotsReadInFull) break;
+
                     if (CountListed(document, copy) > 0)
                     {
-                        picked = copy;
-                        break;
+                        picked.Add(copy);
+                        continue;
                     }
 
                     // Named, so the file records that DM-11's copy exists and was passed
                     // over rather than reading as if DM-14's were the first.
-                    skipped.Add(copy.Name + " lists no element, so it was not read in full.");
+                    passedOver.Add(copy.Name + " lists no element, so it was not read in full.");
                 }
 
-                if (picked == null)
+                if (picked.Count == 0)
                 {
-                    picked = copies[0];
+                    picked.Add(copies[0]);
+                    passedOver.RemoveAll(line => line.StartsWith(copies[0].Name + " lists no element",
+                        StringComparison.Ordinal));
                     skipped.Add("None of the first " + Math.Min(CopiesTried, copies.Count) + " copies of "
-                        + group.Key + " lists an element, so " + picked.Name + " was read in full with nothing in it.");
+                        + group.Key + " lists an element, so " + copies[0].Name
+                        + " was read in full with nothing in it.");
                 }
 
-                chosen.Add(picked.Id);
+                skipped.AddRange(passedOver);
+
+                foreach (ViewSchedule one in picked) chosen.Add(one.Id);
             }
 
             return chosen;

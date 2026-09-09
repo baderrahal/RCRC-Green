@@ -1,6 +1,30 @@
 # ai-max state
 
-Phase: 9, ship. Twenty seventh pass, the template picker and the workbook writer. Pull
+Phase: 9, ship. Twenty eighth pass, recognition fixed, the scan gaps, one check against the
+real workbooks, and the review of that work folded back in.
+
+A five lens review of the round below raised 58 findings, 24 were put to a reader whose job was
+to refute them, 14 survived and those are six distinct faults, all fixed. A plot's regions were
+counted off the area values so a region with no area vanished from its plot. A filled region
+type carrying no plot had no row, so the answer none could not print. Absent and blank both
+printed as an empty plot with nothing saying which. The near miss block printed once per
+missing name and listed a wanted name as a near miss of itself. One schedule was recorded as
+both passed over and read in full. And `kpi-rules.md` held both the old one per name rule and
+the new one. The log entry's own claim of eight red tests was wrong as well, reproduced at 14,
+and is corrected. 711 tests locally, 0 failed, with four breaks watched red.
+
+The KPI scanner ran on the real model for the first time. Recognition was reading 0 of 7,
+because the map held the main sheet names with the angle brackets stripped and the brackets are
+part of the name. Fixed for all seven with a test that asserts the shape. A one-off check
+against two real EXISTING PARKS workbooks supplied in a chat session, unrepeatable and covered
+by no gate, agreed with the map on all six cells, proved the patcher keeps 37 of 37 parts while
+an object model loses 21, and confirmed the tree rows. Four scan gaps closed: a near miss is
+now shown as well as named, the four plot parameters print side by side, every filled region
+prints its plot, and three plots per schedule name are read rather than one. The measured facts
+and the five open questions are in `.claude/rules/kpi-rules.md`, because CLAUDE.md is at its
+200 line ceiling. 710 tests locally, 0 failed, up from 657, with three breaks watched red.
+
+Before that, the twenty seventh pass, the template picker and the workbook writer. Pull
 request 33 merged into main as `c88083f` with 696 tests on the runner, 0 failed and 0
 skipped, 657 locally before the merge that brought the divided sheets rounds in and 696
 after it.

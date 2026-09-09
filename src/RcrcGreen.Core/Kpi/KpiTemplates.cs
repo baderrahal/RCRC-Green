@@ -14,6 +14,15 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public static class KpiTemplates
     {
+        /// <summary>
+        /// Every main sheet name is wrapped in angle brackets, and the brackets are part of the
+        /// name rather than placeholder notation. They were stripped when the map was first
+        /// written, so all seven workbooks came back unrecognised on the first real folder.
+        /// </summary>
+        public const string MainSheetOpens = "<";
+
+        public const string MainSheetCloses = ">";
+
         public const string ExistingTreesSheet = "Tree List - Existing";
 
         public const string ProposedTreesSheet = "Tree List - Proposed";
@@ -42,17 +51,17 @@ namespace RcrcGreen.Core.Kpi
 
         public static readonly KpiTemplate FutureParks = Parks("FUTURE PARKS");
 
-        public static readonly KpiTemplate Healthcare = Standard("HEALTHCARE", "Healthcare");
+        public static readonly KpiTemplate Healthcare = Standard("HEALTHCARE", "<Healthcare>");
 
-        public static readonly KpiTemplate Mosques = Standard("MOSQUES", "Mosques");
+        public static readonly KpiTemplate Mosques = Standard("MOSQUES", "<Mosques>");
 
-        public static readonly KpiTemplate Parking = Standard("PARKING", "Parking Plots");
+        public static readonly KpiTemplate Parking = Standard("PARKING", "<Parking Plots>");
 
-        public static readonly KpiTemplate Schools = Standard("SCHOOLS", "Schools");
+        public static readonly KpiTemplate Schools = Standard("SCHOOLS", "<Schools>");
 
         public static readonly KpiTemplate Streets = new KpiTemplate(
             "STREETS",
-            "Streets",
+            "<Streets>",
             new[]
             {
                 new MappedCell(KpiValue.Component, "D3"),
@@ -77,7 +86,7 @@ namespace RcrcGreen.Core.Kpi
         {
             return new KpiTemplate(
                 name,
-                "Park Name",
+                "<Park Name>",
                 new[]
                 {
                     new MappedCell(KpiValue.Component, "D3"),

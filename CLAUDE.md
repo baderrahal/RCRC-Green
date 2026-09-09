@@ -23,9 +23,10 @@ in the top strip, reads the whole document not just the range.
 **Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
 schedules and sheets. One confirmation, one transaction, one undo, one report of what happened.
 
-**KPI Checklist**, the one button on the KPI panel, opens a pane of the model name, when it was
-read, KPI Scan and a status line. KPI Scan reads the whole document into a text file of nine
-sections, one per question the workbook raises, and creates nothing. Rules in `kpi-rules.md`.
+**KPI Checklist** opens a pane of the model name, KPI Scan, a status line and the template
+picker. KPI Scan writes nine sections and creates nothing. **The elements a schedule lists are
+not the scheduled things:** the softscape schedule returns RVT Link instances, so its printed
+rows are its numbers' only route. Every measured fact is in `.claude/rules/kpi-rules.md`.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
 `Addins\2024\` layout the build does not, so copying the output folder by hand leaves Revit
@@ -122,8 +123,7 @@ Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
   both
 - Title blocks are AR-PRX-Title_Block_A1, several types. Read them from the model, never fix them
 - Three full runs: 10 with 0 refused, then 8 with 6 refused and 3 needing attention, then 13
-  with 0 refused, KERBS built, budget filters back as integers, the title block reading 841 by
-  594 mm off the placed block. Every fault each run surfaced was fixed and every path has run
+  with 0 refused. Every fault each run surfaced was fixed and every path has now run
 
 Real names are in `.claude/rules/core-rules.md`, next to the rule they illustrate.
 
