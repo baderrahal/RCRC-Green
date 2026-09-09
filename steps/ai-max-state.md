@@ -1,7 +1,8 @@
 # ai-max state
 
-Phase: 9, ship. Thirty third pass, the component to template mapping. Pull request 41 is open,
-823 tests locally, 0 failed and 0 skipped, after six break watches were restored byte for byte.
+Phase: 9, ship. Thirty third pass, the component to template mapping. Pull request 41 is merged
+into main as `a0d3d3b`, 823 tests on the runner against its merged head and 823 locally, 0 failed
+and 0 skipped on each.
 
 The question open since the 1355 run is answered. `ComponentTemplates` is a table of the eleven
 values the 1548 scan measured, many to one, and the word matching it replaces is gone. The two

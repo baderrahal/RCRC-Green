@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-09, thirty third pass. The component to template mapping, as a table
 
+Pull request 41, merged into main as `a0d3d3b`. **The runner executed 823 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 823 ran, 0 failed and 0 skipped**, after
+the last file was written and after the six break watches were restored byte for byte.
+
 The question that has been open since the 1355 run is answered. The team measured it on the
 1548 scan, 11 distinct values over 1384 sheets, off the component values block the round before
 last added to the end of section 3, and it is now a table in Core.
