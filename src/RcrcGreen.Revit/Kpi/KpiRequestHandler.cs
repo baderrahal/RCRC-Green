@@ -33,9 +33,12 @@ namespace RcrcGreen.Revit.Kpi
         private KpiRequest _wanted = KpiRequest.Nothing;
 
         /// <summary>
-        /// Called back on the Revit thread. The pane marshals to its own thread itself.
+        /// Called back on the Revit thread with the document title and the folder the model
+        /// file sits in, empty for a model that has never been saved. The pane marshals to
+        /// its own thread itself. The folder is here because the filled workbook goes beside
+        /// the model, and only the Revit side can say where that is.
         /// </summary>
-        public Action<string> Named { get; set; }
+        public Action<string, string> Named { get; set; }
 
         public Action<KpiScan, DateTime> Scanned { get; set; }
 
@@ -95,7 +98,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 // The document can be closed while the pane is still on screen. That is
                 // ordinary, so it is said rather than thrown.
-                Named?.Invoke(string.Empty);
+                Named?.Invoke(string.Empty, string.Empty);
                 Told?.Invoke(KpiPaneWords.NoModel);
                 return;
             }
@@ -105,7 +108,7 @@ namespace RcrcGreen.Revit.Kpi
                 switch (wanted)
                 {
                     case KpiRequest.WhichModel:
-                        Named?.Invoke(document.Title);
+                        Named?.Invoke(document.Title, FolderOf(document));
                         break;
                     case KpiRequest.Scan:
                         Scan(document);
@@ -131,6 +134,29 @@ namespace RcrcGreen.Revit.Kpi
             catch (IOException failed)
             {
                 Told?.Invoke("The report could not be written. " + failed.Message);
+            }
+        }
+
+        /// <summary>
+        /// Empty for a model that has never been saved. A cloud model's path is not a folder
+        /// on disk either, so anything that does not exist as a directory comes back empty
+        /// and the pane says to save the model first.
+        /// </summary>
+        private static string FolderOf(Document document)
+        {
+            try
+            {
+                string path = document.PathName;
+                if (string.IsNullOrEmpty(path)) return string.Empty;
+
+                string folder = System.IO.Path.GetDirectoryName(path);
+                return !string.IsNullOrEmpty(folder) && System.IO.Directory.Exists(folder)
+                    ? folder
+                    : string.Empty;
+            }
+            catch (ArgumentException)
+            {
+                return string.Empty;
             }
         }
 

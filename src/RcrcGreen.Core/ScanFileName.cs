@@ -40,6 +40,16 @@ namespace RcrcGreen.Core
                 + Extension;
         }
 
+        /// <summary>
+        /// The cleaning on its own, for a name that is not a report's. The KPI output name
+        /// goes through this, because a second copy of the cleaning rule is the fault this
+        /// repo has hit six times.
+        /// </summary>
+        public static string Cleaned(string name)
+        {
+            return Safe(name);
+        }
+
         private static string Safe(string documentTitle)
         {
             if (string.IsNullOrEmpty(documentTitle)) return "untitled";

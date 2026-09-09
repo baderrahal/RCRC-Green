@@ -1,9 +1,22 @@
 # ai-max state
 
-Phase: 9, ship. Twenty sixth pass, the report for the divided sheets round.
+Phase: 9, ship. Twenty seventh pass, the template picker and the workbook writer. Pull
+request 33, waiting on the gate.
 
-Pull request 32 merged as `6f212e1` with 619 tests on the runner, 0 failed and 0 skipped. Its
-log entry carries the merge and the count now.
+The workbook half of the KPI tool. `KpiTemplates` in Core carries the map, one entry per
+template, measured off the annotated seven, with the tree row ranges on the entry because a
+constant wrote quantities into rows no total sums. `RecognisedWorkbook` settles five templates
+on the main sheet name, breaks the park tie on the file name and puts an unsettled pick to the
+user. `WorkbookPatcher` copies the zip and patches only the cells that get a value, through
+the platform's own zip and XML types with no third party assembly, after a live licence search
+found EPPlus moved to Polyform Noncommercial and the object model libraries lose parts. It
+sets recalculate on open and reads every written cell back off the output. The pane gains the
+template block below the unchanged scan block, with no fill button, and `KpiFillValues` is the
+empty seam the next round fills. 657 tests locally, 0 failed, up from 580, three breaks
+watched red. Nothing reads the model and nothing fills.
+
+Before that, the twenty sixth pass, the report for the divided sheets round. Pull request 32
+merged as `6f212e1` with 619 tests on the runner, 0 failed and 0 skipped.
 
 Before that, the twenty fifth pass, divided sheets, proposed names and numbers, and the scale
 question answered.

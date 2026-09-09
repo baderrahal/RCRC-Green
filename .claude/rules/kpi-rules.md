@@ -3,6 +3,7 @@ paths:
   - src/RcrcGreen.Core/Kpi/**
   - src/RcrcGreen.Revit/Kpi/**
   - tests/RcrcGreen.Core.Tests/Kpi/**
+  - steps/kpi-templates.md
 ---
 
 # The rules the KPI tool holds
@@ -104,6 +105,39 @@ Sheet and this tool changes none of them. A change one of them seems to need goe
 `steps/log.md` with why, and the tool works round it. `PanelMetrics` is shared too and took
 one added value, `HairlineAbove`, because a number written in a pane file is the fault that
 made the first pane black on black.
+
+## The tool carries the map, and the map is data
+
+The production templates the team fills carry no note saying where a value comes from,
+measured at zero note cells in all seven. The annotated set that holds the mapping in green
+text is not what the team fills. So `KpiTemplates` in Core is the map, one entry per template,
+measured off the annotated seven cell by cell, with a completeness test. Nothing reads a
+mapping out of a workbook and nothing fills on a best guess.
+
+Recognition is the main sheet name first, which settles five of seven. The two park templates
+share Park Name, so the file name breaks the tie, and a name that settles nothing puts the
+pick to the user. The tree row ranges come from the map entry and never from a constant,
+because writing 89 rows into an 80 row list puts quantities into rows no total sums.
+
+## A workbook is copied and patched, never loaded and resaved
+
+An .xlsx is a zip and the client's EXISTING PARKS one holds 37 parts. Loading it into an
+object model and saving lost 21 of them, the embedded image, the printer settings, the
+threaded comments and the array metadata among them, and the file still opened. So
+`WorkbookPatcher` copies the file byte for byte and rewrites only the sheet parts that
+receive values and the workbook part, through the platform's own zip and XML types with no
+package dependency. It decides everything off the source first, so a refusal writes no file.
+It sets recalculate on open, because every formula carries a stored result and the old blanks
+would sit beside the new numbers otherwise. Every written cell is read back off the output
+and reported as it landed, never as it was sent.
+
+The untouched client file recalculates with 45 errors and a correctly filled one with 44. The
+44 are the PARK PROGRAMME section failing on an empty Criteria table either way, so a filled
+file showing 44 errors is correct.
+
+**No client workbook enters this repository.** It is public and those files carry the Green
+Riyadh KPI targets, neighbourhood names and the plant palette. `*.xlsx` is ignored and tests
+build their own small workbook in the temp folder.
 
 ## Do not name a KPI control Scan Model
 
