@@ -1,6 +1,11 @@
 # ai-max state
 
-Phase: 9, ship. Twenty fifth pass, divided sheets, proposed names and numbers, and the scale
+Phase: 9, ship. Twenty sixth pass, the report for the divided sheets round.
+
+Pull request 32 merged as `6f212e1` with 619 tests on the runner, 0 failed and 0 skipped. Its
+log entry carries the merge and the count now.
+
+Before that, the twenty fifth pass, divided sheets, proposed names and numbers, and the scale
 question answered.
 
 A third full run created 13 with 0 refused. Three faults remained and one question needed an
