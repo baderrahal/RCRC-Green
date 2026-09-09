@@ -4,10 +4,25 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twenty second pass. The report for the second full run round
+
+Branch `claude/rcrc-green-setup-wf9ham`. The entry below went in with its work, so it could not
+carry its own merge or runner count. It carries them now.
+
+Pull request 29 merged as `a44fe4f` and the gate executed 436 tests against it, 0 failed and 0
+skipped, which is the same count the local run gave.
+
+The pull request number in that entry read 28 while the pull request opened as 29, because the
+entry is written before the pull request exists. Corrected here rather than left to be found.
+
+Nothing else changed. No code is touched.
+
+---
+
 ## 2026-09-09, twenty first pass. A category is a number and a Yes is a 1
 
-Branch `claude/rcrc-green-setup-wf9ham`. Pull request 28, one commit. This entry goes in with the
-work, so the merge and the runner count are written into it by the follow-up.
+Branch `claude/rcrc-green-setup-wf9ham`. Pull request 29, one commit. Merged as `a44fe4f` with
+436 tests against it on the runner, 0 failed and 0 skipped.
 
 Five items off the second full run: 8 created, 6 refused, 3 needing attention. Leading with the
 two schedule faults, because both are the same shape and both were findable by reading the code

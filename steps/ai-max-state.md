@@ -1,6 +1,11 @@
 # ai-max state
 
-Phase: 9, ship. Twenty first pass, off the second full run in Revit.
+Phase: 9, ship. Twenty second pass, the report for the second full run round.
+
+Pull request 29 merged as `a44fe4f` with 436 tests on the runner, 0 failed and 0 skipped. Its
+log entry carries the merge and the count now.
+
+Before that, the twenty first pass, off the second full run in Revit.
 
 8 created, 6 refused, 3 needing attention. Five items, and the two schedule faults are the same
 shape as each other.
