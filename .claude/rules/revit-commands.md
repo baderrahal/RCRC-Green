@@ -276,73 +276,66 @@ same failure this repo keeps hitting, wearing different clothes.
 `FillTheCodes` compares before it clears, because the dropdown is one of the controls that
 outlives a redraw and clearing it under an open list takes the selection with it.
 
-## A sheet is described, never copied
+## A sheet is described, never copied, and one description makes a set
 
 It used to copy a sheet that already existed. The user picked one with no views on it and got
 an empty sheet, and copying was not how they wanted to work. `SheetCapture` is deleted rather
 than left as a second way to build the same thing.
 
-**A sheet is described once and repeated across every ticked plot.** Four things are shared:
-the title block type, read from the model and never written down here, the sheet name, the
-view types that go on it, and whether 1, 2 or 4 views go per sheet. One thing is per plot: the
-sheet number.
+**A sheet is described once and its views divide into as many sheets as they need.** Three
+things are shared: the title block type, read from the model and never written down here, the
+view types that go on, and whether 1, 2 or 4 go per sheet. Views go onto sheets in the order
+they are ticked, and no view is ever left off: six at two per sheet is three sheets. The old
+one-sheet-per-plot shape left five schedules unmade with a report line as the only trace, and
+its empty sheet for a viewless definition is superseded too, because no views need nothing.
 
-The name and the number are editable dropdowns and the user can type past both, because the
-list is an offer and never a restriction. **The tool still invents neither.** A plot with no
-number gets no sheet and the report says which plot and which sheet.
+**Every sheet that will be made is a row the user can read before Run.** Step 4 holds a table,
+one row per sheet per ticked plot: the views, read only, then a name box and a number box. A
+sheet holding one view gets its name proposed from the view, upper cased with the code removed,
+and its number proposed as the code, the plot's own letter and the first free sheet letter. A
+sheet holding more gets typed boxes and a line saying why. Proposals are editable offers: the
+tool still invents nothing it cannot read, so a plot with no sheet numbers gets an empty box
+with the reason, and a row still short of a name or a number is refused by name.
 
-**The number list is the numbers NOT in use.** It used to be the ones in use, so every entry in
-it was certain to be refused, and three sheets were lost to that in one run with "a sheet
-numbered 010EA is already in this model". `SheetNumbers.Free` steps the last run of digits in
-each number in use until it lands on a free one, so every offer is shaped like something the
-project already does.
+`SheetBeingDescribed` in the Revit project is the mutable half the panel owns. Its views are an
+ordered list, because a HashSet loses the tick order the division depends on. What the user
+types is filed under the plot and the planned sheet's own views, so an edit survives the redraw
+and stays with its sheet while the division changes shape around it. What it hands out is the
+Core `SheetDefinition` and the `SheetToMake` rows, narrowed to the view types still ticked in
+step 2, with one growing set of taken numbers threaded through every described sheet so two
+proposals on one panel can never offer the same number.
 
-A number that will be refused says so under its box as it is typed, and step 5 counts them
-before the confirmation. Every number warning refreshes on any keystroke in any box, because two
-plots given one number is a clash and neither box knows about the other on its own.
+**A keystroke refreshes the other boxes rather than rebuilding them.** Typing a number can move
+another row's proposal out of the way, and a box left showing the old one would have the run
+make a sheet the screen never showed. The refresh actions rewrite box text and warning lines in
+place, skipping the box that has the keyboard, because rebuilding the tree under the cursor
+takes the cursor out of the box.
 
-More than one sheet can be described, so one run gives a plot its LIST OF DRAWINGS and its
-GENERAL ARRANGEMENT LAYOUT together. `SheetOrder` pairs one `SheetDefinition` with the number
-each plot gets for it, and `RunPlan` turns each pair into one item per ticked plot that has one.
-
-**Where the views sit is worked out, not read.** `SheetLayout.For` takes the title block's width
-and height and a count of 1, 2 or 4 and hands back the centre of each viewport in reading order.
-One is centred, two sit side by side, four make a two by two grid, and the margin round the
-outside is the same measurement as the gap down the middle. Y counts up from the bottom in
-Revit, so the first row back is the top one.
+**Where the views sit is worked out, not read.** `SheetLayout.For` takes the title block's
+width and height and a count of 1, 2 or 4 and hands back the centre of each viewport in reading
+order. The last sheet of a division can hold fewer views than the count, and they sit in the
+first cells of the same grid.
 
 **The size comes off the title block PLACED ON THE SHEET, never off the type.** Sheet Width and
 Sheet Height are read-only INSTANCE parameters. On a `FamilySymbol` `get_Parameter` returns
 null for both, null became zero, and three sheets were created empty on a real A1 title block
-while the report said the block had no size.
+while the report said the block had no size. So `ModelWriter.SizeOf` regenerates, finds the
+title block instance on the new sheet and reads those two parameters off it. A family that does
+not drive them is measured across instead. The sheet is made, measured, and deleted again when
+it cannot be measured, with the delete checked like every other one here.
 
-So `ModelWriter.SizeOf` regenerates, finds the title block instance on the new sheet and reads
-those two parameters off it. A title block family that does not drive them is measured across
-instead, because a block drawn at A1 is still A1. `SheetSize` carries which of the two reads
-answered and the report prints it in millimetres.
+**Every placement is read back and recorded.** After the sheet's viewports are created,
+`ModelWriter` regenerates once and reads each viewport's centre, outline and the view's own
+scale into a `ViewportRecord`, and a schedule's bounding box the same way. The scan reads the
+same shape off every existing sheet, sizes off the placed title blocks by `OwnerViewId`, so a
+placement the tool made can be held against one the team made. **Nothing sets a scale.** A
+sheet has no scale of its own: what it shows under Scale is a readout of the views placed on
+it, and each view's scale comes from its own view template.
 
-The order this forces is worth knowing. The size cannot be read until the sheet exists, so a
-sheet that has views ticked and cannot be measured is created, found wanting, and deleted
-again. The delete is checked like every other one here, and the sheet is never recorded as made
-before that is settled. A definition with no views ticked is not measured at all and still
-makes an empty sheet, which is a real thing to ask for.
-
-`SheetBeingDescribed` in the Revit project is the mutable half the panel owns while somebody is
-still filling it in. What it hands out is the immutable Core `SheetDefinition`, narrowed to the
-view types still ticked in step 2, so a sheet cannot keep asking for a view the run no longer
-offers. The tick is remembered rather than dropped, so re-ticking the type in step 2 puts it
-back on the sheet.
-
-Three things it will not do. **A definition short of a type or a name is refused once**, not
-once per plot, because it is one thing to go and fix rather than seventeen. **A view already on
-another sheet is refused rather than moved**, because it belongs to whoever put it there, and
-`Viewport.CanAddViewToSheet` is asked before every placement so that comes back as a refusal
-rather than a throw. And **a definition with no views ticked still makes a sheet**, empty, which
-is a real thing to ask for. The confirmation says so before it runs, so nobody is surprised by
-one twice.
-
-Views are made before sheets inside the same transaction, so a sheet can carry a view this run
-only just created.
+A view already on another sheet is refused rather than moved, because it belongs to whoever put
+it there, and `Viewport.CanAddViewToSheet` is asked before every placement so that comes back
+as a refusal rather than a throw. Views are made before sheets inside the same transaction, so
+a sheet can carry a view this run only just created.
 
 ## A schedule is built on a category number and typed filter values
 

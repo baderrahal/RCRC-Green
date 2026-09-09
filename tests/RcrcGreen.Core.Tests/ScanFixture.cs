@@ -18,7 +18,8 @@ namespace RcrcGreen.Core.Tests
             ScannedParameterValue[] plotIdValues = null,
             ScannedDisagreement[] disagreements = null,
             int elementsScanned = 0,
-            double scanSeconds = 0.0)
+            double scanSeconds = 0.0,
+            ViewportRecord[] viewports = null)
         {
             return new ModelScan(
                 documentTitle,
@@ -29,7 +30,8 @@ namespace RcrcGreen.Core.Tests
                 plotIdValues ?? new ScannedParameterValue[0],
                 disagreements ?? new ScannedDisagreement[0],
                 elementsScanned,
-                scanSeconds);
+                scanSeconds,
+                viewports ?? new ViewportRecord[0]);
         }
 
         public static ScannedView View(string name, string viewTypeName)

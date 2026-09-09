@@ -90,34 +90,199 @@ namespace RcrcGreen.Core.Tests
     }
 
     /// <summary>
-    /// Which of the numbers the user typed will be refused, before Run rather than after.
+    /// The letter that stands for the plot in its own sheet numbers.
+    ///
+    /// The numbers below are plot DM-11's real ones: 010QE, 010QF, 010QG, 010QH, 200Q, 400Q,
+    /// 600QC, 600QD. Every expected letter is written by hand off that list.
+    /// </summary>
+    public class PlotLetterTests
+    {
+        private static readonly string[] DmElevenNumbers =
+        {
+            "010QE", "010QF", "010QG", "010QH", "200Q", "400Q", "600QC", "600QD"
+        };
+
+        [Fact]
+        public void ThePlotLetterIsReadOffThePlotsOwnNumbers()
+        {
+            Assert.Equal("Q", SheetNumbers.PlotLetter(DmElevenNumbers));
+        }
+
+        /// <summary>
+        /// A number that does not start with digits carries no letter to read, so L-211 and a
+        /// bare word contribute nothing rather than a wrong answer.
+        /// </summary>
+        [Fact]
+        public void ANumberNotStartingWithDigitsContributesNoLetter()
+        {
+            Assert.Equal("Q", SheetNumbers.PlotLetter(new[] { "L-211", "200Q", "COVER" }));
+            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "L-211", "COVER" }));
+        }
+
+        /// <summary>
+        /// 010QE Copy 001 still reads as Q, because the letter sits right after the leading
+        /// digits and the copy suffix is behind it.
+        /// </summary>
+        [Fact]
+        public void ACopyNumberStillGivesItsLetter()
+        {
+            Assert.Equal("Q", SheetNumbers.PlotLetter(new[] { "010QE Copy 001" }));
+        }
+
+        /// <summary>
+        /// Disagreeing numbers give no letter at all. Picking a side would put a wrong number
+        /// into a drawing register.
+        /// </summary>
+        [Fact]
+        public void DisagreeingNumbersGiveNoLetter()
+        {
+            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "010QE", "200R" }));
+            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new string[0]));
+            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(null));
+        }
+
+        [Fact]
+        public void ALowerCaseLetterIsReadAsItsCapital()
+        {
+            Assert.Equal("Q", SheetNumbers.PlotLetter(new[] { "010q" }));
+        }
+    }
+
+    /// <summary>
+    /// The number proposed for a new sheet: the view code, the plot's own letter, then the
+    /// first sheet letter not in use anywhere. Expected values written by hand from DM-11's
+    /// real numbers.
+    /// </summary>
+    public class SheetNumberProposalTests
+    {
+        private static readonly string[] DmElevenNumbers =
+        {
+            "010QE", "010QF", "010QG", "010QH", "200Q", "400Q", "600QC", "600QD"
+        };
+
+        /// <summary>
+        /// The sheet letter starts at A even though the plot already uses E to H, because A is
+        /// the first letter no sheet anywhere carries. The brief asks for the first free
+        /// letter, not the next after the highest.
+        /// </summary>
+        [Fact]
+        public void TheFirstFreeLetterFromAIsOffered()
+        {
+            SheetNumberProposal offered = SheetNumbers.Propose(
+                "010", DmElevenNumbers, DmElevenNumbers);
+
+            Assert.True(offered.Offered);
+            Assert.Equal("010QA", offered.Number);
+            Assert.Equal(string.Empty, offered.WhyNot);
+        }
+
+        [Fact]
+        public void ATakenLetterIsSteppedOver()
+        {
+            var inUse = new[] { "010QA", "010QB", "200Q" };
+
+            Assert.Equal("010QC", SheetNumbers.Propose("010", inUse, inUse).Number);
+        }
+
+        /// <summary>
+        /// Taken anywhere in the model counts, not only on this plot, because Revit keeps
+        /// sheet numbers unique across the whole document.
+        /// </summary>
+        [Fact]
+        public void ANumberTakenByAnotherPlotIsNotOffered()
+        {
+            SheetNumberProposal offered = SheetNumbers.Propose(
+                "010",
+                new[] { "010QA", "200Q" },
+                new[] { "200Q" });
+
+            Assert.Equal("010QB", offered.Number);
+        }
+
+        [Fact]
+        public void APlotWithNoNumbersGetsNoProposalAndSaysWhy()
+        {
+            SheetNumberProposal nothing = SheetNumbers.Propose(
+                "010", DmElevenNumbers, new string[0]);
+
+            Assert.False(nothing.Offered);
+            Assert.Equal(string.Empty, nothing.Number);
+            Assert.Equal(
+                "This plot has no sheet numbers yet, so there is no plot letter to continue. "
+                + "Type the number.",
+                nothing.WhyNot);
+        }
+
+        [Fact]
+        public void APlotWhoseNumbersDisagreeGetsNoProposal()
+        {
+            SheetNumberProposal nothing = SheetNumbers.Propose(
+                "010", DmElevenNumbers, new[] { "010QE", "200R" });
+
+            Assert.False(nothing.Offered);
+            Assert.Equal(
+                "This plot's own sheet numbers disagree about their plot letter, so none can "
+                + "be continued. Type the number.",
+                nothing.WhyNot);
+        }
+
+        [Fact]
+        public void NoCodeMeansNoProposal()
+        {
+            Assert.Equal(
+                "There is no view code to number from. Type the number.",
+                SheetNumbers.Propose(string.Empty, DmElevenNumbers, DmElevenNumbers).WhyNot);
+
+            Assert.Equal(
+                "There is no view code to number from. Type the number.",
+                SheetNumbers.Propose(null, DmElevenNumbers, DmElevenNumbers).WhyNot);
+        }
+
+        [Fact]
+        public void EveryLetterTakenIsSaidRatherThanInvented()
+        {
+            var everyLetter = new List<string>();
+            for (char letter = 'A'; letter <= 'Z'; letter++)
+            {
+                everyLetter.Add("010Q" + letter);
+            }
+
+            SheetNumberProposal nothing = SheetNumbers.Propose(
+                "010", everyLetter, new[] { "010QA" });
+
+            Assert.False(nothing.Offered);
+            Assert.Equal(
+                "Every number from 010QA to 010QZ is taken. Type the number.",
+                nothing.WhyNot);
+        }
+    }
+
+    /// <summary>
+    /// Which of the numbers the run asks for will be refused, before Run rather than after.
     /// </summary>
     public class SheetNumberFaultTests
     {
         private static readonly ViewType General = new ViewType("200", "General Arrangement Layout");
 
-        private static SheetOrder Order(string sheetName, params string[] plotAndNumber)
+        private static readonly string[] InTheModel = { "010EA", "L-211" };
+
+        private static SheetBatch Batch(string sheetName, params string[] plotAndNumber)
         {
-            var numbers = new List<SheetRequest>();
+            var rows = new List<SheetToMake>();
             for (int at = 0; at + 1 < plotAndNumber.Length; at += 2)
             {
-                numbers.Add(new SheetRequest(plotAndNumber[at], plotAndNumber[at + 1]));
+                rows.Add(RunFixture.Row(
+                    plotAndNumber[at], plotAndNumber[at + 1], sheetName, new[] { General }));
             }
 
-            return new SheetOrder(
-                new SheetDefinition("AR-PRX-Title_Block_A1", "GA-DETAILED DESIGN", sheetName,
-                    new[] { General }, 1),
-                numbers);
+            return RunFixture.Batch(new[] { General }, 1, rows.ToArray());
         }
-
-        private static readonly string[] InTheModel = { "010EA", "L-211" };
 
         [Fact]
         public void ANumberAlreadyInTheModelIsCaught()
         {
             var problems = SheetNumbers.Problems(
-                new[] { Order("GA", "DM-11", "010EA", "DM-12", "L-999") },
-                new[] { "DM-11", "DM-12" },
+                new[] { Batch("GA", "DM-11", "010EA", "DM-12", "L-999") },
                 InTheModel);
 
             SheetNumberProblem only = Assert.Single(problems);
@@ -131,15 +296,14 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// Two ticked plots given one number. The first would be created and the second refused,
-        /// which is the same fault arriving a second later.
+        /// Two rows given one number. The first would be created and the second refused, which
+        /// is the same fault arriving a second later.
         /// </summary>
         [Fact]
-        public void TwoPlotsGivenOneNumberAreBothCaught()
+        public void TwoRowsGivenOneNumberAreBothCaught()
         {
             var problems = SheetNumbers.Problems(
-                new[] { Order("GA", "DM-11", "L-500", "DM-12", "L-500") },
-                new[] { "DM-11", "DM-12" },
+                new[] { Batch("GA", "DM-11", "L-500", "DM-12", "L-500") },
                 InTheModel);
 
             Assert.Equal(2, problems.Count);
@@ -149,18 +313,17 @@ namespace RcrcGreen.Core.Tests
 
         /// <summary>
         /// Two sheets described separately, both asking for one number, clash just as hard as
-        /// two plots do. They go into one model.
+        /// two rows of one sheet do. They go into one model.
         /// </summary>
         [Fact]
-        public void TwoSheetsAskingForOneNumberClashToo()
+        public void TwoDescribedSheetsAskingForOneNumberClashToo()
         {
             var problems = SheetNumbers.Problems(
                 new[]
                 {
-                    Order("GA", "DM-11", "L-500"),
-                    Order("LIST OF DRAWINGS", "DM-11", "L-500")
+                    Batch("GA", "DM-11", "L-500"),
+                    Batch("LIST OF DRAWINGS", "DM-11", "L-500")
                 },
-                new[] { "DM-11" },
                 InTheModel);
 
             Assert.Equal(2, problems.Count);
@@ -170,33 +333,33 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
-        public void AFreeNumberOnATickedPlotIsNoProblemAtAll()
+        public void AFreeNumberIsNoProblemAtAll()
         {
             Assert.Empty(SheetNumbers.Problems(
-                new[] { Order("GA", "DM-11", "L-500", "DM-12", "L-501") },
-                new[] { "DM-11", "DM-12" },
+                new[] { Batch("GA", "DM-11", "L-500", "DM-12", "L-501") },
+                InTheModel));
+        }
+
+        [Fact]
+        public void ARowWithNoNumberIsNotAClash()
+        {
+            Assert.Empty(SheetNumbers.Problems(
+                new[] { Batch("GA", "DM-11", "", "DM-12", "   ") },
                 InTheModel));
         }
 
         /// <summary>
-        /// An unticked plot makes no sheet, so its number cannot clash with anything and is not
-        /// counted against the run.
+        /// An unusable definition makes no sheets, so its rows cannot clash with anything.
         /// </summary>
         [Fact]
-        public void AnUntickedPlotIsNotCounted()
+        public void RowsOfAnUnusableDefinitionAreNotCounted()
         {
             Assert.Empty(SheetNumbers.Problems(
-                new[] { Order("GA", "DM-99", "010EA") },
-                new[] { "DM-11" },
-                InTheModel));
-        }
-
-        [Fact]
-        public void APlotWithNoNumberIsNotAClash()
-        {
-            Assert.Empty(SheetNumbers.Problems(
-                new[] { Order("GA", "DM-11", string.Empty, "DM-12", "   ") },
-                new[] { "DM-11", "DM-12" },
+                new[]
+                {
+                    RunFixture.BatchMissingItsType(
+                        RunFixture.Row("DM-11", "010EA", "GA", new[] { General }))
+                },
                 InTheModel));
         }
 
@@ -208,8 +371,7 @@ namespace RcrcGreen.Core.Tests
         public void AlreadyInTheModelIsSaidBeforeUsedTwice()
         {
             var problems = SheetNumbers.Problems(
-                new[] { Order("GA", "DM-11", "010EA", "DM-12", "010EA") },
-                new[] { "DM-11", "DM-12" },
+                new[] { Batch("GA", "DM-11", "010EA", "DM-12", "010EA") },
                 InTheModel);
 
             Assert.Equal(2, problems.Count);
@@ -218,25 +380,27 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The faults come back one set per sheet described, keyed by plot, because that is what
-        /// puts a line next to the right box.
+        /// The same answer the panel puts under one box, so the line and the summary can never
+        /// disagree.
         /// </summary>
         [Fact]
-        public void TheFaultsComeBackKeyedByPlotForEachSheet()
+        public void OneNumberCanBeAskedAboutOnItsOwn()
         {
-            var faults = SheetNumbers.Faults(
-                new[]
-                {
-                    Order("GA", "DM-11", "010EA", "DM-12", "L-500"),
-                    Order("LIST", "DM-11", "L-501")
-                },
-                new[] { "DM-11", "DM-12" },
-                InTheModel);
+            Assert.Equal(
+                SheetNumberFault.AlreadyInTheModel,
+                SheetNumbers.FaultIn("010EA", InTheModel, new[] { "010EA" }));
 
-            Assert.Equal(2, faults.Count);
-            Assert.Equal(SheetNumberFault.AlreadyInTheModel, faults[0]["DM-11"]);
-            Assert.False(faults[0].ContainsKey("DM-12"));
-            Assert.Empty(faults[1]);
+            Assert.Equal(
+                SheetNumberFault.UsedTwiceInThisRun,
+                SheetNumbers.FaultIn("L-500", InTheModel, new[] { "L-500", "L-500" }));
+
+            Assert.Equal(
+                SheetNumberFault.None,
+                SheetNumbers.FaultIn("L-500", InTheModel, new[] { "L-500" }));
+
+            Assert.Equal(
+                SheetNumberFault.None,
+                SheetNumbers.FaultIn(string.Empty, InTheModel, new string[0]));
         }
 
         [Fact]

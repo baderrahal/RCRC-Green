@@ -8,26 +8,33 @@ using ViewType = RcrcGreen.Core.ViewType;
 namespace RcrcGreen.Revit
 {
     /// <summary>
-    /// One sheet as the user is still filling it in.
+    /// One sheet definition as the user is still filling it in.
     ///
     /// The panel holds these rather than reading the controls back, because step 4 is thrown
     /// away and built again on every change and a control that has gone is not a place to keep
     /// the only copy of something somebody typed.
     ///
     /// It is a Revit project type only because it is mutable and the panel owns it. What it
-    /// hands out is the Core <see cref="SheetDefinition"/>, which is immutable and is what the
-    /// run and every count are worked out from.
+    /// hands out is the Core <see cref="SheetDefinition"/> and the <see cref="SheetToMake"/>
+    /// rows, which are immutable and are what the run and every count are worked out from.
     /// </summary>
     internal sealed class SheetBeingDescribed
     {
-        private readonly HashSet<ViewType> _views = new HashSet<ViewType>();
+        // In the order they were ticked, because that is the order they go onto sheets. This
+        // was a HashSet, which has no order to keep, and the division is meaningless without
+        // one.
+        private readonly List<ViewType> _views = new List<ViewType>();
 
-        private readonly Dictionary<string, string> _numberByPlot =
-            new Dictionary<string, string>(StringComparer.Ordinal);
+        // What the user typed over a proposal, keyed by plot and then by the planned sheet's
+        // views, so an edit survives the redraw and stays with its own sheet while the
+        // division changes shape around it.
+        private readonly Dictionary<string, Dictionary<string, string>> _namesTyped =
+            new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+
+        private readonly Dictionary<string, Dictionary<string, string>> _numbersTyped =
+            new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
 
         public TitleBlockType TitleBlock { get; set; }
-
-        public string SheetName { get; set; } = string.Empty;
 
         public int ViewsPerSheet { get; set; } = 1;
 
@@ -40,23 +47,24 @@ namespace RcrcGreen.Revit
         {
             if (type == null) return;
 
-            if (carried) _views.Add(type);
-            else _views.Remove(type);
+            if (carried)
+            {
+                if (!_views.Contains(type)) _views.Add(type);
+            }
+            else
+            {
+                _views.Remove(type);
+            }
         }
 
-        public string NumberFor(string plotId)
+        public void TypeName(string plotId, string signature, string name)
         {
-            string found;
-            return plotId != null && _numberByPlot.TryGetValue(plotId, out found)
-                ? found ?? string.Empty
-                : string.Empty;
+            Remember(_namesTyped, plotId, signature, name);
         }
 
-        public void SetNumber(string plotId, string number)
+        public void TypeNumber(string plotId, string signature, string number)
         {
-            if (plotId == null) return;
-
-            _numberByPlot[plotId] = number ?? string.Empty;
+            Remember(_numbersTyped, plotId, signature, number);
         }
 
         /// <summary>
@@ -68,23 +76,169 @@ namespace RcrcGreen.Revit
         /// </summary>
         public SheetDefinition Built(IReadOnlyList<ViewType> stillTicked)
         {
-            IEnumerable<ViewType> carrying = (stillTicked ?? new List<ViewType>())
-                .Where(_views.Contains);
+            var offered = new HashSet<ViewType>(stillTicked ?? new List<ViewType>());
 
             return new SheetDefinition(
                 TitleBlock == null ? string.Empty : TitleBlock.FamilyName,
                 TitleBlock == null ? string.Empty : TitleBlock.TypeName,
-                SheetName,
-                carrying,
+                _views.Where(offered.Contains),
                 ViewsPerSheet);
         }
 
-        public SheetOrder Ordered(IReadOnlyList<ViewType> stillTicked, IEnumerable<string> plots)
+        /// <summary>
+        /// One row per sheet this definition will make, per ticked plot, each carrying its
+        /// name and number, prefilled or typed, or the reason nothing could be proposed.
+        ///
+        /// takenNumbers is shared across every described sheet and grows with each row, so two
+        /// proposals on one panel can never offer the same number. It starts as the numbers
+        /// the model already holds and gains what this panel asks for, typed or proposed.
+        /// </summary>
+        public IReadOnlyList<SheetRowShown> RowsFor(
+            IReadOnlyList<ViewType> stillTicked,
+            IEnumerable<string> plots,
+            DrawingSheetSnapshot model,
+            HashSet<string> takenNumbers)
         {
-            return new SheetOrder(
-                Built(stillTicked),
-                (plots ?? Enumerable.Empty<string>())
-                    .Select(plotId => new SheetRequest(plotId, NumberFor(plotId))));
+            if (model == null) throw new ArgumentNullException("model");
+            if (takenNumbers == null) throw new ArgumentNullException("takenNumbers");
+
+            SheetDefinition definition = Built(stillTicked);
+            IReadOnlyList<PlannedSheet> planned = definition.Planned;
+
+            var rows = new List<SheetRowShown>();
+
+            foreach (string plotId in (plots ?? Enumerable.Empty<string>())
+                .Where(one => !string.IsNullOrEmpty(one)))
+            {
+                foreach (PlannedSheet sheet in planned)
+                {
+                    rows.Add(OneRow(definition, plotId, sheet, model, takenNumbers));
+                }
+            }
+
+            return rows;
         }
+
+        private SheetRowShown OneRow(
+            SheetDefinition definition,
+            string plotId,
+            PlannedSheet sheet,
+            DrawingSheetSnapshot model,
+            HashSet<string> takenNumbers)
+        {
+            string typedName;
+            bool nameTyped = Typed(_namesTyped, plotId, sheet.Signature, out typedName);
+            string name = nameTyped ? typedName : sheet.ProposedName;
+
+            string typedNumber;
+            bool numberTyped = Typed(_numbersTyped, plotId, sheet.Signature, out typedNumber);
+
+            string number = string.Empty;
+            bool numberGenerated = false;
+            string whyNoNumber = string.Empty;
+
+            if (numberTyped)
+            {
+                number = typedNumber;
+            }
+            else if (sheet.NamedFromItsView)
+            {
+                SheetNumberProposal proposal = SheetNumbers.Propose(
+                    sheet.Views[0].Code, takenNumbers, model.NumbersOnPlot(plotId));
+
+                number = proposal.Number;
+                numberGenerated = proposal.Offered;
+                whyNoNumber = proposal.WhyNot;
+            }
+
+            // Whatever this row asks for is taken from here on, typed or proposed, so no later
+            // proposal on this panel can offer it again.
+            string asked = (number ?? string.Empty).Trim();
+            if (asked.Length > 0) takenNumbers.Add(asked);
+
+            return new SheetRowShown(
+                plotId,
+                sheet,
+                new SheetToMake(
+                    plotId,
+                    number,
+                    name,
+                    sheet.Views,
+                    definition.ViewsPerSheet,
+                    definition.TitleBlockFamilyName,
+                    definition.TitleBlockTypeName,
+                    !nameTyped && sheet.NamedFromItsView,
+                    numberGenerated),
+                whyNoNumber);
+        }
+
+        private static void Remember(
+            Dictionary<string, Dictionary<string, string>> typed,
+            string plotId,
+            string signature,
+            string value)
+        {
+            if (plotId == null || signature == null) return;
+
+            Dictionary<string, string> forPlot;
+            if (!typed.TryGetValue(plotId, out forPlot))
+            {
+                forPlot = new Dictionary<string, string>(StringComparer.Ordinal);
+                typed.Add(plotId, forPlot);
+            }
+
+            forPlot[signature] = value ?? string.Empty;
+        }
+
+        private static bool Typed(
+            Dictionary<string, Dictionary<string, string>> typed,
+            string plotId,
+            string signature,
+            out string value)
+        {
+            value = string.Empty;
+
+            Dictionary<string, string> forPlot;
+            if (plotId == null || signature == null
+                || !typed.TryGetValue(plotId, out forPlot))
+            {
+                return false;
+            }
+
+            string held;
+            if (!forPlot.TryGetValue(signature, out held)) return false;
+
+            value = held ?? string.Empty;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// One row of the step 4 table: the sheet the run would make and what the panel says next
+    /// to it. The Core row inside is what the run and every count read, so the table and the
+    /// run can never disagree about a sheet.
+    /// </summary>
+    internal sealed class SheetRowShown
+    {
+        public SheetRowShown(
+            string plotId, PlannedSheet planned, SheetToMake row, string whyNoNumber)
+        {
+            PlotId = plotId ?? string.Empty;
+            Planned = planned;
+            Row = row;
+            WhyNoNumber = whyNoNumber ?? string.Empty;
+        }
+
+        public string PlotId { get; }
+
+        public PlannedSheet Planned { get; }
+
+        public SheetToMake Row { get; }
+
+        /// <summary>
+        /// Why the number box starts empty on a sheet that would have been proposed one, said
+        /// next to the box rather than left as a surprise at Run.
+        /// </summary>
+        public string WhyNoNumber { get; }
     }
 }

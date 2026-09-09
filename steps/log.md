@@ -4,9 +4,14 @@ Newest entry first.
 
 ---
 
-## 2026-09-09, twenty fifth pass. The template picker and the workbook writer
+## 2026-09-09, twenty seventh pass. The template picker and the workbook writer
 
 Branch `claude/inspiring-allen-xs113f`, restarted from main because pull request 31 is merged.
+Pull requests 32 and 34 landed from the Drawing Sheet branch while this was being built, and the
+merge that brought them in conflicted only on this file and the state file, both settled by
+keeping every entry with this one on top. The merge record `e343fe1` on main carries a
+co-author credit line: it went in through the GitHub squash button, which the commit hook
+cannot see, so the hook does not cover that button and the gap is now written down.
 The workbook half of the KPI tool and nothing of the Revit half. It reads no model, fills
 nothing, and has no fill button, because a control that does nothing is a lie about what the
 tool can do. The round ends with a person able to point at a folder, see the templates in it,
@@ -122,6 +127,151 @@ taken before the break and checked byte for byte, then 657 ran green.
   whether every production file's first sheet name matches the map is UNKNOWN until the team
   points the pane at the real folder
 - No file has been written beside a model, because nothing fills yet
+
+## 2026-09-09, twenty sixth pass. The report for the divided sheets round
+
+Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 32 is
+merged. The entry below went in with its work, so it could not carry its own merge or runner
+count. It carries them now.
+
+Pull request 32 merged as `6f212e1` and the gate executed 619 tests against it, 0 failed and
+0 skipped, which is the same count the local run gave after the restack onto main.
+
+The design folder was named pr-32 before the pull request existed and the pull request opened
+as 32, so the guess held this time. Nothing else changed. No code is touched.
+
+---
+
+## 2026-09-09, twenty fifth pass. A sheet has no scale, and one description makes a set
+
+Branch `claude/rcrc-green-setup-wf9ham`, one commit, restacked onto main after the two KPI
+rounds landed there mid round. The merge sha and the runner count go in the next entry,
+because this one is written before the pull request exists and the last time a number was
+guessed here it was wrong.
+
+Off the third full run: 13 created, 0 refused. KERBS built on its category number, both budget
+filters went back as integers, and the title block size read 841 by 594 mm off the placed
+block. Three faults remained and one question had to be answered before anything moved.
+Leading with that one, item 5.
+
+### 5. A sheet has no scale of its own, so there is nothing to set
+
+The reading offered was that the Scale a sheet shows is a readout of the views placed on it,
+each from its own view template, not a setting of the sheet. Checked against the API before
+acting on it, and it holds:
+
+- An Autodesk forum thread on Scale as Indicated, forums.autodesk.com, Revit Architecture
+  forum, "Issue with Scale in view title, Scale as Indicated", says the sheet's Scale
+  parameter is enabled only when at least one view is placed on the sheet and every placed
+  view has the same scale, and reads As Indicated otherwise
+- The View.Scale page on revitapidocs.com, the 2026 edition of the ViewScale property, which
+  is a property of the view, not of the sheet, and is what a view template drives
+
+So the sheets that looked wrong were showing exactly what sat on them, and the fault behind
+the complaint was item 2: one typed name went onto every sheet, so a location key plan sat
+under GENERAL ARRANGEMENT LAYOUT and read as a layout at a mad scale. Nothing in this round
+sets a scale on anything, because a view's scale belongs to its template and overriding it
+would fight the team's own settings. The run report now records the scale of every placed
+view, and its closing note says whose the scale is.
+
+How real sheets place their viewports is a separate question and it is UNKNOWN. The scan
+grew a VIEWPORTS ON EXISTING SHEETS section, scale, centre, size and sheet size in
+millimetres off every placed viewport and schedule, sizes off the placed title blocks by
+OwnerViewId, so the tool's centred placement can be held against the team's real ones the
+next time Scan Model runs. Until then nothing about placement was changed on a guess.
+
+### 1. One sheet definition makes as many sheets as the views need
+
+`SheetDivision.Of` in Core chunks the ticked views, in the order they were ticked, into
+`PlannedSheet`s. Six views at one per sheet is six sheets, at two is three, at four is two
+with the second holding two, and a flatten test proves no view is ever left off. The old
+`Placed` and `LeftOff` split on `SheetDefinition` is deleted, and so is the sheet name it
+carried, because one typed name across a divided set is the fault item 2 names.
+
+**Superseded: a definition with no views used to make an empty sheet on purpose.** It makes
+no sheets now. The division says a sheet is what its views need, and no views need nothing.
+The report's closing note and the step 4 words both changed with it, and the panel line that
+promised an empty sheet is gone. Flagged here rather than slipped in, because it reverses a
+behaviour an earlier round wrote down as wanted.
+
+### 2. A one view sheet is named from its view
+
+`SheetNaming.FromView` upper cases the view name and drops the bracketed code, so
+(200) General Arrangement Layout proposes GENERAL ARRANGEMENT LAYOUT, the way the team's own
+sheets read. The name sits in an editable box prefilled per row. A sheet holding more than
+one view gets no proposal, the row says why in `PlannedSheet.WhyNothingIsProposed`, and the
+sheet is not made until a name is typed.
+
+### 3. A sheet number continues the plot's own pattern
+
+`SheetNumbers.PlotLetter` reads the letter after the leading digits of each of the plot's own
+numbers, DM-11's 010QE to 600QD all read Q, and every parseable number must agree or there is
+no letter. `SheetNumbers.Propose` offers the code, that letter, then the first sheet letter
+from A not in use anywhere, so DM-11's code 010 proposes 010QA even though QE to QH exist,
+because A is free. A plot with no sheet numbers gets an empty box and the reason. One growing
+set of taken numbers is threaded through every row of every described sheet, so two proposals
+on one panel can never collide, and a typed number joins the set so later proposals move out
+of its way. `FaultIn` still warns under the box for a number the model holds or a number
+asked for twice, the same method the run summary counts with.
+
+### 4. Step 4 is a table of the sheets that will be made
+
+Per definition: Type, Views per sheet, the view ticks, then one row per sheet per ticked
+plot. Views read only, name and number editable, prefilled where a proposal exists. The line
+over the table is `SheetBatch.InWords`, how many sheets this press makes across the ticked
+plots and how many rows are still short. What the user types is filed under the plot and the
+planned sheet's own views, so an edit survives the redraw and stays with its sheet while the
+division changes shape. A keystroke refreshes every other box in place, skipping the focused
+one, because a proposal that moved has to show its move and rebuilding the tree would take
+the cursor out of the box. `RunPlan` refuses an unusable definition once, refuses a row short
+of a name or a number by plot and views, and drops a row on an unticked plot silently, the
+same as a mark.
+
+### 6. Both reports say where every viewport landed
+
+The run report grew WHERE EACH VIEWPORT LANDED: after the sheet's placements are created,
+`ModelWriter` regenerates once and reads each viewport's centre and outline back off what
+Revit made, with the view's own scale, a schedule's bounding box the same way, next to the
+sheet size. `ViewportRecord` in Core formats it all in millimetres. The scan reads the same
+shape off every existing sheet, so the two files can be held against each other. The report
+also names, per sheet, whether its name and its number were generated or typed.
+
+### 7. The lowercase s is answered
+
+NS-19-(400) Landscape Cross section is spelled that way by its own sibling. The model does
+it, so the tool copying it is correct. Nothing to do, recorded so it is not chased again.
+
+### 8. Sheet parameters are out of scope
+
+PRX_ parameters beyond PRX_Plot_ID, and Approver, Designer, Checker and Author, are not
+filled, get no controls and are not raised in the report. The team's decision, recorded so
+nobody reads their absence as an oversight.
+
+### What ran here
+
+`dotnet build` on the solution and `dotnet test` on the suite after the last file: 475 tests
+on the pre KPI base, then 619 with main merged in, 0 failed, 0 skipped on both. Three guards were broken on purpose and watched go red before being
+trusted: the division stepped past a view and the flatten test caught it, the taken number
+guard was bypassed and the stepped over letter test caught it, and the ticked order was
+sorted and the order test caught it. All restored, suite green again.
+
+### What did not run, item by item
+
+Nothing in this round has been through Revit.
+
+- No sheet has been made by the division, and no run has executed any of this round's code
+- No proposal has been rendered. Whether the four column table fits the docked pane, whether
+  a warning line under one box pushes its row out of step, and how the table reads at 17
+  plots by 3 planned sheets are all UNKNOWN
+- The keystroke refresh has never been exercised. Whether writing ComboBox text while its
+  dropdown is open fights the selection is UNKNOWN
+- No `ViewportRecord` has been written by a real run. `GetBoxCenter` and `GetBoxOutline`
+  units and origin are taken from the API documentation, not measured
+- Whether a `ScheduleSheetInstance` bounding box is readable after the one regeneration is
+  UNKNOWN, and a null there records zeros, which print as 0 mm rather than a plausible size
+- The scan's viewport section has never run, and its cost across 1,385 sheets and 953 placed
+  views is unmeasured
+- The forum's account of Scale as Indicated has not been reproduced on this model
 
 ---
 

@@ -37,7 +37,8 @@ namespace RcrcGreen.Core
             int fromParameter,
             int fromViewName,
             int withNoPlot,
-            int sourcesDisagree)
+            int sourcesDisagree,
+            IEnumerable<SheetOnAPlot> sheetNumbersByPlot = null)
         {
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
 
@@ -85,6 +86,20 @@ namespace RcrcGreen.Core
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(number => number, NaturalOrder.Comparer)
                 .ToList();
+
+            _numbersByPlot = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            foreach (SheetOnAPlot one in (sheetNumbersByPlot ?? Enumerable.Empty<SheetOnAPlot>())
+                .Where(one => one != null && one.PlotId.Length > 0 && one.SheetNumber.Length > 0))
+            {
+                List<string> held;
+                if (!_numbersByPlot.TryGetValue(one.PlotId, out held))
+                {
+                    held = new List<string>();
+                    _numbersByPlot.Add(one.PlotId, held);
+                }
+
+                held.Add(one.SheetNumber);
+            }
 
             ScopeBoxNames = Clean(scopeBoxNames)
                 .Distinct(StringComparer.Ordinal)
@@ -170,6 +185,21 @@ namespace RcrcGreen.Core
 
         public IReadOnlyList<string> SheetNumbersInUse { get; }
 
+        private readonly Dictionary<string, List<string>> _numbersByPlot;
+
+        /// <summary>
+        /// The sheet numbers already on one plot, read off PRX_Plot_ID on the sheets. They are
+        /// what the plot letter is worked out from, so a plot whose sheets carry no parameter
+        /// reads as having no numbers and gets no proposal.
+        /// </summary>
+        public IReadOnlyList<string> NumbersOnPlot(string plotId)
+        {
+            List<string> held;
+            return plotId != null && _numbersByPlot.TryGetValue(plotId, out held)
+                ? (IReadOnlyList<string>)held
+                : new List<string>();
+        }
+
         /// <summary>
         /// Numbers no sheet in this model carries, which is what the dropdown offers.
         ///
@@ -221,5 +251,22 @@ namespace RcrcGreen.Core
             if (values == null) return Enumerable.Empty<string>();
             return values.Where(value => !string.IsNullOrEmpty(value));
         }
+    }
+
+    /// <summary>
+    /// One sheet number and the plot its sheet carries in PRX_Plot_ID. Plain values, so the
+    /// snapshot can group them without holding anything from the model.
+    /// </summary>
+    public sealed class SheetOnAPlot
+    {
+        public SheetOnAPlot(string plotId, string sheetNumber)
+        {
+            PlotId = (plotId ?? string.Empty).Trim();
+            SheetNumber = (sheetNumber ?? string.Empty).Trim();
+        }
+
+        public string PlotId { get; }
+
+        public string SheetNumber { get; }
     }
 }

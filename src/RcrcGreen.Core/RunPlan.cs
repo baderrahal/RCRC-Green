@@ -34,35 +34,30 @@ namespace RcrcGreen.Core
             SheetName = string.Empty;
         }
 
-        private RunItem(string plotId, string sheetNumber, SheetDefinition sheet)
+        private RunItem(SheetToMake sheet)
         {
-            PlotId = plotId;
+            PlotId = sheet.PlotId;
             Type = null;
             Kind = RunItemKind.Sheet;
-            SheetNumber = sheetNumber;
+            SheetNumber = sheet.SheetNumber;
             SheetName = sheet.SheetName;
             Sheet = sheet;
         }
 
         /// <summary>
-        /// A sheet carries no view type. Its number is typed per plot and its name comes off the
-        /// definition, and the tool invents neither.
+        /// A sheet carries no view type. Its name and its number sit on its own row, generated
+        /// or typed, and a row short of either never becomes an item.
         /// </summary>
-        public static RunItem ForSheet(SheetRequest wanted, SheetDefinition sheet)
+        public static RunItem ForSheet(SheetToMake sheet)
         {
-            if (wanted == null) throw new ArgumentNullException("wanted");
             if (sheet == null) throw new ArgumentNullException("sheet");
-            if (!wanted.Complete)
-            {
-                throw new ArgumentException("That plot has no sheet number typed in.", "wanted");
-            }
-            if (!sheet.CanBeUsed)
+            if (!sheet.CanBeMade)
             {
                 throw new ArgumentException(
                     "That sheet is missing " + sheet.WhatIsMissing + ".", "sheet");
             }
 
-            return new RunItem(wanted.PlotId, wanted.SheetNumber, sheet);
+            return new RunItem(sheet);
         }
 
         public string PlotId { get; }
@@ -81,7 +76,7 @@ namespace RcrcGreen.Core
         /// <summary>
         /// What goes on this sheet and how it lays out. Null on anything that is not a sheet.
         /// </summary>
-        public SheetDefinition Sheet { get; }
+        public SheetToMake Sheet { get; }
 
         public string Name
         {
@@ -194,8 +189,8 @@ namespace RcrcGreen.Core
         /// model, not a rule.</param>
         /// <param name="capturableScheduleTypes">Schedule types some plot in the model already
         /// has, so there is something to capture a definition from.</param>
-        /// <param name="sheetsWanted">The sheets the user described, each with the number every
-        /// plot gets for it. One definition makes one sheet per ticked plot that has a number.</param>
+        /// <param name="sheetsWanted">The sheets the user described, each already divided into
+        /// the rows it makes across the ticked plots, one row per sheet.</param>
         public static RunPlan Of(
             IEnumerable<PlotViewKey> marked,
             IEnumerable<string> ticked,
@@ -203,7 +198,7 @@ namespace RcrcGreen.Core
             IEnumerable<ViewType> scheduleTypes,
             IEnumerable<ViewType> sectionTypes,
             IEnumerable<ViewType> capturableScheduleTypes,
-            IEnumerable<SheetOrder> sheetsWanted)
+            IEnumerable<SheetBatch> sheetsWanted)
         {
             var stillTicked = new HashSet<string>(
                 (ticked ?? Enumerable.Empty<string>()).Where(plotId => plotId != null),
@@ -267,62 +262,56 @@ namespace RcrcGreen.Core
                     sections.Contains(key.ViewType) ? RunItemKind.Section : RunItemKind.PlanView));
             }
 
-            AddSheets(sheetsWanted, ticked, stillTicked, items, refusals);
+            AddSheets(sheetsWanted, stillTicked, items, refusals);
 
             return new RunPlan(items, refusals);
         }
 
         /// <summary>
-        /// One sheet per definition per ticked plot that has a number typed in.
+        /// Every row of every described sheet, and a refusal for every row that cannot be made.
         ///
-        /// A definition short of a sheet type or a sheet name is refused once, not once per
-        /// plot, because it is one thing the user has to go and fix rather than seventeen.
+        /// A definition short of a sheet type is refused once, not once per row, because it is
+        /// one thing the user has to go and fix rather than seventeen. A row short of a name or
+        /// a number is refused by itself, naming its plot and its views, because the row next
+        /// to it may be complete.
         /// </summary>
         private static void AddSheets(
-            IEnumerable<SheetOrder> sheetsWanted,
-            IEnumerable<string> ticked,
+            IEnumerable<SheetBatch> sheetsWanted,
             HashSet<string> stillTicked,
             List<RunItem> items,
             List<RunRefusal> refusals)
         {
-            List<string> plots = (ticked ?? Enumerable.Empty<string>())
-                .Where(plotId => plotId != null)
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(plotId => plotId, NaturalOrder.Comparer)
-                .ToList();
-
-            foreach (SheetOrder order in (sheetsWanted ?? Enumerable.Empty<SheetOrder>())
+            foreach (SheetBatch batch in (sheetsWanted ?? Enumerable.Empty<SheetBatch>())
                 .Where(one => one != null))
             {
-                if (!order.Definition.CanBeUsed)
+                if (!batch.Definition.CanBeUsed)
                 {
                     refusals.Add(RunRefusal.ForSheet(
                         string.Empty,
                         string.Empty,
-                        order.Definition.SheetName,
+                        batch.Definition.TitleBlock,
                         "No sheet of this kind was made on any plot, because it is missing "
-                        + order.Definition.WhatIsMissing + ". The tool invents neither."));
+                        + batch.Definition.WhatIsMissing + ". The tool invents neither."));
                     continue;
                 }
 
-                foreach (string plotId in plots)
+                foreach (SheetToMake row in batch.Rows)
                 {
-                    if (!stillTicked.Contains(plotId)) continue;
+                    if (!stillTicked.Contains(row.PlotId)) continue;
 
-                    SheetRequest number = order.NumberFor(plotId);
-
-                    if (number == null || !number.Complete)
+                    if (!row.CanBeMade)
                     {
                         refusals.Add(RunRefusal.ForSheet(
-                            plotId,
-                            string.Empty,
-                            order.Definition.SheetName,
-                            "No sheet was made for " + plotId + ", because no sheet number was "
-                            + "typed in for it. The tool invents neither a number nor a name."));
+                            row.PlotId,
+                            row.SheetNumber,
+                            row.SheetName.Length == 0 ? row.ViewsInWords() : row.SheetName,
+                            "No sheet was made for " + row.PlotId + " holding "
+                            + row.ViewsInWords() + ", because it is still missing "
+                            + row.WhatIsMissing + ". The tool invents neither."));
                         continue;
                     }
 
-                    items.Add(RunItem.ForSheet(number, order.Definition));
+                    items.Add(RunItem.ForSheet(row));
                 }
             }
         }

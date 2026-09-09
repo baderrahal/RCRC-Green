@@ -152,9 +152,9 @@ namespace RcrcGreen.Core
         /// <param name="titleBlockTypes">How many title block types the model holds. A sheet is
         /// created with one, so none means no sheet can be made at all.</param>
         /// <param name="sheetsDescribed">How many sheet definitions the user has added.</param>
-        /// <param name="sheetsAsked">How many sheets a run would make, meaning every definition
-        /// against every ticked plot that has a number typed in.</param>
-        /// <param name="sheetsIncomplete">How many definitions are missing a type or a name.</param>
+        /// <param name="sheetsAsked">How many sheets a run would make, meaning every row of
+        /// every usable definition that has its name and its number.</param>
+        /// <param name="sheetsIncomplete">How many definitions are missing a sheet type.</param>
         /// <param name="plan">What a run would make right now.</param>
         public static PanelSteps Of(
             bool readOnce,
@@ -276,7 +276,7 @@ namespace RcrcGreen.Core
                     "none added", true, string.Empty, false);
             }
 
-            string sheets = described == 1 ? "1 sheet" : described + " sheets";
+            string sheets = described == 1 ? "1 described" : described + " described";
             string making = asked == 0
                 ? "none to make yet"
                 : asked == 1 ? "1 to make" : asked + " to make";
@@ -291,10 +291,10 @@ namespace RcrcGreen.Core
             {
                 return new StepState(PanelStep.Run, "RUN", string.Empty, false,
                     sheetsIncomplete > 0
-                        ? "Every sheet in step 4 is missing a type or a name, so none can be "
-                            + "made. Mark a cell in step 3 or finish one off."
-                        : "Mark a cell in step 3, or add a sheet in step 4 and type a number for "
-                            + "a plot. Nothing is created until you do.", false);
+                        ? "Every sheet in step 4 still needs its type, a name or a number, so "
+                            + "none can be made. Mark a cell in step 3 or finish one off."
+                        : "Mark a cell in step 3, or add a sheet in step 4. Nothing is created "
+                            + "until you do.", false);
             }
 
             string counts = plan == null ? "nothing to make" : plan.CountsInWords();

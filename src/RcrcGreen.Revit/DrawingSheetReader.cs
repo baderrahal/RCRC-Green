@@ -101,6 +101,7 @@ namespace RcrcGreen.Revit
 
             var sheetNames = new List<string>();
             var sheetNumbers = new List<string>();
+            var numbersByPlot = new List<SheetOnAPlot>();
             foreach (ViewSheet sheet in new FilteredElementCollector(document)
                 .OfClass(typeof(ViewSheet))
                 .Cast<ViewSheet>()
@@ -108,6 +109,16 @@ namespace RcrcGreen.Revit
             {
                 sheetNames.Add(sheet.Name);
                 sheetNumbers.Add(sheet.SheetNumber);
+
+                // The plot letter a new number continues is read off the numbers the plot
+                // already has, found through PRX_Plot_ID on the sheet. A sheet carrying no
+                // plot belongs to no plot's pattern.
+                Parameter plot = sheet.LookupParameter(ModelScanner.PlotIdParameterName);
+                string plotId = plot != null && plot.HasValue ? plot.AsString() : null;
+                if (!string.IsNullOrWhiteSpace(plotId))
+                {
+                    numbersByPlot.Add(new SheetOnAPlot(plotId, sheet.SheetNumber));
+                }
             }
 
             // Types rather than instances. A model can hold a title block type no sheet uses
@@ -138,7 +149,8 @@ namespace RcrcGreen.Revit
                 fromParameter,
                 fromViewName,
                 withNoPlot,
-                disagree);
+                disagree,
+                numbersByPlot);
         }
 
         private static ViewScopeBoxState ScopeBoxStateOf(Document document, View view)

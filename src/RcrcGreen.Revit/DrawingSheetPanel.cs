@@ -87,13 +87,17 @@ namespace RcrcGreen.Revit
             new Dictionary<string, double>(StringComparer.Ordinal);
 
         /// <summary>
-        /// One for every sheet number box on screen, called whenever any of them changes.
+        /// One for every row of every sheet table on screen, called with a fresh set of rows
+        /// whenever anything about the sheets changes.
         ///
-        /// A number typed into one box can make a second box wrong, because two plots given the
-        /// same number is a clash and neither of them knows about the other. Refreshing only the
-        /// box being typed in would leave the other reading as fine.
+        /// A number typed into one box can change what every other box should say, because two
+        /// rows given one number is a clash neither knows about on its own, and a proposal
+        /// steps aside when a typed number takes the one it offered. Refreshing only the box
+        /// being typed in would leave the others stale, and rebuilding the tree would take the
+        /// cursor out of the box.
         /// </summary>
-        private readonly List<Action> _numberWarnings = new List<Action>();
+        private readonly List<Action<IReadOnlyList<IReadOnlyList<SheetRowShown>>>> _numberWarnings =
+            new List<Action<IReadOnlyList<IReadOnlyList<SheetRowShown>>>>();
 
         // The sheets the user has described, and what they typed for each plot. Held here
         // rather than read back off the controls, because the step is thrown away and rebuilt
@@ -300,9 +304,14 @@ namespace RcrcGreen.Revit
 
             if (_runLine != null) _runLine.Text = RunLine();
 
-            // Every number box, not only the one being typed in. Two plots given one number is
-            // a clash neither box knows about on its own.
-            foreach (Action said in _numberWarnings) said();
+            // Every sheet row, not only the one being typed in. Two rows given one number is a
+            // clash neither box knows about on its own, and a proposal has to move when a
+            // typed number takes the one it offered.
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
+            foreach (Action<IReadOnlyList<IReadOnlyList<SheetRowShown>>> said in _numberWarnings)
+            {
+                said(rows);
+            }
         }
 
         private UIElement Step(StepState step)
@@ -841,11 +850,12 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// The sheets the user describes, and the number every plot gets for each.
+        /// The sheets the user describes, and the set each definition makes per ticked plot.
         ///
-        /// A sheet is described once and repeated across the ticked plots. It used to be copied
-        /// off a sheet that already existed, which meant one had to be laid out by hand first
-        /// and meant picking an empty one gave an empty sheet.
+        /// A sheet is described once and its views divide into as many sheets as they need,
+        /// made for every ticked plot. It used to be copied off a sheet that already existed,
+        /// which meant one had to be laid out by hand first and meant picking an empty one
+        /// gave an empty sheet.
         /// </summary>
         private UIElement InsideSheets()
         {
@@ -853,13 +863,16 @@ namespace RcrcGreen.Revit
 
             if (_sheets.Count == 0)
             {
-                block.Children.Add(Faint("No sheet added yet. A sheet is described once here and "
-                    + "made for every ticked plot that has a number typed in."));
+                block.Children.Add(Faint("No sheet added yet. A sheet is described once here, "
+                    + "its views divide into as many sheets as they need, and each ticked plot "
+                    + "gets the whole set."));
             }
+
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
 
             for (int at = 0; at < _sheets.Count; at++)
             {
-                block.Children.Add(OneSheet(_sheets[at], at));
+                block.Children.Add(OneSheet(_sheets[at], at, rows));
             }
 
             block.Children.Add(Secondary("Add a sheet", AddASheet,
@@ -870,7 +883,8 @@ namespace RcrcGreen.Revit
             return block;
         }
 
-        private UIElement OneSheet(SheetBeingDescribed sheet, int at)
+        private UIElement OneSheet(
+            SheetBeingDescribed sheet, int at, IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
         {
             var block = new StackPanel { Margin = PanelMetrics.StepInside };
 
@@ -896,27 +910,6 @@ namespace RcrcGreen.Revit
                 RefreshHeaders();
             };
             block.Children.Add(Labelled("Type", type));
-
-            // Editable, because the list is the names already in use and a new sheet often wants
-            // one that is not. The list is an offer and never a restriction.
-            var name = new ComboBox { IsEditable = true, Margin = PanelMetrics.Row, Text = sheet.SheetName };
-            foreach (string one in _model.SheetNamesInUse) name.Items.Add(one);
-            name.Loaded += (sender, e) => name.Text = sheet.SheetName;
-            name.SelectionChanged += (sender, e) =>
-            {
-                if (_filling) return;
-                sheet.SheetName = (name.SelectedItem as string) ?? name.Text ?? string.Empty;
-                RefreshHeaders();
-            };
-            name.AddHandler(
-                System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
-                new TextChangedEventHandler((sender, e) =>
-                {
-                    if (_filling) return;
-                    sheet.SheetName = name.Text ?? string.Empty;
-                    RefreshHeaders();
-                }));
-            block.Children.Add(Labelled("Name", name));
 
             var perSheet = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
             perSheet.Children.Add(new TextBlock
@@ -947,14 +940,14 @@ namespace RcrcGreen.Revit
             block.Children.Add(perSheet);
 
             block.Children.Add(Faint("Tick the views that go on it, from the types ticked in "
-                + "step 2."));
+                + "step 2. They go onto sheets in the order they are ticked here."));
 
             var views = new StackPanel();
             IReadOnlyList<ViewType> offered = _columns.Shown;
             if (offered.Count == 0)
             {
-                views.Children.Add(Faint("No view type is ticked in step 2, so this sheet will "
-                    + "be made empty."));
+                views.Children.Add(Faint("No view type is ticked in step 2, so this definition "
+                    + "makes no sheets."));
             }
 
             _filling = true;
@@ -974,8 +967,32 @@ namespace RcrcGreen.Revit
             _filling = false;
 
             block.Children.Add(Scrolling(views, PanelMetrics.ListHeight));
-            block.Children.Add(Faint(sheet.Built(_columns.Shown).InWords()));
-            block.Children.Add(Scrolling(NumberTable(sheet), PanelMetrics.ListHeight));
+
+            SheetDefinition described = sheet.Built(_columns.Shown);
+            block.Children.Add(Faint(described.InWords()));
+
+            // Why some rows start with empty boxes, said once per shape of sheet rather than
+            // repeated down every plot's row.
+            foreach (PlannedSheet planned in described.Planned)
+            {
+                if (planned.NamedFromItsView) continue;
+
+                block.Children.Add(Faint(
+                    planned.ViewsInWords() + ": " + planned.WhyNothingIsProposed()));
+            }
+
+            var batchLine = new TextBlock
+            {
+                TextWrapping = TextWrapping.Wrap,
+                Margin = PanelMetrics.Row
+            };
+            block.Children.Add(batchLine);
+
+            int whichSheet = at;
+            _numberWarnings.Add(fresh => SayBatchLine(batchLine, whichSheet, fresh));
+            SayBatchLine(batchLine, whichSheet, rows);
+
+            block.Children.Add(Scrolling(SheetTable(sheet, at, rows), PanelMetrics.ListHeight));
 
             return new Border
             {
@@ -1001,50 +1018,145 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// One row per ticked plot, holding the number that plot gets for this sheet. Editable,
-        /// because a new sheet usually carries a number no sheet has yet.
+        /// The line over a definition's table: how many sheets this one press makes across the
+        /// ticked plots, and how many rows are still short of a name or a number.
         /// </summary>
-        private UIElement NumberTable(SheetBeingDescribed sheet)
+        private void SayBatchLine(
+            TextBlock line, int whichSheet, IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
+        {
+            if (whichSheet < 0 || whichSheet >= _sheets.Count || whichSheet >= rows.Count) return;
+
+            line.Text = new SheetBatch(
+                _sheets[whichSheet].Built(_columns.Shown),
+                rows[whichSheet].Select(one => one.Row)).InWords();
+        }
+
+        /// <summary>
+        /// One row per sheet that will be made, per ticked plot: the views it holds, read
+        /// only, and its name and number, prefilled where they could be proposed and editable
+        /// everywhere. Editing either marks it typed, and the report says which was which.
+        /// </summary>
+        private UIElement SheetTable(
+            SheetBeingDescribed sheet, int at, IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
         {
             var table = new Grid();
             table.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            table.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(PanelMetrics.ColumnWidth) });
+            table.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = new GridLength(1.0, GridUnitType.Star)
+            });
+            table.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = new GridLength(PanelMetrics.ColumnWidth)
+            });
+            table.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = new GridLength(PanelMetrics.ColumnWidth)
+            });
 
             table.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             Put(table, HeaderCell("Plot"), 0, 0);
-            Put(table, HeaderCell("Sheet number"), 0, 1);
+            Put(table, HeaderCell("Views"), 0, 1);
+            Put(table, HeaderCell("Name"), 0, 2);
+            Put(table, HeaderCell("Number"), 0, 3);
 
-            int row = 1;
-            foreach (string plotId in _picked.Ticked)
+            IReadOnlyList<SheetRowShown> mine =
+                at < rows.Count ? rows[at] : new List<SheetRowShown>();
+
+            for (int row = 0; row < mine.Count; row++)
             {
+                SheetRowShown shown = mine[row];
                 table.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
                 Put(table, new TextBlock
                 {
-                    Text = plotId,
+                    Text = shown.PlotId,
                     Margin = PanelMetrics.CellPad,
                     VerticalAlignment = VerticalAlignment.Center
-                }, row, 0);
+                }, row + 1, 0);
 
-                Put(table, NumberBox(sheet, plotId), row, 1);
-                row++;
+                Put(table, new TextBlock
+                {
+                    Text = shown.Planned.ViewsInWords(),
+                    Margin = PanelMetrics.CellPad,
+                    TextWrapping = TextWrapping.Wrap,
+                    VerticalAlignment = VerticalAlignment.Center
+                }, row + 1, 1);
+
+                Put(table, NameBox(sheet, at, row, shown), row + 1, 2);
+                Put(table, NumberBox(sheet, at, row, shown, rows), row + 1, 3);
             }
 
             return table;
         }
 
-        private UIElement NumberBox(SheetBeingDescribed sheet, string plotId)
+        private UIElement NameBox(SheetBeingDescribed sheet, int at, int row, SheetRowShown shown)
         {
             var box = new ComboBox
             {
                 IsEditable = true,
                 Margin = PanelMetrics.Row,
-                Text = sheet.NumberFor(plotId)
+                Text = shown.Row.SheetName
             };
 
-            // Numbers no sheet in this model carries. It used to offer the ones in use, so every
-            // entry in it was certain to be refused, and three sheets were lost to that in one
-            // run. Free typing stays, because the list is an offer and never a restriction.
+            // The names already in use, an offer and never a restriction. The box starts on
+            // the name built from the sheet's one view, which the user can type over.
+            foreach (string one in _model.SheetNamesInUse) box.Items.Add(one);
+
+            string plotId = shown.PlotId;
+            string signature = shown.Planned.Signature;
+            string starting = shown.Row.SheetName;
+            box.Loaded += (sender, e) =>
+            {
+                _filling = true;
+                box.Text = starting;
+                _filling = false;
+            };
+
+            // A keystroke changes what the headers and the other boxes say and nothing else,
+            // because rebuilding the tree under the cursor takes the cursor out of the box.
+            box.AddHandler(
+                System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
+                new TextChangedEventHandler((sender, e) =>
+                {
+                    if (_filling) return;
+                    sheet.TypeName(plotId, signature, box.Text ?? string.Empty);
+                    RefreshHeaders();
+                }));
+
+            box.SelectionChanged += (sender, e) =>
+            {
+                if (_filling) return;
+                sheet.TypeName(plotId, signature,
+                    (box.SelectedItem as string) ?? box.Text ?? string.Empty);
+                RefreshHeaders();
+            };
+
+            int whichSheet = at;
+            int whichRow = row;
+            _numberWarnings.Add(fresh => RefillBox(box, whichSheet, whichRow, fresh, true));
+
+            return box;
+        }
+
+        private UIElement NumberBox(
+            SheetBeingDescribed sheet,
+            int at,
+            int row,
+            SheetRowShown shown,
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
+        {
+            var box = new ComboBox
+            {
+                IsEditable = true,
+                Margin = PanelMetrics.Row,
+                Text = shown.Row.SheetNumber
+            };
+
+            // Numbers no sheet in this model carries. It used to offer the ones in use, so
+            // every entry in it was certain to be refused, and three sheets were lost to that
+            // in one run. Free typing stays, because the list is an offer and never a
+            // restriction.
             foreach (string one in _model.FreeSheetNumbers) box.Items.Add(one);
 
             var wrong = new TextBlock
@@ -1054,30 +1166,41 @@ namespace RcrcGreen.Revit
                 Visibility = Visibility.Collapsed
             };
 
-            string forPlot = plotId;
-            box.Loaded += (sender, e) => box.Text = sheet.NumberFor(forPlot);
+            string plotId = shown.PlotId;
+            string signature = shown.Planned.Signature;
+            string starting = shown.Row.SheetNumber;
+            box.Loaded += (sender, e) =>
+            {
+                _filling = true;
+                box.Text = starting;
+                _filling = false;
+            };
 
-            Action saidHere = () => ShowNumberFault(sheet, forPlot, wrong);
-            _numberWarnings.Add(saidHere);
-            saidHere();
-
-            // A keystroke changes what the headers and these lines say and nothing else, because
-            // rebuilding the tree under the cursor takes the cursor out of the box.
             box.AddHandler(
                 System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
                 new TextChangedEventHandler((sender, e) =>
                 {
                     if (_filling) return;
-                    sheet.SetNumber(forPlot, box.Text ?? string.Empty);
+                    sheet.TypeNumber(plotId, signature, box.Text ?? string.Empty);
                     RefreshHeaders();
                 }));
 
             box.SelectionChanged += (sender, e) =>
             {
                 if (_filling) return;
-                sheet.SetNumber(forPlot, (box.SelectedItem as string) ?? box.Text ?? string.Empty);
+                sheet.TypeNumber(plotId, signature,
+                    (box.SelectedItem as string) ?? box.Text ?? string.Empty);
                 RefreshHeaders();
             };
+
+            int whichSheet = at;
+            int whichRow = row;
+            _numberWarnings.Add(fresh =>
+            {
+                RefillBox(box, whichSheet, whichRow, fresh, false);
+                SayRowFault(wrong, whichSheet, whichRow, fresh);
+            });
+            SayRowFault(wrong, at, row, rows);
 
             var stacked = new StackPanel();
             stacked.Children.Add(box);
@@ -1086,27 +1209,74 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// What is wrong with one plot's number, said next to the box as it is typed rather than
-        /// found out from a refusal after Run.
+        /// Puts a fresh value into a box the user is not typing in. A proposal moves when a
+        /// typed number takes the one it offered, and a box left showing the old one would
+        /// have the run make a sheet the screen never showed.
         /// </summary>
-        private void ShowNumberFault(SheetBeingDescribed sheet, string plotId, TextBlock wrong)
+        private void RefillBox(
+            ComboBox box,
+            int whichSheet,
+            int whichRow,
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows,
+            bool name)
         {
-            IReadOnlyList<SheetOrder> orders = SheetsWanted();
-            int which = _sheets.IndexOf(sheet);
+            if (box.IsKeyboardFocusWithin) return;
+            if (whichSheet < 0 || whichSheet >= rows.Count) return;
+            if (whichRow < 0 || whichRow >= rows[whichSheet].Count) return;
 
-            IReadOnlyList<IReadOnlyDictionary<string, SheetNumberFault>> faults =
-                SheetNumbers.Faults(orders, _picked.Ticked, _model.SheetNumbersInUse);
+            SheetRowShown shown = rows[whichSheet][whichRow];
+            string fresh = name ? shown.Row.SheetName : shown.Row.SheetNumber;
+            if (string.Equals(box.Text, fresh, StringComparison.Ordinal)) return;
 
-            SheetNumberFault fault;
-            if (which < 0 || which >= faults.Count
-                || !faults[which].TryGetValue(plotId, out fault))
+            _filling = true;
+            box.Text = fresh;
+            _filling = false;
+        }
+
+        /// <summary>
+        /// What is wrong with one row's number, said under the box as it is typed rather than
+        /// found out from a refusal after Run. The same method the run summary counts with, so
+        /// the two can never disagree. An empty box that would have been proposed a number
+        /// says why it was not.
+        /// </summary>
+        private void SayRowFault(
+            TextBlock wrong,
+            int whichSheet,
+            int whichRow,
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
+        {
+            if (whichSheet < 0 || whichSheet >= rows.Count
+                || whichRow < 0 || whichRow >= rows[whichSheet].Count)
             {
                 wrong.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            wrong.Text = SheetNumbers.FaultInWords(fault);
-            wrong.Visibility = Visibility.Visible;
+            SheetRowShown shown = rows[whichSheet][whichRow];
+
+            List<string> asked = rows
+                .SelectMany(one => one)
+                .Select(one => one.Row.SheetNumber)
+                .ToList();
+
+            SheetNumberFault fault = SheetNumbers.FaultIn(
+                shown.Row.SheetNumber, _model.SheetNumbersInUse, asked);
+
+            if (fault != SheetNumberFault.None)
+            {
+                wrong.Text = SheetNumbers.FaultInWords(fault);
+                wrong.Visibility = Visibility.Visible;
+                return;
+            }
+
+            if (!shown.Row.HasNumber && shown.WhyNoNumber.Length > 0)
+            {
+                wrong.Text = shown.WhyNoNumber;
+                wrong.Visibility = Visibility.Visible;
+                return;
+            }
+
+            wrong.Visibility = Visibility.Collapsed;
         }
 
         private TitleBlockType ChosenTitleBlock(SheetBeingDescribed sheet)
@@ -1171,7 +1341,8 @@ namespace RcrcGreen.Revit
 
             return PlanNow().InWords()
                 + " Only marked cells on ticked plots are made, and nothing is copied from "
-                + "another plot. A sheet is made only for a plot with a sheet number typed in."
+                + "another plot. A sheet is made only once its row in step 4 has a name and a "
+                + "number."
                 + (clashes.Length == 0 ? string.Empty : " " + clashes);
         }
 
@@ -1182,7 +1353,7 @@ namespace RcrcGreen.Revit
         private int SheetNumbersThatWillBeRefused()
         {
             return SheetNumbers
-                .Problems(SheetsWanted(), _picked.Ticked, _model.SheetNumbersInUse)
+                .Problems(SheetsWanted(), _model.SheetNumbersInUse)
                 .Count;
         }
 
@@ -1479,23 +1650,50 @@ namespace RcrcGreen.Revit
                 SheetsWanted());
         }
 
-        private IReadOnlyList<SheetOrder> SheetsWanted()
+        /// <summary>
+        /// Every described sheet's rows, one list per sheet, with one set of taken numbers
+        /// threaded through the lot so no two proposals on this panel ever offer one number.
+        /// </summary>
+        private IReadOnlyList<IReadOnlyList<SheetRowShown>> DescribedRows()
         {
+            var taken = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string number in _model.SheetNumbersInUse)
+            {
+                string held = (number ?? string.Empty).Trim();
+                if (held.Length > 0) taken.Add(held);
+            }
+
             IReadOnlyList<ViewType> ticked = _columns.Shown;
             IReadOnlyList<string> plots = _picked.Ticked;
 
-            return _sheets.Select(one => one.Ordered(ticked, plots)).ToList();
+            return _sheets
+                .Select(one => one.RowsFor(ticked, plots, _model, taken))
+                .ToList();
+        }
+
+        private IReadOnlyList<SheetBatch> SheetsWanted()
+        {
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
+            IReadOnlyList<ViewType> ticked = _columns.Shown;
+
+            var batches = new List<SheetBatch>();
+            for (int at = 0; at < _sheets.Count; at++)
+            {
+                batches.Add(new SheetBatch(
+                    _sheets[at].Built(ticked),
+                    rows[at].Select(one => one.Row)));
+            }
+
+            return batches;
         }
 
         /// <summary>
-        /// How many sheets a run would make right now: every usable definition against every
-        /// ticked plot with a number typed in.
+        /// How many sheets a run would make right now: every row of every usable definition
+        /// that has its name and its number.
         /// </summary>
         private int SheetsToMake()
         {
-            return SheetsWanted()
-                .Where(one => one.Definition.CanBeUsed)
-                .Sum(one => one.FilledIn);
+            return SheetsWanted().Sum(one => one.WillBeMade);
         }
 
         private void AskToRun()
@@ -1509,8 +1707,8 @@ namespace RcrcGreen.Revit
 
             if (PlanNow().MakesNothing)
             {
-                Say("Nothing is marked and no sheet is asked for. Click an empty cell in step 3, "
-                    + "or add a sheet in step 4 and type a number for a plot.");
+                Say("Nothing is marked and no sheet can be made. Click an empty cell in step 3, "
+                    + "or add a sheet in step 4 and give it views, a name and a number.");
                 return;
             }
 

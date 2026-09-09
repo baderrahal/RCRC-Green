@@ -43,6 +43,8 @@ namespace RcrcGreen.Core
 
         public const string SetUpFrom = "WHERE EACH NEW VIEW AND SHEET WAS SET UP FROM";
 
+        public const string WhereViewportsLanded = "WHERE EACH VIEWPORT LANDED";
+
         public static readonly IReadOnlyList<string> CreatedHeadings = new List<string>
         {
             CreatedPlanViews, CreatedSections, CreatedSchedules, CreatedSheets
@@ -95,6 +97,12 @@ namespace RcrcGreen.Core
             // looked as though they had come from two different places, and nothing in the file
             // said which view either had come from, so it could not be checked at all.
             Section(report, SetUpFrom, outcome.SetUp.Select(one => one.ToString()));
+
+            // Recorded after each placement returned, because the first sheets came out with
+            // views the user called too small and this file could not say where anything had
+            // landed or at what scale. The scan reads the same measurements off real sheets,
+            // so the two can be held against each other.
+            Section(report, WhereViewportsLanded, outcome.Placements.Select(one => one.InWords()));
 
             Closing(report);
 
@@ -175,17 +183,26 @@ namespace RcrcGreen.Core
             Line(report, "correct on a drawing. When Revit refuses that delete, the schedule is in");
             Line(report, "the model and is named at the top of this report. A schedule short of a");
             Line(report, "FIELD is created and named above, because a missing column can be seen.");
-            Line(report, "A sheet is described rather than copied. The title block type, the sheet");
-            Line(report, "name, the views and how many go per sheet are the same on every plot, and");
-            Line(report, "the sheet number is typed per plot. Neither the number nor the name is");
-            Line(report, "ever invented. Where a view sits is worked out from the size of the title");
+            Line(report, "A sheet is described rather than copied. The title block type, the views");
+            Line(report, "and how many go per sheet are shared, and the views divide into as many");
+            Line(report, "sheets as they need, in the order they were ticked, so no view is ever");
+            Line(report, "left off. A sheet holding one view is named after it, the bracketed code");
+            Line(report, "removed and the rest upper cased, and its number continues the plot's own");
+            Line(report, "pattern: the view code, the plot's letter, then the first letter not in");
+            Line(report, "use. Both are proposals the user can change, the sheet lines above say");
+            Line(report, "which were generated and which were typed, and a sheet still short of");
+            Line(report, "either is refused rather than guessed.");
+            Line(report, "A SHEET HAS NO SCALE OF ITS OWN. The Scale a sheet shows is a readout of");
+            Line(report, "the views placed on it, and each view's scale comes from its own view");
+            Line(report, "template. Nothing here sets a scale anywhere, and the viewport lines");
+            Line(report, "above are where to check what each view came out at.");
+            Line(report, "Where a view sits is worked out from the size of the title");
             Line(report, "block placed on the sheet, which is read off that placed block and not off");
             Line(report, "the type, because Sheet Width and Sheet Height only exist once one is");
             Line(report, "placed. Reading the type is why three sheets came out empty. A sheet whose");
-            Line(report, "size still cannot be read is refused rather than made empty, and a sheet");
-            Line(report, "with no views ticked is made empty on purpose. A view already sitting on");
-            Line(report, "another sheet is refused rather than moved, because it belongs to whoever");
-            Line(report, "put it there.");
+            Line(report, "size still cannot be read is refused rather than made empty. A view");
+            Line(report, "already sitting on another sheet is refused rather than moved, because it");
+            Line(report, "belongs to whoever put it there.");
         }
 
         private static void Section(StringBuilder report, string heading, IEnumerable<string> lines)

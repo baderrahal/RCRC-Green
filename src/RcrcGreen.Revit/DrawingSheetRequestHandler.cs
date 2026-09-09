@@ -36,7 +36,7 @@ namespace RcrcGreen.Revit
         private long _viewToSelect;
         private IReadOnlyList<string> _plotsTicked = new List<string>();
         private IReadOnlyList<PlotViewKey> _marked = new List<PlotViewKey>();
-        private IReadOnlyList<SheetOrder> _sheetsWanted = new List<SheetOrder>();
+        private IReadOnlyList<SheetBatch> _sheetsWanted = new List<SheetBatch>();
 
         /// <summary>
         /// Called back on the Revit thread when a request finishes. The panel marshals to its
@@ -80,14 +80,14 @@ namespace RcrcGreen.Revit
         public void AskToRun(
             IReadOnlyList<string> plotsTicked,
             IReadOnlyList<PlotViewKey> marked,
-            IReadOnlyList<SheetOrder> sheetsWanted)
+            IReadOnlyList<SheetBatch> sheetsWanted)
         {
             lock (_asking)
             {
                 _wanted = DrawingSheetRequest.Run;
                 _plotsTicked = plotsTicked ?? new List<string>();
                 _marked = marked ?? new List<PlotViewKey>();
-                _sheetsWanted = sheetsWanted ?? new List<SheetOrder>();
+                _sheetsWanted = sheetsWanted ?? new List<SheetBatch>();
             }
         }
 
@@ -119,7 +119,7 @@ namespace RcrcGreen.Revit
             long viewToSelect;
             IReadOnlyList<string> plotsTicked;
             IReadOnlyList<PlotViewKey> marked;
-            IReadOnlyList<SheetOrder> sheetsWanted;
+            IReadOnlyList<SheetBatch> sheetsWanted;
 
             lock (_asking)
             {
@@ -352,7 +352,7 @@ namespace RcrcGreen.Revit
             Document document,
             IReadOnlyList<string> plotsTicked,
             IReadOnlyList<PlotViewKey> marked,
-            IReadOnlyList<SheetOrder> sheetsWanted)
+            IReadOnlyList<SheetBatch> sheetsWanted)
         {
             // Read again rather than trusting the panel's snapshot. It is as old as the last
             // refresh, and creating a view that somebody else added in the meantime is how a
@@ -424,7 +424,7 @@ namespace RcrcGreen.Revit
             Told?.Invoke(said + " Press Refresh to see them. " + where);
         }
 
-        private static bool Confirmed(RunPlan plan, IReadOnlyList<SheetOrder> sheetsWanted)
+        private static bool Confirmed(RunPlan plan, IReadOnlyList<SheetBatch> sheetsWanted)
         {
             string how = "A plan view is created fresh and carries no annotation. Its family "
                 + "type, level and view template come from a view of the same type on another "
@@ -432,12 +432,12 @@ namespace RcrcGreen.Revit
                 + "way. A schedule is captured from a plot that already has it and rebuilt with "
                 + "only the plot filter changed. The whole run is one undo.";
 
-            // Every sheet says what it will carry before anything is pressed, including the ones
-            // that will come out empty, because an empty sheet is a real thing to ask for and a
-            // surprising thing to be given.
-            foreach (SheetOrder order in sheetsWanted ?? new List<SheetOrder>())
+            // Every described sheet says what it will make before anything is pressed, so how
+            // many sheets the views divide into is on the dialog rather than in the report.
+            foreach (SheetBatch batch in sheetsWanted ?? new List<SheetBatch>())
             {
-                how += Environment.NewLine + Environment.NewLine + order.Definition.InWords();
+                how += Environment.NewLine + Environment.NewLine
+                    + batch.Definition.InWords() + " " + batch.InWords();
             }
 
             var asking = new TaskDialog("RCRC Green, Drawing Sheet")

@@ -19,7 +19,8 @@ namespace RcrcGreen.Core
             IEnumerable<ScannedParameterValue> plotIdValues,
             IEnumerable<ScannedDisagreement> disagreements,
             int elementsScanned,
-            double scanSeconds)
+            double scanSeconds,
+            IEnumerable<ViewportRecord> viewports = null)
         {
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
 
@@ -32,6 +33,7 @@ namespace RcrcGreen.Core
             Disagreements = Held(disagreements);
             ElementsScanned = elementsScanned;
             ScanSeconds = scanSeconds;
+            Viewports = Held(viewports);
         }
 
         public string DocumentTitle { get; }
@@ -54,6 +56,14 @@ namespace RcrcGreen.Core
         public IReadOnlyList<ScannedScopeBox> ScopeBoxes { get; }
 
         public IReadOnlyList<ScannedParameterValue> PlotIdValues { get; }
+
+        /// <summary>
+        /// Every viewport already on a sheet, with its scale, centre and size next to the size
+        /// of the sheet. It is the yardstick a placement the tool makes is held against,
+        /// because without a real one to compare with there is no way to say whether a
+        /// placement is right.
+        /// </summary>
+        public IReadOnlyList<ViewportRecord> Viewports { get; }
 
         /// <summary>
         /// Views named for one plot while PRX_Plot_ID holds another. Named rather than counted,

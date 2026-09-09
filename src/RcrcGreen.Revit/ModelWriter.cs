@@ -52,15 +52,18 @@ namespace RcrcGreen.Revit
                 }
                 catch (Autodesk.Revit.Exceptions.ApplicationException failed)
                 {
-                    outcome.Refused(new RunRefusal(item.PlotId, null, "Revit refused that sheet. " + failed.Message));
+                    outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, "Revit refused that sheet. " + failed.Message));
                 }
                 catch (InvalidOperationException failed)
                 {
-                    outcome.Refused(new RunRefusal(item.PlotId, null, "Revit would not make that sheet. " + failed.Message));
+                    outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, "Revit would not make that sheet. " + failed.Message));
                 }
                 catch (ArgumentException failed)
                 {
-                    outcome.Refused(new RunRefusal(item.PlotId, null, "Revit refused an argument on that sheet. " + failed.Message));
+                    outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, "Revit refused an argument on that sheet. " + failed.Message));
                 }
             }
         }
@@ -325,15 +328,12 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// A sheet the user described, made for one plot.
+        /// One sheet off one row of the step 4 table, made for one plot.
         ///
         /// It used to copy a sheet that already existed, which meant somebody had to have laid
-        /// one out first and meant picking an empty one gave an empty sheet. The description is
-        /// four choices now: a title block type, a name, which of the ticked view types go on
-        /// it, and how many per sheet. Where each one sits is worked out by SheetLayout.
-        ///
-        /// The number comes off the item, typed per plot. The tool invents neither it nor the
-        /// name.
+        /// one out first and meant picking an empty one gave an empty sheet. A row now carries
+        /// its own slice of the ticked views, its name and its number, generated or typed, and
+        /// where each view sits is worked out by SheetLayout.
         /// </summary>
         private static void MakeSheet(
             Document document,
@@ -341,12 +341,12 @@ namespace RcrcGreen.Revit
             RunOutcome outcome,
             Dictionary<string, ElementId> madeSoFar)
         {
-            SheetDefinition wanted = item.Sheet;
+            SheetToMake wanted = item.Sheet;
 
             FamilySymbol block = TitleBlock(document, wanted);
             if (block == null)
             {
-                outcome.Refused(new RunRefusal(item.PlotId, null,
+                outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber, item.SheetName,
                     item.Name + " was not made. This model has no title block type named "
                     + wanted.TitleBlock + "."));
                 return;
@@ -370,7 +370,7 @@ namespace RcrcGreen.Revit
                     : " IT IS STILL IN THE MODEL under the number Revit gave it, and has to be "
                         + "sorted out by hand.";
 
-                outcome.Refused(new RunRefusal(item.PlotId, null,
+                outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber, item.SheetName,
                     item.Name + " was not made. A sheet numbered " + item.SheetNumber
                     + " is already in this model." + kept));
                 return;
@@ -382,7 +382,7 @@ namespace RcrcGreen.Revit
             // Height live on the title block Revit places on it. So the sheet is made, measured,
             // and taken away again when it cannot be measured and views were ticked for it.
             SheetSize size = SheetSize.NotRead(wanted.TitleBlock);
-            if (wanted.Placed.Count > 0)
+            if (wanted.Views.Count > 0)
             {
                 size = SizeOf(document, sheet, wanted);
 
@@ -392,12 +392,12 @@ namespace RcrcGreen.Revit
                         ? " It was deleted again."
                         : " IT IS STILL IN THE MODEL, empty, and has to be deleted by hand.";
 
-                    outcome.Refused(new RunRefusal(
-                        item.PlotId, null, size.WhyNotInWords(item.Name) + kept));
+                    outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, size.WhyNotInWords(item.Name) + kept));
                     return;
                 }
 
-                SaySheetSetUpFrom(item, outcome, size.InWords());
+                SaySheetSetUpFrom(item, outcome, size.InWords() + " " + wanted.ProvenanceInWords());
             }
 
             outcome.Made(item);
@@ -419,7 +419,7 @@ namespace RcrcGreen.Revit
         /// A title block family that does not drive those two parameters is measured instead,
         /// because a block that is drawn at A1 is still A1.
         /// </summary>
-        private static SheetSize SizeOf(Document document, ViewSheet sheet, SheetDefinition wanted)
+        private static SheetSize SizeOf(Document document, ViewSheet sheet, SheetToMake wanted)
         {
             // The placed block is not findable by a collector until the document catches up.
             document.Regenerate();
@@ -451,10 +451,11 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Every view the definition asks for, at the spot Core worked out for it.
+        /// Every view the row carries, at the spot Core worked out for it.
         ///
-        /// A definition with no views ticked makes an empty sheet on purpose, so nothing here
-        /// treats that as a fault. The run says so before it runs.
+        /// The division never puts more views on a row than its grid holds, so the overflow
+        /// guard here has never fired. It is a guard rather than a trust, because a view
+        /// silently left off a sheet reads as finished.
         /// </summary>
         private static void PlaceViews(
             Document document,
@@ -464,24 +465,37 @@ namespace RcrcGreen.Revit
             SheetSize size,
             Dictionary<string, ElementId> madeSoFar)
         {
-            SheetDefinition wanted = item.Sheet;
-            IReadOnlyList<ViewType> placing = wanted.Placed;
+            SheetToMake wanted = item.Sheet;
+            IReadOnlyList<ViewType> placing = wanted.Views;
             if (placing.Count == 0) return;
 
             IReadOnlyList<ViewportSpot> spots =
                 SheetLayout.For(size.WidthFeet, size.HeightFeet, wanted.ViewsPerSheet);
 
-            for (int at = 0; at < placing.Count && at < spots.Count; at++)
+            var landed = new List<OnTheSheet>();
+
+            for (int at = 0; at < placing.Count; at++)
             {
                 ViewType type = placing[at];
                 string named = item.PlotId + "-(" + type.Code + ") " + type.ViewName;
 
+                if (at >= spots.Count)
+                {
+                    outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, item.Name + " was made without "
+                        + string.Join(", ", placing.Skip(at).Select(one => one.ToString()).ToArray())
+                        + ", because the sheet lays out " + spots.Count
+                        + " and this row carries more. That is a bug in the division."));
+                    break;
+                }
+
                 ElementId viewId = ViewNamed(document, named, madeSoFar);
                 if (viewId == ElementId.InvalidElementId)
                 {
-                    outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
-                        item.Name + " was made without " + named + ", because that view is not in "
-                        + "the model and was not marked to be made."));
+                    outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, item.Name + " was made without " + named
+                        + ", because that view is not in the model and was not marked to be "
+                        + "made."));
                     continue;
                 }
 
@@ -489,7 +503,11 @@ namespace RcrcGreen.Revit
 
                 if (document.GetElement(viewId) is ViewSchedule)
                 {
-                    ScheduleSheetInstance.Create(document, sheet.Id, viewId, point);
+                    landed.Add(new OnTheSheet
+                    {
+                        Schedule = ScheduleSheetInstance.Create(document, sheet.Id, viewId, point),
+                        ViewName = named
+                    });
                     continue;
                 }
 
@@ -497,24 +515,95 @@ namespace RcrcGreen.Revit
                 {
                     // Almost always because it is already on another sheet. Moving it would
                     // take it off a drawing somebody else made.
-                    outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
-                        item.Name + " was made without " + named + ", because Revit will not put "
-                        + "that view on this sheet. A view already placed on another sheet cannot "
-                        + "be placed twice."));
+                    outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, item.Name + " was made without " + named
+                        + ", because Revit will not put that view on this sheet. A view already "
+                        + "placed on another sheet cannot be placed twice."));
                     continue;
                 }
 
-                Viewport.Create(document, sheet.Id, viewId, point);
+                landed.Add(new OnTheSheet
+                {
+                    Viewport = Viewport.Create(document, sheet.Id, viewId, point),
+                    ViewName = named
+                });
             }
 
-            if (wanted.LeftOff.Count > 0)
+            // One regeneration, then every placement is read back off what Revit really made
+            // rather than off the spot that was asked for. The first sheets came out with views
+            // the user called too small, and the report could not say where anything sat or at
+            // what scale.
+            if (landed.Count == 0) return;
+            document.Regenerate();
+
+            foreach (OnTheSheet one in landed)
             {
-                outcome.NeedsAttention(new RunRefusal(item.PlotId, null,
-                    item.Name + " holds " + wanted.ViewsPerSheet + " views, and "
-                    + wanted.LeftOff.Count + " more were ticked than fit, so these were left off: "
-                    + string.Join(", ", wanted.LeftOff.Select(one => one.ToString()).ToArray())
-                    + "."));
+                NotePlacement(document, outcome, sheet, one, size);
             }
+        }
+
+        /// <summary>
+        /// One thing put on the new sheet, held until the read back after the regeneration.
+        /// </summary>
+        private sealed class OnTheSheet
+        {
+            public Viewport Viewport;
+
+            public ScheduleSheetInstance Schedule;
+
+            public string ViewName;
+        }
+
+        /// <summary>
+        /// Where one placement really landed. The scale is the view's own, off its template. A
+        /// sheet has no scale: what a sheet shows under Scale is a readout of the views placed
+        /// on it, so nothing here sets one anywhere.
+        /// </summary>
+        private static void NotePlacement(
+            Document document,
+            RunOutcome outcome,
+            ViewSheet sheet,
+            OnTheSheet placed,
+            SheetSize size)
+        {
+            if (placed.Viewport != null)
+            {
+                XYZ centre = placed.Viewport.GetBoxCenter();
+                Outline box = placed.Viewport.GetBoxOutline();
+
+                var view = document.GetElement(placed.Viewport.ViewId) as View;
+
+                outcome.NotePlacement(new ViewportRecord(
+                    sheet.SheetNumber,
+                    sheet.Name,
+                    placed.ViewName,
+                    view == null ? 0 : view.Scale,
+                    centre == null ? 0.0 : centre.X,
+                    centre == null ? 0.0 : centre.Y,
+                    box == null ? 0.0 : box.MaximumPoint.X - box.MinimumPoint.X,
+                    box == null ? 0.0 : box.MaximumPoint.Y - box.MinimumPoint.Y,
+                    size.WidthFeet,
+                    size.HeightFeet,
+                    false));
+                return;
+            }
+
+            if (placed.Schedule == null) return;
+
+            BoundingBoxXYZ across = placed.Schedule.get_BoundingBox(sheet);
+
+            outcome.NotePlacement(new ViewportRecord(
+                sheet.SheetNumber,
+                sheet.Name,
+                placed.ViewName,
+                0,
+                across == null ? 0.0 : (across.Min.X + across.Max.X) / 2.0,
+                across == null ? 0.0 : (across.Min.Y + across.Max.Y) / 2.0,
+                across == null ? 0.0 : across.Max.X - across.Min.X,
+                across == null ? 0.0 : across.Max.Y - across.Min.Y,
+                size.WidthFeet,
+                size.HeightFeet,
+                true));
         }
 
         private static double Number(Parameter parameter)
@@ -525,7 +614,7 @@ namespace RcrcGreen.Revit
             return parameter.AsDouble();
         }
 
-        private static FamilySymbol TitleBlock(Document document, SheetDefinition wanted)
+        private static FamilySymbol TitleBlock(Document document, SheetToMake wanted)
         {
             return new FilteredElementCollector(document)
                 .OfCategory(BuiltInCategory.OST_TitleBlocks)
