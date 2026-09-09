@@ -4,6 +4,20 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twenty sixth pass. The report for the divided sheets round
+
+Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 32 is
+merged. The entry below went in with its work, so it could not carry its own merge or runner
+count. It carries them now.
+
+Pull request 32 merged as `6f212e1` and the gate executed 619 tests against it, 0 failed and
+0 skipped, which is the same count the local run gave after the restack onto main.
+
+The design folder was named pr-32 before the pull request existed and the pull request opened
+as 32, so the guess held this time. Nothing else changed. No code is touched.
+
+---
+
 ## 2026-09-09, twenty fifth pass. A sheet has no scale, and one description makes a set
 
 Branch `claude/rcrc-green-setup-wf9ham`, one commit, restacked onto main after the two KPI
