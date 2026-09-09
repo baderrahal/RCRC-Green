@@ -6,8 +6,11 @@ Newest entry first.
 
 ## 2026-09-09, thirty sixth pass. The first real workbook, and two things it showed
 
-**The first workbook is written and correct.** 867 tests locally, 0 failed and 0 skipped, after
+Pull request 44, merged into main as `116afdb`. **The runner executed 867 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 867 ran, 0 failed and 0 skipped**, after
 the last file was written and after the four break watches were restored byte for byte.
+
+**The first workbook is written and correct.**
 
 ### The date and name boxes did not reach the fill
 

@@ -1,7 +1,8 @@
 # ai-max state
 
-Phase: 9, ship. Thirty sixth pass, the first real workbook. Pull request 44 is open, 867 tests
-locally, 0 failed and 0 skipped, after four break watches were restored byte for byte.
+Phase: 9, ship. Thirty sixth pass, the first real workbook. Pull request 44 is merged into main as
+`116afdb`, 867 tests on the runner against its merged head and 867 locally, 0 failed and 0
+skipped on each.
 
 **The first workbook is written and correct.** DM-12 on MOSQUES, 37 parts in and 37 out, zero
 recalculation errors, and the client's formulas gave 28.1 percent canopy against a 13 percent
