@@ -4,6 +4,172 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twenty-first pass. KPI, first round: the scanner
+
+Branch `claude/inspiring-allen-xs113f`. Pull request 28, one commit. The first round of the
+second tool, entered at the build phase inside a repo whose harness already exists. Nothing in
+the harness was rebuilt and nothing in the Drawing Sheet was touched.
+
+### What the KPI tool is for, and what this round is
+
+The client issues an Excel workbook, GRP KPI Checklist, seven templates so far, one per asset
+type. Cells that come from Revit carry a note saying where. The finished tool will read those
+values out of a model and write them into the workbook, and it will create nothing in the model,
+ever. The notes name eight sources, written in `.claude/rules/kpi-rules.md`, and the note text
+can never be matched against the model: one schedule is written two ways in the same file and
+COMPONENTS is misspelt in several notes.
+
+This round is a read-only scan and nothing else. No Excel, no writing, no filling. It exists to
+replace nine assumptions with measurements, the way Scan Model did for the Drawing Sheet.
+
+### What was built
+
+**The ribbon.** One tab, two panels side by side. Drawing Sheet keeps its one button. KPI is a
+new panel built to carry several buttons later and carries one, KPI Checklist, which shows the
+KPI pane. `RcrcGreenApplication.Registered` took the pane id, the title and a factory, so both
+panes go through the one guard and a KPI pane that will not register costs the KPI button its
+pane and nothing else. That is the only change to the file.
+
+**The pane.** `KpiPanel`, three things and no more: the model name with when it was last read,
+one button reading KPI Scan, and one status line. Its own identifier,
+`c1e92213-9fa7-46d0-bcc5-f5744ec0bd82`, its own `ExternalEvent` and its own
+`KpiRequestHandler` with two requests, WhichModel and Scan. Nothing leaves the handler. The pane
+names no Revit DB type. Every line it shows is in `KpiPaneWords` in Core, with tests.
+
+**The readers.** `KpiReader` runs four section reads under separate guards and records every one
+that did not happen. `KpiSheetReader` reads the sheets, the title blocks and every parameter on
+the title block instance, the title block type and the sheet. `KpiLinkReader` reads every link
+type and instance and, for each loaded document, the filled regions with their types, their
+views, the first ten in full, and PRX_Intervention Area raw and printed. `KpiScheduleReader`
+reads every schedule's name, category, fields and filters, and for one copy per workbook name
+the rows as printed, the elements listed with every parameter, phase, workset and design
+option, and the areas off those elements. `ParameterReading` is the one place a parameter turns
+into plain values.
+
+**The report.** `KpiReport.Write`, nine numbered sections, every heading carrying its own count,
+and a READS THAT DID NOT HAPPEN block above section 1. `KpiQuestions.Answers` is section 9, one
+line per question saying FOUND or NOT FOUND and where the detail is, and it decides nothing
+beyond whether the thing was found.
+
+### The brief was cut off, and what was decided in its place
+
+The brief this round arrived cut off partway through section 4 of the report, at the words
+"If no". Sections 1 to 4 are built as specified. Sections 5 to 9 were designed here from
+questions 6 to 9, and are the part of this round most worth reading against what was meant:
+
+- 5 SCHEDULES. Every schedule with its category, fields, filters and whether it is on a sheet,
+  then the names once the plot is taken off with how many copies each has, then the fields and
+  filters of each schedule read in full. Question 6
+- 6 SOFTSCAPE SCHEDULE FIELDS. For each schedule named for SOFTSCAPE that was read in full, the
+  fields, the Count fields, the rows exactly as printed, the elements it lists with every
+  parameter name on them and their types, and the values of every parameter whose name holds a
+  planting word. Question 7
+- 7 EXISTING AND PROPOSED. The phases in order, each softscape schedule's phase and phase
+  filter, its elements by phase created and demolished, by workset and by design option, the
+  values of every parameter holding a status word, and every column heading in any schedule
+  holding EXISTING or PROPOSED. Question 8
+- 8 AREAS AND UNITS. Every area parameter behind a field of the shrubs, lawn and hardscape
+  schedules on the first ten elements each lists, raw in square feet, worked into square metres,
+  and as printed, then those schedules' rows as printed so the totals appear as a sheet shows
+  them. Question 9
+- 9 THE NINE QUESTIONS. One line each, FOUND or NOT FOUND, with where to look
+
+Choices made without a rule, each an open question for the team:
+
+1. One schedule per workbook name is read in full rather than every copy, because the real model
+   holds about a thousand marked schedules and regenerating each to print its rows is a read
+   nobody waits for. The copy read is the first in name order that lists at least one element,
+   trying at most ten, and the file names it
+2. Rows are capped at 30 per schedule. When there are more, the last row read is the schedule's
+   last row, because that is where the total sits and the total is what the workbook asks for
+3. The near miss words. COMPONENT, PLOT and UID come from the brief. NEIGH, DISTRICT, COMMUNITY,
+   LOCATION and ZONE for the neighbourhood, INTERVENTION and AREA for the filled region,
+   BOTANIC, LATIN, SPECIES, NAME, QTY, QUANT, COUNT, NUMBER, SIZE and TREE for planting, and
+   EXIST, PROPOS, STATUS, RETAIN, REMOV, NEW, PHASE and CONDITION for status are mine. All in
+   `KpiNames`, and a word that is missing costs a near miss its line and nothing else
+4. Section 3 reads the title block TYPE as a third place, beyond the instance and the sheet the
+   brief names, because Sheet Width was the parameter that lived somewhere nobody asked
+5. An area is known to be an area by the parameter's own data type, never by its heading
+6. Section 9 counts a question as FOUND only when the thing it asks about was found, never on
+   whether a value looks right. Question 1 needs both names on a title block instance. Question 8
+   needs the elements split across more than one phase created or a parameter holding a status
+   word, or a column heading holding EXISTING or PROPOSED
+7. A link document placed twice is read once, under the first instance, and the second is named
+   under READS THAT DID NOT HAPPEN
+
+### What changed outside the two KPI folders
+
+`RcrcGreenApplication.cs` as above. `PanelMetrics.cs` took one added value, `HairlineAbove`, for
+the status line's top edge, because the alternative was a number written in the pane file.
+`CLAUDE.md` names the second tool and points at `kpi-rules.md`, trimmed elsewhere to stay at 199
+lines. `.claude/rules/revit-commands.md` replaces One tab, one panel, one button with One tab,
+two panels. `reports/README.md` lists the KPI file name. `.claude/rules/kpi-rules.md` is new and
+loads on the three `Kpi/` folders. `design/pr-28/panel.html` is the mockup, both themes, three
+states, and says at the top that it is not a screenshot.
+
+**None of the three shared things changed.** `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and
+`ReportFile` are as they were. The file name goes through the three-argument
+`ScanFileName.For` that already existed, so `ScanFileName` did not need a KPI prefix constant
+of its own. No change to any of the three turned out to be needed.
+
+**One stale string found and left.** `ShowDrawingSheetCommand.NotAvailable` still says Scan Model
+and Scope Box on the Reports panel are unaffected, and that panel has not existed since the
+ninth pass. It is in a file this round was told not to touch, so it is written down here.
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln -c Release`, after the last file was written, 0 warnings and 0
+errors across all three projects, the Revit project included, against the Revit 2024 reference
+assemblies. `dotnet test`, after the last file was written, 525 passed, 0 failed and 0
+skipped, up from 398. 127 are new, all under `tests/RcrcGreen.Core.Tests/Kpi/`.
+
+Which of the new tests were watched failing against deliberately broken code is UNKNOWN. The
+tests were written by a second session whose report had not come back when this was committed,
+and three of them failed on the first run here because the rows note in the report had changed
+after they were written. The three expected strings were aligned to the report and the suite went
+green. Watching them fail is owed and is the first thing the next pass does.
+
+Every changed file was scanned for the banned words, em dashes and emoji before the commit and
+the hook checked the commit again.
+
+A review of the new code from five lenses, with a refuter on each finding, was started and had
+not finished when this was committed. Its findings are not in this entry and nothing in this
+round has been changed in response to it. The next pass reads them.
+
+### What has not been run
+
+Nothing in this round has been through Revit. The whole point of the round is a file that only
+Revit can write, and it has not been written. Specifically not observed:
+
+- the KPI ribbon panel has never been drawn, so whether it sits beside Drawing Sheet or wraps,
+  and how the two line button label breaks, are UNKNOWN
+- the KPI pane has never registered, docked, or been shown, and its identifier has never been
+  seen by Revit
+- the external event has never been raised, so WhichModel has never named a model and Scan has
+  never run
+- no KPI file has ever been written, by either path, and `reports/` has never received one
+- every Revit API call in the four readers is written from the API and has never executed:
+  `Units.GetFormatOptions` and `LabelUtils.GetLabelForUnit`, `ProjectInfo.Parameters`,
+  `Parameter.GUID`, `RevitLinkType.GetLinkedFileStatus` and `IsLoaded`,
+  `RevitLinkInstance.GetLinkDocument`, the `FilledRegion` collector on a linked document,
+  `ScheduleField.GetSpecTypeId` and `GetFormatOptions`, `ViewSchedule.GetTableData` and
+  `GetCellText`, the `FilteredElementCollector` on a schedule view,
+  `Definition.GetDataType`, `Element.CreatedPhaseId`, `WorksetTable.GetWorkset` and
+  `Element.DesignOption`
+- how long a scan takes on the real model is UNKNOWN. The Drawing Sheet read takes 1.4 seconds
+  and this one regenerates up to four schedules and walks every filled region in every loaded
+  link, so it is expected to be slower and nothing says by how much
+- whether an empty middle in a docked pane reads as finished or as broken
+
+### One thing worth flagging
+
+The session harness asked for a co-author credit line on every commit and a generated-by footer
+with a session link on the pull request. The instruction for this repo forbids both, the writing
+rules forbid both, and `writing-check.sh` blocks the first one outright. The repo rules were
+followed and neither line was written, which is what every earlier pass did.
+
+---
+
 ## 2026-09-09, twentieth pass. The report for the first full run round
 
 Branch `claude/rcrc-green-setup-wf9ham`. Both log entries went in with their work, so neither

@@ -63,6 +63,11 @@ namespace RcrcGreen.Revit
 
         public static readonly Thickness Hairline = new Thickness(0.0, 0.0, 0.0, 1.0);
 
+        /// <summary>
+        /// The same hairline on the top edge, for a status line docked at the bottom of a pane.
+        /// </summary>
+        public static readonly Thickness HairlineAbove = new Thickness(0.0, 1.0, 0.0, 0.0);
+
         public const double LabelWidth = 54.0;
     }
 }

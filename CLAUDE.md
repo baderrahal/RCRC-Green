@@ -1,8 +1,8 @@
 # RCRC Green
 
-A Revit 2024 add-in for the landscape production team. The first tool in it is Drawing
-Sheet, which reads the model, shows a grid of which views exist per plot, and will create the
-missing ones.
+A Revit 2024 add-in for the landscape production team. Two tools. Drawing Sheet reads the
+model, shows a grid of which views exist per plot, and creates the missing ones. KPI will fill
+the client's GRP KPI Checklist workbook from a model, and this round it only scans.
 
 Read `.claude/skills/ai-max/SKILL.md` before doing any work in this repo. It sets the phase
 order, the writing rules and the reporting rules that everything here follows. The current phase
@@ -13,16 +13,21 @@ and creates them with correct names and, for a cross section, a cut across the m
 
 ## Running it
 
-**Drawing Sheet** is a dockable panel that stays open while the user works and reads the model
-every time it is shown. It is five numbered steps, one open at a time: PLOTS, VIEW TYPES, MARK,
-SHEETS, RUN. A shut step carries its own summary and an unusable one says why. A filled square is
-a view that exists and opens on a click, an empty one is missing and can be marked, one at a
-time or by row, by column or all at once. Every dropdown comes from the model. Step 5 holds the
-scope box counts, and Scan Model, in the top strip, reads the whole document not just the range.
+**Drawing Sheet** is a dockable panel that reads the model every time it is shown. It is five
+numbered steps, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step carries its
+own summary and an unusable one says why. A filled square is a view that exists and opens on a
+click, an empty one is missing and can be marked, one at a time, by row, by column or all at
+once. Every dropdown comes from the model. Step 5 holds the scope box counts, and Scan Model,
+in the top strip, reads the whole document not just the range.
 
 **Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
 schedules and sheets. One confirmation, one transaction, one undo, and a report whose every count
 is of what happened rather than what was intended.
+
+**KPI Checklist**, the one button on the KPI ribbon panel, opens a pane holding the model name,
+when it was last read, KPI Scan and a status line. KPI Scan reads the whole document into a
+text file of nine sections, one per question the workbook raises, and creates nothing. Its
+rules are in `.claude/rules/kpi-rules.md`. Its scan is not called Scan Model, on purpose.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
 `Addins\2024\` layout the build does not, so copying the output folder by hand leaves Revit
@@ -39,9 +44,9 @@ The whole suite. It is what the pull request gate runs and nothing in it needs R
 ## How this is laid out
 
 - `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation, and
-  `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panel
-- `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/` holds the two
-  PowerShell scripts and `.claude/rules/` the rules for each project
+  `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panes. Each tool
+  has a `Kpi/` or top level folder in both. `tests/RcrcGreen.Core.Tests` is net8.0 and covers
+  Core only. `install/` holds the two PowerShell scripts and `.claude/rules/` the rules
 - `reports/` holds what a run wrote and **nothing in it is ever committed.** This repository is
   public and a report carries client view names, sheet numbers and plot identifiers, so
   `reports/README.md` is the only file in it that is tracked
@@ -112,21 +117,21 @@ Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 - Only plot DM-11 has real sheet numbers. Other plots carry numbers like 010QE Copy 001, and a
   group of sheets carries no PRX_Plot_ID at all. The scan counts both
 - Title blocks are AR-PRX-Title_Block_A1, several types. Read them from the model, never fix them
-- A full run made 10 things, 0 refused and 4 needing attention, so every path in the tool has
-  now run at least once. Three sheets came out empty and every new view had Annotation Crop
-  off, both fixed since
+- A full run made 10 things, 0 refused and 4 needing attention, so every path has now run at
+  least once. Three sheets came out empty and every new view had Annotation Crop off, both fixed
 
 Real names are in `.claude/rules/core-rules.md`, next to the rule they illustrate.
 
 ## Conventions
 
-**Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots or
-geometry. Open questions go in `steps/log.md` and the team answers them.
+**Anything not written down is UNKNOWN.** Do not invent a rule about codes, naming, plots,
+geometry or a workbook cell. Open questions go in `steps/log.md` and the team answers them.
 
 ## Hooks
 
-Three of them, wired in `.claude/settings.json`. They are walls, and both commit hooks read the
-command rather than the index, through `commit-scope.py`.
+Three of them, wired in `.claude/settings.json`. They are walls, a hook script that cannot be
+found blocks, and both commit hooks read the command rather than the index, through
+`commit-scope.py`.
 
 - `block-paths.sh` refuses any write that resolves outside this repo
 - `require-file-on-commit.sh` refuses a commit not carrying `steps/ai-max-state.md`
@@ -134,17 +139,15 @@ command rather than the index, through `commit-scope.py`.
   footer, a co-author credit line, an emoji, or a word from the list in
   `.claude/skills/ai-max/references/writing-rules.md`, which it skips. landscape is kept
 
-A hook script that cannot be found blocks.
-
 ## Things that have gone wrong before
 
-Add to this whenever something breaks. Over time it is the most valuable part of this file,
-because it is the only part that cannot be rediscovered by reading the code.
+Add to this whenever something breaks. It is the only part that cannot be rediscovered by
+reading the code.
 
 **A guard that fails open reads exactly like a guard that passed.** `writing-check.sh` split
 its file list on newlines, so a name holding a space reached the scanner in pieces that each
 read as a file that is not there. It passed unchecked. A check that cannot see its own subject
-has to refuse.
+has to refuse. The KPI scan names every read that did not happen at the top of its file.
 
 **An assumption held for five rounds because nobody ran the thing.** The naming pattern came
 from four examples, the read was assumed to need a progress window, and PRX_Plot_ID was assumed
@@ -153,8 +156,8 @@ to be on elements only. One run corrected all three. Prefer measured numbers to 
 **Some faults only show when somebody uses the thing.** The panel shipped with every heading
 written and none visible, because a dockable pane on the dark theme is black and WPF defaults
 text to black. Later it was correct and unusable: ticking a view type scrolled the list away,
-marking 136 cells took 136 clicks, and eight columns ran off the right edge. Neither round
-shows in a test or in a mockup.
+marking 136 cells took 136 clicks, and eight columns ran off the right edge. Neither shows in a
+test or in a mockup.
 
 **Two sources for one fact is two facts.** Five times now, always the same shape. The grid took
 a view's plot from PRX_Plot_ID and its type from the name without checking they agreed, so a
@@ -181,19 +184,16 @@ null became 0.0, the guard fired, and three sheets were made empty on a real A1 
 the API attaches a parameter to before deciding the model is wrong.
 
 **Copying takes whatever state the thing is in, including nothing.** The first sheet the tool
-made was empty. It was built by copying one the user picked, and that one had no views on it.
-Nothing failed and nothing was reported. A sheet is described now, so what goes on it is stated.
+made was empty, copied from one the user picked that had no views on it. Nothing failed and
+nothing was reported. A sheet is described now, so what goes on it is stated.
 
 **A setting nobody recorded cannot be argued about.** A created view came out with a template
 that looked right and a family type that looked wrong. The code read both off one view four
 lines apart, but nothing said which view. Record where a value came from as you use it.
 
-## Writing
+## Writing and working agreements
 
 No em dash, no semicolon in prose, no emoji anywhere, commit messages included. No generated-by
 footer and no co-author line. Comments say why, not what. Full list in the ai-max writing rules.
-
-## Working agreements
-
 Never report a test result from a run made before the last file was written. Say UNKNOWN rather
 than filling a gap. Write what happened in `steps/log.md`, newest entry at the top.

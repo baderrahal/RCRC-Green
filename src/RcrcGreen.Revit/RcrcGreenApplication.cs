@@ -3,17 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Autodesk.Revit.UI;
+using RcrcGreen.Revit.Kpi;
 
 namespace RcrcGreen.Revit
 {
     /// <summary>
-    /// Builds the ribbon and registers the dockable panel.
+    /// Builds the ribbon and registers the two dockable panes.
+    ///
+    /// One tab holding two panels side by side. Drawing Sheet keeps its single button. KPI is
+    /// a panel built to carry several buttons later and carries one this round.
     /// </summary>
     public class RcrcGreenApplication : IExternalApplication
     {
         public const string TabName = "RCRC Green";
 
         public const string DrawingSheetPanelName = "Drawing Sheet";
+
+        public const string KpiPanelName = "KPI";
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -27,9 +33,21 @@ namespace RcrcGreen.Revit
                 // of the add-in is registered.
             }
 
-            // The panel has to be registered before any document opens, which is why it is
-            // here rather than in the command that shows it.
-            ShowDrawingSheetCommand.PaneRegistered = Registered(application);
+            // The panes have to be registered before any document opens, which is why they
+            // are here rather than in the commands that show them. Each goes through the same
+            // guard on its own, so a KPI pane that will not register costs the KPI button its
+            // pane and nothing else on the ribbon.
+            ShowDrawingSheetCommand.PaneRegistered = Registered(
+                application,
+                ShowDrawingSheetCommand.PaneId,
+                ShowDrawingSheetCommand.PaneTitle,
+                () => new DrawingSheetPanel());
+
+            ShowKpiCommand.PaneRegistered = Registered(
+                application,
+                ShowKpiCommand.PaneId,
+                ShowKpiCommand.PaneTitle,
+                () => new KpiPanel());
 
             RibbonPanel drawingSheet = PanelNamed(application, DrawingSheetPanelName);
             Add(drawingSheet, ShowDrawingSheetCommand.ButtonName, ShowDrawingSheetCommand.ButtonText,
@@ -44,9 +62,22 @@ namespace RcrcGreen.Revit
                       + "assignment are both in there too."
                     : ShowDrawingSheetCommand.NotAvailable);
 
-            // One tab, one panel, one button. Scan Model and Scope Box were buttons of their
-            // own and are not any more. Both are still reachable from inside the panel, which
-            // is where someone deciding what to do already is.
+            // Scan Model and Scope Box were buttons of their own and are not any more. Both are
+            // still reachable from inside the Drawing Sheet panel, which is where someone
+            // deciding what to do already is. The KPI panel is the second panel on the tab,
+            // and its one button this round shows the KPI pane.
+            RibbonPanel kpi = PanelNamed(application, KpiPanelName);
+            Add(kpi, ShowKpiCommand.ButtonName, ShowKpiCommand.ButtonText,
+                typeof(ShowKpiCommand),
+                ShowKpiCommand.PaneRegistered
+                    ? "Open the KPI pane."
+                    : ShowKpiCommand.NotAvailableTip,
+                ShowKpiCommand.PaneRegistered
+                    ? "KPI Scan reads the open model and writes a text file answering where each "
+                      + "value the GRP KPI Checklist asks for lives. It creates nothing in the "
+                      + "model and touches no workbook."
+                    : ShowKpiCommand.NotAvailable);
+
             return Result.Succeeded;
         }
 
@@ -56,20 +87,23 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Registers the dockable pane and says whether it took.
+        /// Registers one dockable pane and says whether it took.
         ///
         /// Guarded because an exception here leaves OnStartup throwing, and Revit answers that
-        /// by building no ribbon at all. A panel that will not register is worth losing the
-        /// panel over. It is not worth losing Scan Model and Scope Box as well.
+        /// by building no ribbon at all. A pane that will not register is worth losing that
+        /// pane over. It is not worth losing the other pane and every button as well. The
+        /// pane is built inside the guard, because building it is WPF work and registering is
+        /// Revit work and the throw can come from either side.
         /// </summary>
-        private static bool Registered(UIControlledApplication application)
+        private static bool Registered(
+            UIControlledApplication application,
+            DockablePaneId paneId,
+            string title,
+            Func<IDockablePaneProvider> build)
         {
             try
             {
-                application.RegisterDockablePane(
-                    ShowDrawingSheetCommand.PaneId,
-                    ShowDrawingSheetCommand.PaneTitle,
-                    new DrawingSheetPanel());
+                application.RegisterDockablePane(paneId, title, build());
                 return true;
             }
             catch (Autodesk.Revit.Exceptions.ApplicationException)
@@ -78,8 +112,6 @@ namespace RcrcGreen.Revit
             }
             catch (InvalidOperationException)
             {
-                // Building the panel is WPF work and registering is Revit work, so the throw
-                // can come from either side of the line.
                 return false;
             }
             catch (ArgumentException)

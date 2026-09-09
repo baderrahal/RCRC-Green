@@ -1,6 +1,27 @@
 # ai-max state
 
-Phase: 9, ship. Twentieth pass, the report for the first full run round.
+Phase: 9, ship. Twenty-first pass, the KPI scanner, first round of the second tool.
+
+Branch `claude/inspiring-allen-xs113f`, pull request 28, waiting on a click. Locally, after the
+last file was written, the build came back with 0 warnings and 0 errors and the tests with 525
+passed and 0 failed, up from 398.
+
+**The KPI tool** will one day fill the client's GRP KPI Checklist workbook from a model and will
+never create anything in it. This round is the scanner: a second ribbon panel, KPI, with one
+button, KPI Checklist, opening a pane of three things, the model name with when it was last
+read, KPI Scan and a status line. KPI Scan reads the whole document through its own external
+event and handler into a `KpiScan` of plain values, and `KpiReport` in Core writes nine numbered
+sections, one per question the workbook raises, every heading carrying its own count, with a
+READS THAT DID NOT HAPPEN block above section 1. `KpiQuestions` is section 9, one line per
+question saying FOUND or NOT FOUND and where to look.
+
+The brief arrived cut off partway through section 4 of the report. Sections 1 to 4 are as
+specified and 5 to 9 were designed here from questions 6 to 9. The choices made without a rule
+are numbered in `steps/log.md`. Nothing in this round has been through Revit, no KPI file has
+ever been written, and the review started over the code had not reported when it was committed.
+`RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile` are unchanged.
+
+Before that, the twentieth pass, the report for the first full run round.
 
 Pull request 25 merged as `281056e` with 379 tests on the runner, and pull request 26 as
 `6e64c73` with 398, 0 failed and 0 skipped on each. Both log entries carry their own merge and
