@@ -76,5 +76,14 @@ namespace RcrcGreen.Revit
         public static readonly Thickness HairlineAbove = new Thickness(0.0, 1.0, 0.0, 0.0);
 
         public const double LabelWidth = 54.0;
+
+        /// <summary>
+        /// A wider caption column for the KPI pane's typed boxes. Prepared by is the longest of
+        /// the three captions and came out as Prepared b, running into its box, at the shared 54.
+        ///
+        /// Added rather than widening LabelWidth, which the Drawing Sheet uses in two places and
+        /// this round does not touch. **This number has not been seen in Revit.**
+        /// </summary>
+        public const double WideLabelWidth = 88.0;
     }
 }

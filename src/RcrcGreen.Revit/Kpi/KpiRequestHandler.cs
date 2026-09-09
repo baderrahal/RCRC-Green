@@ -239,7 +239,11 @@ namespace RcrcGreen.Revit.Kpi
             KpiCreateAsk asked = Asked;
             if (asked == null || asked.Template == null)
             {
-                Told?.Invoke(CreateWords.CannotCreate(true, false, true));
+                // A document is in hand, so the model is open. Whether it has a folder is read
+                // rather than assumed, because the two are different refusals and this handler
+                // is the second place that could get them the wrong way round.
+                Told?.Invoke(CreateWords.CannotCreate(
+                    true, FolderOf(document).Length > 0, false, true));
                 return;
             }
 

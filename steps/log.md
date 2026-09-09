@@ -4,6 +4,108 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, thirty fourth pass. Five faults off the first real run of the KPI pane
+
+The pane reached Revit and five things were wrong with it. **Every one of them is a fault
+nothing in the suite could have caught**, because each is about what reaches the screen rather
+than about what the code computes. 849 tests locally, 0 failed and 0 skipped, after the last
+file was written and after the five break watches were restored byte for byte.
+
+### It said no model was open while a model was open
+
+The header read 96,959 elements at 16:08:14 and Create said Cannot create. No model is open, on
+a detached model that has never been saved. The line directly above the button already had the
+truth.
+
+`CannotCreate` was handed the model's FOLDER and called it the model. **Whether a model is open
+and whether it has a folder are two facts**, so it takes both now, a model that is not open is
+not asked whether it has been saved, and the two never print together. The never saved words are
+`TemplateWords.NoModelPath`, the very line above the button, rather than a second sentence about
+one condition. `KpiRequestHandler` is the other caller and it reads the folder off the document
+rather than assuming one, because it is the second place that could get the pair the wrong way
+round.
+
+That is the eighth time in this repo that two records of one fact have been the bug, and
+`CLAUDE.md` counts it as the eighth.
+
+### The pane showed five parameter names that no model holds
+
+PRXComponent, PRXPlot_ID, PRXPlot_UID, PRXPlot_UID2 and PRXPlot_NH. WPF reads the first
+underscore in a button's text as an access key marker, swallows it and underlines the next
+letter. **The strings were right in the code and wrong on the screen**, on the one tool whose
+whole job is exact parameter names.
+
+`PaneLabel.Escaped` doubles every underscore, which is WPF's own escape, and every string that
+reaches a `Button` or a `CheckBox` on this pane goes through it: eleven places, not the five
+that were noticed. Only what is drawn goes through it and nothing compares the escaped form
+against anything.
+
+The test walks every name `KpiNames` holds and asserts what WPF renders is the name itself,
+rather than the five that happened to be seen.
+
+**The Drawing Sheet has the same fault and this round does not touch it.** Its view type names,
+plot identifiers and column headers all go onto buttons and tick boxes the same way. It is out
+of scope by instruction and it is written down here rather than left to be found again.
+
+### It described itself doing something it does not do
+
+`KpiTemplates.SourceOf` said PRX_COMPONENT, read off the title block and PRX_Plot_UID2, read off
+the title block. **Every part of both was wrong.** PRX_COMPONENT is in no model. The value is
+PRX_Component on the sheet. PRX_Plot_UID2 sits on 1233 title block instances and holds a value on
+none of them, while the sheet holds 1384 of them. It was the workbook's own note put on screen
+as though it were the tool's behaviour, and the reader had been corrected rounds before.
+
+It takes a `ChosenParameters` now and names the three parameters the pane's own pickers hold,
+because those are the ones that will really be read, with the place each is read from. Nothing
+picked yet names the picker to look at rather than a parameter nobody chose. A test walks every
+one of the seven templates and refuses any line holding PRX_COMPONENT or the words title block.
+
+### The preselections were positional
+
+Reference started on PRX_Plot_ID, which is first of the four and is not what the note names.
+Location started on whichever neighbourhood parameter sorted first, and Neighborhood Group sorts
+above Neighborhood Name.
+
+`Preselected.From` takes the name the note asks for and the names the model offers, and hands
+back that name where it is offered. Reference starts on PRX_Plot_UID2 and Location on
+Neighborhood Name, both now measured constants rather than positions. Component goes through the
+same one rule.
+
+### Prepared by was cut to Prepared b
+
+`PanelMetrics.WideLabelWidth`, added rather than a widening of the shared `LabelWidth`, which the
+Drawing Sheet uses in two places. **The number has not been seen in Revit** and is the one thing
+in this round chosen by eye rather than measured.
+
+### The plot picker, and what I could not reproduce
+
+**All 155 plots ticked by default is not what the code does, and I could not find a path that
+would.** A fresh `PlotTicks` is built with no ticks, `Found` carries the previous ticks across
+and the previous set is empty, and `All()` is reached only by pressing Select all. Three tests
+now pin it: a fresh picker over 155 plots reads 0 of 155 plots ticked, reading the model carries
+nothing across, and Select all is the only route to all of them.
+
+So the state is pinned and cannot drift, but **the fault as reported is not explained**, and
+saying it is fixed would be a guess dressed as an answer. If it is seen again on a pane nobody
+has pressed Select all on, the next thing to look at is whether `Found` runs more than once with
+something already ticked.
+
+### What was broken to see the tests go red
+
+Five, each restored byte for byte and checked with md5.
+
+- Never saved reported as no model again. 1 red
+- The escape made to return its text unchanged. 5 red
+- The preselection put back on position alone. 2 red
+- The note shown as the tool's behaviour again. 3 red
+- A fresh picker made to tick every plot. 6 red
+
+### What has not been run
+
+None of this has been seen in Revit. Four of the five fixes are Core with tests over them and
+the fifth, the label width, is a number in a pane file that only Revit can settle.
+
+---
 ## 2026-09-09, thirty third pass. The component to template mapping, as a table
 
 Pull request 41, merged into main as `a0d3d3b`. **The runner executed 823 tests against its

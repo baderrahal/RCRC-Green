@@ -408,10 +408,52 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.Equal(
                 "Cannot create. No model is open. No template picked. No plot ticked.",
-                CreateWords.CannotCreate(false, false, false));
+                CreateWords.CannotCreate(false, false, false, false));
 
-            Assert.Equal("Cannot create. No plot ticked.", CreateWords.CannotCreate(true, true, false));
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(true, true, true));
+            Assert.Equal("Cannot create. No plot ticked.", CreateWords.CannotCreate(true, true, true, false));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(true, true, true, true));
+        }
+
+        /// <summary>
+        /// A model open and never saved is not no model. The pane's header read 96,959 elements
+        /// at 16:08:14 while Create said no model was open, on a detached model with no path,
+        /// and the line directly above the button already had the truth.
+        /// </summary>
+        [Fact]
+        public void AModelOpenAndNeverSavedIsADifferentRefusalFromNoModel()
+        {
+            Assert.Equal(
+                "Cannot create. The open model has never been saved, so there is no folder to "
+                + "write beside. Save the model first.",
+                CreateWords.CannotCreate(true, false, true, true));
+
+            Assert.Equal(
+                "Cannot create. No model is open.",
+                CreateWords.CannotCreate(false, false, true, true));
+        }
+
+        /// <summary>
+        /// The two never print together. A model that is not open is not asked whether it has
+        /// been saved, and reading both at once would be the pane saying two things about one
+        /// state.
+        /// </summary>
+        [Fact]
+        public void NoModelAndNeverSavedAreNeverSaidTogether()
+        {
+            string said = CreateWords.CannotCreate(false, false, false, false);
+
+            Assert.Contains(CreateWords.NoModel, said);
+            Assert.DoesNotContain(CreateWords.NotSaved, said);
+        }
+
+        /// <summary>
+        /// Create says the same words as the line above it, from the one constant, rather than
+        /// a second sentence about the same condition.
+        /// </summary>
+        [Fact]
+        public void TheNeverSavedRefusalIsTheLineTheOutputBlockAlreadyShows()
+        {
+            Assert.Equal(TemplateWords.NoModelPath, CreateWords.NotSaved);
         }
 
         [Fact]
