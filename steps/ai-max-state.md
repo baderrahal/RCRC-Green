@@ -1,6 +1,7 @@
 # ai-max state
 
-Phase: 9, ship. Twenty fifth pass, the template picker and the workbook writer.
+Phase: 9, ship. Twenty fifth pass, the template picker and the workbook writer. Pull request
+33, waiting on the gate.
 
 The workbook half of the KPI tool. `KpiTemplates` in Core carries the map, one entry per
 template, measured off the annotated seven, with the tree row ranges on the entry because a
