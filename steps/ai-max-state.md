@@ -1,7 +1,8 @@
 # ai-max state
 
-Phase: 9, ship. Thirty fifth pass, two more off the KPI pane. Pull request 43 is open, 857 tests
-locally, 0 failed and 0 skipped, after four break watches were restored byte for byte.
+Phase: 9, ship. Thirty fifth pass, two more off the KPI pane. Pull request 43 is merged into main as
+`61ea270`, 857 tests on the runner against its merged head and 857 locally, 0 failed and 0
+skipped on each.
 
 The reference sample showed the first plot in the model rather than the first ticked one. And
 Create stayed grey after the model was saved, which had never worked: the folder was a copy taken

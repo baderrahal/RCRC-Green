@@ -6,8 +6,9 @@ Newest entry first.
 
 ## 2026-09-09, thirty fifth pass. Two more off the KPI pane, and one of them was never working
 
-857 tests locally, 0 failed and 0 skipped, after the last file was written and after the four
-break watches were restored byte for byte.
+Pull request 43, merged into main as `61ea270`. **The runner executed 857 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 857 ran, 0 failed and 0 skipped**, after
+the last file was written and after the four break watches were restored byte for byte.
 
 ### The reference sample showed the wrong plot
 
