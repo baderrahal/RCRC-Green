@@ -97,15 +97,15 @@ namespace RcrcGreen.Core.Tests
         public void TheSheetHeaderCountsWhatWasAddedAndWhatWillBeMade()
         {
             Assert.Equal(
-                "4  SHEETS   1 sheet, 3 to make",
+                "4  SHEETS   1 described, 3 to make",
                 After(sheetsDescribed: 1, sheetsAsked: 3).For(PanelStep.Sheets).Header);
 
             Assert.Equal(
-                "4  SHEETS   1 sheet, 1 to make",
+                "4  SHEETS   1 described, 1 to make",
                 After(sheetsDescribed: 1, sheetsAsked: 1).For(PanelStep.Sheets).Header);
 
             Assert.Equal(
-                "4  SHEETS   1 sheet, none to make yet",
+                "4  SHEETS   1 described, none to make yet",
                 After(sheetsDescribed: 1, sheetsAsked: 0).For(PanelStep.Sheets).Header);
 
             Assert.Equal(
@@ -203,7 +203,7 @@ namespace RcrcGreen.Core.Tests
             StepState run = After(sheetsDescribed: 2, sheetsIncomplete: 2).For(PanelStep.Run);
 
             Assert.False(run.Usable);
-            Assert.Contains("missing a type or a name", run.WhyNot);
+            Assert.Contains("still needs its type, a name or a number", run.WhyNot);
         }
 
         [Fact]

@@ -77,6 +77,24 @@ namespace RcrcGreen.Core
         /// from two different places, and there was no way to check because nothing said which
         /// view either came from. Now the report names it.
         /// </summary>
+        private readonly List<ViewportRecord> _placements = new List<ViewportRecord>();
+
+        /// <summary>
+        /// One view placed on one sheet, recorded after the placement returned. The first
+        /// sheets came out with views the user called too small, and nothing in the report
+        /// could say where anything had landed or at what scale.
+        /// </summary>
+        public void NotePlacement(ViewportRecord placed)
+        {
+            if (placed == null) throw new ArgumentNullException("placed");
+            _placements.Add(placed);
+        }
+
+        public IReadOnlyList<ViewportRecord> Placements
+        {
+            get { return _placements; }
+        }
+
         public void NoteSetup(RunRefusal note)
         {
             if (note == null) throw new ArgumentNullException("note");

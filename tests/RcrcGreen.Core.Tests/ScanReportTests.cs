@@ -60,6 +60,9 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal("== VIEWS ON SHEETS (3) ==", HeadingIn(report, "VIEWS ON SHEETS"));
             Assert.Equal("== VIEWS NOT ON SHEETS (2) ==", HeadingIn(report, "VIEWS NOT ON SHEETS"));
             Assert.Equal("== VIEW TEMPLATES (1) ==", HeadingIn(report, "VIEW TEMPLATES"));
+            Assert.Equal(
+                "== VIEWPORTS ON EXISTING SHEETS (0) ==",
+                HeadingIn(report, "VIEWPORTS ON EXISTING SHEETS"));
             Assert.Equal("== SCOPE BOXES (2) ==", HeadingIn(report, "SCOPE BOXES"));
             Assert.Equal("== PRX_Plot_ID VALUES (2) ==", HeadingIn(report, "PRX_Plot_ID VALUES"));
             Assert.Equal("== PARSE SUMMARY (9) ==", HeadingIn(report, "PARSE SUMMARY"));
@@ -83,12 +86,39 @@ namespace RcrcGreen.Core.Tests
                     "== VIEW TEMPLATES (1) ==",
                     "== VIEW FAMILY TYPES (0) ==",
                     "== VIEW FAMILY TYPE PER VIEW TYPE (2) ==",
+                    "== VIEWPORTS ON EXISTING SHEETS (0) ==",
                     "== SCOPE BOXES (2) ==",
                     "== PRX_Plot_ID VALUES (2) ==",
                     "== VIEWS THAT DISAGREE WITH THEMSELVES (0) ==",
                     "== PARSE SUMMARY (9) =="
                 },
                 headings);
+        }
+
+        /// <summary>
+        /// The placements read off real sheets, in millimetres, next to the sheet's own size.
+        /// One foot is 304.8 millimetres, and every expected number below is that arithmetic
+        /// done by hand.
+        /// </summary>
+        [Fact]
+        public void APlacementOnAnExistingSheetIsListedInMillimetres()
+        {
+            ModelScan scan = ScanFixture.Build(viewports: new[]
+            {
+                new ViewportRecord(
+                    "200Q", "GENERAL ARRANGEMENT LAYOUT",
+                    "DM-11-(200) General Arrangement Layout",
+                    250, 1.0, 0.5, 2.0, 1.0, 2.0, 1.0, false)
+            });
+
+            string report = ScanReport.Write(scan, Noon);
+
+            Assert.Contains("== VIEWPORTS ON EXISTING SHEETS (1) ==", report);
+            Assert.Contains(
+                "200Q | DM-11-(200) General Arrangement Layout | 1:250 | 304.8 by 152.4 mm | "
+                + "609.6 by 304.8 mm | 609.6 by 304.8 mm",
+                report);
+            Assert.Contains("What the team's own sheets look like", report);
         }
 
         [Fact]

@@ -275,6 +275,62 @@ namespace RcrcGreen.Core.Tests
             Assert.DoesNotContain("the far clip offset of the sibling section", written);
         }
 
+        /// <summary>
+        /// The sheets divide now, the names come off the views and the numbers continue the
+        /// plot's pattern, and a sheet carries no scale of its own. The note has to say all of
+        /// that or it explains a tool that no longer exists.
+        /// </summary>
+        [Fact]
+        public void TheClosingNoteSaysHowSheetsAreNamedNumberedAndScaled()
+        {
+            string written = Report();
+
+            Assert.Contains("divide into as many", written);
+            Assert.Contains("A sheet holding one view is named after it", written);
+            Assert.Contains("the view code, the plot's letter, then the first letter not in", written);
+            Assert.Contains("A SHEET HAS NO SCALE OF ITS OWN", written);
+            Assert.Contains("each view's scale comes from its own view", written);
+            Assert.DoesNotContain("made empty on purpose", written);
+        }
+
+        /// <summary>
+        /// Every placement the run makes is read back and listed, so the user's "too small"
+        /// has numbers to point at. One foot is 304.8 millimetres, done by hand below.
+        /// </summary>
+        [Fact]
+        public void EveryPlacementIsListedWhereItLanded()
+        {
+            RunOutcome outcome = RunFixture.Outcome();
+            outcome.NotePlacement(new ViewportRecord(
+                "200QA", "GENERAL ARRANGEMENT LAYOUT",
+                "DM-11-(200) General Arrangement Layout",
+                250, 1.0, 0.5, 2.0, 1.0, 2.0, 1.0, false));
+            outcome.NotePlacement(new ViewportRecord(
+                "600QA", "HARDSCAPE SCHEDULE", "DM-11-(600) HARDSCAPE SCHEDULE",
+                0, 1.0, 0.5, 2.0, 1.0, 2.0, 1.0, true));
+
+            string written = RunReport.Write(
+                RunFixture.Of(null, null, null, null, null),
+                outcome,
+                "RCRC_NG05",
+                When,
+                true);
+
+            Assert.Contains(RunReport.WhereViewportsLanded + ", 2", written);
+            Assert.Contains(
+                "  On 200QA GENERAL ARRANGEMENT LAYOUT: DM-11-(200) General Arrangement Layout "
+                + "at 1:250, 609.6 by 304.8 mm, centre at 304.8 by 152.4 mm, on a sheet of "
+                + "609.6 by 304.8 mm.",
+                written);
+            Assert.Contains(", a schedule, ", written);
+        }
+
+        [Fact]
+        public void ARunThatPlacedNothingStillCarriesTheSection()
+        {
+            Assert.Contains(RunReport.WhereViewportsLanded + ", 0", Report());
+        }
+
         [Fact]
         public void TheModelAndTheTimeAreAtTheTop()
         {

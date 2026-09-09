@@ -102,12 +102,13 @@ left neighbouring plots' section markers drawing through. The report says whose 
 A section is left with no scope box while every plan view has one.
 
 A new view is CREATED FRESH, never copied from another plot, and carries no annotation,
-dimensions, tags or detailing. A SHEET IS DESCRIBED rather than copied. The title block type,
-the sheet name, the view types and whether 1, 2 or 4 views go on it are shared across the ticked
-plots, and the sheet number is the only thing per plot. The user types every number and every
-name and the tool invents neither, and the number dropdown offers numbers NOT in use. A sheet's
-size is read off the title block PLACED ON IT, because Sheet Width and Sheet Height are instance
-parameters and do not exist on the type.
+dimensions, tags or detailing. A SHEET IS DESCRIBED rather than copied: the title block type,
+the views and 1, 2 or 4 per sheet are shared, and the views DIVIDE into as many sheets as they
+need, in ticked order, none left off. A one-view sheet is named after its view, upper cased,
+code removed, and numbered as the code, the plot's letter, then the first free letter, both
+editable proposals the report marks generated or typed. A sheet's size is read off the title
+block PLACED ON IT, because Sheet Width and Sheet Height only exist on the instance. A SHEET
+HAS NO SCALE OF ITS OWN: its Scale reads out the placed views' templates. Nothing sets one.
 
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 
@@ -115,15 +116,14 @@ Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 - 1,385 sheets, 953 views on sheets, 2,430 not on sheets, 79 view templates
 - 406 scope boxes for 160 PRX_Plot_ID values, so a box not named for a plot is ordinary
 - 2,114 names parsed and 4,039 did not, which made the parameter the first source not a fallback
-- Scope box cases over one range came back A 0, B 102, C 66, D 0, E 13, F 1
 - 6 views are named for one plot and carry PRX_Plot_ID for another. The scan names them
-- 8 templates start with (200) General Arrangement Layout, so a prefix match answers nothing
-- Only plot DM-11 has real sheet numbers. Other plots carry numbers like 010QE Copy 001, and a
-  group of sheets carries no PRX_Plot_ID at all. The scan counts both
+- Only plot DM-11 has real sheet numbers, 010QE to 600QD, all with plot letter Q. Other plots
+  carry numbers like 010QE Copy 001, and a group of sheets has no PRX_Plot_ID. The scan counts
+  both
 - Title blocks are AR-PRX-Title_Block_A1, several types. Read them from the model, never fix them
-- Two full runs. The first made 10 with 0 refused, the second 8 with 6 refused and 3 needing
-  attention, so every path has run. Empty sheets, annotation crop off, sheet numbers certain to
-  clash, a category looked up by name and a Yes handed back as a word were the faults, all fixed
+- Three full runs: 10 with 0 refused, then 8 with 6 refused and 3 needing attention, then 13
+  with 0 refused, KERBS built, budget filters back as integers, the title block reading 841 by
+  594 mm off the placed block. Every fault each run surfaced was fixed and every path has run
 
 Real names are in `.claude/rules/core-rules.md`, next to the rule they illustrate.
 

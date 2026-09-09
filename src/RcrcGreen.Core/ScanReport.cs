@@ -115,6 +115,26 @@ namespace RcrcGreen.Core
 
             WhatEachViewTypeIsBuiltWith(report, scan);
 
+            List<ViewportRecord> viewports = scan.Viewports
+                .OrderBy(one => one.SheetNumber, NaturalOrder.Comparer)
+                .ThenBy(one => one.ViewName, NaturalOrder.Comparer)
+                .ToList();
+            Heading(report, "VIEWPORTS ON EXISTING SHEETS", viewports.Count,
+                "sheet | view | scale | centre | size | sheet size");
+            Line(report, "Millimetres. What the team's own sheets look like, so a placement the "
+                + "tool makes can be held against a real one instead of against a guess.");
+            foreach (ViewportRecord placed in viewports)
+            {
+                Line(report, Join(
+                    placed.SheetNumber,
+                    placed.ViewName,
+                    placed.ScaleInWords(),
+                    placed.CentreInWords(),
+                    placed.SizeInWords(),
+                    placed.SheetSizeInWords()));
+            }
+            Line(report, string.Empty);
+
             List<ScannedScopeBox> boxes = scan.ScopeBoxes
                 .OrderBy(box => box.Name, NaturalOrder.Comparer)
                 .ToList();

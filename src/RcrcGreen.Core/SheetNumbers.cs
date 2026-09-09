@@ -26,7 +26,7 @@ namespace RcrcGreen.Core
     }
 
     /// <summary>
-    /// One plot whose sheet will be refused, and why.
+    /// One sheet whose number will be refused, and why.
     /// </summary>
     public sealed class SheetNumberProblem
     {
@@ -55,13 +55,50 @@ namespace RcrcGreen.Core
     }
 
     /// <summary>
-    /// Sheet numbers that will work, and the ones that will not.
+    /// A sheet number proposed from the pattern the model already uses, or the reason none
+    /// could be. Never random: a sheet number goes on an issued drawing and into a register,
+    /// and a random one cannot be corrected later.
+    /// </summary>
+    public sealed class SheetNumberProposal
+    {
+        private SheetNumberProposal(string number, string whyNot)
+        {
+            Number = number ?? string.Empty;
+            WhyNot = whyNot ?? string.Empty;
+        }
+
+        public static SheetNumberProposal For(string number)
+        {
+            return new SheetNumberProposal(number, string.Empty);
+        }
+
+        public static SheetNumberProposal Nothing(string whyNot)
+        {
+            return new SheetNumberProposal(string.Empty, whyNot);
+        }
+
+        public string Number { get; }
+
+        public bool Offered
+        {
+            get { return Number.Length > 0; }
+        }
+
+        /// <summary>
+        /// Said next to the empty box, so an empty proposal is a reason rather than a surprise
+        /// at Run.
+        /// </summary>
+        public string WhyNot { get; }
+    }
+
+    /// <summary>
+    /// Sheet numbers that will work, the ones that will not, and the next one in the model's
+    /// own pattern.
     ///
-    /// Three sheets were refused in a real run, every one of them with "a sheet numbered 010EA
-    /// is already in this model". The refusal was right and the offer was wrong: the dropdown
-    /// listed the numbers already in use, so every entry in it was certain to be rejected. It
-    /// lists free ones now, and a number that will be refused says so before Run rather than
-    /// after.
+    /// Numbers on plot DM-11 read 010QE, 010QF, 010QG, 010QH, 200Q, 400Q, 600QC, 600QD: the
+    /// view code, then a letter for the plot, then a letter for the sheet within that code.
+    /// The plot letter is read off the numbers the plot already has, never invented, so a plot
+    /// with no sheets gets no proposal and says so.
     /// </summary>
     public static class SheetNumbers
     {
@@ -82,11 +119,7 @@ namespace RcrcGreen.Core
         /// </summary>
         public static IReadOnlyList<string> Free(IEnumerable<string> inUse)
         {
-            var taken = new HashSet<string>(
-                (inUse ?? Enumerable.Empty<string>())
-                    .Where(one => !string.IsNullOrWhiteSpace(one))
-                    .Select(one => one.Trim()),
-                StringComparer.Ordinal);
+            HashSet<string> taken = Trimmed(inUse);
 
             var offered = new HashSet<string>(StringComparer.Ordinal);
 
@@ -107,91 +140,109 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// What is wrong with each plot's number, one dictionary per sheet the user described,
-        /// keyed by plot. The panel puts a line next to the box from this, and the run summary
-        /// counts it, so the two can never say different things.
+        /// The letter that stands for the plot in its own sheet numbers, read as the first
+        /// letter after the leading digits. Every parseable number the plot has must agree, and
+        /// a plot whose numbers disagree gets no letter, because picking a side would put a
+        /// wrong number into a drawing register.
         /// </summary>
-        public static IReadOnlyList<IReadOnlyDictionary<string, SheetNumberFault>> Faults(
-            IReadOnlyList<SheetOrder> orders,
-            IEnumerable<string> ticked,
-            IEnumerable<string> inUse)
+        public static string PlotLetter(IEnumerable<string> plotsOwnNumbers)
         {
-            List<SheetOrder> wanted = (orders ?? new List<SheetOrder>())
-                .Where(one => one != null)
-                .ToList();
+            List<string> letters = LettersIn(plotsOwnNumbers);
 
-            var inTheRun = new HashSet<string>(
-                (ticked ?? Enumerable.Empty<string>()).Where(one => one != null),
-                StringComparer.Ordinal);
-
-            var taken = new HashSet<string>(
-                (inUse ?? Enumerable.Empty<string>())
-                    .Where(one => !string.IsNullOrWhiteSpace(one))
-                    .Select(one => one.Trim()),
-                StringComparer.Ordinal);
-
-            // Every number this run would write, counted across all the sheets described,
-            // because two definitions asking for one number clash just as hard as two plots do.
-            var timesAsked = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (SheetOrder order in wanted.Where(one => one.Definition.CanBeUsed))
-            {
-                foreach (SheetRequest number in order.Numbers
-                    .Where(one => one.Complete && inTheRun.Contains(one.PlotId)))
-                {
-                    int already;
-                    timesAsked[number.SheetNumber] =
-                        timesAsked.TryGetValue(number.SheetNumber, out already) ? already + 1 : 1;
-                }
-            }
-
-            var faults = new List<IReadOnlyDictionary<string, SheetNumberFault>>(wanted.Count);
-            foreach (SheetOrder order in wanted)
-            {
-                var forThisSheet = new Dictionary<string, SheetNumberFault>(StringComparer.Ordinal);
-
-                foreach (SheetRequest number in order.Numbers)
-                {
-                    if (!number.Complete || !inTheRun.Contains(number.PlotId)) continue;
-                    if (!order.Definition.CanBeUsed) continue;
-
-                    SheetNumberFault fault = FaultIn(number.SheetNumber, taken, timesAsked);
-                    if (fault != SheetNumberFault.None) forThisSheet.Add(number.PlotId, fault);
-                }
-
-                faults.Add(forThisSheet);
-            }
-
-            return faults;
+            return letters.Count > 0 && letters.Distinct(StringComparer.Ordinal).Count() == 1
+                ? letters[0]
+                : string.Empty;
         }
 
         /// <summary>
-        /// Every plot whose sheet will be refused, in the order the sheets were described.
+        /// The next free number in the pattern the plot already uses: the code, the plot's own
+        /// letter, then A, B, C and so on, the first not in use anywhere. Nothing is invented:
+        /// no numbers to continue means no proposal, with the reason.
+        /// </summary>
+        public static SheetNumberProposal Propose(
+            string code, IEnumerable<string> numbersInUse, IEnumerable<string> plotsOwnNumbers)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return SheetNumberProposal.Nothing(
+                    "There is no view code to number from. Type the number.");
+            }
+
+            List<string> letters = LettersIn(plotsOwnNumbers);
+
+            if (letters.Count == 0)
+            {
+                return SheetNumberProposal.Nothing(
+                    "This plot has no sheet numbers yet, so there is no plot letter to "
+                    + "continue. Type the number.");
+            }
+
+            if (letters.Distinct(StringComparer.Ordinal).Count() > 1)
+            {
+                return SheetNumberProposal.Nothing(
+                    "This plot's own sheet numbers disagree about their plot letter, so none "
+                    + "can be continued. Type the number.");
+            }
+
+            HashSet<string> taken = Trimmed(numbersInUse);
+
+            for (char sheetLetter = 'A'; sheetLetter <= 'Z'; sheetLetter++)
+            {
+                string offered = code + letters[0] + sheetLetter;
+                if (!taken.Contains(offered)) return SheetNumberProposal.For(offered);
+            }
+
+            return SheetNumberProposal.Nothing(
+                "Every number from " + code + letters[0] + "A to " + code + letters[0]
+                + "Z is taken. Type the number.");
+        }
+
+        /// <summary>
+        /// What is wrong with one number, for the line under its box. The same answer the run
+        /// summary counts, so the two can never disagree.
+        /// </summary>
+        public static SheetNumberFault FaultIn(
+            string number, IEnumerable<string> inUse, IEnumerable<string> askedThisRun)
+        {
+            string wanted = (number ?? string.Empty).Trim();
+            if (wanted.Length == 0) return SheetNumberFault.None;
+
+            // Already in the model comes first. Both can be true of a number typed twice
+            // against a sheet that also exists, and the model is the one somebody looks at.
+            if (Trimmed(inUse).Contains(wanted)) return SheetNumberFault.AlreadyInTheModel;
+
+            int asked = (askedThisRun ?? Enumerable.Empty<string>())
+                .Where(one => !string.IsNullOrWhiteSpace(one))
+                .Count(one => string.Equals(one.Trim(), wanted, StringComparison.Ordinal));
+
+            return asked > 1 ? SheetNumberFault.UsedTwiceInThisRun : SheetNumberFault.None;
+        }
+
+        /// <summary>
+        /// Every numbered sheet across the run that will be refused, in the order the sheets
+        /// were described.
         /// </summary>
         public static IReadOnlyList<SheetNumberProblem> Problems(
-            IReadOnlyList<SheetOrder> orders,
-            IEnumerable<string> ticked,
-            IEnumerable<string> inUse)
+            IEnumerable<SheetBatch> batches, IEnumerable<string> inUse)
         {
-            List<SheetOrder> wanted = (orders ?? new List<SheetOrder>())
-                .Where(one => one != null)
+            List<SheetToMake> rows = (batches ?? Enumerable.Empty<SheetBatch>())
+                .Where(one => one != null && one.Definition.CanBeUsed)
+                .SelectMany(one => one.Rows)
                 .ToList();
 
-            IReadOnlyList<IReadOnlyDictionary<string, SheetNumberFault>> faults =
-                Faults(wanted, ticked, inUse);
+            List<string> asked = rows
+                .Where(one => one.HasNumber)
+                .Select(one => one.SheetNumber)
+                .ToList();
 
             var problems = new List<SheetNumberProblem>();
-            for (int at = 0; at < wanted.Count; at++)
+            foreach (SheetToMake row in rows.Where(one => one.HasNumber))
             {
-                SheetOrder order = wanted[at];
+                SheetNumberFault fault = FaultIn(row.SheetNumber, inUse, asked);
+                if (fault == SheetNumberFault.None) continue;
 
-                foreach (SheetRequest number in order.Numbers)
-                {
-                    SheetNumberFault fault;
-                    if (!faults[at].TryGetValue(number.PlotId, out fault)) continue;
-
-                    problems.Add(new SheetNumberProblem(
-                        number.PlotId, order.Definition.SheetName, number.SheetNumber, fault));
-                }
+                problems.Add(new SheetNumberProblem(
+                    row.PlotId, row.SheetName, row.SheetNumber, fault));
             }
 
             return problems;
@@ -225,17 +276,38 @@ namespace RcrcGreen.Core
             }
         }
 
-        private static SheetNumberFault FaultIn(
-            string number, HashSet<string> taken, Dictionary<string, int> timesAsked)
+        private static HashSet<string> Trimmed(IEnumerable<string> numbers)
         {
-            // Already in the model comes first. Both are true of a number typed twice against a
-            // sheet that also exists, and the model is the one a person goes and looks at.
-            if (taken.Contains(number)) return SheetNumberFault.AlreadyInTheModel;
+            return new HashSet<string>(
+                (numbers ?? Enumerable.Empty<string>())
+                    .Where(one => !string.IsNullOrWhiteSpace(one))
+                    .Select(one => one.Trim()),
+                StringComparer.Ordinal);
+        }
 
-            int asked;
-            return timesAsked.TryGetValue(number, out asked) && asked > 1
-                ? SheetNumberFault.UsedTwiceInThisRun
-                : SheetNumberFault.None;
+        /// <summary>
+        /// The first letter after the leading digits of each parseable number. 010QE gives Q,
+        /// 200Q gives Q, and L-211 gives nothing because it does not start with digits.
+        /// </summary>
+        private static List<string> LettersIn(IEnumerable<string> numbers)
+        {
+            var letters = new List<string>();
+
+            foreach (string number in (numbers ?? Enumerable.Empty<string>())
+                .Where(one => !string.IsNullOrWhiteSpace(one))
+                .Select(one => one.Trim()))
+            {
+                int at = 0;
+                while (at < number.Length && char.IsDigit(number[at])) at++;
+
+                if (at == 0 || at >= number.Length) continue;
+                if (!char.IsLetter(number[at])) continue;
+
+                letters.Add(char.ToUpper(number[at], CultureInfo.InvariantCulture)
+                    .ToString(CultureInfo.InvariantCulture));
+            }
+
+            return letters;
         }
 
         /// <summary>

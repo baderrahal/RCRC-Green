@@ -119,6 +119,30 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(new[] { "L-201 General Arrangement" }, outcome.BothWays.ToArray());
         }
 
+        /// <summary>
+        /// A placement is recorded after the call that made it returned, like everything else
+        /// here, and a null is refused at the door rather than becoming a blank line.
+        /// </summary>
+        [Fact]
+        public void PlacementsAreKeptInTheOrderTheyLanded()
+        {
+            RunOutcome outcome = RunOutcome.NothingWasWritten();
+
+            Assert.Empty(outcome.Placements);
+
+            outcome.NotePlacement(new ViewportRecord(
+                "200QA", "GA", "DM-11-(200) General Arrangement Layout",
+                250, 0.0, 0.0, 1.0, 1.0, 2.0, 1.0, false));
+            outcome.NotePlacement(new ViewportRecord(
+                "200QA", "GA", "DM-11-(600) HARDSCAPE SCHEDULE",
+                0, 0.0, 0.0, 1.0, 1.0, 2.0, 1.0, true));
+
+            Assert.Equal(2, outcome.Placements.Count);
+            Assert.Equal(
+                "DM-11-(200) General Arrangement Layout", outcome.Placements[0].ViewName);
+            Assert.Throws<ArgumentNullException>(() => outcome.NotePlacement(null));
+        }
+
         [Fact]
         public void NothingIsEverRecordedAsNull()
         {
