@@ -4,6 +4,127 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, twenty fifth pass. The template picker and the workbook writer
+
+Branch `claude/inspiring-allen-xs113f`, restarted from main because pull request 31 is merged.
+The workbook half of the KPI tool and nothing of the Revit half. It reads no model, fills
+nothing, and has no fill button, because a control that does nothing is a lie about what the
+tool can do. The round ends with a person able to point at a folder, see the templates in it,
+pick one, read exactly which cells the tool would fill, and name the file that would be
+written.
+
+### The map is data, and the tool carries it
+
+The production templates carry no note saying where any value comes from, measured at zero
+note cells in all seven, and the annotated set that holds the mapping is not what the team
+fills. So `KpiTemplates` in Core is the map, one entry per template, the cells as measured off
+the annotated seven: D3, C5 and E4 everywhere, the area at D8 for the parks and H7 for
+HEALTHCARE, MOSQUES, PARKING and SCHOOLS, shrubs and lawn at F11 and H11 or F10 and H10, and
+no area cell at all for STREETS, whose road width and length the user types by hand. E5, G5
+and H5 are the date, the person and their position, typed by the team and never written. The
+tree lists run B4 to B92 and B4 to B84 on the two park templates and B4 to B83 everywhere
+else, and the range comes off the map entry and never off a constant, because writing 89 rows
+into an 80 row list puts nine quantities into rows no total sums. A completeness test walks
+all seven entries.
+
+`RecognisedWorkbook.Recognise` is the recognition rule. The main sheet name settles five of
+seven. Park Name is two templates, so the file name breaks the tie through the letter run
+match `KpiNames.Holds`, and a name holding both park words or neither puts the pick to the
+user with nothing guessed. A workbook matching no entry is named with the reason and cannot
+be picked.
+
+### The writer copies the zip and patches cells, and the library is no library
+
+Picked by live search, as asked, and here is what the search found. EPPlus moved from LGPL to
+Polyform Noncommercial at version 5 in 2020 and sells commercial licences, stated at
+epplussoftware.com under LgplToPolyform, which blocks free use by a company of more than
+twenty people. That is the licence change the brief warned about. ClosedXML is MIT and NPOI
+is Apache 2.0, both read at their github repositories, but both are load the model and save
+it back, which is the measured failure: 21 of the client file's 37 parts gone while the file
+still opens. DocumentFormat.OpenXml, the Open XML SDK, is MIT on nuget.org and runs on
+netstandard2.0, and works at package level, so it would have served.
+
+The choice is none of them. `WorkbookPatcher` in Core works on the zip directly through
+System.IO.Compression and System.Xml.Linq, both in the platform, because the one thing the
+writer must not do is rewrite parts it does not touch, and the way to be sure is to not hand
+the package to anything that could. It also puts no third party assembly into the Autodesk
+Addins folder, where a version clash with whatever Revit or Dynamo already load cannot be
+tested from here, and it leaves no licence question at all. The brief's own measurements came
+from patching the zip directly.
+
+What the patcher does, each part proven on a workbook the tests build by hand because no
+client file may enter this public repository: every part of the source is in the output and
+none is added, an untouched part comes through byte for byte, only the sheets that received
+values and the workbook part change, a cell that already existed keeps its style and loses
+its old value, text goes in as an inline string so the shared strings part is never touched,
+rows and cells come out in sheet order because a cell out of order is a file Excel repairs,
+`calcPr fullCalcOnLoad` is set so the client's own formulas recalculate on open, a formula
+cell no write names keeps its formula and cached result, and every written cell is read back
+off the output and reported as it landed, never as it was sent. Everything is decided off the
+source first, so a write naming a missing sheet refuses before any file exists.
+
+### The pane block, and the seam
+
+`KpiPanel` gains the template block below the scan block, which is unchanged: the folder with
+Browse, remembered in templates-folder.txt beside the installed assembly on the
+reports-folder.txt pattern, the list of workbooks with the template or the reason beside
+each, one pick at a time, the would fill lines, the output name box prefilled with the
+template file name, and one line saying the file goes beside the open model and that an
+existing file is overwritten silently with no confirmation and no second copy, which is what
+the team asked for. The final name goes through `ScanFileName` cleaning with .xlsx put back.
+`install.ps1` creates templates-folder.txt only when it is missing, so a reinstall keeps the
+folder the user set, and lists it.
+
+`KpiFillValues` is the seam: six values and two lists of botanical name against quantity.
+Nothing constructs one, because the values arrive next round once the scanner has run on the
+real model.
+
+### Touched outside the two Kpi folders, each with why
+
+- `ScanFileName` gained the public `Cleaned` wrapper over its private cleaning, because the
+  output name must go through the same cleaning and a second copy of the rule is the fault
+  this repo has hit six times
+- `KpiRequestHandler.Named` now hands the model's folder beside its title, because the output
+  goes beside the model and only the Revit side can say where that is
+- `install.ps1` as above, `.gitignore` gained `*.xlsx`, and `kpi-rules.md` gained the map and
+  patcher rules
+- The Drawing Sheet is untouched
+
+### What was checked, and how
+
+`dotnet build RcrcGreen.sln -c Release` and `dotnet test`, both after the last file was
+written. Build 0 warnings and 0 errors across all three projects. 657 tests, 0 failed and 0
+skipped, locally, up from 580. 77 are new: the map completeness sweep and the cell table, the
+recognition cases, the output name, the would fill lines held as literals, and the patcher
+suite over the hand built workbook with two sheets, a formula with a cached value, a named
+range, an image part and a custom part.
+
+Three breaks were watched failing before the tests were trusted. The parks existing tree list
+cut to 83 rows turned the two tree range tests and the would fill literal red and nothing
+else. Recalculate on open written as 0 turned the two calcPr tests red. The park tie break
+inverted turned the two EXISTING file name tests red. Each file was restored from a copy
+taken before the break and checked byte for byte, then 657 ran green.
+
+### Never observed, because it needs Revit or the real files
+
+- No client workbook has been touched by this code. Every patcher number above is from the
+  hand built test workbook, and the 37 part, 45 error and 44 error measurements are the
+  brief's, made before this round, not reproduced here
+- The pane's template block has never been rendered, docked or clicked. Whether the would
+  fill lines wrap readably in a docked pane, whether the list reads as a list, and whether
+  the two blocks together scroll well are all UNKNOWN
+- The Browse dialog has never been opened and templates-folder.txt has never been written by
+  the pane or read back after a restart
+- `install.ps1` has not been run since it learned templates-folder.txt
+- The handler's model folder read has never executed, so the output line has never named a
+  real folder, and a cloud model's path has never been seen by it
+- Recognition has never run over the seven real templates, only over the test names, so
+  whether every production file's first sheet name matches the map is UNKNOWN until the team
+  points the pane at the real folder
+- No file has been written beside a model, because nothing fills yet
+
+---
+
 ## 2026-09-09, twenty fourth pass. Two numbers the cut-off brief left to a guess, corrected
 
 Branch `claude/inspiring-allen-xs113f`, restarted from main because pull request 28 is merged.

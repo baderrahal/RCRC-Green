@@ -14,6 +14,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
 
 .PARAMETER Configuration
 Which build to install. Release unless you are debugging.
@@ -93,6 +94,15 @@ New-Item -ItemType Directory -Path $reportsFolder -Force | Out-Null
 $pointer = Join-Path $assemblyFolder 'reports-folder.txt'
 Set-Content -LiteralPath $pointer -Value $reportsFolder -Encoding UTF8 -NoNewline
 $copied.Add($pointer)
+
+# Where the GRP KPI Checklist templates live. The user sets it with Browse in the KPI pane
+# and the pane writes it here, so an install must not wipe a folder already chosen. The file
+# is made empty only when it is missing, and empty means the pane says to set the folder.
+$templatesPointer = Join-Path $assemblyFolder 'templates-folder.txt'
+if (-not (Test-Path -LiteralPath $templatesPointer)) {
+    Set-Content -LiteralPath $templatesPointer -Value '' -Encoding UTF8 -NoNewline
+}
+$copied.Add($templatesPointer)
 
 Write-Host "Installed RCRC Green from $BuildOutput"
 foreach ($file in $copied) {

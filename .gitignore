@@ -37,3 +37,8 @@ TestResults/
 # The README stays, because it is the thing that says why.
 reports/*
 !reports/README.md
+
+# No client workbook, template or filled output, ever. The GRP KPI Checklist files carry the
+# Green Riyadh KPI targets, neighbourhood names and the full plant palette, and this
+# repository is public. Tests build their own small workbooks in the temp folder instead.
+*.xlsx

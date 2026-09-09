@@ -1,6 +1,20 @@
 # ai-max state
 
-Phase: 9, ship. Twenty fourth pass, two numbers the cut-off brief left to a guess, corrected.
+Phase: 9, ship. Twenty fifth pass, the template picker and the workbook writer.
+
+The workbook half of the KPI tool. `KpiTemplates` in Core carries the map, one entry per
+template, measured off the annotated seven, with the tree row ranges on the entry because a
+constant wrote quantities into rows no total sums. `RecognisedWorkbook` settles five templates
+on the main sheet name, breaks the park tie on the file name and puts an unsettled pick to the
+user. `WorkbookPatcher` copies the zip and patches only the cells that get a value, through
+the platform's own zip and XML types with no third party assembly, after a live licence search
+found EPPlus moved to Polyform Noncommercial and the object model libraries lose parts. It
+sets recalculate on open and reads every written cell back off the output. The pane gains the
+template block below the unchanged scan block, with no fill button, and `KpiFillValues` is the
+empty seam the next round fills. 657 tests locally, 0 failed, up from 580, three breaks
+watched red. Nothing reads the model and nothing fills.
+
+Before that, the twenty fourth pass, two numbers the cut-off brief left to a guess, corrected.
 
 The KPI row cap goes from 30 to 200, because the workbook's softscape lists run 80 to 89
 species and a cap of 30 lost about 55 of them from the section this round exists to fill. TREE

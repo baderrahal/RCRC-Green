@@ -1,22 +1,33 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Autodesk.Revit.UI;
 using RcrcGreen.Core.Kpi;
 
+// Autodesk.Revit.UI carries a TextBox of its own for the ribbon. This pane is WPF, so the
+// name is pinned to the one that belongs in a UserControl.
+using TextBox = System.Windows.Controls.TextBox;
+
 namespace RcrcGreen.Revit.Kpi
 {
     /// <summary>
-    /// The KPI pane. Three things and no more: the model name with when it was last read, one
-    /// button reading KPI Scan, and one status line. Kept that small on purpose, because this
-    /// round proves the pane, its identifier, its external event and its handler in one
-    /// install, with almost nothing to go wrong.
+    /// The KPI pane. The scan block at the top is the first round's and stays as it was: the
+    /// model name with when it was last read, one button reading KPI Scan, and one status
+    /// line. Below it sits the template block: the templates folder, every workbook in it
+    /// with what it was recognised as, one pick at a time, exactly what the pick would fill,
+    /// and the name the output would be written under. Nothing here fills anything, and
+    /// there is no fill button, because a control that does nothing is a lie about what the
+    /// tool can do.
     ///
-    /// Nothing in this file reads a Document or touches the Revit API. Everything it wants
-    /// doing goes through <see cref="KpiRequestHandler"/> and its own external event. No
-    /// brush and no spacing is written here either. Colours come from <see cref="PanelTheme"/>
-    /// and every margin from <see cref="PanelMetrics"/>, both shared with the Drawing Sheet
-    /// pane and changed by neither.
+    /// Nothing in this file reads a Document or touches the Revit API. Everything that needs
+    /// one goes through <see cref="KpiRequestHandler"/> and its own external event. The
+    /// template folder and the workbooks in it are plain file reads that touch no document,
+    /// which is the same reason PanelTheme reads the theme without an event. No brush and no
+    /// spacing is written here either. Colours come from <see cref="PanelTheme"/> and every
+    /// margin from <see cref="PanelMetrics"/>.
     /// </summary>
     internal sealed class KpiPanel : UserControl, IDockablePaneProvider
     {
@@ -30,12 +41,30 @@ namespace RcrcGreen.Revit.Kpi
         private readonly Border _strip = new Border();
         private readonly Border _status = new Border();
 
+        private readonly StackPanel _templates = new StackPanel();
+
+        // Outlives every redraw of the template block, because it carries what somebody is
+        // halfway through typing. It goes through Reparented on each rebuild, the same rule
+        // the Drawing Sheet panel follows for its combo boxes.
+        private readonly TextBox _outputName = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
+
         private PanelTheme _theme = PanelTheme.Current();
 
         // The title the read line and the status line describe. Null until a scan. The name
         // and the read line used to be set by two callbacks, so model B's name sat over model
         // A's read line after a document switch.
         private string _scannedTitle;
+
+        // Where the open model sits, from the handler, empty until Revit answers or for a
+        // model that has never been saved. The output goes beside the model, so the line
+        // under the name box reads it.
+        private string _modelFolder = string.Empty;
+
+        // The one picked workbook, and the template settled for it. For most files the two
+        // arrive together. A file caught between the two park templates has a pick and no
+        // template until the user chooses, and nothing is guessed meanwhile.
+        private RecognisedWorkbook _picked;
+        private KpiTemplate _pickedAs;
 
         public KpiPanel()
         {
@@ -78,6 +107,7 @@ namespace RcrcGreen.Revit.Kpi
 
             PaintFromTheTheme();
             Ask(KpiRequest.WhichModel);
+            RedrawTemplates();
         }
 
         private void PaintFromTheTheme()
@@ -99,9 +129,8 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// The strip at the top, the status line at the bottom, and nothing between them yet.
-        /// The buttons this ribbon panel will carry later each get their own controls here
-        /// when they arrive, and an empty middle now is honest about that.
+        /// The strip at the top, the status line at the bottom, and the template block
+        /// between them, scrolling on its own.
         /// </summary>
         private UIElement Layout()
         {
@@ -115,7 +144,13 @@ namespace RcrcGreen.Revit.Kpi
             DockPanel.SetDock(status, Dock.Bottom);
             everything.Children.Add(status);
 
-            everything.Children.Add(new Border { Margin = PanelMetrics.Edge });
+            everything.Children.Add(new ScrollViewer
+            {
+                Content = _templates,
+                Padding = PanelMetrics.Edge,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            });
 
             return everything;
         }
@@ -169,11 +204,12 @@ namespace RcrcGreen.Revit.Kpi
         /// The handler calls these from the Revit thread, so the hop to the pane's own thread
         /// happens here rather than being forgotten at each call site.
         /// </summary>
-        private void Took(string documentTitle)
+        private void Took(string documentTitle, string modelFolder)
         {
             Dispatcher.Invoke(() =>
             {
                 _modelName.Text = KpiPaneWords.ModelNamed(documentTitle);
+                _modelFolder = modelFolder ?? string.Empty;
 
                 if (!string.Equals(documentTitle, _scannedTitle, StringComparison.Ordinal))
                 {
@@ -181,6 +217,10 @@ namespace RcrcGreen.Revit.Kpi
                     _readAt.Text = KpiPaneWords.NotScanned;
                     if (!string.IsNullOrEmpty(documentTitle)) _said.Text = KpiPaneWords.NotScanned;
                 }
+
+                // The output line names the folder the model sits in, so it is drawn again
+                // once Revit has said which that is.
+                RedrawTemplates();
             });
         }
 
@@ -197,6 +237,210 @@ namespace RcrcGreen.Revit.Kpi
         private void Say(string what)
         {
             Dispatcher.Invoke(() => _said.Text = what ?? string.Empty);
+        }
+
+        /// <summary>
+        /// The whole template block, drawn again from the state on every change. One path in
+        /// and out of every change, the same rule as the Drawing Sheet grid.
+        /// </summary>
+        private void RedrawTemplates()
+        {
+            _templates.Children.Clear();
+
+            _templates.Children.Add(new TextBlock
+            {
+                Text = "GRP KPI Checklist templates",
+                FontWeight = FontWeights.Bold,
+                Margin = PanelMetrics.Row
+            });
+
+            string folder = TemplateFolder.Read();
+
+            var folderLine = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+            var browse = new Button
+            {
+                Content = "Browse",
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Gap,
+                ToolTip = "Point at the folder holding the client's GRP KPI Checklist templates. "
+                    + "It is remembered beside the installed add-in."
+            };
+            browse.Click += (sender, e) => BrowseForTheFolder();
+            DockPanel.SetDock(browse, Dock.Right);
+            folderLine.Children.Add(browse);
+            folderLine.Children.Add(new TextBlock
+            {
+                Text = folder.Length == 0 ? "No folder set" : folder,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            _templates.Children.Add(folderLine);
+
+            if (folder.Length == 0)
+            {
+                _templates.Children.Add(Faint(TemplateWords.NoFolder));
+                return;
+            }
+
+            IReadOnlyList<string> paths = TemplateFolder.WorkbooksIn(folder);
+            if (paths.Count == 0)
+            {
+                _templates.Children.Add(Faint(TemplateWords.EmptyFolder));
+                return;
+            }
+
+            List<RecognisedWorkbook> recognised = paths
+                .Select(path =>
+                {
+                    PeekedWorkbook peeked = PeekedWorkbook.Of(path);
+                    return RecognisedWorkbook.Recognise(
+                        Path.GetFileName(path), peeked.SheetNames, peeked.Refusal);
+                })
+                .ToList();
+
+            _templates.Children.Add(Faint(TemplateWords.Listed(
+                recognised.Count, recognised.Count(one => one.IsMatched))));
+
+            foreach (RecognisedWorkbook workbook in recognised)
+            {
+                RecognisedWorkbook which = workbook;
+                bool pickable = which.IsMatched || which.NeedsAPick;
+                var row = new Button
+                {
+                    Content = which.FileName + "   " + which.InWords,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Padding = PanelMetrics.CellPad,
+                    Margin = PanelMetrics.Row,
+                    IsEnabled = pickable,
+                    FontWeight = _picked != null && _picked.FileName == which.FileName
+                        ? FontWeights.Bold
+                        : FontWeights.Normal,
+                    ToolTip = pickable ? "Pick this workbook." : which.Reason
+                };
+                row.Click += (sender, e) => Picked(which);
+                _templates.Children.Add(row);
+            }
+
+            if (_picked == null) return;
+
+            if (_pickedAs == null)
+            {
+                _templates.Children.Add(Faint(TemplateWords.PickBetween(_picked)));
+                var either = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+                foreach (KpiTemplate candidate in _picked.Candidates)
+                {
+                    KpiTemplate chosen = candidate;
+                    var choice = new Button
+                    {
+                        Content = chosen.Name,
+                        Padding = PanelMetrics.CellPad,
+                        Margin = PanelMetrics.Gap
+                    };
+                    choice.Click += (sender, e) => { _pickedAs = chosen; RedrawTemplates(); };
+                    either.Children.Add(choice);
+                }
+                _templates.Children.Add(either);
+                return;
+            }
+
+            _templates.Children.Add(new TextBlock
+            {
+                Text = "What " + _pickedAs.Name + " would fill",
+                FontWeight = FontWeights.Bold,
+                Margin = PanelMetrics.Row
+            });
+
+            foreach (string line in TemplateWords.WouldFill(_pickedAs))
+            {
+                _templates.Children.Add(new TextBlock
+                {
+                    Text = line,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = PanelMetrics.Row
+                });
+            }
+
+            var named = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+            var caption = new TextBlock
+            {
+                Text = "Written as",
+                Width = PanelMetrics.LabelWidth,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(caption, Dock.Left);
+            named.Children.Add(caption);
+            named.Children.Add(Reparented(_outputName));
+            _templates.Children.Add(named);
+
+            _templates.Children.Add(Faint(_modelFolder.Length == 0
+                ? TemplateWords.NoModelPath
+                : TemplateWords.Output(_modelFolder)));
+        }
+
+        private void Picked(RecognisedWorkbook workbook)
+        {
+            _picked = workbook;
+            _pickedAs = workbook.Template;
+            _outputName.Text = OutputName.Suggested(workbook.FileName);
+            RedrawTemplates();
+        }
+
+        /// <summary>
+        /// A folder picker is a Windows dialog rather than a Revit one, so it needs no
+        /// external event. The choice is written beside the installed assembly at once,
+        /// because the pane can be closed a moment later.
+        /// </summary>
+        private void BrowseForTheFolder()
+        {
+            using (var picking = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                picking.Description = "The folder holding the GRP KPI Checklist templates";
+                string already = TemplateFolder.Read();
+                if (already.Length > 0) picking.SelectedPath = already;
+
+                if (picking.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                if (!TemplateFolder.Remember(picking.SelectedPath))
+                {
+                    Say("The folder could not be remembered. " + TemplateFolder.PointerFileName
+                        + " beside the installed add-in refused the write.");
+                }
+
+                _picked = null;
+                _pickedAs = null;
+                RedrawTemplates();
+            }
+        }
+
+        private TextBlock Faint(string text)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = _theme.Faint,
+                Margin = PanelMetrics.Row
+            };
+        }
+
+        /// <summary>
+        /// Takes a control out of whatever held it before it goes somewhere new. The template
+        /// block is thrown away and rebuilt on every change and the name box outlives it, and
+        /// WPF refuses an element with two logical parents outright. Same rule as the Drawing
+        /// Sheet panel's combo boxes.
+        /// </summary>
+        private static UIElement Reparented(UIElement what)
+        {
+            var was = LogicalTreeHelper.GetParent(what) as DependencyObject;
+
+            var panel = was as Panel;
+            if (panel != null) panel.Children.Remove(what);
+
+            var holder = was as ContentControl;
+            if (holder != null) holder.Content = null;
+
+            return what;
         }
     }
 }

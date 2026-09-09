@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI template block, pull request 32</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .pane { width: 430px; border: 1px solid #999; display: flex; flex-direction: column;
+          font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .strip  { background: #ececec; }
+  .dark  .strip  { background: #262626; }
+  .light .status { background: #ececec; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #262626; border-top: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+
+  .strip { padding: 6px 8px; display: flex; align-items: flex-start; }
+  .strip .named { flex: 1; min-width: 0; }
+  .strip .model { font-weight: bold; white-space: nowrap; overflow: hidden;
+                  text-overflow: ellipsis; }
+  .btn { display: inline-block; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+         padding: 2px 6px; margin: 0 6px 0 0; white-space: nowrap; }
+  .middle { flex: 1; padding: 8px; }
+  .status { padding: 6px 8px; }
+  .head { font-weight: bold; margin: 3px 0; }
+  .row { margin: 3px 0; }
+  .fill { margin: 3px 0; white-space: pre-wrap; }
+  .filebtn { display: block; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+             padding: 2px 6px; margin: 3px 0; text-align: left; }
+  .filebtn.on { font-weight: bold; }
+  .filebtn.off { opacity: 0.45; }
+  .namebox { display: flex; align-items: center; margin: 3px 0; }
+  .namebox .cap { width: 54px; }
+  .namebox input { flex: 1; font: inherit; padding: 1px 4px; border: 1px solid #adadad;
+                   background: #fff; color: #1a1a1a; }
+</style>
+</head>
+<body>
+
+<h1>KPI pane, third round: the template block</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/Kpi/KpiPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show how a docked
+  pane wraps these lines at a real width, whether the list of workbook buttons reads as a
+  list or as a wall, how the folder picker dialog looks, what the real fonts come out as, or
+  whether the two blocks together are taller than the pane and how the scroll feels.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on
+  it. If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>The block, a workbook picked</h2>
+
+<p class="caption">The scan block from the first round is unchanged at the top and the bottom.
+The middle is new. The file names and the folder here are invented for the drawing. What a
+pick would fill is the whole point: a person checks these lines against the annotated workbook
+before anything is ever written. There is no fill button, because filling waits on the scan
+report and a control that does nothing is a lie about what the tool can do.</p>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme. EXISTING PARKS picked, its cells and tree ranges listed.</p>
+<div class="pane light">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Not scanned yet. Press KPI Scan.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle">
+    <div class="head">GRP KPI Checklist templates</div>
+    <div class="row">C:\GRP\Templates <span class="btn" style="float:right">Browse</span></div>
+    <div class="row faint">3 workbooks in the folder, 2 recognised.</div>
+    <span class="filebtn on">GRP KPI Checklist - EXISTING PARKS.xlsx&nbsp;&nbsp; EXISTING PARKS</span>
+    <span class="filebtn">GRP KPI Checklist - STREETS.xlsx&nbsp;&nbsp; STREETS</span>
+    <span class="filebtn off">Plant palette.xlsx&nbsp;&nbsp; not offered. Its first sheet is named Palette, which no template uses.</span>
+    <div class="head">What EXISTING PARKS would fill</div>
+    <div class="fill">Main sheet Park Name:
+  D3  PRX_COMPONENT, read off the title block
+  C5  PRX_Plot_UID2, read off the title block
+  E4  the neighbourhood name from Project Information
+  D8  PRX_Intervention Area, totalled off the 00 link's filled regions
+  F11  SHRUBS &amp; GROUND COVER TOTAL AREA from the shrubs and lawn schedule
+  H11  LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule
+  E5, G5, H5  the date, the person and their position, typed by the team, never written
+Tree List - Existing: quantities into B4 to B92, one per botanical name in column D
+Tree List - Proposed: quantities into B4 to B84, one per botanical name in column D</div>
+    <div class="namebox"><span class="cap">Written as</span><input value="GRP KPI Checklist - EXISTING PARKS.xlsx"></div>
+    <div class="row faint">Written to C:\models\NG05. A file already there under this name is
+    overwritten, with no confirmation and no second copy.</div>
+  </div>
+  <div class="status">Open a model. This pane reads its name as soon as it is shown.</div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme. A file the sheet name and the file name could not settle, so
+the user picks between the two park templates and nothing is guessed.</p>
+<div class="pane dark">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Not scanned yet. Press KPI Scan.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle">
+    <div class="head">GRP KPI Checklist templates</div>
+    <div class="row">C:\GRP\Templates <span class="btn" style="float:right">Browse</span></div>
+    <div class="row faint">2 workbooks in the folder, 1 recognised.</div>
+    <span class="filebtn on">GRP KPI Checklist - PARKS.xlsx&nbsp;&nbsp; EXISTING PARKS or FUTURE PARKS. Pick one, nothing is guessed.</span>
+    <span class="filebtn">GRP KPI Checklist - SCHOOLS.xlsx&nbsp;&nbsp; SCHOOLS</span>
+    <div class="row faint">GRP KPI Checklist - PARKS.xlsx is named for neither park template or
+    for both, so the file name settles nothing. Pick which it is.</div>
+    <div class="row"><span class="btn">EXISTING PARKS</span><span class="btn">FUTURE PARKS</span></div>
+  </div>
+  <div class="status">Open a model. This pane reads its name as soon as it is shown.</div>
+</div>
+</div>
+
+</div>
+
+<h2>Before a folder is set, and STREETS</h2>
+
+<div class="pair">
+
+<div>
+<p class="caption">Light theme, first open after an install. The folder is remembered in
+templates-folder.txt beside the installed add-in, the same pattern as reports-folder.txt.</p>
+<div class="pane light">
+  <div class="strip">
+    <div class="named">
+      <div class="model">No model open</div>
+      <div class="faint">Not scanned yet. Press KPI Scan.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle">
+    <div class="head">GRP KPI Checklist templates</div>
+    <div class="row">No folder set <span class="btn" style="float:right">Browse</span></div>
+    <div class="row faint">No template folder is set. Press Browse and point at the folder
+    holding the GRP KPI Checklist templates.</div>
+  </div>
+  <div class="status">Open a model. This pane reads its name as soon as it is shown.</div>
+</div>
+</div>
+
+<div>
+<p class="caption">Dark theme, STREETS picked. It has no area cell from Revit, and the block
+says which cells are left alone and why rather than going quiet about them.</p>
+<div class="pane dark">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Not scanned yet. Press KPI Scan.</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+  <div class="middle">
+    <div class="head">GRP KPI Checklist templates</div>
+    <div class="row">C:\GRP\Templates <span class="btn" style="float:right">Browse</span></div>
+    <div class="row faint">1 workbook in the folder, 1 recognised.</div>
+    <span class="filebtn on">GRP KPI Checklist - STREETS.xlsx&nbsp;&nbsp; STREETS</span>
+    <div class="head">What STREETS would fill</div>
+    <div class="fill">Main sheet Streets:
+  D3  PRX_COMPONENT, read off the title block
+  C5  PRX_Plot_UID2, read off the title block
+  E4  the neighbourhood name from Project Information
+  F11  SHRUBS &amp; GROUND COVER TOTAL AREA from the shrubs and lawn schedule
+  H11  LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule
+  No area cell. The road width and the total length are typed by hand and the sheet works
+  the area out. Those cells are left alone.
+  E5, G5, H5  the date, the person and their position, typed by the team, never written
+Tree List - Existing: quantities into B4 to B83, one per botanical name in column D
+Tree List - Proposed: quantities into B4 to B83, one per botanical name in column D</div>
+    <div class="namebox"><span class="cap">Written as</span><input value="GRP KPI Checklist - STREETS.xlsx"></div>
+    <div class="row faint">The open model has never been saved, so there is no folder to write
+    beside. Save the model first.</div>
+  </div>
+  <div class="status">Open a model. This pane reads its name as soon as it is shown.</div>
+</div>
+</div>
+
+</div>
+
+</body>
+</html>
