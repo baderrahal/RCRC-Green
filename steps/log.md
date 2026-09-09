@@ -4,6 +4,41 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, the rule behind the last three rounds, written down
+
+No code change. One rule into `CLAUDE.md` and a pointer from each of the two rules files.
+
+**NEVER READ A SCHEDULE VALUE BY CELL POSITION. Ask the heading row which column it is. A
+reader that cannot find its column says so rather than falling back to a position.**
+
+Three rounds, four readers, one fault. `SoftscapeRows` took the botanical name off cell 0 and
+the count off the last number. `ScheduleGroups` decided a row was named off cell 0.
+`ShrubsAndLawnRows` read a species row off cell 0. The first column is the image and an existing
+species prints with none, so every one of them was invisible on a plot whose rows all carry
+photos, which is why each round found only the one in front of it.
+
+`kpi-rules.md` said it as a fact about these schedules and `core-rules.md` did not say it at
+all, so a reader touching `ScheduleRows` from the Core side met the rule nowhere. It is in
+`CLAUDE.md` now, said once, and both files point at it rather than restating it.
+
+### The half of the rule the code does not yet keep
+
+The first sentence is kept everywhere. **The second is not**, and this round changed no code, so
+it is written down rather than quietly true. Four readers still fall back to a position when the
+heading row names no column:
+
+- `ScheduleGroups.IsNamed` falls back to `row[0]`
+- `SoftscapeRows.SpeciesIn` falls back to `row[0]` for the botanical name
+- `SoftscapeRows.QuantityIn` falls back to the last whole number in the row
+- `ShrubsAndLawnRows.SubtotalsIn` falls back to cell 0 for the species test
+
+None has ever fired on a schedule these readers have been run against: the softscape and shrubs
+heading rows both name BOTANICAL NAME, AREA and COUNT, so no report has come off a fallback. `ShrubsAndLawnRows` already shows the shape the rule wants for the other
+half: no AREA column and it hands back nothing rather than guessing at one.
+
+Taking the four out is a code change and was not asked for. It is open.
+
+---
 ## 2026-09-09, thirty second pass. The group counter, the switch and the component values
 
 Pull request 39, merged into main as `973c817`. **The runner executed 804 tests against its

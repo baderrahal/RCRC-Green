@@ -110,6 +110,10 @@ KERBS is built on Slab Edges, a name lookup found nothing, and the schedule was 
 "this model has no category named Slab Edges" on a model that has it. `CategoryName` is kept for
 the report only.
 
+Reading a schedule as PRINTED is a different job and Core does that too, in `ScheduleRows` and
+`ScheduleGroups`. **Never read a schedule value by cell position**, which is the rule in
+`CLAUDE.md`, stated there and nowhere else.
+
 ## A sheet number is proposed from the pattern the model already uses
 
 `SheetNumbers.Propose` continues what the plot already does: the view code, then the plot's
