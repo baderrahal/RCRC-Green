@@ -6,6 +6,12 @@ Newest entry first.
 
 ## 2026-09-09, twenty ninth pass. Two report faults from the 1355 scan, and the facts
 
+Pull request 36, merged into main as `01d9886`. **The runner executed 722 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 722 ran, 0 failed and 0 skipped**, after
+the last file was written and after the five break watches were restored. The squash carries no
+co-author line and no generated-by footer, the message having gone through the API rather than
+the GitHub button the hook cannot see.
+
 The scan ran on the 1355 model. Two things in the report were wrong in the same way, both
 answering a question from the wrong place while the right answer sat a screen above in the same
 file.

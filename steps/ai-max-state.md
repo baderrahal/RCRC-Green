@@ -1,7 +1,8 @@
 # ai-max state
 
 Phase: 9, ship. Twenty ninth pass, two report faults from the 1355 scan and the facts it
-measured.
+measured. Pull request 36 is merged into main as `01d9886`, 722 tests on the runner against its
+merged head and 722 locally, 0 failed and 0 skipped on each.
 
 Both faults were the report answering a question from the wrong place while the right answer sat
 a screen above it in the same file. Section 9 read NOT FOUND for PRX_COMPONENT while section 3
