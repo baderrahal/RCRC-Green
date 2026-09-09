@@ -66,6 +66,11 @@ namespace RcrcGreen.Revit.Kpi
         private RecognisedWorkbook _picked;
         private KpiTemplate _pickedAs;
 
+        // Why the component on the ticked plots preselected nothing, empty when it preselected
+        // something or when there is nothing to say yet. A value the table does not hold used to
+        // leave the pane silent, which reads as a tool that never looked.
+        private string _whyNoTemplate = string.Empty;
+
         // What the model holds, read through the external event when the pane is shown. Plain
         // values only, so the pane still names no Revit type.
         private KpiPlotFacts _facts;
@@ -336,6 +341,9 @@ namespace RcrcGreen.Revit.Kpi
 
             _templates.Children.Add(Faint(TemplateWords.Listed(
                 recognised.Count, recognised.Count(one => one.IsMatched))));
+
+            // Said above the list, because it is the reason none of these rows is preselected.
+            if (_whyNoTemplate.Length > 0) _templates.Children.Add(Faint(_whyNoTemplate));
 
             foreach (RecognisedWorkbook workbook in recognised)
             {
@@ -632,19 +640,30 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// The component on the ticked plots preselects a template. A component matching none,
-        /// matching more than one, or plots that disagree all leave the pick to the user, and
-        /// a template the user has already picked by hand is never moved.
+        /// The component on the ticked plots preselects a template, off the measured table in
+        /// <see cref="ComponentTemplates"/>. A value the table does not hold, and plots that
+        /// disagree, both leave the pick to the user WITH THE REASON ON SCREEN, and a template
+        /// the user has already picked by hand is never moved.
         /// </summary>
         private void Preselect()
         {
+            _whyNoTemplate = string.Empty;
             if (_facts == null || _ticks.Count == 0 || _picked != null) return;
 
             AgreedValue component = new AgreedValue(_ticks.Ticked
                 .Select(plotId => new PlotText(plotId, _facts.ComponentOn(plotId))));
 
             TemplateChoice choice = TemplateForComponent.For(component, null);
-            if (choice.NeedsAPick) return;
+            if (choice.NeedsAPick)
+            {
+                // Nothing is picked by hand here, because this method returns above when
+                // something is, so whatever _pickedAs holds came from an earlier preselection on
+                // plots that are no longer the ticked ones. Leaving it would arm Create with a
+                // template beside a line saying none was preselected.
+                _pickedAs = null;
+                _whyNoTemplate = choice.Why;
+                return;
+            }
 
             _pickedAs = choice.Preselected;
             if (_outputName.Text.Length == 0)
@@ -782,6 +801,11 @@ namespace RcrcGreen.Revit.Kpi
         {
             _picked = workbook;
             _pickedAs = workbook.Template;
+
+            // The line saying nothing was preselected describes a pane with nothing picked, so
+            // a hand pick is what makes it untrue. A line left standing beside the state that
+            // contradicts it is the shape this repo has met seven times.
+            _whyNoTemplate = string.Empty;
             _outputName.Text = OutputName.Suggested(workbook.FileName);
             RedrawTemplates();
         }
@@ -809,6 +833,7 @@ namespace RcrcGreen.Revit.Kpi
 
                 _picked = null;
                 _pickedAs = null;
+                _whyNoTemplate = string.Empty;
                 RedrawTemplates();
             }
         }

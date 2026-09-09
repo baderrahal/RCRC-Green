@@ -975,14 +975,15 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "value | sheets carrying it | plots | the plots",
-                    "FRIDAY MOSQUE | 2 | 1 | FM-05",
-                    "SCHOOL | 2 | 1 | SC-03",
-                    "EXISTING PARK | 1 | 1 | EP-02",
-                    "HEALTH | 1 | 1 | NS-19",
-                    "NH STRT 20m ROW | 1 | 1 | NS-06",
-                    "The value is the asset type. It is not a template name and nothing in the tool "
-                        + "turns one into the other, so this list is the whole of what the model says."
+                    "value | sheets carrying it | plots | template | the plots",
+                    "FRIDAY MOSQUE | 2 | 1 | MOSQUES | FM-05",
+                    "SCHOOL | 2 | 1 | SCHOOLS | SC-03",
+                    "EXISTING PARK | 1 | 1 | EXISTING PARKS | EP-02",
+                    "HEALTH | 1 | 1 | HEALTHCARE | NS-19",
+                    "NH STRT 20m ROW | 1 | 1 | STREETS | NS-06",
+                    "The value is the asset type and it is not a template name. Which template each "
+                        + "one means is a table measured off the 1548 scan, read back in the column "
+                        + "above. A value (not in the table) preselects nothing and the user picks."
                 },
                 UntilBlank(lines, "EVERY VALUE OF PRX_Component ON THE SHEET, 5 distinct values over 7 sheets. "
                     + "The plot beside each is PRX_Plot_ID read off the sheet."));
@@ -1034,6 +1035,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// <summary>
         /// A component value on sheets that carry no plot is counted and named, never dropped,
         /// because a value with nowhere to sit is the one a mapping cannot be built for.
+        ///
+        /// PARKING is also a value the table does not hold. The measured one is PARKING LOT, and
+        /// nothing matches on part of a value, so this prints as one nobody has mapped yet.
         /// </summary>
         [Fact]
         public void AComponentValueWithNoPlotOnAnySheetSaysSo()
@@ -1050,7 +1054,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     })));
             string[] lines = LinesOf(KpiReport.Write(scan, Noon));
 
-            Assert.Contains("PARKING | 2 | 0 | (no plot on those sheets)", lines);
+            Assert.Contains("PARKING | 2 | 0 | (not in the table) | (no plot on those sheets)", lines);
         }
 
         /// <summary>
