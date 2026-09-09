@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI plot picker and Create, pull request 37</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  ul { max-width: 900px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .pane { width: 430px; border: 1px solid #999; display: flex; flex-direction: column;
+          font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .strip  { background: #ececec; }
+  .dark  .strip  { background: #262626; }
+  .light .status { background: #ececec; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #262626; border-top: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #ff8080; }
+
+  .strip { padding: 6px 8px; display: flex; align-items: flex-start; }
+  .strip .named { flex: 1; min-width: 0; }
+  .strip .model { font-weight: bold; white-space: nowrap; overflow: hidden;
+                  text-overflow: ellipsis; }
+  .btn { display: inline-block; background: #ddd; color: #1a1a1a; border: 1px solid #adadad;
+         padding: 2px 6px; margin: 0 6px 0 0; white-space: nowrap; }
+  .btn.on { font-weight: bold; }
+  .btn.off { color: #8a8a8a; border-color: #cfcfcf; }
+  .middle { flex: 1; padding: 8px; }
+  .status { padding: 6px 8px; }
+  .head { font-weight: bold; margin: 10px 0 4px; }
+  .row { margin: 3px 0; }
+  .box { display: inline-block; min-width: 150px; background: #fff; color: #1a1a1a;
+         border: 1px solid #adadad; padding: 1px 4px; }
+  .dark .box { background: #1a1a1a; color: #e6e6e6; border-color: #4a4a4a; }
+  .label { display: inline-block; width: 90px; }
+  .ticks { max-height: 200px; overflow: auto; border: 1px solid #c8c8c8; padding: 4px; }
+  .dark .ticks { border-color: #4a4a4a; }
+  .indent { margin-left: 14px; }
+</style>
+</head>
+<body>
+
+<h1>KPI pane, the plot picker and Create</h1>
+
+<div class="warning">
+  <p><strong>This is a hand drawn mockup, not a screenshot.</strong> Nothing here has been
+  through Revit. It is drawn from <code>KpiPanel.cs</code>, <code>CreateWords.cs</code> and
+  <code>PanelTheme.cs</code> so the layout and the wording can be read before somebody spends
+  an install on it.</p>
+  <p>It cannot show how Revit will render it. WPF metrics, the dockable pane's real width and
+  the font Revit hands the pane are all outside what a browser can tell you. Treat the words as
+  exact and the spacing as approximate.</p>
+</div>
+
+<p class="caption">The pane with three plots ticked, the template preselected from the
+component, and one plot refusing because two of its filled regions hold an area. The scan block
+and the template block above are unchanged from the last two rounds and are shown shortened.</p>
+
+<div class="pair">
+
+<div class="pane light">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Read 2026-09-09 14:05, 96,959 elements in 5.4 s</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+
+  <div class="middle">
+    <div class="faint">GRP KPI Checklist templates, folder set, 7 workbooks, 7 recognised.</div>
+    <div class="row"><span class="btn on">GRP KPI Checklist MOSQUES.xlsx&nbsp;&nbsp; MOSQUES</span></div>
+    <div class="faint">What MOSQUES would fill: 6 cells and 2 tree lists.</div>
+    <div class="row"><span class="label">Written as</span><span class="box">MOSQUES FRIDAY MOSQUE</span></div>
+    <div class="faint">Beside the model, in ...\NG05\.</div>
+    <div class="faint">A file of this name in that folder is overwritten without asking.</div>
+
+    <div class="head">Plots</div>
+    <div class="faint">The sheets and the schedules do not name the same plots. Both lists are
+      offered.</div>
+    <div class="faint">&nbsp;&nbsp;On a sheet and on no schedule, 1: DM-12</div>
+    <div class="faint">&nbsp;&nbsp;On a schedule and on no sheet, 1: NS-06</div>
+    <div class="row"><span class="btn">Select all</span><span class="btn">Clear</span></div>
+    <div class="row"><strong>3 of 160 plots ticked.</strong></div>
+    <div class="ticks">
+      <div class="row">&#9746; FM-05</div>
+      <div class="row">&#9746; FM-06</div>
+      <div class="row">&#9746; FM-07</div>
+      <div class="row">&#9744; NS-06</div>
+      <div class="row">&#9744; NS-19</div>
+      <div class="row">&#9744; DM-11</div>
+      <div class="row">&#9744; DM-12</div>
+      <div class="faint">... 153 more</div>
+    </div>
+
+    <div class="head">What the values come from</div>
+    <div class="row">Component</div>
+    <div class="row"><span class="btn on">PRX_Component</span></div>
+    <div class="row">Reference</div>
+    <div class="row"><span class="btn">PRX_Plot_ID</span><span class="btn">PRX_Plot_UID</span></div>
+    <div class="row"><span class="btn on">PRX_Plot_UID2</span><span class="btn">PRX_Plot_NH</span></div>
+    <div class="faint">&nbsp;&nbsp;&nbsp;PRX_Plot_ID&nbsp;&nbsp; FM-05</div>
+    <div class="faint">&nbsp;&nbsp;&nbsp;PRX_Plot_UID&nbsp;&nbsp; 120000247</div>
+    <div class="faint">&nbsp;&nbsp;&nbsp;PRX_Plot_UID2&nbsp;&nbsp; ANH-007-MO-100019</div>
+    <div class="faint">&nbsp;&nbsp;&nbsp;PRX_Plot_NH&nbsp;&nbsp; GP.NH.Z2.052-DES042</div>
+    <div class="row">Location</div>
+    <div class="row"><span class="btn on">Neighborhood Name</span><span class="btn">Neighborhood Group</span></div>
+    <div class="row"><span class="label">Date</span><span class="box">2026-09-09</span></div>
+    <div class="row"><span class="label">Prepared by</span><span class="box">B RAHAL</span></div>
+    <div class="row"><span class="label">Position</span><span class="box">BIM COORDINATOR</span></div>
+
+    <div class="head">Create</div>
+    <div class="warn row">FM-07 has 2 filled regions holding an area,
+      RCRC_CADASTRAL LIMIT 1131.7 m&sup2;, RCRC_OUT OF SCOPE (PRESENTATION) 250 m&sup2;.
+      Pick the one that is its intervention area.</div>
+    <div class="faint">&nbsp;&nbsp;&nbsp;FM-07, pick its intervention area:</div>
+    <div class="row"><span class="btn">RCRC_CADASTRAL LIMIT&nbsp;&nbsp; 1131.7 m&sup2;</span></div>
+    <div class="row"><span class="btn">RCRC_OUT OF SCOPE (PRESENTATION)&nbsp;&nbsp; 250 m&sup2;</span></div>
+    <div class="row"><span class="btn">Create</span></div>
+  </div>
+
+  <div class="status">Nothing was written. FM-07 has 2 filled regions holding an area.</div>
+</div>
+
+<div class="pane dark">
+  <div class="strip">
+    <div class="named">
+      <div class="model">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">Read 2026-09-09 14:05, 96,959 elements in 5.4 s</div>
+    </div>
+    <span class="btn">KPI Scan</span>
+  </div>
+
+  <div class="middle">
+    <div class="faint">GRP KPI Checklist templates, folder set, 7 workbooks, 7 recognised.</div>
+    <div class="row"><span class="btn on">GRP KPI Checklist MOSQUES.xlsx&nbsp;&nbsp; MOSQUES</span></div>
+    <div class="faint">What MOSQUES would fill: 6 cells and 2 tree lists.</div>
+    <div class="row"><span class="label">Written as</span><span class="box">MOSQUES FRIDAY MOSQUE</span></div>
+    <div class="faint">Beside the model, in ...\NG05\.</div>
+    <div class="faint">A file of this name in that folder is overwritten without asking.</div>
+
+    <div class="head">Plots</div>
+    <div class="faint">The sheets and the schedules name the same 160 plots.</div>
+    <div class="row"><span class="btn">Select all</span><span class="btn">Clear</span></div>
+    <div class="row"><strong>3 of 160 plots ticked.</strong></div>
+    <div class="ticks">
+      <div class="row">&#9746; FM-05</div>
+      <div class="row">&#9746; FM-06</div>
+      <div class="row">&#9746; FM-07</div>
+      <div class="row">&#9744; NS-06</div>
+      <div class="row">&#9744; NS-19</div>
+      <div class="faint">... 155 more</div>
+    </div>
+
+    <div class="head">What the values come from</div>
+    <div class="row">Component</div>
+    <div class="row"><span class="btn on">PRX_Component</span></div>
+    <div class="row">Reference</div>
+    <div class="row"><span class="btn on">PRX_Plot_UID2</span><span class="btn">PRX_Plot_NH</span></div>
+    <div class="row">Location</div>
+    <div class="row"><span class="btn on">Neighborhood Name</span></div>
+    <div class="row"><span class="label">Date</span><span class="box">2026-09-09</span></div>
+    <div class="row"><span class="label">Prepared by</span><span class="box">B RAHAL</span></div>
+    <div class="row"><span class="label">Position</span><span class="box">BIM COORDINATOR</span></div>
+
+    <div class="head">Create</div>
+    <div class="warn row">CONFIRM BEFORE WRITING. 1 set of chosen plots report the same area.</div>
+    <div class="warn row">&nbsp;&nbsp;FM-05, FM-06 all read 1131.7 m&sup2;. Either they are the
+      same size or one region is counted twice.</div>
+    <div class="row"><span class="btn">These areas are right, write anyway</span></div>
+    <div class="row"><span class="btn">Create</span></div>
+  </div>
+
+  <div class="status">Nothing was written. These plots report the same area, FM-05 and FM-06.</div>
+</div>
+
+</div>
+
+<h2>What the drawing is showing</h2>
+
+<ul>
+  <li><strong>Three modes in one list.</strong> One plot is a tick, several are several ticks,
+  and every plot is <code>Select all</code>. There is no free text box anywhere: a plot the
+  model does not hold cannot be chosen, which is the rule <code>PlotTicks</code> enforces.</li>
+
+  <li><strong>The count shows at all times</strong>, from
+  <code>PlotTicks.InWords</code>, so nobody presses Create wondering how many plots are about
+  to be added together.</li>
+
+  <li><strong>Both plot sources are named when they disagree</strong>, from
+  <code>CreateWords.PlotSources</code>. The light pane shows the disagreeing case and the dark
+  pane the agreeing one. Neither list wins.</li>
+
+  <li><strong>The reference shows each parameter's value beside its name</strong>, so the pick
+  is made by looking at the value. The four values are the ones measured on sheet 010EA.</li>
+
+  <li><strong>Two refusals are drawn, one per pane.</strong> The light pane has a plot whose two
+  filled regions both hold an area, which the type name cannot settle, so the tool asks. The
+  dark pane has two plots reading the same area, which is either two plots of one size or one
+  region counted twice. Both refuse the write until a person answers.</li>
+
+  <li><strong>The buttons are buttons rather than combo boxes</strong>, because this block is
+  thrown away and built again on every change and a combo box carries its own item list across
+  a redraw. The three text boxes do outlive the redraw and go through
+  <code>Reparented</code>.</li>
+</ul>
+
+<h2>What it does not show</h2>
+
+<ul>
+  <li>The pane after a successful write. The status line then reads the count of cells that
+  really landed, read back off the output file, from <code>CreateWords.Wrote</code>.</li>
+  <li>160 plots in the tick list. The list scrolls at
+  <code>PanelMetrics.ListHeight</code>, 200, and the drawing shows the first few.</li>
+  <li>Anything about how Revit will actually render this. See the note at the top.</li>
+</ul>
+
+</body>
+</html>

@@ -18,8 +18,66 @@ parks, future parks, healthcare, mosques, parking, schools, streets. Cells that 
 carry a note saying where. The finished tool reads those values out of a model and writes them
 into the workbook. **It creates nothing in the model, ever.**
 
-This round is the KPI Scanner and nothing else. No Excel, no writing to the model, no filling.
-It replaces nine assumptions with measurements, the way Scan Model did for the Drawing Sheet.
+The scanner came first and is still there. The pane now also fills: a plot picker, the three
+choices the model cannot make, and a Create button that copies the template, patches it and
+writes a report. **It still creates nothing in the model and never writes to the template.**
+
+## One checklist can cover more than one plot
+
+A checklist is not always one plot. It can be a whole asset made of several, and then the
+workbook wants the plots added together.
+
+**Which plots belong to one checklist is not written down anywhere.** Nothing groups by the
+plot prefix, by the component, or by anything else. The user ticks them and the tool adds up
+exactly what was ticked. `PlotTicks` is the one record of that choice and the list is drawn
+from it every time it changes.
+
+The plot list is the union of two sources, `PRX_Plot_ID` on the sheets and the
+`PRX_Ref Plot ID` filter value on the schedules. Both lists are kept, the disagreement is shown
+on screen, and neither wins. That is a seventh place two records of one fact could part.
+
+## Adding printed numbers is allowed, working one out is not
+
+Reading one plot adds nothing. Reading several means adding numbers the schedules printed,
+which is allowed. Recomputing a number off the elements a schedule lists is never allowed and
+happens nowhere, because those elements are RVT Link instances on this model.
+
+What makes the addition safe is that **every plot's own number is printed beside the total and
+the total must equal their sum.** `Totalled` carries both and `Adds` works the sum out again.
+A total that does not equal its parts refuses the write. The tool does not write a total with a
+note attached.
+
+Trees merge on the group AND the botanical name, never the name alone. ALBIZIA LEBBECK is 1
+existing and 13 proposed on DM-12, and merging on the name would put 14 in one tree sheet.
+
+**Two plots reporting an identical raw area are flagged, never silently added.** MM-03 and
+MM-04 both read 12182.05561411 in the 00 link. Either they are the same size or one region is
+counted twice, and a double count nobody sees is the worst thing this tool can produce, so a
+person confirms before anything is written. More than one region holding an area on one plot
+refuses the same way, because which of a plot's two regions carries it varies by plot.
+
+## Every plot chosen is accounted for on the way out
+
+`Reconciliation` opens the report: plots ticked, plots read, plots with each schedule and with
+an area, and every plot that contributed nothing with its reason. A plot that gave nothing is
+named rather than quietly absent, because a plot list that goes in longer than it comes out is
+the failure this exists to catch. It refuses the write when the numbers do not agree.
+
+## Matching a species is plain or it is nothing
+
+The workbook's own column D is the only species list there is and `SpeciesList` reads it out of
+the template. Nothing in this repo carries a copy of the plant palette. Matching is the
+botanical name compared without case and with surrounding whitespace off, and nothing else.
+
+Three measured cases are why nothing is stripped, split or normalised past that. The model
+prints a species called UNKNOWN and the workbook holds four rows all named Unknown Tree, so
+nothing can match those on name. ACACIA / VACHELLIA FARNESIANA carries a slash.
+BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an apostrophe, and the shrub rows are prefixed
+SHRUBS: and GRASS: where the workbook's list is not.
+
+**A species Revit holds that the list does not is named in the report and never dropped.** A
+quantity that goes nowhere leaves a tree list that reads as complete and is short. A species
+the list holds and Revit does not is left empty, which is correct and needs no line.
 
 ## The note text can never be matched against the model
 
@@ -211,7 +269,10 @@ production copy and the annotated one. **It cannot be re-run and no gate repeats
 files are not in this repository and never will be. What is committed is what it taught.
 
 Every mapped cell agreed with the annotation, D3, C5, E4, D8, F11 and H11, and E5, G5 and H5
-read DATE OF THE DAY, EMPLOYEE NAME and EMPLOYEE POSITION, which the team types.
+read DATE OF THE DAY, EMPLOYEE NAME and EMPLOYEE POSITION. Those three come from nowhere in
+Revit. The team types them into the pane and the tool copies them through, so a filled
+checklist carries who filled it and when. They sit in the same three cells in every template,
+which is why `KpiTemplates.TypedByTheTeam` holds them rather than a template's mapped cells.
 
 Two things the check found that reading the map could not:
 

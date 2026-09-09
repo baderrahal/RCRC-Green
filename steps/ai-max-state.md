@@ -1,6 +1,23 @@
 # ai-max state
 
-Phase: 9, ship. Twenty ninth pass, two report faults from the 1355 scan and the facts it
+Phase: 9, ship. Thirtieth pass, the plot picker, several plots at once, and the Create button.
+
+The button the last four rounds deliberately did not add. The pane gains a plot picker offering
+one plot, several or all of them, the three choices the model cannot make, three typed boxes,
+and Create, which copies the chosen template, patches it and writes a report beside the model.
+It creates nothing in the model and never writes to the template.
+
+**Which plots belong to one checklist is not written down anywhere and nothing derives it.**
+The user ticks them and the tool adds up exactly what was ticked. Adding numbers the schedules
+printed is allowed and recomputing one off elements is not. Every plot's own number is printed
+beside every total and a total that does not equal its parts refuses the write, as do two plots
+reporting an identical area and one plot whose two regions both hold one. Species merge on the
+group AND the name. Matching is plain, so UNKNOWN, the slash and the apostrophe all come back
+unmatched and named rather than forced onto a row.
+
+Nothing in this round has been through Revit. The log lists every unobserved thing item by item.
+
+Before that, the twenty ninth pass, two report faults from the 1355 scan and the facts it
 measured. Pull request 36 is merged into main as `01d9886`, 722 tests on the runner against its
 merged head and 722 locally, 0 failed and 0 skipped on each.
 

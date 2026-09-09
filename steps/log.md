@@ -4,6 +4,118 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, thirtieth pass. The plot picker, several plots at once, and Create
+
+The button the last four rounds deliberately did not add. It does something now.
+
+### One checklist can cover more than one plot
+
+This is the shape of the round. A checklist is not always one plot, it can be a whole asset
+made of several, and then the workbook wants them added together. **Which plots belong to one
+checklist is not written down anywhere and nothing here derives it.** No grouping by prefix, by
+component or by anything else. The user ticks and the tool adds up exactly what was ticked.
+
+The picker offers one plot, several, or all of them, from a list built as the union of two
+sources: `PRX_Plot_ID` on the sheets and the `PRX_Ref Plot ID` filter value on the schedules.
+Both lists are kept, the disagreement is shown on screen, neither wins. That is the seventh
+place two records of one fact could have parted and it is held open on purpose.
+
+### Adding printed numbers, and the rule that makes it safe
+
+Reading one plot adds nothing. Reading several means adding numbers the schedules printed,
+which is allowed, and is a different thing from recomputing a number off elements, which is
+never allowed and happens nowhere.
+
+`Totalled` carries the per plot numbers and the total together and works the sum out again to
+compare. **A total that does not equal its parts refuses the write.** The report prints each
+plot's own number beside every total so the arithmetic can be checked by eye without opening
+Revit. Trees merge on the group AND the botanical name: ALBIZIA LEBBECK is 1 existing and 13
+proposed on DM-12, and merging on the name alone would put 14 into one tree sheet.
+
+Two plots reporting an identical raw area are flagged and refuse the write until somebody
+confirms. So does one plot whose two filled regions both hold an area, because which of them
+carries it varies by plot and the type name cannot decide. The tool asks rather than picking.
+
+### Matching a species
+
+`SpeciesList` reads the workbook's own column D out of the template, resolving shared strings,
+because a cell holding one stores an index and reading the index as the name would report every
+species unmatched. Nothing in this repo carries a copy of the plant palette.
+
+Matching is the botanical name compared without case and with surrounding whitespace off, and
+nothing else. All three hard cases are tested: UNKNOWN against the four rows named Unknown Tree
+matches none of them, the slash in ACACIA / VACHELLIA FARNESIANA is not split on, and the
+apostrophe in BOUGAINVILLEA GLABRA 'PINK PIXIE' is part of the name. A name the workbook holds
+twice is reported rather than placed on the first, for the same reason.
+
+### The rule this round changed
+
+`kpi-rules.md` said the tool never writes E5, G5 and H5, because the team types them. The brief
+puts them on the pane as three boxes, so the tool now copies them through. The rules file and
+`KpiTemplates` both say so now rather than one of them still saying the old thing.
+
+### Checked
+
+`dotnet build RcrcGreen.sln -c Release`, 0 warnings and 0 errors. The suite after the last file
+was written. Four breaks watched red first and each file restored byte for byte, checked by
+md5:
+
+- dropping the ticked-versus-read refusal from `Reconciliation` turned
+  `APlotTickedAndNotReadRefusesTheWriteAndIsNamed` red
+- merging species on the botanical name alone turned `TheSameSpeciesInTwoGroupsNeverMerges` and
+  `TheGroupDecidesTheSheetAndNothingElseDoes` red
+- comparing identical areas on the rounded metres rather than the raw turned both identical
+  area tests red
+- placing a name the workbook holds twice on its first row turned
+  `ANameTheWorkbookHoldsTwiceIsReportedRatherThanPlacedOnTheFirst` red
+
+One test caught a fault in its own fixture rather than in the code: every plot built by the
+fixture had the same default area, so the identical area guard fired on a reconciliation test
+that expected to pass. The guard was right and the fixture was wrong.
+
+### Never observed, item by item
+
+Nothing in this round has been through Revit. Every one of these is written down because it has
+not been run, not because it is expected to fail.
+
+- **No workbook has been filled.** `WorkbookPatcher` is proven by its own tests against a
+  workbook the tests build, and the 37 parts in and 37 out was measured last round on the real
+  EXISTING PARKS file. This round has not repeated it
+- **No plot has been read out of a model.** `KpiPlotReader` compiles against the reference
+  assemblies and has never run. Every method in it is untested, because the test project must
+  never load the Revit API
+- **The pane has never been drawn.** The plot picker, the three pickers, the three boxes and the
+  Create button exist only as a mockup in `design/pr-37/kpi-create.html`
+- **The schedule filter route has never run.** Schedules are found by the plot their filter
+  names rather than by the plot in their own name. That is the more correct source by
+  `CLAUDE.md`, and it has not been run once
+- **The shrubs and lawn row shape is inferred, not measured.** `kpi-rules.md` records DM-11 as
+  GRASS 35 m2 46 then SHRUBS & GROUND COVER 70 m2 58, which reads as the heading and its
+  numbers on one row. The reader is written for that shape. If the real schedule puts the
+  heading on its own row the subtotals come back empty and the report says so per plot
+- **The softscape total row's shape has never been seen.** A subtotal has an empty first cell
+  on the fixture and is skipped. A grand total row carrying its own word in the first cell would
+  read as a species here, come out as one the workbook's list does not hold, and be named in the
+  report with its count. Visible, and written nowhere, but wrong
+- **The three typed cells have never been written.** E5, G5 and H5 are new this round
+- **`RememberedNames` has never read or written its file.** The two name boxes are meant to
+  survive a Revit restart and that has not been shown
+- **No refusal has been seen on screen.** The identical area confirmation, the region pick and
+  the one-refusal-lists-everything line are all drawn in the mockup and never rendered
+- **The output has never been overwritten.** The delete before the patch is written and unrun
+
+### Open, and not to be guessed at in code
+
+- **Which plots belong to one checklist is not written down anywhere.** The user ticks them.
+  Do not derive a grouping rule from the prefix, from PRX_Component, or from anything else
+
+Two from last round are still open and neither is answered here. The four rows named Unknown
+Tree against the model's UNKNOWN, and the species names carrying slashes and apostrophes. The
+code reports all of them unmatched rather than guessing, which is the honest half of an answer
+and not the answer.
+
+---
+
 ## 2026-09-09, twenty ninth pass. Two report faults from the 1355 scan, and the facts
 
 Pull request 36, merged into main as `01d9886`. **The runner executed 722 tests against its

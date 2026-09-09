@@ -43,7 +43,9 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// The same in every template and not from Revit: E5 the date, G5 the person, H5
-        /// their position. The team types them, so the tool never writes them.
+        /// their position. The team types them on the pane and the tool copies them through,
+        /// so a filled checklist carries who filled it and when. Nothing reads them from a
+        /// model, which is why they are here rather than in a template's mapped cells.
         /// </summary>
         public static readonly string[] TypedByTheTeam = { "E5", "G5", "H5" };
 

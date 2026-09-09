@@ -1,0 +1,158 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace RcrcGreen.Core.Kpi
+{
+    /// <summary>
+    /// One merged species held against the workbook's own list: where it landed, or why it did
+    /// not land anywhere.
+    ///
+    /// A species Revit holds that the list does not is named with its count and written
+    /// nowhere. It is never dropped, because a quantity that goes nowhere leaves a tree list
+    /// that reads as complete and is short. A species the list holds that Revit does not is
+    /// simply left empty, which is correct and needs no line.
+    /// </summary>
+    public sealed class SpeciesMatch
+    {
+        public SpeciesMatch(
+            MergedSpecies species,
+            string sheetName,
+            int row,
+            string workbookName,
+            string why)
+        {
+            if (species == null) throw new ArgumentNullException("species");
+            if (row < 0) throw new ArgumentOutOfRangeException("row");
+
+            Species = species;
+            SheetName = sheetName ?? string.Empty;
+            Row = row;
+            WorkbookName = workbookName ?? string.Empty;
+            Why = why ?? string.Empty;
+        }
+
+        public MergedSpecies Species { get; }
+
+        public string SheetName { get; }
+
+        /// <summary>
+        /// The workbook row the quantity goes on, or nothing when the species did not match.
+        /// </summary>
+        public int Row { get; }
+
+        /// <summary>
+        /// The name as the workbook spells it, which is not how Revit spells it. Revit prints
+        /// ALBIZIA LEBBECK and the workbook holds Albizia lebbeck.
+        /// </summary>
+        public string WorkbookName { get; }
+
+        public string Why { get; }
+
+        public bool Matched
+        {
+            get { return Row > 0 && SheetName.Length > 0; }
+        }
+    }
+
+    /// <summary>
+    /// Matches what Revit printed against what the workbook holds.
+    ///
+    /// Plainly: the botanical name compared without case and with surrounding whitespace off,
+    /// and nothing else. Names are not stripped, split or normalised past that. Three measured
+    /// cases are the reason: the model prints a species called UNKNOWN while the workbook holds
+    /// four rows all named Unknown Tree, ACACIA / VACHELLIA FARNESIANA carries a slash, and
+    /// BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an apostrophe. Normalising past any of them
+    /// would put a quantity on a row nobody chose.
+    /// </summary>
+    public static class SpeciesMatching
+    {
+        public const string NotInTheList = "the workbook's list does not hold this name";
+
+        public const string NoSheetForTheGroup =
+            "its group names neither tree list sheet, so nothing says which list it belongs to";
+
+        public const string MoreThanOneRow =
+            "the workbook holds this name on more than one row, so nothing can say which";
+
+        public static IReadOnlyList<SpeciesMatch> Against(
+            IEnumerable<MergedSpecies> merged,
+            KpiTemplate template,
+            SpeciesList existing,
+            SpeciesList proposed)
+        {
+            if (template == null) throw new ArgumentNullException("template");
+
+            var found = new List<SpeciesMatch>();
+
+            foreach (MergedSpecies species in (merged ?? Enumerable.Empty<MergedSpecies>())
+                .Where(one => one != null))
+            {
+                TreeRows rows = SheetFor(species.GroupName, template);
+                if (rows == null)
+                {
+                    found.Add(new SpeciesMatch(species, string.Empty, 0, string.Empty, NoSheetForTheGroup));
+                    continue;
+                }
+
+                SpeciesList list = string.Equals(rows.SheetName, template.ExistingTrees.SheetName,
+                    StringComparison.Ordinal) ? existing : proposed;
+
+                if (list == null || !list.WasRead)
+                {
+                    found.Add(new SpeciesMatch(species, rows.SheetName, 0, string.Empty,
+                        list == null ? NotInTheList : list.Refusal));
+                    continue;
+                }
+
+                List<SpeciesListRow> holding = list.Rows
+                    .Where(one => Same(one.BotanicalName, species.BotanicalName))
+                    .ToList();
+
+                if (holding.Count == 0)
+                {
+                    found.Add(new SpeciesMatch(species, rows.SheetName, 0, string.Empty, NotInTheList));
+                    continue;
+                }
+
+                if (holding.Count > 1)
+                {
+                    found.Add(new SpeciesMatch(species, rows.SheetName, 0, holding[0].BotanicalName,
+                        MoreThanOneRow));
+                    continue;
+                }
+
+                found.Add(new SpeciesMatch(
+                    species, rows.SheetName, holding[0].Row, holding[0].BotanicalName, string.Empty));
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// The tree list sheet a group belongs to, decided by the sheet's own name holding the
+        /// group's name. Tree List - Existing holds Existing. The words Existing and Proposed
+        /// are written in neither side of this: the group comes off the document's phases and
+        /// the sheet name comes off the map, and a group matching neither sheet is reported.
+        /// </summary>
+        private static TreeRows SheetFor(string groupName, KpiTemplate template)
+        {
+            if (string.IsNullOrWhiteSpace(groupName)) return null;
+
+            foreach (TreeRows rows in new[] { template.ExistingTrees, template.ProposedTrees })
+            {
+                if (KpiNames.Holds(rows.SheetName, groupName.Trim())) return rows;
+            }
+
+            return null;
+        }
+
+        private static bool Same(string workbook, string revit)
+        {
+            return string.Equals(
+                (workbook ?? string.Empty).Trim(),
+                (revit ?? string.Empty).Trim(),
+                StringComparison.OrdinalIgnoreCase);
+        }
+    }
+}
