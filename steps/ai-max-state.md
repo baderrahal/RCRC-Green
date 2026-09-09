@@ -1,6 +1,15 @@
 # ai-max state
 
-Phase: 9, ship. Thirtieth pass, the plot picker, several plots at once, and the Create button.
+Phase: 9, ship. Thirty first pass, the shrubs and lawn shape measured rather than guessed.
+
+The team supplied the real rows. The group heading sits on its own row with a phase row under
+it, and **the subtotal prints twice**, so adding a group's subtotal rows gives double. One is
+taken and two that disagree refuse the write. The area, the count and the botanical name come
+off the columns the heading row names rather than off assumed positions, because the schedules
+are eleven columns wide. An area carries its unit and can be nought. The shape is now in
+`kpi-rules.md`, sourced to the 1355 scan report, which is not in this repository.
+
+Before that, the thirtieth pass, the plot picker, several plots at once, and the Create button.
 Pull request 37 is merged into main as `ce825b1`, 781 tests on the runner against its merged
 head and 781 locally, 0 failed and 0 skipped on each.
 

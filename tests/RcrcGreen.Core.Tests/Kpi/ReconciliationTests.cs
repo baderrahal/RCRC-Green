@@ -164,6 +164,38 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(Reconciliation.Of(new[] { "NS-19" }, new[] { picked }, null, false).AddsUp);
         }
 
+        /// <summary>
+        /// The shrubs and lawn schedule prints each group's subtotal twice. Two that disagree
+        /// are a failure worth naming rather than a number to pick between.
+        /// </summary>
+        [Fact]
+        public void ASubtotalThatPrintedTwiceAndDisagreedRefusesTheWrite()
+        {
+            var reading = CreateFixture.Plot(
+                "DM-11",
+                subtotals: new[]
+                {
+                    new GroupSubtotal(KpiMerge.LawnHeading, 35.0, 46, 2, 35.0,
+                        "its 2 subtotal rows disagree: 35 over 46, 37 over 46")
+                });
+
+            Reconciliation held = Reconciliation.Of(new[] { "DM-11" }, new[] { reading }, null, false);
+
+            Assert.False(held.AddsUp);
+            Assert.Contains(held.Refusals,
+                one => one.Contains("DM-11, GRASS") && one.Contains("2 subtotal rows disagree"));
+        }
+
+        [Fact]
+        public void ASubtotalThatPrintedTwiceAndAgreedDoesNotRefuse()
+        {
+            var reading = CreateFixture.Plot(
+                "DM-11",
+                subtotals: new[] { new GroupSubtotal(KpiMerge.LawnHeading, 35.0, 46, 2, 35.0) });
+
+            Assert.True(Reconciliation.Of(new[] { "DM-11" }, new[] { reading }, null, false).AddsUp);
+        }
+
         [Fact]
         public void APlotWithNoAreaIsNamedInWithoutArea()
         {

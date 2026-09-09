@@ -81,16 +81,31 @@ namespace RcrcGreen.Core.Kpi
     /// <summary>
     /// One group subtotal off a schedule that prints in groups, exactly as the row read.
     /// The workbook wants the two group subtotals of SHRUBS AND LAWN and never the total.
+    ///
+    /// **The subtotal prints twice.** DM-11 gives 35 then 35 for GRASS and 70 then 70 for
+    /// SHRUBS &amp; GROUND COVER, so adding a group's subtotal rows gives double. One is taken.
+    /// Two that disagree are not a number to pick between, so the disagreement is carried here
+    /// and refuses the write.
     /// </summary>
     public sealed class GroupSubtotal
     {
-        public GroupSubtotal(string heading, double squareMetres, int itemCount)
+        public GroupSubtotal(
+            string heading,
+            double squareMetres,
+            int itemCount,
+            int repeats = 1,
+            double speciesSum = double.NaN,
+            string disagreement = null)
         {
             if (heading == null) throw new ArgumentNullException("heading");
+            if (repeats < 0) throw new ArgumentOutOfRangeException("repeats");
 
             Heading = heading;
             SquareMetres = squareMetres;
             ItemCount = itemCount;
+            Repeats = repeats;
+            SpeciesSum = speciesSum;
+            Disagreement = disagreement ?? string.Empty;
         }
 
         public string Heading { get; }
@@ -98,6 +113,30 @@ namespace RcrcGreen.Core.Kpi
         public double SquareMetres { get; }
 
         public int ItemCount { get; }
+
+        /// <summary>
+        /// How many subtotal rows the group printed. Two on the measured model.
+        /// </summary>
+        public int Repeats { get; }
+
+        /// <summary>
+        /// The species rows of the group added up, or NaN when the schedule named no botanical
+        /// column to find them in. DM-11's shrubs are 36 and 34 against a subtotal of 70, so
+        /// the two can be held against each other. It is printed rather than enforced, because
+        /// every one of those numbers is already rounded to the metre on the way out of Revit
+        /// and a sum of rounded numbers need not equal a rounded sum.
+        /// </summary>
+        public double SpeciesSum { get; }
+
+        /// <summary>
+        /// Empty unless the repeated subtotal rows disagreed with each other.
+        /// </summary>
+        public string Disagreement { get; }
+
+        public bool Agrees
+        {
+            get { return Disagreement.Length == 0; }
+        }
     }
 
     /// <summary>

@@ -6,9 +6,13 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// The number at the front of a printed cell. A schedule prints an area as 35 m² and a
-    /// count as 46, so the unit is taken off by reading only as far as the number goes rather
-    /// than by stripping characters, which would turn 1.234 m² into something else.
+    /// The number at the front of a printed cell. A schedule prints an area as 35 m2 with its
+    /// unit attached and a count as 46 with none, so the unit comes off by reading only as far
+    /// as the number goes rather than by stripping characters, which would turn 1.234 m2 into
+    /// something else.
+    ///
+    /// A real area can be zero. The hardscape schedule prints 0 m2, which reads as the number
+    /// nought and not as a cell holding nothing.
     /// </summary>
     public static class CellNumber
     {
@@ -63,17 +67,66 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
+    /// Which column of a printed schedule holds what, read off its own heading row.
+    ///
+    /// These schedules are eleven columns wide. Taking the first number in a row would take the
+    /// area and taking the last would take L/DAY, so neither position can be assumed and the
+    /// headings decide. A schedule whose headings name none of them says so by handing back
+    /// nothing rather than by pointing at a column that happens to be there.
+    /// </summary>
+    public static class ScheduleColumns
+    {
+        public const string AreaWord = "AREA";
+
+        public const string CountWord = "COUNT";
+
+        public const string BotanicalWord = "BOTANIC";
+
+        public static int Holding(IReadOnlyList<string> headings, string word)
+        {
+            if (headings == null) return -1;
+
+            for (int at = 0; at < headings.Count; at++)
+            {
+                if (KpiNames.Holds(headings[at], word)) return at;
+            }
+
+            return -1;
+        }
+
+        public static string At(IReadOnlyList<string> row, int column)
+        {
+            if (row == null || column < 0 || column >= row.Count) return string.Empty;
+
+            return row[column] ?? string.Empty;
+        }
+
+        /// <summary>
+        /// A row carrying text in its first cell and nothing anywhere else. A group heading and
+        /// a phase row are both this shape, and a row carrying numbers never is, which is what
+        /// keeps the TOTAL row out.
+        /// </summary>
+        public static bool IsStructureRow(IReadOnlyList<string> row)
+        {
+            if (row == null || row.Count == 0) return false;
+            if (string.IsNullOrWhiteSpace(row[0])) return false;
+
+            for (int at = 1; at < row.Count; at++)
+            {
+                if (!string.IsNullOrWhiteSpace(row[at])) return false;
+            }
+
+            return true;
+        }
+    }
+
+    /// <summary>
     /// The species rows of a softscape schedule, each with the group row it sat under.
     ///
-    /// A row is a species when its first cell holds text and a later cell holds a whole
-    /// number. That is what tells a species from the two rows around it: the category row
-    /// TREES holds one cell and no number, and a subtotal holds a number and no name. The
-    /// headings row holds two cells and its second is COUNT (n), which is not a number.
-    ///
-    /// A grand total row carrying its own word in the first cell would read as a species here.
-    /// It has not been seen on this model and nothing guesses at its wording, so if one ever
-    /// arrives it comes out as a species the workbook's list does not hold, named in the report
-    /// with its count and written nowhere. That is visible, which a dropped row would not be.
+    /// The botanical name and the quantity come off the columns the heading row names, and fall
+    /// back to the first cell and the last whole number only where it names neither. The real
+    /// schedules are eleven columns wide with an image in the first, so a name read off cell
+    /// nought there would be a file name.
     /// </summary>
     public static class SoftscapeRows
     {
@@ -85,12 +138,17 @@ namespace RcrcGreen.Core.Kpi
             var found = new List<SpeciesRow>();
             if (!schedule.RowsWereRead) return found;
 
+            List<IReadOnlyList<string>> rows = schedule.Rows.ToList();
+            if (rows.Count == 0) return found;
+
+            int nameColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.BotanicalWord);
+            int countColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.CountWord);
+
             IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, phaseNames);
             var groupAt = new Dictionary<int, string>();
             foreach (ScheduleGroup group in groups) groupAt[group.RowIndex] = group.Name;
 
             string carrying = string.Empty;
-            List<IReadOnlyList<string>> rows = schedule.Rows.ToList();
 
             for (int index = 0; index < rows.Count; index++)
             {
@@ -103,23 +161,28 @@ namespace RcrcGreen.Core.Kpi
 
                 IReadOnlyList<string> row = rows[index];
                 if (row == null || row.Count == 0) continue;
-                if (string.IsNullOrWhiteSpace(row[0])) continue;
+
+                string botanical = nameColumn >= 0
+                    ? ScheduleColumns.At(row, nameColumn)
+                    : (row.Count > 0 ? row[0] : string.Empty);
+                if (string.IsNullOrWhiteSpace(botanical)) continue;
 
                 int quantity;
-                if (!LastWholeNumberIn(row, out quantity)) continue;
+                if (!QuantityIn(row, countColumn, out quantity)) continue;
 
-                found.Add(new SpeciesRow(row[0].Trim(), carrying, quantity, plotId));
+                found.Add(new SpeciesRow(botanical.Trim(), carrying, quantity, plotId));
             }
 
             return found;
         }
 
-        /// <summary>
-        /// The count column is the last one on this schedule, so the last whole number in the
-        /// row is the quantity. Taking the first would take a size or a code.
-        /// </summary>
-        private static bool LastWholeNumberIn(IReadOnlyList<string> row, out int quantity)
+        private static bool QuantityIn(IReadOnlyList<string> row, int countColumn, out int quantity)
         {
+            if (countColumn >= 0)
+            {
+                return CellNumber.WholeIn(ScheduleColumns.At(row, countColumn), out quantity);
+            }
+
             quantity = 0;
             bool any = false;
 
@@ -139,11 +202,29 @@ namespace RcrcGreen.Core.Kpi
     /// <summary>
     /// The group subtotals of a shrubs and lawn schedule.
     ///
-    /// This schedule prints its group heading and that group's numbers on ONE row, which is a
-    /// different shape from the softscape schedule where the group row stands alone. DM-11
-    /// prints GRASS 35 m² 46, then SHRUBS &amp; GROUND COVER 70 m² 58, then TOTAL 105 m² 104.
-    /// Only the two headings the workbook asks for are looked for, so the schedule's own TOTAL
-    /// is never a source and never has to be told apart from a group.
+    /// The shape is measured, off the 1355 scan report, which is not in this repository because
+    /// nothing under reports/ is ever committed. DM-11-(600) SHRUBS &amp; LAWN SCHEDULE prints
+    /// eleven columns and this:
+    ///
+    /// <code>
+    /// IMAGE | # | PLANT CODE | BOTANICAL NAME | AREA (sqm) | COUNT (n) | ...
+    /// GRASS                                                                   group heading
+    /// Proposed                                                                phase
+    /// Pennisetum Setaceum.jpg | PEN SET | ... | 35 m2 | 46 | ...              species
+    ///                                         | 35 m2 | 46 | ...              subtotal
+    ///                                         | 35 m2 | 46 | ...              subtotal AGAIN
+    /// SHRUBS &amp; GROUND COVER                                                   group heading
+    /// ...
+    /// TOTAL                                   | 105 m2 | 104 | ...            the whole thing
+    /// </code>
+    ///
+    /// Three things follow. The heading is on its own row rather than beside its numbers. A
+    /// phase row sits under it, the same shape the softscape schedule uses. And **the subtotal
+    /// prints twice**, so adding a group's subtotal rows gives double: one is taken, and two
+    /// that disagree are named rather than chosen between.
+    ///
+    /// TOTAL needs no special case. It carries numbers, so it is not a structure row, and its
+    /// first cell holds text, so it is not a subtotal row.
     /// </summary>
     public static class ShrubsAndLawnRows
     {
@@ -159,55 +240,87 @@ namespace RcrcGreen.Core.Kpi
             var found = new List<GroupSubtotal>();
             if (!schedule.RowsWereRead || wanted.Count == 0) return found;
 
-            foreach (IReadOnlyList<string> row in schedule.Rows)
-            {
-                if (row == null || row.Count == 0) continue;
-                if (string.IsNullOrWhiteSpace(row[0])) continue;
+            List<IReadOnlyList<string>> rows = schedule.Rows.ToList();
+            if (rows.Count == 0) return found;
 
-                string heading = row[0].Trim();
-                if (!wanted.Any(one => string.Equals(one.Trim(), heading, StringComparison.OrdinalIgnoreCase)))
+            int areaColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.AreaWord);
+            int countColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.CountWord);
+            int nameColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.BotanicalWord);
+            if (areaColumn < 0) return found;
+
+            string heading = null;
+            var subtotals = new List<GroupSubtotal>();
+            var species = new List<double>();
+
+            for (int index = 1; index < rows.Count; index++)
+            {
+                IReadOnlyList<string> row = rows[index];
+
+                if (ScheduleColumns.IsStructureRow(row))
                 {
+                    string text = row[0].Trim();
+                    if (!wanted.Any(one => string.Equals(one.Trim(), text, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        // A phase row inside the group. It names no wanted heading, so it does
+                        // not open or close one.
+                        continue;
+                    }
+
+                    Close(found, heading, subtotals, species);
+                    heading = text;
+                    subtotals = new List<GroupSubtotal>();
+                    species = new List<double>();
                     continue;
                 }
 
+                if (heading == null) continue;
+
                 double area;
-                if (!FirstNumberIn(row, out area)) continue;
+                if (!CellNumber.In(ScheduleColumns.At(row, areaColumn), out area)) continue;
 
                 int items;
-                LastWholeNumberIn(row, out items);
+                CellNumber.WholeIn(ScheduleColumns.At(row, countColumn), out items);
 
-                found.Add(new GroupSubtotal(heading, area, items));
+                if (string.IsNullOrWhiteSpace(ScheduleColumns.At(row, 0)))
+                {
+                    subtotals.Add(new GroupSubtotal(heading, area, items));
+                    continue;
+                }
+
+                if (nameColumn >= 0 && !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn)))
+                {
+                    species.Add(area);
+                }
             }
 
+            Close(found, heading, subtotals, species);
             return found;
         }
 
-        private static bool FirstNumberIn(IReadOnlyList<string> row, out double area)
+        private static void Close(
+            List<GroupSubtotal> found, string heading, List<GroupSubtotal> subtotals, List<double> species)
         {
-            for (int at = 1; at < row.Count; at++)
-            {
-                if (CellNumber.In(row[at], out area)) return true;
-            }
+            if (heading == null || subtotals.Count == 0) return;
 
-            area = 0.0;
-            return false;
+            GroupSubtotal first = subtotals[0];
+            double sum = species.Count == 0 ? double.NaN : species.Sum();
+
+            List<GroupSubtotal> differing = subtotals
+                .Where(one => one.SquareMetres != first.SquareMetres || one.ItemCount != first.ItemCount)
+                .ToList();
+
+            string disagreement = differing.Count == 0
+                ? string.Empty
+                : "its " + subtotals.Count + " subtotal rows disagree: " + string.Join(", ", subtotals
+                    .Select(one => Said(one.SquareMetres) + " over " + one.ItemCount).ToArray());
+
+            found.Add(new GroupSubtotal(
+                heading, first.SquareMetres, first.ItemCount, subtotals.Count, sum, disagreement));
         }
 
-        private static bool LastWholeNumberIn(IReadOnlyList<string> row, out int items)
+        private static string Said(double value)
         {
-            items = 0;
-            bool any = false;
-
-            for (int at = 1; at < row.Count; at++)
-            {
-                int number;
-                if (!CellNumber.WholeIn(row[at], out number)) continue;
-
-                items = number;
-                any = true;
-            }
-
-            return any;
+            return value.ToString("0.##", CultureInfo.InvariantCulture);
         }
     }
 }

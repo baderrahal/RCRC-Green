@@ -238,13 +238,64 @@ each name are read in full is the rule above, and it is stated there and nowhere
 
 - SHRUBS & LAWN SCHEDULE, category Floors, prints in groups. DM-11 gives GRASS 35 m² 46, then
   SHRUBS & GROUND COVER 70 m² 58, then TOTAL 105 m² 104. The workbook wants the two group
-  subtotals and not the total
+  subtotals and not the total. **How it prints is below and the numbers alone are not enough**
 - SOFTSCAPE SCHEDULE, category Planting. Its fields are BOTANICAL NAME, which is
   PRX_Softscape Botanical Name, and COUNT (n), a Count field. DM-11 gives ALBIZIA LEBBECK 6,
   BAUHINIA PURPUREA 2, CASSIA GLAUCA 4, total 12. How it prints is the rule in `CLAUDE.md`,
   stated there and nowhere else, because the group row is what question 8 is answered from
 - Two phases, Existing and Proposed. The split shows as a group row inside the printed
   schedule, not as a separate schedule
+
+## How a grouped schedule really prints
+
+Measured off the 1355 scan report, which **is not in this repository** because nothing under
+`reports/` is ever committed. The numbers were recorded a round before the shape was, and the
+numbers alone were not enough: a reader written to them found no subtotal at all.
+
+DM-11-(600) SHRUBS & LAWN SCHEDULE is eleven columns wide and prints this:
+
+```
+IMAGE | # | PLANT CODE | BOTANICAL NAME | AREA  (sqm) | COUNT (n) | HEIGHT (m) | ... | L/DAY
+GRASS                                                                     group heading
+Proposed                                                                  phase
+Pennisetum Setaceum.jpg | PEN SET | ... | GRASS: PENNISETUM ... | 35 m² | 46 | ...   species
+                                                          | 35 m² | 46 | ...        subtotal
+                                                          | 35 m² | 46 | ...        subtotal AGAIN
+SHRUBS & GROUND COVER                                                     group heading
+Proposed                                                                  phase
+Bougainvillea glabra Pink Pixie.jpg | ... | 36 m² | 46 | ...                    species
+Carissa macrocarpa - grandiflora.jpg | ... | 34 m² | 12 | ...                   species
+                                                          | 70 m² | 58 | ...        subtotal
+                                                          | 70 m² | 58 | ...        subtotal AGAIN
+TOTAL                                                     | 105 m² | 104 | ...      the lot
+```
+
+Three things follow, and `ShrubsAndLawnRows` holds all three.
+
+**The group heading is on its own row**, first cell only and every other cell empty, rather
+than beside its numbers. A phase row sits under it in the same shape, so a structure row that
+names no wanted heading opens no group.
+
+**THE SUBTOTAL PRINTS TWICE.** Adding a group's subtotal rows gives 70 and 140. One is taken.
+Two that disagree are a failure worth naming rather than a number to pick between, so the
+disagreement travels on the `GroupSubtotal` and refuses the write.
+
+**The species rows add up to the subtotal**, 36 plus 34 is 70, so the two are held against each
+other and printed. They are not enforced, because every one of those numbers is already rounded
+to the metre on the way out of Revit and a sum of rounded numbers need not equal a rounded sum.
+
+TOTAL needs no special case. It carries numbers, so it is not a structure row, and its first
+cell holds text, so it is not a subtotal.
+
+**Neither the area nor the count sits at a position that can be assumed.** Eleven columns wide,
+the first number in a subtotal row is the area and the last is L/DAY. `ScheduleColumns` finds
+both off the schedule's own heading row, and the softscape reader takes its botanical name and
+its count the same way, because a name read off the first cell there would be an image file
+name.
+
+**An area prints with its unit attached and a count does not.** 35 m² against 46. The unit comes
+off by reading as far as the number goes rather than by stripping characters. A real area can be
+nought: the hardscape schedule prints 0 m², which is the number and not an empty cell.
 
 **The 00 link** is RCRC_NG05_NU_MAIN_RVT24_00.rvt, loaded, 279 filled regions all in a view
 called Intervention Limits. Types RCRC_CADASTRAL LIMIT 124 and RCRC_OUT OF SCOPE
