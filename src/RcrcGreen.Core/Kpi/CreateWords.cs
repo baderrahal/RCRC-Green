@@ -6,6 +6,62 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
+    /// The open document as Revit last answered for it: its title, and the folder it sits in.
+    ///
+    /// **The two are one record and neither is worked out anywhere else.** The pane used to
+    /// hold them as two loose strings and hand them to the refusal in the wrong order, so a
+    /// detached model that had never been saved was refused with No model is open. Deriving
+    /// both from one answer is what stops a caller getting them the wrong way round.
+    ///
+    /// A title is empty only when there is no document. A folder is empty for a document that
+    /// has never been saved, and for a cloud model whose path is not a folder on disk.
+    /// </summary>
+    public sealed class OpenModel
+    {
+        private OpenModel(string title, string folder)
+        {
+            Title = title ?? string.Empty;
+            Folder = folder ?? string.Empty;
+        }
+
+        /// <summary>
+        /// No document. What the pane holds before Revit has answered and what Revit answers
+        /// when the model is closed while the pane is still on screen.
+        /// </summary>
+        public static readonly OpenModel Nothing = new OpenModel(string.Empty, string.Empty);
+
+        public static OpenModel Of(string documentTitle, string modelFolder)
+        {
+            return new OpenModel(documentTitle, modelFolder);
+        }
+
+        public string Title { get; }
+
+        public string Folder { get; }
+
+        public bool IsOpen
+        {
+            get { return Title.Length > 0; }
+        }
+
+        /// <summary>
+        /// False for a model that has never been saved. The workbook is written beside the
+        /// model, so there is nowhere to write until it has one.
+        /// </summary>
+        public bool HasAFolder
+        {
+            get { return Folder.Length > 0; }
+        }
+
+        public bool Is(OpenModel other)
+        {
+            return other != null
+                && string.Equals(Title, other.Title, StringComparison.Ordinal)
+                && string.Equals(Folder, other.Folder, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
     /// Every line the plot picker and the Create block show. The pane draws them and formats
     /// none of them, the same rule PanelSteps follows for the Drawing Sheet, because a summary
     /// written next to the control that shows it is two records of one fact.
@@ -46,6 +102,29 @@ namespace RcrcGreen.Core.Kpi
             "This template takes no area. The road width and the total length are typed by hand.";
 
         /// <summary>
+        /// Under the Reference picker with nothing ticked. The values shown there belong to a
+        /// plot, so with no plot chosen there is nothing to show and the block says so rather
+        /// than showing some other plot's.
+        /// </summary>
+        public const string NoPlotForTheReferenceValues =
+            "No plot is ticked, so there is no value to show here. Tick a plot to see what each "
+            + "of the four holds on it.";
+
+        /// <summary>
+        /// The heading over the four values, naming the plot they belong to.
+        ///
+        /// **The plot is named because the block was showing DM-11's values with DM-12 ticked.**
+        /// It read the first plot in the model's list rather than the first ticked one, and the
+        /// whole point of the block is that a person picks the reference by looking at its
+        /// value. A value belonging to a plot they did not choose is worse than no value.
+        /// </summary>
+        public static string ReferenceValuesOn(string plotId)
+        {
+            return "What each holds on " + (string.IsNullOrWhiteSpace(plotId) ? "(no plot)" : plotId.Trim())
+                + ", the first ticked plot:";
+        }
+
+        /// <summary>
         /// One refusal listing everything that is missing, rather than one per thing. Pressing
         /// Create three times to be told three separate halves of the same answer is worse than
         /// being told all of it once.
@@ -54,13 +133,17 @@ namespace RcrcGreen.Core.Kpi
         /// used to be handed the folder and call it the model, so a detached model that had
         /// never been saved was reported as no model open, next to a header counting its
         /// 96,959 elements. A model that is not open is not asked whether it has been saved.
+        ///
+        /// It takes an <see cref="OpenModel"/> rather than two loose flags, so a caller cannot
+        /// hand it the two the wrong way round. That is the whole of the fault it is here for.
         /// </summary>
-        public static string CannotCreate(
-            bool modelIsOpen, bool modelHasAFolder, bool hasTemplate, bool hasAPlot)
+        public static string CannotCreate(OpenModel model, bool hasTemplate, bool hasAPlot)
         {
+            OpenModel open = model ?? OpenModel.Nothing;
+
             var missing = new List<string>();
-            if (!modelIsOpen) missing.Add(NoModel);
-            else if (!modelHasAFolder) missing.Add(NotSaved);
+            if (!open.IsOpen) missing.Add(NoModel);
+            else if (!open.HasAFolder) missing.Add(NotSaved);
             if (!hasTemplate) missing.Add(NoTemplate);
             if (!hasAPlot) missing.Add(NoPlotTicked);
 

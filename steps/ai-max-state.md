@@ -1,6 +1,17 @@
 # ai-max state
 
-Phase: 9, ship. Thirty fourth pass, five faults off the first real run of the KPI pane. Pull
+Phase: 9, ship. Thirty fifth pass, two more off the KPI pane. Pull request 43 is open, 857 tests
+locally, 0 failed and 0 skipped, after four break watches were restored byte for byte.
+
+The reference sample showed the first plot in the model rather than the first ticked one. And
+Create stayed grey after the model was saved, which had never worked: the folder was a copy taken
+once, the title was a second copy on a different schedule, and the pane's own request for the
+model was being thrown away by a one slot queue. **A PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
+FOR** is the rule that came out of it, and it is in `CLAUDE.md`. Create is greyed out on what the
+pane owns and the model state is decided on the Revit thread when it is pressed. The tests are
+over the decision and not over Revit.
+
+Before that, the thirty fourth pass, five faults off the first real run of the KPI pane. Pull
 request 42 is merged into main as `36dc0f8`, 849 tests on the runner against its merged head and
 849 locally, 0 failed and 0 skipped on each.
 

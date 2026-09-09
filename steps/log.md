@@ -4,6 +4,83 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, thirty fifth pass. Two more off the KPI pane, and one of them was never working
+
+857 tests locally, 0 failed and 0 skipped, after the last file was written and after the four
+break watches were restored byte for byte.
+
+### The reference sample showed the wrong plot
+
+With DM-12 ticked the block under Reference printed DM-11's four values, and the same four with
+all 155 ticked. `ReadThePlots` took `plots.All[0]` and read the four for that one plot.
+
+The block exists so a person picks the reference parameter by looking at its value rather than
+its name, so a value belonging to a plot they did not choose defeats the whole of it.
+
+`ReferenceValuesPerPlot` reads all four for every plot in one pass over the sheets, which is the
+shape `ValuePerPlot` already used for the component. The pane shows the first ticked plot's, with
+the plot named above them, and shows none and says so when nothing is ticked.
+
+### Create stayed grey after the model was saved
+
+**This path has never worked in Revit.** A detached model with no path, Create refused, the model
+saved to a real folder, and Create stayed grey saying No model is open. A KPI Scan after the save
+made no difference.
+
+Three things were wrong at once and each on its own would have been enough.
+
+**The folder was a copy taken once.** `Found` set it from the plot read and nothing re-read it.
+
+**The title was a second copy on a different schedule.** `Scanned` set it and nothing else did,
+so the two halves of one fact went stale independently.
+
+**The pane asked for the model and threw the request away.** `Shown` called `Ask(WhichModel)`
+then `Ask(Plots)`, and `Ask` holds ONE SLOT, so the second overwrote the first every time. The
+model name request never ran from that path at all.
+
+The fix is one rule, and it is now in `CLAUDE.md`: **A PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
+FOR.**
+
+- `OpenModel` is one record, title and folder together, built from one answer. `CannotCreate`
+  takes it rather than two loose flags, so nothing can hand the pair over the wrong way round
+- Every answer from the handler carries the model state, whatever was asked for, read off the
+  live document at that moment
+- `RedrawTemplates` asks for it every time it draws, and `Took` redraws only when the answer
+  moved, so the ask does not chase its own tail
+- `Ask` never lets `WhichModel` take the slot from anything, because it is now the request most
+  likely to arrive on top of another, and losing one costs nothing
+- **Create is greyed out on what the PANE owns and nothing else**, a template picked and a plot
+  ticked. Whether a model is open and whether it has a folder are decided on the Revit thread
+  against the live document when the button is pressed
+
+That last one is what removes the class of fault rather than narrowing the window. A button
+greyed out on a fact the pane does not own can always go stale, however often it is refreshed.
+
+### What the test covers, and what it does not
+
+Seven tests over `CannotCreate` and `OpenModel`, across all three states: no document, a document
+with no path, and a document with a path. Each gives its own line, the no-path line says to save
+the model, and a folder arriving with no title is still no model.
+
+**These are tests over the decision, not over Revit.** Nothing here proves that a saved model
+arms Create in Revit, because nothing in this repository can run Revit. What is proven is that
+the decision is right for all three states and that it is now made from the live document rather
+than from a copy. The Revit half is unrun and stays unrun until somebody presses the button.
+
+### What was broken to see the tests go red
+
+Four, each restored byte for byte and checked with md5.
+
+- Never saved reported as no model again. 3 red
+- A folder with no title made to count as a model open. 1 red
+- The reference block made to name no plot. 2 red
+- A changed folder made to read as the same model. 1 red
+
+The last one matters because `Took` decides whether to redraw on it. A folder change that read as
+no change would leave the pane showing the state from before the save, which is the fault again
+one layer down.
+
+---
 ## 2026-09-09, thirty fourth pass. Five faults off the first real run of the KPI pane
 
 Pull request 42, merged into main as `36dc0f8`. **The runner executed 849 tests against its

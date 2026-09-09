@@ -15,17 +15,17 @@ namespace RcrcGreen.Revit.Kpi
             PlotsInTheModel plots,
             IReadOnlyList<string> componentNames,
             IReadOnlyList<string> locationNames,
-            string modelFolder,
             IDictionary<string, string> componentPerPlot = null,
-            IReadOnlyList<PlotParameterValue> referenceChoices = null)
+            IDictionary<string, IReadOnlyList<PlotParameterValue>> referenceValuesPerPlot = null)
         {
             Plots = plots ?? PlotsInTheModel.Of(null, null);
             ComponentNames = componentNames ?? new List<string>();
             LocationNames = locationNames ?? new List<string>();
-            ModelFolder = modelFolder ?? string.Empty;
             ComponentPerPlot = new Dictionary<string, string>(
                 componentPerPlot ?? new Dictionary<string, string>(), StringComparer.Ordinal);
-            ReferenceChoices = referenceChoices ?? new List<PlotParameterValue>();
+            ReferenceValuesPerPlot = new Dictionary<string, IReadOnlyList<PlotParameterValue>>(
+                referenceValuesPerPlot ?? new Dictionary<string, IReadOnlyList<PlotParameterValue>>(),
+                StringComparer.Ordinal);
         }
 
         /// <summary>
@@ -36,10 +36,21 @@ namespace RcrcGreen.Revit.Kpi
         public IDictionary<string, string> ComponentPerPlot { get; }
 
         /// <summary>
-        /// The four plot parameters with the value each holds on the first plot, so the
-        /// reference is picked by looking at a value rather than at a name.
+        /// The four plot parameters with the value each holds, per plot, so the pane can show
+        /// the ticked plot's rather than one plot's for all of them.
         /// </summary>
-        public IReadOnlyList<PlotParameterValue> ReferenceChoices { get; }
+        public IDictionary<string, IReadOnlyList<PlotParameterValue>> ReferenceValuesPerPlot { get; }
+
+        /// <summary>
+        /// What the four hold on one plot, empty for a plot no sheet carries.
+        /// </summary>
+        public IReadOnlyList<PlotParameterValue> ReferenceValuesOn(string plotId)
+        {
+            IReadOnlyList<PlotParameterValue> held;
+            return ReferenceValuesPerPlot.TryGetValue(plotId ?? string.Empty, out held)
+                ? held
+                : new List<PlotParameterValue>();
+        }
 
         public string ComponentOn(string plotId)
         {
@@ -52,8 +63,6 @@ namespace RcrcGreen.Revit.Kpi
         public IReadOnlyList<string> ComponentNames { get; }
 
         public IReadOnlyList<string> LocationNames { get; }
-
-        public string ModelFolder { get; }
     }
 
     /// <summary>

@@ -127,17 +127,28 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// The four plot parameters and what each holds on one plot's first sheet, so the user
-        /// picks the reference by its value. The workbook note names PRX_Plot_UID2.
+        /// The four plot parameters and what each holds, for EVERY plot, off that plot's first
+        /// sheet. One pass over the sheets rather than one per plot, the same shape
+        /// <see cref="ValuePerPlot"/> uses, because this runs before anything is ticked.
+        ///
+        /// **It used to read one plot, the first in the model's list.** The pane then showed
+        /// DM-11's four values with DM-12 ticked, and the block exists so a person picks the
+        /// reference by looking at its value. Reading every plot is what lets the pane show the
+        /// ticked one without asking Revit again.
         /// </summary>
-        public static IReadOnlyList<PlotParameterValue> ReferenceChoices(Document document, string plotId)
+        public static IDictionary<string, IReadOnlyList<PlotParameterValue>> ReferenceValuesPerPlot(
+            Document document)
         {
-            var found = new List<PlotParameterValue>();
+            var found = new Dictionary<string, IReadOnlyList<PlotParameterValue>>(StringComparer.Ordinal);
 
-            ViewSheet sheet = FirstSheetOf(document, plotId);
-            foreach (string name in KpiNames.PlotNamesOnSheets)
+            foreach (ViewSheet sheet in Sheets(document).OrderBy(one => one.SheetNumber, NaturalOrder.Comparer))
             {
-                found.Add(new PlotParameterValue(name, sheet == null ? string.Empty : Held(sheet, name)));
+                string plot = Held(sheet, KpiNames.PlotId);
+                if (plot.Length == 0 || found.ContainsKey(plot)) continue;
+
+                found[plot] = KpiNames.PlotNamesOnSheets
+                    .Select(name => new PlotParameterValue(name, Held(sheet, name)))
+                    .ToList();
             }
 
             return found;

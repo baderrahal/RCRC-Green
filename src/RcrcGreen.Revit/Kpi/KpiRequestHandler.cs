@@ -66,17 +66,22 @@ namespace RcrcGreen.Revit.Kpi
         public KpiCreateAsk Asked { get; set; }
 
         /// <summary>
-        /// One slot. A Scan already waiting is kept when the pane asks for the model name,
-        /// because the pane asks every time it is shown and Revit can take a while to get to
-        /// the event, and a scan that the name request had overwritten left the status line
-        /// reading Scanning with nothing written. A scan names the model on its own.
+        /// One slot, and WhichModel never takes it from anything.
+        ///
+        /// The pane asks for WhichModel on every draw, so it is the request most likely to
+        /// arrive on top of another. It used to displace Plots, which the pane asks for in the
+        /// same breath when it is shown, so the plot list never arrived. Losing a WhichModel
+        /// costs nothing instead, because **every answer from here carries the model state**
+        /// whatever was asked for.
         /// </summary>
         public void Ask(KpiRequest wanted)
         {
+            if (wanted == KpiRequest.Nothing) return;
+
             lock (_asking)
             {
-                if (_wanted == KpiRequest.Scan && wanted == KpiRequest.WhichModel) return;
-                if (_wanted == KpiRequest.Create && wanted == KpiRequest.WhichModel) return;
+                if (wanted == KpiRequest.WhichModel && _wanted != KpiRequest.Nothing) return;
+
                 _wanted = wanted;
             }
         }
@@ -125,12 +130,18 @@ namespace RcrcGreen.Revit.Kpi
                 return;
             }
 
+            // Every answer carries the model state, whatever was asked for, read off the live
+            // document at the moment it is read. THE PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
+            // FOR: a model saved while the pane sat open left Create refusing on a folder that
+            // had been read once and never again.
+            Named?.Invoke(document.Title, FolderOf(document));
+
             try
             {
                 switch (wanted)
                 {
                     case KpiRequest.WhichModel:
-                        Named?.Invoke(document.Title, FolderOf(document));
+                        // Said above. This request exists to ask for that and nothing else.
                         break;
                     case KpiRequest.Scan:
                         Scan(document);
@@ -215,15 +226,13 @@ namespace RcrcGreen.Revit.Kpi
         {
             IReadOnlyList<string> componentNames = KpiPlotReader.ComponentNames(document);
             PlotsInTheModel plots = KpiPlotReader.Plots(document);
-            string first = plots.All.Count == 0 ? string.Empty : plots.All[0];
 
             FoundPlots?.Invoke(new KpiPlotFacts(
                 plots,
                 componentNames,
                 KpiPlotReader.LocationNames(document),
-                FolderOf(document),
                 KpiPlotReader.ValuePerPlot(document, componentNames.Count == 0 ? string.Empty : componentNames[0]),
-                KpiPlotReader.ReferenceChoices(document, first)));
+                KpiPlotReader.ReferenceValuesPerPlot(document)));
         }
 
         /// <summary>
@@ -237,13 +246,19 @@ namespace RcrcGreen.Revit.Kpi
         private void Create(Document document)
         {
             KpiCreateAsk asked = Asked;
-            if (asked == null || asked.Template == null)
+
+            // **The refusal is decided here, on the live document, at the moment Create runs.**
+            // The pane used to decide it from a folder it had read once, so a model saved while
+            // the pane sat open stayed refused with No model is open. One record built from one
+            // answer, so nothing can hand the two the wrong way round.
+            string cannot = CreateWords.CannotCreate(
+                OpenModel.Of(document.Title, FolderOf(document)),
+                asked != null && asked.Template != null,
+                asked != null && asked.Ticked.Count > 0);
+
+            if (cannot.Length > 0)
             {
-                // A document is in hand, so the model is open. Whether it has a folder is read
-                // rather than assumed, because the two are different refusals and this handler
-                // is the second place that could get them the wrong way round.
-                Told?.Invoke(CreateWords.CannotCreate(
-                    true, FolderOf(document).Length > 0, false, true));
+                Told?.Invoke(cannot);
                 return;
             }
 

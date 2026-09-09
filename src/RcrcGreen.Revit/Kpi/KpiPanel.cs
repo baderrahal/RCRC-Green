@@ -55,15 +55,14 @@ namespace RcrcGreen.Revit.Kpi
         // A's read line after a document switch.
         private string _scannedTitle;
 
-        // Where the open model sits, from the handler, empty until Revit answers or for a
-        // model that has never been saved. The output goes beside the model, so the line
-        // under the name box reads it.
-        private string _modelFolder = string.Empty;
-
-        // The open document's title, empty when nothing is open. Held apart from the folder
-        // because a detached model that has never been saved is open and has no folder, and
-        // Create was handed the folder and reported it as no model open.
-        private string _modelTitle = string.Empty;
+        // The open model as Revit last answered for it, title and folder together. ONE record,
+        // set by one message and asked for again on every draw.
+        //
+        // THE PANE HOLDS NO COPY OF ANYTHING IT CAN ASK FOR. This was two loose strings, one set
+        // by the plot read and one by the scan, and neither was re-read when the model was
+        // saved. Create stayed grey saying no model was open on a model that had just been
+        // given a folder, and a second scan did not shift it.
+        private OpenModel _model = OpenModel.Nothing;
 
         // The one picked workbook, and the template settled for it. For most files the two
         // arrive together. A file caught between the two park templates has a pick and no
@@ -154,7 +153,10 @@ namespace RcrcGreen.Revit.Kpi
             if (!IsVisible) return;
 
             PaintFromTheTheme();
-            Ask(KpiRequest.WhichModel);
+
+            // The plot read carries the model state back with it, like every other answer, and
+            // the redraw below asks for the model on its own. Asking for both here lost one of
+            // them to the handler's one slot, which is how the plot list came back empty.
             Ask(KpiRequest.Plots);
             RedrawTemplates();
         }
@@ -257,20 +259,22 @@ namespace RcrcGreen.Revit.Kpi
         {
             Dispatcher.Invoke(() =>
             {
-                _modelName.Text = KpiPaneWords.ModelNamed(documentTitle);
-                _modelTitle = documentTitle ?? string.Empty;
-                _modelFolder = modelFolder ?? string.Empty;
+                OpenModel answered = OpenModel.Of(documentTitle, modelFolder);
+                bool moved = !answered.Is(_model);
 
-                if (!string.Equals(documentTitle, _scannedTitle, StringComparison.Ordinal))
+                _model = answered;
+                _modelName.Text = KpiPaneWords.ModelNamed(_model.Title);
+
+                if (!string.Equals(_model.Title, _scannedTitle, StringComparison.Ordinal))
                 {
                     _scannedTitle = null;
                     _readAt.Text = KpiPaneWords.NotScanned;
-                    if (!string.IsNullOrEmpty(documentTitle)) _said.Text = KpiPaneWords.NotScanned;
+                    if (_model.Title.Length > 0) _said.Text = KpiPaneWords.NotScanned;
                 }
 
-                // The output line names the folder the model sits in, so it is drawn again
-                // once Revit has said which that is.
-                RedrawTemplates();
+                // Only when the answer moved. Drawing asks for this again, so redrawing on
+                // every answer would spin the external event for as long as the pane is open.
+                if (moved) RedrawTemplates();
             });
         }
 
@@ -278,9 +282,9 @@ namespace RcrcGreen.Revit.Kpi
         {
             Dispatcher.Invoke(() =>
             {
+                // The scan says which model it describes and nothing about the open one. That
+                // comes from Took, which every answer from the handler now carries.
                 _scannedTitle = scan.Document.Title;
-                _modelTitle = scan.Document.Title ?? string.Empty;
-                _modelName.Text = KpiPaneWords.ModelNamed(scan.Document.Title);
                 _readAt.Text = KpiPaneWords.ReadAt(readAt, scan.Document.ElementInstances, scan.Document.ReadSeconds);
             });
         }
@@ -427,14 +431,20 @@ namespace RcrcGreen.Revit.Kpi
             named.Children.Add(Reparented(_outputName));
             _templates.Children.Add(named);
 
-            _templates.Children.Add(Faint(_modelFolder.Length == 0
-                ? TemplateWords.NoModelPath
-                : TemplateWords.Output(_modelFolder)));
+            _templates.Children.Add(Faint(_model.HasAFolder
+                ? TemplateWords.Output(_model.Folder)
+                : TemplateWords.NoModelPath));
             _templates.Children.Add(Faint(CreateWords.Overwrite));
 
             ThePlots();
             TheChoices();
             TheCreateButton();
+
+            // Read at the moment the pane is drawn, never held. A model saved while the pane
+            // sat open used to leave Create refusing on a folder read once and never again, and
+            // a second scan did not shift it. The answer comes back through Took, which redraws
+            // only when it moved, so this does not chase its own tail.
+            Ask(KpiRequest.WhichModel);
         }
 
         /// <summary>
@@ -514,18 +524,11 @@ namespace RcrcGreen.Revit.Kpi
                 "Component", _facts.ComponentNames, _componentParameter,
                 chosen => { _componentParameter = chosen; Changed(); }));
 
-            IReadOnlyList<string> references = _ticks.Count == 0
-                ? KpiNames.PlotNamesOnSheets.ToList()
-                : _facts.ReferenceChoices.Select(one => one.Name).ToList();
-
             _templates.Children.Add(Picker(
-                "Reference", references, _referenceParameter,
+                "Reference", KpiNames.PlotNamesOnSheets.ToList(), _referenceParameter,
                 chosen => { _referenceParameter = chosen; Changed(); }));
 
-            foreach (PlotParameterValue value in _facts.ReferenceChoices)
-            {
-                _templates.Children.Add(Faint("   " + value.InWords));
-            }
+            TheReferenceValues();
 
             _templates.Children.Add(Picker(
                 "Location", _facts.LocationNames, _locationParameter,
@@ -537,6 +540,31 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
+        /// What the four plot parameters hold ON THE FIRST TICKED PLOT, with that plot named.
+        ///
+        /// It used to print the first plot in the model's list whatever was ticked, so DM-12
+        /// ticked showed DM-11's four values. The block exists so a person picks the reference
+        /// by looking at its value, and a value belonging to a plot they did not choose is
+        /// worse than no value at all. With nothing ticked it says so and shows none.
+        /// </summary>
+        private void TheReferenceValues()
+        {
+            if (_ticks.Count == 0)
+            {
+                _templates.Children.Add(Faint("   " + CreateWords.NoPlotForTheReferenceValues));
+                return;
+            }
+
+            string plotId = _ticks.Ticked[0];
+            _templates.Children.Add(Faint("   " + CreateWords.ReferenceValuesOn(plotId)));
+
+            foreach (PlotParameterValue value in _facts.ReferenceValuesOn(plotId))
+            {
+                _templates.Children.Add(Faint("      " + value.InWords));
+            }
+        }
+
+        /// <summary>
         /// Create, and everything standing between the pane and pressing it. A refusal lists
         /// every missing thing at once rather than one per press.
         /// </summary>
@@ -544,8 +572,7 @@ namespace RcrcGreen.Revit.Kpi
         {
             _templates.Children.Add(Head(CreateWords.Create));
 
-            string cannot = CreateWords.CannotCreate(
-                _modelTitle.Length > 0, _modelFolder.Length > 0, _pickedAs != null, _ticks.Count > 0);
+            string cannot = CreateWords.CannotCreate(_model, _pickedAs != null, _ticks.Count > 0);
 
             if (cannot.Length > 0) _templates.Children.Add(Faint(cannot));
 
@@ -582,13 +609,17 @@ namespace RcrcGreen.Revit.Kpi
                 }
             }
 
+            // Greyed out on what the PANE owns and on nothing else. Whether a model is open
+            // and whether it has a folder belong to Revit, and a button greyed out on the
+            // pane's last answer about them stayed grey after the model was saved. Those two
+            // are decided on the Revit thread against the live document when this is pressed.
             var create = new Button
             {
                 Content = PaneLabel.Escaped(CreateWords.Create),
                 Padding = PanelMetrics.CellPad,
                 Margin = PanelMetrics.Row,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                IsEnabled = cannot.Length == 0
+                IsEnabled = _pickedAs != null && _ticks.Count > 0
             };
             create.Click += (sender, e) => AskedToCreate();
             _templates.Children.Add(create);
@@ -691,6 +722,10 @@ namespace RcrcGreen.Revit.Kpi
             return new ChosenParameters(_componentParameter, _referenceParameter, _locationParameter);
         }
 
+        /// <summary>
+        /// The model state is not tested here. It is read off the live document inside the
+        /// handler, because the pane's copy of it is what went stale.
+        /// </summary>
         private void AskedToCreate()
         {
             if (_pickedAs == null) return;
@@ -718,7 +753,6 @@ namespace RcrcGreen.Revit.Kpi
             {
                 _facts = facts;
                 _ticks = new PlotTicks(facts.Plots, _ticks.Ticked);
-                _modelFolder = facts.ModelFolder;
 
                 if (_componentParameter.Length == 0)
                 {
@@ -728,7 +762,7 @@ namespace RcrcGreen.Revit.Kpi
                 if (_referenceParameter.Length == 0)
                 {
                     _referenceParameter = Preselected.From(
-                        facts.ReferenceChoices.Select(one => one.Name).ToList(), KpiNames.PlotUid2);
+                        KpiNames.PlotNamesOnSheets.ToList(), KpiNames.PlotUid2);
                 }
 
                 if (_locationParameter.Length == 0)

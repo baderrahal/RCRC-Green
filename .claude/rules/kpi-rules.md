@@ -266,6 +266,44 @@ model that has never been saved was refused with No model is open, next to a hea
 96,959 elements and directly under the line that already said the truth. The never saved words
 are `TemplateWords.NoModelPath`, the one that line uses, rather than a second sentence.
 
+## The pane holds no copy of anything it can ask for
+
+The model's folder was read once, when the pane was shown, and kept. The model was then saved to
+a real folder and **Create stayed grey saying No model is open**, and a KPI Scan after the save
+did not shift it. The pane was also holding the title in a second string, set by the scan and by
+nothing else, so the two halves of one fact went stale on different schedules.
+
+Four things hold the fix up.
+
+**`OpenModel` is one record**, title and folder together, built from one answer. `CannotCreate`
+takes it rather than two loose flags, so nothing can hand it the pair the wrong way round.
+
+**Every answer from `KpiRequestHandler` carries the model state**, whatever was asked for, read
+off the live document at that moment. `WhichModel` is only the request that asks for that and
+nothing else.
+
+**`RedrawTemplates` asks for it every time it draws**, and `Took` redraws only when the answer
+moved, so the ask does not chase its own tail.
+
+**Create is greyed out on what the PANE owns and nothing else**, a template picked and a plot
+ticked. Whether a model is open and whether it has a folder are decided on the Revit thread
+against the live document when the button is pressed, and the refusal comes back from there.
+
+`Ask` holds one slot and `WhichModel` never takes it from anything, because the pane asks for it
+on every draw. It used to displace `Plots`, which the pane asks for in the same breath when it
+is shown, so the plot list never arrived at all.
+
+## The reference values follow the ticked plot
+
+The block under the Reference picker showed DM-11's four values with DM-12 ticked, and the same
+four with all 155 ticked. It was read for one plot, the first in the model's list.
+
+`ReferenceValuesPerPlot` reads all four for every plot in one pass over the sheets, the shape
+`ValuePerPlot` already used, and the pane shows the FIRST TICKED plot's **with that plot named
+beside them**. Nothing ticked shows none and says so. The block exists so a person picks the
+reference by looking at its value, and a value belonging to a plot they did not choose is worse
+than no value at all.
+
 ## Shared and not changed
 
 `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile` are shared with the Drawing
