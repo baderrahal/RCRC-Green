@@ -1,8 +1,8 @@
 # ai-max state
 
 Phase: 9, ship. Thirty second pass, the group counter, the switch and the component values.
-Pull request 39 is open, 804 tests locally, 0 failed and 0 skipped, after the last file was
-written and after six break watches were restored byte for byte.
+Pull request 39 is merged into main as `973c817`, 804 tests on the runner against its merged
+head and 804 locally, 0 failed and 0 skipped on each.
 
 The group counter counted what sat under a phase off the first cell, which is the image column,
 and an existing species prints with no photo, so DM-12 Existing came back as 0 named rows of 6

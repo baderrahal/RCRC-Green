@@ -6,9 +6,20 @@ Newest entry first.
 
 ## 2026-09-09, thirty second pass. The group counter, the switch and the component values
 
-One bug and two report faults from the 1521 scan, and nothing else. The suite runs 804 tests
-locally, 0 failed and 0 skipped, after the last file was written and after the six break
-watches were restored byte for byte.
+Pull request 39, merged into main as `973c817`. **The runner executed 804 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 804 ran, 0 failed and 0 skipped**, after
+the last file was written and after the six break watches were restored byte for byte.
+
+The gate endpoints went stale again, the fourth round running. The job LOG settled it the same
+way it did last round: it returns 404 while the job is running, so a log that comes back at all
+is a job that has ended, whatever the status field still says.
+
+The remote branch still held last round's commit, which main already carried under a different
+hash as `82dd51d`. The two trees were identical, so the branch carried nothing but merged
+history and was restarted from main with a force-with-lease pinned to that old commit. Nothing
+unmerged was on it to lose, and that was checked rather than assumed.
+
+One bug and two report faults from the 1521 scan, and nothing else.
 
 ### The group counter read the image column
 
