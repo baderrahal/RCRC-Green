@@ -106,22 +106,28 @@ KERBS is built on Slab Edges, a name lookup found nothing, and the schedule was 
 "this model has no category named Slab Edges" on a model that has it. `CategoryName` is kept for
 the report only.
 
-## A sheet number that will be refused says so before Run
+## A sheet number is proposed from the pattern the model already uses
 
-`SheetNumbers.Free` offers numbers no sheet in the model carries, each one a number in use with
-its last run of digits stepped on until it is free, so every offer is shaped like something the
-project already does. The dropdown used to list the numbers already in use, which meant every
-entry in it was certain to be rejected, and three sheets were lost to that in one run.
+`SheetNumbers.Propose` continues what the plot already does: the view code, then the plot's
+letter, then the first sheet letter from A not in use anywhere. The plot letter comes off
+`PlotLetter`, read as the first letter after the leading digits of the plot's own numbers, and
+every parseable number must agree. DM-11's real numbers, 010QE to 600QD, all read Q. A plot
+with no numbers, or with disagreeing ones, gets `SheetNumberProposal.Nothing` with the reason,
+because a wrong number in a drawing register cannot be corrected later. Never random: a caller
+threads one growing set of taken numbers through every row, so two proposals cannot collide.
 
-`Faults` and `Problems` answer the same question twice over: the line under one box, and the
+`SheetNumbers.Free` still offers numbers no sheet carries, each a number in use with its last
+run of digits stepped on until it is free, for the dropdown the user can pick past.
+
+`FaultIn` and `Problems` answer the same question twice over: the line under one box, and the
 count in the run summary. One place decides, so the panel can never say a number is fine while
 the summary counts it.
 
 Two ways to be refused. A sheet in the model already carries it, or two of the sheets this run
 would make carry it, which is the same fault a second later. Two separately described sheets
-asking for one number clash as hard as two plots do, because they go into one model. Already in
-the model is said first when both are true, since the model is the one somebody goes and looks
-at.
+asking for one number clash as hard as two rows of one sheet do, because they go into one
+model. Already in the model is said first when both are true, since the model is the one
+somebody goes and looks at.
 
 ## What is counted is what gets written
 
@@ -177,29 +183,37 @@ a file that contradicts itself has nothing else in it worth believing either.
 Needing attention is not the same as not being created. A schedule short of a column is in the
 model and it is wrong, and counting it as not created would be a second lie.
 
-## A sheet is described, not captured
+## A sheet is described, not captured, and the views divide
 
-`SheetDefinition` holds the title block family and type, the sheet name, the view types that go
-on it and how many per sheet. Plain strings, a list and a number, filled from what the user
-chose rather than read off a sheet that already exists.
+`SheetDefinition` holds the title block family and type, the view types that go on and how many
+per sheet. No sheet name: it used to carry one typed name for every sheet it made, which put
+GENERAL ARRANGEMENT LAYOUT around a location key plan. `SheetDivision.Of` divides the views, in
+the order they were ticked, into as many `PlannedSheet`s as they need, so six views at two per
+sheet is three sheets and no view is ever left off. The old `Placed` and `LeftOff` split and
+the empty sheet a viewless definition used to make are superseded by that.
 
-The sheet number is not in it. It is the one thing that differs between the sheets one
-definition makes, so it comes per plot in a `SheetRequest`, and `SheetOrder` pairs a definition
-with the number every plot gets for it.
+Each sheet the run makes is a `SheetToMake` row: one plot, one slice of the views, one name and
+one number, each remembering whether it was generated or typed so the report can say. A sheet
+holding one view is named by `SheetNaming.FromView`, the view name upper cased with no code,
+because the code is already the front of the number. One holding more is typed, and
+`PlannedSheet.WhyNothingIsProposed` says so next to the empty boxes. A row short of a name or a
+number is refused by name, and `SheetBatch` counts what one definition really makes.
 
 `SheetLayout.For` is the maths: a title block's width and height and a count of 1, 2 or 4, back
 comes the centre of each viewport in reading order. It divides the sheet evenly, so the margin
 outside equals the gap between. Y counts up from the bottom, which is Revit's convention and
 the reason the first row back is the top one.
 
-More views ticked than fit is not an error. The first few are `Placed`, the rest are `LeftOff`
-and named, so nothing is dropped without being said. A definition with no views is usable and
-makes an empty sheet, which is a real thing to ask for.
-
 `SheetSize` is the width and the height in feet AND which read produced them, because a size
 that came from nowhere reads exactly like a size that was measured. Three sheets were made
 empty on a real A1 title block. A size that is zero, negative, NaN or infinite is not a size,
 and the factory turns it into `NotRead` rather than letting it reach `SheetLayout.For`.
+
+`ViewportRecord` is one placement in plain numbers: sheet, view, the view's own scale, centre,
+size and the sheet's size, said in millimetres. The run records one per placement and the scan
+reads the same shape off sheets the team made, so the two can be held against each other. A
+sheet has no scale of its own: what a sheet shows under Scale is a readout of the views placed
+on it, and each view's comes from its template, so nothing anywhere sets one.
 
 ## Every count the panel shows is worked out here
 

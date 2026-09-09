@@ -115,8 +115,125 @@ namespace RcrcGreen.Revit
                 plotIds.Values,
                 disagreements,
                 plotIds.ElementsRead,
-                plotIds.Seconds);
+                plotIds.Seconds,
+                ReadViewports(document, sheets));
             return true;
+        }
+
+        /// <summary>
+        /// Every placement on every existing sheet, measured the same way the run report
+        /// measures its own, so a sheet the tool makes can be held against one the team made
+        /// instead of against a guess. Nothing that cannot be read is skipped quietly: it is
+        /// recorded with the reason in its name.
+        /// </summary>
+        private static List<ViewportRecord> ReadViewports(
+            Document document, IEnumerable<ViewSheet> sheets)
+        {
+            var sheetById = new Dictionary<ElementId, ViewSheet>();
+            foreach (ViewSheet sheet in sheets) sheetById[sheet.Id] = sheet;
+
+            // The size comes off the title block placed on each sheet, never off the type,
+            // because Sheet Width and Sheet Height only exist once one is placed. The first
+            // block found per sheet answers, the way the run measures its own new sheets.
+            var footprints = new Dictionary<ElementId, SheetFootprint>();
+            foreach (FamilyInstance block in new FilteredElementCollector(document)
+                .OfCategory(BuiltInCategory.OST_TitleBlocks)
+                .WhereElementIsNotElementType()
+                .OfType<FamilyInstance>())
+            {
+                if (footprints.ContainsKey(block.OwnerViewId)) continue;
+
+                footprints[block.OwnerViewId] = new SheetFootprint
+                {
+                    WidthFeet = Number(block.get_Parameter(BuiltInParameter.SHEET_WIDTH)),
+                    HeightFeet = Number(block.get_Parameter(BuiltInParameter.SHEET_HEIGHT))
+                };
+            }
+
+            var placements = new List<ViewportRecord>();
+
+            foreach (Viewport viewport in new FilteredElementCollector(document)
+                .OfClass(typeof(Viewport))
+                .Cast<Viewport>())
+            {
+                ViewSheet sheet;
+                if (!sheetById.TryGetValue(viewport.SheetId, out sheet)) continue;
+
+                var view = document.GetElement(viewport.ViewId) as View;
+                XYZ centre = viewport.GetBoxCenter();
+                Outline box = viewport.GetBoxOutline();
+                SheetFootprint footprint = FootprintOf(footprints, sheet.Id);
+
+                placements.Add(new ViewportRecord(
+                    sheet.SheetNumber,
+                    sheet.Name,
+                    view == null ? "(view not read)" : view.Name,
+                    view == null ? 0 : view.Scale,
+                    centre == null ? 0.0 : centre.X,
+                    centre == null ? 0.0 : centre.Y,
+                    box == null ? 0.0 : box.MaximumPoint.X - box.MinimumPoint.X,
+                    box == null ? 0.0 : box.MaximumPoint.Y - box.MinimumPoint.Y,
+                    footprint.WidthFeet,
+                    footprint.HeightFeet,
+                    false));
+            }
+
+            foreach (ScheduleSheetInstance placed in new FilteredElementCollector(document)
+                .OfClass(typeof(ScheduleSheetInstance))
+                .Cast<ScheduleSheetInstance>())
+            {
+                if (placed.IsTitleblockRevisionSchedule) continue;
+
+                ViewSheet sheet;
+                if (!sheetById.TryGetValue(placed.OwnerViewId, out sheet)) continue;
+
+                Element schedule = document.GetElement(placed.ScheduleId);
+                BoundingBoxXYZ across = placed.get_BoundingBox(sheet);
+                SheetFootprint footprint = FootprintOf(footprints, sheet.Id);
+
+                placements.Add(new ViewportRecord(
+                    sheet.SheetNumber,
+                    sheet.Name,
+                    schedule == null ? "(schedule not read)" : schedule.Name,
+                    0,
+                    across == null ? 0.0 : (across.Min.X + across.Max.X) / 2.0,
+                    across == null ? 0.0 : (across.Min.Y + across.Max.Y) / 2.0,
+                    across == null ? 0.0 : across.Max.X - across.Min.X,
+                    across == null ? 0.0 : across.Max.Y - across.Min.Y,
+                    footprint.WidthFeet,
+                    footprint.HeightFeet,
+                    true));
+            }
+
+            return placements;
+        }
+
+        private static SheetFootprint FootprintOf(
+            Dictionary<ElementId, SheetFootprint> footprints, ElementId sheetId)
+        {
+            SheetFootprint found;
+            return footprints.TryGetValue(sheetId, out found)
+                ? found
+                : new SheetFootprint();
+        }
+
+        private static double Number(Parameter parameter)
+        {
+            if (parameter == null || !parameter.HasValue) return 0.0;
+            if (parameter.StorageType != StorageType.Double) return 0.0;
+
+            return parameter.AsDouble();
+        }
+
+        /// <summary>
+        /// A sheet's width and height in feet, zero when no placed title block answered, which
+        /// prints as 0 mm rather than as a plausible size.
+        /// </summary>
+        private sealed class SheetFootprint
+        {
+            public double WidthFeet;
+
+            public double HeightFeet;
         }
 
         /// <summary>

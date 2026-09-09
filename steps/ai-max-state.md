@@ -1,6 +1,35 @@
 # ai-max state
 
-Phase: 9, ship. Twenty fourth pass, two numbers the cut-off brief left to a guess, corrected.
+Phase: 9, ship. Twenty fifth pass, divided sheets, proposed names and numbers, and the scale
+question answered.
+
+A third full run created 13 with 0 refused. Three faults remained and one question needed an
+answer before anything moved.
+
+**A sheet has no scale of its own.** The Scale a sheet shows is a readout of the views placed
+on it, enabled only when every placed view shares one scale and reading As Indicated
+otherwise, and each view's scale comes from its own view template. Checked against the API
+documentation before acting, sources in the log. So nothing here sets a scale anywhere, and
+the wrong scale complaint was really item 2's wrong name around the right view. Whether the
+tool's centred placement matches how real sheets sit is UNKNOWN until the scan's new viewport
+section runs on the model.
+
+**One description makes as many sheets as its views need.** `SheetDivision` chunks the ticked
+views in ticked order, six at two per sheet is three sheets, none ever left off. A one view
+sheet is named from its view by `SheetNaming` and numbered by `SheetNumbers.Propose`, the
+code, the plot's letter off its own numbers, then the first free letter. Step 4 is a table
+now, one row per sheet per ticked plot, names and numbers prefilled where they could be
+proposed and editable everywhere, and the report says which were generated and which were
+typed. Both reports record every placement: scale, centre, size and sheet size in millimetres,
+the scan off existing sheets for comparison.
+
+The empty sheet a viewless definition used to make is superseded: no views, no sheets. The
+lowercase s in a section name is answered, a sibling spells it that way, nothing to do. Sheet
+parameters are out of scope by the team's decision.
+
+Nothing in this round has been through Revit.
+
+Before that, the twenty fourth pass, two numbers the cut-off brief left to a guess, corrected.
 
 The KPI row cap goes from 30 to 200, because the workbook's softscape lists run 80 to 89
 species and a cap of 30 lost about 55 of them from the section this round exists to fill. TREE
@@ -409,15 +438,16 @@ Three projects in `RcrcGreen.sln`.
   which is the only route from that panel to the API, `DrawingSheetReader`, `ModelScanner`
   and `ScopeBoxScanner` which read a document into plain values, `ScanProgressWindow` which
   shows how far a read has got and can stop it, `RcrcGreen.addin`, and `SectionDefaults`,
-  which holds the 10 metre section depth and converts it to feet.
+  which converts the one metre section depth to feet.
 - `install/install.ps1` and `install/uninstall.ps1` build the per user layout the manifest
   asks for, which the build itself does not produce.
 - `tests/RcrcGreen.Core.Tests`, net8.0, xunit, Core only.
 
 ## What is not built
 
-Sheet creation and section creation are both written and neither has run. The three questions
-that blocked sheets are answered: a sheet is copied from one the user set up by hand.
+Three full runs of Drawing Sheet have executed: 10 created, then 8 with 6 refused, then 13
+with 0 refused. Plan views, sections, schedules and sheets have all been made at least once,
+KERBS included, so every path has run against the old one sheet per plot shape.
 
 Nothing in the Revit project has been run on this machine. It compiles against the Revit 2024
 reference assemblies and no more than that can be said from here. The panel especially, since
@@ -425,16 +455,10 @@ a dockable pane, an external event and a WPF tree built in code can all compile 
 wrong the first time Revit loads them. That goes for the three failure paths added in the
 sixth pass as well. None of them has been made to happen.
 
-**Three plan views and one sheet have been created. Nothing else ever has.** No section and no
-schedule has ever been made by this tool, so the section path and the schedule path have still
-never executed. The sheet that was made came out empty, and the whole route that made it is
-being replaced.
-
-**Nothing in this round has been run.** The single sibling lookup, the far clip taken from the
-model, the refilled code dropdown and the two new scan counts are all written and none has been
-seen working. The rebuilt panel has been used, which is where three of these four faults came
-from, but no part of this round's change to it has been rendered. The newest `steps/log.md`
-entry lists what that leaves unchecked, item by item.
+**Nothing in this round has been run.** The division, the proposed names and numbers, the
+rebuilt step 4 table, the keystroke refresh of the other boxes, the placement records and the
+scan's viewport section are all written and none has been seen working. The newest
+`steps/log.md` entry lists what that leaves unchecked, item by item.
 
 The mockups under `design/` are hand drawn, not screenshots, and each says so at the top of the
 file. Every round that changes the panel writes one.

@@ -10,6 +10,10 @@ namespace RcrcGreen.Core.Tests
     /// </summary>
     internal static class RunFixture
     {
+        public const string TitleBlockFamily = "AR-PRX-Title_Block_A1";
+
+        public const string TitleBlockType = "GA-DETAILED DESIGN";
+
         /// <summary>
         /// The shape most tests want. No sections and no sheets, which is the run the panel
         /// made before this round.
@@ -43,43 +47,46 @@ namespace RcrcGreen.Core.Tests
 
         public static RunPlan WithSheets(
             IEnumerable<string> ticked,
-            params SheetOrder[] sheetsWanted)
+            params SheetBatch[] sheetsWanted)
         {
             return RunPlan.Of(null, ticked, null, null, null, null, sheetsWanted);
         }
 
         /// <summary>
-        /// A sheet the user described, with a number for every plot named. Pass an empty string
-        /// for a plot that has no number typed in.
+        /// One described sheet and its rows, the way the panel hands them over.
         /// </summary>
-        public static SheetOrder Sheet(
-            string sheetName, IEnumerable<ViewType> views, int perSheet,
-            params string[] plotAndNumber)
+        public static SheetBatch Batch(
+            IEnumerable<ViewType> views, int perSheet, params SheetToMake[] rows)
         {
-            var numbers = new List<SheetRequest>();
-            for (int at = 0; at + 1 < plotAndNumber.Length; at += 2)
-            {
-                numbers.Add(new SheetRequest(plotAndNumber[at], plotAndNumber[at + 1]));
-            }
-
-            return new SheetOrder(
-                new SheetDefinition("AR-PRX-Title_Block_A1", "GA-DETAILED DESIGN", sheetName,
-                    views, perSheet),
-                numbers);
+            return new SheetBatch(
+                new SheetDefinition(TitleBlockFamily, TitleBlockType, views, perSheet),
+                rows);
         }
 
-        public static SheetOrder SheetMissingAName(params string[] plotAndNumber)
+        /// <summary>
+        /// A definition still short of its title block, which is the one thing a definition
+        /// can be missing now that names and numbers live on the rows.
+        /// </summary>
+        public static SheetBatch BatchMissingItsType(params SheetToMake[] rows)
         {
-            var numbers = new List<SheetRequest>();
-            for (int at = 0; at + 1 < plotAndNumber.Length; at += 2)
-            {
-                numbers.Add(new SheetRequest(plotAndNumber[at], plotAndNumber[at + 1]));
-            }
+            return new SheetBatch(
+                new SheetDefinition(string.Empty, string.Empty, null, 1), rows);
+        }
 
-            return new SheetOrder(
-                new SheetDefinition("AR-PRX-Title_Block_A1", "GA-DETAILED DESIGN", string.Empty,
-                    null, 1),
-                numbers);
+        /// <summary>
+        /// One row of the step 4 table. Pass an empty number or name for a row still short of
+        /// one.
+        /// </summary>
+        public static SheetToMake Row(
+            string plotId,
+            string number,
+            string name,
+            IEnumerable<ViewType> views = null,
+            int perSheet = 1)
+        {
+            return new SheetToMake(
+                plotId, number, name, views, perSheet,
+                TitleBlockFamily, TitleBlockType, false, false);
         }
 
         /// <summary>
@@ -87,9 +94,7 @@ namespace RcrcGreen.Core.Tests
         /// </summary>
         public static RunItem SheetItem(string plotId, string number, string name)
         {
-            return RunItem.ForSheet(
-                new SheetRequest(plotId, number),
-                new SheetDefinition("AR-PRX-Title_Block_A1", "GA-DETAILED DESIGN", name, null, 1));
+            return RunItem.ForSheet(Row(plotId, number, name));
         }
 
         public static RunOutcome Outcome(
