@@ -13,20 +13,20 @@ and creates them with correct names and, for a cross section, a cut across the m
 
 ## Running it
 
-**Drawing Sheet** is a dockable panel that reads the model every time it is shown. It is five
-numbered steps, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step carries its
-own summary and an unusable one says why. A filled square is a view that exists and opens on a
-click, an empty one is missing and can be marked, one at a time, by row, by column or all at
-once. Every dropdown comes from the model. Step 5 holds the scope box counts, and Scan Model,
-in the top strip, reads the whole document not just the range.
+**Drawing Sheet** is a dockable panel that reads the model every time it is shown. Five numbered
+steps, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step carries its own
+summary and an unusable one says why. A filled square is a view that exists and opens on a
+click, an empty one is missing and can be marked one at a time, by row, by column or all at
+once. Every dropdown comes from the model, and Scan Model reads the whole document.
 
 **Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
-schedules and sheets. One confirmation, one transaction, one undo, one report of what happened.
+schedules and sheets. One confirmation, one transaction, one undo, one report.
 
 **KPI Checklist** opens a pane of the model name, KPI Scan, a status line and the template
 picker. KPI Scan writes nine sections and creates nothing. **The elements a schedule lists are
 not the scheduled things:** the softscape schedule returns RVT Link instances, so its printed
-rows are its numbers' only route. Every measured fact is in `.claude/rules/kpi-rules.md`.
+rows are its numbers' only route, and its group rows are the only place a phase shows. Every
+measured fact is in `.claude/rules/kpi-rules.md`.
 
 Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
 `Addins\2024\` layout the build does not, so copying the output folder by hand leaves Revit
@@ -68,48 +68,37 @@ These come from the team and from real models. They are not guesses.
 
 - Views and sheets are named `<PlotID>-(<code>) <View name>`. PlotID is two uppercase letters,
   a dash, then digits, as in DM-41, and lowercase is invalid. The code is digits in round
-  brackets and the view name is free text after the bracket and one space
-- Plots also exist as scope boxes named with the PlotID, for example a box named DM-41
+  brackets and the view name is free text after the bracket and one space. A plot is also a
+  scope box named with the PlotID
 - **There are two plot parameters, not one.** `PRX_Plot_ID` sits on views and on sheets and the
   Sheet List filters on it. `PRX_Ref Plot ID`, with spaces rather than underscores, sits on
   model elements and every quantity schedule filters on that one. A schedule built against the
   wrong one comes back empty
-- On a view, PRX_Plot_ID is the first place to look for the plot. The name is the fallback
+- On a view, PRX_Plot_ID is the first place to look for the plot and the name is the fallback
 - Cross sections are cut across the middle of the plot's scope box, the SHORT way
 - View names repeat word for word across plots, and nothing plot specific appears in one
 
-Six of the things under a plot are schedules, under Schedules and Quantities rather than Views.
-They filter on PRX_Ref Plot ID. Category alone does not identify one, because HARDSCAPE and
-SHRUBS AND LAWN SCHEDULE are both Floors, told apart by their second filter. Field names are
-copied exactly, PRX_Furniture Lenght included. A schedule is built on Revit's NUMBER for the
-category, never the display name, because KERBS is built on Slab Edges and that name is not in
-`Document.Settings.Categories`. A filter value goes back as its own kind, so a Yes/No parameter
-goes back as 1. A calculated field cannot be added to a new schedule at all.
+Six of the things under a plot are schedules, filtered on PRX_Ref Plot ID. Category alone does
+not identify one: HARDSCAPE and SHRUBS AND LAWN are both Floors, told apart by their second
+filter. A schedule is built on Revit's NUMBER for the category, a filter value goes back as its
+own kind, a calculated field cannot be added at all, and field names are copied exactly.
 
 **A view family type is not named after the view type, and one view type is not built one way.**
-DM-18-(200) General Arrangement Layout uses `(200) General Arrangement Layout`, which matches.
-DM-11-(010) Location Key Plan uses `(010) Key Location Plan`, words swapped, which does not. So
-nothing is matched on a name. A new view takes its family type, its level, its view template,
-Crop View and Crop Region Visible from ONE view of the same type the model already holds, and
-the report names that view. Three (010) views made in one run got three different family types
-that way, each copied faithfully, so the scan counts them per view type and picks no winner.
-**(400) Landscape Cross Section is a section rather than a plan view**, read off that view's
-kind rather than off the code.
+DM-11-(010) Location Key Plan uses `(010) Key Location Plan`, words swapped, so nothing anywhere
+is matched on a name. A new view takes its family type, level, template and two crop settings
+from ONE view of the same type the model holds, and the report names it. Three (010) views in
+one run took three different family types that way. **(400) Landscape Cross Section is a section
+rather than a plan view**, read off that view's kind rather than off the code.
 
 Two settings are the tool's own rather than the model's, because the model disagrees with
-itself. Cross sections look 1 METRE, where four real ones read 0.93, 0.93, 1.53 and 12.83.
-ANNOTATION CROP IS ALWAYS ON for a plan view, where copying it off PL-17 passed the fault on and
-left neighbouring plots' section markers drawing through. The report says whose setting each is.
-A section is left with no scope box while every plan view has one.
+itself. Cross sections look 1 METRE, where four real ones read 0.93, 0.93, 1.53 and 12.83, and
+ANNOTATION CROP IS ALWAYS ON for a plan view. The report says whose setting each is.
 
-A new view is CREATED FRESH, never copied from another plot, and carries no annotation,
-dimensions, tags or detailing. A SHEET IS DESCRIBED rather than copied: the title block type,
-the views and 1, 2 or 4 per sheet are shared, and the views DIVIDE into as many sheets as they
-need, in ticked order, none left off. A one-view sheet is named after its view, upper cased,
-code removed, and numbered as the code, the plot's letter, then the first free letter, both
-editable proposals the report marks generated or typed. A sheet's size is read off the title
-block PLACED ON IT, because Sheet Width and Sheet Height only exist on the instance. A SHEET
-HAS NO SCALE OF ITS OWN: its Scale reads out the placed views' templates. Nothing sets one.
+A new view is CREATED FRESH, never copied from another plot, and carries no annotation or
+detailing. A SHEET IS DESCRIBED rather than copied: the title block type, the views and 1, 2 or
+4 per sheet are shared, and the views DIVIDE into as many sheets as they need, none left off. A
+sheet's size is read off the title block PLACED ON IT, because Sheet Width and Sheet Height only
+exist on the instance. A SHEET HAS NO SCALE OF ITS OWN: its Scale reads out its views' templates.
 
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 
@@ -118,18 +107,28 @@ Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 - 406 scope boxes for 160 PRX_Plot_ID values, so a box not named for a plot is ordinary
 - 2,114 names parsed and 4,039 did not, which made the parameter the first source not a fallback
 - 6 views are named for one plot and carry PRX_Plot_ID for another. The scan names them
-- Only plot DM-11 has real sheet numbers, 010QE to 600QD, all with plot letter Q. Other plots
-  carry numbers like 010QE Copy 001, and a group of sheets has no PRX_Plot_ID. The scan counts
-  both
+- Only plot DM-11 has real sheet numbers, 010QE to 600QD, all with plot letter Q. Others carry
+  numbers like 010QE Copy 001, and a group of sheets has no PRX_Plot_ID
 - Title blocks are AR-PRX-Title_Block_A1, several types. Read them from the model, never fix them
-- Three full runs: 10 with 0 refused, then 8 with 6 refused and 3 needing attention, then 13
-  with 0 refused. Every fault each run surfaced was fixed and every path has now run
+
+Measured on the 1355 run. These are what pick a workbook and fill it:
+
+- **PRX_Component on the sheet is the ASSET TYPE, not a park name.** FRIDAY MOSQUE and SCHOOL,
+  on 1,384 of 1,385 sheets. It is what picks the workbook template
+- **PRX_Plot_ID is the plot** and the thing every schedule filters on. FM-05, SC-03. Plot
+  prefixes track the asset type: FM, SC, EP, FP, PL, MM, DM, NS
+- PRX_Plot_UID is numeric with nulls. PRX_Plot_UID2 reads ANH-007-MO-100019. PRX_Plot_NH is the
+  same on every sheet. None of the three is the plot
+- **The softscape schedule prints TREES, then a group row per phase, then the species under it,
+  then a subtotal per group, then TOTAL.** A species can appear under BOTH groups: ALBIZIA
+  LEBBECK is 1 existing and 13 proposed on DM-12. THE GROUP ROW MUST TRAVEL WITH THE SPECIES ROW
+- Existing species print with no image and often NO BOQ CODE AVAILABLE. One is called UNKNOWN
+- **Every plot has two filled regions in the 00 link**, one CADASTRAL LIMIT and one OUT OF SCOPE
+  (PRESENTATION), and WHICH OF THEM CARRIES THE AREA VARIES BY PLOT. DM-11, DM-12 and DM-13 hold
+  it on OUT OF SCOPE with cadastral at 0. NS-19 and NS-06 hold it on cadastral. The type name
+  cannot decide it
 
 Real names are in `.claude/rules/core-rules.md`, next to the rule they illustrate.
-
-## Conventions
-
-**Anything not written down is UNKNOWN.** Never invent a rule. Open questions go in the log.
 
 ## Hooks
 
@@ -194,6 +193,7 @@ lines apart, but nothing said which view. Record where a value came from as you 
 
 ## Writing and working agreements
 
+**Anything not written down is UNKNOWN.** Never invent a rule. Open questions go in the log.
 No em dash, no semicolon in prose, no emoji anywhere, commit messages included. No generated-by
 footer and no co-author line. Comments say why, not what. Full list in the ai-max writing rules.
 Never report a test result from a run made before the last file was written. Say UNKNOWN rather

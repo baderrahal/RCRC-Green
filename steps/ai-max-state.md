@@ -1,6 +1,19 @@
 # ai-max state
 
-Phase: 9, ship. Twenty eighth pass, recognition fixed, the scan gaps, one check against the
+Phase: 9, ship. Twenty ninth pass, two report faults from the 1355 scan and the facts it
+measured.
+
+Both faults were the report answering a question from the wrong place while the right answer sat
+a screen above it in the same file. Section 9 read NOT FOUND for PRX_COMPONENT while section 3
+printed PRX_Component with 1384 values, so a near miss holding values is now named and counts as
+the answer. Question 8 reported the elements by phase created, which are the link instances the
+softscape schedule lists rather than the plants, so it is answered from the printed group rows
+instead, by `ScheduleGroups` in Core, naming the plot that showed it. Six measured facts are in
+`CLAUDE.md`, which was held at 200 lines by compressing the Drawing Sheet prose `core-rules.md`
+already holds. Two new open questions, both about matching a species by name, are in
+`steps/log.md`, and four of the five older ones are settled.
+
+Before that, the twenty eighth pass, recognition fixed, the scan gaps, one check against the
 real workbooks, and the review of that work folded back in.
 
 Pull request 35 is merged into main as `1b78c91`, 711 tests on the runner against its merged

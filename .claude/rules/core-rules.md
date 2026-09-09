@@ -74,6 +74,10 @@ plot the tool offers or acts on comes from the model, and nothing anywhere can a
 
 ## A definition sits between reading a schedule and writing one
 
+Six of the things under a plot are schedules, and they sit under Schedules and Quantities in the
+project browser rather than under Views, which is why a scan that walks views alone finds none
+of them.
+
 `ScheduleDefinition` holds the category, the fields in order, the filters and the link setting
 as plain values. Capture fills one in from a schedule that exists, create builds one in the
 model, and duplicating is the two run back to back.

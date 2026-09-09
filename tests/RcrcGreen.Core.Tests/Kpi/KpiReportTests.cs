@@ -516,11 +516,15 @@ namespace RcrcGreen.Core.Tests.Kpi
                 {
                     "  The rows are as the schedule last regenerated, which can be older than the elements listed count below it when the model changed since and the schedule was not opened.",
                     "  BOTANICAL NAME | COMMON NAME | SIZE | ENTER EACH PROPOSED TREE QUANTITY",
+                    "  TREES | - | - | -",
+                    "  Existing | - | - | -",
                     "  Acacia tortilis | Umbrella thorn | 3 m | 30",
+                    "  - | - | - | 30",
+                    "  Proposed | - | - | -",
                     "  Ziziphus spina-christi | Sidr | 3 m | 27",
                     "  - | - | - | 57"
                 },
-                Following(lines, "  rows as printed, showing 4 of 4. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.", 5));
+                Following(lines, "  rows as printed, showing 8 of 8. The first row is usually the headings and the last usually the total. When fewer are shown than there are, the last one shown is the schedule's last row.", 9));
         }
 
         /// <summary>

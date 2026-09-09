@@ -236,11 +236,19 @@ namespace RcrcGreen.Core.Tests.Kpi
                 phaseName: "New Construction",
                 phaseFilterName: "Show All",
                 rowsWereRead: true,
-                bodyRowCount: 4,
+                bodyRowCount: 8,
+                // The real shape, measured on the 1355 run. The schedule prints TREES, then a
+                // group row per phase, then the species under it, then a subtotal, and TOTAL
+                // last. Those group rows are the only place the existing and proposed split
+                // shows, because the elements the schedule lists are RVT Link instances.
                 rows: new[]
                 {
                     new[] { "BOTANICAL NAME", "COMMON NAME", "SIZE", "ENTER EACH PROPOSED TREE QUANTITY" },
+                    new[] { "TREES", "", "", "" },
+                    new[] { "Existing", "", "", "" },
                     new[] { "Acacia tortilis", "Umbrella thorn", "3 m", "30" },
+                    new[] { "", "", "", "30" },
+                    new[] { "Proposed", "", "", "" },
                     new[] { "Ziziphus spina-christi", "Sidr", "3 m", "27" },
                     new[] { "", "", "", "57" }
                 });
