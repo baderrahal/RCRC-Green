@@ -741,7 +741,10 @@ namespace RcrcGreen.Revit.Kpi
                 _referenceParameter,
                 _locationParameter,
                 _confirmedIdentical,
-                _chosenRegions);
+                _chosenRegions,
+                _date.Text,
+                _preparedBy.Text,
+                _position.Text);
 
             Say("Creating.");
             Ask(KpiRequest.Create);

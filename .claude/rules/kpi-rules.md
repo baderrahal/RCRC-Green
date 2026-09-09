@@ -499,6 +499,52 @@ Two things the check found that reading the map could not:
 Species stop where the map says: existing rows 4 to 92, proposed 4 to 84, header row 3, and the
 total at row 93 is `SUM(B4:B92)` on both sheets.
 
+## What the first real workbook measured
+
+One press of Create on DM-12 with the MOSQUES template, 2026-09-09. **The workbook is written
+and correct.** These are measurements off that output file, not reasoning about it.
+
+- **37 parts in, 37 out, 4 changed**, and the output recalculates with ZERO errors. The parks
+  figure above, 45 against 44, is EXISTING PARKS and is a different template. Both stand
+- The six values landed and the client's own formulas ran on them: **28.1 percent canopy against
+  a 13 percent target, Excessive, NOT COMPLIANT.** The tool wrote no verdict anywhere. That is
+  the workbook's arithmetic on the numbers Revit gave it
+- **The slash case matched.** ACACIA / VACHELLIA FARNESIANA found Acacia / Vachellia farnesiana
+  at row 11, which is why nothing is stripped or split on the way to a comparison
+- **Three species were correctly refused.** The MOSQUES tree list holds 80 species and not one
+  of them is Phoenix dactylifera, Washingtonia robusta, or any of the Unknown rows. Checked
+  against the output file itself rather than against the map
+
+The last one has a consequence and it is an open question rather than a fault:
+
+**The workbook reads 2 existing trees where the model holds 10, and 31 in total where the model
+holds 39.** The tool is right and the client's list is short. **Nothing in the tool may ever
+place an unmatched species by guessing**, so the three are named in the report and the numbers
+stay as they are until the team answers. `steps/log.md` carries it as the open question.
+
+## The area is not a schedule row
+
+The report used to end saying every number above came off a row the schedule printed. **The area
+did not.** H7 took 3728.7570000000005, converted from the raw 40136.006313679296 square feet off
+`PRX_Intervention Area` on the chosen filled region in the 00 link, where the schedule prints
+3729.
+
+The conversion is right and is more precise than the printed value. The sentence was wrong about
+it. The region row carries the raw reading, the converted metres and what the model prints, side
+by side and unrounded, so the two can be held against each other, and the closing paragraph says
+the schedule claim for the numbers it is true of and names the area separately.
+
+## What the team types reaches the cells
+
+E5, G5 and H5 come from no model. The pane collects them, and **it used to collect them and hand
+none of the three on**: `KpiCreateAsk` did not carry them and `KpiCreatePlan.Of` defaulted all
+three to null, so the first real workbook came out holding the template's own placeholders while
+the report said nobody had typed them, on a run where all three boxes were filled in.
+
+The three are REQUIRED arguments of `KpiCreatePlan.Of` now, so a caller that forgets them does
+not compile. A default that reads as a deliberate empty is how a whole link in a chain goes
+missing without a word.
+
 ## Open, and not to be guessed at in code
 
 The first real scan raised five. The 1355 run settled four of them, and the answers are facts

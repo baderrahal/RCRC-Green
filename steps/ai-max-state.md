@@ -1,6 +1,20 @@
 # ai-max state
 
-Phase: 9, ship. Thirty fifth pass, two more off the KPI pane. Pull request 43 is merged into main as
+Phase: 9, ship. Thirty sixth pass, the first real workbook. Pull request 44 is open, 867 tests
+locally, 0 failed and 0 skipped, after four break watches were restored byte for byte.
+
+**The first workbook is written and correct.** DM-12 on MOSQUES, 37 parts in and 37 out, zero
+recalculation errors, and the client's formulas gave 28.1 percent canopy against a 13 percent
+target. Two things it showed: the three typed boxes reached nothing, because `KpiCreateAsk` did
+not carry them and `KpiCreatePlan.Of` defaulted them to null, and the report claimed every number
+came off a schedule row when the area comes off a filled region parameter. Both fixed, the three
+are required arguments now, and the region row prints raw, converted and printed side by side.
+
+**One open question for the team**: the client's MOSQUES tree list holds 80 species and none
+matches three the model holds, so the workbook reads 31 trees where the model holds 39. The tool
+is right and the list is short. Nothing may ever place an unmatched species by guessing.
+
+Before that, the thirty fifth pass, two more off the KPI pane. Pull request 43 is merged into main as
 `61ea270`, 857 tests on the runner against its merged head and 857 locally, 0 failed and 0
 skipped on each.
 

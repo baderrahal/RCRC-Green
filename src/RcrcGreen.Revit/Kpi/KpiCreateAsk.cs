@@ -84,7 +84,10 @@ namespace RcrcGreen.Revit.Kpi
             string referenceParameter,
             string locationParameter,
             bool identicalAreasConfirmed,
-            IDictionary<string, string> chosenRegions)
+            IDictionary<string, string> chosenRegions,
+            string date,
+            string preparedBy,
+            string position)
         {
             Ticked = (ticked ?? Enumerable.Empty<string>()).Where(one => one != null).ToList();
             Template = template;
@@ -96,7 +99,25 @@ namespace RcrcGreen.Revit.Kpi
             IdenticalAreasConfirmed = identicalAreasConfirmed;
             ChosenRegions = new Dictionary<string, string>(
                 chosenRegions ?? new Dictionary<string, string>(), StringComparer.Ordinal);
+            Date = date ?? string.Empty;
+            PreparedBy = preparedBy ?? string.Empty;
+            Position = position ?? string.Empty;
         }
+
+        /// <summary>
+        /// The three the team types on the pane, for E5, G5 and H5. They come from no model, so
+        /// nothing on the Revit side can read them and they have to travel on here.
+        ///
+        /// **They were not on here at all.** The pane collected them, remembered two of them for
+        /// next time, and handed none of the three to the run, so the first real workbook came
+        /// out holding the template's own placeholders while the report said nobody had typed
+        /// them. What the boxes hold and what Create reads were two different things.
+        /// </summary>
+        public string Date { get; }
+
+        public string PreparedBy { get; }
+
+        public string Position { get; }
 
         public IReadOnlyList<string> Ticked { get; }
 

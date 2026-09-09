@@ -4,6 +4,84 @@ Newest entry first.
 
 ---
 
+## 2026-09-09, thirty sixth pass. The first real workbook, and two things it showed
+
+**The first workbook is written and correct.** 867 tests locally, 0 failed and 0 skipped, after
+the last file was written and after the four break watches were restored byte for byte.
+
+### The date and name boxes did not reach the fill
+
+E5, G5 and H5 came out holding the template's own placeholders, and the report said nobody had
+typed them, on a run where the user had typed 2026-09-09, xx and bb into the three boxes before
+pressing Create. **What the boxes hold and what Create reads were two different things.**
+
+Two links were missing at once. `KpiCreateAsk` did not carry the three at all, so nothing the
+pane collected left the pane. And `KpiCreatePlan.Of` defaulted all three to null, so the handler
+calling it without them read as a deliberate empty rather than as a caller that forgot.
+
+Both are fixed, and **the three are required arguments now.** A caller that forgets them does not
+compile, which is the guarantee a test cannot give. Three tests cover what a typed value does:
+it reaches the cell, an empty box is still recorded with its reason, and the surrounding space
+comes off and nothing else does.
+
+The pane's own half, box to `KpiCreateAsk`, is Revit code and no test here reaches it. What is
+tested is the decision and the plan.
+
+### The area claim was not true of the area
+
+The report ended with "Every number above came off a row the schedule printed". H7 took
+3728.7570000000005, converted from the raw 40136.006313679296 square feet, and the schedule
+prints 3729. **The conversion is right and more precise. The sentence was wrong about it.**
+
+The area comes off `PRX_Intervention Area` on the chosen filled region in the 00 link, which is
+not a schedule row at all. The region table now carries the raw reading, the written metres and
+what the model prints, side by side and unrounded, so the two can be held against each other,
+and the closing paragraph makes the schedule claim for the numbers it is true of and names the
+area separately.
+
+Rounding the raw number for reading would have hidden the difference the row exists to show, so
+it prints round trip. A break watch on that alone turned two tests red.
+
+### What the first real output measured
+
+One press of Create on DM-12 with the MOSQUES template. All of it is in `kpi-rules.md`.
+
+- 37 parts in, 37 out, 4 changed, and the output recalculates with ZERO errors. The 45 against
+  44 recorded earlier is EXISTING PARKS, a different template, and both stand
+- The six values landed and the client's own formulas ran on them: 28.1 percent canopy against a
+  13 percent target, Excessive, NOT COMPLIANT. The tool wrote no verdict anywhere
+- The slash case matched. ACACIA / VACHELLIA FARNESIANA found Acacia / Vachellia farnesiana at
+  row 11
+- Three species were correctly refused. The MOSQUES tree list holds 80 species and not one is
+  Phoenix dactylifera, Washingtonia robusta, or any Unknown row, checked against the output file
+
+### Open, and not to be guessed at in code
+
+**THE CLIENT'S TREE LIST IS SHORTER THAN THE MODEL.** The workbook reads 2 existing trees where
+the model holds 10, and 31 in total where the model holds 39, because the MOSQUES list has no row
+any of the three refused species can match.
+
+**The tool is right and the list is short.** This is a question for the team about their own
+template, not a thing to fix in code. **Nothing in the tool may ever place an unmatched species
+by guessing**, whatever the totals look like: a quantity put in the nearest row is a number
+nobody can trace and every one of the 80 rows would then be suspect. The three are named in the
+report with their counts and the numbers stay as they are until somebody answers.
+
+### What was broken to see the tests go red
+
+Four, each restored byte for byte and checked with md5.
+
+- The typed date dropped again. 5 red
+- The old schedule claim put back. 2 red
+- The raw number rounded for reading. 2 red
+- The printed value dropped from the region row. 2 red
+
+### What has not been run
+
+The pane change, box to `KpiCreateAsk`, has not been through Revit. Everything else in this round
+is Core and covered.
+
+---
 ## 2026-09-09, thirty fifth pass. Two more off the KPI pane, and one of them was never working
 
 Pull request 43, merged into main as `61ea270`. **The runner executed 857 tests against its

@@ -142,6 +142,11 @@ Measured on the 1355 run. These are what pick a workbook and fill it:
 - **Existing species print with no image and often NO BOQ CODE AVAILABLE.** One is called
   UNKNOWN. The image is the FIRST cell, so an existing species row starts with a dash and a row
   is a species row when the BOTANICAL NAME column holds text, never when the first cell does
+- **The client's tree list can be shorter than the model.** The first real workbook, DM-12 on
+  MOSQUES, came out correct and reads 2 existing trees where the model holds 10 and 31 in total
+  where it holds 39, because the 80 species in the MOSQUES list hold no Phoenix dactylifera, no
+  Washingtonia robusta and no Unknown row to match. **Nothing may ever place an unmatched species
+  by guessing.** It is named in the report and it is an open question for the team
 - **Every plot has two filled regions in the 00 link**, one CADASTRAL LIMIT and one OUT OF SCOPE
   (PRESENTATION), and WHICH OF THEM CARRIES THE AREA VARIES BY PLOT. DM-11, DM-12 and DM-13 hold
   it on OUT OF SCOPE with cadastral at 0. NS-19 and NS-06 hold it on cadastral. The type name

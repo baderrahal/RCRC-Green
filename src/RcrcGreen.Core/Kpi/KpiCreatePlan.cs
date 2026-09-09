@@ -84,9 +84,9 @@ namespace RcrcGreen.Core.Kpi
             Totalled shrubs,
             Totalled lawn,
             IEnumerable<SpeciesMatch> matches,
-            string date = null,
-            string preparedBy = null,
-            string position = null)
+            string date,
+            string preparedBy,
+            string position)
         {
             if (template == null) throw new ArgumentNullException("template");
 
@@ -96,6 +96,12 @@ namespace RcrcGreen.Core.Kpi
             // E5, G5 and H5 sit in the same place in every template and none of them comes
             // from Revit. The team types them on the pane and the tool copies them through,
             // so a filled checklist carries who filled it and when.
+            //
+            // **These three are required arguments and used to default to null.** The handler
+            // called this without them, so the first real workbook came out holding the
+            // template's own <Date>, <Name> and <Position> while the report said nobody had
+            // typed them, on a run where all three boxes were filled in. A default that reads
+            // as a deliberate empty is how a whole link in a chain goes missing in silence.
             Typed(template, KpiTemplates.TypedByTheTeam[0], "Date", date, writes, skipped);
             Typed(template, KpiTemplates.TypedByTheTeam[1], "Prepared by", preparedBy, writes, skipped);
             Typed(template, KpiTemplates.TypedByTheTeam[2], "Position", position, writes, skipped);
