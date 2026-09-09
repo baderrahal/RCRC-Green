@@ -1,7 +1,9 @@
 # ai-max state
 
 Phase: 9, ship. Twenty seventh pass, the template picker and the workbook writer. Pull
-request 33, waiting on the gate.
+request 33 merged into main as `c88083f` with 696 tests on the runner, 0 failed and 0
+skipped, 657 locally before the merge that brought the divided sheets rounds in and 696
+after it.
 
 The workbook half of the KPI tool. `KpiTemplates` in Core carries the map, one entry per
 template, measured off the annotated seven, with the tree row ranges on the entry because a
