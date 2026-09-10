@@ -14,8 +14,6 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// </summary>
     public class SchedulesAsPrintedTests
     {
-        private static readonly string[] Phases = { "Existing", "Proposed" };
-
         private static ScannedSchedule Softscape()
         {
             return CreateFixture.Softscape(
@@ -33,8 +31,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// FM-05 GRASS as measured: Existing 96 over 117, Proposed 69 over 84, the group 165
-        /// over 201, and the last row is the one taken.
+        /// FM-05 GRASS as the 1536 report printed it: Proposed 96 over 117, Street Design 69
+        /// over 84, the group 165 over 201. Proposed is taken, the street is left out, and the
+        /// group total row is the check on both.
         /// </summary>
         private static ScannedSchedule ShrubsAndLawn()
         {
@@ -42,10 +41,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "FM-05",
                 new[] { "IMAGE", "BOTANICAL NAME", "AREA (sqm)", "COUNT (n)" },
                 new[] { "GRASS", "", "", "" },
-                new[] { "Existing", "", "", "" },
+                new[] { "Proposed", "", "", "" },
                 new[] { "-", "GRASS: CYNODON DACTYLON", "96 m\u00b2", "117" },
                 new[] { "", "", "96 m\u00b2", "117" },
-                new[] { "Proposed", "", "", "" },
+                new[] { "Street Design", "", "", "" },
                 new[] { "Pennisetum setaceum.jpg", "GRASS: PENNISETUM SETACEUM", "69 m\u00b2", "84" },
                 new[] { "", "", "69 m\u00b2", "84" },
                 new[] { "", "", "165 m\u00b2", "201" },
@@ -54,14 +53,15 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static PlotReading Fm05()
         {
-            SoftscapeReading trees = SoftscapeRows.Read(Softscape(), Phases, "FM-05");
-            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading });
+            SoftscapeReading trees = SoftscapeRows.Read(Softscape(), CreateFixture.Counted, "FM-05");
+            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
 
             return CreateFixture.Plot("FM-05",
                 species: trees.Species.ToArray(),
                 subtotals: ground.Subtotals.ToArray(),
                 softscapeTotalRead: trees.TotalRead, softscapeTotal: trees.Total, rowsPassedOver: trees.RowsPassedOver,
-                printedSchedules: new[] { Softscape(), ShrubsAndLawn() }, softscapeTotalRow: trees.TotalRow);
+                printedSchedules: new[] { Softscape(), ShrubsAndLawn() }, softscapeTotalRow: trees.TotalRow,
+                printedGroups: trees.Groups.ToArray());
         }
 
         private static string Spaces(int howMany)
@@ -102,7 +102,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Contains(
                 "  FM-05, FM-05-(600) SOFTSCAPE SCHEDULE\r\n"
-                + "    read as species rows: 3, rows 4, 5, 8, passed over as subtotals: 2, TOTAL row: row 10\r\n"
+                + "    group rows: 3, 7, read as species rows: 3, rows 4, 5, 8, passed over as subtotals: 2, TOTAL row: row 10\r\n"
                 + "    rows printed 10, shown 10\r\n"
                 + "     1 | IMAGE               | BOTANICAL NAME      | COUNT (n) | HEIGHT (m)\r\n"
                 + "     2 | TREES               | -                   | -         | -         \r\n"
@@ -118,9 +118,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// For the shrubs and lawn schedule, WHICH SUBTOTAL ROW WAS TAKEN and why the others
-        /// were not: the last of the group's subtotal rows, the ones above it being the phase
-        /// subtotals that add to it.
+        /// For the shrubs and lawn schedule, WHICH SUBTOTAL ROWS WERE TAKEN and which were left
+        /// out, each by its phase and its row, and that the group total row was checked.
         /// </summary>
         [Fact]
         public void AShrubsAndLawnScheduleSaysWhichSubtotalRowWasTakenAndWhy()
@@ -129,8 +128,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Contains(
                 "  FM-05, FM-05-(600) SHRUBS AND LAWN SCHEDULE\r\n"
-                + "    read as group values: GRASS taken off row 9, the last of its 3 subtotal rows (5, 8, 9), "
-                + "the rows above it are the phase subtotals that add to it and are not taken\r\n"
+                + "    read as group values: GRASS off Proposed row 5 taken and Street Design row 8 left out, group total row 9 checked\r\n"
                 + "    rows printed 10, shown 10\r\n",
                 report);
             // Widths by hand: the longest image name is 23, the longest botanical name 26, the
@@ -141,12 +139,13 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheSubtotalRowsTravelOnTheGroupValue()
         {
-            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading });
+            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
 
             GroupSubtotal grass = Assert.Single(ground.Subtotals);
-            Assert.Equal(165.0, grass.SquareMetres);
+            Assert.Equal(96.0, grass.SquareMetres);
             Assert.Equal(9, grass.RowNumber);
             Assert.Equal(new[] { 5, 8, 9 }, grass.RowsConsidered);
+            Assert.Equal(165.0, grass.GroupTotalSquareMetres);
         }
 
         /// <summary>
@@ -160,7 +159,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             ScannedSchedule schedule = CreateFixture.Softscape("EP-05", rows.ToArray());
 
             PlotReading reading = CreateFixture.Plot("EP-05",
-                species: SoftscapeRows.Read(schedule, Phases, "EP-05").Species.ToArray(),
+                species: SoftscapeRows.Read(schedule, CreateFixture.Counted, "EP-05").Species.ToArray(),
                 printedSchedules: new[] { schedule });
 
             string report = Report(reading);

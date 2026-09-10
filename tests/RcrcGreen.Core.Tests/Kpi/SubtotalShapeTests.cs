@@ -10,7 +10,12 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// **A group prints ONE SUBTOTAL PER PHASE, then the GROUP TOTAL.** The old rule came off
     /// DM-11 alone, where every group holds one phase and so prints two equal rows, and it read
     /// that as one subtotal printed twice. Taking the first row then took one phase and called
-    /// it the group: 30 where the group is 84, and 361 where it is 820.
+    /// it the group: 30 where the group is 84.
+    ///
+    /// **The phases a tree list sheet is named for are added, and the group total is the
+    /// check.** FM-05 prints a third phase, Street Design, which is somebody else's scope by
+    /// Bader's decision, so its row is left out and named: GRASS 96 taken, 69 left out, 165
+    /// printed. The rule before this one took the group total, 165, and counted the street.
     ///
     /// Every expected value below is written out by hand off the run report, not worked out
     /// with the rule the code uses.
@@ -47,7 +52,8 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             return Assert.Single(ShrubsAndLawnRows.Read(
                 CreateFixture.ShrubsAndLawn(plot, all.ToArray()),
-                new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }).Subtotals);
+                new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading },
+                CreateFixture.Counted).Subtotals);
         }
 
         /// <summary>
@@ -98,49 +104,68 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// FM-05 GRASS: 96 over 117, then 69 over 84, then 165 over 201.
-        /// 96 plus 69 is 165 and 117 plus 84 is 201. The old rule took 96.
+        /// FM-05 GRASS as the 1536 report printed it: Proposed 96 over 117, then Street Design
+        /// 69 over 84, then 165 over 201. 96 plus 69 is 165 and 117 plus 84 is 201, so the
+        /// group total checks, and the value is the one phase a tree list sheet is named for:
+        /// 96. The rule before this one wrote 165 and counted the street.
         /// </summary>
         [Fact]
-        public void Fm05GrassIsOneHundredAndSixtyFiveAndNotNinetySix()
+        public void Fm05GrassIsNinetySixWithStreetDesignLeftOutAndTheGroupTotalChecked()
         {
             GroupSubtotal group = Only(
                 "FM-05",
                 KpiMerge.LawnHeading,
-                Structure("Existing"),
+                Structure("Proposed"),
                 Species("Pennisetum", 96.0, 117),
                 Subtotal(96.0, 117),
-                Structure("Proposed"),
+                Structure("Street Design"),
                 Species("Cynodon", 69.0, 84),
                 Subtotal(69.0, 84),
                 Subtotal(165.0, 201));
 
-            Assert.Equal(165.0, group.SquareMetres);
-            Assert.Equal(201, group.ItemCount);
+            Assert.Equal(96.0, group.SquareMetres);
+            Assert.Equal(117, group.ItemCount);
             Assert.True(group.Agrees);
+            Assert.Equal(3, group.Repeats);
+            Assert.True(group.GroupTotalPrinted);
+            Assert.Equal(165.0, group.GroupTotalSquareMetres);
+            Assert.Equal(201, group.GroupTotalItemCount);
+
+            PhaseSubtotal left = Assert.Single(group.PhasesLeftOut);
+            Assert.Equal("Street Design", left.Name);
+            Assert.Equal(69.0, left.SquareMetres);
+            Assert.Equal(84, left.ItemCount);
+            Assert.Equal(8, left.RowNumber);
+            Assert.Equal("no tree list sheet is named for it, so it is out of scope", left.Why);
         }
 
         /// <summary>
-        /// FM-05 SHRUBS AND GROUND COVER: 361 over 450, then 459 over 570, then 820 over 1020.
-        /// 361 plus 459 is 820 and 450 plus 570 is 1020. The old rule took 361.
+        /// FM-05 SHRUBS AND GROUND COVER: Proposed 361 over 450, then Street Design 459 over
+        /// 570, then 820 over 1020. 361 plus 459 is 820 and 450 plus 570 is 1020. The value is
+        /// 361 and the rule before this one wrote 820.
         /// </summary>
         [Fact]
-        public void Fm05ShrubsIsEightHundredAndTwentyAndNotThreeHundredAndSixtyOne()
+        public void Fm05ShrubsIsThreeHundredAndSixtyOneWithStreetDesignLeftOut()
         {
             GroupSubtotal group = Only(
                 "FM-05",
                 KpiMerge.ShrubsHeading,
-                Structure("Existing"),
+                Structure("Proposed"),
                 Species("Acacia", 361.0, 450),
                 Subtotal(361.0, 450),
-                Structure("Proposed"),
+                Structure("Street Design"),
                 Species("Carissa", 459.0, 570),
                 Subtotal(459.0, 570),
                 Subtotal(820.0, 1020));
 
-            Assert.Equal(820.0, group.SquareMetres);
-            Assert.Equal(1020, group.ItemCount);
+            Assert.Equal(361.0, group.SquareMetres);
+            Assert.Equal(450, group.ItemCount);
             Assert.True(group.Agrees);
+            Assert.Equal(2, group.Phases.Count);
+            Assert.Equal("Proposed", group.Phases[0].Name);
+            Assert.True(group.Phases[0].Counted);
+            Assert.Equal("Tree List - Proposed is named for it", group.Phases[0].Why);
+            Assert.False(group.Phases[1].Counted);
         }
 
         /// <summary>
@@ -166,12 +191,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Three phases, which the shape allows and no plot has been seen to print. The rule is
-        /// the same one and nothing in it counts phases: the last row is the group and the rows
-        /// above it must add to it.
+        /// Three phases, two of them the ones a sheet is named for. The two are added, 10 plus
+        /// 20 is 30 and 4 plus 7 is 11, the third is left out and named, and the group total
+        /// is checked against all three: 10 plus 20 plus 5 is 35 and 4 plus 7 plus 2 is 13.
         /// </summary>
         [Fact]
-        public void AGroupHoldingThreePhasesPrintsFourRowsAndTheLastIsStillTheGroup()
+        public void AGroupHoldingAThirdPhaseAddsTheTwoNamedForAndLeavesTheThirdOut()
         {
             GroupSubtotal group = Only(
                 "FM-05",
@@ -187,10 +212,59 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Subtotal(5.0, 2),
                 Subtotal(35.0, 13));
 
-            Assert.Equal(35.0, group.SquareMetres);
-            Assert.Equal(13, group.ItemCount);
+            Assert.Equal(30.0, group.SquareMetres);
+            Assert.Equal(11, group.ItemCount);
             Assert.True(group.Agrees);
             Assert.Equal(4, group.Repeats);
+            Assert.Equal("Demolished", Assert.Single(group.PhasesLeftOut).Name);
+        }
+
+        /// <summary>
+        /// A group total that does not equal every phase added, the ones left out included, is
+        /// a schedule that does not add up, whatever the phases taken come to. 96 plus 69 is
+        /// 165, not 170.
+        /// </summary>
+        [Fact]
+        public void AGroupTotalIsCheckedAgainstThePhasesLeftOutAsWellAsThoseTaken()
+        {
+            GroupSubtotal group = Only(
+                "FM-05",
+                KpiMerge.LawnHeading,
+                Structure("Proposed"),
+                Species("Pennisetum", 96.0, 117),
+                Subtotal(96.0, 117),
+                Structure("Street Design"),
+                Species("Cynodon", 69.0, 84),
+                Subtotal(69.0, 84),
+                Subtotal(170.0, 201));
+
+            Assert.Equal(96.0, group.SquareMetres);
+            Assert.False(group.Agrees);
+            Assert.Contains("its group total reads 170 over 201", group.Disagreement);
+            Assert.Contains("2 rows above it add to 165 over 201", group.Disagreement);
+            Assert.Contains("Every row: Proposed 96 over 117, Street Design 69 over 84, 170 over 201", group.Disagreement);
+        }
+
+        /// <summary>
+        /// A group whose every phase is out of scope is nought, said so, with the group total
+        /// still checked. Nothing is taken because nothing was left.
+        /// </summary>
+        [Fact]
+        public void AGroupHoldingOnlyAPhaseLeftOutIsNoughtAndSaysSo()
+        {
+            GroupSubtotal group = Only(
+                "FM-05",
+                KpiMerge.LawnHeading,
+                Structure("Street Design"),
+                Species("Cynodon", 69.0, 84),
+                Subtotal(69.0, 84),
+                Subtotal(69.0, 84));
+
+            Assert.Equal(0.0, group.SquareMetres);
+            Assert.Equal(0, group.ItemCount);
+            Assert.True(group.Agrees);
+            Assert.Single(group.PhasesLeftOut);
+            Assert.Equal(69.0, group.GroupTotalSquareMetres);
         }
 
         /// <summary>

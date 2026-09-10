@@ -251,7 +251,10 @@ namespace RcrcGreen.Revit.Kpi
             var whole = Stopwatch.StartNew();
             var reading = Stopwatch.StartNew();
 
-            IReadOnlyList<string> phases = PhaseNames(document);
+            // The groups that count are the ones a tree list sheet of the template is named for.
+            // The document's phases used to decide it, and a third group the phases did not name,
+            // Street Design, went unseen for four runs.
+            CountedGroups counted = CountedGroups.Of(asked.Template);
             var readings = new List<PlotReading>();
 
             // **A TEMPLATE THAT TAKES NO AREA HAS ITS REGIONS LEFT UNREAD.** STREETS types the
@@ -284,7 +287,7 @@ namespace RcrcGreen.Revit.Kpi
 
                 readings.Add(KpiPlotReader.Read(
                     document, plotId, asked.ComponentParameter, asked.ReferenceParameter,
-                    phases, chosen, regions, perPlot.Elapsed.TotalSeconds));
+                    counted, chosen, regions, perPlot.Elapsed.TotalSeconds));
             }
 
             double readSeconds = reading.Elapsed.TotalSeconds;
@@ -380,22 +383,6 @@ namespace RcrcGreen.Revit.Kpi
             {
                 return PatchOutcome.Refused(CreateWords.CouldNotBeWritten(failed.Message));
             }
-        }
-
-        /// <summary>
-        /// The document's own phase names, which is what tells a group row from a subtotal in
-        /// a printed schedule. The words Existing and Proposed are nowhere in this code.
-        /// </summary>
-        private static IReadOnlyList<string> PhaseNames(Document document)
-        {
-            var found = new List<string>();
-
-            foreach (Phase phase in document.Phases)
-            {
-                if (phase != null && !string.IsNullOrWhiteSpace(phase.Name)) found.Add(phase.Name);
-            }
-
-            return found;
         }
 
         /// <summary>

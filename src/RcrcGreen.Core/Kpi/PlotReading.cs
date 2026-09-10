@@ -6,6 +6,202 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
+    /// Which group rows count. **Only the groups a tree list sheet is named for**, which on the
+    /// map are Tree List - Existing and Tree List - Proposed, and the words Existing and Proposed
+    /// are still written nowhere in the code: they come off the sheet names. Every other group
+    /// row is out of scope and its rows are named and left out.
+    ///
+    /// **Measured on the 1536 report.** FM-05's softscape schedule prints three groups, Existing
+    /// 6, Proposed 32 and Street Design 38, TOTAL 76, and its shrubs and lawn schedule prints
+    /// GRASS as Proposed 96 and Street Design 69 and SHRUBS as Proposed 361 and Street Design
+    /// 459. The tool did not know Street Design as a group row, so its 38 trees carried on under
+    /// Proposed in silence, and the group totals 165 and 820 were taken whole. Bader has decided
+    /// Street Design is somebody else's scope and does not belong on this plot's checklist. The
+    /// model will be corrected later, and until it is the tool leaves those rows out and says so.
+    /// </summary>
+    public sealed class CountedGroups
+    {
+        private CountedGroups(IEnumerable<string> sheetNames)
+        {
+            SheetNames = (sheetNames ?? Enumerable.Empty<string>()).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
+        }
+
+        public IReadOnlyList<string> SheetNames { get; }
+
+        public static CountedGroups Of(KpiTemplate template)
+        {
+            if (template == null) throw new ArgumentNullException("template");
+
+            return new CountedGroups(new[] { template.ExistingTrees.SheetName, template.ProposedTrees.SheetName });
+        }
+
+        public static CountedGroups Named(params string[] sheetNames)
+        {
+            return new CountedGroups(sheetNames);
+        }
+
+        public bool Counts(string groupName)
+        {
+            return SheetFor(groupName) != null;
+        }
+
+        /// <summary>
+        /// Tree List - Existing is named for it, or no tree list sheet is named for it, so it is
+        /// out of scope.
+        /// </summary>
+        public string Why(string groupName)
+        {
+            string sheet = SheetFor(groupName);
+            return sheet != null ? sheet + " is named for it" : LeftOut;
+        }
+
+        public const string LeftOut = "no tree list sheet is named for it, so it is out of scope";
+
+        /// <summary>
+        /// A sheet is named for a group when its name ends in the group's name, word for word
+        /// and without case: Tree List - Existing ends in Existing. Nothing looser, because a
+        /// group called Tree or List is not what either sheet is for.
+        /// </summary>
+        private string SheetFor(string groupName)
+        {
+            List<string> wanted = Words(groupName);
+            if (wanted.Count == 0) return null;
+
+            return SheetNames.FirstOrDefault(one => EndsWith(Words(one), wanted));
+        }
+
+        private static bool EndsWith(List<string> words, List<string> tail)
+        {
+            if (tail.Count > words.Count) return false;
+
+            for (int at = 0; at < tail.Count; at++)
+            {
+                string word = words[words.Count - tail.Count + at];
+                if (!string.Equals(word, tail[at], StringComparison.OrdinalIgnoreCase)) return false;
+            }
+
+            return true;
+        }
+
+        private static List<string> Words(string name)
+        {
+            var words = new List<string>();
+            if (string.IsNullOrEmpty(name)) return words;
+
+            var run = new System.Text.StringBuilder();
+            foreach (char letter in name)
+            {
+                if (char.IsLetterOrDigit(letter))
+                {
+                    run.Append(letter);
+                    continue;
+                }
+
+                if (run.Length > 0) words.Add(run.ToString());
+                run.Length = 0;
+            }
+
+            if (run.Length > 0) words.Add(run.ToString());
+            return words;
+        }
+    }
+
+    /// <summary>
+    /// One group row of a softscape schedule as printed, with the species rows under it, its
+    /// own subtotal row, and whether it was taken or left out and why.
+    /// </summary>
+    public sealed class PrintedGroup
+    {
+        public PrintedGroup(
+            string name,
+            int rowNumber,
+            IEnumerable<SpeciesRow> species,
+            bool subtotalPrinted,
+            int subtotal,
+            int subtotalRow,
+            bool counted,
+            string why)
+        {
+            if (name == null) throw new ArgumentNullException("name");
+
+            Name = name;
+            RowNumber = rowNumber;
+            Species = (species ?? Enumerable.Empty<SpeciesRow>()).Where(one => one != null).ToList();
+            SubtotalPrinted = subtotalPrinted;
+            Subtotal = subtotalPrinted ? subtotal : 0;
+            SubtotalRow = subtotalPrinted ? subtotalRow : 0;
+            Counted = counted;
+            Why = why ?? string.Empty;
+        }
+
+        public string Name { get; }
+
+        /// <summary>
+        /// The printed row of the group row, counting the heading row as 1.
+        /// </summary>
+        public int RowNumber { get; }
+
+        public IReadOnlyList<SpeciesRow> Species { get; }
+
+        public int SpeciesSum
+        {
+            get { return Species.Sum(one => one.Quantity); }
+        }
+
+        public bool SubtotalPrinted { get; }
+
+        public int Subtotal { get; }
+
+        public int SubtotalRow { get; }
+
+        public bool Counted { get; }
+
+        public string Why { get; }
+
+        /// <summary>
+        /// Empty unless the group printed a subtotal that its own species rows do not add to.
+        /// </summary>
+        public string Disagreement
+        {
+            get
+            {
+                if (!SubtotalPrinted || Subtotal == SpeciesSum) return string.Empty;
+
+                return "its species rows add to " + SpeciesSum + " and its subtotal row " + SubtotalRow + " prints " + Subtotal;
+            }
+        }
+    }
+
+    /// <summary>
+    /// One phase subtotal row inside a group of the shrubs and lawn schedule, and whether it was
+    /// taken or left out and why.
+    /// </summary>
+    public sealed class PhaseSubtotal
+    {
+        public PhaseSubtotal(string name, int rowNumber, double squareMetres, int itemCount, bool counted, string why)
+        {
+            Name = name ?? string.Empty;
+            RowNumber = rowNumber;
+            SquareMetres = squareMetres;
+            ItemCount = itemCount;
+            Counted = counted;
+            Why = why ?? string.Empty;
+        }
+
+        public string Name { get; }
+
+        public int RowNumber { get; }
+
+        public double SquareMetres { get; }
+
+        public int ItemCount { get; }
+
+        public bool Counted { get; }
+
+        public string Why { get; }
+    }
+
+    /// <summary>
     /// One species printed on more than one row under one group on one plot, with the rows.
     /// </summary>
     public sealed class RepeatedSpecies
@@ -26,14 +222,22 @@ namespace RcrcGreen.Core.Kpi
         public IReadOnlyList<SpeciesRow> Rows { get; }
 
         /// <summary>
-        /// rows 12 and 13, counting 10 and 10.
+        /// rows 12 and 13, counting 10 and 10. When the rows sit under two group rows carrying
+        /// one name, which DM-25 prints, those rows are named too, because that is a different
+        /// thing from one group printing a species twice.
         /// </summary>
         public string InWords
         {
             get
             {
+                List<int> groupRows = Rows.Select(one => one.GroupRowNumber).Where(one => one > 0).Distinct().OrderBy(one => one).ToList();
+                string under = groupRows.Count > 1
+                    ? ", under " + groupRows.Count + " group rows " + (groupRows.Count == 2 ? "both" : "all") + " named " + GroupName + ", rows "
+                        + Joined(groupRows.Select(one => one.ToString(CultureInfo.InvariantCulture)))
+                    : string.Empty;
+
                 return "rows " + Joined(Rows.Select(one => one.RowNumber.ToString(CultureInfo.InvariantCulture)))
-                    + ", counting " + Joined(Rows.Select(one => one.Quantity.ToString(CultureInfo.InvariantCulture)));
+                    + ", counting " + Joined(Rows.Select(one => one.Quantity.ToString(CultureInfo.InvariantCulture))) + under;
             }
         }
 
@@ -139,11 +343,13 @@ namespace RcrcGreen.Core.Kpi
             string plotId = null,
             int rowNumber = 0,
             PrintedMeasure height = null,
-            PrintedMeasure diameter = null)
+            PrintedMeasure diameter = null,
+            int groupRowNumber = 0)
         {
             if (botanicalName == null) throw new ArgumentNullException("botanicalName");
             if (quantity < 0) throw new ArgumentOutOfRangeException("quantity");
             if (rowNumber < 0) throw new ArgumentOutOfRangeException("rowNumber");
+            if (groupRowNumber < 0) throw new ArgumentOutOfRangeException("groupRowNumber");
 
             BotanicalName = botanicalName;
             GroupName = groupName ?? string.Empty;
@@ -152,6 +358,7 @@ namespace RcrcGreen.Core.Kpi
             RowNumber = rowNumber;
             Height = height ?? PrintedMeasure.NotRead;
             Diameter = diameter ?? PrintedMeasure.NotRead;
+            GroupRowNumber = groupRowNumber;
         }
 
         /// <summary>
@@ -159,8 +366,13 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public SpeciesRow OnPlot(string plotId)
         {
-            return new SpeciesRow(BotanicalName, GroupName, Quantity, plotId, RowNumber, Height, Diameter);
+            return new SpeciesRow(BotanicalName, GroupName, Quantity, plotId, RowNumber, Height, Diameter, GroupRowNumber);
         }
+
+        /// <summary>
+        /// The printed row of the group row this species sat under, or nought.
+        /// </summary>
+        public int GroupRowNumber { get; }
 
         /// <summary>
         /// The printed row, counting the heading row as 1, the way every reader here numbers a
@@ -258,7 +470,11 @@ namespace RcrcGreen.Core.Kpi
             double speciesSum = double.NaN,
             string disagreement = null,
             int rowNumber = 0,
-            IEnumerable<int> rowsConsidered = null)
+            IEnumerable<int> rowsConsidered = null,
+            IEnumerable<PhaseSubtotal> phases = null,
+            bool groupTotalPrinted = false,
+            double groupTotalSquareMetres = 0.0,
+            int groupTotalItemCount = 0)
         {
             if (heading == null) throw new ArgumentNullException("heading");
             if (repeats < 0) throw new ArgumentOutOfRangeException("repeats");
@@ -272,20 +488,41 @@ namespace RcrcGreen.Core.Kpi
             Disagreement = disagreement ?? string.Empty;
             RowNumber = rowNumber;
             RowsConsidered = (rowsConsidered ?? Enumerable.Empty<int>()).ToList();
+            Phases = (phases ?? Enumerable.Empty<PhaseSubtotal>()).Where(one => one != null).ToList();
+            GroupTotalPrinted = groupTotalPrinted;
+            GroupTotalSquareMetres = groupTotalPrinted ? groupTotalSquareMetres : 0.0;
+            GroupTotalItemCount = groupTotalPrinted ? groupTotalItemCount : 0;
         }
 
         /// <summary>
-        /// The printed row the value was taken off, counting the heading row as 1, so the
-        /// report can say which subtotal row was taken. Nought when the value came from no
-        /// schedule.
+        /// The printed row of the group total, counting the heading row as 1, or of the one row
+        /// the value was taken off where the group printed no phase rows. Nought when the value
+        /// came from no schedule.
         /// </summary>
         public int RowNumber { get; }
 
         /// <summary>
-        /// Every subtotal row the group printed, in order. The last is the one taken and the
-        /// ones before it are the phase subtotals that add to it.
+        /// Every subtotal row the group printed, in order.
         /// </summary>
         public IReadOnlyList<int> RowsConsidered { get; }
+
+        /// <summary>
+        /// One per phase row the group printed, each taken or left out. **The value is the
+        /// phases taken added together and never the group total**, because on FM-05 the group
+        /// total holds Street Design, which is out of scope, and 459 of its 820 shrubs are that.
+        /// </summary>
+        public IReadOnlyList<PhaseSubtotal> Phases { get; }
+
+        public bool GroupTotalPrinted { get; }
+
+        public double GroupTotalSquareMetres { get; }
+
+        public int GroupTotalItemCount { get; }
+
+        public IReadOnlyList<PhaseSubtotal> PhasesLeftOut
+        {
+            get { return Phases.Where(one => !one.Counted).ToList(); }
+        }
 
         public string Heading { get; }
 
@@ -358,7 +595,8 @@ namespace RcrcGreen.Core.Kpi
             int softscapeTotal = 0,
             int softscapeRowsPassedOver = 0,
             IEnumerable<ScannedSchedule> printedSchedules = null,
-            int softscapeTotalRow = 0)
+            int softscapeTotalRow = 0,
+            IEnumerable<PrintedGroup> printedGroups = null)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
             if (softscapeRowsPassedOver < 0) throw new ArgumentOutOfRangeException("softscapeRowsPassedOver");
@@ -367,6 +605,7 @@ namespace RcrcGreen.Core.Kpi
             PlotId = plotId;
             PrintedSchedules = Held(printedSchedules);
             SoftscapeTotalRow = softscapeTotalRow;
+            PrintedGroups = Held(printedGroups);
             ReadRefusals = Held(readRefusals).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
             SoftscapeTotalRead = softscapeTotalRead;
             SoftscapeTotal = softscapeTotal;
@@ -496,6 +735,41 @@ namespace RcrcGreen.Core.Kpi
         /// survived two rounds because nothing showed the rows.
         /// </summary>
         public IReadOnlyList<ScannedSchedule> PrintedSchedules { get; }
+
+        /// <summary>
+        /// Every group row the softscape schedule printed, in order, taken or left out. A plot
+        /// whose schedule prints only Existing and Proposed lists those two, so a schedule with
+        /// the ordinary two reads differently from one nobody has looked at.
+        /// </summary>
+        public IReadOnlyList<PrintedGroup> PrintedGroups { get; }
+
+        /// <summary>
+        /// The species rows under the groups left out, named with their counts and never
+        /// counted. FM-05: ALBIZIA LEBBECK 10, BAUHINIA PURPUREA 20, CASSIA GLAUCA 4 and
+        /// CONOCARPUS LANCIFOLIUS 4 under Street Design, 38 trees.
+        /// </summary>
+        public IReadOnlyList<SpeciesRow> LeftOutSpecies
+        {
+            get { return PrintedGroups.Where(one => !one.Counted).SelectMany(one => one.Species).ToList(); }
+        }
+
+        public int LeftOutSum
+        {
+            get { return LeftOutSpecies.Sum(one => one.Quantity); }
+        }
+
+        /// <summary>
+        /// True when either schedule on this plot printed a group no tree list sheet is named
+        /// for, so the accounting can count the schedules and name the plots.
+        /// </summary>
+        public bool HoldsAGroupLeftOut
+        {
+            get
+            {
+                return PrintedGroups.Any(one => !one.Counted)
+                    || Subtotals.Any(one => one.Phases.Any(phase => !phase.Counted));
+            }
+        }
 
         /// <summary>
         /// Every species the softscape schedule printed on more than one row under one group,

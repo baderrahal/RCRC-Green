@@ -1,6 +1,29 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Forty seventh pass, six things measured on the 20 plot MOSQUES run of
+Phase: 9, ship. Forty eighth pass, the FM-05 refusal answered off the 1536 report: its softscape
+schedule holds THREE groups, and the third, Street Design, is somebody else's scope by Bader's
+decision. The model will be corrected later and until then the tool leaves those rows out and
+says so. **The other 43 audit findings stay open**, not renumbered, not reordered, not
+annotated.
+
+**Only the groups a tree list sheet is named for count.** `CountedGroups` holds the template's
+two sheet names and nothing matches a word. The softscape reader takes the species under those
+groups, checks each group against its own subtotal row and the groups taken plus the groups left
+out against TOTAL: FM-05 6 plus 32 taken, 38 left out, 76 printed. The shrubs and lawn reader
+adds the phase rows a sheet is named for and checks the group total against all of them: GRASS
+96 taken, 69 left out, 165 printed, SHRUBS 361, 459, 820. **The report names every group row,
+always**, with its row, its subtotal, TAKEN or LEFT OUT and why, and the accounting counts the
+schedules holding such a group and names the plots. A species in two groups refuses nothing, in
+one group still does. A repeated group name, DM-25's two Existing rows, is taken both times and
+the second says so. The false comment in `KpiPlotReader` is corrected: FM-05 holds one softscape
+schedule.
+
+Six break watches went red on 18, 9, 3, 2, 1 and 2 tests and were restored byte for byte.
+**Locally 1081 tests at this branch, 0 failed and 0 skipped, 566 of them KPI, 21 added.** The
+pull request, the merge hash and the runner's count go in the record the merge adds here.
+**Nothing in this round has been observed in Revit.**
+
+Before that, the forty seventh pass, six things measured on the 20 plot MOSQUES run of
 2026-09-10 at 14:28 and on its workbook opened in Excel. Five fixed, one reported and not
 fixed. **The other 43 audit findings stay open**, not renumbered, not reordered, not annotated.
 

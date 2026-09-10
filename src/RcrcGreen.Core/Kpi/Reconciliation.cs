@@ -110,6 +110,8 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<string> withoutShrubsAndLawn,
             IReadOnlyList<string> withMoreThanOneSoftscape,
             IReadOnlyList<string> withMoreThanOneShrubsAndLawn,
+            IReadOnlyList<string> withAGroupLeftOut,
+            int schedulesWithAGroupLeftOut,
             IReadOnlyList<string> withoutArea,
             IReadOnlyList<PlotAndReason> contributedNothing,
             IReadOnlyList<IdenticalArea> identicalAreas,
@@ -123,6 +125,8 @@ namespace RcrcGreen.Core.Kpi
             WithoutShrubsAndLawn = withoutShrubsAndLawn;
             WithMoreThanOneSoftscape = withMoreThanOneSoftscape;
             WithMoreThanOneShrubsAndLawn = withMoreThanOneShrubsAndLawn;
+            WithAGroupLeftOut = withAGroupLeftOut;
+            SchedulesWithAGroupLeftOut = schedulesWithAGroupLeftOut;
             WithoutArea = withoutArea;
             ContributedNothing = contributedNothing;
             IdenticalAreas = identicalAreas;
@@ -144,6 +148,15 @@ namespace RcrcGreen.Core.Kpi
         public IReadOnlyList<string> WithMoreThanOneSoftscape { get; }
 
         public IReadOnlyList<string> WithMoreThanOneShrubsAndLawn { get; }
+
+        /// <summary>
+        /// Every plot one of whose schedules printed a group no tree list sheet is named for,
+        /// with the rows under it left out and named. FM-05 and its Street Design. Not a
+        /// refusal: the rows are out of scope by decision and the report says which.
+        /// </summary>
+        public IReadOnlyList<string> WithAGroupLeftOut { get; }
+
+        public int SchedulesWithAGroupLeftOut { get; }
 
         /// <summary>
         /// Empty when the template takes no area, because then no region was read and no plot
@@ -259,9 +272,17 @@ namespace RcrcGreen.Core.Kpi
                     refusals.Add(RepeatedRows(reading.PlotId, repeated));
                 }
 
-                if (reading.SoftscapeTotalRead && reading.SpeciesSum != reading.SoftscapeTotal)
+                // Each group against its own subtotal row, then the groups taken plus the groups
+                // left out against the TOTAL row. FM-05: 6 and 32 taken, 38 left out, TOTAL 76.
+                foreach (PrintedGroup group in reading.PrintedGroups.Where(one => one.Disagreement.Length > 0))
+                {
+                    refusals.Add(reading.PlotId + ", " + group.Name + " at row " + group.RowNumber + ": " + group.Disagreement + ".");
+                }
+
+                if (reading.SoftscapeTotalRead && reading.SpeciesSum + reading.LeftOutSum != reading.SoftscapeTotal)
                 {
                     refusals.Add(reading.PlotId + ": its species rows add to " + reading.SpeciesSum
+                        + (reading.LeftOutSum > 0 ? ", " + reading.LeftOutSum + " more were left out under groups no tree list sheet is named for," : string.Empty)
                         + " and its softscape schedule prints TOTAL " + reading.SoftscapeTotal + ".");
                 }
             }
@@ -315,6 +336,9 @@ namespace RcrcGreen.Core.Kpi
                 Named(held, one => one.ShrubsAndLawnSchedules.Count == 0),
                 Named(held, one => one.MoreThanOneSoftscape),
                 Named(held, one => one.MoreThanOneShrubsAndLawn),
+                Named(held, one => one.HoldsAGroupLeftOut),
+                held.Sum(one => (one.PrintedGroups.Any(group => !group.Counted) ? 1 : 0)
+                    + (one.Subtotals.Any(group => group.PhasesLeftOut.Count > 0) ? 1 : 0)),
                 areaWanted
                     ? Named(held, one => one.ChosenRegion == null || !one.ChosenRegion.HoldsAnArea)
                     : new List<string>(),

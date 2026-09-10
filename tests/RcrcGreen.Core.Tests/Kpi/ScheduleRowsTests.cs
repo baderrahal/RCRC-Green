@@ -36,7 +36,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void EverySpeciesRowComesBackWithTheGroupItSatUnder()
         {
             IReadOnlyList<SpeciesRow> species =
-                SoftscapeRows.Read(TheRealDm12(), Phases, "DM-12").Species;
+                SoftscapeRows.Read(TheRealDm12(), CreateFixture.Counted, "DM-12").Species;
 
             Assert.Equal(8, species.Count);
             Assert.Equal(
@@ -67,7 +67,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheHeadingsRowTheCategoryRowAndTheSubtotalAreNoneOfThemASpecies()
         {
             IReadOnlyList<SpeciesRow> species =
-                SoftscapeRows.Read(TheRealDm12(), Phases, "DM-12").Species;
+                SoftscapeRows.Read(TheRealDm12(), CreateFixture.Counted, "DM-12").Species;
 
             Assert.DoesNotContain(species, one => one.BotanicalName == "BOTANICAL NAME");
             Assert.DoesNotContain(species, one => one.BotanicalName == "TREES");
@@ -84,7 +84,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Proposed", "" },
                 new[] { "ALBIZIA LEBBECK", "13" });
 
-            IReadOnlyList<SpeciesRow> species = SoftscapeRows.Read(schedule, Phases, "DM-12").Species;
+            IReadOnlyList<SpeciesRow> species = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-12").Species;
 
             Assert.Equal(2, species.Count);
             Assert.Equal(string.Empty, species[0].GroupName);
@@ -97,7 +97,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             ScannedSchedule refused = KpiFixture.Schedule("DM-12-(600) SOFTSCAPE SCHEDULE", rowsRefused: true);
 
-            Assert.Empty(SoftscapeRows.Read(refused, Phases, "DM-12").Species);
+            Assert.Empty(SoftscapeRows.Read(refused, CreateFixture.Counted, "DM-12").Species);
         }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static IReadOnlyList<GroupSubtotal> SubtotalsOfDm11()
         {
             return ShrubsAndLawnRows.Read(
-                TheRealDm11(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }).Subtotals;
+                TheRealDm11(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals;
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "37 m\u00b2", "46" });
 
             GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
-                schedule, new[] { KpiMerge.LawnHeading }).Subtotals);
+                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals);
 
             Assert.False(only.Agrees);
             Assert.Contains("its group total reads 37 over 46", only.Disagreement);
@@ -337,7 +337,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             ScannedSchedule schedule = TheRealDm12WithImages();
 
-            IReadOnlyList<SpeciesRow> species = SoftscapeRows.Read(schedule, Phases, "DM-12").Species;
+            IReadOnlyList<SpeciesRow> species = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-12").Species;
             IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, Phases);
 
             Assert.Equal(
@@ -365,7 +365,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "35 m\u00b2", "46" });
 
             GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
-                schedule, new[] { KpiMerge.LawnHeading }).Subtotals);
+                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals);
 
             Assert.Equal(35.0, only.SquareMetres);
             Assert.Equal(2, only.Repeats);
@@ -383,7 +383,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "0 m\u00b2", "0" });
 
             GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
-                schedule, new[] { KpiMerge.LawnHeading }).Subtotals);
+                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals);
 
             Assert.Equal(0.0, only.SquareMetres);
             Assert.Equal(0, only.ItemCount);

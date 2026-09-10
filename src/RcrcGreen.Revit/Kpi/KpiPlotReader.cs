@@ -233,13 +233,14 @@ namespace RcrcGreen.Revit.Kpi
             string plotId,
             string componentParameter,
             string referenceParameter,
-            IReadOnlyList<string> phases,
+            CountedGroups counted,
             string chosenRegionTypeName,
             IReadOnlyList<RegionArea> regions,
             double regionSeconds)
         {
             if (document == null) throw new ArgumentNullException("document");
             if (plotId == null) throw new ArgumentNullException("plotId");
+            if (counted == null) throw new ArgumentNullException("counted");
 
             // The regions were read before this was called, so their cost is handed in and added
             // rather than left out of the plot's own number.
@@ -253,14 +254,18 @@ namespace RcrcGreen.Revit.Kpi
             var subtotals = new List<GroupSubtotal>();
             var refusals = new List<string>();
             var printed = new List<ScannedSchedule>();
+            var groups = new List<PrintedGroup>();
             bool totalRead = false;
             int total = 0;
             int totalRow = 0;
             int passedOver = 0;
 
             // Every schedule of each kind is found first and counted. One is read. Two or more
-            // are named and none of them is read, because FM-05 holds two whose names hold
-            // SOFTSCAPE and reading both counted its trees twice.
+            // are named and none of them is read, because nothing could say which of two is the
+            // real one. No plot has been measured holding two: FM-05 holds one softscape
+            // schedule, and the double it printed was a third group, Street Design, printed
+            // after Proposed's own subtotal row. That diagnosis of two schedules was wrong and
+            // the guard stands for the case it was built for.
             var softscape = new List<ViewSchedule>();
             var ground = new List<ViewSchedule>();
 
@@ -298,8 +303,9 @@ namespace RcrcGreen.Revit.Kpi
                 ViewSchedule schedule = softscape[0];
                 ScannedSchedule rows = Printed(schedule);
                 printed.Add(rows);
-                SoftscapeReading trees = SoftscapeRows.Read(rows, phases, plotId);
+                SoftscapeReading trees = SoftscapeRows.Read(rows, counted, plotId);
                 species.AddRange(trees.Species);
+                groups.AddRange(trees.Groups);
                 refusals.AddRange(trees.Refusals.Select(why => schedule.Name + ": " + why));
                 if (trees.TotalRead)
                 {
@@ -317,7 +323,7 @@ namespace RcrcGreen.Revit.Kpi
                 ScannedSchedule rows = Printed(schedule);
                 printed.Add(rows);
                 ShrubsAndLawnReading read = ShrubsAndLawnRows.Read(
-                    rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading });
+                    rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted);
                 subtotals.AddRange(read.Subtotals);
                 refusals.AddRange(read.Refusals.Select(why => schedule.Name + ": " + why));
             }
@@ -339,7 +345,8 @@ namespace RcrcGreen.Revit.Kpi
                 total,
                 passedOver,
                 printed,
-                totalRow);
+                totalRow,
+                groups);
         }
 
         /// <summary>
