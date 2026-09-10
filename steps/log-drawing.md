@@ -4,6 +4,74 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty sixth pass. The Shared round: one thing in, three things out, and what Shared is for
+
+Pull request 64, merged into main as `45138ae`. **The runner executed 1060 tests against it,
+0 failed and 0 skipped, the same count main carried before the round and the same count the
+local run gave after the last file was written.** Main on `45138ae` reads 1060 locally too,
+and the squash message came back byte for byte. Two moves and no behaviour change. Nothing a
+user can see differs, and no test was added, deleted or changed in what it asserts. Every
+other session was stopped for it, because both moves touch Core/Shared and territory.md says
+a Shared change runs alone.
+
+### PaneLabel into Shared
+
+The WPF caption escape was KPI's. Pull request 62 made Drawing Sheet call it across the
+fence rather than copy it, which was the right call against two records of one fact and
+the wrong shape for two sessions that cannot see each other: task 1 depended on task 2 at
+compile time, so a KPI round moving or renaming it would have broken Drawing Sheet with
+nobody watching. It is `Core/Shared/PaneLabel.cs` now, with four of its five tests in the
+flat test folder. The fifth walks every KPI name and stays with the KPI tests as
+`KpiPaneLabelTests`, because the names are KPI's. `TextWithNoUnderscoreIsUntouched` reads
+the same five strings as literals rather than through KPI's constants, because a Shared
+test cannot lean on a task's file. The KPI panel reads Shared's through an alias rather
+than a using of the whole Core namespace, so no other Core name can shadow a KPI one, and
+the Drawing Sheet panel reads it plainly. No other KPI file was edited.
+
+### The Drawing Sheet prefixes out of Shared
+
+Finding 28. The scan, scope box and run prefixes and the two-argument `For` that
+defaulted to the scan one were Drawing Sheet's report names on a Shared class, so
+renaming a report was a Shared change that stopped every other session, for three
+constants no other task reads. They are `ReportFileNames` in Core/DrawingSheet now, the
+file name tests moved and renamed with them, and `ScanFileName` in Shared keeps `Cleaned`,
+`Extension` and the three-argument `For`, which both tasks name their files through. A
+Drawing Sheet report name is a Drawing Sheet change again.
+
+### What Shared is for
+
+territory.md gained a section in its own words. A thing belongs in Shared when more than
+one task reads it and no task owns its meaning. A task's own constants, names and report
+words do not belong there even when they sit in a Shared file today. A task needing
+another task's code asks for it to be moved to Shared, in a round of its own, rather than
+calling across the fence or copying it. `PaneLabel` and the `ScanFileName` prefixes are
+the two worked examples.
+
+### How it landed through the wall
+
+The hook refuses a commit that touches Shared and a task's files together, and a move
+across the fence touches both by definition. So the round is four commits, each inside one
+territory and each compiling on its own, in an order chosen so that nothing is ever
+referenced before it exists: Shared adds `PaneLabel` and its tests, Drawing Sheet adds
+`ReportFileNames`, switches its three callers and points its panel at Shared, KPI removes
+its copy and aliases the Shared one, and Shared takes the three constants off
+`ScanFileName`. The C# lookup that makes the third step safe is that a name declared in an
+enclosing namespace wins over a using directive, so the KPI tests, which sit under
+RcrcGreen.Core.Tests.Kpi, read the Shared class from the first commit onward without an
+edit. The suite read 1072 after the first two commits, the twelve escape test cases existing
+twice until the KPI copy went, and 1060 after the third and fourth. Each state was built and
+run before it was committed.
+
+### Not observed
+
+Nothing in this round has been through Revit. Both panels are unchanged on screen by
+construction, and neither has been opened against a model since the move. No break was made
+this round, because no rule changed and the tests are the ones that moved. The hooks ran on
+the four real commits and passed them, which is not the same as watching one refuse, and
+none was probed.
+
+---
+
 ## 2026-09-10, forty fifth pass. The rest of the audit in two pull requests, all but three findings
 
 Two pull requests, because eleven fixes over thirty files was too large for one review and

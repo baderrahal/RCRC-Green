@@ -1,13 +1,16 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Forty sixth pass, the Shared round, with every other session stopped for
-it. Two moves and no behaviour change. `PaneLabel` goes to Shared with its tests, because
-both panels read it and neither owns its meaning, and Drawing Sheet's three report
-prefixes and the two-argument `For` leave Shared for Core/DrawingSheet, because they are
-one task's names. It lands as four commits, each inside one territory so the wall lets it
-through and each compiling: Shared, Drawing Sheet, KPI, Shared. All four are in, and
-territory.md says what Shared is for with both moves as its worked examples. Not merged
-yet. The count should read 1060 before and after.
+Phase: 9, ship. Forty sixth pass, the Shared round, with every other session stopped for it,
+merged into main as `45138ae` from pull request 64. **The runner executed 1060 tests against
+it, 0 failed and 0 skipped, the count main carried before the round and the count main reads
+after it, measured locally on `45138ae`.** Two moves and no behaviour change. `PaneLabel` is
+in Shared with its tests, because both panels read it and neither owns its meaning, and
+Drawing Sheet's three report prefixes and the two-argument `For` left Shared for
+Core/DrawingSheet as `ReportFileNames`, because they are one task's names. It landed as four
+commits, each inside one territory so the wall let it through and each compiling: Shared,
+Drawing Sheet, KPI, Shared. territory.md says what Shared is for with both moves as its
+worked examples, and finding 28 is marked FIXED, leaving 11 and 15 as they were. The squash
+message came back off main byte for byte. Nothing in this round has been through Revit.
 
 Before that, the forty fifth pass, the rest of steps/audit-drawing.md in two pull requests.
 The first, pull request 61 with fixes 1 to 6, merged into main as `aaf78db` with 1056
