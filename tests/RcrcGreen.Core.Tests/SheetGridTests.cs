@@ -105,6 +105,34 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(1, grid.MissingCount);
         }
 
+        /// <summary>
+        /// The marks the run is handed are the marked squares on screen, in row order. A mark
+        /// on a column not shown, on a plot out of range or on a square holding a view is not
+        /// among them, and the count is the length of that same list.
+        /// </summary>
+        [Fact]
+        public void MarkedListsTheMarkedSquaresAndNothingOffTheGrid()
+        {
+            SheetGrid grid = SheetGrid.Build(
+                new[] { "DM-28", "DM-11" },
+                new[] { KeyPlan(), Layout() },
+                new[] { new PlotViewPresence("DM-28", Layout(), 4211) },
+                null,
+                new[]
+                {
+                    new PlotViewKey("DM-28", KeyPlan()),
+                    new PlotViewKey("DM-11", Layout()),
+                    new PlotViewKey("DM-11", CrossSection()),
+                    new PlotViewKey("DM-28", Layout()),
+                    new PlotViewKey("DM-41", KeyPlan())
+                });
+
+            Assert.Equal(
+                new[] { new PlotViewKey("DM-11", Layout()), new PlotViewKey("DM-28", KeyPlan()) },
+                grid.Marked);
+            Assert.Equal(2, grid.MarkedCount);
+        }
+
         [Fact]
         public void AViewThatExistsCannotBeMarked()
         {

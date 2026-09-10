@@ -160,6 +160,34 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
+        /// Rows where the user typed a name or a number over the proposal. Those are the only
+        /// thing Remove loses that a redraw cannot bring back, so they are what it asks about.
+        /// </summary>
+        public int RowsWithTypedText
+        {
+            get
+            {
+                return Rows.Count(one =>
+                    (one.HasName && !one.NameWasGenerated)
+                    || (one.HasNumber && !one.NumberWasGenerated));
+            }
+        }
+
+        /// <summary>
+        /// The question Remove puts up, or nothing when there is nothing typed to lose. A
+        /// definition whose rows all carry proposals is taken out without asking, because the
+        /// proposals come back the moment it is added again.
+        /// </summary>
+        public string WhyRemovalAsks()
+        {
+            int typed = RowsWithTypedText;
+            if (typed == 0) return string.Empty;
+
+            return "Removing this sheet loses the names or numbers typed on "
+                + (typed == 1 ? "1 row" : typed + " rows") + ". Remove it anyway?";
+        }
+
+        /// <summary>
         /// The line over the definition's table, so how much this one press makes is on screen
         /// before the confirmation.
         /// </summary>

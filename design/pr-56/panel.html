@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The grid counts what it shows, pull request 56</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .strip  { background: #ececec; }
+  .dark  .strip  { background: #262626; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #ff8080; }
+  .light .shade  { background: #f6f6f6; }
+  .dark  .shade  { background: #343434; }
+  .light .status { background: #ececec; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #262626; border-top: 1px solid #4a4a4a; }
+  .body { padding: 8px; }
+  .strip { padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; }
+  .strip .name { font-weight: bold; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .step { margin-bottom: 4px; }
+  .row { margin: 3px 0; }
+  .status { padding: 6px 8px; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 1px 8px; margin: 2px 4px 2px 0;
+         background: #e1e1e1; color: #1a1a1a; }
+  .light .btn { background: #e1e1e1; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+  table.grid { border-collapse: collapse; margin: 6px 0; }
+  table.grid th, table.grid td { padding: 2px 8px; height: 22px; text-align: center; }
+  table.grid th { font-weight: bold; }
+  table.grid td.plot { text-align: left; }
+  table.sheet { border-collapse: collapse; width: 100%; margin: 6px 0; }
+  table.sheet th, table.sheet td { padding: 2px 6px; text-align: left; vertical-align: top; }
+  .box { display: inline-block; border: 1px solid #adadad; padding: 1px 4px; min-width: 90px; }
+  .light .box { background: #ffffff; }
+  .dark  .box { background: #3a3a3a; }
+  .box .arrow { float: right; color: #888; }
+  .dialog { width: 360px; border: 1px solid #999; background: #ffffff; color: #1a1a1a;
+            font: 12px/1.45 "Segoe UI", Arial, sans-serif; margin-top: 12px; }
+  .dialog .title { background: #ffffff; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+  .dialog .text { padding: 16px 12px; }
+  .dialog .buttons { background: #f0f0f0; padding: 8px 12px; text-align: right; }
+</style>
+</head>
+<body>
+
+<h1>The grid counts what it shows, and the panel stops losing what was typed</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show whether the grid
+  really comes back where it was scrolled, how the Yes and No box looks over a docked pane, or
+  how the longer status line wraps at the pane's real width. The counts in the status line are
+  the shape of the line and not a measurement.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on
+  it. If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>What changed</h2>
+
+<p class="caption">Four things a user can see. The MARK header and the status line count the
+marks on the grid, so a mark on a view type unticked in step 2 is neither counted nor run; it
+is remembered and comes back with its column. Refresh keeps the plots that were unticked and
+says how many marks it cleared. A step 4 number box on a plot whose only numbers are copies is
+empty with the reason, where it used to propose DM-11's letter, and the dropdown no longer
+offers a copy of a copy. Remove on a described sheet asks first when any row holds typed
+text. Underneath, every list on the panel comes back where it was scrolled, the grid both
+ways.</p>
+
+<h2>Step 3 and the status line after a refresh, both themes</h2>
+
+<p class="caption">Two view types are ticked in step 2. A third, (400), was ticked, marked on
+DM-12, and unticked again. The header says 2, which is what the grid shows. The run would make
+those two and nothing else.</p>
+
+<div class="pair">
+
+<div>
+<div class="panel light">
+  <div class="strip"><span><span class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS</span><br>
+    <span class="faint">3383 views read at 14:02:11</span></span>
+    <span><span class="btn">Refresh</span><span class="btn">Scan Model</span></span></div>
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">+</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;DM-11 to DM-13, 2 of 3 ticked</div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">+</span>2&nbsp;&nbsp;VIEW TYPES&nbsp;&nbsp;&nbsp;2 of 84 ticked</div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">-</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;2 marked</div>
+      <div class="inside">
+        <div class="row faint">&#9632; exists, click to open it&nbsp;&nbsp;&nbsp;&#9633; missing, click to mark it&nbsp;&nbsp;&nbsp;&#9679; marked to be made</div>
+        <div class="row"><span class="btn">Mark every missing</span><span class="btn">Clear all marks</span></div>
+        <table class="grid">
+          <tr><th>Use</th><th>Plot</th><th>010</th><th>200</th></tr>
+          <tr><td>[x]</td><td class="plot">DM-11</td><td>&#9632;</td><td>&#9679;</td></tr>
+          <tr class="shade"><td>[ ]</td><td class="plot faint">DM-12</td><td>&#9632;</td><td>&#9633;</td></tr>
+          <tr><td>[x]</td><td class="plot">DM-13</td><td>&#9679;</td><td>&#9633;</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">+</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, 2 to make</div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">+</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;2 plan views and 2 sheets</div>
+    </div>
+  </div>
+  <div class="status">3383 views read at 14:02:11. 160 plots, 2114 found through PRX_Plot_ID,
+    1269 through the name, 6 with no plot at all. 2 marks cleared. Nothing in the model has
+    changed.</div>
+</div>
+</div>
+
+<div>
+<div class="panel dark">
+  <div class="strip"><span><span class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS</span><br>
+    <span class="faint">3383 views read at 14:02:11</span></span>
+    <span><span class="btn">Refresh</span><span class="btn">Scan Model</span></span></div>
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">+</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;DM-11 to DM-13, 2 of 3 ticked</div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">+</span>2&nbsp;&nbsp;VIEW TYPES&nbsp;&nbsp;&nbsp;2 of 84 ticked</div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">-</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;2 marked</div>
+      <div class="inside">
+        <div class="row faint">&#9632; exists, click to open it&nbsp;&nbsp;&nbsp;&#9633; missing, click to mark it&nbsp;&nbsp;&nbsp;&#9679; marked to be made</div>
+        <div class="row"><span class="btn">Mark every missing</span><span class="btn">Clear all marks</span></div>
+        <table class="grid">
+          <tr><th>Use</th><th>Plot</th><th>010</th><th>200</th></tr>
+          <tr><td>[x]</td><td class="plot">DM-11</td><td>&#9632;</td><td>&#9679;</td></tr>
+          <tr class="shade"><td>[ ]</td><td class="plot faint">DM-12</td><td>&#9632;</td><td>&#9633;</td></tr>
+          <tr><td>[x]</td><td class="plot">DM-13</td><td>&#9679;</td><td>&#9633;</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">+</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, 2 to make</div>
+    </div>
+    <div class="step">
+      <div class="head"><span class="sign">+</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;2 plan views and 2 sheets</div>
+    </div>
+  </div>
+  <div class="status">3383 views read at 14:02:11. 160 plots, 2114 found through PRX_Plot_ID,
+    1269 through the name, 6 with no plot at all. 2 marks cleared. Nothing in the model has
+    changed.</div>
+</div>
+</div>
+
+</div>
+
+<p class="caption">The last sentence of the status line is new. It is
+<code>BulkMarking.ClearedInWords</code>, appended by the handler when the panel reports that a
+refresh cleared anything, and absent when nothing was marked. DM-12 is still unticked after
+the refresh. It used to come back ticked.</p>
+
+<h2>Step 4, the number box on a plot with only copied numbers</h2>
+
+<p class="caption">DM-11 has numbers of its own, 010QE to 600QD, so its row is proposed 010QA.
+DM-13 carries 010QE Copy 001 and nothing else. It used to be proposed 010QA as well, DM-11's
+letter, and now gets the empty box and the reason. The dropdown under any number box offers
+011EA and L-212 and no longer offers 010QE Copy 002.</p>
+
+<div class="pair">
+
+<div>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, 1 to make</div>
+      <div class="inside">
+        <div class="row"><b>Sheet 1</b><span class="btn" style="float:right">Remove</span></div>
+        <div class="row faint">Makes 1 sheet across the ticked plots. 1 row still needs a name or a number.</div>
+        <table class="sheet">
+          <tr><th>Plot</th><th>Views</th><th>Name</th><th>Number</th></tr>
+          <tr><td>DM-11</td><td>(010) Location Key Plan</td>
+              <td><span class="box">LOCATION KEY PLAN<span class="arrow">v</span></span></td>
+              <td><span class="box">010QA<span class="arrow">v</span></span></td></tr>
+          <tr><td>DM-13</td><td>(010) Location Key Plan</td>
+              <td><span class="box">LOCATION KEY PLAN<span class="arrow">v</span></span></td>
+              <td><span class="box">&nbsp;<span class="arrow">v</span></span><br>
+                  <span class="warn">This plot has no sheet numbers yet, so there is no plot
+                  letter to continue. Type the number.</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, 1 to make</div>
+      <div class="inside">
+        <div class="row"><b>Sheet 1</b><span class="btn" style="float:right">Remove</span></div>
+        <div class="row faint">Makes 1 sheet across the ticked plots. 1 row still needs a name or a number.</div>
+        <table class="sheet">
+          <tr><th>Plot</th><th>Views</th><th>Name</th><th>Number</th></tr>
+          <tr><td>DM-11</td><td>(010) Location Key Plan</td>
+              <td><span class="box">LOCATION KEY PLAN<span class="arrow">v</span></span></td>
+              <td><span class="box">010QA<span class="arrow">v</span></span></td></tr>
+          <tr><td>DM-13</td><td>(010) Location Key Plan</td>
+              <td><span class="box">LOCATION KEY PLAN<span class="arrow">v</span></span></td>
+              <td><span class="box">&nbsp;<span class="arrow">v</span></span><br>
+                  <span class="warn">This plot has no sheet numbers yet, so there is no plot
+                  letter to continue. Type the number.</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>Remove, when a row holds typed text</h2>
+
+<p class="caption">Pressing Remove on a sheet whose rows all carry proposals takes it out at
+once, because the proposals come back the moment it is described again. When any row holds a
+name or a number the user typed, this box comes up first, with No as the default. It is a
+Windows message box, so it follows Windows and not the pane's theme, and only the light
+rendering is drawn.</p>
+
+<div class="dialog">
+  <div class="title">Remove sheet 1</div>
+  <div class="text">Removing this sheet loses the names or numbers typed on 3 rows. Remove it
+    anyway?</div>
+  <div class="buttons"><span class="btn">Yes</span><span class="btn"><u>N</u>o</span></div>
+</div>
+
+<h2>Where the words come from</h2>
+
+<p class="caption">The header count is <code>SheetGrid.MarkedCount</code>, the length of
+<code>SheetGrid.Marked</code>, which is also what the run is handed. The cleared clause is
+<code>BulkMarking.ClearedInWords</code>. The empty number box's reason is
+<code>SheetNumberProposal.WhyNot</code> off <code>SheetNumbers.Propose</code>, which skips a
+number holding <code>ScannedSheet.CopyMark</code> before reading a letter. The question is
+<code>SheetBatch.WhyRemovalAsks</code>. All four are in Core with tests, so the panel formats
+none of them.</p>
+
+<h2>Nothing else in the panel changed on screen</h2>
+
+<p class="caption">Under the surface the grid's two viewers and step 4's two lists remember
+where they were scrolled, and the name and number dropdowns share one list each instead of
+copying every entry per row. In the writer, a refused sheet name and a throw while a
+schedule's fields go on both delete the element again, what runs after an item is made cannot
+turn it into a contradiction in the report, and the two remaining PRX_Plot_ID writes are
+checked. None of that has been through Revit.</p>
+
+</body>
+</html>

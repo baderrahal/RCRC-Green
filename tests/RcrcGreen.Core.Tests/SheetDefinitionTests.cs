@@ -559,5 +559,57 @@ namespace RcrcGreen.Core.Tests
             Assert.Throws<ArgumentNullException>(() => new SheetBatch(null, null));
             Assert.Empty(RunFixture.Batch(null, 1).Rows);
         }
+
+        private static SheetToMake Proposed(string plotId, string number, string name)
+        {
+            return new SheetToMake(
+                plotId, number, name, new[] { KeyPlan }, 1,
+                RunFixture.TitleBlockFamily, RunFixture.TitleBlockType, true, true);
+        }
+
+        /// <summary>
+        /// Remove asks only when a row carries something typed. A proposal comes back the
+        /// moment the sheet is described again and typed text does not, and Remove sits next
+        /// to the sheet heading where a slip costs every row's typing.
+        /// </summary>
+        [Fact]
+        public void RemoveAsksOnlyWhenARowCarriesTypedText()
+        {
+            SheetBatch proposed = RunFixture.Batch(new[] { KeyPlan }, 1,
+                Proposed("DM-11", "010QA", "LOCATION KEY PLAN"),
+                Proposed("DM-12", "010RA", "LOCATION KEY PLAN"));
+
+            Assert.Equal(0, proposed.RowsWithTypedText);
+            Assert.Equal(string.Empty, proposed.WhyRemovalAsks());
+
+            SheetBatch oneTyped = RunFixture.Batch(new[] { KeyPlan }, 1,
+                Proposed("DM-11", "010QA", "LOCATION KEY PLAN"),
+                RunFixture.Row("DM-12", "010RA", "LOCATION KEY PLAN", new[] { KeyPlan }));
+
+            Assert.Equal(1, oneTyped.RowsWithTypedText);
+            Assert.Equal(
+                "Removing this sheet loses the names or numbers typed on 1 row. Remove it anyway?",
+                oneTyped.WhyRemovalAsks());
+        }
+
+        /// <summary>
+        /// A row typed on either box counts once, and an empty box is not typed text. Two rows
+        /// each with one typed box read as two rows.
+        /// </summary>
+        [Fact]
+        public void ARowCountsOnceWhicheverBoxWasTypedAndAnEmptyBoxDoesNotCount()
+        {
+            SheetBatch batch = RunFixture.Batch(new[] { KeyPlan }, 1,
+                new SheetToMake("DM-11", "010QA", "LIST OF DRAWINGS", new[] { KeyPlan }, 1,
+                    RunFixture.TitleBlockFamily, RunFixture.TitleBlockType, false, true),
+                new SheetToMake("DM-12", "010RB", "LOCATION KEY PLAN", new[] { KeyPlan }, 1,
+                    RunFixture.TitleBlockFamily, RunFixture.TitleBlockType, true, false),
+                RunFixture.Row("DM-13", "", "", new[] { KeyPlan }));
+
+            Assert.Equal(2, batch.RowsWithTypedText);
+            Assert.Equal(
+                "Removing this sheet loses the names or numbers typed on 2 rows. Remove it anyway?",
+                batch.WhyRemovalAsks());
+        }
     }
 }

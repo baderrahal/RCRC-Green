@@ -90,9 +90,27 @@ namespace RcrcGreen.Core
             get { return Rows.Sum(row => row.Cells.Count(cell => cell.State == SheetCellState.Missing)); }
         }
 
+        /// <summary>
+        /// The marked cells this grid shows, and the only marks the run is handed. The panel
+        /// remembers a mark on a view type that has since been unticked, so it comes back when
+        /// the column does, but a cell that is not drawn cannot be marked and cannot reach the
+        /// plan. The MARK header counts this list, so the number and the squares agree.
+        /// </summary>
+        public IReadOnlyList<PlotViewKey> Marked
+        {
+            get
+            {
+                return Rows
+                    .SelectMany(row => row.Cells
+                        .Where(cell => cell.State == SheetCellState.Marked)
+                        .Select(cell => new PlotViewKey(row.PlotId, cell.ViewType)))
+                    .ToList();
+            }
+        }
+
         public int MarkedCount
         {
-            get { return Rows.Sum(row => row.Cells.Count(cell => cell.State == SheetCellState.Marked)); }
+            get { return Marked.Count; }
         }
 
         public static SheetGrid Build(
