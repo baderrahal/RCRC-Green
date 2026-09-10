@@ -38,6 +38,14 @@ namespace RcrcGreen.Core.Kpi
     /// cached result dropped from every formula cell in every sheet, and xl/calcChain.xml
     /// removed. Forcing a recalculation on that same file gave Total Green cover 1518, Canopy
     /// 1048, Total Trees 31, Planting 410 and Lawn 60.
+    ///
+    /// **A fourth, measured on the 1428 workbook.** All three held and Excel opened the file
+    /// showing every written number and every formula cell blank, and Ctrl Alt F9 filled them.
+    /// calcPr carried no calcMode. Excel's calculation mode is a session setting and the first
+    /// workbook opened in a session sets it, so anyone with a manual workbook open, or manual
+    /// in their own options, opened this file into a manual session. calcMode is set to auto
+    /// outright now and it is the fifth thing checked. The check is over what the file says
+    /// and not over what Excel does with it, which nothing here can run.
     /// </summary>
     public sealed class CacheCheck
     {
@@ -46,13 +54,18 @@ namespace RcrcGreen.Core.Kpi
             string calcId,
             int formulaCellsCarryingACachedValue,
             bool calcChainRemoved,
-            int cachedValuesDropped)
+            int cachedValuesDropped,
+            string calcMode = null,
+            IEnumerable<string> otherCalculationSettings = null)
         {
             RecalculatesOnOpen = recalculatesOnOpen;
             CalcId = calcId ?? string.Empty;
             FormulaCellsCarryingACachedValue = formulaCellsCarryingACachedValue;
             CalcChainRemoved = calcChainRemoved;
             CachedValuesDropped = cachedValuesDropped;
+            CalcMode = calcMode ?? string.Empty;
+            OtherCalculationSettings = (otherCalculationSettings ?? Enumerable.Empty<string>())
+                .Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
         }
 
         /// <summary>
@@ -60,6 +73,28 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static readonly CacheCheck NotChecked =
             new CacheCheck(false, string.Empty, 0, false, 0);
+
+        /// <summary>
+        /// The value calcPr carries for calcMode, read back off the output, or empty when it
+        /// carries none. Only auto passes.
+        /// </summary>
+        public string CalcMode { get; }
+
+        public bool CalcModeAuto
+        {
+            get { return string.Equals(CalcMode, "auto", StringComparison.Ordinal); }
+        }
+
+        /// <summary>
+        /// Every other place in the package that was found holding a calculation setting: a
+        /// sheetCalcPr element in a sheet part, a VBA project, or another attribute on calcPr.
+        /// Empty when none was found, and the report says what was looked for either way.
+        /// </summary>
+        public IReadOnlyList<string> OtherCalculationSettings { get; }
+
+        public const string LookedFor =
+            "a sheetCalcPr element in every sheet part, an xl/vbaProject.bin part, and every "
+            + "attribute on calcPr other than the three set here";
 
         public bool RecalculatesOnOpen { get; }
 
@@ -81,8 +116,9 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// All three together, because any one of them on its own leaves Excel free to trust
-        /// the cache. This is what the report prints and what a test asserts.
+        /// All five together, because any one of them on its own leaves Excel free to trust
+        /// the cache or to open the file into a manual session. This is what the report prints
+        /// and what a test asserts.
         /// </summary>
         public bool WillRecalculate
         {
@@ -91,7 +127,8 @@ namespace RcrcGreen.Core.Kpi
                 return RecalculatesOnOpen
                     && CalcIdCleared
                     && FormulaCellsCarryingACachedValue == 0
-                    && CalcChainRemoved;
+                    && CalcChainRemoved
+                    && CalcModeAuto;
             }
         }
     }
@@ -112,7 +149,8 @@ namespace RcrcGreen.Core.Kpi
             int partsInOutput,
             IReadOnlyList<string> changedParts,
             IReadOnlyList<LandedCell> landed,
-            CacheCheck cache)
+            CacheCheck cache,
+            FormulaCheck formulas)
         {
             Written = written;
             Refusal = refusal ?? string.Empty;
@@ -121,7 +159,16 @@ namespace RcrcGreen.Core.Kpi
             ChangedParts = changedParts ?? new List<string>();
             Landed = landed ?? new List<LandedCell>();
             Cache = cache ?? CacheCheck.NotChecked;
+            Formulas = formulas ?? FormulaCheck.NotChecked;
         }
+
+        /// <summary>
+        /// What the output's formulas will compute from the cells this run wrote, read off the
+        /// output. A run whose written cells leave a formula reading an error is refused and
+        /// the output is deleted again, and this carries why. Checked whether or not the run
+        /// was refused, so the report has the section either way.
+        /// </summary>
+        public FormulaCheck Formulas { get; }
 
         /// <summary>
         /// What the output really holds about recalculation, read back off the file the same
@@ -165,7 +212,20 @@ namespace RcrcGreen.Core.Kpi
         public static PatchOutcome Refused(string why)
         {
             if (why == null) throw new ArgumentNullException("why");
-            return new PatchOutcome(false, why, 0, 0, null, null, null);
+            return new PatchOutcome(false, why, 0, 0, null, null, null, null);
+        }
+
+        /// <summary>
+        /// The output was written, read back, found to leave a formula reading an error off a
+        /// row this run wrote, and deleted again. The check travels so the report can print
+        /// every formula at risk.
+        /// </summary>
+        public static PatchOutcome RefusedAfterWriting(string why, FormulaCheck formulas)
+        {
+            if (why == null) throw new ArgumentNullException("why");
+            if (formulas == null) throw new ArgumentNullException("formulas");
+
+            return new PatchOutcome(false, why, 0, 0, null, null, null, formulas);
         }
 
         public static PatchOutcome Done(
@@ -173,7 +233,8 @@ namespace RcrcGreen.Core.Kpi
             int partsInOutput,
             IEnumerable<string> changedParts,
             IEnumerable<LandedCell> landed,
-            CacheCheck cache)
+            CacheCheck cache,
+            FormulaCheck formulas = null)
         {
             return new PatchOutcome(
                 true,
@@ -182,7 +243,8 @@ namespace RcrcGreen.Core.Kpi
                 partsInOutput,
                 (changedParts ?? Enumerable.Empty<string>()).ToList(),
                 (landed ?? Enumerable.Empty<LandedCell>()).Where(cell => cell != null).ToList(),
-                cache);
+                cache,
+                formulas);
         }
     }
 }

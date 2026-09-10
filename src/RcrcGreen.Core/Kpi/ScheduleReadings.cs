@@ -99,34 +99,38 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<string> refusals,
             bool totalRead,
             int total,
-            int rowsPassedOver)
+            int rowsPassedOver,
+            int totalRow)
         {
             Species = (species ?? Enumerable.Empty<SpeciesRow>()).Where(one => one != null).ToList();
             Refusals = (refusals ?? Enumerable.Empty<string>()).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
             TotalRead = totalRead;
             Total = total;
             RowsPassedOver = rowsPassedOver;
+            TotalRow = totalRow;
         }
 
         /// <summary>
         /// A schedule whose rows were never read, or that printed none. Nothing to refuse and
         /// nothing to hand back.
         /// </summary>
-        public static readonly SoftscapeReading Nothing = new SoftscapeReading(null, null, false, 0, 0);
+        public static readonly SoftscapeReading Nothing = new SoftscapeReading(null, null, false, 0, 0, 0);
 
         public static SoftscapeReading Refused(IEnumerable<string> why)
         {
-            var held = new SoftscapeReading(null, why, false, 0, 0);
+            var held = new SoftscapeReading(null, why, false, 0, 0, 0);
             if (held.Refusals.Count == 0) throw new ArgumentException("A refusal needs a reason.", "why");
 
             return held;
         }
 
-        public static SoftscapeReading Of(IEnumerable<SpeciesRow> species, bool totalRead, int total, int rowsPassedOver)
+        public static SoftscapeReading Of(
+            IEnumerable<SpeciesRow> species, bool totalRead, int total, int rowsPassedOver, int totalRow = 0)
         {
             if (rowsPassedOver < 0) throw new ArgumentOutOfRangeException("rowsPassedOver");
+            if (totalRow < 0) throw new ArgumentOutOfRangeException("totalRow");
 
-            return new SoftscapeReading(species, null, totalRead, total, rowsPassedOver);
+            return new SoftscapeReading(species, null, totalRead, total, rowsPassedOver, totalRead ? totalRow : 0);
         }
 
         public IReadOnlyList<SpeciesRow> Species { get; }
@@ -144,6 +148,11 @@ namespace RcrcGreen.Core.Kpi
         public bool TotalRead { get; }
 
         public int Total { get; }
+
+        /// <summary>
+        /// The printed row the TOTAL was read off, counting the heading row as 1, or nought.
+        /// </summary>
+        public int TotalRow { get; }
 
         /// <summary>
         /// Rows carrying a count and no botanical name, which are the subtotal a group prints

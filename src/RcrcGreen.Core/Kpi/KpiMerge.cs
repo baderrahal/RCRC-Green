@@ -80,11 +80,131 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
+    /// One height or one diameter as one row of one plot printed it, for holding every value a
+    /// merged species carries against the others.
+    /// </summary>
+    public sealed class SpeciesMeasure
+    {
+        public SpeciesMeasure(string plotId, int rowNumber, PrintedMeasure measure)
+        {
+            PlotId = plotId ?? string.Empty;
+            RowNumber = rowNumber;
+            Measure = measure ?? PrintedMeasure.NotRead;
+        }
+
+        public string PlotId { get; }
+
+        public int RowNumber { get; }
+
+        public PrintedMeasure Measure { get; }
+
+        /// <summary>
+        /// FM-05 row 12 prints 15, or FM-05 row 12 prints '-'.
+        /// </summary>
+        public string InWords
+        {
+            get
+            {
+                string where = PlotId.Length == 0 ? "a row" : PlotId + (RowNumber > 0 ? " row " + RowNumber : string.Empty);
+                return where + " " + (Measure.Held ? "prints " + Measure.Printed : Measure.WhyNotHeld);
+            }
+        }
+    }
+
+    /// <summary>
+    /// What goes into the workbook's height or diameter column for one merged species: one
+    /// number, or nothing and why.
+    ///
+    /// **Every row that holds a value has to agree, and nothing is averaged or taken first.**
+    /// A species off two plots printing two heights gets nothing written and every value named,
+    /// because the tool cannot know which the client's palette means. A row printing a dash or
+    /// a nought is named and does not stop the others agreeing.
+    /// </summary>
+    public sealed class MeasureAnswer
+    {
+        private MeasureAnswer(bool write, double value, string why, IEnumerable<string> found)
+        {
+            Write = write;
+            Value = value;
+            Why = why ?? string.Empty;
+            Found = (found ?? Enumerable.Empty<string>()).ToList();
+        }
+
+        public bool Write { get; }
+
+        public double Value { get; }
+
+        /// <summary>
+        /// Why nothing is written, or the rows that printed no value beside the ones that
+        /// agreed. Empty when every row agreed.
+        /// </summary>
+        public string Why { get; }
+
+        /// <summary>
+        /// Every value found, one line per row, as the rows printed them.
+        /// </summary>
+        public IReadOnlyList<string> Found { get; }
+
+        public static MeasureAnswer Of(string what, IEnumerable<SpeciesMeasure> measures)
+        {
+            List<SpeciesMeasure> held = (measures ?? Enumerable.Empty<SpeciesMeasure>()).Where(one => one != null).ToList();
+            List<string> found = held.Select(one => one.InWords).ToList();
+            List<SpeciesMeasure> reading = held.Where(one => one.Measure.Held).ToList();
+            List<SpeciesMeasure> notReading = held.Where(one => !one.Measure.Held).ToList();
+
+            string consequence = string.Equals(what, "diameter", StringComparison.OrdinalIgnoreCase)
+                ? ", so nothing is written and the row will not compute its canopy"
+                : ", so nothing is written";
+
+            if (held.Count == 0)
+            {
+                return new MeasureAnswer(false, 0.0, "no row printed a " + what + consequence, found);
+            }
+
+            if (reading.Count == 0)
+            {
+                return new MeasureAnswer(false, 0.0,
+                    "no row printed a " + what + " a workbook can compute with: "
+                    + string.Join(", ", found.ToArray()) + consequence, found);
+            }
+
+            var distinct = new List<double>();
+            foreach (SpeciesMeasure one in reading)
+            {
+                if (!distinct.Any(value => Same(value, one.Measure.Value))) distinct.Add(one.Measure.Value);
+            }
+
+            if (distinct.Count > 1)
+            {
+                return new MeasureAnswer(false, 0.0,
+                    "the rows disagree on the " + what + ": "
+                    + string.Join(", ", reading.Select(one => one.InWords).ToArray()) + consequence, found);
+            }
+
+            string note = notReading.Count == 0
+                ? string.Empty
+                : string.Join(", ", notReading.Select(one => one.InWords).ToArray())
+                    + ", and every row that holds a " + what + " prints " + reading[0].Measure.Printed;
+
+            return new MeasureAnswer(true, distinct[0], note, found);
+        }
+
+        private static bool Same(double one, double other)
+        {
+            return Math.Abs(one - other) <= Totalled.Tolerance * Math.Max(1.0, Math.Abs(one));
+        }
+    }
+
+    /// <summary>
     /// One species and group across every chosen plot, with each plot's own number kept.
     ///
     /// Merging is on the group AND the botanical name, never the name alone. ALBIZIA LEBBECK
     /// proposed on DM-12 is 13 and on DM-13 is 5, so the merged proposed row is 18, and the
     /// same name existing on DM-12 is 1 and stays out of it.
+    ///
+    /// **One entry per printed row, not per plot.** A plot printing the species on two rows is
+    /// two entries with the same plot, which is what FM-05 10, FM-05 10 in the report meant
+    /// and what the rows now say outright.
     /// </summary>
     public sealed class MergedSpecies
     {
@@ -95,6 +215,89 @@ namespace RcrcGreen.Core.Kpi
             BotanicalName = botanicalName;
             GroupName = groupName ?? string.Empty;
             PerPlot = (perPlot ?? Enumerable.Empty<PlotNumber>()).Where(one => one != null).ToList();
+            Rows = new List<SpeciesRow>();
+        }
+
+        private MergedSpecies(string botanicalName, string groupName, IReadOnlyList<SpeciesRow> rows)
+        {
+            BotanicalName = botanicalName;
+            GroupName = groupName ?? string.Empty;
+            Rows = rows;
+            PerPlot = rows.Select(one => new PlotNumber(one.PlotId, one.Quantity)).ToList();
+        }
+
+        /// <summary>
+        /// Built off the rows themselves, so the heights, the diameters and the row numbers
+        /// travel with the count.
+        /// </summary>
+        public static MergedSpecies FromRows(string botanicalName, string groupName, IEnumerable<SpeciesRow> rows)
+        {
+            if (botanicalName == null) throw new ArgumentNullException("botanicalName");
+
+            return new MergedSpecies(
+                botanicalName, groupName,
+                (rows ?? Enumerable.Empty<SpeciesRow>()).Where(one => one != null).ToList());
+        }
+
+        /// <summary>
+        /// The printed rows this was merged from, empty for a species built from plot numbers
+        /// alone.
+        /// </summary>
+        public IReadOnlyList<SpeciesRow> Rows { get; }
+
+        public IReadOnlyList<SpeciesMeasure> Heights
+        {
+            get { return Rows.Select(one => new SpeciesMeasure(one.PlotId, one.RowNumber, one.Height)).ToList(); }
+        }
+
+        public IReadOnlyList<SpeciesMeasure> Diameters
+        {
+            get { return Rows.Select(one => new SpeciesMeasure(one.PlotId, one.RowNumber, one.Diameter)).ToList(); }
+        }
+
+        public MeasureAnswer Height
+        {
+            get { return MeasureAnswer.Of("height", Heights); }
+        }
+
+        public MeasureAnswer Diameter
+        {
+            get { return MeasureAnswer.Of("diameter", Diameters); }
+        }
+
+        /// <summary>
+        /// FM-05 20 (2 rows, 10 + 10), FM-06 15. One entry per plot, its rows added, so a plot
+        /// printing the species twice reads as one plot with two rows rather than as one plot
+        /// appearing twice.
+        /// </summary>
+        public string Working
+        {
+            get
+            {
+                var order = new List<string>();
+                var byPlot = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+                foreach (PlotNumber one in PerPlot)
+                {
+                    List<int> already;
+                    if (!byPlot.TryGetValue(one.PlotId, out already))
+                    {
+                        already = new List<int>();
+                        byPlot[one.PlotId] = already;
+                        order.Add(one.PlotId);
+                    }
+
+                    already.Add((int)one.Value);
+                }
+
+                return string.Join(", ", order.Select(plot =>
+                {
+                    List<int> counts = byPlot[plot];
+                    if (counts.Count == 1) return plot + " " + counts[0];
+
+                    return plot + " " + counts.Sum() + " (" + counts.Count + " rows, "
+                        + string.Join(" + ", counts.Select(count => count.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToArray()) + ")";
+                }).ToArray());
+            }
         }
 
         /// <summary>
@@ -284,7 +487,7 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static IReadOnlyList<MergedSpecies> Species(IEnumerable<PlotReading> readings)
         {
-            var byKey = new Dictionary<string, List<PlotNumber>>(StringComparer.Ordinal);
+            var byKey = new Dictionary<string, List<SpeciesRow>>(StringComparer.Ordinal);
             var names = new Dictionary<string, SpeciesRow>(StringComparer.Ordinal);
             var order = new List<string>();
 
@@ -295,21 +498,21 @@ namespace RcrcGreen.Core.Kpi
                     if (!row.HasGroup) continue;
 
                     string key = Key(row);
-                    List<PlotNumber> already;
+                    List<SpeciesRow> already;
                     if (!byKey.TryGetValue(key, out already))
                     {
-                        already = new List<PlotNumber>();
+                        already = new List<SpeciesRow>();
                         byKey[key] = already;
                         names[key] = row;
                         order.Add(key);
                     }
 
-                    already.Add(new PlotNumber(reading.PlotId, row.Quantity));
+                    already.Add(row.OnPlot(reading.PlotId));
                 }
             }
 
             return order
-                .Select(key => new MergedSpecies(names[key].BotanicalName, names[key].GroupName, byKey[key]))
+                .Select(key => MergedSpecies.FromRows(names[key].BotanicalName, names[key].GroupName, byKey[key]))
                 .OrderBy(one => one.GroupName, NaturalOrder.Comparer)
                 .ThenBy(one => one.BotanicalName, NaturalOrder.Comparer)
                 .ToList();
@@ -328,7 +531,7 @@ namespace RcrcGreen.Core.Kpi
                 {
                     if (row.HasGroup) continue;
 
-                    found.Add(new SpeciesRow(row.BotanicalName, row.GroupName, row.Quantity, reading.PlotId));
+                    found.Add(row.OnPlot(reading.PlotId));
                 }
             }
 

@@ -591,7 +591,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 species: reading.Species.ToArray(),
                 softscapeTotalRead: reading.TotalRead,
                 softscapeTotal: reading.Total,
-                rowsPassedOver: reading.RowsPassedOver);
+                rowsPassedOver: reading.RowsPassedOver,
+                softscapeTotalRow: reading.TotalRow);
 
             Reconciliation held = Reconciliation.Of(
                 new[] { "DM-12" }, new[] { plot }, null, false, KpiTemplates.Mosques);
@@ -600,7 +601,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = KpiCreateReport.Write(CreateFixture.Run(new[] { plot }), new DateTime(2026, 9, 10, 9, 28, 0))
                 .Split(new[] { "\r\n" }, StringSplitOptions.None);
 
-            Assert.Contains("      species rows add to 39, the TOTAL row prints 39", lines);
+            // Row 14: the heading, TREES, Existing, five species, a subtotal, Proposed, three
+            // species, then TOTAL.
+            Assert.Contains("      species rows add to 39, the TOTAL row prints 39 at row 14", lines);
             Assert.Contains("      1 row with a count and no botanical name passed over, the subtotals", lines);
         }
 

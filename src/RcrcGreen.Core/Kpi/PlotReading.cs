@@ -1,28 +1,184 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// One species row as the softscape schedule printed it, with the group row it sat under.
+    /// One species printed on more than one row under one group on one plot, with the rows.
+    /// </summary>
+    public sealed class RepeatedSpecies
+    {
+        public RepeatedSpecies(string botanicalName, string groupName, IEnumerable<SpeciesRow> rows)
+        {
+            if (botanicalName == null) throw new ArgumentNullException("botanicalName");
+
+            BotanicalName = botanicalName;
+            GroupName = groupName ?? string.Empty;
+            Rows = (rows ?? Enumerable.Empty<SpeciesRow>()).Where(one => one != null).OrderBy(one => one.RowNumber).ToList();
+        }
+
+        public string BotanicalName { get; }
+
+        public string GroupName { get; }
+
+        public IReadOnlyList<SpeciesRow> Rows { get; }
+
+        /// <summary>
+        /// rows 12 and 13, counting 10 and 10.
+        /// </summary>
+        public string InWords
+        {
+            get
+            {
+                return "rows " + Joined(Rows.Select(one => one.RowNumber.ToString(CultureInfo.InvariantCulture)))
+                    + ", counting " + Joined(Rows.Select(one => one.Quantity.ToString(CultureInfo.InvariantCulture)));
+            }
+        }
+
+        private static string Joined(IEnumerable<string> parts)
+        {
+            List<string> held = parts.ToList();
+            if (held.Count <= 1) return string.Join(string.Empty, held.ToArray());
+
+            return string.Join(", ", held.Take(held.Count - 1).ToArray()) + " and " + held[held.Count - 1];
+        }
+    }
+
+    /// <summary>
+    /// One measure a schedule prints beside a species, the height or the canopy diameter, as
+    /// the cell printed it and whether that is a number a workbook can compute with.
+    ///
+    /// **Held means a number greater than nought.** UNKNOWN prints a dash for its height and 0
+    /// for its diameter on the real model, and a canopy worked out from a nought is a nought
+    /// written where the workbook's own formula expected a blank. A cell holding a digit past
+    /// its number is not read, the way a count is not, and the reason travels with the row into
+    /// the report rather than refusing the schedule, because a species counts whether or not
+    /// its height reads.
+    /// </summary>
+    public sealed class PrintedMeasure
+    {
+        private PrintedMeasure(string printed, bool held, double value, string whyNotHeld)
+        {
+            Printed = printed ?? string.Empty;
+            Held = held;
+            Value = value;
+            WhyNotHeld = whyNotHeld ?? string.Empty;
+        }
+
+        /// <summary>
+        /// A row that came from somewhere the measures were never read, a fixture or an older
+        /// caller. Not held, and it says so rather than reading as a blank cell.
+        /// </summary>
+        public static readonly PrintedMeasure NotRead = new PrintedMeasure(string.Empty, false, 0.0, "was not read");
+
+        public static PrintedMeasure NoColumn(string word)
+        {
+            return new PrintedMeasure(string.Empty, false, 0.0,
+                "the heading row names no column holding " + (word ?? string.Empty));
+        }
+
+        public static PrintedMeasure Of(string cell)
+        {
+            string text = (cell ?? string.Empty).Trim();
+            CellNumberRead read = CellNumber.Read(text);
+
+            if (read.IsRefused) return new PrintedMeasure(text, false, 0.0, read.Refusal);
+            if (read.IsEmpty)
+            {
+                return new PrintedMeasure(text, false, 0.0,
+                    text.Length == 0 ? "prints nothing" : "prints '" + text + "'");
+            }
+
+            if (read.Value <= 0.0)
+            {
+                return new PrintedMeasure(text, false, read.Value, "prints " + text + ", which is no size");
+            }
+
+            return new PrintedMeasure(text, true, read.Value, string.Empty);
+        }
+
+        public static PrintedMeasure Holding(double value)
+        {
+            if (value <= 0.0) throw new ArgumentOutOfRangeException("value");
+
+            return new PrintedMeasure(value.ToString("0.##", CultureInfo.InvariantCulture), true, value, string.Empty);
+        }
+
+        /// <summary>
+        /// Exactly as the schedule printed the cell, so the report can show it.
+        /// </summary>
+        public string Printed { get; }
+
+        public bool Held { get; }
+
+        public double Value { get; }
+
+        public string WhyNotHeld { get; }
+    }
+
+    /// <summary>
+    /// One species row as the softscape schedule printed it, with the group row it sat under,
+    /// the row it printed on, and the height and the canopy diameter printed beside it.
     ///
     /// The group travels with the row because a species is not unique in the schedule.
     /// ALBIZIA LEBBECK on DM-12 is 1 under Existing and 13 under Proposed, and a row that
     /// arrives without its group collapses those two numbers into one in the wrong sheet.
+    ///
+    /// **The row number travels too**, so a species the schedule prints on two rows under one
+    /// group can be named by its rows. FM-05 prints ALBIZIA LEBBECK twice under Proposed, 10
+    /// and 10, and for two rounds that read as one plot appearing twice.
     /// </summary>
     public sealed class SpeciesRow
     {
-        public SpeciesRow(string botanicalName, string groupName, int quantity, string plotId = null)
+        public SpeciesRow(
+            string botanicalName,
+            string groupName,
+            int quantity,
+            string plotId = null,
+            int rowNumber = 0,
+            PrintedMeasure height = null,
+            PrintedMeasure diameter = null)
         {
             if (botanicalName == null) throw new ArgumentNullException("botanicalName");
             if (quantity < 0) throw new ArgumentOutOfRangeException("quantity");
+            if (rowNumber < 0) throw new ArgumentOutOfRangeException("rowNumber");
 
             BotanicalName = botanicalName;
             GroupName = groupName ?? string.Empty;
             Quantity = quantity;
             PlotId = plotId ?? string.Empty;
+            RowNumber = rowNumber;
+            Height = height ?? PrintedMeasure.NotRead;
+            Diameter = diameter ?? PrintedMeasure.NotRead;
         }
+
+        /// <summary>
+        /// The same row with its plot named, for a row that travels out of its reading.
+        /// </summary>
+        public SpeciesRow OnPlot(string plotId)
+        {
+            return new SpeciesRow(BotanicalName, GroupName, Quantity, plotId, RowNumber, Height, Diameter);
+        }
+
+        /// <summary>
+        /// The printed row, counting the heading row as 1, the way every reader here numbers a
+        /// row. Nought when the row came from no schedule.
+        /// </summary>
+        public int RowNumber { get; }
+
+        /// <summary>
+        /// HEIGHT (m) as the schedule printed it. The workbook's Mature Height column, measured
+        /// identical on six species sitting in both.
+        /// </summary>
+        public PrintedMeasure Height { get; }
+
+        /// <summary>
+        /// DIAMETER (m) as the schedule printed it, which is the workbook's Average Mature
+        /// Canopy Diameter and what its canopy formula computes from.
+        /// </summary>
+        public PrintedMeasure Diameter { get; }
 
         public string BotanicalName { get; }
 
@@ -100,10 +256,13 @@ namespace RcrcGreen.Core.Kpi
             int itemCount,
             int repeats = 1,
             double speciesSum = double.NaN,
-            string disagreement = null)
+            string disagreement = null,
+            int rowNumber = 0,
+            IEnumerable<int> rowsConsidered = null)
         {
             if (heading == null) throw new ArgumentNullException("heading");
             if (repeats < 0) throw new ArgumentOutOfRangeException("repeats");
+            if (rowNumber < 0) throw new ArgumentOutOfRangeException("rowNumber");
 
             Heading = heading;
             SquareMetres = squareMetres;
@@ -111,7 +270,22 @@ namespace RcrcGreen.Core.Kpi
             Repeats = repeats;
             SpeciesSum = speciesSum;
             Disagreement = disagreement ?? string.Empty;
+            RowNumber = rowNumber;
+            RowsConsidered = (rowsConsidered ?? Enumerable.Empty<int>()).ToList();
         }
+
+        /// <summary>
+        /// The printed row the value was taken off, counting the heading row as 1, so the
+        /// report can say which subtotal row was taken. Nought when the value came from no
+        /// schedule.
+        /// </summary>
+        public int RowNumber { get; }
+
+        /// <summary>
+        /// Every subtotal row the group printed, in order. The last is the one taken and the
+        /// ones before it are the phase subtotals that add to it.
+        /// </summary>
+        public IReadOnlyList<int> RowsConsidered { get; }
 
         public string Heading { get; }
 
@@ -182,12 +356,17 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<string> readRefusals = null,
             bool softscapeTotalRead = false,
             int softscapeTotal = 0,
-            int softscapeRowsPassedOver = 0)
+            int softscapeRowsPassedOver = 0,
+            IEnumerable<ScannedSchedule> printedSchedules = null,
+            int softscapeTotalRow = 0)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
             if (softscapeRowsPassedOver < 0) throw new ArgumentOutOfRangeException("softscapeRowsPassedOver");
+            if (softscapeTotalRow < 0) throw new ArgumentOutOfRangeException("softscapeTotalRow");
 
             PlotId = plotId;
+            PrintedSchedules = Held(printedSchedules);
+            SoftscapeTotalRow = softscapeTotalRow;
             ReadRefusals = Held(readRefusals).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
             SoftscapeTotalRead = softscapeTotalRead;
             SoftscapeTotal = softscapeTotal;
@@ -303,6 +482,40 @@ namespace RcrcGreen.Core.Kpi
         /// counted rather than dropped in silence.
         /// </summary>
         public int SoftscapeRowsPassedOver { get; }
+
+        /// <summary>
+        /// The printed row the TOTAL was read off, counting the heading row as 1. Nought when no
+        /// TOTAL row was found.
+        /// </summary>
+        public int SoftscapeTotalRow { get; }
+
+        /// <summary>
+        /// Every schedule this plot's numbers were read off, row for row as the schedule prints
+        /// it, so the report can show what was read and not only what was concluded from it.
+        /// Nothing in the report was what the tool read until this, and a plot counted twice
+        /// survived two rounds because nothing showed the rows.
+        /// </summary>
+        public IReadOnlyList<ScannedSchedule> PrintedSchedules { get; }
+
+        /// <summary>
+        /// Every species the softscape schedule printed on more than one row under one group,
+        /// with those rows. FM-05 prints ALBIZIA LEBBECK on two rows under Proposed, 10 and
+        /// 10, BAUHINIA PURPUREA 19 and 20, CASSIA GLAUCA 3 and 4. Nothing in the schedule says
+        /// whether that is two types of one species or one counted twice, so the accounting
+        /// refuses on it and names the rows.
+        /// </summary>
+        public IReadOnlyList<RepeatedSpecies> SpeciesPrintedOnMoreThanOneRow
+        {
+            get
+            {
+                return Species
+                    .Where(one => one.HasGroup)
+                    .GroupBy(one => one.GroupName.Trim().ToUpperInvariant() + " | " + one.BotanicalName.Trim().ToUpperInvariant())
+                    .Where(group => group.Count() > 1)
+                    .Select(group => new RepeatedSpecies(group.First().BotanicalName, group.First().GroupName, group))
+                    .ToList();
+            }
+        }
 
         /// <summary>
         /// The species rows added up, which is adding printed numbers and allowed. The

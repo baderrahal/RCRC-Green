@@ -15,18 +15,29 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class SpeciesListRow
     {
-        public SpeciesListRow(int row, string botanicalName)
+        public SpeciesListRow(int row, string botanicalName, string height = null, string diameter = null)
         {
             if (row < 1) throw new ArgumentOutOfRangeException("row");
             if (botanicalName == null) throw new ArgumentNullException("botanicalName");
 
             Row = row;
             BotanicalName = botanicalName;
+            Height = (height ?? string.Empty).Trim();
+            Diameter = (diameter ?? string.Empty).Trim();
         }
 
         public int Row { get; }
 
         public string BotanicalName { get; }
+
+        /// <summary>
+        /// What the row already holds in the sheet's height column, as the cell prints it, so a
+        /// species Revit measures differently can be named. Empty when the sheet names no such
+        /// column or the cell is blank.
+        /// </summary>
+        public string Height { get; }
+
+        public string Diameter { get; }
     }
 
     /// <summary>
@@ -60,9 +71,17 @@ namespace RcrcGreen.Core.Kpi
             int totalFirstRow,
             int totalLastRow,
             string totalCell,
-            string refusal)
+            string refusal,
+            string heightColumn,
+            string diameterColumn,
+            string whyNoHeightColumn,
+            string whyNoDiameterColumn)
         {
             Refusal = refusal ?? string.Empty;
+            HeightColumn = heightColumn ?? string.Empty;
+            DiameterColumn = diameterColumn ?? string.Empty;
+            WhyNoHeightColumn = HeightColumn.Length > 0 ? string.Empty : (whyNoHeightColumn ?? NoColumn(ScheduleColumns.HeightWord));
+            WhyNoDiameterColumn = DiameterColumn.Length > 0 ? string.Empty : (whyNoDiameterColumn ?? NoColumn(ScheduleColumns.DiameterWord));
             TotalFound = totalFound;
             TotalFirstRow = totalFound ? totalFirstRow : 0;
             TotalLastRow = totalFound ? totalLastRow : 0;
@@ -164,9 +183,31 @@ namespace RcrcGreen.Core.Kpi
 
         public string Refusal { get; }
 
+        /// <summary>
+        /// The column whose heading on the header row holds HEIGHT, as its letter, or empty
+        /// when the header row names none or names more than one. Measured I on MOSQUES, Mature
+        /// Height (m), and found by that heading rather than by the letter.
+        /// </summary>
+        public string HeightColumn { get; }
+
+        /// <summary>
+        /// The same for DIAMETER. Measured J on MOSQUES, Average Mature Canopy Diameter (m),
+        /// and what the sheet's canopy formula computes from.
+        /// </summary>
+        public string DiameterColumn { get; }
+
+        public string WhyNoHeightColumn { get; }
+
+        public string WhyNoDiameterColumn { get; }
+
         public bool WasRead
         {
             get { return Refusal.Length == 0; }
+        }
+
+        public static string NoColumn(string word)
+        {
+            return "the sheet's header row, row " + KpiTemplates.TreeHeaderRow + ", names no column holding " + word;
         }
 
         public bool Reaches(int row)
@@ -194,7 +235,8 @@ namespace RcrcGreen.Core.Kpi
 
         public static SpeciesList Refused(string why)
         {
-            return new SpeciesList(null, false, 0, 0, null, why ?? "The species list could not be read.");
+            return new SpeciesList(null, false, 0, 0, null, why ?? "The species list could not be read.",
+                null, null, null, null);
         }
 
         /// <summary>
@@ -203,17 +245,26 @@ namespace RcrcGreen.Core.Kpi
         /// nothing can state an empty row that is named or a named row the total reaches.
         /// </summary>
         public static SpeciesList Holding(
-            IEnumerable<SpeciesListRow> named, int totalFirstRow, int totalLastRow, string totalCell = null)
+            IEnumerable<SpeciesListRow> named,
+            int totalFirstRow,
+            int totalLastRow,
+            string totalCell = null,
+            string heightColumn = null,
+            string diameterColumn = null,
+            string whyNoHeightColumn = null,
+            string whyNoDiameterColumn = null)
         {
             if (totalFirstRow < 1) throw new ArgumentOutOfRangeException("totalFirstRow");
             if (totalLastRow < totalFirstRow) throw new ArgumentOutOfRangeException("totalLastRow");
 
-            return new SpeciesList(named, true, totalFirstRow, totalLastRow, totalCell, string.Empty);
+            return new SpeciesList(named, true, totalFirstRow, totalLastRow, totalCell, string.Empty,
+                heightColumn, diameterColumn, whyNoHeightColumn, whyNoDiameterColumn);
         }
 
-        public static SpeciesList WithNoTotal(IEnumerable<SpeciesListRow> named)
+        public static SpeciesList WithNoTotal(
+            IEnumerable<SpeciesListRow> named, string heightColumn = null, string diameterColumn = null)
         {
-            return new SpeciesList(named, false, 0, 0, null, string.Empty);
+            return new SpeciesList(named, false, 0, 0, null, string.Empty, heightColumn, diameterColumn, null, null);
         }
 
         /// <summary>
@@ -250,15 +301,33 @@ namespace RcrcGreen.Core.Kpi
                             + Path.GetFileName(path) + " could not be read.");
                     }
 
-                    IEnumerable<SpeciesListRow> named = NamesByRow(part, SharedStrings(zip))
-                        .Select(one => new SpeciesListRow(one.Key, one.Value));
+                    Dictionary<int, Dictionary<string, string>> cells = CellsByRow(part, SharedStrings(zip));
+
+                    // The height and the diameter columns are found by what the header row calls
+                    // them, never by a letter. Measured I and J on MOSQUES, and the letters are
+                    // written nowhere.
+                    string whyNoHeight;
+                    string heightColumn = ColumnHeaded(cells, ScheduleColumns.HeightWord, out whyNoHeight);
+                    string whyNoDiameter;
+                    string diameterColumn = ColumnHeaded(cells, ScheduleColumns.DiameterWord, out whyNoDiameter);
+
+                    var named = new List<SpeciesListRow>();
+                    foreach (KeyValuePair<int, Dictionary<string, string>> row in cells.OrderBy(one => one.Key))
+                    {
+                        string name = In(row.Value, KpiTemplates.BotanicalColumn);
+                        if (string.IsNullOrWhiteSpace(name)) continue;
+
+                        named.Add(new SpeciesListRow(
+                            row.Key, name.Trim(), In(row.Value, heightColumn), In(row.Value, diameterColumn)));
+                    }
 
                     int first;
                     int last;
                     string cell;
                     return QuantityTotal(part, out first, out last, out cell)
-                        ? Holding(named, first, last, cell)
-                        : WithNoTotal(named);
+                        ? Holding(named, first, last, cell, heightColumn, diameterColumn, whyNoHeight, whyNoDiameter)
+                        : new SpeciesList(named, false, 0, 0, null, string.Empty,
+                            heightColumn, diameterColumn, whyNoHeight, whyNoDiameter);
                 }
             }
             catch (IOException failed)
@@ -276,29 +345,73 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Every row of column D that names something, over the whole sheet. Where the list
-        /// stops is decided afterwards by reading down, never by a range.
+        /// Every cell holding text, by row and then by column letter, over the whole sheet.
+        /// Where the list stops is decided afterwards by reading down, never by a range.
         /// </summary>
-        private static IDictionary<int, string> NamesByRow(XDocument sheet, List<string> shared)
+        private static Dictionary<int, Dictionary<string, string>> CellsByRow(XDocument sheet, List<string> shared)
         {
-            var found = new Dictionary<int, string>();
+            var found = new Dictionary<int, Dictionary<string, string>>();
 
             foreach (XElement cell in Cells(sheet))
             {
                 CellRef where = CellRef.TryParse((string)cell.Attribute("r"));
                 if (where == null) continue;
-                if (!string.Equals(where.Column, KpiTemplates.BotanicalColumn, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
 
                 string text = TextOf(cell, shared);
                 if (string.IsNullOrWhiteSpace(text)) continue;
 
-                found[where.Row] = text.Trim();
+                Dictionary<string, string> row;
+                if (!found.TryGetValue(where.Row, out row))
+                {
+                    row = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    found[where.Row] = row;
+                }
+
+                row[where.Column] = text.Trim();
             }
 
             return found;
+        }
+
+        private static string In(Dictionary<string, string> row, string column)
+        {
+            string text;
+            return row != null && !string.IsNullOrEmpty(column) && row.TryGetValue(column, out text) ? text : string.Empty;
+        }
+
+        /// <summary>
+        /// The one column of the header row whose heading holds the word. None is said, and so
+        /// is more than one, because a value written under the wrong one of two is a value on
+        /// a row nobody chose.
+        /// </summary>
+        private static string ColumnHeaded(Dictionary<int, Dictionary<string, string>> cells, string word, out string whyNot)
+        {
+            Dictionary<string, string> header;
+            if (!cells.TryGetValue(KpiTemplates.TreeHeaderRow, out header))
+            {
+                whyNot = "the sheet's header row, row " + KpiTemplates.TreeHeaderRow + ", holds nothing";
+                return string.Empty;
+            }
+
+            List<string> holding = header
+                .Where(one => KpiNames.Holds(one.Value, word))
+                .Select(one => one.Key.ToUpperInvariant())
+                .OrderBy(one => one.Length)
+                .ThenBy(one => one, StringComparer.Ordinal)
+                .ToList();
+
+            if (holding.Count == 1)
+            {
+                whyNot = string.Empty;
+                return holding[0];
+            }
+
+            whyNot = holding.Count == 0
+                ? NoColumn(word)
+                : "the sheet's header row, row " + KpiTemplates.TreeHeaderRow + ", names " + holding.Count
+                    + " columns holding " + word + ", " + string.Join(", ", holding.ToArray())
+                    + ", so nothing says which";
+            return string.Empty;
         }
 
         /// <summary>

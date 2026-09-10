@@ -252,8 +252,10 @@ namespace RcrcGreen.Revit.Kpi
             var species = new List<SpeciesRow>();
             var subtotals = new List<GroupSubtotal>();
             var refusals = new List<string>();
+            var printed = new List<ScannedSchedule>();
             bool totalRead = false;
             int total = 0;
+            int totalRow = 0;
             int passedOver = 0;
 
             // Every schedule of each kind is found first and counted. One is read. Two or more
@@ -289,16 +291,21 @@ namespace RcrcGreen.Revit.Kpi
             // A refused read travels with the schedule's name and refuses the write. It used
             // to be a list of nothing, which the reconciliation read as a plot whose schedule
             // listed no species.
+            // The rows as printed travel with the reading, so the report can show what was read
+            // and not only what was made of it.
             if (softscape.Count == 1)
             {
                 ViewSchedule schedule = softscape[0];
-                SoftscapeReading trees = SoftscapeRows.Read(Printed(schedule), phases, plotId);
+                ScannedSchedule rows = Printed(schedule);
+                printed.Add(rows);
+                SoftscapeReading trees = SoftscapeRows.Read(rows, phases, plotId);
                 species.AddRange(trees.Species);
                 refusals.AddRange(trees.Refusals.Select(why => schedule.Name + ": " + why));
                 if (trees.TotalRead)
                 {
                     totalRead = true;
                     total = trees.Total;
+                    totalRow = trees.TotalRow;
                 }
 
                 passedOver = trees.RowsPassedOver;
@@ -307,8 +314,10 @@ namespace RcrcGreen.Revit.Kpi
             if (ground.Count == 1)
             {
                 ViewSchedule schedule = ground[0];
+                ScannedSchedule rows = Printed(schedule);
+                printed.Add(rows);
                 ShrubsAndLawnReading read = ShrubsAndLawnRows.Read(
-                    Printed(schedule), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading });
+                    rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading });
                 subtotals.AddRange(read.Subtotals);
                 refusals.AddRange(read.Refusals.Select(why => schedule.Name + ": " + why));
             }
@@ -328,7 +337,9 @@ namespace RcrcGreen.Revit.Kpi
                 refusals,
                 totalRead,
                 total,
-                passedOver);
+                passedOver,
+                printed,
+                totalRow);
         }
 
         /// <summary>

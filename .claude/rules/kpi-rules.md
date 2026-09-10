@@ -77,18 +77,26 @@ the plot reading with the schedule's name, prints in red above Create, and print
 report, among the reasons and under the plot. A refused read used to come back as a list of
 nothing, which read as a plot whose schedule listed no species.
 
-**A plot holds one schedule of a kind or the kind is not read.** FM-05 holds two schedules
-whose names hold SOFTSCAPE. `KpiPlotReader` appended both, `KpiMerge.Species` added them by
-name and group, and the first twenty plot run printed FM-05 twice in one species row, FM-05 10,
-FM-05 10, FM-06 15, so that plot's trees were counted twice and ALBIZIA LEBBECK proposed read
-170 where the truth is nearer 160. The shrubs and lawn read had the other half of the same
-fault, the first group with the heading taken and a second schedule dropped in silence. The
-reader now finds every schedule of each kind filtered on the plot before it reads any, reads
-the one when there is one, and hands `PlotReading` the names of all of them. A reading refuses
-to hold species rows beside two softscape names or subtotals beside two shrubs and lawn names,
-and `Reconciliation` refuses the write naming the plot, the kind and every schedule found. The
-report names the schedule each number came off, per plot, and says NONE READ with every name
-where there were two. Nothing picks the first, and nothing adds them.
+**A plot holds one schedule of a kind or the kind is not read.** The reader finds every
+schedule of each kind filtered on the plot before it reads any, reads the one when there is
+one, and hands `PlotReading` the names of all of them. A reading refuses to hold species rows
+beside two softscape names or subtotals beside two shrubs and lawn names, and `Reconciliation`
+refuses the write naming the plot, the kind and every schedule found. The report names the
+schedule each number came off, per plot, and says NONE READ with every name where there were
+two. Nothing picks the first, and nothing adds them.
+
+**THE FM-05 DOUBLE WAS NOT TWO SCHEDULES, AND THE ROUND THAT SAID SO WAS WRONG.** The first
+twenty plot run printed FM-05 twice in one species row, FM-05 10, FM-05 10, FM-06 15, and the
+round that fixed it took that for a second schedule without measuring one. The 1428 run, with
+the count and the read one list, read one softscape schedule on every plot and printed the same
+rows: ALBIZIA LEBBECK 10 and 10, BAUHINIA PURPUREA 19 and 20, CASSIA GLAUCA 3 and 4. Counts
+that differ are not one row read twice. **They are two printed rows of one schedule for one
+species under one group**, and whether that is two types of the species or one counted twice
+is written down nowhere. `SpeciesRow` carries the row it printed on,
+`PlotReading.SpeciesPrintedOnMoreThanOneRow` finds every such species, and `Reconciliation`
+refuses the write naming the plot, the species, the group, the rows and the counts, and says
+the rows are printed at the end of the report. A merged row reads FM-05 20 (2 rows, 10 + 10)
+rather than FM-05 twice, and the plot's own block says it too.
 
 ## Matching a species is plain or it is nothing
 
@@ -136,9 +144,30 @@ The MOSQUES list read 80 names in rows 4 to 83 on 2026-09-09 and 98 in rows 4 to
 2026-09-10. Who added the 18 and why the total was not extended to cover the last nine is
 UNKNOWN and is for the team.
 
-**Family, genus, native, canopy and every code column stay empty.** Those are the client's data
-and the tool does not know them, so the KPIs that need them still cannot see a species written
-this way. That is in `steps/log-kpi.md` as an open question for the team.
+**A species written in carries four things: the name, the count, the height and the canopy
+diameter.** The softscape schedule prints HEIGHT (m) and DIAMETER (m), and on six species
+sitting in both they read the same as the workbook's Mature Height and Average Mature Canopy
+Diameter, measured on the 1428 run: ACACIA / VACHELLIA FARNESIANA 7 and 6, ALBIZIA LEBBECK 15
+and 8, BAUHINIA PURPUREA 6 and 5, CASSIA GLAUCA 6 and 5, HIBISCUS TILIACEUS 6 and 5,
+WASHINGTONIA ROBUSTA 25 and 5. A row written with the name and the count alone broke the
+workbook's canopy maths: L84 reads `IF(ISBLANK(J84), " ", ...)` and returned a space, M84
+multiplied that space by the count, and #VALUE! ran through the canopy total to the KPI row,
+nine errors that survive a full recalculation. So `SoftscapeRows` reads both measures off the
+columns the heading row names, `MergedSpecies` holds every row's value against the others, and
+`KpiCreatePlan` writes them into the columns the sheet's own header row names, found by the
+words HEIGHT and DIAMETER and never by the letters I and J. A dash, a nought or a cell that
+does not read is not written and is named: UNKNOWN prints a dash and a 0. Rows off more than
+one plot that disagree write nothing into that column, every value is named, and the report
+says the row will not compute its canopy. Nothing is averaged and nothing is taken first.
+
+**Family, genus, native and every code column stay empty.** Revit does not print them, so the
+KPIs that need them still cannot see a species written this way. That is in `steps/log-kpi.md`
+as an open question for the team.
+
+**A matched species whose height or diameter in Revit differs from the client's row is named
+and the row is left alone.** PHOENIX DACTYLIFERA prints 15 metres across in the model and the
+MOSQUES existing list holds 8 at row 86. Two numbers for one species, and which is right is a
+question for Bader, in the log, not a cell to overwrite.
 
 More unmatched species than empty rows writes what fits, names the rest, and says plainly that
 the sheet ran out of room. A species the list holds and Revit does not is left empty, which is
@@ -189,6 +218,17 @@ Section 9 is one line per question saying FOUND or NOT FOUND and where to look.
 count, so a section that found nothing reads differently from one that was never filled in.
 Above section 1 is READS THAT DID NOT HAPPEN, because a read that was refused would otherwise
 print as a zero and a zero reads as an answer. Every skip in the Revit readers goes in there.
+
+**The create report ends with what the tool read.** Everything else in it is what the tool
+concluded, and a species printed on two rows survived two rounds because nothing showed the
+rows. `PlotReading.PrintedSchedules` carries every schedule the plot's numbers came off, row for
+row, and `KpiCreateReport` prints each last, under EVERY SCHEDULE THIS RUN READ, AS THE SCHEDULE
+PRINTS IT: the name, how many rows it printed and how many are shown, which rows were read as
+species rows and which as subtotals and where the TOTAL row was, and for the shrubs and lawn
+schedule which subtotal row was taken for each group and why the rows above it were not. Every
+column, padded to its widest cell, with the row numbered the way the readers number it, the
+heading row being 1. Two hundred rows a schedule at most, said in those numbers. The top of the
+report says the section is there.
 
 Every parameter that is read carries both its printed form, which is what a Properties panel
 shows, and its raw form, which is feet or square feet whatever the project displays. Question 9
@@ -468,10 +508,37 @@ file, and `xl/calcChain.xml` removed. Forcing a recalculation gave Total Green c
 1048, Total Trees 31, Planting 410, Lawn 60.
 
 **The output is then checked the way the written cells already are.** `CacheCheck` is read back
-off the file: recalculate on open, calcId cleared, no formula cell carrying a cached value, and
-the calc chain gone. All four, or the report says the file may open showing stale numbers. A
-workbook that opens showing zeros beside correct inputs is the worst thing this tool can produce,
-because it looks finished.
+off the file: recalculate on open, calcId cleared, no formula cell carrying a cached value, the
+calc chain gone, and calcMode auto. All five, or the report says the file may open showing
+stale numbers. A workbook that opens showing zeros beside correct inputs is the worst thing this
+tool can produce, because it looks finished.
+
+**calcMode is the fifth, measured on the 1428 workbook.** The four above all held and Excel
+opened the file showing every written number and every formula cell blank, and Ctrl Alt F9
+filled them: 528, 3258, 1127, 6 and 522. calcPr read `calcId="0" fullCalcOnLoad="1"` and no
+calcMode. Excel's calculation mode is a session setting and the first workbook opened in a
+session sets it, so anyone with a manual workbook open, or manual in their own options, opened
+this file into a manual session. `calcMode="auto"` is set outright beside the other two, read
+back, and required. The patcher also looks for every other place in the package that can hold
+a calculation setting, a `sheetCalcPr` in any sheet part, a VBA project and any other attribute
+on calcPr, and the report names what it found or says none was found and what it looked for.
+**Nothing here can run Excel and neither can the gate**, so the five checks are over what the
+file says and not over what Excel does with it, and the report says so in those words.
+
+**The output's formulas are read for what they will compute, and a written cell nobody can
+compute from is a refusal.** `WorkbookFormulas.Check` reads every formula in the output, by its
+text alone and never by evaluating one. A formula holding ISBLANK on a cell that is blank and a
+string literal returns that text, a formula doing arithmetic on such a cell is #VALUE!, and
+every formula reading a cell in error carries it. When the chain starts on a row this run wrote
+into, the output is deleted again and the run is refused naming every formula. The section WHAT
+THE WORKBOOK WILL COMPUTE FROM THIS prints every formula at risk with the reason, every formula
+reading a row this run wrote into with the reference it reads it through, the six cells the map
+names with whether each is present and which formulas read it with what blanks among their
+inputs, and every function the file stores with the `_xlfn.` prefix, by name and by cell count,
+because such a cell reads #NAME? in a version of Excel that does not have the function. The
+1428 workbook read #NAME? in every Meets KPI and Compliance cell, nine rows plus the Tree Class
+and Planters rows, off `_xlfn.IFS`. The tool writes no formula and did not put them there, and
+which version of Excel has IFS is not worked out here.
 
 **The part count reads 37 in and 36 out and the report says which part went and why.** A count
 short by one with no explanation reads as a loss. `PatchOutcome.PartsDeliberatelyRemoved` is what
@@ -789,12 +856,33 @@ the model. These are measurements off that run, not reasoning about it.
   reported as having nowhere to go, 85 existing trees between them, and four of the six sat in
   the list past row 83. The workbook said 76 existing trees where the model holds 161. Fixed
   under the species rule
-- **FM-05's trees were counted twice.** Two schedules whose names hold SOFTSCAPE, both read
-  and added. Fixed under the accounting rule
+- **FM-05 printed twice in one species row**, taken that round for two schedules whose names
+  hold SOFTSCAPE. The 1428 run showed one schedule and two printed rows, under the accounting
+  rule above
 - **313.5 seconds, 312.8 of them reading the model**, 20 plots at 15.6 seconds each, and 0.7
   seconds for everything after the read. STREETS ticks 78 plots, which is about twenty minutes
   at that rate. What the read does per plot is in the log. It is measured in calls and not in
   seconds, because nothing here runs Revit, and it is not changed
+
+## What the 1428 run measured
+
+Twenty mosque plots on MOSQUES, 2026-09-10 at 14:28, the workbook it wrote, and that workbook
+opened in Excel. These are measurements, not reasoning.
+
+- **The tree list fix worked.** B84 17, B86 27, B87 19, B89 3, B99 3, so the 69 existing trees
+  that went nowhere the run before are in the file, species matched went 16 to 21, and the tree
+  list section proved it in four lines
+- **A written row broke the canopy maths**, nine #VALUE! cells from Proposed M84 to the KPI row,
+  fixed under the species rule with the height and the diameter off the schedule
+- **FM-05 printed twice again** with the accounting reading one softscape schedule on all 20
+  plots, which is what showed the double to be two printed rows of one schedule
+- **Excel opened the file and did not calculate it**, every formula cell blank until Ctrl Alt
+  F9, fixed with calcMode under the patcher rule
+- **Every Meets KPI and Compliance cell read #NAME?** off `_xlfn.IFS`, sixteen cells, not the
+  tool's doing and now counted in the report
+- **Nothing in the report was what the tool read.** The last section prints every schedule
+  this run read as the schedule prints it, every column aligned, with what was read off it
+  and which subtotal row was taken and why, capped at 200 rows a schedule and named at the top
 
 ## The area is not a schedule row
 

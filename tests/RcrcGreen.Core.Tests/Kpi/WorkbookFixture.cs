@@ -233,6 +233,176 @@ namespace RcrcGreen.Core.Tests.Kpi
             return xml.ToString();
         }
 
+        /// <summary>
+        /// One row of a tree list sheet in the computing workbook: the name, and what the
+        /// sheet's height and diameter columns already hold, empty for an empty row.
+        /// </summary>
+        public sealed class TreeRow
+        {
+            public TreeRow(int row, string name, string height = "", string diameter = "")
+            {
+                Row = row;
+                Name = name;
+                Height = height;
+                Diameter = diameter;
+            }
+
+            public int Row { get; }
+
+            public string Name { get; }
+
+            public string Height { get; }
+
+            public string Diameter { get; }
+        }
+
+        /// <summary>
+        /// A workbook shaped like the MOSQUES one the 1428 run wrote, in miniature, so the
+        /// formula check can be proven on the shape that broke: a tree sheet whose canopy
+        /// column reads IF(ISBLANK(J), " ", ROUND(PI()*(J/2)^2, 0)) and whose canopy area
+        /// column multiplies that by the count, a canopy total summing them, and a main sheet
+        /// computing from that total, from the mapped cells and from a defined name, with two
+        /// _xlfn.IFS formulas at the KPI row. No client name and no client value is in here.
+        ///
+        /// Both tree sheets run rows 4 to 9 with the totals on row 10, the header on row 3 with
+        /// the height and diameter headings in I and J, and the canopy formulas shared from
+        /// row 4 the way Excel stores a column of one formula.
+        /// </summary>
+        public static string Computing(
+            string folder,
+            TreeRow[] existing,
+            TreeRow[] proposed,
+            string fileName = "MOSQUES.xlsx",
+            string heightHeading = "Mature Height (m)",
+            string diameterHeading = "Average Mature Canopy Diameter (m)",
+            string heightColumn = "I",
+            string diameterColumn = "J",
+            bool withSheetCalcPr = false)
+        {
+            string path = Path.Combine(folder, fileName);
+
+            using (FileStream file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
+            using (var zip = new ZipArchive(file, ZipArchiveMode.Create))
+            {
+                Add(zip, "[Content_Types].xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+                    + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                    + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+                    + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet2.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet3.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/calcChain.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml\"/>"
+                    + "</Types>");
+
+                Add(zip, "_rels/.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                    + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/>"
+                    + "</Relationships>");
+
+                Add(zip, "xl/workbook.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
+                    + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
+                    + "<sheets>"
+                    + "<sheet name=\"&lt;Mosques&gt;\" sheetId=\"1\" r:id=\"rId1\"/>"
+                    + "<sheet name=\"Tree List - Existing\" sheetId=\"2\" r:id=\"rId2\"/>"
+                    + "<sheet name=\"Tree List - Proposed\" sheetId=\"3\" r:id=\"rId3\"/>"
+                    + "</sheets>"
+                    + "<definedNames><definedName name=\"Area\">'&lt;Mosques&gt;'!$H$7</definedName></definedNames>"
+                    + "<calcPr calcId=\"191029\"/>"
+                    + "</workbook>");
+
+                Add(zip, "xl/calcChain.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<calcChain xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+                    + "<c r=\"D8\" i=\"1\"/><c r=\"M10\" i=\"3\"/>"
+                    + "</calcChain>");
+
+                Add(zip, "xl/_rels/workbook.xml.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                    + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/>"
+                    + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet2.xml\"/>"
+                    + "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet3.xml\"/>"
+                    + "</Relationships>");
+
+                // The main sheet: the six mapped cells, three of them holding the template's own
+                // placeholders, and the formulas that compute from them. F8 is the canopy area
+                // off both tree sheets, D8 the total green cover, D9 and H9 divide by the area,
+                // E31 reads D8, and F31 and G31 are the KPI row's IFS formulas.
+                Add(zip, "xl/worksheets/sheet1.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+                    + "<sheetData>"
+                    + "<row r=\"3\"><c r=\"D3\" t=\"inlineStr\"><is><t>&lt;Component&gt;</t></is></c></row>"
+                    + "<row r=\"7\"><c r=\"H7\"><v>0</v></c></row>"
+                    + "<row r=\"8\"><c r=\"D8\"><f>F8+F10+H10</f><v>0</v></c><c r=\"F8\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
+                    + "<row r=\"9\"><c r=\"D9\"><f>D8/H7</f><v>0</v></c><c r=\"H9\"><f>H8/Area</f><v>0</v></c></row>"
+                    + "<row r=\"10\"><c r=\"F10\"><v>0</v></c><c r=\"H10\"><v>0</v></c></row>"
+                    + "<row r=\"31\"><c r=\"E31\"><f>D8</f><v>0</v></c>"
+                    + "<c r=\"F31\" t=\"str\"><f>_xlfn.IFS(Area&lt;1,\" \",D9&lt;1,\" \",E31&lt;H31-(H31*7%),\"Insufficient\",TRUE,\"YES\")</f><v> </v></c>"
+                    + "<c r=\"G31\" t=\"str\"><f>_xlfn.IFS(F31=\"YES\",\"COMPLIANT\",TRUE,\"NOT COMPLIANT\")</f><v> </v></c>"
+                    + "<c r=\"H31\"><v>13</v></c></row>"
+                    + "</sheetData>"
+                    + (withSheetCalcPr ? "<sheetCalcPr fullCalcOnLoad=\"1\"/>" : string.Empty)
+                    + "</worksheet>");
+
+                Add(zip, "xl/worksheets/sheet2.xml", TreeSheetComputing(existing, heightHeading, diameterHeading, heightColumn, diameterColumn));
+                Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn));
+            }
+
+            return path;
+        }
+
+        private static string TreeSheetComputing(
+            TreeRow[] named, string heightHeading, string diameterHeading, string heightColumn, string diameterColumn)
+        {
+            var byRow = new Dictionary<int, TreeRow>();
+            foreach (TreeRow one in named ?? new TreeRow[0]) byRow[one.Row] = one;
+
+            var xml = new StringBuilder();
+            xml.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+            xml.Append("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData>");
+            xml.Append("<row r=\"3\">"
+                + "<c r=\"B3\" t=\"inlineStr\"><is><t>Quantity</t></is></c>"
+                + "<c r=\"D3\" t=\"inlineStr\"><is><t>Botanical Name</t></is></c>"
+                + "<c r=\"" + heightColumn + "3\" t=\"inlineStr\"><is><t>" + heightHeading + "</t></is></c>"
+                + "<c r=\"" + diameterColumn + "3\" t=\"inlineStr\"><is><t>" + diameterHeading + "</t></is></c>"
+                + "<c r=\"L3\" t=\"inlineStr\"><is><t>Canopy per tree</t></is></c>"
+                + "<c r=\"M3\" t=\"inlineStr\"><is><t>Canopy area</t></is></c>"
+                + "</row>");
+
+            for (int row = 4; row <= 9; row++)
+            {
+                var cells = new StringBuilder();
+                TreeRow one;
+                if (byRow.TryGetValue(row, out one))
+                {
+                    cells.Append("<c r=\"D" + row + "\" t=\"inlineStr\"><is><t>" + one.Name + "</t></is></c>");
+                    if (one.Height.Length > 0) cells.Append("<c r=\"" + heightColumn + row + "\"><v>" + one.Height + "</v></c>");
+                    if (one.Diameter.Length > 0) cells.Append("<c r=\"" + diameterColumn + row + "\"><v>" + one.Diameter + "</v></c>");
+                }
+
+                // Shared from row 4, the way Excel stores one formula filled down a column: the
+                // master carries the text and the ref, the rest carry the index alone.
+                string canopy = row == 4
+                    ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L9\" si=\"0\">IF(ISBLANK(" + diameterColumn + "4),\" \",ROUND(PI()*(" + diameterColumn + "4/2)^2,0))</f><v> </v></c>"
+                    : "<c r=\"L" + row + "\" t=\"str\"><f t=\"shared\" si=\"0\"/><v> </v></c>";
+                string area = row == 4
+                    ? "<c r=\"M4\" t=\"str\"><f t=\"shared\" ref=\"M4:M9\" si=\"1\">IF(ISBLANK(B4),\" \",L4*B4)</f><v> </v></c>"
+                    : "<c r=\"M" + row + "\" t=\"str\"><f t=\"shared\" si=\"1\"/><v> </v></c>";
+
+                xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + "</row>");
+            }
+
+            xml.Append("<row r=\"10\"><c r=\"B10\"><f>SUM(B4:B9)</f><v>0</v></c><c r=\"M10\"><f>SUM(M4:M9)</f><v>0</v></c></row>");
+            xml.Append("</sheetData></worksheet>");
+            return xml.ToString();
+        }
+
         public static byte[] PartBytes(string path, string partPath)
         {
             using (FileStream file = File.OpenRead(path))

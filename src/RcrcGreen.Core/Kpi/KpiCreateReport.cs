@@ -24,6 +24,15 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const string NowhereAtAll = "NOWHERE, so its count is not in the total";
 
+        public const string SchedulesHeading = "EVERY SCHEDULE THIS RUN READ, AS THE SCHEDULE PRINTS IT";
+
+        public const string FormulasHeading = "WHAT THE WORKBOOK WILL COMPUTE FROM THIS";
+
+        /// <summary>
+        /// The most rows one schedule prints in the report, the same cap the scan report uses.
+        /// </summary>
+        public const int ShownRows = 200;
+
         public static string Write(KpiCreateRun run, DateTime writtenAt)
         {
             if (run == null) throw new ArgumentNullException("run");
@@ -35,15 +44,19 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
             Line(report, "Read only. Nothing in the model was changed and the template was not touched.");
             TheClock(report, run);
+            Line(report, "Every schedule this run read is printed as the schedule prints it, at the end of this");
+            Line(report, "file under " + SchedulesHeading + ", so every number above it can be held against the drawing.");
             Line(report, string.Empty);
 
             TheReconciliation(report, run);
             ThePlots(report, run);
             TheCellsWritten(report, run);
             TheCellsNotWritten(report, run);
+            TheFormulas(report, run);
             TheSpecies(report, run);
             TheTreeLists(report, run);
             TheChoices(report, run);
+            TheSchedules(report, run);
 
             return report.ToString();
         }
@@ -177,11 +190,20 @@ namespace RcrcGreen.Core.Kpi
                     Line(report, "      species rows add to " + reading.SpeciesSum + ", "
                         + (reading.SoftscapeTotalRead
                             ? "the TOTAL row prints " + reading.SoftscapeTotal
+                                + (reading.SoftscapeTotalRow > 0 ? " at row " + reading.SoftscapeTotalRow : string.Empty)
                             : "no TOTAL row was found to hold that against"));
                     if (reading.SoftscapeRowsPassedOver > 0)
                     {
                         Line(report, "      " + Count(reading.SoftscapeRowsPassedOver, "row")
                             + " with a count and no botanical name passed over, the subtotals");
+                    }
+
+                    // A species on two rows under one group is what FM-05 10, FM-05 10 was, and
+                    // it is said here beside the plot rather than left to be read off a merged row.
+                    foreach (RepeatedSpecies repeated in reading.SpeciesPrintedOnMoreThanOneRow)
+                    {
+                        Line(report, "      " + repeated.BotanicalName + " under " + repeated.GroupName
+                            + " is printed on " + repeated.Rows.Count + " rows, " + repeated.InWords);
                     }
                 }
 
@@ -277,7 +299,8 @@ namespace RcrcGreen.Core.Kpi
         private static void TheCache(StringBuilder report, CacheCheck cache)
         {
             Line(report, string.Empty);
-            Line(report, "  WILL EXCEL RECALCULATE THIS FILE: " + (cache.WillRecalculate ? "YES" : "NO"));
+            Line(report, "  WILL EXCEL RECALCULATE THIS FILE: " + (cache.WillRecalculate ? "YES" : "NO")
+                + ", five things checked off the output file, over what the file says and not over what Excel does with it");
             Line(report, "    recalculate on open   " + (cache.RecalculatesOnOpen ? "set" : "NOT SET"));
             Line(report, "    calcId                " + Shown(cache.CalcId)
                 + (cache.CalcIdCleared ? string.Empty : "   NOT CLEARED, so Excel may trust the cache"));
@@ -286,10 +309,94 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "    " + WorkbookPatcher.CalcChainPart + "     "
                 + (cache.CalcChainRemoved ? "removed" : "STILL THERE"));
 
+            // The 1428 file passed the four above and opened into a manual session showing every
+            // formula cell blank, because calcPr carried no calcMode and Excel takes the mode
+            // from the first workbook it opens.
+            Line(report, "    calcMode              " + (cache.CalcMode.Length == 0 ? "NOT SET" : cache.CalcMode)
+                + (cache.CalcModeAuto ? string.Empty : "   NOT AUTO, so a manual Excel session opens it without calculating"));
+            Line(report, "    other calculation settings in the package: "
+                + (cache.OtherCalculationSettings.Count == 0 ? "none found" : cache.OtherCalculationSettings.Count.ToString(CultureInfo.InvariantCulture)));
+            foreach (string setting in cache.OtherCalculationSettings) Line(report, "      " + setting);
+            Line(report, "      looked for: " + CacheCheck.LookedFor);
+
             if (cache.WillRecalculate) return;
 
             Line(report, "  THE FILE MAY OPEN SHOWING THE TEMPLATE'S OWN CACHED NUMBERS RATHER THAN THESE.");
             Line(report, "  Press Ctrl Alt F9 in Excel to force it, and treat this as a bug in the tool.");
+        }
+
+        /// <summary>
+        /// What the output's formulas will make of the cells that landed, read off the output's
+        /// own text. This is the section that would have caught the canopy fault without anyone
+        /// opening Excel: a written row's neighbouring formula returned a space and the cell
+        /// beside it multiplied that space by the count.
+        /// </summary>
+        private static void TheFormulas(StringBuilder report, KpiCreateRun run)
+        {
+            FormulaCheck check = run.Outcome == null ? FormulaCheck.NotChecked : run.Outcome.Formulas;
+
+            Heading(report, FormulasHeading, check.AtRisk.Count(one => one.IsAnError),
+                "formulas that would read an error, checked off the output file over what its formulas read and never by evaluating one");
+
+            if (!check.WasChecked)
+            {
+                Line(report, "  not checked. " + (run.Outcome == null
+                    ? "The accounting refused this run, so no file was written to check."
+                    : "The patch was refused before a file was written."));
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  formulas in the output   " + check.FormulaCount
+                + ", of which " + check.ReadingWrittenRows.Count + " read a cell on a row this run wrote into");
+            if (check.RefusesTheWrite)
+            {
+                Line(report, "  THIS RUN IS REFUSED ON WHAT FOLLOWS. " + check.Refusal);
+            }
+
+            Line(report, string.Empty);
+            Line(report, "  FORMULAS AT RISK, " + check.AtRisk.Count
+                + ": a formula returning text where a number was expected, the #VALUE! that arithmetic on it gives, and every formula that reads one");
+            Line(report, "  sheet | cell | formula | why");
+            foreach (FormulaAtRisk one in check.AtRisk)
+            {
+                Line(report, "  " + Join(one.SheetName, one.Cell, one.Text,
+                    one.Reason + (one.FromWrittenRow ? string.Empty : " (not from a row this run wrote into)")));
+            }
+
+            Line(report, string.Empty);
+            Line(report, "  THE CELLS THE WORKBOOK COMPUTES FROM, " + check.ComputesFrom.Count
+                + ", every cell the map names on the main sheet and whether the formulas reading it have their inputs");
+            foreach (ComputedFrom one in check.ComputesFrom)
+            {
+                Line(report, "  " + Join(
+                    one.Input.ToString(),
+                    one.Present ? "present, holds " + Shown(one.Holds) : "NOT PRESENT, nothing was written there",
+                    "read by " + Count(one.Readers.Count, "formula")));
+                foreach (string reader in one.Readers) Line(report, "      " + reader);
+                foreach (string blank in one.BlankInputs) Line(report, "      " + blank);
+            }
+
+            Line(report, string.Empty);
+            Line(report, "  FORMULAS READING A ROW THIS RUN WROTE INTO, " + check.ReadingWrittenRows.Count);
+            Line(report, "  sheet | cell | reads | formula");
+            foreach (FormulaCell one in check.ReadingWrittenRows)
+            {
+                Line(report, "  " + Join(one.SheetName, one.Cell, string.Join(", ", one.ReadsWritten.ToArray()),
+                    one.Text + (one.SharedWith.Length == 0 ? string.Empty : " (shared with " + one.SharedWith + ")")));
+            }
+
+            Line(report, string.Empty);
+            Line(report, "  FUNCTIONS THE READER'S EXCEL MAY NOT HAVE, " + check.FunctionsExcelMayNotHave.Count
+                + ". The file stores a function with the _xlfn. prefix when an older Excel does not have it,");
+            Line(report, "  and such a cell reads #NAME? there. The tool writes no formula and did not put these here.");
+            foreach (FunctionUse one in check.FunctionsExcelMayNotHave)
+            {
+                Line(report, "    _xlfn." + one.Name + " in " + Count(one.Cells, "cell")
+                    + ". Those cells need a version of Excel that has " + one.Name + ".");
+            }
+
+            Line(report, string.Empty);
         }
 
         private static void TheCellsNotWritten(StringBuilder report, KpiCreateRun run)
@@ -339,6 +446,22 @@ namespace RcrcGreen.Core.Kpi
 
             Line(report, string.Empty);
 
+            // Two numbers for one species, the client's and the model's. Named, and the client's
+            // row left as it is, because which is right is a question for the team.
+            IReadOnlyList<MeasureDifference> differences = run.Plan == null
+                ? new List<MeasureDifference>()
+                : run.Plan.Differences;
+            Heading(report, "MATCHED SPECIES WHOSE HEIGHT OR DIAMETER IN REVIT DIFFERS FROM THE ROW'S", differences.Count,
+                "named and CHANGED NOTHING, the client's row keeps its own number");
+            Line(report, "  sheet | row | workbook name | what | Revit prints | the row holds");
+            foreach (MeasureDifference one in differences)
+            {
+                Line(report, "  " + Join(one.SheetName, one.Row.ToString(CultureInfo.InvariantCulture),
+                    one.WorkbookName, one.What, one.RevitPrints, one.WorkbookHolds, "CHANGED NOTHING"));
+            }
+
+            Line(report, string.Empty);
+
             // The list holds the name and its total does not reach the row. The count is not
             // written there, because a count on the sheet that no total adds reads as complete
             // and is short, and this is where a person sees which rows the client's total is
@@ -365,7 +488,7 @@ namespace RcrcGreen.Core.Kpi
             // reaches the sheet's total, and an empty one says it did not.
             Heading(report, "SPECIES REVIT HELD THAT THE WORKBOOK'S LIST DOES NOT", missed.Count,
                 "named with the count, never dropped, and written into an empty row where there was one");
-            Line(report, "  Revit name | group | merged | from | where it landed | why");
+            Line(report, "  Revit name | group | merged | from | where it landed | height | diameter | why");
             foreach (SpeciesMatch match in missed)
             {
                 Line(report, "  " + Join(
@@ -378,14 +501,17 @@ namespace RcrcGreen.Core.Kpi
                             + match.Row.ToString(CultureInfo.InvariantCulture) + " and "
                             + KpiTemplates.QuantityColumn + match.Row.ToString(CultureInfo.InvariantCulture)
                         : NowhereAtAll,
+                    match.Placed ? Measured(match.Species.Height, match.HeightColumn, match.WhyNoHeightColumn, match.Row) : "-",
+                    match.Placed ? Measured(match.Species.Diameter, match.DiameterColumn, match.WhyNoDiameterColumn, match.Row) : "-",
                     match.Why));
             }
 
             if (missed.Any(one => one.Placed))
             {
-                Line(report, "  A written row carries the botanical name and the count and NOTHING ELSE.");
-                Line(report, "  Family, genus, native and every code column are the client's data, so they");
-                Line(report, "  stay empty and any KPI that needs one still cannot see this species.");
+                Line(report, "  A written row carries the botanical name, the count, and the height and the canopy");
+                Line(report, "  diameter the schedule printed beside it, into the columns the sheet's header row names,");
+                Line(report, "  and NOTHING ELSE. Family, genus, native and every code column are the client's data,");
+                Line(report, "  so they stay empty and any KPI that needs one still cannot see this species.");
             }
 
             Line(report, string.Empty);
@@ -598,9 +724,111 @@ namespace RcrcGreen.Core.Kpi
 
         private static string Working(MergedSpecies species)
         {
-            return string.Join(", ", species.PerPlot
-                .Select(one => one.PlotId + " " + ((int)one.Value).ToString(CultureInfo.InvariantCulture))
-                .ToArray());
+            return species.Working;
+        }
+
+        /// <summary>
+        /// 15 into I84, or why nothing went there, with every value found so the reader can see
+        /// what the rows printed.
+        /// </summary>
+        private static string Measured(MeasureAnswer answer, string column, string whyNoColumn, int row)
+        {
+            if (string.IsNullOrEmpty(column)) return "not written: " + whyNoColumn;
+            if (!answer.Write) return "not written: " + answer.Why;
+
+            return Number(answer.Value) + " into " + column + row.ToString(CultureInfo.InvariantCulture)
+                + (answer.Why.Length == 0 ? string.Empty : " (" + answer.Why + ")");
+        }
+
+        /// <summary>
+        /// Every schedule this run read, as the schedule prints it, last in the file because it
+        /// is the longest and named at the top because it is what makes the rest checkable.
+        /// Nothing above it was what the tool read, and a plot counted on two rows survived two
+        /// rounds because nothing showed the rows.
+        /// </summary>
+        private static void TheSchedules(StringBuilder report, KpiCreateRun run)
+        {
+            int howMany = run.Readings.Sum(one => one.PrintedSchedules.Count);
+            Heading(report, SchedulesHeading, howMany,
+                "one block per schedule, every column, row numbers counting the heading row as 1, so it can be held against the drawing");
+
+            foreach (PlotReading reading in run.Readings)
+            {
+                foreach (ScannedSchedule schedule in reading.PrintedSchedules)
+                {
+                    Line(report, string.Empty);
+                    Line(report, "  " + reading.PlotId + ", " + schedule.Name);
+                    Line(report, "    " + WhatWasRead(reading, schedule));
+
+                    int shown = Math.Min(ShownRows, schedule.Rows.Count);
+                    Line(report, "    rows printed " + schedule.Rows.Count + ", shown " + shown
+                        + (shown < schedule.Rows.Count ? " of " + schedule.Rows.Count + ", the rest are cut off here" : string.Empty)
+                        + (schedule.BodyRowCount != schedule.Rows.Count ? ", the model holds " + schedule.BodyRowCount : string.Empty));
+
+                    foreach (string line in Aligned(schedule.Rows.Take(shown).ToList())) Line(report, "    " + line);
+                }
+            }
+
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// Which rows were read as what, per kind: the species rows and the TOTAL row of a
+        /// softscape schedule, and for a shrubs and lawn schedule WHICH SUBTOTAL ROW WAS TAKEN
+        /// for each group and why the others were not.
+        /// </summary>
+        private static string WhatWasRead(PlotReading reading, ScannedSchedule schedule)
+        {
+            if (schedule.IsSoftscape)
+            {
+                List<int> rows = reading.Species.Where(one => one.RowNumber > 0).Select(one => one.RowNumber).OrderBy(one => one).ToList();
+                return "read as species rows: " + rows.Count
+                    + (rows.Count == 0 ? string.Empty : ", rows " + Rows(rows))
+                    + ", passed over as subtotals: " + reading.SoftscapeRowsPassedOver
+                    + ", TOTAL row: " + (reading.SoftscapeTotalRead ? "row " + reading.SoftscapeTotalRow : "none found");
+            }
+
+            if (reading.Subtotals.Count == 0) return "read as group values: none";
+
+            return "read as group values: " + string.Join("; ", reading.Subtotals.Select(one =>
+                one.Heading + " taken off row " + one.RowNumber + ", the last of its "
+                + Count(one.RowsConsidered.Count, "subtotal row") + " (" + Rows(one.RowsConsidered) + ")"
+                + (one.RowsConsidered.Count > 1
+                    ? ", the rows above it are the phase subtotals that add to it and are not taken"
+                    : ", nothing above it to check against")).ToArray());
+        }
+
+        /// <summary>
+        /// The rows with every column padded to the widest cell in it, so a column can be read
+        /// down. A cell longer than the cap is cut and marked.
+        /// </summary>
+        private static IEnumerable<string> Aligned(IReadOnlyList<IReadOnlyList<string>> rows)
+        {
+            const int Cap = 40;
+            int columns = rows.Count == 0 ? 0 : rows.Max(row => row.Count);
+            var widths = new int[columns];
+            for (int column = 0; column < columns; column++)
+            {
+                widths[column] = rows.Max(row => Cell(row, column, Cap).Length);
+            }
+
+            int rowWidth = rows.Count.ToString(CultureInfo.InvariantCulture).Length;
+            for (int index = 0; index < rows.Count; index++)
+            {
+                var cells = new List<string>();
+                for (int column = 0; column < columns; column++)
+                {
+                    cells.Add(Cell(rows[index], column, Cap).PadRight(widths[column]));
+                }
+
+                yield return (index + 1).ToString(CultureInfo.InvariantCulture).PadLeft(rowWidth) + " | " + string.Join(" | ", cells.ToArray());
+            }
+        }
+
+        private static string Cell(IReadOnlyList<string> row, int column, int cap)
+        {
+            string text = column < row.Count && !string.IsNullOrEmpty(row[column]) ? row[column] : "-";
+            return text.Length <= cap ? text : text.Substring(0, cap - 1) + "~";
         }
 
         private static string Counted(
