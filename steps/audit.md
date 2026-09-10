@@ -21,6 +21,10 @@ line a finding cites was checked unchanged between the two.
    the pipe. Whether a real filter read throws is UNKNOWN without Revit, and the catch exists
    because it can | A method: record the loss on the definition and refuse it at create
 
+   FIXED. Capture records every unreadable filter and field on the definition, a lost
+   filter refuses the type at plan and at create, and a lost field is named under needs
+   attention.
+
 ### WRONG
 
 2. LOGIC | src/RcrcGreen.Revit/DrawingSheetReader.cs:59 and :84 | The panel's plot list is
@@ -33,6 +37,10 @@ line a finding cites was checked unchanged between the two.
    real plots are box-only is UNKNOWN without Revit, and 406 boxes against 160 element values
    says the shapes differ | A round: merge box and element sources into the snapshot's list
 
+   FIXED. PlotRegistry is wired in with PRX_Plot_ID on views as its own source, the
+   reader walks elements through the scan's shared loop, and step 1 marks the plots no
+   view carries.
+
 3. WIRING | src/RcrcGreen.Revit/ModelWriter.cs:160, :271, :820 | A marked cell whose view now
    exists is still attempted, because RunPlan takes no presence data and the handler's fresh
    read narrows only scope boxes and types. ViewPlan.Create succeeds, the rename to the taken
@@ -43,6 +51,9 @@ line a finding cites was checked unchanged between the two.
    stale panel plus a colleague's edit, which is ordinary in a shared model | A method:
    re-check presence in the fresh read, and delete-again on a refused rename like MakeSheet
 
+   FIXED. The plan refuses a mark whose view exists in the fresh read, and a refused
+   rename deletes the orphan again with the delete checked, the MakeSheet way.
+
 4. WIRING | src/RcrcGreen.Revit/ModelWriter.cs:191 and :734 | The bool Revit returns from
    Parameter.Set is ignored when the scope box and annotation crop are set on a new view,
    while AssignScopeBoxCommand.cs:150 treats the same false return as a refusal worth naming.
@@ -51,6 +62,8 @@ line a finding cites was checked unchanged between the two.
    clean. Annotation crop off is the fault of the eighteenth pass, able to return silently.
    Whether Set answers false in practice there is UNKNOWN without Revit, which is exactly why
    the other caller checks | Two lines: check the returns and add the NeedsAttention note
+
+   FIXED. Both Set returns are checked and a false lands under needs attention.
 
 5. LOGIC | src/RcrcGreen.Revit/DrawingSheetPanel.cs:1649 against
    DrawingSheetRequestHandler.cs:371 | The panel's plan preview passes ScheduleTypes as the
@@ -61,6 +74,9 @@ line a finding cites was checked unchanged between the two.
    filters on no plot, sending the user to look for the wrong thing | A line to pass the same
    set, plus a second refusal wording for the filter-less case
 
+   FIXED. The snapshot carries the capturable set off the same capture the run uses, and
+   an uncapturable schedule is refused with its own reason.
+
 ### COSTLY
 
 6. QA | src/RcrcGreen.Core/DrawingSheetSnapshot.cs, whole file | The type feeding the panel
@@ -70,6 +86,9 @@ line a finding cites was checked unchanged between the two.
    SheetNamesInUse instead of numbers (fills the dropdown with garbage). All three run, all
    three green, code restored each time | The proposal and refusal feeds can break without a
    test noticing, and 619 reads as cover it does not give | A test file
+
+    FIXED. DrawingSheetSnapshotTests pins all three, and each break was made again and
+    went red before being trusted.
 
 7. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:767 and :1550, with CellClicked at
    :2017 | The grid's outer and inner ScrollViewers are built without the remembered-offset
@@ -87,6 +106,9 @@ line a finding cites was checked unchanged between the two.
    which this repo's history holds, lands unchecked | A Revit-side compile break merges green
    and costs whoever pulls next a broken build | A workflow line to build the solution, and
    one to run on main pushes
+
+    FIXED. The gate restores and builds the whole solution, runs on pushes to main as
+    well as pull requests, and its comment says why the add-in compiles without Revit.
 
 9. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:1751 | Refresh clears every mark with
    no warning and nothing said afterwards. The status line reports views read and plot counts
@@ -122,6 +144,10 @@ line a finding cites was checked unchanged between the two.
     the union rule finding 2 shows the product lacks, and its tests inflate the count the
     gate reports. DrawingSheetFlowTests names a behaviour the shipped panel does not have |
     A decision round: wire the union in per finding 2, then delete what stays unused
+
+    FIXED with finding 2. The registry family is live now. PlotViewGrid,
+    MissingViewFinder, MissingViewType and PlotMissingViews stayed unreachable and are
+    deleted with their tests. The wrong-case chain runs inside Build and is kept.
 
 13. NO VIBE CODING | src/RcrcGreen.Revit/ScanModelCommand.cs:22,
     AssignScopeBoxCommand Execute path, ScanProgressWindow.cs | No button registers either

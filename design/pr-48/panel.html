@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The plot list shows its sources, pull request 48</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .body { padding: 8px; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .step { margin-bottom: 4px; }
+  .row { margin: 3px 0; }
+  .tip { border: 1px solid #adadad; background: #ffffe1; color: #1a1a1a;
+         display: inline-block; padding: 2px 6px; margin-left: 24px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<h1>The plot a scan finds and the panel used to drop</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show how the longer
+  rows wrap at the pane's real width, what the tooltip really looks like, or how long the
+  refresh takes now that it walks every element.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on
+  it. If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>What changed</h2>
+
+<p class="caption">The plot list is the union of every place a plot shows up: view names,
+PRX_Plot_ID on views, scope box names and PRX_Plot_ID on elements. It was built from views
+alone, so a plot existing only as a scope box with tagged elements, which is the plot with
+everything missing, never got a row and could never be ticked. Each row now carries a faint
+suffix when no view carries the plot, and the tooltip names every source. A plot with views
+says nothing, because the quiet case is the ordinary one.</p>
+
+<h2>Step 1, both themes</h2>
+
+<div class="pair">
+
+<div>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;AB-7 to DM-41, 4 of 4 ticked</div>
+      <div class="inside">
+        <div class="row">[x] AB-7&nbsp;&nbsp;&nbsp;<span class="faint">box and elements, no views</span></div>
+        <div class="row">[x] AB-8&nbsp;&nbsp;&nbsp;<span class="faint">box only, no views</span></div>
+        <div class="row">[x] DM-40</div>
+        <div class="row">[x] DM-41</div>
+        <div class="tip">AB-7, found through a scope box, PRX_Plot_ID on elements.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;AB-7 to DM-41, 4 of 4 ticked</div>
+      <div class="inside">
+        <div class="row">[x] AB-7&nbsp;&nbsp;&nbsp;<span class="faint">box and elements, no views</span></div>
+        <div class="row">[x] AB-8&nbsp;&nbsp;&nbsp;<span class="faint">box only, no views</span></div>
+        <div class="row">[x] DM-40</div>
+        <div class="row">[x] DM-41</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>Where the words come from</h2>
+
+<p class="caption">The suffix is <code>PlotRecord.NoViewsInWords</code> and the tooltip is
+<code>PlotRecord.SourcesInWords</code>, both in Core with tests, so the panel formats no rule
+of its own. The union itself is <code>PlotRegistry.Build</code>, which held the rule with
+tests all along and was called by nothing until this round.</p>
+
+<h2>Nothing else in the panel changed on screen</h2>
+
+<p class="caption">The grid, the sweeps, the sheet table and the scope box counts are exactly
+as the last round left them. Under the surface the plan preview now reads the same capturable
+schedule list the run reads, so step 5 can no longer promise a schedule the confirmation
+refuses.</p>
+
+</body>
+</html>

@@ -38,14 +38,30 @@ namespace RcrcGreen.Core
             int fromViewName,
             int withNoPlot,
             int sourcesDisagree,
-            IEnumerable<SheetOnAPlot> sheetNumbersByPlot = null)
+            IEnumerable<SheetOnAPlot> sheetNumbersByPlot = null,
+            IEnumerable<PlotRecord> plots = null,
+            IEnumerable<ViewType> capturableScheduleTypes = null,
+            IEnumerable<UncapturableSchedule> uncapturableSchedules = null)
         {
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
 
             DocumentTitle = documentTitle;
             ReadAt = readAt;
 
+            Plots = (plots ?? Enumerable.Empty<PlotRecord>())
+                .Where(one => one != null)
+                .ToList();
+
+            _recordByPlot = new Dictionary<string, PlotRecord>(StringComparer.Ordinal);
+            foreach (PlotRecord record in Plots)
+            {
+                if (!_recordByPlot.ContainsKey(record.PlotId)) _recordByPlot.Add(record.PlotId, record);
+            }
+
+            // The records and the id list both come from one registry call in the reader, and
+            // the union here is the guard against them ever drifting apart.
             PlotIds = Clean(plotIds)
+                .Concat(Plots.Select(one => one.PlotId))
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(plotId => plotId, NaturalOrder.Comparer)
                 .ToList();
@@ -116,12 +132,35 @@ namespace RcrcGreen.Core
                 .Where(PlotId.IsPlotId)
                 .ToList();
 
+            CapturableScheduleTypes = (capturableScheduleTypes ?? Enumerable.Empty<ViewType>())
+                .Where(one => one != null)
+                .Distinct()
+                .OrderBy(one => one)
+                .ToList();
+
+            UncapturableSchedules = (uncapturableSchedules ?? Enumerable.Empty<UncapturableSchedule>())
+                .Where(one => one != null)
+                .ToList();
+
             ViewsRead = viewsRead;
             FromParameter = fromParameter;
             FromViewName = fromViewName;
             WithNoPlot = withNoPlot;
             SourcesDisagree = sourcesDisagree;
         }
+
+        /// <summary>
+        /// Schedule types whose captured definition can really be aimed at another plot. The
+        /// plan preview reads this, the run reads the same rule off a fresh capture, so the
+        /// preview and the confirmation follow one rule and only the data can differ.
+        /// </summary>
+        public IReadOnlyList<ViewType> CapturableScheduleTypes { get; }
+
+        /// <summary>
+        /// Schedule types that exist and cannot be captured, each with the reason its refusal
+        /// prints.
+        /// </summary>
+        public IReadOnlyList<UncapturableSchedule> UncapturableSchedules { get; }
 
         public string DocumentTitle { get; }
 
@@ -136,6 +175,26 @@ namespace RcrcGreen.Core
         /// which is how it can never act on a plot that does not exist.
         /// </summary>
         public IReadOnlyList<string> PlotIds { get; }
+
+        /// <summary>
+        /// Each plot with every source it was found through: view names, PRX_Plot_ID on
+        /// views, a scope box, PRX_Plot_ID on elements. The union of all of them is the plot
+        /// list, because a plot with only a scope box and tagged elements has no views at all
+        /// and is exactly the plot the team needs to see. The list came from views alone once
+        /// and silently dropped that plot.
+        /// </summary>
+        public IReadOnlyList<PlotRecord> Plots { get; }
+
+        private readonly Dictionary<string, PlotRecord> _recordByPlot;
+
+        /// <summary>
+        /// The record for one plot, or null when the snapshot was built without records.
+        /// </summary>
+        public PlotRecord RecordOf(string plotId)
+        {
+            PlotRecord found;
+            return plotId != null && _recordByPlot.TryGetValue(plotId, out found) ? found : null;
+        }
 
         public IReadOnlyList<ViewType> ViewTypes { get; }
 

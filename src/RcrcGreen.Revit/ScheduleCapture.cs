@@ -23,16 +23,45 @@ namespace RcrcGreen.Revit
     internal static class ScheduleCapture
     {
         /// <summary>
-        /// One definition per view type, taken from the first plot that has it.
+        /// What one capture pass found: the definitions a run can build from, and the
+        /// schedule types that exist and cannot be built from, each with the reason its
+        /// refusal prints.
         ///
-        /// The first is as good as any because every plot's copy of a schedule differs only in
-        /// the plot named in its filter, which is the one thing create replaces.
+        /// The plan and the writer both read Usable, and the panel's snapshot carries the
+        /// same two lists from its own read, so the preview and the run follow one rule for
+        /// which schedules can be made. The panel passed every schedule type as capturable
+        /// once, and step 5 promised schedules the confirmation then refused.
         /// </summary>
-        public static Dictionary<ViewType, CapturedSchedule> ByType(Document document)
+        public sealed class CapturedSchedules
+        {
+            public CapturedSchedules(
+                Dictionary<ViewType, CapturedSchedule> usable,
+                List<UncapturableSchedule> refused)
+            {
+                Usable = usable ?? new Dictionary<ViewType, CapturedSchedule>();
+                Refused = refused ?? new List<UncapturableSchedule>();
+            }
+
+            public Dictionary<ViewType, CapturedSchedule> Usable { get; }
+
+            public IReadOnlyList<UncapturableSchedule> Refused { get; }
+        }
+
+        /// <summary>
+        /// One definition per view type, taken from the first plot whose copy is usable.
+        ///
+        /// The first usable copy is as good as any because every plot's copy of a schedule
+        /// differs only in the plot named in its filter, which is the one thing create
+        /// replaces. A copy that lost a filter at capture or filters on no plot does not
+        /// reserve the type, so a later plot's clean copy can still fill it, and the type is
+        /// refused with the first copy's reason only when no copy anywhere is usable.
+        /// </summary>
+        public static CapturedSchedules Read(Document document)
         {
             if (document == null) throw new ArgumentNullException("document");
 
-            var found = new Dictionary<ViewType, CapturedSchedule>();
+            var usable = new Dictionary<ViewType, CapturedSchedule>();
+            var whyNot = new Dictionary<ViewType, string>();
 
             foreach (ViewSchedule schedule in new FilteredElementCollector(document)
                 .OfClass(typeof(ViewSchedule))
@@ -41,16 +70,46 @@ namespace RcrcGreen.Revit
             {
                 ParsedViewName parsed;
                 if (!ViewNameParser.TryParse(schedule.Name, out parsed)) continue;
-                if (found.ContainsKey(parsed.Type)) continue;
+                if (usable.ContainsKey(parsed.Type)) continue;
 
                 CapturedSchedule read = Of(document, schedule, parsed.Type);
+                if (read == null)
+                {
+                    Why(whyNot, parsed.Type,
+                        "That schedule exists and its definition could not be read at capture, "
+                        + "so there is nothing to build from.");
+                    continue;
+                }
 
-                // A schedule that filters on no plot cannot be aimed at another one, so keeping
-                // it here would offer the user something that cannot be built.
-                if (read != null && read.CanBeMadeForAnotherPlot) found.Add(parsed.Type, read);
+                // The lost filter is checked before the plot filter, because the filter that
+                // could not be read may be the plot filter itself.
+                if (read.LostAFilterAtCapture)
+                {
+                    Why(whyNot, parsed.Type, read.WhyTheCaptureLossRefusesIt());
+                    continue;
+                }
+
+                if (!read.CanBeMadeForAnotherPlot)
+                {
+                    Why(whyNot, parsed.Type, read.WhyItCannotBeAimed());
+                    continue;
+                }
+
+                usable.Add(parsed.Type, read);
+                whyNot.Remove(parsed.Type);
             }
 
-            return found;
+            var refused = whyNot
+                .Where(pair => !usable.ContainsKey(pair.Key))
+                .Select(pair => new UncapturableSchedule(pair.Key, pair.Value))
+                .ToList();
+
+            return new CapturedSchedules(usable, refused);
+        }
+
+        private static void Why(Dictionary<ViewType, string> whyNot, ViewType type, string why)
+        {
+            if (!whyNot.ContainsKey(type)) whyNot.Add(type, why);
         }
 
         public static CapturedSchedule Of(Document document, ViewSchedule schedule, ViewType type)
@@ -58,21 +117,50 @@ namespace RcrcGreen.Revit
             Autodesk.Revit.DB.ScheduleDefinition definition = schedule.Definition;
             if (definition == null) return null;
 
+            // Every read that fails is recorded on the definition rather than skipped, so a
+            // loss at capture is as loud as one at write time. Both were bare continues once,
+            // and a schedule that lost the filter telling HARDSCAPE from SHRUBS AND LAWN was
+            // one unreadable value away from being built and reading as correct.
             var fields = new List<ScheduleFieldEntry>();
+            var fieldsNotRead = new List<string>();
+            int fieldAt = 0;
             foreach (ScheduleFieldId fieldId in definition.GetFieldOrder())
             {
+                fieldAt++;
+
                 ScheduleField field = definition.GetField(fieldId);
-                if (field != null) fields.Add(new ScheduleFieldEntry(field.GetName(), KindOf(field)));
+                if (field == null)
+                {
+                    fieldsNotRead.Add("the field at position " + fieldAt
+                        + ", whose id resolved to nothing");
+                    continue;
+                }
+
+                fields.Add(new ScheduleFieldEntry(field.GetName(), KindOf(field)));
             }
 
             var rules = new List<ScheduleFilterRule>();
+            var filtersNotRead = new List<string>();
+            int filterAt = 0;
             foreach (ScheduleFilter filter in definition.GetFilters())
             {
+                filterAt++;
+
                 ScheduleField field = definition.GetField(filter.FieldId);
-                if (field == null) continue;
+                if (field == null)
+                {
+                    filtersNotRead.Add("the filter at position " + filterAt
+                        + ", on a field that could not be resolved");
+                    continue;
+                }
 
                 FilterValue value = ValueIn(filter);
-                if (value == null) continue;
+                if (value == null)
+                {
+                    filtersNotRead.Add("the filter on " + field.GetName()
+                        + ", whose value could not be read");
+                    continue;
+                }
 
                 rules.Add(new ScheduleFilterRule(field.GetName(), value));
             }
@@ -86,7 +174,9 @@ namespace RcrcGreen.Revit
                 rules,
                 definition.IncludeLinkedFiles,
                 definition.CategoryId == new ElementId(BuiltInCategory.OST_Sheets),
-                BuiltInValueOf(category));
+                BuiltInValueOf(category),
+                filtersNotRead,
+                fieldsNotRead);
         }
 
         /// <summary>

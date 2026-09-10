@@ -187,10 +187,17 @@ namespace RcrcGreen.Core
         /// comes from the kind of the view the model already holds for that type, never from
         /// the code in the name. (400) is a section in this model and that is a fact about this
         /// model, not a rule.</param>
-        /// <param name="capturableScheduleTypes">Schedule types some plot in the model already
-        /// has, so there is something to capture a definition from.</param>
+        /// <param name="capturableScheduleTypes">Schedule types whose captured definition can
+        /// really be aimed at another plot. The panel and the run both read this off the same
+        /// capture rule, so the preview can never promise a schedule the run refuses.</param>
         /// <param name="sheetsWanted">The sheets the user described, each already divided into
         /// the rows it makes across the ticked plots, one row per sheet.</param>
+        /// <param name="alreadyInTheModel">The cells whose view exists in the freshest read. A
+        /// mark can go stale while the panel sits open in a shared model, and creating over an
+        /// existing name leaves an orphan view behind a rename Revit refuses.</param>
+        /// <param name="schedulesThatCannotBeCaptured">Schedule types that exist and cannot be
+        /// captured, each with the reason its refusal prints. Without this every one was
+        /// answered with no plot has that schedule, which is false for all of them.</param>
         public static RunPlan Of(
             IEnumerable<PlotViewKey> marked,
             IEnumerable<string> ticked,
@@ -198,7 +205,9 @@ namespace RcrcGreen.Core
             IEnumerable<ViewType> scheduleTypes,
             IEnumerable<ViewType> sectionTypes,
             IEnumerable<ViewType> capturableScheduleTypes,
-            IEnumerable<SheetBatch> sheetsWanted)
+            IEnumerable<SheetBatch> sheetsWanted,
+            IEnumerable<PlotViewKey> alreadyInTheModel = null,
+            IEnumerable<UncapturableSchedule> schedulesThatCannotBeCaptured = null)
         {
             var stillTicked = new HashSet<string>(
                 (ticked ?? Enumerable.Empty<string>()).Where(plotId => plotId != null),
@@ -213,6 +222,16 @@ namespace RcrcGreen.Core
             var capturable = new HashSet<ViewType>(
                 (capturableScheduleTypes ?? Enumerable.Empty<ViewType>()).Where(type => type != null));
 
+            var present = new HashSet<PlotViewKey>(
+                (alreadyInTheModel ?? Enumerable.Empty<PlotViewKey>()).Where(key => key != null));
+
+            var whyNotCapturable = new Dictionary<ViewType, string>();
+            foreach (UncapturableSchedule one in (schedulesThatCannotBeCaptured
+                ?? Enumerable.Empty<UncapturableSchedule>()).Where(one => one != null))
+            {
+                if (!whyNotCapturable.ContainsKey(one.Type)) whyNotCapturable.Add(one.Type, one.Why);
+            }
+
             var items = new List<RunItem>();
             var refusals = new List<RunRefusal>();
 
@@ -224,6 +243,19 @@ namespace RcrcGreen.Core
 
             foreach (PlotViewKey key in wanted)
             {
+                // Checked before anything else, because every kind clashes the same way. The
+                // grid never offers an existing cell for marking, so a mark that lands here
+                // went stale while the panel sat open and somebody else filled the cell.
+                if (present.Contains(key))
+                {
+                    refusals.Add(new RunRefusal(
+                        key.PlotId,
+                        key.ViewType,
+                        "A view with this name is already in the model, added since the panel "
+                        + "last read it, so nothing is made over it. Press Refresh to see it."));
+                    continue;
+                }
+
                 if (schedules.Contains(key.ViewType))
                 {
                     if (capturable.Contains(key.ViewType))
@@ -232,11 +264,14 @@ namespace RcrcGreen.Core
                     }
                     else
                     {
-                        refusals.Add(new RunRefusal(
-                            key.PlotId,
-                            key.ViewType,
-                            "No plot in this model has that schedule, so there is no definition "
-                            + "to capture and nothing to build from."));
+                        string why;
+                        if (!whyNotCapturable.TryGetValue(key.ViewType, out why))
+                        {
+                            why = "No plot in this model has that schedule, so there is no "
+                                + "definition to capture and nothing to build from.";
+                        }
+
+                        refusals.Add(new RunRefusal(key.PlotId, key.ViewType, why));
                     }
 
                     continue;

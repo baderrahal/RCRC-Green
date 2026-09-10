@@ -1,7 +1,28 @@
 # ai-max state
 
-Phase: 9, ship. Thirty ninth pass, an audit of the KPI tool alone. It built nothing and fixed
-nothing.
+Phase: 9, ship. Fortieth pass, seven audit findings fixed and nothing else touched.
+
+The plot list is the union at last: PlotRegistry is wired into the panel read with
+PRX_Plot_ID on views as its own source, the reader walks every element through the scan's
+shared loop, and a plot no view carries shows box only, no views on its row. Capture records
+every filter and field it cannot read, a lost filter refuses the schedule at plan and at
+create, and the panel and the run read one capturable list, with an uncapturable schedule
+refused for its real reason. A stale mark is refused against the fresh read and a refused
+rename deletes the orphan again with the delete checked. Both ignored Parameter.Set returns
+are checked. The gate builds the whole solution and runs on pushes to main. The snapshot has
+tests that go red on all three of the audit's breaks, each broken again and watched.
+
+PlotViewGrid, MissingViewFinder, MissingViewType and PlotMissingViews stayed unreachable
+after the wiring and are deleted with their tests. The registry family, the ignored-name
+classification and the wrong-case checks are kept because Build runs them. Every other audit
+finding stays written down and untouched.
+
+Nothing in this round has been through Revit. The union, the suffixes, the new refusals, the
+rename guard and the Set checks are all unexecuted there, and the log lists what that leaves
+unchecked.
+
+Before that, the thirty ninth pass, an audit of the KPI tool alone. It built nothing and
+fixed nothing.
 
 Twenty nine findings are in steps/audit-kpi.md, ranked by cost: two BLOCKS, six WRONG, thirteen
 COSTLY, eight TIDY. The two BLOCKS: nothing stops the browsed output path from being the
@@ -650,7 +671,7 @@ Phase 10, packaging, has not started.
 Three projects in `RcrcGreen.sln`.
 
 - `src/RcrcGreen.Core`, netstandard2.0, no Revit reference. View name parsing, the plot
-  list, the grid, the missing view report, the section maths, the plot source ordering in
+  list, the grid, the section maths, the plot source ordering in
   `ViewPlotReader`, the range filter in `PlotRange`, and the grid shaping in `SheetGrid`. A
   bound that is NaN or infinite is refused when a `PlotBox` is built, because an infinite
   bound survives an ordering check and then turns every centre into NaN, which reads as a

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -354,13 +355,14 @@ namespace RcrcGreen.Revit
             IReadOnlyList<PlotViewKey> marked,
             IReadOnlyList<SheetBatch> sheetsWanted)
         {
-            // Read again rather than trusting the panel's snapshot. It is as old as the last
-            // refresh, and creating a view that somebody else added in the meantime is how a
-            // model ends up with two of everything.
+            // Read again rather than trusting the panel's snapshot, which is as old as the
+            // last refresh. The fresh read feeds the plan its scope boxes, its schedule sets
+            // and, through Present, the cells whose view already exists, so a mark that went
+            // stale while somebody else filled the cell is refused by the plan rather than
+            // attempted over the existing view.
             DrawingSheetSnapshot now = DrawingSheetReader.Read(document);
 
-            Dictionary<ViewType, RcrcGreen.Core.ScheduleDefinition> definitions =
-                ScheduleCapture.ByType(document);
+            ScheduleCapture.CapturedSchedules definitions = ScheduleCapture.Read(document);
 
             RunPlan plan = RunPlan.Of(
                 marked,
@@ -368,8 +370,10 @@ namespace RcrcGreen.Revit
                 now.PlotsWithAScopeBox,
                 now.ScheduleTypes,
                 now.SectionTypes,
-                definitions.Keys,
-                sheetsWanted);
+                definitions.Usable.Keys,
+                sheetsWanted,
+                now.Present.Select(one => one.Where),
+                definitions.Refused);
 
             bool applied = false;
             RunOutcome outcome = RunOutcome.NothingWasWritten();
@@ -387,7 +391,7 @@ namespace RcrcGreen.Revit
                 using (var making = new Transaction(document, "Create drawing sheet views"))
                 {
                     making.Start();
-                    ModelWriter.Make(document, plan, outcome, definitions, boxIdByName);
+                    ModelWriter.Make(document, plan, outcome, definitions.Usable, boxIdByName);
                     making.Commit();
                 }
 

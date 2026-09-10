@@ -310,7 +310,9 @@ namespace RcrcGreen.Core
             IEnumerable<ScheduleFilterRule> filters,
             bool includesLinkedFiles,
             bool isASheetList,
-            long categoryBuiltInValue = 0L)
+            long categoryBuiltInValue = 0L,
+            IEnumerable<string> filtersNotRead = null,
+            IEnumerable<string> fieldsNotRead = null)
         {
             if (type == null) throw new ArgumentNullException("type");
             if (categoryName == null) throw new ArgumentNullException("categoryName");
@@ -331,6 +333,16 @@ namespace RcrcGreen.Core
 
             IncludesLinkedFiles = includesLinkedFiles;
             IsASheetList = isASheetList;
+
+            FiltersNotRead = Kept(filtersNotRead);
+            FieldsNotRead = Kept(fieldsNotRead);
+        }
+
+        private static IReadOnlyList<string> Kept(IEnumerable<string> notRead)
+        {
+            return (notRead ?? Enumerable.Empty<string>())
+                .Where(one => !string.IsNullOrEmpty(one))
+                .ToList();
         }
 
         public ViewType Type { get; }
@@ -371,6 +383,51 @@ namespace RcrcGreen.Core
         public bool IsASheetList { get; }
 
         /// <summary>
+        /// Filters on the source schedule that capture could not read, each named as far as
+        /// the read got. Both used to be dropped with a bare continue, which is how a schedule
+        /// short of the filter that tells HARDSCAPE from SHRUBS AND LAWN could be built and
+        /// read as correct on a drawing.
+        /// </summary>
+        public IReadOnlyList<string> FiltersNotRead { get; }
+
+        /// <summary>
+        /// Fields on the source schedule whose id resolved to nothing at capture, named by
+        /// position because the name is exactly what could not be read.
+        /// </summary>
+        public IReadOnlyList<string> FieldsNotRead { get; }
+
+        public bool LostAFilterAtCapture
+        {
+            get { return FiltersNotRead.Count > 0; }
+        }
+
+        /// <summary>
+        /// Why a definition that lost a filter at capture refuses to build anything. The same
+        /// rule a filter lost at write time follows, one step earlier: a schedule missing a
+        /// filter shows every plot's elements and reads as correct on a drawing.
+        /// </summary>
+        public string WhyTheCaptureLossRefusesIt()
+        {
+            return FiltersNotRead.Count
+                + (FiltersNotRead.Count == 1 ? " filter" : " filters")
+                + " on the source schedule could not be read when it was captured: "
+                + string.Join(", ", FiltersNotRead.ToArray())
+                + ". A schedule missing a filter shows every plot's elements and reads as "
+                + "correct on a drawing, so nothing is built from this definition.";
+        }
+
+        /// <summary>
+        /// Why a schedule that exists cannot be made for another plot. Saying no plot has it
+        /// sent the user looking for a schedule that is plainly there.
+        /// </summary>
+        public string WhyItCannotBeAimed()
+        {
+            return "That schedule exists in this model and filters on no plot, so there is no "
+                + "plot filter to swap and it cannot be aimed at another plot. Add the plot "
+                + "filter to the source schedule and refresh.";
+        }
+
+        /// <summary>
         /// The parameter the plot is filtered on, empty when no rule names a plot. Read off the
         /// captured filters rather than decided here, because which parameter a schedule uses
         /// is a fact about the model and not a rule this code gets to make.
@@ -405,7 +462,9 @@ namespace RcrcGreen.Core
                 Filters.Select(rule => rule.ForPlot(plotId)),
                 IncludesLinkedFiles,
                 IsASheetList,
-                CategoryBuiltInValue);
+                CategoryBuiltInValue,
+                FiltersNotRead,
+                FieldsNotRead);
         }
 
         /// <summary>
