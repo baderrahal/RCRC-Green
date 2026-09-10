@@ -6,7 +6,8 @@ Newest entry first.
 
 ## 2026-09-10, thirty seventh pass. Excel showed zeros, and the workbook stops going beside the model
 
-Branch `claude/inspiring-allen-xs113f`. **904 tests locally, 0 failed and 0 skipped**, run after
+Pull request 46, merged into main as `6f2e521`. **The runner executed 904 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 904 ran, 0 failed and 0 skipped**, after
 the last file was written and after every break watch was restored byte for byte.
 
 Seven things came out of the first real run. **Three of them were already delivered in pull

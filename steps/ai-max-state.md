@@ -1,7 +1,8 @@
 # ai-max state
 
-Phase: 9, ship. Thirty seventh pass, four things off the first real run. On branch
-`claude/inspiring-allen-xs113f`, 904 tests locally, 0 failed and 0 skipped.
+Phase: 9, ship. Thirty seventh pass, four things off the first real run. Pull request 46 is
+merged into main as `6f2e521`, 904 tests on the runner against its merged head and 904 locally,
+0 failed and 0 skipped on each.
 
 **Excel showed zeros where the numbers were right.** Stale cached results in the output, and
 `fullCalcOnLoad` alone was never enough. calcId set to 0, the cached `<v>` dropped from every
