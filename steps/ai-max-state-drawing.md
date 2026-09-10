@@ -1,7 +1,9 @@
 # ai-max state, Drawing Sheet
 
 Phase: 9, ship. Forty fifth pass, the rest of steps/audit-drawing.md in two pull requests,
-the first of which holds fixes 1 to 6 and is not merged yet.
+the first of which, pull request 61, holds fixes 1 to 6 and is not merged yet. Its mockup
+folder was named pr-60 from the highest number on the list and the request opened as 61,
+so the folder was renamed before the merge rather than left as a second finding 22.
 
 Fixes 1 to 6 are eleven findings. The run report's headline is one number for everything
 not made, split the way its sections split it, and one refusal is 1 thing rather than 1
