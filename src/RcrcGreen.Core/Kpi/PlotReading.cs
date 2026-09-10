@@ -169,11 +169,20 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<RegionArea> regions,
             double readSeconds,
             string chosenRegionTypeName = null,
-            IEnumerable<string> notes = null)
+            IEnumerable<string> notes = null,
+            IEnumerable<string> readRefusals = null,
+            bool softscapeTotalRead = false,
+            int softscapeTotal = 0,
+            int softscapeRowsPassedOver = 0)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
+            if (softscapeRowsPassedOver < 0) throw new ArgumentOutOfRangeException("softscapeRowsPassedOver");
 
             PlotId = plotId;
+            ReadRefusals = Held(readRefusals).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
+            SoftscapeTotalRead = softscapeTotalRead;
+            SoftscapeTotal = softscapeTotal;
+            SoftscapeRowsPassedOver = softscapeRowsPassedOver;
             ReadSeconds = readSeconds;
             Component = component ?? string.Empty;
             Reference = reference ?? string.Empty;
@@ -219,6 +228,37 @@ namespace RcrcGreen.Core.Kpi
         public double ReadSeconds { get; }
 
         public IReadOnlyList<string> Notes { get; }
+
+        /// <summary>
+        /// Every reason a schedule read on this plot was refused: a column the heading row did
+        /// not name, a cell holding a digit past where its number ends, a species row with no
+        /// whole count. Each one refuses the write and prints on the pane and in the report.
+        /// **A refused read is never a zero**, which is what a fallback to a cell position was.
+        /// </summary>
+        public IReadOnlyList<string> ReadRefusals { get; }
+
+        /// <summary>
+        /// True when the softscape schedule printed a TOTAL row and its count was read whole.
+        /// </summary>
+        public bool SoftscapeTotalRead { get; }
+
+        public int SoftscapeTotal { get; }
+
+        /// <summary>
+        /// Rows of the softscape schedule carrying a count and no botanical name, the subtotals,
+        /// counted rather than dropped in silence.
+        /// </summary>
+        public int SoftscapeRowsPassedOver { get; }
+
+        /// <summary>
+        /// The species rows added up, which is adding printed numbers and allowed. The
+        /// reconciliation holds it against <see cref="SoftscapeTotal"/>, because the first real
+        /// workbook read 31 trees where the schedule printed 39 and nothing could say so.
+        /// </summary>
+        public int SpeciesSum
+        {
+            get { return Species.Sum(one => one.Quantity); }
+        }
 
         public RegionArea ChosenRegion
         {

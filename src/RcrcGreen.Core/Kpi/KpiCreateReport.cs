@@ -87,8 +87,9 @@ namespace RcrcGreen.Core.Kpi
                 held.Read.Count - held.WithoutSoftscape.Count, held.WithoutSoftscape));
             Line(report, "  " + Counted("plots with a shrubs and lawn schedule",
                 held.Read.Count - held.WithoutShrubsAndLawn.Count, held.WithoutShrubsAndLawn));
-            Line(report, "  " + Counted("plots with an area",
-                held.Read.Count - held.WithoutArea.Count, held.WithoutArea));
+            Line(report, held.AreaWanted
+                ? "  " + Counted("plots with an area", held.Read.Count - held.WithoutArea.Count, held.WithoutArea)
+                : "  plots with an area   " + AreaNotRead);
 
             Line(report, "  plots that contributed nothing at all   " + held.ContributedNothing.Count);
             foreach (PlotAndReason nothing in held.ContributedNothing)
@@ -110,10 +111,27 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
-            TheWorking(report, "AREA, SQUARE METRES", run.Area);
+            if (held.AreaWanted)
+            {
+                TheWorking(report, "AREA, SQUARE METRES", run.Area);
+            }
+            else
+            {
+                Line(report, "  AREA, SQUARE METRES, " + AreaNotRead);
+                Line(report, string.Empty);
+            }
+
             TheWorking(report, "SHRUBS, SQUARE METRES", run.Shrubs);
             TheWorking(report, "LAWN, SQUARE METRES", run.Lawn);
         }
+
+        /// <summary>
+        /// Said wherever the area would have printed on a template that takes none, so the
+        /// section reads as a read that did not happen and never as a plot with no area. The
+        /// words are the pane's own line for the same condition, with why nothing was refused.
+        /// </summary>
+        public static readonly string AreaNotRead = "not read. " + CreateWords.AreaTypedByHand
+            + " No filled region was read for any plot and nothing about the area was refused on.";
 
         /// <summary>
         /// Each plot's own number and the total underneath it, so the arithmetic can be checked
@@ -146,9 +164,30 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, "    softscape schedule: " + (reading.SoftscapeRead
                     ? Count(reading.Species.Count, "species row") + " read"
                     : "not read"));
+
+                // The species rows against the TOTAL the schedule printed, so a row the reader
+                // dropped is visible here rather than only in a workbook short of trees.
+                if (reading.SoftscapeRead)
+                {
+                    Line(report, "      species rows add to " + reading.SpeciesSum + ", "
+                        + (reading.SoftscapeTotalRead
+                            ? "the TOTAL row prints " + reading.SoftscapeTotal
+                            : "no TOTAL row was found to hold that against"));
+                    if (reading.SoftscapeRowsPassedOver > 0)
+                    {
+                        Line(report, "      " + Count(reading.SoftscapeRowsPassedOver, "row")
+                            + " with a count and no botanical name passed over, the subtotals");
+                    }
+                }
+
                 Line(report, "    shrubs and lawn schedule: " + (reading.ShrubsAndLawnRead
                     ? Count(reading.Subtotals.Count, "group") + " read"
                     : "not read"));
+
+                foreach (string refused in reading.ReadRefusals)
+                {
+                    Line(report, "    REFUSED: " + refused);
+                }
 
                 foreach (GroupSubtotal subtotal in reading.Subtotals)
                 {
@@ -157,10 +196,12 @@ namespace RcrcGreen.Core.Kpi
                 }
 
                 RegionArea chosen = reading.ChosenRegion;
-                Line(report, "    area: " + (chosen == null
-                    ? "none chosen"
-                    : chosen.TypeName + " | " + Number(chosen.SquareMetres) + " | raw "
-                        + chosen.RawSquareFeet.ToString("R", CultureInfo.InvariantCulture)));
+                Line(report, "    area: " + (!run.Reconciliation.AreaWanted
+                    ? "not read, the template takes none"
+                    : chosen == null
+                        ? "none chosen"
+                        : chosen.TypeName + " | " + Number(chosen.SquareMetres) + " | raw "
+                            + chosen.RawSquareFeet.ToString("R", CultureInfo.InvariantCulture)));
 
                 Line(report, "    read in " + Seconds(reading.ReadSeconds));
 
@@ -359,6 +400,37 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
+            if (run.Reconciliation.AreaWanted)
+            {
+                TheRegions(report, run);
+            }
+            else
+            {
+                Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF: " + AreaNotRead);
+            }
+
+            Line(report, string.Empty);
+            Line(report, "  The shrubs, the lawn and every tree quantity came off a row the schedule");
+            Line(report, "  printed. Nothing anywhere is worked out from the elements a schedule lists,");
+            Line(report, "  because on this model those elements are RVT Link instances and the plants");
+            Line(report, "  live inside them.");
+
+            // The paragraph about the area is about a read that did not happen on a template
+            // that takes none, so it is left off rather than printed about nothing.
+            if (!run.Reconciliation.AreaWanted) return;
+
+            Line(report, string.Empty);
+            Line(report, "  THE AREA IS NOT A SCHEDULE ROW. It is " + KpiNames.InterventionArea
+                + " read off the");
+            Line(report, "  chosen filled region in the 00 link, raw in square feet, converted here to");
+            Line(report, "  square metres. Both are in the row above with the value the model prints");
+            Line(report, "  beside them, which is rounded to the metre, so the two can be held against");
+            Line(report, "  each other: what was written is that same measurement at full precision and");
+            Line(report, "  not a different number.");
+        }
+
+        private static void TheRegions(StringBuilder report, KpiCreateRun run)
+        {
             Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF, AND WHAT IT READ");
             Line(report, "  plot | chosen type | raw square feet | written square metres | "
                 + "as the model prints it | offered");
@@ -377,20 +449,6 @@ namespace RcrcGreen.Core.Kpi
                         : string.Join(", ", reading.Regions
                             .Select(one => one.TypeName + " " + Number(one.SquareMetres)).ToArray())));
             }
-
-            Line(report, string.Empty);
-            Line(report, "  The shrubs, the lawn and every tree quantity came off a row the schedule");
-            Line(report, "  printed. Nothing anywhere is worked out from the elements a schedule lists,");
-            Line(report, "  because on this model those elements are RVT Link instances and the plants");
-            Line(report, "  live inside them.");
-            Line(report, string.Empty);
-            Line(report, "  THE AREA IS NOT A SCHEDULE ROW. It is " + KpiNames.InterventionArea
-                + " read off the");
-            Line(report, "  chosen filled region in the 00 link, raw in square feet, converted here to");
-            Line(report, "  square metres. Both are in the row above with the value the model prints");
-            Line(report, "  beside them, which is rounded to the metre, so the two can be held against");
-            Line(report, "  each other: what was written is that same measurement at full precision and");
-            Line(report, "  not a different number.");
         }
 
         /// <summary>

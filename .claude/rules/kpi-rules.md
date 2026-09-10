@@ -63,6 +63,20 @@ an area, and every plot that contributed nothing with its reason. A plot that ga
 named rather than quietly absent, because a plot list that goes in longer than it comes out is
 the failure this exists to catch. It refuses the write when the numbers do not agree.
 
+**It knows the template, and on a template with no area cell the area is not read.** STREETS
+types the road width and the total length by hand and the sheet works the area out. MM-03 and
+MM-04 are street plots and both read 12182.05561411 in the 00 link, so a reconciliation that
+did not know the template would have ended the first 78 plot run asking the user to confirm an
+area the workbook has no cell for, then read all 78 again. On such a template no filled region
+is read, nothing about the area is refused on, and the report says the area was not read and
+why rather than leaving the section empty.
+
+**A refused schedule read refuses the write.** A column the heading row did not name, a cell
+holding a digit past where its number ends, a species row with no whole count: each travels on
+the plot reading with the schedule's name, prints in red above Create, and prints twice in the
+report, among the reasons and under the plot. A refused read used to come back as a list of
+nothing, which read as a plot whose schedule listed no species.
+
 ## Matching a species is plain or it is nothing
 
 The workbook's own column D is the only species list there is and `SpeciesList` reads it out of
@@ -591,13 +605,31 @@ above it to compare against and is taken.
 other. They are not enforced, because every one of those numbers is already rounded to the metre
 on the way out of Revit and a sum of rounded numbers need not equal a rounded sum.
 
-TOTAL needs no special case. It carries numbers, so it is not a structure row, and its first
-cell holds text, so it is not a subtotal.
+TOTAL needs no special case in the shrubs and lawn schedule. It carries numbers, so it is not a
+structure row, and its first cell holds text, so it is not a subtotal.
+
+**The softscape TOTAL row is read, and the species rows are held against it.** It is the row
+whose first cell holds that word, and its count is read off the COUNT column like every other.
+The first real workbook read 31 trees where the model held 39 and nothing in the tool could say
+so, because nothing read the one printed number that would have. DM-12 prints TOTAL 39 and its
+eight species rows add to 39. Adding printed numbers is allowed, so a sum that does not match
+the printed TOTAL refuses the write, and a schedule printing no TOTAL row is said in the report
+rather than refused, because a check with no subject is not a failure of the schedule. The two
+skips that were bare continues are named: a row with a name and no whole count refuses and
+names the row, and a row with a count and no name is the subtotal, counted as passed over.
 
 Never read a schedule value by cell position, which is the rule in `CLAUDE.md` and is stated
 there and nowhere else. `ScheduleColumns` is what asks the heading row. What these schedules
 measure is why: eleven columns wide, the first number in a subtotal row is the area and the last
 is L/DAY, so both ends are wrong.
+
+**A reader that cannot find its column refuses, naming the column and printing the headings.**
+The four fallbacks stood through two audits: the botanical name off the first cell, the count
+off the last whole number, the species test off the first cell and the group count off the
+first cell. All four are gone. `SoftscapeRows.Read`, `ShrubsAndLawnRows.Read` and
+`ScheduleGroups.Of` hand back what they read or every reason they refused, never both, in one
+sentence from `ScheduleColumns.NothingNamed`. A group whose named rows cannot be counted is
+still found, with the reason on it, because the group row needs no column.
 
 **A ROW IS A SPECIES ROW WHEN THE BOTANICAL COLUMN HOLDS TEXT, NOT WHEN THE FIRST CELL DOES.**
 The first cell is the image, and **an existing species prints with no photo**, so its first cell
@@ -621,6 +653,16 @@ as a subtotal.
 **An area prints with its unit attached and a count does not.** 35 m² against 46. The unit comes
 off by reading as far as the number goes rather than by stripping characters. A real area can be
 nought: the hardscape schedule prints 0 m², which is the number and not an empty cell.
+
+**A digit after the number ends is a refusal, never a shorter number.** Reading as far as the
+number goes turned 1,234 m² into 1. Every value the reader had met printed under a thousand, and
+the two four figure values ever seen, 1161 and 3729, came off the one project, whose unit format
+prints no separator. A number read short passes its own checks: a one phase group over 999
+printed two rows both reading as their thousands and 1 equalled 1, and 1,200 plus 1,300 totalling
+2,500 read as 1 plus 1 equals 2. Which character a project groups digits with, or uses for the
+decimal, is a units setting this tool has never read, so `CellNumber` parses no separator: a
+cell holding a digit past where the number ends is refused with the cell named, and 1131,72 is
+refused the same way. Revit prints the unit with a superscript two, which is not a digit.
 
 **The 00 link** is RCRC_NG05_NU_MAIN_RVT24_00.rvt, loaded, 279 filled regions all in a view
 called Intervention Limits. Types RCRC_CADASTRAL LIMIT 124 and RCRC_OUT OF SCOPE

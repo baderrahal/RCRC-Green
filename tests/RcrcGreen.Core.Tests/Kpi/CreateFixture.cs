@@ -46,8 +46,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             PlotReading[] readings = null,
             string outputPath = null,
             PatchOutcome outcome = null,
-            RunTiming timing = null)
+            RunTiming timing = null,
+            KpiTemplate template = null)
         {
+            KpiTemplate which = template ?? KpiTemplates.Mosques;
+
             IReadOnlyList<PlotReading> held = readings ?? new[]
             {
                 Plot("DM-12", regions: new[] { Region(OutOfScope, 3728.7570000000005, 40136.006313679296) })
@@ -60,15 +63,15 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             return new KpiCreateRun(
                 "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
-                KpiTemplates.Mosques,
+                which,
                 @"C:\templates\MOSQUES.xlsx",
                 outputPath ?? @"C:\models\MOSQUES DM-12.xlsx",
                 "PRX_Component",
                 "PRX_Plot_UID2",
                 "KING FAHD",
                 held,
-                Reconciliation.Of(held.Select(one => one.PlotId).ToList(), held, null, false),
-                KpiCreatePlan.Of(KpiTemplates.Mosques, null, null, "KING FAHD", area, null, null,
+                Reconciliation.Of(held.Select(one => one.PlotId).ToList(), held, null, false, which),
+                KpiCreatePlan.Of(which, null, null, "KING FAHD", area, null, null,
                     null, "2026-09-09", "xx", "bb"),
                 area,
                 Totalled.Nothing,
@@ -92,7 +95,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             bool softscapeRead = true,
             bool shrubsAndLawnRead = true,
             string[] notes = null,
-            double readSeconds = 0.0)
+            double readSeconds = 0.0,
+            string[] readRefusals = null,
+            bool softscapeTotalRead = false,
+            int softscapeTotal = 0,
+            int rowsPassedOver = 0)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
             string chosen = chosenRegion ?? (held.Length > 0 ? held[0].TypeName : null);
@@ -108,7 +115,11 @@ namespace RcrcGreen.Core.Tests.Kpi
                 held,
                 readSeconds,
                 chosen,
-                notes);
+                notes,
+                readRefusals,
+                softscapeTotalRead,
+                softscapeTotal,
+                rowsPassedOver);
         }
 
         /// <summary>

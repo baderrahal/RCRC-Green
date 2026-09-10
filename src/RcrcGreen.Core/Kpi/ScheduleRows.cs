@@ -11,15 +11,25 @@ namespace RcrcGreen.Core.Kpi
     /// as the number goes rather than by stripping characters, which would turn 1.234 m2 into
     /// something else.
     ///
+    /// **A DIGIT AFTER THE NUMBER ENDS IS A REFUSAL, NEVER A SHORTER NUMBER.** Reading as far as
+    /// the number goes turned 1,234 m2 into 1. Every value this reader had met printed under a
+    /// thousand, and the two four figure values ever seen came off the one project, whose unit
+    /// format prints no separator. Which character a project groups digits with, or uses for
+    /// the decimal, is a units setting this tool has never read, so nothing here parses a
+    /// separator: a cell holding a digit past where the number ends is refused with the cell
+    /// named, and 1131,72 is refused the same way. A number read short defeats the checks built
+    /// on it, because 1 plus 1 equals 2 whether the rows really read 1,200, 1,300 and 2,500 or
+    /// not. Revit prints the area unit as m with a superscript two, which is not a digit, so
+    /// the ordinary cell passes and a unit spelt m2 does not.
+    ///
     /// A real area can be zero. The hardscape schedule prints 0 m2, which reads as the number
     /// nought and not as a cell holding nothing.
     /// </summary>
     public static class CellNumber
     {
-        public static bool In(string cell, out double value)
+        public static CellNumberRead Read(string cell)
         {
-            value = 0.0;
-            if (string.IsNullOrWhiteSpace(cell)) return false;
+            if (string.IsNullOrWhiteSpace(cell)) return CellNumberRead.Empty;
 
             string text = cell.Trim();
             int at = 0;
@@ -46,23 +56,32 @@ namespace RcrcGreen.Core.Kpi
                 break;
             }
 
-            if (digits == 0) return false;
+            if (digits == 0) return CellNumberRead.Empty;
 
-            return double.TryParse(
-                text.Substring(0, at), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+            string front = text.Substring(0, at);
+            string rest = text.Substring(at);
+
+            if (rest.Any(char.IsDigit))
+            {
+                return CellNumberRead.Refused("holds " + Quoted(text) + ", which carries a digit after "
+                    + "the number " + front + " ends. That is a thousands separator or a decimal comma, "
+                    + "this tool does not read the project's separator setting, and a number read short "
+                    + "passes its own checks, so the cell is refused rather than read as " + front + ".");
+            }
+
+            double value;
+            if (!double.TryParse(front, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            {
+                return CellNumberRead.Refused("holds " + Quoted(text) + " and " + front
+                    + " did not read as a number.");
+            }
+
+            return CellNumberRead.Number(value);
         }
 
-        public static bool WholeIn(string cell, out int value)
+        private static string Quoted(string text)
         {
-            value = 0;
-
-            double number;
-            if (!In(cell, out number)) return false;
-            if (number < 0 || number > int.MaxValue) return false;
-            if (Math.Abs(number - Math.Round(number)) > 0.0) return false;
-
-            value = (int)Math.Round(number);
-            return true;
+            return "'" + text + "'";
         }
     }
 
@@ -71,8 +90,9 @@ namespace RcrcGreen.Core.Kpi
     ///
     /// These schedules are eleven columns wide. Taking the first number in a row would take the
     /// area and taking the last would take L/DAY, so neither position can be assumed and the
-    /// headings decide. A schedule whose headings name none of them says so by handing back
-    /// nothing rather than by pointing at a column that happens to be there.
+    /// headings decide. **A schedule whose headings name none of them is refused, with the
+    /// column named**, never read off a position that happens to be there. Cell 0 is the image
+    /// column, so a name read off it is a file name.
     /// </summary>
     public static class ScheduleColumns
     {
@@ -92,6 +112,21 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return -1;
+        }
+
+        /// <summary>
+        /// The refusal every reader gives for a column its heading row does not name, one
+        /// sentence for all of them, with the headings printed so the person reading it can see
+        /// what the schedule does call its columns.
+        /// </summary>
+        public static string NothingNamed(IReadOnlyList<string> headings, string word)
+        {
+            var named = (headings ?? new List<string>())
+                .Select(one => string.IsNullOrWhiteSpace(one) ? "-" : one.Trim())
+                .ToList();
+
+            return "the heading row names no column holding " + word + ". Its headings: "
+                + (named.Count == 0 ? "(none)" : string.Join(" | ", named.ToArray()));
         }
 
         public static string At(IReadOnlyList<string> row, int column)
@@ -121,36 +156,56 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
-    /// The species rows of a softscape schedule, each with the group row it sat under.
+    /// The species rows of a softscape schedule, each with the group row it sat under, and the
+    /// TOTAL row held beside them.
     ///
-    /// The botanical name and the quantity come off the columns the heading row names, and fall
-    /// back to the first cell and the last whole number only where it names neither. The real
-    /// schedules are eleven columns wide with an image in the first, so a name read off cell
-    /// nought there would be a file name.
+    /// The botanical name and the quantity come off the columns the heading row names and off
+    /// nothing else. **A schedule naming neither is refused with the column named.** It used to
+    /// fall back to the first cell and the last whole number, and the real schedules are eleven
+    /// columns wide with an image in the first, so the name would have been a file name and the
+    /// count L/DAY.
+    ///
+    /// Nothing is dropped in silence. A row with a name and no whole count refuses the read and
+    /// names the row. A row with a count and no name is a subtotal and is counted as passed
+    /// over. The TOTAL row is read off the row whose first cell holds that word, so the species
+    /// rows can be held against what the schedule says they add to.
     /// </summary>
     public static class SoftscapeRows
     {
-        public static IReadOnlyList<SpeciesRow> SpeciesIn(
+        public const string TotalMark = "TOTAL";
+
+        public static SoftscapeReading Read(
             ScannedSchedule schedule, IEnumerable<string> phaseNames, string plotId)
         {
             if (schedule == null) throw new ArgumentNullException("schedule");
 
-            var found = new List<SpeciesRow>();
-            if (!schedule.RowsWereRead) return found;
+            if (!schedule.RowsWereRead) return SoftscapeReading.Nothing;
 
             List<IReadOnlyList<string>> rows = schedule.Rows.ToList();
-            if (rows.Count == 0) return found;
+            if (rows.Count == 0) return SoftscapeReading.Nothing;
 
-            int nameColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.BotanicalWord);
-            int countColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.CountWord);
+            IReadOnlyList<string> headings = rows[0];
+            int nameColumn = ScheduleColumns.Holding(headings, ScheduleColumns.BotanicalWord);
+            int countColumn = ScheduleColumns.Holding(headings, ScheduleColumns.CountWord);
+
+            var refusals = new List<string>();
+            if (nameColumn < 0) refusals.Add(ScheduleColumns.NothingNamed(headings, ScheduleColumns.BotanicalWord));
+            if (countColumn < 0) refusals.Add(ScheduleColumns.NothingNamed(headings, ScheduleColumns.CountWord));
+            if (refusals.Count > 0) return SoftscapeReading.Refused(refusals);
+
+            string countHeading = (headings[countColumn] ?? string.Empty).Trim();
 
             IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, phaseNames);
             var groupAt = new Dictionary<int, string>();
             foreach (ScheduleGroup group in groups) groupAt[group.RowIndex] = group.Name;
 
+            var found = new List<SpeciesRow>();
             string carrying = string.Empty;
+            bool totalRead = false;
+            int total = 0;
+            int passedOver = 0;
 
-            for (int index = 0; index < rows.Count; index++)
+            for (int index = 1; index < rows.Count; index++)
             {
                 string named;
                 if (groupAt.TryGetValue(index, out named))
@@ -162,40 +217,62 @@ namespace RcrcGreen.Core.Kpi
                 IReadOnlyList<string> row = rows[index];
                 if (row == null || row.Count == 0) continue;
 
-                string botanical = nameColumn >= 0
-                    ? ScheduleColumns.At(row, nameColumn)
-                    : (row.Count > 0 ? row[0] : string.Empty);
-                if (string.IsNullOrWhiteSpace(botanical)) continue;
+                string countCell = ScheduleColumns.At(row, countColumn);
+                CellNumberRead count = CellNumber.Read(countCell);
 
-                int quantity;
-                if (!QuantityIn(row, countColumn, out quantity)) continue;
+                // The TOTAL row is read before the shape of the row is looked at, because a
+                // TOTAL row whose count is empty is one cell of text and nothing else, which is
+                // the shape of a heading, and it is a refusal rather than a heading.
+                if (string.Equals(ScheduleColumns.At(row, 0).Trim(), TotalMark, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (count.IsWhole)
+                    {
+                        totalRead = true;
+                        total = count.Whole;
+                        continue;
+                    }
 
-                found.Add(new SpeciesRow(botanical.Trim(), carrying, quantity, plotId));
+                    refusals.Add("row " + (index + 1) + ", the TOTAL row: its " + countHeading + " cell "
+                        + (count.IsRefused ? count.Refusal : "holds '" + countCell + "' and not a whole number")
+                        + ".");
+                    continue;
+                }
+
+                // A category row such as TREES holds text in one cell and nothing else. On a
+                // schedule whose botanical column is the first, that text sits in the botanical
+                // column, and a row of that shape is a heading rather than a species short of
+                // its count.
+                if (ScheduleColumns.IsStructureRow(row)) continue;
+
+                string botanical = ScheduleColumns.At(row, nameColumn);
+                if (string.IsNullOrWhiteSpace(botanical))
+                {
+                    // A count and no name is the subtotal a group prints under its species. A
+                    // structure row holds neither and is nothing to count.
+                    if (count.IsNumber) passedOver++;
+                    if (count.IsRefused)
+                    {
+                        refusals.Add("row " + (index + 1) + ", no botanical name: its " + countHeading
+                            + " cell " + count.Refusal);
+                    }
+
+                    continue;
+                }
+
+                if (count.IsWhole)
+                {
+                    found.Add(new SpeciesRow(botanical.Trim(), carrying, count.Whole, plotId));
+                    continue;
+                }
+
+                refusals.Add("row " + (index + 1) + ", " + botanical.Trim() + ": its " + countHeading + " cell "
+                    + (count.IsRefused ? count.Refusal : "holds '" + countCell + "' and not a whole number")
+                    + ", so the row cannot be counted.");
             }
 
-            return found;
-        }
+            if (refusals.Count > 0) return SoftscapeReading.Refused(refusals);
 
-        private static bool QuantityIn(IReadOnlyList<string> row, int countColumn, out int quantity)
-        {
-            if (countColumn >= 0)
-            {
-                return CellNumber.WholeIn(ScheduleColumns.At(row, countColumn), out quantity);
-            }
-
-            quantity = 0;
-            bool any = false;
-
-            for (int at = 1; at < row.Count; at++)
-            {
-                int number;
-                if (!CellNumber.WholeIn(row[at], out number)) continue;
-
-                quantity = number;
-                any = true;
-            }
-
-            return any;
+            return SoftscapeReading.Of(found, totalRead, total, passedOver);
         }
     }
 
@@ -228,8 +305,7 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public static class ShrubsAndLawnRows
     {
-        public static IReadOnlyList<GroupSubtotal> SubtotalsIn(
-            ScannedSchedule schedule, IEnumerable<string> headings)
+        public static ShrubsAndLawnReading Read(ScannedSchedule schedule, IEnumerable<string> headings)
         {
             if (schedule == null) throw new ArgumentNullException("schedule");
 
@@ -237,17 +313,29 @@ namespace RcrcGreen.Core.Kpi
                 .Where(one => !string.IsNullOrWhiteSpace(one))
                 .ToList();
 
-            var found = new List<GroupSubtotal>();
-            if (!schedule.RowsWereRead || wanted.Count == 0) return found;
+            if (!schedule.RowsWereRead || wanted.Count == 0) return ShrubsAndLawnReading.Nothing;
 
             List<IReadOnlyList<string>> rows = schedule.Rows.ToList();
-            if (rows.Count == 0) return found;
+            if (rows.Count == 0) return ShrubsAndLawnReading.Nothing;
 
-            int areaColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.AreaWord);
-            int countColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.CountWord);
-            int nameColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.BotanicalWord);
-            if (areaColumn < 0) return found;
+            IReadOnlyList<string> headingRow = rows[0];
+            int areaColumn = ScheduleColumns.Holding(headingRow, ScheduleColumns.AreaWord);
+            int countColumn = ScheduleColumns.Holding(headingRow, ScheduleColumns.CountWord);
+            int nameColumn = ScheduleColumns.Holding(headingRow, ScheduleColumns.BotanicalWord);
 
+            // **Refused with the column named, never read off a position.** The area used to
+            // return nothing in silence and the name fell back to the first cell, which is the
+            // image, so an existing shrub with no photo read as a subtotal.
+            var refusals = new List<string>();
+            if (areaColumn < 0) refusals.Add(ScheduleColumns.NothingNamed(headingRow, ScheduleColumns.AreaWord));
+            if (countColumn < 0) refusals.Add(ScheduleColumns.NothingNamed(headingRow, ScheduleColumns.CountWord));
+            if (nameColumn < 0) refusals.Add(ScheduleColumns.NothingNamed(headingRow, ScheduleColumns.BotanicalWord));
+            if (refusals.Count > 0) return ShrubsAndLawnReading.Refused(refusals);
+
+            string areaHeading = (headingRow[areaColumn] ?? string.Empty).Trim();
+            string countHeading = (headingRow[countColumn] ?? string.Empty).Trim();
+
+            var found = new List<GroupSubtotal>();
             string heading = null;
             var subtotals = new List<GroupSubtotal>();
             var species = new List<double>();
@@ -275,34 +363,52 @@ namespace RcrcGreen.Core.Kpi
 
                 if (heading == null) continue;
 
-                double area;
-                if (!CellNumber.In(ScheduleColumns.At(row, areaColumn), out area)) continue;
+                string areaCell = ScheduleColumns.At(row, areaColumn);
+                CellNumberRead area = CellNumber.Read(areaCell);
+                if (area.IsRefused)
+                {
+                    refusals.Add("row " + (index + 1) + ": its " + areaHeading + " cell " + area.Refusal);
+                    continue;
+                }
 
-                int items;
-                CellNumber.WholeIn(ScheduleColumns.At(row, countColumn), out items);
+                if (!area.IsNumber) continue;
+
+                string countCell = ScheduleColumns.At(row, countColumn);
+                CellNumberRead count = CellNumber.Read(countCell);
+                if (count.IsRefused)
+                {
+                    refusals.Add("row " + (index + 1) + ": its " + countHeading + " cell " + count.Refusal);
+                    continue;
+                }
 
                 // A species is a row the botanical column names, whatever its image cell holds,
                 // because an existing species prints with no photo. A subtotal names nothing
                 // anywhere. TOTAL names nothing botanical either and is kept out by its own
                 // first cell, which is the one thing it does carry.
-                bool named = nameColumn >= 0
-                    ? !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn))
-                    : !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, 0));
+                bool named = !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn));
 
                 if (named)
                 {
-                    species.Add(area);
+                    species.Add(area.Value);
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(ScheduleColumns.At(row, 0)))
+                if (!string.IsNullOrWhiteSpace(ScheduleColumns.At(row, 0))) continue;
+
+                if (!count.IsWhole)
                 {
-                    subtotals.Add(new GroupSubtotal(heading, area, items));
+                    refusals.Add("row " + (index + 1) + ", a subtotal row: its " + countHeading + " cell holds '"
+                        + countCell + "' and not a whole number, so the group cannot be checked.");
+                    continue;
                 }
+
+                subtotals.Add(new GroupSubtotal(heading, area.Value, count.Whole));
             }
 
+            if (refusals.Count > 0) return ShrubsAndLawnReading.Refused(refusals);
+
             Close(found, heading, subtotals, species);
-            return found;
+            return ShrubsAndLawnReading.Of(found);
         }
 
         /// <summary>

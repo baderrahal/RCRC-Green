@@ -30,7 +30,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             var readings = new[] { Full("DM-11"), Full("DM-12", 250.0) };
 
             Reconciliation held = Reconciliation.Of(
-                new[] { "DM-11", "DM-12" }, readings, new[] { KpiMerge.Shrubs(readings) }, false);
+                new[] { "DM-11", "DM-12" }, readings, new[] { KpiMerge.Shrubs(readings) }, false, KpiTemplates.Mosques);
 
             Assert.True(held.AddsUp);
             Assert.Empty(held.Refusals);
@@ -47,7 +47,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void APlotTickedAndNotReadRefusesTheWriteAndIsNamed()
         {
             Reconciliation held = Reconciliation.Of(
-                new[] { "DM-11", "DM-12", "DM-13" }, new[] { Full("DM-11") }, null, false);
+                new[] { "DM-11", "DM-12", "DM-13" }, new[] { Full("DM-11") }, null, false, KpiTemplates.Mosques);
 
             Assert.False(held.AddsUp);
             string refusal = Assert.Single(held.Refusals);
@@ -59,7 +59,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void APlotReadThatWasNeverTickedRefusesTheWriteToo()
         {
             Reconciliation held = Reconciliation.Of(
-                new[] { "DM-11" }, new[] { Full("DM-11"), Full("DM-99", 250.0) }, null, false);
+                new[] { "DM-11" }, new[] { Full("DM-11"), Full("DM-99", 250.0) }, null, false, KpiTemplates.Mosques);
 
             Assert.False(held.AddsUp);
             Assert.Contains(held.Refusals, one => one.Contains("not ticked") && one.Contains("DM-99"));
@@ -78,7 +78,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 105.0);
 
             Reconciliation held = Reconciliation.Of(
-                new[] { "DM-11" }, new[] { Full("DM-11") }, new[] { wrong }, false);
+                new[] { "DM-11" }, new[] { Full("DM-11") }, new[] { wrong }, false, KpiTemplates.Mosques);
 
             Assert.False(held.AddsUp);
             Assert.Contains(held.Refusals, one => one.Contains("does not equal the plot numbers"));
@@ -100,12 +100,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             };
             var ticked = new[] { "MM-03", "MM-04" };
 
-            Reconciliation refusing = Reconciliation.Of(ticked, readings, null, false);
+            Reconciliation refusing = Reconciliation.Of(ticked, readings, null, false, KpiTemplates.Mosques);
             Assert.False(refusing.AddsUp);
             Assert.Contains(refusing.Refusals, one => one.Contains("report the same area"));
             Assert.Single(refusing.IdenticalAreas);
 
-            Reconciliation confirmed = Reconciliation.Of(ticked, readings, null, true);
+            Reconciliation confirmed = Reconciliation.Of(ticked, readings, null, true, KpiTemplates.Mosques);
             Assert.True(confirmed.AddsUp);
             Assert.Single(confirmed.IdenticalAreas);
         }
@@ -122,7 +122,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 }, regions: new[] { CreateFixture.Region(CreateFixture.OutOfScope, 250.0) })
             };
 
-            Reconciliation held = Reconciliation.Of(new[] { "DM-11", "DM-12" }, readings, null, false);
+            Reconciliation held = Reconciliation.Of(new[] { "DM-11", "DM-12" }, readings, null, false, KpiTemplates.Mosques);
 
             Assert.True(held.AddsUp);
             Assert.Equal(new[] { "DM-12" }, held.WithoutSoftscape);
@@ -146,7 +146,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 chosenRegion: string.Empty);
 
-            Reconciliation refusing = Reconciliation.Of(new[] { "NS-19" }, new[] { reading }, null, false);
+            Reconciliation refusing = Reconciliation.Of(new[] { "NS-19" }, new[] { reading }, null, false, KpiTemplates.Mosques);
 
             Assert.False(refusing.AddsUp);
             Assert.Contains(refusing.Refusals,
@@ -161,7 +161,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 chosenRegion: CreateFixture.Cadastral);
 
-            Assert.True(Reconciliation.Of(new[] { "NS-19" }, new[] { picked }, null, false).AddsUp);
+            Assert.True(Reconciliation.Of(new[] { "NS-19" }, new[] { picked }, null, false, KpiTemplates.Mosques).AddsUp);
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         "its 2 subtotal rows disagree: 35 over 46, 37 over 46")
                 });
 
-            Reconciliation held = Reconciliation.Of(new[] { "DM-11" }, new[] { reading }, null, false);
+            Reconciliation held = Reconciliation.Of(new[] { "DM-11" }, new[] { reading }, null, false, KpiTemplates.Mosques);
 
             Assert.False(held.AddsUp);
             Assert.Contains(held.Refusals,
@@ -193,7 +193,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "DM-11",
                 subtotals: new[] { new GroupSubtotal(KpiMerge.LawnHeading, 35.0, 46, 2, 35.0) });
 
-            Assert.True(Reconciliation.Of(new[] { "DM-11" }, new[] { reading }, null, false).AddsUp);
+            Assert.True(Reconciliation.Of(new[] { "DM-11" }, new[] { reading }, null, false, KpiTemplates.Mosques).AddsUp);
         }
 
         [Fact]
@@ -208,7 +208,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     chosenRegion: string.Empty)
             };
 
-            Reconciliation held = Reconciliation.Of(new[] { "DM-11", "DM-12" }, readings, null, false);
+            Reconciliation held = Reconciliation.Of(new[] { "DM-11", "DM-12" }, readings, null, false, KpiTemplates.Mosques);
 
             Assert.Equal(new[] { "DM-12" }, held.WithoutArea);
             Assert.True(held.AddsUp);
@@ -230,7 +230,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     chosenRegion: string.Empty)
             };
 
-            Reconciliation held = Reconciliation.Of(new[] { "DM-11", "DM-12" }, readings, null, false);
+            Reconciliation held = Reconciliation.Of(new[] { "DM-11", "DM-12" }, readings, null, false, KpiTemplates.Mosques);
 
             PlotAndReason nothing = Assert.Single(held.ContributedNothing);
             Assert.Equal("DM-12", nothing.PlotId);

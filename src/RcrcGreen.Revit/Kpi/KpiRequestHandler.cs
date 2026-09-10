@@ -254,19 +254,32 @@ namespace RcrcGreen.Revit.Kpi
             IReadOnlyList<string> phases = PhaseNames(document);
             var readings = new List<PlotReading>();
 
+            // **A TEMPLATE THAT TAKES NO AREA HAS ITS REGIONS LEFT UNREAD.** STREETS types the
+            // road width and the total length by hand and the sheet works the area out, so its
+            // map holds no area cell. Reading the regions anyway meant the first 78 plot run
+            // would refuse on MM-03 and MM-04, which read one raw area, over a number the
+            // workbook has no cell for, and read all 78 again after the confirm.
+            bool areaWanted = !asked.Template.AreaIsTypedByHand;
+
             foreach (string plotId in asked.Ticked)
             {
                 var perPlot = Stopwatch.StartNew();
-                IReadOnlyList<RegionArea> regions = KpiPlotReader.RegionsFor(document, plotId);
+                IReadOnlyList<RegionArea> regions = areaWanted
+                    ? KpiPlotReader.RegionsFor(document, plotId)
+                    : new List<RegionArea>();
 
                 // One region holding an area answers itself. More than one is a question the
                 // type name cannot settle, so it is left unchosen and the reconciliation
                 // refuses until a person picks.
-                string chosen = asked.RegionChosenFor(plotId);
-                if (chosen.Length == 0)
+                string chosen = string.Empty;
+                if (areaWanted)
                 {
-                    List<RegionArea> holding = regions.Where(one => one.HoldsAnArea).ToList();
-                    if (holding.Count == 1) chosen = holding[0].TypeName;
+                    chosen = asked.RegionChosenFor(plotId);
+                    if (chosen.Length == 0)
+                    {
+                        List<RegionArea> holding = regions.Where(one => one.HoldsAnArea).ToList();
+                        if (holding.Count == 1) chosen = holding[0].TypeName;
+                    }
                 }
 
                 readings.Add(KpiPlotReader.Read(
@@ -283,7 +296,8 @@ namespace RcrcGreen.Revit.Kpi
             AgreedValue reference = KpiMerge.Reference(readings);
 
             Reconciliation reconciliation = Reconciliation.Of(
-                asked.Ticked, readings, new[] { area, shrubs, lawn }, asked.IdenticalAreasConfirmed);
+                asked.Ticked, readings, new[] { area, shrubs, lawn }, asked.IdenticalAreasConfirmed,
+                asked.Template);
 
             string location = KpiPlotReader.Location(document, asked.LocationParameter);
             IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings);

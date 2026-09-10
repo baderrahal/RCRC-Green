@@ -17,6 +17,10 @@ namespace RcrcGreen.Core.Kpi
     /// It used to be counted off the first cell, which is the image column, and an existing
     /// species prints with no photo: DM-12 Existing came back as 0 named rows of 6 while
     /// section 6 of the same file printed its five species.
+    ///
+    /// **A schedule naming no such column has its groups found and its named rows NOT
+    /// counted**, with the reason on every group, rather than counted off the first cell. The
+    /// group rows need no column, so they are still found.
     /// </summary>
     public static class ScheduleGroups
     {
@@ -39,6 +43,10 @@ namespace RcrcGreen.Core.Kpi
             if (rows.Count == 0) return found;
 
             int nameColumn = ScheduleColumns.Holding(rows[0], ScheduleColumns.BotanicalWord);
+            bool counted = nameColumn >= 0;
+            string whyNotCounted = counted
+                ? string.Empty
+                : ScheduleColumns.NothingNamed(rows[0], ScheduleColumns.BotanicalWord);
             var at = new List<int>();
 
             for (int index = 0; index < rows.Count; index++)
@@ -53,12 +61,13 @@ namespace RcrcGreen.Core.Kpi
                 int under = ends - index - 1;
                 int named = 0;
 
-                for (int row = index + 1; row < ends; row++)
+                for (int row = index + 1; counted && row < ends; row++)
                 {
                     if (IsNamed(rows[row], nameColumn)) named++;
                 }
 
-                found.Add(new ScheduleGroup(GroupNameIn(rows[index], wanted), index, under, named));
+                found.Add(new ScheduleGroup(
+                    GroupNameIn(rows[index], wanted), index, under, named, counted, whyNotCounted));
             }
 
             return found;
@@ -89,16 +98,14 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// A row that names something, read off the botanical column where the heading row
-        /// names one and off the first cell only where it does not.
+        /// A row that names something, read off the botanical column and nothing else. It is
+        /// called only when the heading row names one.
         /// </summary>
         private static bool IsNamed(IReadOnlyList<string> row, int nameColumn)
         {
             if (row == null || row.Count == 0) return false;
 
-            if (nameColumn >= 0) return !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn));
-
-            return !string.IsNullOrWhiteSpace(row[0]);
+            return !string.IsNullOrWhiteSpace(ScheduleColumns.At(row, nameColumn));
         }
     }
 }

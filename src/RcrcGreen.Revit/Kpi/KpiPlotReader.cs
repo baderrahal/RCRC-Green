@@ -251,8 +251,12 @@ namespace RcrcGreen.Revit.Kpi
 
             var species = new List<SpeciesRow>();
             var subtotals = new List<GroupSubtotal>();
+            var refusals = new List<string>();
             bool softscapeRead = false;
             bool groundRead = false;
+            bool totalRead = false;
+            int total = 0;
+            int passedOver = 0;
 
             foreach (ViewSchedule schedule in Schedules(document))
             {
@@ -268,18 +272,32 @@ namespace RcrcGreen.Revit.Kpi
 
                 ScannedSchedule read = Printed(schedule);
 
+                // A refused read travels with the schedule's name and refuses the write. It
+                // used to be a list of nothing, which the reconciliation read as a plot whose
+                // schedule listed no species.
                 if (KpiNames.HoldsAny(schedule.Name, KpiNames.SoftscapeWords))
                 {
                     softscapeRead = true;
-                    species.AddRange(SoftscapeRows.SpeciesIn(read, phases, plotId));
+                    SoftscapeReading trees = SoftscapeRows.Read(read, phases, plotId);
+                    species.AddRange(trees.Species);
+                    refusals.AddRange(trees.Refusals.Select(why => schedule.Name + ": " + why));
+                    if (trees.TotalRead)
+                    {
+                        totalRead = true;
+                        total += trees.Total;
+                    }
+
+                    passedOver += trees.RowsPassedOver;
                     continue;
                 }
 
                 if (KpiNames.HoldsAny(schedule.Name, "SHRUB", "LAWN"))
                 {
                     groundRead = true;
-                    subtotals.AddRange(ShrubsAndLawnRows.SubtotalsIn(
-                        read, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }));
+                    ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(
+                        read, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading });
+                    subtotals.AddRange(ground.Subtotals);
+                    refusals.AddRange(ground.Refusals.Select(why => schedule.Name + ": " + why));
                 }
             }
 
@@ -294,7 +312,11 @@ namespace RcrcGreen.Revit.Kpi
                 regions,
                 regionSeconds + clock.Elapsed.TotalSeconds,
                 chosenRegionTypeName,
-                notes);
+                notes,
+                refusals,
+                totalRead,
+                total,
+                passedOver);
         }
 
         /// <summary>

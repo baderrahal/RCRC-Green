@@ -488,8 +488,10 @@ namespace RcrcGreen.Core.Kpi
                 anything = true;
                 parts.Add("THE PRINTED ROWS SEPARATE THEM. " + schedule.Name + " prints "
                     + Count(groups.Count, "group row") + ": " + string.Join(", ", groups
-                        .Select(group => group.Name + " with " + Count(group.NamedRowsUnder, "named row")
-                            + " under it, of " + group.RowsUnder + " before the next")
+                        .Select(group => group.Name + " with " + (group.NamedRowsCounted
+                                ? Count(group.NamedRowsUnder, "named row") + " under it"
+                                : "its named rows not counted, because " + group.WhyNotCounted)
+                            + ", of " + group.RowsUnder + " before the next")
                         .ToArray())
                     + ". The plot is " + PlotOf(schedule));
             }
