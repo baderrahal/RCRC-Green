@@ -69,14 +69,6 @@ namespace RcrcGreen.Core
             _leftBehind.Add(refusal);
         }
 
-        /// <summary>
-        /// Where each new view took its family type, level, template and far clip from. Not a
-        /// problem and not a refusal, which is why it has a list of its own.
-        ///
-        /// A run created a view whose template and family type looked as though they had come
-        /// from two different places, and there was no way to check because nothing said which
-        /// view either came from. Now the report names it.
-        /// </summary>
         private readonly List<ViewportRecord> _placements = new List<ViewportRecord>();
 
         /// <summary>
@@ -95,6 +87,15 @@ namespace RcrcGreen.Core
             get { return _placements; }
         }
 
+        /// <summary>
+        /// Where each new view took its family type, level, template and crop from, and each
+        /// sheet its size. Not a problem and not a refusal, which is why it has a list of its
+        /// own.
+        ///
+        /// A run created a view whose template and family type looked as though they had come
+        /// from two different places, and there was no way to check because nothing said which
+        /// view either came from. Now the report names it.
+        /// </summary>
         public void NoteSetup(RunRefusal note)
         {
             if (note == null) throw new ArgumentNullException("note");

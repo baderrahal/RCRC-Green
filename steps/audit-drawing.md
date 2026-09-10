@@ -158,6 +158,9 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    The one time this shows, in the middle of a failure, it names a ribbon panel that does
    not exist | A sentence
 
+   FIXED. The message says the panel cannot be opened and that Scan Model and Scope Box run
+   from inside it, then restart Revit.
+
 9. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:1114 and :1170, with
    src/RcrcGreen.Core/DrawingSheet/SheetNumbers.cs:120 and DrawingSheetSnapshot.cs:269 |
    Every row of every step 4 table gets its own copy of every sheet name in use and every
@@ -301,6 +304,10 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     Two comments describing a rule the tool stopped following, one on the wrong field | Two
     lines and a move
 
+    FIXED. The RunOutcome comment sits on `NoteSetup` and says family type, level, template
+    and crop, and each sheet's size. The SiblingReader comment says two of the three crop
+    settings rather than the far clip.
+
 19. LOGIC | src/RcrcGreen.Core/DrawingSheet/RunPlan.cs:364 and :370, pinned by
     tests/RcrcGreen.Core.Tests/RunPlanTests.cs:236 | Finding 15 of the last audit,
     unchanged. One refusal prints 1 things cannot be made, and the test asserts that exact
@@ -351,6 +358,14 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     folder says pull request 31 and the file's title says pull request 28 | Anyone tracing
     a round from its mockup lands on the wrong pull request | A folder rename
 
+    FIXED, and it was two folders. `git log --diff-filter=A` says `design/pr-31/panel.html`,
+    titled pull request 28, was added by the commit for pull request 28, and
+    `design/pr-28/panel.html`, titled Sheet numbers, pull request 28, was added by the commit
+    for pull request 29. Both sessions guessed 28 and the KPI one landed it. So pr-28 is
+    renamed pr-29 with its title changed to 29, and pr-31 is renamed pr-28 with its title
+    kept. The same fault nearly recurred this round, pr-60 opening as 61, and was renamed
+    before the merge.
+
 23. NO VIBE CODING | src/RcrcGreen.Core/DrawingSheet/PanelSteps.cs:210,
     src/RcrcGreen.Revit/DrawingSheetPanel.cs:1966, and .claude/rules/core-rules.md:27 |
     Both messages for a model with no plots say no view carries a PRX_Plot_ID and no view
@@ -358,6 +373,11 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     Since pull request 48 the list is the union of four, and a plot found through a scope
     box or an element alone is the point of it | A message and a rule describing the list
     the tool had before the fix | Three lines
+
+    FIXED. One sentence, `PanelSteps.NoPlotsInTheModel`, names all four sources, step 1 and
+    the empty grid both read it, core-rules.md's heading says four and names the registry,
+    and the reader's own comment says four. A test pins the sentence and that the grid
+    starts with it.
 
 24. INTERFACE | src/RcrcGreen.Core/DrawingSheet/PanelSteps.cs:290 to :297, fed by
     src/RcrcGreen.Revit/DrawingSheetPanel.cs:287 | `sheetsIncomplete` counts only
@@ -397,6 +417,10 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     one display name is UNKNOWN | A schedule one column short with the report reading
     clean, on a path nobody has measured | A NeedsAttention note
 
+    FIXED. A field the captured definition names twice is added once and named under needs
+    attention, with the note saying that whether a source schedule really holds two fields
+    under one name is UNKNOWN. Not observed in Revit.
+
 28. STRUCTURE | src/RcrcGreen.Core/Shared/ScanFileName.cs:13 to :17 and :27 | The scan,
     scope box and run prefixes are Drawing Sheet's report names, and the two-argument
     `For` defaults to the scan one. They live in Shared, where KPI passes a prefix of its
@@ -414,6 +438,13 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     sit in ComboBoxes | A name with an underscore reads wrong on the one panel whose job is
     exact names | The escape the KPI pane already has
 
+    FIXED. The plot tick boxes, the view type tick boxes, the step 4 view tick boxes, the
+    scope box case buttons and their view rows, and every secondary button go through
+    `PaneLabel.Escaped`, the KPI pane's own, called across the fence rather than copied and
+    with no KPI file edited. Its home should be Shared, which needs a round of its own. The
+    title block names in the ComboBoxes are left as the audit left them. Not observed in
+    Revit.
+
 30. INTERFACE | src/RcrcGreen.Core/DrawingSheet/SiblingView.cs:244, with
     src/RcrcGreen.Revit/ModelWriter.cs:139 and :266 | `SiblingChoice.For` falls back to
     the first view of the type whatever its kind. A plan asked of a section sibling is
@@ -422,6 +453,10 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     type and is refused with Revit refused an argument | Two refusals that name the wrong
     cause, on a model that draws one view type both ways | Say the kind in both refusals
 
+    FIXED. `SiblingView.WrongKindInWords` names the kind the nearest view is and the kind
+    that was wanted, the writer refuses on it before asking for a level or creating a
+    section, and a test writes both refusals out by hand.
+
 31. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:433, :1401, :1716, :1722, :1960
     and :2031, against .claude/rules/revit-commands.md's rule that every summary and reason
     is in PanelSteps with a test | Six messages are formatted in the panel with no test,
@@ -429,6 +464,11 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     same words live in two files and one of them is already stale, finding 23 | The rule
     that has caught two count faults is not being followed on the panel that needs it most
     | Move six strings
+
+    FIXED. The step 1 line, the scope box line, the two no plots ticked lines, the nothing
+    to run line, the empty grid's four reasons and the marked line are `PanelSteps` methods
+    with tests, and the panel calls them. The no plots sentence is one constant read from
+    both places, finding 23.
 
 ## Dropped, no cost to the user
 

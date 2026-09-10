@@ -205,6 +205,32 @@ namespace RcrcGreen.Core.Tests
             Assert.DoesNotContain("annotation crop", made.InWords());
         }
 
+        /// <summary>
+        /// The model draws one view type both ways. A plan asked of a section used to be
+        /// refused as sitting on no level, and a section asked of a plan reached Revit and
+        /// came back as a bad argument. Both refusals name the kind now, written out by hand.
+        /// </summary>
+        [Fact]
+        public void AWrongKindIsRefusedByNamingTheKindItIsAndTheKindWanted()
+        {
+            var crossSection = new ViewType("400", "Landscape Cross Section");
+            SiblingView section = Section("DM-14-(400) Landscape Cross Section", crossSection, "TEMPLATE");
+            SiblingView plan = Plan("DM-18-(010) Overall Plan", Overall, "TYPE A", "TEMPLATE");
+
+            Assert.Equal(
+                "No (400) Landscape Cross Section in this model is a plan view. The nearest is "
+                + "DM-14-(400) Landscape Cross Section, which is a section, so there is nothing "
+                + "to take a level and a family type from. Make one by hand on any plot and this "
+                + "will follow it.",
+                section.WrongKindInWords(SiblingKind.Plan));
+
+            Assert.Equal(
+                "No (010) Overall Plan in this model is a section. The nearest is DM-18-(010) "
+                + "Overall Plan, which is a plan view, so there is nothing to take a family type "
+                + "from. Make one by hand on any plot and this will follow it.",
+                plan.WrongKindInWords(SiblingKind.Section));
+        }
+
         [Fact]
         public void ASiblingWithNoTemplateSaysNoneRatherThanNothing()
         {

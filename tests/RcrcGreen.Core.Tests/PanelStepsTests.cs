@@ -153,6 +153,79 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
+        /// One sentence for a model with no plots, on step 1 and on the grid, naming all four
+        /// sources the list is the union of. The panel held a second copy written out, and
+        /// both still named two sources after the registry made it four.
+        /// </summary>
+        [Fact]
+        public void AModelWithNoPlotsNamesAllFourSourcesInOneSentence()
+        {
+            StepState plots = After(plotsInModel: 0, first: "", last: "", plotsInRange: 0, plotsTicked: 0)
+                .For(PanelStep.Plots);
+
+            Assert.Equal(
+                "This model holds no plots. No view name, no PRX_Plot_ID on a view or an element "
+                + "and no scope box gives one.",
+                plots.WhyNot);
+            Assert.Equal(PanelSteps.NoPlotsInTheModel, plots.WhyNot);
+            Assert.StartsWith(PanelSteps.NoPlotsInTheModel, PanelSteps.NothingToDraw(true, true, false));
+        }
+
+        /// <summary>
+        /// Six messages the panel used to format itself, against the rule that every summary
+        /// and reason lives here with a test. Each expected line is written out by hand.
+        /// </summary>
+        [Fact]
+        public void TheMessagesThePanelUsedToFormatItselfLiveHere()
+        {
+            Assert.Equal("No plots in this model.", PanelSteps.PlotsLine(true, 0, 0, 0));
+            Assert.Equal(
+                "15 of 17 plots in range ticked, 160 in the model. Untick one to leave it out of "
+                + "the counts and out of anything that writes.",
+                PanelSteps.PlotsLine(false, 15, 17, 160));
+
+            Assert.Equal(
+                "42 views across 17 ticked plots. Only C is written.",
+                PanelSteps.ScopeBoxLine(42, 17));
+            Assert.Equal(
+                "1 view across 1 ticked plot. Only C is written.",
+                PanelSteps.ScopeBoxLine(1, 1));
+
+            Assert.Equal(
+                "No plots are ticked, so there is nothing to run.",
+                PanelSteps.NoPlotsTicked("run"));
+            Assert.Equal(
+                "No plots are ticked, so there is nothing to assign.",
+                PanelSteps.NoPlotsTicked("assign"));
+
+            Assert.Equal(
+                "Nothing is marked and no sheet can be made. Click an empty cell in step 3, or add "
+                + "a sheet in step 4 and give it views, a name and a number.",
+                PanelSteps.NothingToRunYet);
+
+            Assert.Equal(
+                "3 marked. Marking records intent and changes nothing until Run.",
+                PanelSteps.MarkedLine(3));
+        }
+
+        [Fact]
+        public void TheGridSaysWhyItHasNoRowsInTheWordsOfTheState()
+        {
+            Assert.Equal("Reading the model.", PanelSteps.NothingToDraw(false, true, false));
+            Assert.Equal(
+                "This model holds no plots. No view name, no PRX_Plot_ID on a view or an element "
+                + "and no scope box gives one. Open the model you meant and press Refresh.",
+                PanelSteps.NothingToDraw(true, true, false));
+            Assert.Equal(
+                "Pick a prefix in step 1. From and To fill themselves with the plots under it, "
+                + "and the grid follows.",
+                PanelSteps.NothingToDraw(true, false, false));
+            Assert.Equal(
+                "No plots in that range. Widen From and To in step 1.",
+                PanelSteps.NothingToDraw(true, false, true));
+        }
+
+        /// <summary>
         /// Everything below the plots acts on the plots in the range, so none of it means
         /// anything until there is one.
         /// </summary>

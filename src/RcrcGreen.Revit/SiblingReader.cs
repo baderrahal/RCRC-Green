@@ -12,8 +12,8 @@ namespace RcrcGreen.Revit
     /// Reads every view that could be a sibling into plain values, once per run, and hands the
     /// choosing to Core.
     ///
-    /// A new view takes its family type, its level, its view template and, for a section, its
-    /// far clip offset. All four come off ONE view. This is the only place that view is chosen,
+    /// A new view takes its family type, its level, its view template and two of its three
+    /// crop settings. All of them come off ONE view. This is the only place that view is chosen,
     /// and it is chosen by <see cref="SiblingChoice"/> so a test can hold the chosen family type
     /// against the chosen template and prove they belong together.
     ///

@@ -431,11 +431,8 @@ namespace RcrcGreen.Revit
             block.Children.Add(Labelled("From", _from));
             block.Children.Add(Labelled("To", _to));
 
-            block.Children.Add(Faint(_model.Empty
-                ? "No plots in this model."
-                : _picked.TickedCount + " of " + _picked.InRangeCount + " plots in range ticked, "
-                    + _model.PlotIds.Count + " in the model. Untick one to leave it out of the "
-                    + "counts and out of anything that writes."));
+            block.Children.Add(Faint(PanelSteps.PlotsLine(
+                _model.Empty, _picked.TickedCount, _picked.InRangeCount, _model.PlotIds.Count)));
 
             var ticks = new StackPanel();
             foreach (string plotId in _picked.InRange)
@@ -450,7 +447,7 @@ namespace RcrcGreen.Revit
 
                 var tick = new CheckBox
                 {
-                    Content = suffix.Length == 0 ? which : which + "   " + suffix,
+                    Content = Label(suffix.Length == 0 ? which : which + "   " + suffix),
                     IsChecked = _picked.IsTicked(which),
                     Margin = PanelMetrics.Row,
                     ToolTip = record == null
@@ -504,7 +501,7 @@ namespace RcrcGreen.Revit
                 ViewType which = viewType;
                 var tick = new CheckBox
                 {
-                    Content = which + KindWord(which) + (_columns.IsNew(which) ? "   new" : string.Empty),
+                    Content = Label(which + KindWord(which) + (_columns.IsNew(which) ? "   new" : string.Empty)),
                     IsChecked = _columns.IsShown(which),
                     Margin = PanelMetrics.Row
                 };
@@ -1012,7 +1009,7 @@ namespace RcrcGreen.Revit
                 ViewType which = viewType;
                 var tick = new CheckBox
                 {
-                    Content = which + KindWord(which),
+                    Content = Label(which + KindWord(which)),
                     IsChecked = sheet.Carries(which),
                     Margin = PanelMetrics.Row
                 };
@@ -1475,8 +1472,7 @@ namespace RcrcGreen.Revit
             ScopeBoxCounts counts = ScopeBoxCounts.For(
                 _model.ViewStates, _model.ScopeBoxNames, _picked.Ticked);
 
-            block.Children.Add(Faint(counts.Considered + " views across " + _picked.TickedCount
-                + " ticked plots. Only C is written."));
+            block.Children.Add(Faint(PanelSteps.ScopeBoxLine(counts.Considered, _picked.TickedCount)));
 
             AddCase(block, counts, ScopeBoxCase.NameDoesNotParse, "A, name does not parse");
 
@@ -1505,7 +1501,7 @@ namespace RcrcGreen.Revit
 
             var line = new Button
             {
-                Content = (open ? "-  " : "+  ") + label + ": " + inIt.Count,
+                Content = Label((open ? "-  " : "+  ") + label + ": " + inIt.Count),
                 HorizontalContentAlignment = HorizontalAlignment.Left,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Padding = PanelMetrics.CellPad,
@@ -1527,8 +1523,8 @@ namespace RcrcGreen.Revit
                 ViewScopeBoxDecision one = decision;
                 var view = new Button
                 {
-                    Content = one.PlotId + "   " + one.ViewName
-                        + (one.CurrentScopeBoxName.Length > 0 ? "   holds " + one.CurrentScopeBoxName : string.Empty),
+                    Content = Label(one.PlotId + "   " + one.ViewName
+                        + (one.CurrentScopeBoxName.Length > 0 ? "   holds " + one.CurrentScopeBoxName : string.Empty)),
                     HorizontalContentAlignment = HorizontalAlignment.Left,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     Padding = PanelMetrics.CellPad,
@@ -1566,11 +1562,25 @@ namespace RcrcGreen.Revit
                 "Opens step " + to.Number + ".");
         }
 
+        /// <summary>
+        /// A name on a control that reads its content as a caption. WPF takes the first
+        /// underscore in a CheckBox or Button caption as an access key marker, swallows it and
+        /// underlines the next letter, so PRX_Plot_ID read as PRXPlot_ID on the KPI pane, and
+        /// this panel's job is exact names. The escape is the KPI pane's, in Core under Kpi,
+        /// called across the fence rather than copied, because two copies of one rule is the
+        /// shape this repo keeps paying for. Its home should be Shared, which needs a round of
+        /// its own.
+        /// </summary>
+        private static string Label(string text)
+        {
+            return RcrcGreen.Core.Kpi.PaneLabel.Escaped(text);
+        }
+
         private Button Secondary(string text, Action clicked, string why)
         {
             var button = new Button
             {
-                Content = text,
+                Content = Label(text),
                 Margin = PanelMetrics.Gap,
                 Padding = PanelMetrics.CellPad,
                 ToolTip = why
@@ -1799,14 +1809,13 @@ namespace RcrcGreen.Revit
             IReadOnlyList<string> ticked = _picked.Ticked;
             if (ticked.Count == 0)
             {
-                Say("No plots are ticked, so there is nothing to run.");
+                Say(PanelSteps.NoPlotsTicked("run"));
                 return;
             }
 
             if (PlanNow().MakesNothing)
             {
-                Say("Nothing is marked and no sheet can be made. Click an empty cell in step 3, "
-                    + "or add a sheet in step 4 and give it views, a name and a number.");
+                Say(PanelSteps.NothingToRunYet);
                 return;
             }
 
@@ -1820,7 +1829,7 @@ namespace RcrcGreen.Revit
             IReadOnlyList<string> ticked = _picked.Ticked;
             if (ticked.Count == 0)
             {
-                Say("No plots are ticked, so there is nothing to assign.");
+                Say(PanelSteps.NoPlotsTicked("assign"));
                 return;
             }
 
@@ -2059,21 +2068,7 @@ namespace RcrcGreen.Revit
         /// </summary>
         private string NothingToDraw()
         {
-            if (!_readOnce) return "Reading the model.";
-
-            if (_model.Empty)
-            {
-                return "No plots in this model. No view carries a PRX_Plot_ID and no view name "
-                    + "gives one. Open the model you meant and press Refresh.";
-            }
-
-            if (_prefix.SelectedItem == null)
-            {
-                return "Pick a prefix in step 1. From and To fill themselves with the plots "
-                    + "under it, and the grid follows.";
-            }
-
-            return "No plots in that range. Widen From and To in step 1.";
+            return PanelSteps.NothingToDraw(_readOnce, _model.Empty, _prefix.SelectedItem != null);
         }
 
         private Button CellButton(string plotId, SheetGridCell cell, bool ticked)
@@ -2128,7 +2123,7 @@ namespace RcrcGreen.Revit
             if (!_marked.Remove(key)) _marked.Add(key);
 
             Redraw();
-            Say(GridNow().MarkedCount + " marked. Marking records intent and changes nothing until Run.");
+            Say(PanelSteps.MarkedLine(GridNow().MarkedCount));
         }
 
         private void OpenTheView(long viewId)

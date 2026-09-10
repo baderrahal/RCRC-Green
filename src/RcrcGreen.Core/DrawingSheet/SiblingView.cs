@@ -197,6 +197,37 @@ namespace RcrcGreen.Core
             return what.Length == 0 ? "none" : what;
         }
 
+        /// <summary>
+        /// Why this view cannot set up a new one of the wanted kind.
+        ///
+        /// The model draws one view type both ways and the choice falls back to any view of
+        /// the type, so a plan asked of a section was refused as sitting on no level, which
+        /// describes a section as a plan with a fault, and a section asked of a plan reached
+        /// Revit and came back as a bad argument. Both named the wrong cause. This names the
+        /// kind it is and the kind that was wanted.
+        /// </summary>
+        public string WrongKindInWords(SiblingKind wanted)
+        {
+            return "No " + Type + " in this model is a " + KindInWords(wanted)
+                + ". The nearest is " + ViewName + ", which is a " + KindInWords(Kind)
+                + ", so there is nothing to take "
+                + (wanted == SiblingKind.Plan ? "a level and a family type" : "a family type")
+                + " from. Make one by hand on any plot and this will follow it.";
+        }
+
+        private static string KindInWords(SiblingKind kind)
+        {
+            switch (kind)
+            {
+                case SiblingKind.Plan:
+                    return "plan view";
+                case SiblingKind.Section:
+                    return "section";
+                default:
+                    return "view that is neither a plan nor a section";
+            }
+        }
+
         public override string ToString()
         {
             return ViewName;

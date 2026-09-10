@@ -140,6 +140,75 @@ namespace RcrcGreen.Core
             }
         }
 
+        /// <summary>
+        /// Said on step 1 and on the empty grid, once. The list is the union of four sources
+        /// since the plot registry was wired in, and the two copies of this sentence, one
+        /// here and one written out in the panel, both still named two.
+        /// </summary>
+        public const string NoPlotsInTheModel =
+            "This model holds no plots. No view name, no PRX_Plot_ID on a view or an element "
+            + "and no scope box gives one.";
+
+        /// <summary>
+        /// Said when Run or Assign is pressed with no plot ticked. The verb is the button's.
+        /// </summary>
+        public static string NoPlotsTicked(string verb)
+        {
+            return "No plots are ticked, so there is nothing to " + verb + ".";
+        }
+
+        public const string NothingToRunYet =
+            "Nothing is marked and no sheet can be made. Click an empty cell in step 3, or add "
+            + "a sheet in step 4 and give it views, a name and a number.";
+
+        /// <summary>
+        /// The line under the range pickers in step 1.
+        /// </summary>
+        public static string PlotsLine(bool modelEmpty, int plotsTicked, int plotsInRange, int plotsInModel)
+        {
+            if (modelEmpty) return "No plots in this model.";
+
+            return plotsTicked + " of " + plotsInRange + " plots in range ticked, " + plotsInModel
+                + " in the model. Untick one to leave it out of the counts and out of anything "
+                + "that writes.";
+        }
+
+        /// <summary>
+        /// The line over the scope box cases in step 5.
+        /// </summary>
+        public static string ScopeBoxLine(int viewsConsidered, int plotsTicked)
+        {
+            return viewsConsidered + (viewsConsidered == 1 ? " view" : " views") + " across "
+                + plotsTicked + (plotsTicked == 1 ? " ticked plot" : " ticked plots")
+                + ". Only C is written.";
+        }
+
+        /// <summary>
+        /// Why the grid has no rows, in the words the user needs rather than a blank area.
+        /// </summary>
+        public static string NothingToDraw(bool readOnce, bool modelEmpty, bool prefixPicked)
+        {
+            if (!readOnce) return "Reading the model.";
+
+            if (modelEmpty) return NoPlotsInTheModel + " Open the model you meant and press Refresh.";
+
+            if (!prefixPicked)
+            {
+                return "Pick a prefix in step 1. From and To fill themselves with the plots under "
+                    + "it, and the grid follows.";
+            }
+
+            return "No plots in that range. Widen From and To in step 1.";
+        }
+
+        /// <summary>
+        /// The status line after one cell is clicked.
+        /// </summary>
+        public static string MarkedLine(int marked)
+        {
+            return marked + " marked. Marking records intent and changes nothing until Run.";
+        }
+
         /// <param name="readOnce">Whether the model has been read at all.</param>
         /// <param name="plotsInModel">Every plot the model holds, which is what step 1 offers.</param>
         /// <param name="first">The first plot of the range, empty when none is picked.</param>
@@ -210,8 +279,7 @@ namespace RcrcGreen.Core
             if (plotsInModel == 0)
             {
                 return new StepState(PanelStep.Plots, "PLOTS", string.Empty, false,
-                    "This model holds no plots. No view carries a PRX_Plot_ID and no view name "
-                    + "gives one.", false);
+                    NoPlotsInTheModel, false);
             }
 
             if (first.Length == 0 || last.Length == 0)

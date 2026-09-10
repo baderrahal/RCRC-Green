@@ -29,8 +29,8 @@ namespace RcrcGreen.Revit
 
         public const string NotAvailable =
             "The Drawing Sheet panel did not register when Revit started, so it cannot be "
-            + "opened. Scan Model and Scope Box on the Reports panel are unaffected. Restart "
-            + "Revit to try again.";
+            + "opened, and Scan Model and Scope Box run from inside it. Restart Revit to try "
+            + "again.";
 
         /// <summary>
         /// Set once by <see cref="RcrcGreenApplication"/> at startup.

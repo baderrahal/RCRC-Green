@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Underscores survive the caption, pull request 62</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .body { padding: 8px; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .step { margin-bottom: 4px; }
+  .row { margin: 3px 0; }
+  .btn { display: block; border: 1px solid #adadad; padding: 2px 6px; margin: 2px 0; text-align: left; }
+  .light .btn { background: #e1e1e1; color: #1a1a1a; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+  .btn.in { margin-left: 22px; }
+  .btn.was { text-decoration: line-through; opacity: 0.6; }
+  u { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1>Underscores survive the caption, and the grid names all four sources</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. Whether any real view or scope
+  box name on the first model holds an underscore is UNKNOWN, so the names below are made up
+  to show the fault, and the page cannot show how WPF really drew the wrong one.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on
+  it. If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>What changed</h2>
+
+<p class="caption">Two things a user can see. Every tick box and button on the panel that
+carries a model name goes through the escape the KPI pane already had, so WPF no longer reads
+the first underscore in a plot, view type or view name as an access key marker, swallows it
+and underlines the next letter. And the sentence for a model with no plots, on step 1 and on
+the empty grid, names all four sources the plot list is the union of, where both copies still
+named two. Under the surface, six messages the panel formatted itself now live in
+<code>PanelSteps</code> with tests, a duplicate field in a captured schedule is written into
+the report rather than skipped, a plan asked of a section and a section asked of a plan are
+refused by naming the kind, and four descriptions of the tool that no longer existed are
+corrected.</p>
+
+<h2>A scope box case list, before and after, both themes</h2>
+
+<p class="caption">The struck row is what WPF drew before: the underscore in
+<code>Key_Plan_Working</code> gone and the P underlined. The row under it is what it draws
+now. Every other control carrying a name behaves the same way.</p>
+
+<div class="pair">
+
+<div>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;2 plan views</div>
+      <div class="inside">
+        <div class="row faint">42 views across 17 ticked plots. Only C is written.</div>
+        <div class="btn">-&nbsp;&nbsp;C, ready to assign: 2</div>
+        <div class="btn in was">DM-41&nbsp;&nbsp;&nbsp;DM-41-(010) Key<u>P</u>lan_Working</div>
+        <div class="btn in">DM-41&nbsp;&nbsp;&nbsp;DM-41-(010) Key_Plan_Working</div>
+        <div class="btn in">DM-42&nbsp;&nbsp;&nbsp;DM-42-(010) Location Key Plan</div>
+        <div class="btn">+&nbsp;&nbsp;D, no scope box for that plot: 0</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>5&nbsp;&nbsp;RUN&nbsp;&nbsp;&nbsp;2 plan views</div>
+      <div class="inside">
+        <div class="row faint">42 views across 17 ticked plots. Only C is written.</div>
+        <div class="btn">-&nbsp;&nbsp;C, ready to assign: 2</div>
+        <div class="btn in was">DM-41&nbsp;&nbsp;&nbsp;DM-41-(010) Key<u>P</u>lan_Working</div>
+        <div class="btn in">DM-41&nbsp;&nbsp;&nbsp;DM-41-(010) Key_Plan_Working</div>
+        <div class="btn in">DM-42&nbsp;&nbsp;&nbsp;DM-42-(010) Location Key Plan</div>
+        <div class="btn">+&nbsp;&nbsp;D, no scope box for that plot: 0</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>The empty grid on a model with no plots</h2>
+
+<div class="pair">
+
+<div>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>3&nbsp;&nbsp;MARK</div>
+      <div class="inside faint">This model holds no plots. No view name, no PRX_Plot_ID on a view or
+        an element and no scope box gives one. Open the model you meant and press Refresh.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>3&nbsp;&nbsp;MARK</div>
+      <div class="inside faint">This model holds no plots. No view name, no PRX_Plot_ID on a view or
+        an element and no scope box gives one. Open the model you meant and press Refresh.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<h2>Where the words come from</h2>
+
+<p class="caption">The escape is <code>PaneLabel.Escaped</code> in Core under Kpi, called
+across the fence rather than copied, with its test where it was. The sentence is
+<code>PanelSteps.NoPlotsInTheModel</code>, which step 1's reason and the grid's
+<code>PanelSteps.NothingToDraw</code> both read, and the other five moved messages sit
+beside it: the step 1 line, the scope box line, the two no plots ticked lines, the nothing to
+run line and the marked line. All with tests.</p>
+
+</body>
+</html>
