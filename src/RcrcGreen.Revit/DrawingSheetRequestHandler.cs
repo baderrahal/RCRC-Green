@@ -356,7 +356,7 @@ namespace RcrcGreen.Revit
 
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(
-                ScanFileName.For(scan.DocumentTitle, writtenAt),
+                ReportFileNames.ForScan(scan.DocumentTitle, writtenAt),
                 ScanReport.Write(scan, writtenAt));
 
             Told?.Invoke("Scan written. " + ReportPlaces.Written(written));
@@ -421,7 +421,7 @@ namespace RcrcGreen.Revit
 
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(
-                ScanFileName.For(ScanFileName.RunPrefix, document.Title, writtenAt),
+                ScanFileName.For(ReportFileNames.RunPrefix, document.Title, writtenAt),
                 RunReport.Write(plan, outcome, document.Title, writtenAt, applied));
 
             string where = ReportPlaces.Written(written);

@@ -1566,14 +1566,12 @@ namespace RcrcGreen.Revit
         /// A name on a control that reads its content as a caption. WPF takes the first
         /// underscore in a CheckBox or Button caption as an access key marker, swallows it and
         /// underlines the next letter, so PRX_Plot_ID read as PRXPlot_ID on the KPI pane, and
-        /// this panel's job is exact names. The escape is the KPI pane's, in Core under Kpi,
-        /// called across the fence rather than copied, because two copies of one rule is the
-        /// shape this repo keeps paying for. Its home should be Shared, which needs a round of
-        /// its own.
+        /// this panel's job is exact names. The escape is in Shared, where both panels read
+        /// it. It was KPI's and was called across the fence for one round.
         /// </summary>
         private static string Label(string text)
         {
-            return RcrcGreen.Core.Kpi.PaneLabel.Escaped(text);
+            return PaneLabel.Escaped(text);
         }
 
         private Button Secondary(string text, Action clicked, string why)

@@ -5,8 +5,8 @@ it. Two moves and no behaviour change. `PaneLabel` goes to Shared with its tests
 both panels read it and neither owns its meaning, and Drawing Sheet's three report
 prefixes and the two-argument `For` leave Shared for Core/DrawingSheet, because they are
 one task's names. It lands as four commits, each inside one territory so the wall lets it
-through and each compiling: Shared, Drawing Sheet, KPI, Shared. Not merged yet. The count
-should read 1060 before and after.
+through and each compiling: Shared, Drawing Sheet, KPI, Shared. The first two are in. Not
+merged yet. The count should read 1060 before and after.
 
 Before that, the forty fifth pass, the rest of steps/audit-drawing.md in two pull requests.
 The first, pull request 61 with fixes 1 to 6, merged into main as `aaf78db` with 1056
