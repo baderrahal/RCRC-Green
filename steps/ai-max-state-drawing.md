@@ -1,6 +1,12 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Forty second pass, the territory round. Nothing a user can see changed.
+Phase: 9, ship. Forty second pass, the territory round, merged. Nothing a user can see
+changed.
+
+Pull request 50 merged into main as `e0a7a97` with 912 tests on the runner, 0 failed and
+0 skipped, the same count as before the round. The squash message passed on the merge
+call came back off main byte for byte with nothing appended, so that remedy is measured
+and territory.md records it as fact.
 
 Core's 66 flat files moved into three homes, Shared with the sixteen files every task
 reads, DrawingSheet with the other fifty, Kpi as it was. No file content changed and no

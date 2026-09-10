@@ -4,6 +4,103 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty second pass. Three homes in Core, a wall between tasks, and the files split
+
+Pull request 50, merged into main as `e0a7a97`. **The runner executed 912 tests against
+it, 0 failed and 0 skipped, the same count the local run gave after the last file was
+written, and the same count main carried before the round began.** Nothing a user can see
+changed, no tool behaviour changed, and no test was added or removed, which is why the
+count holding at 912 is the round's own proof.
+
+### The move
+
+Core's 66 flat files went into three homes with git mv, every rename at 100 percent
+similarity. Sixteen to `Core/Shared`: the named list, plus `IgnoredName` and
+`PlotRegistryResult`, which had to follow because `PlotRegistry.Build` returns them and a
+Shared file may not lean on a task's file. Fifty to `Core/DrawingSheet`. `Core/Kpi` as it
+was. No file content changed anywhere, because C# does not tie a namespace to a folder
+and the csproj globs, so no namespace and no using had to follow. A textual check
+confirmed no Shared file names any of the 79 types the DrawingSheet folder defines.
+
+Calls that could have gone either way, all put in DrawingSheet because the narrower home
+is the safer mistake. `ReportPlaces` names no task and the KPI pane reads it at three
+call sites today, and it stays Drawing Sheet's under the user's rule that what task 1
+built stays owned. Reading it across the fence is allowed and still compiles, one
+assembly. `PlotBox`, `ViewOnAPlot`, `ViewReading`, `ViewPlotReader`, `ViewPlotReading`
+and `PlotSourceOnView` name no task either, and all were built for the grid and the
+sections, so they went with them.
+
+### The wall
+
+`.claude/rules/territory.md` holds who owns what and `.claude/hooks/territory-check.sh`
+holds the wall, wired in settings.json. It reads the commit through a new `all-paths`
+action on commit-scope.py that keeps deletions in, because deleting another task's file
+is an edit too. Drawing Sheet's Revit files sit flat at the Revit project root, so the
+hook names those fifteen one by one, and the five root files every task shares stay
+outside the fence: the application class, the theme, the metrics, the report writer and
+the manifest.
+
+Probed by hand against a scratch index, nothing committed from any probe:
+
+- A Drawing Sheet file next to a deleted KPI file: "Refused. This commit touches two
+  tasks' territory: DrawingSheet (src/RcrcGreen.Core/DrawingSheet/PlotBox.cs) and Kpi
+  (src/RcrcGreen.Core/Kpi/AreaUnits.cs)." The KPI touch was a staged deletion, so the
+  ACMRD path is what saw it
+- A Shared file next to a task file: "Refused. src/RcrcGreen.Core/Shared/Lengths.cs is in
+  Core/Shared and this commit also touches DrawingSheet"
+- A Revit root Drawing Sheet file next to a KPI file: refused the same way, which proves
+  the root file list maps
+- One task plus common files passed, and Shared plus common files passed
+- The reworked require-file-on-commit.sh refused a commit with no state file, "No
+  steps/ai-max-state-<task>.md is in this commit", and passed with the drawing one
+
+The wiring loaded live the moment settings.json changed, and the wall's first real catch
+was this session's own probe command, refused because the real index then held Shared and
+DrawingSheet renames together. So the round landed as two commits: the DrawingSheet half
+with everything common, then the sixteen Shared files alone, which is the shape the wall
+holds every later commit to.
+
+### The split
+
+`steps/log.md`, 269 KB over 42 entries, went to `steps/log-drawing.md` with 26 and
+`steps/log-kpi.md` with 16, by which session wrote each entry. The branch name settled
+the one surprise: the twenty fourth pass names `claude/inspiring-allen-xs113f`, the KPI
+session's branch, so it went to the KPI log. The passes before the split went with
+Drawing Sheet, whose session wrote them. The state file split the same way, every line
+from 3 to 720 in exactly one file, checked, with the shared phase 1 to 8 history at the
+foot of the drawing file and the KPI top reworded from a Before that into a Phase line,
+the one seam the split needed. Both old paths hold a short pointer, and the live pointers
+in CLAUDE.md, kpi-rules.md and both state files follow the split.
+
+### What GitHub puts back, measured
+
+The squash message for this round's own merge was passed by hand on the merge call, title
+and body both. Read back off main, it is byte for byte what was passed, with nothing
+appended. So the credit line GitHub added to `e0a7a97`'s two predecessors comes only with
+the default message, and passing the message on the call is a working remedy from a
+session. territory.md now says so as a measured fact. The repository settings route
+stays unavailable from here, because no tool in this session changes repository settings.
+
+### Open questions
+
+- Pass numbers were one sequence across both sessions. Two logs now count independently,
+  so either each continues its own or the user assigns ranges. This entry keeps the
+  shared count
+- Drawing Sheet's flat test files read as common to the wall, mixed with the Shared ones
+- The Revit root fence is a file list, so a new Drawing Sheet file at that root has to be
+  added to it by hand
+
+### What did not run
+
+- Nothing in this round has been through Revit. The moved tree builds the same assemblies
+  and the suite is unchanged at 912, and still no Revit has loaded the result
+- No second live session has hit the wall yet. The refusals fired in probes and once
+  against this session's own index, never yet against another session's real commit
+- The zero behaviour claim rests on the build, the suite and the renames being 100
+  percent similar, not on a run of either panel
+
+---
+
 ## 2026-09-10, forty first pass. The report for the seven fixes round
 
 Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 48 is
