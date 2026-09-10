@@ -138,6 +138,48 @@ namespace RcrcGreen.Core.Tests
             Assert.Null(snapshot.RecordOf("DM-41"));
         }
 
+        /// <summary>
+        /// What the read used to throw away. A name can reach the registry twice, as a view
+        /// name and as the value of PRX_Plot_ID on that view, and it is one fault to fix, so
+        /// it is kept once. A name that is not plot shaped at all is the ordinary case and is
+        /// not kept here.
+        /// </summary>
+        [Fact]
+        public void WhatTheReadCouldNotFileIsKeptOncePerNameAndOnlyTheWrongCaseOnes()
+        {
+            var snapshot = new DrawingSheetSnapshot(
+                "NG05",
+                new DateTime(2026, 9, 10, 12, 0, 0),
+                null, null, null, null, null, null, null, null, null, null,
+                0, 0, 0, 0, 0,
+                viewsWithAParameterThatIsNotAPlot: 2,
+                parameterValuesThatAreNotPlots: new[] { " N/A ", "N/A", "Plot 12", "" },
+                wrongCaseNames: new[]
+                {
+                    new IgnoredName("dm-41", IgnoredReason.WrongCase),
+                    new IgnoredName("Level 1", IgnoredReason.NotAPlotName),
+                    new IgnoredName("dm-41", IgnoredReason.WrongCase),
+                    new IgnoredName("dm-12-(010) Location Key Plan", IgnoredReason.WrongCase)
+                },
+                schedulesNotCaptured: new[]
+                {
+                    new IgnoredName("Sheet List", IgnoredReason.NotAPlotName)
+                });
+
+            Assert.Equal(2, snapshot.ViewsWithAParameterThatIsNotAPlot);
+            Assert.Equal(new[] { "N/A", "Plot 12" }, snapshot.ParameterValuesThatAreNotPlots);
+
+            Assert.Equal(2, snapshot.WrongCaseNames.Count);
+            Assert.Equal("dm-12-(010) Location Key Plan", snapshot.WrongCaseNames[0].Text);
+            Assert.Equal("dm-41", snapshot.WrongCaseNames[1].Text);
+
+            Assert.Equal("Sheet List", Assert.Single(snapshot.SchedulesNotCaptured).Text);
+
+            Assert.Equal(0, DrawingSheetSnapshot.Nothing.ViewsWithAParameterThatIsNotAPlot);
+            Assert.Empty(DrawingSheetSnapshot.Nothing.WrongCaseNames);
+            Assert.Empty(DrawingSheetSnapshot.Nothing.SchedulesNotCaptured);
+        }
+
         [Fact]
         public void TheCapturableAndUncapturableSchedulesComeBackAsGiven()
         {

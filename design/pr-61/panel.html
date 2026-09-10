@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Run says what is unfinished, pull request 61</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .strip  { background: #ececec; }
+  .dark  .strip  { background: #262626; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .status { background: #ececec; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #262626; border-top: 1px solid #4a4a4a; }
+  .body { padding: 8px; }
+  .strip { padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; }
+  .strip .name { font-weight: bold; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .head.shut { opacity: 0.55; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .step { margin-bottom: 4px; }
+  .row { margin: 3px 0; }
+  .status { padding: 6px 8px; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 1px 8px; margin: 2px 4px 2px 0; }
+  .light .btn { background: #e1e1e1; color: #1a1a1a; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+  .labelled { display: flex; align-items: center; margin: 3px 0; }
+  .labelled .cap { width: 110px; }
+  .box { display: inline-block; border: 1px solid #adadad; padding: 1px 4px; min-width: 180px; }
+  .light .box { background: #ffffff; }
+  .dark  .box { background: #3a3a3a; }
+  .box .arrow { float: right; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>Run says what is unfinished, the caption says title block, and the refresh line says what it could not file</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup drawn by hand from the code in
+  <code>src/RcrcGreen.Revit/DrawingSheetPanel.cs</code> and
+  <code>src/RcrcGreen.Revit/DrawingSheetRequestHandler.cs</code>. It is not a screenshot.</strong></p>
+  <p>Nothing on this page has been rendered by Revit or by WPF. It cannot show how the longer
+  status line wraps at the pane's real width, or how a shut step's reason wraps under its
+  header. The counts in the status line are the shape of the line and not a measurement.</p>
+  <p>It exists so the layout and the wording can be read before someone spends an install on
+  it. If anyone ever describes it as a screenshot, it has stopped being worth having.</p>
+</div>
+
+<h2>What changed</h2>
+
+<p class="caption">Three things a user can see. The step 4 control that picks the title block
+is captioned Title block, where it was captioned Type over a list of view type tick boxes and
+called a sheet type everywhere else. The RUN step, when nothing is asked for, says what in
+step 4 is unfinished: a sheet still needing its title block, rows still needing a name or a
+number, or both, where it used to tell somebody who had just added a sheet to add a sheet.
+And the refresh line ends with up to three clauses about what the read could not file: views
+whose PRX_Plot_ID holds something that is not a plot, names that are a plot in the wrong
+case, and schedules skipped at capture because their names do not parse. Each clause is
+absent when there is nothing to say.</p>
+
+<h2>Step 4 and a shut step 5, both themes</h2>
+
+<p class="caption">One sheet described with its title block and one view. Two of its three
+rows still have empty name boxes, so nothing is asked for yet and RUN says why.</p>
+
+<div class="pair">
+
+<div>
+<div class="panel light">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, none to make yet</div>
+      <div class="inside">
+        <div class="row"><b>Sheet 1</b><span class="btn" style="float:right">Remove</span></div>
+        <div class="labelled"><span class="cap">Title block</span><span class="box">AR-PRX-Title_Block_A1 GA-DETAILED DESIGN<span class="arrow">v</span></span></div>
+        <div class="labelled"><span class="cap">Views per sheet</span>(x) 1&nbsp;&nbsp;( ) 2&nbsp;&nbsp;( ) 4</div>
+        <div class="row faint">Makes no sheets yet. 2 rows still need a name or a number.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="head shut"><span class="sign">+</span>5&nbsp;&nbsp;RUN</div>
+      <div class="inside faint">2 rows in step 4 still need a name or a number, so no sheet can be
+        made yet. Finish that in step 4, or mark a cell in step 3.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<div class="panel dark">
+  <div class="body">
+    <div class="step">
+      <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, none to make yet</div>
+      <div class="inside">
+        <div class="row"><b>Sheet 1</b><span class="btn" style="float:right">Remove</span></div>
+        <div class="labelled"><span class="cap">Title block</span><span class="box">AR-PRX-Title_Block_A1 GA-DETAILED DESIGN<span class="arrow">v</span></span></div>
+        <div class="labelled"><span class="cap">Views per sheet</span>(x) 1&nbsp;&nbsp;( ) 2&nbsp;&nbsp;( ) 4</div>
+        <div class="row faint">Makes no sheets yet. 2 rows still need a name or a number.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="head shut"><span class="sign">+</span>5&nbsp;&nbsp;RUN</div>
+      <div class="inside faint">2 rows in step 4 still need a name or a number, so no sheet can be
+        made yet. Finish that in step 4, or mark a cell in step 3.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<p class="caption">The other two shapes of that reason, from the same tests: <code>1 sheet in
+step 4 still needs a title block, so no sheet can be made yet. Finish that in step 4, or mark
+a cell in step 3.</code> and, when both are true, <code>1 sheet in step 4 still needs a title
+block, and 2 rows still need a name or a number, so no sheet can be made yet. Finish that in
+step 4, or mark a cell in step 3.</code> The line over the table is unchanged and reads the
+same rows.</p>
+
+<h2>The status line after a refresh</h2>
+
+<p class="caption">A model holding a view whose PRX_Plot_ID reads N/A, a scope box named
+dm-41, and a schedule named Sheet List. The three clauses after with no plot at all are new.</p>
+
+<div class="pair">
+
+<div>
+<div class="panel light">
+  <div class="status">3383 views read at 14:02:11. 160 plots, 2114 found through PRX_Plot_ID,
+    1268 through the name, 5 with no plot at all. 1 view carries a PRX_Plot_ID that is not a
+    plot, such as N/A. It still fills its cell from its name where the name parses. 1 name is
+    a plot in the wrong case and was not read as one: dm-41 (plot identifiers are two
+    uppercase letters). 1 schedule was not captured because its name does not parse.</div>
+</div>
+</div>
+
+<div>
+<div class="panel dark">
+  <div class="status">3383 views read at 14:02:11. 160 plots, 2114 found through PRX_Plot_ID,
+    1268 through the name, 5 with no plot at all. 1 view carries a PRX_Plot_ID that is not a
+    plot, such as N/A. It still fills its cell from its name where the name parses. 1 name is
+    a plot in the wrong case and was not read as one: dm-41 (plot identifiers are two
+    uppercase letters). 1 schedule was not captured because its name does not parse.</div>
+</div>
+</div>
+
+</div>
+
+<h2>Where the words come from</h2>
+
+<p class="caption">The RUN reason is <code>PanelSteps</code>, fed the rows short of a name or
+a number through <code>SheetBatch.RowsShortOfANameOrANumber</code>. The three refresh clauses
+are <code>RefreshWords.ParameterNotAPlot</code>, <code>RefreshWords.WrongCase</code> and
+<code>RefreshWords.SchedulesNotCaptured</code>, each reading a list the snapshot now carries.
+A wrong case name is said in <code>IgnoredName</code>'s own words, which Shared already had.
+All of it is in Core with tests, so the panel and the handler format none of it.</p>
+
+<h2>Nothing else in the panel changed on screen</h2>
+
+<p class="caption">Under the surface, Scan Model still runs from the panel and writes the same
+report, less a sheet number tally that read 0 of 1385 parsed on every scan and a sheet name
+tally that could only ever read the same. The ribbon commands that were never reachable are
+gone. None of this has been through Revit.</p>
+
+</body>
+</html>

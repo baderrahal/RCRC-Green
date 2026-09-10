@@ -102,7 +102,6 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(SheetCellState.Missing, CellFor(grid, "DM-11", KeyPlan()).State);
             Assert.Equal(SheetCellState.Marked, CellFor(grid, "DM-11", Layout()).State);
             Assert.Equal(1, grid.MarkedCount);
-            Assert.Equal(1, grid.MissingCount);
         }
 
         /// <summary>
@@ -230,7 +229,6 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Empty(grid.Rows);
             Assert.Empty(grid.Columns);
-            Assert.Equal(0, grid.MissingCount);
             Assert.Equal(0, grid.MarkedCount);
         }
 

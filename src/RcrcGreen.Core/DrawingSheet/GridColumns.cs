@@ -52,11 +52,6 @@ namespace RcrcGreen.Core
             get { return All.Count(one => _shown.Contains(one)); }
         }
 
-        public int HiddenCount
-        {
-            get { return All.Count - ShownCount; }
-        }
-
         public bool IsShown(ViewType one)
         {
             return one != null && _shown.Contains(one);

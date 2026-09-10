@@ -550,8 +550,8 @@ namespace RcrcGreen.Revit
 
             SheetSize fromParameters = SheetSize.Of(
                 SheetSizeSource.TitleBlockParameters,
-                Number(placed.get_Parameter(BuiltInParameter.SHEET_WIDTH)),
-                Number(placed.get_Parameter(BuiltInParameter.SHEET_HEIGHT)),
+                ModelScanner.Number(placed.get_Parameter(BuiltInParameter.SHEET_WIDTH)),
+                ModelScanner.Number(placed.get_Parameter(BuiltInParameter.SHEET_HEIGHT)),
                 wanted.TitleBlock);
 
             if (fromParameters.CanBeUsed) return fromParameters;
@@ -720,14 +720,6 @@ namespace RcrcGreen.Revit
                 size.WidthFeet,
                 size.HeightFeet,
                 true));
-        }
-
-        private static double Number(Parameter parameter)
-        {
-            if (parameter == null || !parameter.HasValue) return 0.0;
-            if (parameter.StorageType != StorageType.Double) return 0.0;
-
-            return parameter.AsDouble();
         }
 
         private static FamilySymbol TitleBlock(Document document, SheetToMake wanted)

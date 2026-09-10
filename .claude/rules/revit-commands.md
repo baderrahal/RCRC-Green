@@ -29,9 +29,9 @@ one would be the first step toward a command that changes a model while claiming
 ## A command that writes decides everything first, then asks, then writes once
 
 Scope Box works out all six cases with no transaction open, shows the counts, and only then
-opens a single transaction covering every assignment, so the whole run is one undo. The
-progress window is not pumped while that transaction is open, because letting other clicks
-through mid write is how a model ends up half changed.
+opens a single transaction covering every assignment, so the whole run is one undo. Nothing
+pumps the message queue while that transaction is open, because letting other clicks through
+mid write is how a model ends up half changed.
 
 ## A command never overwrites something a person put there
 
@@ -161,10 +161,15 @@ screenshot is worse than no mockup, because it answers a question it never asked
 
 The RCRC Green tab holds two panels side by side. Drawing Sheet holds its one button. KPI is
 built to carry several buttons later and carries one, KPI Checklist, which shows the KPI pane.
-Scan Model and Scope Box were buttons of their own and are not any more. `ScanModelCommand`
-and `AssignScopeBoxCommand` are still classes and still do the work, reached through the
-external event from inside the Drawing Sheet panel, because somebody deciding what to do is
-already in the panel and should not be hunting along a ribbon for the next step.
+Scan Model and Scope Box were buttons of their own and are not any more, because somebody
+deciding what to do is already in the panel and should not be hunting along a ribbon for the
+next step. Both are reached through the external event from inside the Drawing Sheet panel.
+Scan Model is the handler's own `Scan`, which reads through `ModelScanner` and writes through
+`ReportFile`. Scope Box is the three statics on `AssignScopeBoxCommand`, the confirmation,
+the assignment and the report. `ScanModelCommand`, the two `Execute` methods and the progress
+window they showed were unreachable for several rounds after the buttons went, and
+`ScanModelCommand.Execute` was a second scan path writing to the Desktop only. All three are
+deleted.
 
 Each pane has its own identifier, its own `ExternalEvent` and its own handler, and each is
 registered through the one guarded `Registered` in `RcrcGreenApplication`, so a pane that

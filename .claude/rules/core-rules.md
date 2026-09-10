@@ -93,7 +93,7 @@ that second rule is the only thing telling them apart. Field names are copied ex
 including the one spelled PRX_Furniture Lenght in the model, or the field is not found.
 
 **A filter value carries the kind it has to go back as.** `FilterValue` is text, a whole number,
-a number or an element reference, and all four survive a round trip through text. Flattening
+a number or an element reference, and each goes back to Revit as the kind it came out as. Flattening
 them all to a string lost two schedules: both filter on PRX_Included In Budget equals Yes, which
 is a Yes/No parameter Revit holds as the integer 1, and handing the word back was answered with
 "the filter value is not valid for the field and filter type". Only a text value can name a

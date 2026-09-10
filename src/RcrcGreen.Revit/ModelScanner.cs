@@ -217,7 +217,12 @@ namespace RcrcGreen.Revit
                 : new SheetFootprint();
         }
 
-        private static double Number(Parameter parameter)
+        /// <summary>
+        /// A length parameter as a number, zero when it holds nothing or is not a length. The
+        /// writer reads the same two sheet parameters off a placed title block and reads them
+        /// through here, so the two cannot drift.
+        /// </summary>
+        internal static double Number(Parameter parameter)
         {
             if (parameter == null || !parameter.HasValue) return 0.0;
             if (parameter.StorageType != StorageType.Double) return 0.0;

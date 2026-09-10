@@ -146,6 +146,12 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    for not created in the file that exists because two of its numbers once disagreed | A
    phrase in the headline
 
+   FIXED. `RunReport.Headline` is one number for everything not made, split the way the
+   sections split it: refused before the run, refused by Revit during it, created wrong and
+   still in the model. The line under it says which count is the plan's. A test builds four
+   before, two during and one left behind and reads 7 were not, watched red with the plan's
+   refusals dropped from the sum.
+
 8. INTERFACE | src/RcrcGreen.Revit/ShowDrawingSheetCommand.cs:30 to :33 | Finding 11 of
    the last audit, unchanged. The message shown when the pane fails to register still sends
    the user to Scan Model and Scope Box on the Reports panel, which was removed rounds ago |
@@ -208,6 +214,13 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     as the brief allows | A line in the refresh status or a scan report section listing
     the WrongCase entries
 
+    FIXED. The reader hands the registry's WrongCase entries to the snapshot, kept once per
+    text, and the refresh line says them in the registry's own words through
+    `RefreshWords.WrongCase`. `ScheduleCapture.Read` records a schedule whose name does not
+    parse as an `IgnoredName` with the same classification, the snapshot carries the list,
+    and the refresh line counts them and names the wrong case ones. Shared was read and not
+    edited. The clause's filter was watched red. Not observed in Revit.
+
 13. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:902 and :1316 | Remove on a
     described sheet takes it out on one click with no confirmation, and with it every name
     and number typed into that sheet's rows across every plot | A row of typed numbers
@@ -230,6 +243,12 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     scan change lands in one copy, and the rule file sends a reader to a path that does
     not run | A deletion, and one sentence in the rule file
 
+    FIXED. `ScanModelCommand.cs` and `ScanProgressWindow.cs` are deleted.
+    `AssignScopeBoxCommand` keeps its three statics and loses its Execute, its button
+    constants and the two methods only Execute read, and revit-commands.md says which
+    class does what. `IScanWatcher` stays, because both scanners take one and the handler
+    passes a watcher that never cancels. The hook's file list and territory.md follow.
+
 15. LOGIC | src/RcrcGreen.Core/DrawingSheet/SheetNumbers.cs:189 to :193 | A proposal is
     always code, plot letter, sheet letter. DM-11's own numbers, the only real ones,
     read 010QE to 010QH where a code has several sheets and 200Q and 400Q where it has
@@ -251,6 +270,14 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     a fault in the model | Drop the sheet number tally, or parse numbers with a rule of
     their own
 
+    FIXED. Both sheet tallies are gone and the parse summary says why. Measured against the
+    real sheet names this repo records, in `SheetNaming.cs` and the twenty first pass's log
+    entry: LIST OF DRAWINGS, GENERAL ARRANGEMENT LAYOUT, LANDSCAPE CROSS SECTION and
+    SOFTSCAPE SCHEDULES, none carrying a plot or a code, and the tool's own `SheetNaming`
+    makes names of that shape, so the sheet name tally could only ever read 0 of N. No
+    real model was measured this round. CLAUDE.md said sheets are named like views and now
+    says how they are named.
+
 17. INTERFACE | src/RcrcGreen.Revit/DrawingSheetReader.cs:68 to :77, counted at
     DrawingSheetRequestHandler.cs:224, with ViewPlotReading.cs:21 | Finding 19 of the last
     audit, unchanged. A view whose PRX_Plot_ID holds something that is not a plot is
@@ -259,6 +286,11 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     is read by nothing in the product or the scan | The count reads wrong to anyone who
     checks that view, and the value kept to be shown is never shown | A fourth count or a
     scan section
+
+    FIXED. A view whose PRX_Plot_ID holds something that is not a plot is a fourth count,
+    `ViewsWithAParameterThatIsNotAPlot`, kept apart from with no plot at all, and
+    `ViewOnAPlot` carries the raw value so the refresh line shows it: 3 views carry a
+    PRX_Plot_ID that is not a plot, such as N/A. Not observed in Revit.
 
 ### TIDY
 
@@ -275,6 +307,9 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     string | The confirmation dialog reads machine written for the singular case | Two
     lines and the test
 
+    FIXED. 1 thing cannot be made, and is named in the report, with the plural kept for
+    two. The test that pinned 1 things pins the singular now and a second covers both.
+
 20. NO VIBE CODING | src/RcrcGreen.Revit/ModelWriter.cs:607 against ModelScanner.cs:220,
     and src/RcrcGreen.Core/DrawingSheet/RunReport.cs:22 against ScanReport.cs:22 |
     Finding 16 of the last audit, its Drawing Sheet half. `Number(Parameter)` is the same
@@ -282,6 +317,10 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     itself, where ScopeBoxReport.cs:140 reads ScanReport's and RunReport keeps its own |
     Two copies of one fact, the shape this repo has been bitten by nine times now | A
     shared home for each
+
+    FIXED. `ModelScanner.Number` is the one reader of a length parameter and the writer
+    calls it, and `RunReport` writes its lines with `ScanReport.LineEnd` the way
+    `ScopeBoxReport` already did.
 
 21. NO VIBE CODING | src/RcrcGreen.Core/DrawingSheet/SheetDivision.cs:23, PlotBox.cs:74,
     GridColumns.cs:55, SectionPlacement.cs:29, SiblingView.cs:182, SheetNumbers.cs:148,
@@ -298,6 +337,15 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     lookup per view on every Assign and feeds nothing. `MarkedCount` is the count finding 1
     needs | Every one reads as a behaviour the tool has, and one of them is the fix for a
     WRONG finding sitting unused | A deletion each, or a caller for `MarkedCount`
+
+    FIXED, every one checked again against the tree after the last round. Deleted with
+    their tests: `PlannedSheet.Position`, `PlotBox.Centre`, `GridColumns.HiddenCount`,
+    `SectionPlacement.Axis`, `SiblingView.HasTemplate`, `SheetGrid.MissingCount`,
+    `ReportPlaces.InsideTheRepo`, `FilterValue.TryParse` and
+    `ScopeBoxScanner.PlotParameterByView` with the lookup that fed it. Kept:
+    `SheetGrid.MarkedCount`, which the last round gave four callers, and
+    `SheetNumbers.PlotLetter`, which `Propose` now calls through an overload that hands
+    back the reason, so the letter rule has one home and its five tests stay.
 
 22. STRUCTURE | design/pr-31/panel.html:5 | Finding 18 of the last audit, unchanged. The
     folder says pull request 31 and the file's title says pull request 28 | Anyone tracing
@@ -319,11 +367,19 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     The one message that should say finish the rows sends the user to add another sheet |
     Pass the rows short of a name or number as well
 
+    FIXED. `PanelSteps.Of` takes the rows short of a name or a number as well, summed over
+    `SheetBatch.RowsShortOfANameOrANumber`, and Run says what is unfinished, the title
+    block, the rows or both, then finish that in step 4. Three tests, two watched red.
+
 25. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:922, PanelSteps.cs:294 and
     SheetDefinition.cs:73 | The step 4 dropdown is captioned Type, the shut-step and refusal
     words call the same thing a sheet type, and it is a title block. Three words for one
     control, and Type on its own next to a list of view type tick boxes | A production
     person reads Type as the view type they just ticked | One caption
+
+    FIXED. Title block, in those words, on the step 4 caption, in `SheetDefinition`'s
+    three strings, in the Run reason and in the one refusal that named it. Sheet type
+    appears nowhere now.
 
 26. NO VIBE CODING | src/RcrcGreen.Revit/DrawingSheetReader.cs:186 to :199 against
     ScopeBoxScanner.cs:66 to :85 | The scope box state of a view, whether it can hold one
@@ -331,6 +387,9 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     and one feeding the assignment the handler writes | The count on screen and the write
     follow one Core rule on purpose, and the two readers feeding it can drift apart on the
     next change to either | One reader
+
+    FIXED. `ScopeBoxScanner.StateOf` is the one reader of a view's scope box state, and
+    the panel's reader and the assignment's scanner both call it.
 
 27. LOGIC | src/RcrcGreen.Revit/ModelWriter.cs:845 | A captured field whose name is
     already added is skipped with a bare continue and nothing recorded, the shape the

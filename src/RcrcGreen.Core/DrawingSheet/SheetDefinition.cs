@@ -70,7 +70,7 @@ namespace RcrcGreen.Core
 
         public string WhatIsMissing
         {
-            get { return CanBeUsed ? string.Empty : "a sheet type"; }
+            get { return CanBeUsed ? string.Empty : "a title block"; }
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace RcrcGreen.Core
         /// </summary>
         public string InWords()
         {
-            if (!CanBeUsed) return "This sheet is missing a sheet type, so none is made.";
+            if (!CanBeUsed) return "This sheet is missing a title block, so none is made.";
 
             if (Views.Count == 0)
             {
@@ -105,7 +105,7 @@ namespace RcrcGreen.Core
 
         public override string ToString()
         {
-            return TitleBlock.Length == 0 ? "(no sheet type)" : TitleBlock;
+            return TitleBlock.Length == 0 ? "(no title block)" : TitleBlock;
         }
     }
 }

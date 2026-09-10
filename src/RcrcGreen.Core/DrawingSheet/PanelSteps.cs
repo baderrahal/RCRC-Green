@@ -154,7 +154,9 @@ namespace RcrcGreen.Core
         /// <param name="sheetsDescribed">How many sheet definitions the user has added.</param>
         /// <param name="sheetsAsked">How many sheets a run would make, meaning every row of
         /// every usable definition that has its name and its number.</param>
-        /// <param name="sheetsIncomplete">How many definitions are missing a sheet type.</param>
+        /// <param name="sheetsIncomplete">How many definitions are missing a title block.</param>
+        /// <param name="rowsIncomplete">How many rows across every definition are still short
+        /// of a name or a number.</param>
         /// <param name="plan">What a run would make right now.</param>
         public static PanelSteps Of(
             bool readOnce,
@@ -170,6 +172,7 @@ namespace RcrcGreen.Core
             int sheetsDescribed,
             int sheetsAsked,
             int sheetsIncomplete,
+            int rowsIncomplete,
             RunPlan plan)
         {
             first = first ?? string.Empty;
@@ -188,7 +191,7 @@ namespace RcrcGreen.Core
                 ViewTypes(plotsDone, typesTicked, typesInModel),
                 Mark(plotsDone, typesTicked, marked),
                 Sheets(plotsDone, titleBlockTypes, sheetsDescribed, sheetsAsked),
-                Run(marked, sheetsAsked, sheetsIncomplete, plan)
+                Run(marked, sheetsAsked, sheetsIncomplete, rowsIncomplete, plan)
             };
 
             return new PanelSteps(steps);
@@ -285,21 +288,52 @@ namespace RcrcGreen.Core
                 sheets + ", " + making, true, string.Empty, asked > 0);
         }
 
-        private static StepState Run(int marked, int sheetsAsked, int sheetsIncomplete, RunPlan plan)
+        private static StepState Run(
+            int marked, int sheetsAsked, int sheetsIncomplete, int rowsIncomplete, RunPlan plan)
         {
             if (marked == 0 && sheetsAsked == 0)
             {
                 return new StepState(PanelStep.Run, "RUN", string.Empty, false,
-                    sheetsIncomplete > 0
-                        ? "Every sheet in step 4 still needs its type, a name or a number, so "
-                            + "none can be made. Mark a cell in step 3 or finish one off."
-                        : "Mark a cell in step 3, or add a sheet in step 4. Nothing is created "
-                            + "until you do.", false);
+                    WhyNothingToRun(sheetsIncomplete, rowsIncomplete), false);
             }
 
             string counts = plan == null ? "nothing to make" : plan.CountsInWords();
 
             return new StepState(PanelStep.Run, "RUN", counts, true, string.Empty, false);
+        }
+
+        /// <summary>
+        /// Why Run is shut, naming what is unfinished in step 4 when something is. It used to
+        /// know only about a definition missing its title block, so a sheet described with a
+        /// title block and its views, whose rows still lacked names, was told to add a sheet.
+        /// </summary>
+        private static string WhyNothingToRun(int sheetsIncomplete, int rowsIncomplete)
+        {
+            var unfinished = new List<string>();
+
+            if (sheetsIncomplete > 0)
+            {
+                unfinished.Add((sheetsIncomplete == 1 ? "1 sheet" : sheetsIncomplete + " sheets")
+                    + " in step 4 still " + (sheetsIncomplete == 1 ? "needs" : "need")
+                    + " a title block");
+            }
+
+            if (rowsIncomplete > 0)
+            {
+                unfinished.Add((rowsIncomplete == 1 ? "1 row" : rowsIncomplete + " rows")
+                    + (sheetsIncomplete > 0 ? " still " : " in step 4 still ")
+                    + (rowsIncomplete == 1 ? "needs" : "need") + " a name or a number");
+            }
+
+            if (unfinished.Count == 0)
+            {
+                return "Mark a cell in step 3, or add a sheet in step 4. Nothing is created "
+                    + "until you do.";
+            }
+
+            return string.Join(", and ", unfinished.ToArray())
+                + ", so no sheet can be made yet. Finish that in step 4, or mark a cell in "
+                + "step 3.";
         }
     }
 }

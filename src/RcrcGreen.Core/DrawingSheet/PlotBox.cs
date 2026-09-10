@@ -71,11 +71,6 @@ namespace RcrcGreen.Core
             get { return (MinZ + MaxZ) / 2.0; }
         }
 
-        public Point3D Centre
-        {
-            get { return new Point3D(CentreX, CentreY, CentreZ); }
-        }
-
         // An infinite bound survives the ordering check and then turns every centre into NaN,
         // which reads as a placement rather than as a failure. Both are refused here instead.
         private static void RequireOrdered(double min, double max, string axis)

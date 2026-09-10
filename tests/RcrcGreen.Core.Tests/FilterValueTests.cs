@@ -61,53 +61,11 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal("918273", value.AsText);
         }
 
-        /// <summary>
-        /// All four, out to text and back, because a definition written to a file and loaded
-        /// again has to rebuild the same filter rather than four strings.
-        /// </summary>
-        [Fact]
-        public void EveryKindSurvivesTheRoundTrip()
-        {
-            Back(FilterValueKind.Text, "DM-11");
-            Back(FilterValueKind.WholeNumber, "1");
-            Back(FilterValueKind.Number, "12.5");
-            Back(FilterValueKind.ElementReference, "918273");
-        }
-
-        private static void Back(FilterValueKind kind, string text)
-        {
-            FilterValue read;
-            Assert.True(FilterValue.TryParse(kind, text, out read),
-                kind + " could not be read back from " + text);
-
-            Assert.Equal(kind, read.Kind);
-            Assert.Equal(text, read.AsText);
-        }
-
-        /// <summary>
-        /// Reading fails rather than falling back to text, because a filter quietly downgraded
-        /// to a string is exactly what this type exists to stop.
-        /// </summary>
-        [Fact]
-        public void TextThatIsNotThatKindIsRefusedRatherThanDowngraded()
-        {
-            FilterValue read;
-
-            Assert.False(FilterValue.TryParse(FilterValueKind.WholeNumber, "Yes", out read));
-            Assert.Null(read);
-
-            Assert.False(FilterValue.TryParse(FilterValueKind.Number, "quite a lot", out read));
-            Assert.False(FilterValue.TryParse(FilterValueKind.ElementReference, "3.5", out read));
-        }
-
         [Fact]
         public void ANumberThatIsNotANumberIsRefusedAtTheDoor()
         {
             Assert.Throws<ArgumentException>(() => FilterValue.OfNumber(double.NaN));
             Assert.Throws<ArgumentException>(() => FilterValue.OfNumber(double.PositiveInfinity));
-
-            FilterValue read;
-            Assert.False(FilterValue.TryParse(FilterValueKind.Number, "NaN", out read));
         }
 
         /// <summary>

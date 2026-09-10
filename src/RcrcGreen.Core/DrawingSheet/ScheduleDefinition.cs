@@ -85,61 +85,6 @@ namespace RcrcGreen.Core
                 elementId);
         }
 
-        /// <summary>
-        /// The other half of the round trip, for a definition read back from text. It refuses
-        /// rather than falling back to text, because a filter silently downgraded to a string
-        /// is exactly the fault this type exists to stop.
-        /// </summary>
-        public static bool TryParse(FilterValueKind kind, string asText, out FilterValue value)
-        {
-            value = null;
-            string text = asText ?? string.Empty;
-
-            switch (kind)
-            {
-                case FilterValueKind.Text:
-                    value = Text(text);
-                    return true;
-
-                case FilterValueKind.WholeNumber:
-                {
-                    int whole;
-                    if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out whole))
-                    {
-                        return false;
-                    }
-
-                    value = OfWholeNumber(whole);
-                    return true;
-                }
-
-                case FilterValueKind.Number:
-                {
-                    double number;
-                    if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out number)
-                        || double.IsNaN(number) || double.IsInfinity(number))
-                    {
-                        return false;
-                    }
-
-                    value = OfNumber(number);
-                    return true;
-                }
-
-                default:
-                {
-                    long id;
-                    if (!long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out id))
-                    {
-                        return false;
-                    }
-
-                    value = OfElementReference(id);
-                    return true;
-                }
-            }
-        }
-
         public FilterValueKind Kind { get; }
 
         public string AsText { get; }

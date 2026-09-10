@@ -305,7 +305,7 @@ namespace RcrcGreen.Core
         /// <summary>
         /// Every row of every described sheet, and a refusal for every row that cannot be made.
         ///
-        /// A definition short of a sheet type is refused once, not once per row, because it is
+        /// A definition short of a title block is refused once, not once per row, because it is
         /// one thing the user has to go and fix rather than seventeen. A row short of a name or
         /// a number is refused by itself, naming its plot and its views, because the row next
         /// to it may be complete.
@@ -361,14 +361,23 @@ namespace RcrcGreen.Core
             {
                 return Refusals.Count == 0
                     ? "Nothing is marked on a ticked plot, so this run would make nothing."
-                    : "This run would make nothing. " + Refusals.Count + " things cannot be made.";
+                    : "This run would make nothing. " + CannotBeMade() + ".";
             }
 
             string counts = CountsInWords();
             if (Refusals.Count == 0) return "This run would make " + counts + ".";
 
-            return "This run would make " + counts + ". " + Refusals.Count
-                + " things cannot be made and are named in the report.";
+            return "This run would make " + counts + ". " + CannotBeMade()
+                + (Refusals.Count == 1
+                    ? " and is named in the report."
+                    : " and are named in the report.");
+        }
+
+        private string CannotBeMade()
+        {
+            return Refusals.Count == 1
+                ? "1 thing cannot be made"
+                : Refusals.Count + " things cannot be made";
         }
 
         /// <summary>

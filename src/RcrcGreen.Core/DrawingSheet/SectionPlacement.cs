@@ -10,14 +10,12 @@ namespace RcrcGreen.Core
     {
         private SectionPlacement(
             string plotName,
-            SectionAxis axis,
             Point3D start,
             Point3D end,
             Vector3D viewDirection,
             double depth)
         {
             PlotName = plotName;
-            Axis = axis;
             Start = start;
             End = end;
             ViewDirection = viewDirection;
@@ -25,8 +23,6 @@ namespace RcrcGreen.Core
         }
 
         public string PlotName { get; }
-
-        public SectionAxis Axis { get; }
 
         public Point3D Start { get; }
 
@@ -98,7 +94,6 @@ namespace RcrcGreen.Core
             {
                 return new SectionPlacement(
                     box.PlotName,
-                    axis,
                     new Point3D(box.CentreX, box.MinY, box.CentreZ),
                     new Point3D(box.CentreX, box.MaxY, box.CentreZ),
                     new Vector3D(1.0, 0.0, 0.0),
@@ -107,7 +102,6 @@ namespace RcrcGreen.Core
 
             return new SectionPlacement(
                 box.PlotName,
-                axis,
                 new Point3D(box.MinX, box.CentreY, box.CentreZ),
                 new Point3D(box.MaxX, box.CentreY, box.CentreZ),
                 new Vector3D(0.0, -1.0, 0.0),

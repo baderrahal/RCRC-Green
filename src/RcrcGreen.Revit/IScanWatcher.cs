@@ -3,9 +3,10 @@ namespace RcrcGreen.Revit
     /// <summary>
     /// Lets a long read say how far it has got and be told to stop.
     ///
-    /// Both commands walk every element or every view in the document. On a large model that
-    /// is a window that has stopped responding with no number on it and no way out, which is
-    /// indistinguishable from a crash.
+    /// The model scanner and the scope box scanner both take one. The panel hands them a
+    /// watcher that never stops anything, because the read it runs came back in 1.4 seconds
+    /// over 96,934 elements on the first real model and has no Cancel button. The progress
+    /// window that once implemented this went with the ribbon buttons that showed it.
     /// </summary>
     internal interface IScanWatcher
     {

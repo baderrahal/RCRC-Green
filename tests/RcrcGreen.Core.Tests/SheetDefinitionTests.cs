@@ -157,8 +157,8 @@ namespace RcrcGreen.Core.Tests
             var bare = new SheetDefinition(string.Empty, string.Empty, null, 1);
 
             Assert.False(bare.CanBeUsed);
-            Assert.Equal("a sheet type", bare.WhatIsMissing);
-            Assert.Equal("This sheet is missing a sheet type, so none is made.", bare.InWords());
+            Assert.Equal("a title block", bare.WhatIsMissing);
+            Assert.Equal("This sheet is missing a title block, so none is made.", bare.InWords());
 
             Assert.True(Sheet().CanBeUsed);
             Assert.Equal(string.Empty, Sheet().WhatIsMissing);
@@ -347,14 +347,6 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
-        public void PositionsCountUpFromOne()
-        {
-            Assert.Equal(
-                new[] { 1, 2, 3 },
-                SheetDivision.Of(Six, 2).Select(one => one.Position).ToArray());
-        }
-
-        [Fact]
         public void NoViewsMakeNoSheets()
         {
             Assert.Empty(SheetDivision.Of(null, 1));
@@ -539,7 +531,29 @@ namespace RcrcGreen.Core.Tests
                 RunFixture.Row("DM-11", "010QA", "LOCATION KEY PLAN", new[] { KeyPlan }));
 
             Assert.Equal(0, batch.WillBeMade);
-            Assert.Equal("Missing a sheet type, so it makes nothing.", batch.InWords());
+            Assert.Equal("Missing a title block, so it makes nothing.", batch.InWords());
+        }
+
+        /// <summary>
+        /// The count the Run step names when nothing is asked for. A row short of a name or a
+        /// number counts whatever the title block says, and a finished row never does.
+        /// </summary>
+        [Fact]
+        public void RowsShortOfANameOrANumberAreCountedWhateverTheTitleBlockSays()
+        {
+            SheetBatch batch = RunFixture.Batch(new[] { KeyPlan }, 1,
+                RunFixture.Row("DM-11", "010QA", "LOCATION KEY PLAN", new[] { KeyPlan }),
+                RunFixture.Row("DM-12", "", "LOCATION KEY PLAN", new[] { KeyPlan }),
+                RunFixture.Row("DM-13", "010RA", "", new[] { KeyPlan }),
+                RunFixture.Row("DM-14", "", "", new[] { KeyPlan }));
+
+            Assert.Equal(3, batch.RowsShortOfANameOrANumber);
+
+            SheetBatch noTitleBlock = RunFixture.BatchMissingItsType(
+                RunFixture.Row("DM-11", "010QA", "LOCATION KEY PLAN", new[] { KeyPlan }),
+                RunFixture.Row("DM-12", "", "LOCATION KEY PLAN", new[] { KeyPlan }));
+
+            Assert.Equal(1, noTitleBlock.RowsShortOfANameOrANumber);
         }
 
         [Fact]

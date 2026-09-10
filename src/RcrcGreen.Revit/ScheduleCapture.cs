@@ -36,15 +36,24 @@ namespace RcrcGreen.Revit
         {
             public CapturedSchedules(
                 Dictionary<ViewType, CapturedSchedule> usable,
-                List<UncapturableSchedule> refused)
+                List<UncapturableSchedule> refused,
+                List<IgnoredName> notParsed)
             {
                 Usable = usable ?? new Dictionary<ViewType, CapturedSchedule>();
                 Refused = refused ?? new List<UncapturableSchedule>();
+                NotParsed = notParsed ?? new List<IgnoredName>();
             }
 
             public Dictionary<ViewType, CapturedSchedule> Usable { get; }
 
             public IReadOnlyList<UncapturableSchedule> Refused { get; }
+
+            /// <summary>
+            /// Schedules skipped because their names do not parse, each with the reason. They
+            /// were skipped with a bare continue, so a schedule named in the wrong case was
+            /// silently uncapturable.
+            /// </summary>
+            public IReadOnlyList<IgnoredName> NotParsed { get; }
         }
 
         /// <summary>
@@ -62,6 +71,7 @@ namespace RcrcGreen.Revit
 
             var usable = new Dictionary<ViewType, CapturedSchedule>();
             var whyNot = new Dictionary<ViewType, string>();
+            var notParsed = new List<IgnoredName>();
 
             foreach (ViewSchedule schedule in new FilteredElementCollector(document)
                 .OfClass(typeof(ViewSchedule))
@@ -69,7 +79,19 @@ namespace RcrcGreen.Revit
                 .Where(schedule => !schedule.IsTemplate))
             {
                 ParsedViewName parsed;
-                if (!ViewNameParser.TryParse(schedule.Name, out parsed)) continue;
+                if (!ViewNameParser.TryParse(schedule.Name, out parsed))
+                {
+                    // Recorded the way every other loss here is, with the registry's own
+                    // reason, so a schedule named dm-41-(600) FURNITURE SCHEDULE is named on
+                    // the status line rather than skipped in silence.
+                    notParsed.Add(new IgnoredName(
+                        schedule.Name,
+                        ViewNameParser.FailsOnlyOnPlotCase(schedule.Name)
+                            ? IgnoredReason.WrongCase
+                            : IgnoredReason.NotAPlotName));
+                    continue;
+                }
+
                 if (usable.ContainsKey(parsed.Type)) continue;
 
                 CapturedSchedule read = Of(document, schedule, parsed.Type);
@@ -104,7 +126,7 @@ namespace RcrcGreen.Revit
                 .Select(pair => new UncapturableSchedule(pair.Key, pair.Value))
                 .ToList();
 
-            return new CapturedSchedules(usable, refused);
+            return new CapturedSchedules(usable, refused, notParsed);
         }
 
         private static void Why(Dictionary<ViewType, string> whyNot, ViewType type, string why)

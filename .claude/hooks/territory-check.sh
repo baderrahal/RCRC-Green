@@ -58,8 +58,6 @@ DRAWING_SHEET_AT_REVIT_ROOT = {
     "src/RcrcGreen.Revit/IScanWatcher.cs",
     "src/RcrcGreen.Revit/ModelScanner.cs",
     "src/RcrcGreen.Revit/ModelWriter.cs",
-    "src/RcrcGreen.Revit/ScanModelCommand.cs",
-    "src/RcrcGreen.Revit/ScanProgressWindow.cs",
     "src/RcrcGreen.Revit/ScheduleCapture.cs",
     "src/RcrcGreen.Revit/ScopeBoxScanner.cs",
     "src/RcrcGreen.Revit/SectionDefaults.cs",

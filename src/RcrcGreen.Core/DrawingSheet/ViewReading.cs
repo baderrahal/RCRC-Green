@@ -24,7 +24,8 @@ namespace RcrcGreen.Core
             ParsedViewName parsed;
             if (!ViewNameParser.TryParse(viewName, out parsed))
             {
-                return new ViewOnAPlot(reading.PlotId, reading.Source, null, false);
+                return new ViewOnAPlot(
+                    reading.PlotId, reading.Source, null, false, reading.RawParameterValue);
             }
 
             var fills = new PlotViewPresence(parsed.PlotId, parsed.Type, viewId);
@@ -32,7 +33,8 @@ namespace RcrcGreen.Core
             bool disagree = reading.Source == PlotSourceOnView.Parameter
                 && !string.Equals(reading.PlotId, parsed.PlotId, StringComparison.Ordinal);
 
-            return new ViewOnAPlot(reading.PlotId, reading.Source, fills, disagree);
+            return new ViewOnAPlot(
+                reading.PlotId, reading.Source, fills, disagree, reading.RawParameterValue);
         }
     }
 }

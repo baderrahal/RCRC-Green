@@ -7,14 +7,9 @@ namespace RcrcGreen.Core.Tests
     public class NameParseSummaryTests
     {
         [Fact]
-        public void TheThreeNamesTheFirstRealModelBrokeAreAllReportedAsNotParsed()
+        public void TheModelNameTheFirstRealModelBrokeIsReportedAsNotParsed()
         {
             ModelScan scan = ScanFixture.Build(
-                sheets: new[]
-                {
-                    new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 3, "DM-11"),
-                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "DM-41-(010) Location Key Plan", 1, "DM-11")
-                },
                 views: new[]
                 {
                     ScanFixture.View("NG05", "FloorPlan"),
@@ -23,19 +18,23 @@ namespace RcrcGreen.Core.Tests
 
             NameParseSummary summary = NameParseSummary.Of(scan);
 
-            Assert.Contains("600QD", summary.For(NameParseSummary.SheetNumberKind).NotParsed);
-            Assert.Contains("SOFTSCAPE SCHEDULES", summary.For(NameParseSummary.SheetNameKind).NotParsed);
             Assert.Contains("NG05", summary.For(NameParseSummary.ViewNameKind).NotParsed);
         }
 
+        /// <summary>
+        /// Sheet names and sheet numbers are not tallied. A sheet is named after its view with
+        /// no plot and no code and numbered by code, plot letter and sheet letter, so the
+        /// tally read 0 of 1,385 parsed on every scan and named a fault in the model that was
+        /// not one. The sheets here would have been two failures each.
+        /// </summary>
         [Fact]
-        public void EachKindIsCountedOnItsOwn()
+        public void OnlyViewNamesAreCountedAndSheetsAreLeftAlone()
         {
             ModelScan scan = ScanFixture.Build(
                 sheets: new[]
                 {
                     new ScannedSheet("600QD", "SOFTSCAPE SCHEDULES", 0, "DM-11"),
-                    new ScannedSheet("DM-41-(200) General Arrangement Layout", "PF-12-(200) General Arrangement Layout", 0, "DM-11")
+                    new ScannedSheet("010QF", "LIST OF DRAWINGS", 0, "DM-11")
                 },
                 views: new[]
                 {
@@ -46,21 +45,14 @@ namespace RcrcGreen.Core.Tests
 
             NameParseSummary summary = NameParseSummary.Of(scan);
 
-            NameParseTally viewNames = summary.For(NameParseSummary.ViewNameKind);
-            Assert.Equal(2, viewNames.Parsed);
-            Assert.Equal(new[] { "NG05" }, viewNames.NotParsed);
-            Assert.Equal(3, viewNames.Total);
+            NameParseTally only = Assert.Single(summary.Tallies);
+            Assert.Equal(NameParseSummary.ViewNameKind, only.Kind);
+            Assert.Equal(2, only.Parsed);
+            Assert.Equal(new[] { "NG05" }, only.NotParsed);
+            Assert.Equal(3, only.Total);
 
-            NameParseTally sheetNames = summary.For(NameParseSummary.SheetNameKind);
-            Assert.Equal(1, sheetNames.Parsed);
-            Assert.Equal(new[] { "SOFTSCAPE SCHEDULES" }, sheetNames.NotParsed);
-
-            NameParseTally sheetNumbers = summary.For(NameParseSummary.SheetNumberKind);
-            Assert.Equal(1, sheetNumbers.Parsed);
-            Assert.Equal(new[] { "600QD" }, sheetNumbers.NotParsed);
-
-            Assert.Equal(4, summary.ParsedTotal);
-            Assert.Equal(3, summary.NotParsedTotal);
+            Assert.Equal(2, summary.ParsedTotal);
+            Assert.Equal(1, summary.NotParsedTotal);
         }
 
         [Fact]
@@ -96,12 +88,12 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
-        public void AnEmptyModelTalliesZeroOfEachKindRatherThanThrowing()
+        public void AnEmptyModelTalliesZeroRatherThanThrowing()
         {
             NameParseSummary summary = NameParseSummary.Of(ScanFixture.Build());
 
-            Assert.Equal(3, summary.Tallies.Count);
-            Assert.All(summary.Tallies, tally => Assert.Equal(0, tally.Total));
+            NameParseTally only = Assert.Single(summary.Tallies);
+            Assert.Equal(0, only.Total);
             Assert.Equal(0, summary.ParsedTotal);
             Assert.Equal(0, summary.NotParsedTotal);
         }
@@ -111,7 +103,7 @@ namespace RcrcGreen.Core.Tests
         {
             NameParseSummary summary = NameParseSummary.Of(ScanFixture.Build());
 
-            Assert.Throws<System.ArgumentException>(() => summary.For("family name"));
+            Assert.Throws<System.ArgumentException>(() => summary.For("sheet number"));
         }
     }
 }

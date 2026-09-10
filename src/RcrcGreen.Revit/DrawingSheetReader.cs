@@ -44,7 +44,9 @@ namespace RcrcGreen.Revit
             int fromParameter = 0;
             int fromViewName = 0;
             int withNoPlot = 0;
+            int parameterNotAPlot = 0;
             int disagree = 0;
+            var valuesThatAreNotPlots = new List<string>();
 
             foreach (View view in new FilteredElementCollector(document)
                 .OfClass(typeof(View))
@@ -70,6 +72,14 @@ namespace RcrcGreen.Revit
                     plotIds.Add(read.PlotId);
                     if (read.Source == PlotSourceOnView.Parameter) fromParameter++;
                     else fromViewName++;
+                }
+                else if (read.Source == PlotSourceOnView.ParameterNotAPlot)
+                {
+                    // Counted apart from the views with nothing, because a value that is
+                    // present and wrong needs seeing rather than only counting. It used to
+                    // land under with no plot at all while its cell filled from the name.
+                    parameterNotAPlot++;
+                    valuesThatAreNotPlots.Add(read.RawParameterValue);
                 }
                 else
                 {
@@ -99,7 +109,9 @@ namespace RcrcGreen.Revit
 
                 if (read.SourcesDisagree) disagree++;
 
-                states.Add(ScopeBoxStateOf(document, view));
+                // The one reader of a view's scope box state, shared with the assignment so
+                // the count on screen and the write can never read the model two ways.
+                states.Add(ScopeBoxScanner.StateOf(document, view));
             }
 
             var scopeBoxNames = new List<string>();
@@ -180,22 +192,13 @@ namespace RcrcGreen.Revit
                 numbersByPlot,
                 registry.Plots,
                 captured.Usable.Keys,
-                captured.Refused);
-        }
-
-        private static ViewScopeBoxState ScopeBoxStateOf(Document document, View view)
-        {
-            Parameter holder = view.get_Parameter(ScopeBoxScanner.ScopeBoxParameter);
-            bool canHold = holder != null && !holder.IsReadOnly;
-
-            string current = string.Empty;
-            if (holder != null && holder.HasValue)
-            {
-                Element box = document.GetElement(holder.AsElementId());
-                if (box != null) current = box.Name;
-            }
-
-            return new ViewScopeBoxState(view.Id.Value, view.Name, canHold, current);
+                captured.Refused,
+                parameterNotAPlot,
+                valuesThatAreNotPlots,
+                // The registry classified these and the reader used to drop them. A scope box
+                // named dm-41 made its plot vanish with the reason worked out and thrown away.
+                registry.Ignored.Where(one => one.Reason == IgnoredReason.WrongCase),
+                captured.NotParsed);
         }
 
         private static string ValueOf(Parameter parameter)

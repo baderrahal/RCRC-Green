@@ -266,8 +266,41 @@ namespace RcrcGreen.Core.Tests
                 new[] { Furniture });
 
             Assert.Equal(
-                "This run would make 1 plan view. 1 things cannot be made and are named in the report.",
+                "This run would make 1 plan view. 1 thing cannot be made and is named in the report.",
                 plan.InWords());
+        }
+
+        /// <summary>
+        /// One refusal used to print 1 things. The confirmation is the one line somebody reads
+        /// before writing to a model, and a line that reads machine written is a line skimmed.
+        /// </summary>
+        [Fact]
+        public void OneRefusalIsSaidInTheSingularAndTwoInThePlural()
+        {
+            RunPlan one = RunFixture.Of(
+                new[] { new PlotViewKey("DM-13", General) },
+                new[] { "DM-13" },
+                new string[0],
+                Schedules,
+                new[] { Furniture });
+
+            Assert.Equal("This run would make nothing. 1 thing cannot be made.", one.InWords());
+
+            RunPlan two = RunFixture.Of(
+                new[]
+                {
+                    new PlotViewKey("DM-11", General),
+                    new PlotViewKey("DM-13", General),
+                    new PlotViewKey("DM-14", General)
+                },
+                new[] { "DM-11", "DM-13", "DM-14" },
+                new[] { "DM-11" },
+                Schedules,
+                new[] { Furniture });
+
+            Assert.Equal(
+                "This run would make 1 plan view. 2 things cannot be made and are named in the report.",
+                two.InWords());
         }
 
         [Fact]

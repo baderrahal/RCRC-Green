@@ -17,11 +17,6 @@ namespace RcrcGreen.Core
     public static class ReportPlaces
     {
         /// <summary>
-        /// The folder inside the repo, relative to its root.
-        /// </summary>
-        public const string InsideTheRepo = "reports";
-
-        /// <summary>
         /// The file that install.ps1 leaves next to the assembly, holding the absolute path of
         /// that folder. Revit runs the add-in from the Autodesk Addins folder and has no idea
         /// where the repo is, so the installer is the only thing that can say.

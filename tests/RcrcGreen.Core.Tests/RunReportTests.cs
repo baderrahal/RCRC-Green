@@ -121,7 +121,54 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(4, plan.Items.Count);
             Assert.Contains(RunReport.CreatedPlanViews + ", 0", written);
             Assert.Contains(RunReport.NotCreatedDuring + ", 4", written);
-            Assert.Contains("0 were created and 4 were not.", written);
+            Assert.Contains(
+                "0 were created and 4 were not: 0 refused before the run, 4 refused by Revit "
+                + "during it, 0 created wrong and still in the model.",
+                written);
+        }
+
+        /// <summary>
+        /// The headline used to count the run's refusals and the schedules left behind and
+        /// leave the plan's refusals to their own section, so four refused before the run and
+        /// two during it read 2 were not at the top and 6 under the headings. One number now,
+        /// split the way the sections split it, and every part is written out by hand here.
+        /// </summary>
+        [Fact]
+        public void TheHeadlineCountsEveryWayOfNotBeingMadeAsOneNumber()
+        {
+            RunPlan plan = RunFixture.Of(
+                new[]
+                {
+                    new PlotViewKey("DM-11", General),
+                    new PlotViewKey("DM-12", General),
+                    new PlotViewKey("DM-13", General),
+                    new PlotViewKey("DM-14", General)
+                },
+                new[] { "DM-11", "DM-12", "DM-13", "DM-14" },
+                new string[0],
+                new ViewType[0],
+                new ViewType[0]);
+
+            RunOutcome outcome = RunFixture.Outcome(
+                made: new[] { RunFixture.SheetItem("DM-11", "010QA", "LOCATION KEY PLAN") },
+                refused: new[]
+                {
+                    new RunRefusal("DM-12", Hardscape, "Revit refused it."),
+                    new RunRefusal("DM-13", Hardscape, "Revit refused it.")
+                },
+                leftBehind: new[] { new RunRefusal("DM-14", Hardscape, "still there") });
+
+            Assert.Equal(4, plan.Refusals.Count);
+            Assert.Equal(
+                "1 was created and 7 were not: 4 refused before the run, 2 refused by Revit "
+                + "during it, 1 created wrong and still in the model.",
+                RunReport.Headline(plan, outcome));
+
+            string written = RunReport.Write(plan, outcome, "RCRC_NG05", When, true);
+            Assert.Contains(RunReport.Headline(plan, outcome), written);
+            Assert.Contains(RunReport.NotCreatedBefore + ", 4", written);
+            Assert.Contains(RunReport.NotCreatedDuring + ", 2", written);
+            Assert.Contains(RunReport.StillInTheModel + ", 1", written);
         }
 
         /// <summary>

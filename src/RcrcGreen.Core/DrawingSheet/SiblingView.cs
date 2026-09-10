@@ -179,11 +179,6 @@ namespace RcrcGreen.Core
 
         public ViewCrop Crop { get; }
 
-        public bool HasTemplate
-        {
-            get { return TemplateName.Length > 0; }
-        }
-
         /// <summary>
         /// What the report says about where a new view was set up from. One line, naming the
         /// view and every setting taken off it, so a Properties panel is never needed to check

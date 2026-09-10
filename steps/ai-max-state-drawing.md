@@ -1,6 +1,25 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Forty fourth pass, seven findings of steps/audit-drawing.md fixed and
+Phase: 9, ship. Forty fifth pass, the rest of steps/audit-drawing.md in two pull requests,
+the first of which, pull request 61, holds fixes 1 to 6 and is not merged yet. Its mockup
+folder was named pr-60 from the highest number on the list and the request opened as 61,
+so the folder was renamed before the merge rather than left as a second finding 22.
+
+Fixes 1 to 6 are eleven findings. The run report's headline is one number for everything
+not made, split the way its sections split it, and one refusal is 1 thing rather than 1
+things. The refresh line says what the read used to throw away: names that are a plot in
+the wrong case, in the registry's own words, views whose PRX_Plot_ID holds something that
+is not a plot with the value shown, and schedules skipped at capture because their names
+do not parse. `ScanModelCommand`, the two `Execute` methods and the progress window are
+deleted, nine unreachable members go with their tests, `PlotLetter` stays and `Propose`
+calls it, and `MarkedCount` stays with its callers. `Number` and `LineEnd` have one home
+each and a view's scope box state has one reader. Run names the rows still short of a
+name or a number, and the control is captioned Title block everywhere. The sheet name and
+number tallies are gone from the parse summary, measured against the real names this repo
+records, and CLAUDE.md says how a sheet is named. Suite reads 1024 locally, up from the
+1014 main carried. Three breaks watched red. Nothing in this round has been through Revit.
+
+Before that, the forty fourth pass, seven findings of steps/audit-drawing.md fixed and
 nothing else touched.
 
 A mark on a view type unticked in step 2 no longer reaches the run. The panel hands the

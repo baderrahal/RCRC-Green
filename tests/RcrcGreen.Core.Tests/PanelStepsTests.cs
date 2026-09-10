@@ -32,12 +32,13 @@ namespace RcrcGreen.Core.Tests
             int sheetsDescribed = 0,
             int sheetsAsked = 0,
             int sheetsIncomplete = 0,
+            int rowsIncomplete = 0,
             RunPlan plan = null)
         {
             return PanelSteps.Of(
                 readOnce, plotsInModel, first, last, plotsInRange, plotsTicked,
                 typesTicked, typesInModel, marked, titleBlockTypes, sheetsDescribed,
-                sheetsAsked, sheetsIncomplete, plan);
+                sheetsAsked, sheetsIncomplete, rowsIncomplete, plan);
         }
 
         [Fact]
@@ -194,16 +195,59 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// Every sheet added but none of them finished. Saying so on the Run step beats letting
+        /// Sheets added but none with a title block. Saying so on the Run step beats letting
         /// somebody press it and read the refusal afterwards.
         /// </summary>
         [Fact]
-        public void RunSaysWhenEverySheetIsMissingSomething()
+        public void RunSaysWhichSheetsStillNeedATitleBlock()
         {
             StepState run = After(sheetsDescribed: 2, sheetsIncomplete: 2).For(PanelStep.Run);
 
             Assert.False(run.Usable);
-            Assert.Contains("still needs its type, a name or a number", run.WhyNot);
+            Assert.Equal(
+                "2 sheets in step 4 still need a title block, so no sheet can be made yet. "
+                + "Finish that in step 4, or mark a cell in step 3.",
+                run.WhyNot);
+
+            Assert.Equal(
+                "1 sheet in step 4 still needs a title block, so no sheet can be made yet. "
+                + "Finish that in step 4, or mark a cell in step 3.",
+                After(sheetsDescribed: 1, sheetsIncomplete: 1).For(PanelStep.Run).WhyNot);
+        }
+
+        /// <summary>
+        /// A sheet described with its title block and its views, whose rows still lack names.
+        /// It used to have nothing marked, nothing asked and nothing incomplete, so Run told
+        /// somebody who had just added a sheet to add a sheet.
+        /// </summary>
+        [Fact]
+        public void RunSaysFinishTheRowsWhenASheetHasItsTitleBlockAndRowsLackNames()
+        {
+            StepState run = After(sheetsDescribed: 1, rowsIncomplete: 3).For(PanelStep.Run);
+
+            Assert.False(run.Usable);
+            Assert.Equal(
+                "3 rows in step 4 still need a name or a number, so no sheet can be made yet. "
+                + "Finish that in step 4, or mark a cell in step 3.",
+                run.WhyNot);
+
+            Assert.Equal(
+                "1 row in step 4 still needs a name or a number, so no sheet can be made yet. "
+                + "Finish that in step 4, or mark a cell in step 3.",
+                After(sheetsDescribed: 1, rowsIncomplete: 1).For(PanelStep.Run).WhyNot);
+        }
+
+        [Fact]
+        public void RunNamesBothWhenASheetLacksItsTitleBlockAndRowsLackNames()
+        {
+            StepState run = After(sheetsDescribed: 2, sheetsIncomplete: 1, rowsIncomplete: 2)
+                .For(PanelStep.Run);
+
+            Assert.Equal(
+                "1 sheet in step 4 still needs a title block, and 2 rows still need a name or "
+                + "a number, so no sheet can be made yet. Finish that in step 4, or mark a cell "
+                + "in step 3.",
+                run.WhyNot);
         }
 
         [Fact]

@@ -176,6 +176,10 @@ namespace RcrcGreen.Core
 
             Heading(report, "PARSE SUMMARY", parsing.ParsedTotal + parsing.NotParsedTotal, "names read by the parser");
             Line(report, "View templates are not read here. They are listed above under their own heading.");
+            Line(report, "Sheet names and sheet numbers are not read here either. A sheet is named after "
+                + "its view with no plot and no code, and numbered by code, plot letter and sheet "
+                + "letter, so neither is shaped like a view name and a tally of them counted "
+                + "failures nobody could act on.");
             Line(report, string.Empty);
 
             foreach (NameParseTally tally in parsing.Tallies)
