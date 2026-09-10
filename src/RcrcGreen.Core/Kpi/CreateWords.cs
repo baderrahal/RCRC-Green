@@ -278,6 +278,58 @@ namespace RcrcGreen.Core.Kpi
                 + "the box and press Create again.";
         }
 
+        /// <summary>
+        /// The note above the Create button naming every plot and schedule where a group no
+        /// sheet takes was found, Street Design on a mosque plot. It is a note and not a
+        /// refusal: the workbook is written with those rows left out, and this says where the
+        /// model needs correcting, where the user is looking when they press. Plots and
+        /// schedules, never species, because on a run of 78 plots a long list is not read.
+        /// Empty when nothing was left out, and empty on STREETS for Street Design, which
+        /// counts there.
+        /// </summary>
+        public static string GroupsLeftOut(IEnumerable<PlotReading> readings, KpiTemplate template)
+        {
+            if (template == null) throw new ArgumentNullException("template");
+
+            var names = new List<string>();
+            var plots = new List<string>();
+            bool spelled = false;
+
+            foreach (PlotReading reading in (readings ?? Enumerable.Empty<PlotReading>())
+                .Where(one => one != null)
+                .OrderBy(one => one.PlotId, NaturalOrder.Comparer))
+            {
+                List<string> inSoftscape = reading.PrintedGroups.Where(one => !one.Counted).Select(one => one.Name).ToList();
+                List<string> inShrubs = reading.Subtotals
+                    .SelectMany(one => one.Phases).Where(one => !one.Counted).Select(one => one.Name).ToList();
+                if (inSoftscape.Count == 0 && inShrubs.Count == 0) continue;
+
+                foreach (string name in inSoftscape.Concat(inShrubs))
+                {
+                    if (!names.Any(one => string.Equals(one, name, StringComparison.OrdinalIgnoreCase))) names.Add(name);
+                }
+
+                string where;
+                if (inSoftscape.Count > 0 && inShrubs.Count > 0)
+                {
+                    where = spelled ? "in both" : "in its softscape and its shrubs and lawn schedules";
+                    spelled = true;
+                }
+                else
+                {
+                    where = inSoftscape.Count > 0 ? "in its softscape schedule" : "in its shrubs and lawn schedule";
+                }
+
+                plots.Add(reading.PlotId + " " + where);
+            }
+
+            if (plots.Count == 0) return string.Empty;
+
+            return string.Join(" and ", names.ToArray()) + " found on " + Count(plots.Count, "plot") + " on "
+                + template.Name + ", which has no sheet for " + (names.Count == 1 ? "it" : "them") + ": "
+                + string.Join(", ", plots.ToArray()) + ". Those rows were left out. Fix them in the model.";
+        }
+
         public static string Refused(Reconciliation reconciliation)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");

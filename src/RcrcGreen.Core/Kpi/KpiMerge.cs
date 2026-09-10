@@ -214,30 +214,40 @@ namespace RcrcGreen.Core.Kpi
 
             BotanicalName = botanicalName;
             GroupName = groupName ?? string.Empty;
+            SheetName = string.Empty;
             PerPlot = (perPlot ?? Enumerable.Empty<PlotNumber>()).Where(one => one != null).ToList();
             Rows = new List<SpeciesRow>();
         }
 
-        private MergedSpecies(string botanicalName, string groupName, IReadOnlyList<SpeciesRow> rows)
+        private MergedSpecies(string botanicalName, string groupName, IReadOnlyList<SpeciesRow> rows, string sheetName)
         {
             BotanicalName = botanicalName;
             GroupName = groupName ?? string.Empty;
+            SheetName = sheetName ?? string.Empty;
             Rows = rows;
             PerPlot = rows.Select(one => new PlotNumber(one.PlotId, one.Quantity)).ToList();
         }
 
         /// <summary>
         /// Built off the rows themselves, so the heights, the diameters and the row numbers
-        /// travel with the count.
+        /// travel with the count, and the sheet the rows go to travels with them.
         /// </summary>
-        public static MergedSpecies FromRows(string botanicalName, string groupName, IEnumerable<SpeciesRow> rows)
+        public static MergedSpecies FromRows(string botanicalName, string groupName, IEnumerable<SpeciesRow> rows, string sheetName = null)
         {
             if (botanicalName == null) throw new ArgumentNullException("botanicalName");
 
             return new MergedSpecies(
                 botanicalName, groupName,
-                (rows ?? Enumerable.Empty<SpeciesRow>()).Where(one => one != null).ToList());
+                (rows ?? Enumerable.Empty<SpeciesRow>()).Where(one => one != null).ToList(),
+                sheetName);
         }
+
+        /// <summary>
+        /// The tree list sheet the rows go to, decided when they were merged, or empty for a
+        /// species built with none or one no sheet takes. Where it is set it is what places
+        /// the species, and the group name is then only what the schedule printed.
+        /// </summary>
+        public string SheetName { get; }
 
         /// <summary>
         /// The printed rows this was merged from, empty for a species built from plot numbers
@@ -481,12 +491,19 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Every species row across the chosen plots, merged on the group and the botanical
-        /// name compared without case and with surrounding whitespace off. Rows that sat under
-        /// no group row are left out of here and named by <see cref="Ungrouped"/>.
+        /// Every species row across the chosen plots, merged on the tree list sheet that takes
+        /// the row's group and the botanical name compared without case and with surrounding
+        /// whitespace off. The sheet comes off <paramref name="counted"/>, the one resolver the
+        /// readers use, so on STREETS a species under Proposed and under Street Design is one
+        /// row here, ALBIZIA LEBBECK 2 plus 6 on ST-05, because both go to Tree List -
+        /// Proposed, and the row says both groups. A group no sheet takes merges on its own
+        /// name and is reported as placed nowhere. Rows that sat under no group row are left
+        /// out of here and named by <see cref="Ungrouped"/>.
         /// </summary>
-        public static IReadOnlyList<MergedSpecies> Species(IEnumerable<PlotReading> readings)
+        public static IReadOnlyList<MergedSpecies> Species(IEnumerable<PlotReading> readings, CountedGroups counted)
         {
+            if (counted == null) throw new ArgumentNullException("counted");
+
             var byKey = new Dictionary<string, List<SpeciesRow>>(StringComparer.Ordinal);
             var names = new Dictionary<string, SpeciesRow>(StringComparer.Ordinal);
             var order = new List<string>();
@@ -497,7 +514,7 @@ namespace RcrcGreen.Core.Kpi
                 {
                     if (!row.HasGroup) continue;
 
-                    string key = Key(row);
+                    string key = Key(row, counted);
                     List<SpeciesRow> already;
                     if (!byKey.TryGetValue(key, out already))
                     {
@@ -512,7 +529,8 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return order
-                .Select(key => MergedSpecies.FromRows(names[key].BotanicalName, names[key].GroupName, byKey[key]))
+                .Select(key => MergedSpecies.FromRows(
+                    names[key].BotanicalName, Groups(byKey[key]), byKey[key], counted.SheetFor(names[key].GroupName)))
                 .OrderBy(one => one.GroupName, NaturalOrder.Comparer)
                 .ThenBy(one => one.BotanicalName, NaturalOrder.Comparer)
                 .ToList();
@@ -562,11 +580,29 @@ namespace RcrcGreen.Core.Kpi
             return Totalled.Adding(perPlot);
         }
 
-        private static string Key(SpeciesRow row)
+        private static string Key(SpeciesRow row, CountedGroups counted)
         {
-            return row.GroupName.Trim().ToUpperInvariant()
+            string home = counted.SheetFor(row.GroupName) ?? row.GroupName;
+            return home.Trim().ToUpperInvariant()
                 + " | "
                 + row.BotanicalName.Trim().ToUpperInvariant();
+        }
+
+        /// <summary>
+        /// The groups the rows printed under, each once, in the order first seen: Proposed, or
+        /// Proposed and Street Design.
+        /// </summary>
+        private static string Groups(IEnumerable<SpeciesRow> rows)
+        {
+            var seen = new List<string>();
+            foreach (SpeciesRow row in rows)
+            {
+                if (seen.Any(one => string.Equals(one, row.GroupName, StringComparison.OrdinalIgnoreCase))) continue;
+
+                seen.Add(row.GroupName);
+            }
+
+            return string.Join(" and ", seen.ToArray());
         }
 
         private static IEnumerable<PlotReading> Held(IEnumerable<PlotReading> readings)

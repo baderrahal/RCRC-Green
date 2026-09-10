@@ -14,7 +14,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             SpeciesList list = CreateFixture.WorkbookList(workbookHolds);
 
             return SpeciesMatching.Against(
-                KpiMerge.Species(new[] { plot }), KpiTemplates.ExistingParks, list, list);
+                KpiMerge.Species(new[] { plot }, CreateFixture.Counted), KpiTemplates.ExistingParks, list, list);
         }
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             SpeciesList list = CreateFixture.WorkbookList("Albizia lebbeck");
 
             IReadOnlyList<SpeciesMatch> matches = SpeciesMatching.Against(
-                KpiMerge.Species(new[] { plot }), KpiTemplates.ExistingParks, list, list);
+                KpiMerge.Species(new[] { plot }, CreateFixture.Counted), KpiTemplates.ExistingParks, list, list);
 
             Assert.Equal(2, matches.Count);
             Assert.Equal(KpiTemplates.ExistingTreesSheet,

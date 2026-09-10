@@ -1,6 +1,26 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Forty eighth pass, the FM-05 refusal answered off the 1536 report: its softscape
+Phase: 9, ship. Forty ninth pass, two things on top of the forty eighth, both Bader's
+decisions. **The other 43 audit findings stay open**, not renumbered, not reordered, not
+annotated.
+
+**Street Design counts as Proposed on STREETS and stays out everywhere else.** ST-05 prints
+Existing 369, Proposed 2 and Street Design 68 under TOTAL 439, and 369 plus 70 is 439. The
+decision is data on the template, `KpiTemplate.GroupsCountedAsProposed`, keyed on the template
+and never on the plot prefix, read by `CountedGroups.Of` into a `GroupByDecision`, and a test
+says the whole map holds exactly one. The merge keys every row on the sheet that takes its
+group through the same `CountedGroups`, so ALBIZIA LEBBECK 2 under Proposed and 6 under Street
+Design is one row of 8 on Tree List - Proposed and trips no refusal. The report's reason beside
+each group row says which route it took. **The note goes on the pane:** `CreateWords.GroupsLeftOut`
+names the plots and the schedules where a group no sheet takes was found, above the Create
+button, a note and not a refusal.
+
+Four break watches went red on 10, 21, 3 and 4 tests and were restored byte for byte.
+**Locally 1095 tests at this branch, 0 failed and 0 skipped, 580 of them KPI, 14 added.** The
+pull request, the merge hash and the runner's count go in the record the merge adds here.
+**Nothing in this round has been observed in Revit.**
+
+Before that, the forty eighth pass, the FM-05 refusal answered off the 1536 report: its softscape
 schedule holds THREE groups, and the third, Street Design, is somebody else's scope by Bader's
 decision. The model will be corrected later and until then the tool leaves those rows out and
 says so. **The other 43 audit findings stay open**, not renumbered, not reordered, not

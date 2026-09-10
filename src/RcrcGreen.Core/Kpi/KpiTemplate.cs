@@ -102,7 +102,8 @@ namespace RcrcGreen.Core.Kpi
             string mainSheetName,
             IEnumerable<MappedCell> cells,
             TreeSheet existingTrees,
-            TreeSheet proposedTrees)
+            TreeSheet proposedTrees,
+            IEnumerable<string> groupsCountedAsProposed = null)
         {
             if (name == null) throw new ArgumentNullException("name");
             if (mainSheetName == null) throw new ArgumentNullException("mainSheetName");
@@ -114,6 +115,10 @@ namespace RcrcGreen.Core.Kpi
             Cells = (cells ?? Enumerable.Empty<MappedCell>()).Where(cell => cell != null).ToList();
             ExistingTrees = existingTrees;
             ProposedTrees = proposedTrees;
+            GroupsCountedAsProposed = (groupsCountedAsProposed ?? Enumerable.Empty<string>())
+                .Where(one => !string.IsNullOrWhiteSpace(one))
+                .Select(one => one.Trim())
+                .ToList();
         }
 
         public string Name { get; }
@@ -134,6 +139,15 @@ namespace RcrcGreen.Core.Kpi
         public TreeSheet ExistingTrees { get; }
 
         public TreeSheet ProposedTrees { get; }
+
+        /// <summary>
+        /// Group names this template counts as though its Proposed sheet were named for them,
+        /// by decision and not by any sheet name. STREETS holds Street Design, because on a
+        /// street plot that group is the plot's own work. Every other template holds none, so
+        /// the same group is left out there. It is keyed on the template and never on the plot
+        /// prefix. A second name goes in here only when the team says so.
+        /// </summary>
+        public IReadOnlyList<string> GroupsCountedAsProposed { get; }
 
         public MappedCell CellFor(KpiValue value)
         {

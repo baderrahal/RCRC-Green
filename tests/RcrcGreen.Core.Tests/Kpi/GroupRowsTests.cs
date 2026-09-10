@@ -233,7 +233,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PlotReading[] readings = { Fm05Reading() };
 
-            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings);
+            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings, CreateFixture.Counted);
             Assert.Equal(6, merged.Where(one => one.GroupName == "Existing").Sum(one => one.Quantity));
             Assert.Equal(32, merged.Where(one => one.GroupName == "Proposed").Sum(one => one.Quantity));
             Assert.Equal(10, merged.Single(one => one.BotanicalName == "ALBIZIA LEBBECK").Quantity);
@@ -525,17 +525,18 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// Every template's two sheets count the same two groups, because the sheet names are
-        /// the same on all seven. Measured on the map, not on a workbook.
+        /// the same on all seven. Measured on the map, not on a workbook. Street Design counts
+        /// on STREETS alone, by decision, which is in its own test file.
         /// </summary>
         [Fact]
-        public void EveryTemplateCountsExistingAndProposedAndNothingElse()
+        public void EveryTemplateCountsExistingAndProposedAndOnlyStreetsCountsMore()
         {
             foreach (KpiTemplate template in KpiTemplates.All)
             {
                 CountedGroups counted = CountedGroups.Of(template);
                 Assert.True(counted.Counts("Existing"), template.Name);
                 Assert.True(counted.Counts("Proposed"), template.Name);
-                Assert.False(counted.Counts("Street Design"), template.Name);
+                Assert.Equal(template == KpiTemplates.Streets, counted.Counts("Street Design"));
             }
         }
 
