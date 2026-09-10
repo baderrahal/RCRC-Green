@@ -1,9 +1,18 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Forty fifth pass, the rest of steps/audit-drawing.md in two pull requests,
-the first of which, pull request 61, holds fixes 1 to 6 and is not merged yet. Its mockup
-folder was named pr-60 from the highest number on the list and the request opened as 61,
-so the folder was renamed before the merge rather than left as a second finding 22.
+Phase: 9, ship. Forty fifth pass, the rest of steps/audit-drawing.md in two pull requests.
+The first, pull request 61 with fixes 1 to 6, merged into main as `aaf78db` with 1056
+tests on the runner, 0 failed and 0 skipped, the count main then measured locally. The
+second, fixes 7 to 11, is not merged yet.
+
+Fixes 7 to 11 are eight findings. A field a captured definition names twice is added once
+and named in the report. Every tick box and button carrying a model name goes through the
+KPI pane's escape, called across the fence. A plan asked of a section and a section asked
+of a plan are refused by naming the kind. The pane's not available message, two comments
+about the far clip, the three sources sentence in three places and the reader's comment
+are corrected, and six messages the panel formatted itself live in `PanelSteps` with
+tests. The two mockup folders that carried each other's numbers are on the numbers their
+pull requests landed under. Nothing in this round has been through Revit.
 
 Fixes 1 to 6 are eleven findings. The run report's headline is one number for everything
 not made, split the way its sections split it, and one refusal is 1 thing rather than 1

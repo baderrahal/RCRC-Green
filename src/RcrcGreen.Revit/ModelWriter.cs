@@ -135,6 +135,16 @@ namespace RcrcGreen.Revit
                 return;
             }
 
+            // The choice falls back to any view of the type when none is a plan, and this
+            // model draws one view type both ways. A section here used to be refused as
+            // sitting on no level, which describes a section as a plan with a fault.
+            if (sibling.Facts.Kind != SiblingKind.Plan)
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId, item.Type, sibling.Facts.WrongKindInWords(SiblingKind.Plan)));
+                return;
+            }
+
             var siblingPlan = sibling.View as ViewPlan;
             if (siblingPlan == null || siblingPlan.GenLevel == null)
             {
@@ -262,6 +272,15 @@ namespace RcrcGreen.Revit
             if (sibling == null)
             {
                 outcome.Refused(NoSibling(item));
+                return;
+            }
+
+            // A plan's family type used to reach ViewSection.CreateSection here and come back
+            // as Revit refused an argument, which names the wrong cause.
+            if (sibling.Facts.Kind != SiblingKind.Section)
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId, item.Type, sibling.Facts.WrongKindInWords(SiblingKind.Section)));
                 return;
             }
 
@@ -952,6 +971,7 @@ namespace RcrcGreen.Revit
             var fieldByName = new Dictionary<string, ScheduleField>(StringComparer.Ordinal);
             var missingFields = new List<ScheduleFieldEntry>();
             var missingFilters = new List<string>();
+            var addedOnce = new List<string>();
 
             // Inside the same delete-again shape the number and the rename use. A throw from
             // AddField or AddFilter used to land in the catch around the whole item as refused,
@@ -969,7 +989,14 @@ namespace RcrcGreen.Revit
 
                 foreach (ScheduleFieldEntry entry in wanted.FieldsInOrder)
                 {
-                    if (fieldByName.ContainsKey(entry.Name)) continue;
+                    if (fieldByName.ContainsKey(entry.Name))
+                    {
+                        // Recorded rather than skipped. When a source schedule carries two
+                        // fields under one display name is UNKNOWN, and a bare continue here
+                        // was the shape the rules file names as a lie by omission.
+                        addedOnce.Add(entry.Name);
+                        continue;
+                    }
 
                     SchedulableField schedulable;
                     if (!available.TryGetValue(entry.Name, out schedulable))
@@ -1068,6 +1095,19 @@ namespace RcrcGreen.Revit
                         : " A calculated field has to be written again in the new schedule by "
                             + "hand, because Revit keeps it inside the schedule that defines it "
                             + "rather than offering it to a new one.")));
+            }
+
+            if (addedOnce.Count > 0)
+            {
+                outcome.NeedsAttention(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created with " + addedOnce.Count
+                    + (addedOnce.Count == 1 ? " field" : " fields")
+                    + " the captured definition names twice, added once: "
+                    + string.Join("; ", addedOnce.ToArray())
+                    + ". Whether the source schedule really holds two fields under one name is "
+                    + "UNKNOWN, so check its columns against the source by hand."));
             }
 
             // A field capture could not read is a column this schedule silently lacks, and

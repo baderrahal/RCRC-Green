@@ -19,8 +19,8 @@ namespace RcrcGreen.Revit
     /// without asking Revit anything, which is what makes those counts follow the tick boxes
     /// instantly.
     ///
-    /// The plot list is the union of three places a plot shows up: views, scope boxes and
-    /// PRX_Plot_ID on elements. It was built from views alone once, and a plot existing only
+    /// The plot list is the union of four places a plot shows up: view names, PRX_Plot_ID on
+    /// views, scope boxes and PRX_Plot_ID on elements. It was built from views alone once, and a plot existing only
     /// as a scope box with tagged elements, which is the plot with everything missing, never
     /// got a row. The element walk is what pays for that: 96,934 elements came back in 1.4
     /// seconds on the first real model, so there is still no progress window here.

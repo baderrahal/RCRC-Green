@@ -24,11 +24,13 @@ DM-41-(400) Landscape Cross Section
 PF-12-(200) General Arrangement Layout
 ```
 
-## The plot list is the union of three sources
+## The plot list is the union of four sources
 
-A view name, a scope box, or PRX_Plot_ID. A plot that has only a scope box and some tagged
-elements has no views at all, and that is the plot the team most needs to see, so it survives
-into the list rather than being dropped.
+A view name, PRX_Plot_ID on a view, a scope box, or PRX_Plot_ID on an element, gathered by
+`PlotRegistry` in Shared. A plot that has only a scope box and some tagged elements has no
+views at all, and that is the plot the team most needs to see, so it survives into the list
+rather than being dropped. The sentence the panel says on a model with no plots names all
+four, and lives once, in `PanelSteps`.
 
 ## A view fills the cell named by its own name and by nothing else
 

@@ -249,8 +249,8 @@ a button's text as an access key marker, swallows it and underlines the next let
 pane offered PRXComponent, PRXPlot_ID, PRXPlot_UID, PRXPlot_UID2 and PRXPlot_NH. Five names no
 model holds, in a tool whose whole job is exact parameter names. The strings were right in the
 code and wrong on screen, which no test of the code would ever have caught. What goes on a
-button is escaped now and the escape has a test. **The Drawing Sheet has the same fault and is
-not fixed.**
+button is escaped now and the escape has a test. The Drawing Sheet's tick boxes and its
+scope box case buttons go through the same escape now.
 
 **A copy taken once and never refreshed reads exactly like a fact.** The KPI pane held the
 model's folder from the one read that happened when it was shown. The model was then saved to a
