@@ -160,6 +160,16 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
+        /// Rows still short of a name or a number, whatever the title block says. The Run step
+        /// counts these across every definition, because a sheet described with its title
+        /// block and its views, whose rows still lacked names, used to be told to add a sheet.
+        /// </summary>
+        public int RowsShortOfANameOrANumber
+        {
+            get { return Rows.Count(one => !one.HasName || !one.HasNumber); }
+        }
+
+        /// <summary>
         /// Rows where the user typed a name or a number over the proposal. Those are the only
         /// thing Remove loses that a redraw cannot bring back, so they are what it asks about.
         /// </summary>

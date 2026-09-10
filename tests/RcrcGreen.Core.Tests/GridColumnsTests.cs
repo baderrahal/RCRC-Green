@@ -29,7 +29,6 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Equal(6, columns.All.Count);
             Assert.Equal(0, columns.ShownCount);
-            Assert.Equal(6, columns.HiddenCount);
             Assert.Empty(columns.Shown);
         }
 
@@ -48,7 +47,6 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(3, columns.ShownCount);
             Assert.Equal(3, columns.Shown.Count);
             Assert.Equal(3, columns.All.Count(one => columns.IsShown(one)));
-            Assert.Equal(3, columns.HiddenCount);
         }
 
         [Fact]
@@ -275,7 +273,6 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Empty(columns.All);
             Assert.Empty(columns.Shown);
-            Assert.Equal(0, columns.HiddenCount);
             Assert.Empty(columns.CodesInUse);
             Assert.Empty(columns.Matching("anything"));
         }

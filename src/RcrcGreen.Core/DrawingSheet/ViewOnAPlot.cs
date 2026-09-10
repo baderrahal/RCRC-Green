@@ -13,12 +13,17 @@ namespace RcrcGreen.Core
     public sealed class ViewOnAPlot
     {
         internal ViewOnAPlot(
-            string plotId, PlotSourceOnView source, PlotViewPresence fills, bool sourcesDisagree)
+            string plotId,
+            PlotSourceOnView source,
+            PlotViewPresence fills,
+            bool sourcesDisagree,
+            string rawParameterValue)
         {
             PlotId = plotId ?? string.Empty;
             Source = source;
             Fills = fills;
             SourcesDisagree = sourcesDisagree;
+            RawParameterValue = rawParameterValue ?? string.Empty;
         }
 
         /// <summary>
@@ -28,6 +33,12 @@ namespace RcrcGreen.Core
         public string PlotId { get; }
 
         public PlotSourceOnView Source { get; }
+
+        /// <summary>
+        /// What PRX_Plot_ID held, so a value that is present and not a plot can be shown on
+        /// the status line rather than only counted. Empty when the parameter gave nothing.
+        /// </summary>
+        public string RawParameterValue { get; }
 
         /// <summary>
         /// The cell this view fills, or null when its name does not parse and so carries no

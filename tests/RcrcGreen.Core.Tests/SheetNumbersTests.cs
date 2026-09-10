@@ -167,6 +167,31 @@ namespace RcrcGreen.Core.Tests
         {
             Assert.Equal("Q", SheetNumbers.PlotLetter(new[] { "010q" }));
         }
+
+        /// <summary>
+        /// The reason travels with the empty answer, because Propose reads this one rule and
+        /// used to hold a copy of it with the reasons inline.
+        /// </summary>
+        [Fact]
+        public void NoLetterComesWithTheReason()
+        {
+            string whyNot;
+
+            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new string[0], out whyNot));
+            Assert.Equal(
+                "This plot has no sheet numbers yet, so there is no plot letter to continue. "
+                + "Type the number.",
+                whyNot);
+
+            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "010QE", "200R" }, out whyNot));
+            Assert.Equal(
+                "This plot's own sheet numbers disagree about their plot letter, so none can "
+                + "be continued. Type the number.",
+                whyNot);
+
+            Assert.Equal("Q", SheetNumbers.PlotLetter(DmElevenNumbers, out whyNot));
+            Assert.Equal(string.Empty, whyNot);
+        }
     }
 
     /// <summary>

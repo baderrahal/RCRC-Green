@@ -152,11 +152,34 @@ namespace RcrcGreen.Core
         /// </summary>
         public static string PlotLetter(IEnumerable<string> plotsOwnNumbers)
         {
+            string whyNot;
+            return PlotLetter(plotsOwnNumbers, out whyNot);
+        }
+
+        /// <summary>
+        /// The letter, or empty with the reason there is none. Propose reads this rather than
+        /// holding a second copy of the rule, so the letter can never be worked out two ways.
+        /// </summary>
+        public static string PlotLetter(IEnumerable<string> plotsOwnNumbers, out string whyNot)
+        {
             List<string> letters = LettersIn(plotsOwnNumbers);
 
-            return letters.Count > 0 && letters.Distinct(StringComparer.Ordinal).Count() == 1
-                ? letters[0]
-                : string.Empty;
+            if (letters.Count == 0)
+            {
+                whyNot = "This plot has no sheet numbers yet, so there is no plot letter to "
+                    + "continue. Type the number.";
+                return string.Empty;
+            }
+
+            if (letters.Distinct(StringComparer.Ordinal).Count() > 1)
+            {
+                whyNot = "This plot's own sheet numbers disagree about their plot letter, so none "
+                    + "can be continued. Type the number.";
+                return string.Empty;
+            }
+
+            whyNot = string.Empty;
+            return letters[0];
         }
 
         /// <summary>
@@ -173,32 +196,20 @@ namespace RcrcGreen.Core
                     "There is no view code to number from. Type the number.");
             }
 
-            List<string> letters = LettersIn(plotsOwnNumbers);
-
-            if (letters.Count == 0)
-            {
-                return SheetNumberProposal.Nothing(
-                    "This plot has no sheet numbers yet, so there is no plot letter to "
-                    + "continue. Type the number.");
-            }
-
-            if (letters.Distinct(StringComparer.Ordinal).Count() > 1)
-            {
-                return SheetNumberProposal.Nothing(
-                    "This plot's own sheet numbers disagree about their plot letter, so none "
-                    + "can be continued. Type the number.");
-            }
+            string whyNoLetter;
+            string letter = PlotLetter(plotsOwnNumbers, out whyNoLetter);
+            if (letter.Length == 0) return SheetNumberProposal.Nothing(whyNoLetter);
 
             HashSet<string> taken = Trimmed(numbersInUse);
 
             for (char sheetLetter = 'A'; sheetLetter <= 'Z'; sheetLetter++)
             {
-                string offered = code + letters[0] + sheetLetter;
+                string offered = code + letter + sheetLetter;
                 if (!taken.Contains(offered)) return SheetNumberProposal.For(offered);
             }
 
             return SheetNumberProposal.Nothing(
-                "Every number from " + code + letters[0] + "A to " + code + letters[0]
+                "Every number from " + code + letter + "A to " + code + letter
                 + "Z is taken. Type the number.");
         }
 

@@ -178,7 +178,7 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// A definition short of its sheet type is one thing to go and fix, not one per row,
+        /// A definition short of its title block is one thing to go and fix, not one per row,
         /// so it is refused once.
         /// </summary>
         [Fact]
@@ -193,7 +193,7 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Empty(plan.Items);
             RunRefusal only = Assert.Single(plan.Refusals);
-            Assert.Contains("missing a sheet type", only.Because);
+            Assert.Contains("missing a title block", only.Because);
             Assert.Contains("No sheet of this kind was made on any plot", only.Because);
         }
 

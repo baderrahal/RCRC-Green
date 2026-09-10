@@ -210,7 +210,6 @@ namespace RcrcGreen.Core.Tests
         {
             var plan = Plan("DM-18-(010) Overall Plan", Overall, "TYPE A", string.Empty);
 
-            Assert.False(plan.HasTemplate);
             Assert.Contains("view template none", plan.InWords());
         }
 

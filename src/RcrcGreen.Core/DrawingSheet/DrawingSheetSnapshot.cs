@@ -41,7 +41,11 @@ namespace RcrcGreen.Core
             IEnumerable<SheetOnAPlot> sheetNumbersByPlot = null,
             IEnumerable<PlotRecord> plots = null,
             IEnumerable<ViewType> capturableScheduleTypes = null,
-            IEnumerable<UncapturableSchedule> uncapturableSchedules = null)
+            IEnumerable<UncapturableSchedule> uncapturableSchedules = null,
+            int viewsWithAParameterThatIsNotAPlot = 0,
+            IEnumerable<string> parameterValuesThatAreNotPlots = null,
+            IEnumerable<IgnoredName> wrongCaseNames = null,
+            IEnumerable<IgnoredName> schedulesNotCaptured = null)
         {
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
 
@@ -149,6 +153,29 @@ namespace RcrcGreen.Core
             FromViewName = fromViewName;
             WithNoPlot = withNoPlot;
             SourcesDisagree = sourcesDisagree;
+
+            ViewsWithAParameterThatIsNotAPlot = viewsWithAParameterThatIsNotAPlot;
+
+            ParameterValuesThatAreNotPlots = Clean(parameterValuesThatAreNotPlots)
+                .Select(value => value.Trim())
+                .Where(value => value.Length > 0)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(value => value, NaturalOrder.Comparer)
+                .ToList();
+
+            // One name can reach the registry twice, as a view name and as the value of
+            // PRX_Plot_ID on that view, and it is one fault to fix.
+            WrongCaseNames = (wrongCaseNames ?? Enumerable.Empty<IgnoredName>())
+                .Where(one => one != null && one.Reason == IgnoredReason.WrongCase)
+                .GroupBy(one => one.Text, StringComparer.Ordinal)
+                .Select(byText => byText.First())
+                .OrderBy(one => one.Text, NaturalOrder.Comparer)
+                .ToList();
+
+            SchedulesNotCaptured = (schedulesNotCaptured ?? Enumerable.Empty<IgnoredName>())
+                .Where(one => one != null)
+                .OrderBy(one => one.Text, NaturalOrder.Comparer)
+                .ToList();
         }
 
         /// <summary>
@@ -300,6 +327,30 @@ namespace RcrcGreen.Core
         /// no view of that plot existed for.
         /// </summary>
         public int SourcesDisagree { get; }
+
+        /// <summary>
+        /// Views whose PRX_Plot_ID holds something that is not a plot. Counted apart from the
+        /// views with no plot at all, because a value that is present and wrong is a different
+        /// problem from one that was never filled in, and the values are kept so the status
+        /// line can show them.
+        /// </summary>
+        public int ViewsWithAParameterThatIsNotAPlot { get; }
+
+        public IReadOnlyList<string> ParameterValuesThatAreNotPlots { get; }
+
+        /// <summary>
+        /// Every string the registry read that is a plot identifier in the wrong case, from
+        /// any source. A scope box named dm-41 used to make its plot vanish from the list, or
+        /// turn a plot with a box into a plot with none, with the reason worked out and thrown
+        /// away.
+        /// </summary>
+        public IReadOnlyList<IgnoredName> WrongCaseNames { get; }
+
+        /// <summary>
+        /// Schedules the capture skipped because their names do not parse, each with the
+        /// reason. They used to be skipped with nothing written down.
+        /// </summary>
+        public IReadOnlyList<IgnoredName> SchedulesNotCaptured { get; }
 
         public bool Empty
         {

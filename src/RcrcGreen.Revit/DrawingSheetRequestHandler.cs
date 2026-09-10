@@ -232,12 +232,26 @@ namespace RcrcGreen.Revit
                 said.Append("The grid follows the name.");
             }
 
+            // What the read worked out and used to throw away: a PRX_Plot_ID that is present
+            // and not a plot, a name that is a plot in the wrong case, and a schedule skipped
+            // at capture. Each clause is empty when there is nothing to say.
+            Clause(said, RefreshWords.ParameterNotAPlot(
+                snapshot.ViewsWithAParameterThatIsNotAPlot, snapshot.ParameterValuesThatAreNotPlots));
+            Clause(said, RefreshWords.WrongCase(snapshot.WrongCaseNames));
+            Clause(said, RefreshWords.SchedulesNotCaptured(snapshot.SchedulesNotCaptured));
+
             // A refresh used to clear every mark and say nothing about it, so somebody who
             // marked a screenful and pressed Refresh to pick up a colleague's change was told
             // views, plots and counts and not what they had just lost.
-            if (costTheUser.Length > 0) said.Append(" ").Append(costTheUser);
+            Clause(said, costTheUser);
 
             Told?.Invoke(said.ToString());
+        }
+
+        private static void Clause(StringBuilder said, string clause)
+        {
+            if (string.IsNullOrEmpty(clause)) return;
+            said.Append(" ").Append(clause);
         }
 
         private void Select(UIDocument open, Document document, long viewId)

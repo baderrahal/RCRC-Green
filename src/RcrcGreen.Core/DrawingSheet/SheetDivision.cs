@@ -9,18 +9,12 @@ namespace RcrcGreen.Core
     /// </summary>
     public sealed class PlannedSheet
     {
-        public PlannedSheet(int position, IEnumerable<ViewType> views)
+        public PlannedSheet(IEnumerable<ViewType> views)
         {
-            Position = position;
             Views = (views ?? Enumerable.Empty<ViewType>())
                 .Where(one => one != null)
                 .ToList();
         }
-
-        /// <summary>
-        /// 1 for the first sheet of the definition, counting up, so a row can say sheet 2 of 3.
-        /// </summary>
-        public int Position { get; }
 
         /// <summary>
         /// In the order they were ticked, which is the order they go onto the sheet.
@@ -96,9 +90,7 @@ namespace RcrcGreen.Core
             var planned = new List<PlannedSheet>();
             for (int start = 0; start < wanted.Count; start += each)
             {
-                planned.Add(new PlannedSheet(
-                    planned.Count + 1,
-                    wanted.Skip(start).Take(each)));
+                planned.Add(new PlannedSheet(wanted.Skip(start).Take(each)));
             }
 
             return planned;

@@ -5,20 +5,23 @@ using System.Linq;
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// Runs every name in a scan through <see cref="ViewNameParser"/> and counts the answers.
+    /// Runs every view name in a scan through <see cref="ViewNameParser"/> and counts the
+    /// answers.
     ///
     /// This is the part of the scan the first real model was needed for. The parser was
-    /// written from four example names, and a sheet numbered 600QD named SOFTSCAPE SCHEDULES
-    /// matches no part of that pattern. The tallies say how far off the guess was, and the
-    /// list of refusals says what the naming actually looks like.
+    /// written from four example names, and a model called NG05 has no dash in it. The tally
+    /// says how far off the guess was, and the list of refusals says what the naming actually
+    /// looks like.
+    ///
+    /// Sheet names and sheet numbers were tallied here too, and the tally read 0 of 1,385
+    /// parsed on every scan. Neither is shaped like a view name: a sheet is named after its
+    /// view with no plot and no code, 010QF LIST OF DRAWINGS on the first real model, and
+    /// numbered by code, plot letter and sheet letter. A count of failures nobody can act on
+    /// reads as a fault in the model, so both tallies are gone.
     /// </summary>
     public sealed class NameParseSummary
     {
         public const string ViewNameKind = "view name";
-
-        public const string SheetNameKind = "sheet name";
-
-        public const string SheetNumberKind = "sheet number";
 
         /// <summary>
         /// How many refusals the report prints per kind. The tally still counts them all.
@@ -43,8 +46,8 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// View templates are not read here. The brief named three kinds and a template is
-        /// listed in the report under its own heading instead.
+        /// View templates are not read here. A template is listed in the report under its own
+        /// heading instead.
         /// </summary>
         public static NameParseSummary Of(ModelScan scan)
         {
@@ -52,9 +55,7 @@ namespace RcrcGreen.Core
 
             return new NameParseSummary(new List<NameParseTally>
             {
-                Count(ViewNameKind, scan.Views.Where(view => !view.IsTemplate).Select(view => view.Name)),
-                Count(SheetNameKind, scan.Sheets.Select(sheet => sheet.SheetName)),
-                Count(SheetNumberKind, scan.Sheets.Select(sheet => sheet.SheetNumber))
+                Count(ViewNameKind, scan.Views.Where(view => !view.IsTemplate).Select(view => view.Name))
             });
         }
 

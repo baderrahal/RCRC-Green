@@ -9,9 +9,9 @@ head. Read this before touching anything.
 1. **Drawing Sheet.** `src/RcrcGreen.Core/DrawingSheet`, plus its Revit files, which sit at
    the root of `src/RcrcGreen.Revit` because the tool predates the folder convention there.
    The hook names them one by one: the panel, the readers, the writer, the model scanner and
-   its progress window, the schedule capture, the sibling reader, the scope box scanner, the
-   section defaults, the sheet being described and the commands. Its test files sit flat at
-   the root of `tests/RcrcGreen.Core.Tests`.
+   its watcher interface, the schedule capture, the sibling reader, the scope box scanner,
+   the section defaults, the sheet being described, the scope box assignment and the show
+   command. Its test files sit flat at the root of `tests/RcrcGreen.Core.Tests`.
 2. **KPI.** `src/RcrcGreen.Core/Kpi`, `src/RcrcGreen.Revit/Kpi` and
    `tests/RcrcGreen.Core.Tests/Kpi`.
 3. **Coordination Layout**, not started. `src/RcrcGreen.Core/CoordinationLayout`,

@@ -3,7 +3,7 @@ using System;
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// One title block type the model holds, offered as the sheet type.
+    /// One title block type the model holds, offered under Title block when a sheet is described.
     ///
     /// The user's model has AR-PRX-Title_Block_A1 with types including KEYPLAN, LOD, SCHEDULES,
     /// GA-DETAILED DESIGN and SECTION WITH KEYPLAN. That list is read from the model every

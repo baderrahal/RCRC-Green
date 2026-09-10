@@ -80,10 +80,12 @@ them was invisible on a plot whose rows all carry photos. The two rules files po
 
 These come from the team and from real models. They are not guesses.
 
-- Views and sheets are named `<PlotID>-(<code>) <View name>`. PlotID is two uppercase letters,
-  a dash, then digits, as in DM-41, and lowercase is invalid. The code is digits in round
-  brackets and the view name is free text after the bracket and one space. A plot is also a
-  scope box named with the PlotID
+- Views are named `<PlotID>-(<code>) <View name>`. PlotID is two uppercase letters, a dash,
+  then digits, as in DM-41, and lowercase is invalid. The code is digits in round brackets and
+  the view name is free text after the bracket and one space. A plot is also a scope box
+  named with the PlotID. A SHEET IS NOT NAMED THAT WAY: its name is the view name upper cased
+  with no plot and no code, LIST OF DRAWINGS and SOFTSCAPE SCHEDULES on the first real model,
+  and its number is the code, the plot letter and a sheet letter, 010QF and 600QD
 - **There are two plot parameters, not one.** `PRX_Plot_ID` sits on views and on sheets and the
   Sheet List filters on it. `PRX_Ref Plot ID`, with spaces rather than underscores, sits on
   model elements and every quantity schedule filters on that one. A schedule built against the

@@ -87,6 +87,9 @@ namespace RcrcGreen.Core.Tests
             Assert.False(read.Found);
             Assert.Equal("DM-41", read.Fills.Where.PlotId);
             Assert.False(read.SourcesDisagree);
+
+            // Kept on the reading so the status line can show the value, not only count it.
+            Assert.Equal("N/A", read.RawParameterValue);
         }
 
         [Fact]

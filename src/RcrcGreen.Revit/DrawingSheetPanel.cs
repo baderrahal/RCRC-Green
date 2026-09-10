@@ -285,6 +285,7 @@ namespace RcrcGreen.Revit
                 _sheets.Count,
                 SheetsToMake(),
                 SheetsWanted().Count(one => !one.Definition.CanBeUsed),
+                SheetsWanted().Sum(one => one.RowsShortOfANameOrANumber),
                 PlanNow());
         }
 
@@ -961,7 +962,10 @@ namespace RcrcGreen.Revit
                 sheet.TitleBlock = type.SelectedItem as TitleBlockType;
                 RefreshHeaders();
             };
-            block.Children.Add(Labelled("Type", type));
+            // Title block, in those words, everywhere. It was captioned Type here, called a
+            // sheet type in the shut step and the refusal, and sat over a list of view type
+            // tick boxes, three words for one control next to a fourth thing called a type.
+            block.Children.Add(Labelled("Title block", type));
 
             var perSheet = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
             perSheet.Children.Add(new TextBlock

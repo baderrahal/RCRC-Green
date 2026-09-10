@@ -19,8 +19,6 @@ namespace RcrcGreen.Core
     /// </summary>
     public static class RunReport
     {
-        private const string LineEnd = "\r\n";
-
         /// <summary>
         /// Headings used by both the report and the test that holds one against the other, so
         /// renaming a section cannot quietly take it out of that check.
@@ -74,8 +72,9 @@ namespace RcrcGreen.Core
             Line(report, string.Empty);
             Line(report, applied ? "The run was confirmed and written." : "Nothing was written.");
             Line(report, plan.InWords());
-            Line(report, outcome.CreatedCount + " were created and " + outcome.NotCreatedCount
-                + " were not. Every count below is of what happened, not of what was intended.");
+            Line(report, Headline(plan, outcome));
+            Line(report, "The before count is what the plan decided. Every other count in this "
+                + "file is of what happened, not of what was intended.");
 
             Banner(report, outcome);
 
@@ -107,6 +106,29 @@ namespace RcrcGreen.Core
             Closing(report);
 
             return report.ToString();
+        }
+
+        /// <summary>
+        /// One number for everything not created, split the way the sections below split it.
+        ///
+        /// It used to count the run's refusals and the schedules left behind while the plan's
+        /// refusals sat in a section of their own with a count of their own, so four refused
+        /// before the run and two during it read 2 were not at the top and 6 under the
+        /// headings. Two numbers for not created, in the file that exists because two of its
+        /// numbers once disagreed.
+        /// </summary>
+        public static string Headline(RunPlan plan, RunOutcome outcome)
+        {
+            if (plan == null) throw new ArgumentNullException("plan");
+            if (outcome == null) throw new ArgumentNullException("outcome");
+
+            int notMade = plan.Refusals.Count + outcome.NotCreatedCount;
+
+            return (outcome.CreatedCount == 1 ? "1 was created" : outcome.CreatedCount + " were created")
+                + " and " + (notMade == 1 ? "1 was not: " : notMade + " were not: ")
+                + plan.Refusals.Count + " refused before the run, "
+                + outcome.NotCreated.Count + " refused by Revit during it, "
+                + outcome.LeftBehind.Count + " created wrong and still in the model.";
         }
 
         private static IEnumerable<string> Named(RunOutcome outcome, RunItemKind kind)
@@ -224,7 +246,7 @@ namespace RcrcGreen.Core
 
         private static void Line(StringBuilder report, string text)
         {
-            report.Append(text).Append(LineEnd);
+            report.Append(text).Append(ScanReport.LineEnd);
         }
     }
 }

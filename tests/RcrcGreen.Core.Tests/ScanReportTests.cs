@@ -65,7 +65,7 @@ namespace RcrcGreen.Core.Tests
                 HeadingIn(report, "VIEWPORTS ON EXISTING SHEETS"));
             Assert.Equal("== SCOPE BOXES (2) ==", HeadingIn(report, "SCOPE BOXES"));
             Assert.Equal("== PRX_Plot_ID VALUES (2) ==", HeadingIn(report, "PRX_Plot_ID VALUES"));
-            Assert.Equal("== PARSE SUMMARY (9) ==", HeadingIn(report, "PARSE SUMMARY"));
+            Assert.Equal("== PARSE SUMMARY (5) ==", HeadingIn(report, "PARSE SUMMARY"));
         }
 
         [Fact]
@@ -90,7 +90,7 @@ namespace RcrcGreen.Core.Tests
                     "== SCOPE BOXES (2) ==",
                     "== PRX_Plot_ID VALUES (2) ==",
                     "== VIEWS THAT DISAGREE WITH THEMSELVES (0) ==",
-                    "== PARSE SUMMARY (9) =="
+                    "== PARSE SUMMARY (5) =="
                 },
                 headings);
         }
@@ -188,17 +188,26 @@ namespace RcrcGreen.Core.Tests
         }
 
         [Fact]
-        public void TheParseSummaryCountsEachKindAndNamesWhatItRefused()
+        public void TheParseSummaryCountsViewNamesAndNamesWhatItRefused()
         {
             string[] lines = LinesOf(ScanReport.Write(RealShapedScan(), Noon));
 
             Assert.Contains("view name: 2 of 5 parsed, 3 did not", lines);
-            Assert.Contains("sheet name: 1 of 2 parsed, 1 did not", lines);
-            Assert.Contains("sheet number: 1 of 2 parsed, 1 did not", lines);
-
-            Assert.Contains("  600QD", lines);
-            Assert.Contains("  SOFTSCAPE SCHEDULES", lines);
             Assert.Contains("  NG05", lines);
+
+            // Sheets are not tallied. Their names and numbers are not shaped like a view
+            // name, so the tally read 0 of 1385 parsed on every scan and named a fault in the
+            // model that was not one.
+            Assert.DoesNotContain(lines, line => line.StartsWith("sheet name:", StringComparison.Ordinal));
+            Assert.DoesNotContain(lines, line => line.StartsWith("sheet number:", StringComparison.Ordinal));
+            Assert.DoesNotContain("  600QD", lines);
+            Assert.DoesNotContain("  SOFTSCAPE SCHEDULES", lines);
+            Assert.Contains(
+                "Sheet names and sheet numbers are not read here either. A sheet is named after "
+                + "its view with no plot and no code, and numbered by code, plot letter and sheet "
+                + "letter, so neither is shaped like a view name and a tally of them counted "
+                + "failures nobody could act on.",
+                lines);
         }
 
         [Fact]
