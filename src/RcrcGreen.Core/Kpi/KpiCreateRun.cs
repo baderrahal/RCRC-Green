@@ -34,9 +34,14 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<MergedSpecies> merged,
             IEnumerable<SpeciesRow> ungrouped,
             PatchOutcome outcome,
-            RunTiming timing)
+            RunTiming timing,
+            SpeciesList existingList = null,
+            SpeciesList proposedList = null)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");
+
+            ExistingList = existingList;
+            ProposedList = proposedList;
 
             DocumentTitle = documentTitle ?? string.Empty;
             Template = template;
@@ -109,6 +114,15 @@ namespace RcrcGreen.Core.Kpi
         /// before, so a five minute run over 20 plots left no file saying so.
         /// </summary>
         public RunTiming Timing { get; }
+
+        /// <summary>
+        /// The two tree lists as they were read off the template, so the report can say how many
+        /// names each holds, on which rows, and which rows its total reaches. Null when the
+        /// accounting refused before the template was opened.
+        /// </summary>
+        public SpeciesList ExistingList { get; }
+
+        public SpeciesList ProposedList { get; }
 
         public bool Wrote
         {

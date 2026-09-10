@@ -121,9 +121,13 @@ namespace RcrcGreen.Core.Kpi
             {
                 if (!match.Placed)
                 {
+                    // A row the total does not reach is still a row, and the cell is named so
+                    // the line points at where the count was not put.
                     skipped.Add(new NotWritten(
                         match.SheetName,
-                        string.Empty,
+                        match.Row > 0
+                            ? KpiTemplates.QuantityColumn + match.Row.ToString(CultureInfo.InvariantCulture)
+                            : string.Empty,
                         match.Species.BotanicalName + " " + match.Species.Quantity
                             + " under " + Shown(match.Species.GroupName),
                         match.Why));

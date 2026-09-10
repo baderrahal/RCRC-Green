@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
@@ -115,6 +116,121 @@ namespace RcrcGreen.Core.Tests.Kpi
             }
 
             return path;
+        }
+
+        /// <summary>
+        /// One tree list sheet as a test describes it: which rows name what, and where the
+        /// quantity total is and what it reaches. A total row of zero means no total on the
+        /// sheet at all.
+        /// </summary>
+        public sealed class TreeSheetShape
+        {
+            public TreeSheetShape(string sheetName, IDictionary<int, string> namesByRow, int totalFirst, int totalLast, int totalRow)
+            {
+                SheetName = sheetName;
+                NamesByRow = namesByRow;
+                TotalFirst = totalFirst;
+                TotalLast = totalLast;
+                TotalRow = totalRow;
+            }
+
+            public string SheetName { get; }
+
+            public IDictionary<int, string> NamesByRow { get; }
+
+            public int TotalFirst { get; }
+
+            public int TotalLast { get; }
+
+            public int TotalRow { get; }
+        }
+
+        /// <summary>
+        /// A workbook with a main sheet and the two tree list sheets, each shaped as the test
+        /// says. The header row 3 carries a heading in column D so a reader starting at the
+        /// header rather than under it goes red. No client name and no client row is in here.
+        /// </summary>
+        public static string TreeLists(string folder, TreeSheetShape existing, TreeSheetShape proposed, string fileName = "MOSQUES.xlsx")
+        {
+            string path = Path.Combine(folder, fileName);
+
+            using (FileStream file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
+            using (var zip = new ZipArchive(file, ZipArchiveMode.Create))
+            {
+                Add(zip, "[Content_Types].xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+                    + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                    + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+                    + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet2.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet3.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "</Types>");
+
+                Add(zip, "_rels/.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                    + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/>"
+                    + "</Relationships>");
+
+                Add(zip, "xl/workbook.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
+                    + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
+                    + "<sheets>"
+                    + "<sheet name=\"&lt;Mosques&gt;\" sheetId=\"1\" r:id=\"rId1\"/>"
+                    + "<sheet name=\"" + existing.SheetName + "\" sheetId=\"2\" r:id=\"rId2\"/>"
+                    + "<sheet name=\"" + proposed.SheetName + "\" sheetId=\"3\" r:id=\"rId3\"/>"
+                    + "</sheets>"
+                    + "</workbook>");
+
+                Add(zip, "xl/_rels/workbook.xml.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                    + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/>"
+                    + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet2.xml\"/>"
+                    + "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet3.xml\"/>"
+                    + "</Relationships>");
+
+                Add(zip, "xl/worksheets/sheet1.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData/></worksheet>");
+
+                Add(zip, "xl/worksheets/sheet2.xml", TreeSheetXml(existing));
+                Add(zip, "xl/worksheets/sheet3.xml", TreeSheetXml(proposed));
+            }
+
+            return path;
+        }
+
+        private static string TreeSheetXml(TreeSheetShape shape)
+        {
+            var rows = new SortedDictionary<int, string>();
+            rows[3] = "<c r=\"D3\" t=\"inlineStr\"><is><t>BOTANICAL NAME</t></is></c>";
+
+            foreach (KeyValuePair<int, string> named in shape.NamesByRow)
+            {
+                string cell = "<c r=\"D" + named.Key + "\" t=\"inlineStr\"><is><t>" + named.Value + "</t></is></c>";
+                rows[named.Key] = rows.ContainsKey(named.Key) ? rows[named.Key] + cell : cell;
+            }
+
+            if (shape.TotalRow > 0)
+            {
+                string total = "<c r=\"B" + shape.TotalRow + "\"><f>SUM(B" + shape.TotalFirst + ":B" + shape.TotalLast + ")</f><v>0</v></c>";
+                rows[shape.TotalRow] = rows.ContainsKey(shape.TotalRow) ? total + rows[shape.TotalRow] : total;
+            }
+
+            var xml = new StringBuilder();
+            xml.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+            xml.Append("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData>");
+            foreach (KeyValuePair<int, string> row in rows)
+            {
+                xml.Append("<row r=\"" + row.Key + "\">" + row.Value + "</row>");
+            }
+
+            xml.Append("</sheetData></worksheet>");
+            return xml.ToString();
         }
 
         public static byte[] PartBytes(string path, string partPath)

@@ -1,6 +1,28 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Forty fifth pass, four findings that can put a wrong number in front of a
+Phase: 9, ship. Forty sixth pass, two faults measured on the first twenty plot run, 2026-09-10
+at 11:16, and fixed. **The other 43 audit findings stay open**, not renumbered, not reordered,
+not annotated.
+
+**The tree list rows come off the file and the map holds no range.** The map said B4 to B83, the
+sheet's total said SUM(B4:B92), and the names ran to row 101, so four species with a row waiting
+were reported as having nowhere to go and the workbook went out 85 trees short. `TreeSheet`
+holds a sheet name and nothing else, `SpeciesList` reads every named row down column D and the
+total's own reach off its formula, and a species on a row the total does not reach is refused
+per species with the row and the total named. The report prints both lists as read.
+
+**One schedule of a kind per plot or the kind is not read.** FM-05 holds two softscape
+schedules and its trees were counted twice. The reader counts before it reads, `PlotReading`
+carries every name and refuses numbers beside two, the reconciliation refuses the write naming
+the plot, the kind and every schedule, and the report names the schedule each number came off.
+
+The read cost is measured in calls in the log, every plot walking all 951 schedules, and is not
+changed. Three break watches went red on 5, 1 and 1 tests and were restored byte for byte.
+**Locally 1014 tests at this branch, 0 failed and 0 skipped, 525 of them KPI, 20 added.** The
+pull request, the merge hash and the runner's count go in the record the merge adds here.
+**Nothing in this round has been observed in Revit.**
+
+Before that, the forty fifth pass, four findings that can put a wrong number in front of a
 client: finding 2 of the first audit and findings 30, 31 and 32 of the second. **The other 43
 stay open**, not renumbered, not reordered, not annotated.
 

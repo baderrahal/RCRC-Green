@@ -42,6 +42,7 @@ namespace RcrcGreen.Core.Kpi
             TheCellsWritten(report, run);
             TheCellsNotWritten(report, run);
             TheSpecies(report, run);
+            TheTreeLists(report, run);
             TheChoices(report, run);
 
             return report.ToString();
@@ -83,10 +84,12 @@ namespace RcrcGreen.Core.Kpi
 
             Line(report, "  plots ticked            " + held.Ticked.Count);
             Line(report, "  plots read              " + held.Read.Count);
-            Line(report, "  " + Counted("plots with a softscape schedule",
-                held.Read.Count - held.WithoutSoftscape.Count, held.WithoutSoftscape));
-            Line(report, "  " + Counted("plots with a shrubs and lawn schedule",
-                held.Read.Count - held.WithoutShrubsAndLawn.Count, held.WithoutShrubsAndLawn));
+            Line(report, "  " + Counted("plots with one softscape schedule",
+                held.Read.Count - held.WithoutSoftscape.Count - held.WithMoreThanOneSoftscape.Count,
+                held.WithoutSoftscape, held.WithMoreThanOneSoftscape));
+            Line(report, "  " + Counted("plots with one shrubs and lawn schedule",
+                held.Read.Count - held.WithoutShrubsAndLawn.Count - held.WithMoreThanOneShrubsAndLawn.Count,
+                held.WithoutShrubsAndLawn, held.WithMoreThanOneShrubsAndLawn));
             Line(report, held.AreaWanted
                 ? "  " + Counted("plots with an area", held.Read.Count - held.WithoutArea.Count, held.WithoutArea)
                 : "  plots with an area   " + AreaNotRead);
@@ -161,9 +164,11 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, "    " + run.ComponentParameter + ": " + Shown(reading.Component));
                 Line(report, "    " + run.ReferenceParameter + ": " + Shown(reading.Reference));
 
-                Line(report, "    softscape schedule: " + (reading.SoftscapeRead
-                    ? Count(reading.Species.Count, "species row") + " read"
-                    : "not read"));
+                // Which schedule each number came off, by name. FM-05 holds two whose names
+                // hold SOFTSCAPE and a line saying only that species rows were read could not
+                // show which, or that both had been.
+                Line(report, "    " + Schedules("softscape", reading.SoftscapeSchedules,
+                    Count(reading.Species.Count, "species row") + " read"));
 
                 // The species rows against the TOTAL the schedule printed, so a row the reader
                 // dropped is visible here rather than only in a workbook short of trees.
@@ -180,9 +185,8 @@ namespace RcrcGreen.Core.Kpi
                     }
                 }
 
-                Line(report, "    shrubs and lawn schedule: " + (reading.ShrubsAndLawnRead
-                    ? Count(reading.Subtotals.Count, "group") + " read"
-                    : "not read"));
+                Line(report, "    " + Schedules("shrubs and lawn", reading.ShrubsAndLawnSchedules,
+                    Count(reading.Subtotals.Count, "group") + " read"));
 
                 foreach (string refused in reading.ReadRefusals)
                 {
@@ -315,7 +319,8 @@ namespace RcrcGreen.Core.Kpi
                 : run.Plan.Matches;
 
             List<SpeciesMatch> matched = matches.Where(one => one.Matched).ToList();
-            List<SpeciesMatch> missed = matches.Where(one => !one.Matched).ToList();
+            List<SpeciesMatch> unreached = matches.Where(one => one.NotReachedByTheTotal).ToList();
+            List<SpeciesMatch> missed = matches.Where(one => !one.Matched && !one.NotReachedByTheTotal).ToList();
 
             Heading(report, "SPECIES MATCHED", matched.Count,
                 "the workbook row against the merged count, with the plots it came from");
@@ -330,6 +335,28 @@ namespace RcrcGreen.Core.Kpi
                     match.Species.GroupName,
                     match.Species.Quantity.ToString(CultureInfo.InvariantCulture),
                     Working(match.Species)));
+            }
+
+            Line(report, string.Empty);
+
+            // The list holds the name and its total does not reach the row. The count is not
+            // written there, because a count on the sheet that no total adds reads as complete
+            // and is short, and this is where a person sees which rows the client's total is
+            // short of.
+            Heading(report, "SPECIES THE LIST HOLDS ON A ROW ITS TOTAL DOES NOT REACH", unreached.Count,
+                "the count was NOT written, so it is not in the total, and the row is named");
+            Line(report, "  sheet | row | workbook name | Revit name | group | merged | from | why");
+            foreach (SpeciesMatch match in unreached)
+            {
+                Line(report, "  " + Join(
+                    match.SheetName,
+                    match.Row.ToString(CultureInfo.InvariantCulture),
+                    Shown(match.WorkbookName),
+                    match.Species.BotanicalName,
+                    match.Species.GroupName,
+                    match.Species.Quantity.ToString(CultureInfo.InvariantCulture),
+                    Working(match.Species),
+                    match.Why));
             }
 
             Line(report, string.Empty);
@@ -372,6 +399,105 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// The two tree lists as they were read off the template, so what the tool matched
+        /// against can be checked against the file by eye.
+        ///
+        /// **Three answers to where a list ends were measured on one file**: the map said row
+        /// 83, the total said SUM(B4:B92), and the names ran to row 101. The map's answer is
+        /// gone, and the other two are printed here side by side so the next disagreement is
+        /// read off the report rather than found in a workbook 85 trees short.
+        /// </summary>
+        private static void TheTreeLists(StringBuilder report, KpiCreateRun run)
+        {
+            Heading(report, "THE WORKBOOK'S OWN TREE LISTS", 2,
+                "read off the template when Create was pressed, never off a row range in this tool");
+
+            TheTreeList(report, run.Template == null ? KpiTemplates.ExistingTreesSheet
+                : run.Template.ExistingTrees.SheetName, run.ExistingList);
+            TheTreeList(report, run.Template == null ? KpiTemplates.ProposedTreesSheet
+                : run.Template.ProposedTrees.SheetName, run.ProposedList);
+
+            Line(report, string.Empty);
+        }
+
+        public const string ListsNotRead = "not read. The accounting refused before the template was opened.";
+
+        private static void TheTreeList(StringBuilder report, string sheetName, SpeciesList list)
+        {
+            Line(report, "  " + sheetName);
+
+            if (list == null)
+            {
+                Line(report, "    " + ListsNotRead);
+                return;
+            }
+
+            if (!list.WasRead)
+            {
+                Line(report, "    NOT READ: " + list.Refusal);
+                return;
+            }
+
+            Line(report, "    botanical names in column " + KpiTemplates.BotanicalColumn + ": "
+                + (list.Rows.Count == 0
+                    ? "none, the row under the header is empty"
+                    : Count(list.Rows.Count, "name") + ", rows " + list.Rows[0].Row + " to "
+                        + list.Rows[list.Rows.Count - 1].Row));
+            Line(report, "    the quantity total: " + list.TotalInWords
+                + (list.TotalFound ? ", reaching rows " + list.TotalFirstRow + " to " + list.TotalLastRow : string.Empty));
+            Line(report, "    empty rows the total reaches, for a species the list does not hold: "
+                + list.EmptyRows.Count
+                + (list.EmptyRows.Count == 0 ? string.Empty : ", rows " + Rows(list.EmptyRows)));
+
+            if (list.OutsideTheTotal.Count > 0)
+            {
+                Line(report, "    NAMES THE TOTAL DOES NOT REACH: " + list.OutsideTheTotal.Count + ", rows "
+                    + Rows(list.OutsideTheTotal.Select(one => one.Row).ToList())
+                    + ". A count written there would never reach the total, so a species matching");
+                Line(report, "    one of these is not written and is named under SPECIES THE LIST HOLDS ON A ROW ITS TOTAL DOES NOT REACH.");
+            }
+
+            if (list.BelowTheList.Count > 0)
+            {
+                Line(report, "    names below the first empty row of the list, at row " + list.FirstGapRow + ": "
+                    + list.BelowTheList.Count + ", rows " + Rows(list.BelowTheList.Select(one => one.Row).ToList())
+                    + ". These are not the list and were not matched against.");
+            }
+        }
+
+        /// <summary>
+        /// A run of rows as 93 to 101, or the rows one by one when they do not run.
+        /// </summary>
+        private static string Rows(IReadOnlyList<int> rows)
+        {
+            if (rows.Count == 0) return string.Empty;
+            if (rows.Count == 1) return rows[0].ToString(CultureInfo.InvariantCulture);
+
+            bool contiguous = true;
+            for (int at = 1; at < rows.Count; at++)
+            {
+                if (rows[at] != rows[at - 1] + 1) contiguous = false;
+            }
+
+            return contiguous
+                ? rows[0] + " to " + rows[rows.Count - 1]
+                : string.Join(", ", rows.Select(one => one.ToString(CultureInfo.InvariantCulture)).ToArray());
+        }
+
+        /// <summary>
+        /// One kind of schedule on one plot: the name and what was read off it, or none, or
+        /// every name found when there was more than one and none was read.
+        /// </summary>
+        private static string Schedules(string kind, IReadOnlyList<string> names, string read)
+        {
+            if (names.Count == 0) return kind + " schedule: none filters on this plot, so nothing was read";
+            if (names.Count == 1) return kind + " schedule: " + names[0] + ", " + read;
+
+            return kind + " schedules: " + names.Count + " FOUND AND NONE READ, "
+                + string.Join(" | ", names.ToArray());
         }
 
         private static void TheChoices(StringBuilder report, KpiCreateRun run)
@@ -477,12 +603,17 @@ namespace RcrcGreen.Core.Kpi
                 .ToArray());
         }
 
-        private static string Counted(string what, int howMany, IReadOnlyList<string> without)
+        private static string Counted(
+            string what, int howMany, IReadOnlyList<string> without, IReadOnlyList<string> withMoreThanOne = null)
         {
             string said = what + "   " + howMany;
-            if (without.Count == 0) return said;
+            if (without.Count > 0) said += ", without: " + string.Join(", ", without.ToArray());
+            if (withMoreThanOne != null && withMoreThanOne.Count > 0)
+            {
+                said += ", with more than one: " + string.Join(", ", withMoreThanOne.ToArray());
+            }
 
-            return said + ", without: " + string.Join(", ", without.ToArray());
+            return said;
         }
 
         private static void Heading(StringBuilder report, string name, int howMany, string said)

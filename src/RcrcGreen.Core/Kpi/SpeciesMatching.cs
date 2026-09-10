@@ -19,6 +19,12 @@ namespace RcrcGreen.Core.Kpi
     ///
     /// A species the list holds that Revit does not is simply left empty, which is correct and
     /// needs no line.
+    ///
+    /// **A species the list holds on a row the sheet's total does not reach is refused**, with
+    /// the row and the total both named. The MOSQUES existing list measured on 2026-09-10 names
+    /// species on rows 93 to 101 and its total is SUM(B4:B92), so a count written on one of
+    /// those lands on the sheet and never reaches the total, and the sheet then reads as
+    /// complete and is short. Not writing it is the smaller fault, and the report names it.
     /// </summary>
     public sealed class SpeciesMatch
     {
@@ -28,7 +34,8 @@ namespace RcrcGreen.Core.Kpi
             int row,
             string workbookName,
             string why,
-            bool added = false)
+            bool added = false,
+            bool notReachedByTheTotal = false)
         {
             if (species == null) throw new ArgumentNullException("species");
             if (row < 0) throw new ArgumentOutOfRangeException("row");
@@ -39,7 +46,15 @@ namespace RcrcGreen.Core.Kpi
             WorkbookName = workbookName ?? string.Empty;
             Why = why ?? string.Empty;
             Added = added;
+            NotReachedByTheTotal = notReachedByTheTotal;
         }
+
+        /// <summary>
+        /// True when the list holds the name on <see cref="Row"/> and the sheet's total does not
+        /// reach that row, or no total was found at all. The row is kept so the report can point
+        /// at it, and nothing is written there.
+        /// </summary>
+        public bool NotReachedByTheTotal { get; }
 
         /// <summary>
         /// True when the workbook's list did not hold this name and it was written into an
@@ -54,7 +69,7 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public bool Placed
         {
-            get { return Row > 0 && SheetName.Length > 0; }
+            get { return Row > 0 && SheetName.Length > 0 && !NotReachedByTheTotal; }
         }
 
         public MergedSpecies Species { get; }
@@ -62,7 +77,8 @@ namespace RcrcGreen.Core.Kpi
         public string SheetName { get; }
 
         /// <summary>
-        /// The workbook row the quantity goes on, or nothing when the species did not match.
+        /// The workbook row the quantity goes on, or the row the list names when the total does
+        /// not reach it, or nothing when the species did not match.
         /// </summary>
         public int Row { get; }
 
@@ -113,6 +129,36 @@ namespace RcrcGreen.Core.Kpi
 
         public const string WrittenIn = "the list did not hold it, so it was written into an empty row";
 
+        /// <summary>
+        /// The list holds the name and the total does not reach its row. Writing there puts a
+        /// count on the sheet that no total adds, which reads as complete and is short.
+        /// </summary>
+        public static string OutsideTheTotal(int row, SpeciesList list)
+        {
+            return "the workbook holds this name on row " + row + " and the sheet's total, "
+                + list.TotalInWords + ", reaches rows " + list.TotalFirstRow + " to " + list.TotalLastRow
+                + " and not that one, so the count was not written where no total would add it";
+        }
+
+        /// <summary>
+        /// Said for a matched name and for an unmatched one alike when the sheet holds no total
+        /// the reader can find, because then nothing says which rows a count reaches.
+        /// </summary>
+        public static string NoTotalToReach(SpeciesList list)
+        {
+            return list.TotalInWords + ", so nothing says which rows a count reaches and it was not written";
+        }
+
+        /// <summary>
+        /// The name sits past the first empty row of the list. It is neither matched nor
+        /// written in above itself, and the row is named so a person can look.
+        /// </summary>
+        public static string BelowTheList(int row, SpeciesList list)
+        {
+            return "the workbook holds this name on row " + row + ", below the first empty row of its list at row "
+                + list.FirstGapRow + ", so it was neither matched nor written in a second time";
+        }
+
         public static IReadOnlyList<SpeciesMatch> Against(
             IEnumerable<MergedSpecies> merged,
             KpiTemplate template,
@@ -130,19 +176,19 @@ namespace RcrcGreen.Core.Kpi
             foreach (MergedSpecies species in (merged ?? Enumerable.Empty<MergedSpecies>())
                 .Where(one => one != null))
             {
-                TreeRows rows = SheetFor(species.GroupName, template);
-                if (rows == null)
+                TreeSheet sheet = SheetFor(species.GroupName, template);
+                if (sheet == null)
                 {
                     found.Add(new SpeciesMatch(species, string.Empty, 0, string.Empty, NoSheetForTheGroup));
                     continue;
                 }
 
-                SpeciesList list = string.Equals(rows.SheetName, template.ExistingTrees.SheetName,
+                SpeciesList list = string.Equals(sheet.SheetName, template.ExistingTrees.SheetName,
                     StringComparison.Ordinal) ? existing : proposed;
 
                 if (list == null || !list.WasRead)
                 {
-                    found.Add(new SpeciesMatch(species, rows.SheetName, 0, string.Empty,
+                    found.Add(new SpeciesMatch(species, sheet.SheetName, 0, string.Empty,
                         list == null ? NotInTheList : list.Refusal));
                     continue;
                 }
@@ -153,19 +199,44 @@ namespace RcrcGreen.Core.Kpi
 
                 if (holding.Count == 0)
                 {
-                    found.Add(WrittenInto(species, rows.SheetName, list, free));
+                    SpeciesListRow lower = list.BelowTheList
+                        .FirstOrDefault(one => Same(one.BotanicalName, species.BotanicalName));
+                    if (lower != null)
+                    {
+                        found.Add(new SpeciesMatch(species, sheet.SheetName, lower.Row, lower.BotanicalName,
+                            BelowTheList(lower.Row, list), false, true));
+                        continue;
+                    }
+
+                    found.Add(WrittenInto(species, sheet.SheetName, list, free));
                     continue;
                 }
 
                 if (holding.Count > 1)
                 {
-                    found.Add(new SpeciesMatch(species, rows.SheetName, 0, holding[0].BotanicalName,
+                    found.Add(new SpeciesMatch(species, sheet.SheetName, 0, holding[0].BotanicalName,
                         MoreThanOneRow));
                     continue;
                 }
 
+                // The row is the list's, and the total has to reach it before a count goes there.
+                SpeciesListRow row = holding[0];
+                if (!list.TotalFound)
+                {
+                    found.Add(new SpeciesMatch(species, sheet.SheetName, row.Row, row.BotanicalName,
+                        NoTotalToReach(list), false, true));
+                    continue;
+                }
+
+                if (!list.Reaches(row.Row))
+                {
+                    found.Add(new SpeciesMatch(species, sheet.SheetName, row.Row, row.BotanicalName,
+                        OutsideTheTotal(row.Row, list), false, true));
+                    continue;
+                }
+
                 found.Add(new SpeciesMatch(
-                    species, rows.SheetName, holding[0].Row, holding[0].BotanicalName, string.Empty));
+                    species, sheet.SheetName, row.Row, row.BotanicalName, string.Empty));
             }
 
             return found;
@@ -181,6 +252,11 @@ namespace RcrcGreen.Core.Kpi
             SpeciesList list,
             Dictionary<string, Queue<int>> free)
         {
+            if (!list.TotalFound)
+            {
+                return new SpeciesMatch(species, sheetName, 0, string.Empty, NoTotalToReach(list));
+            }
+
             Queue<int> rows;
             if (!free.TryGetValue(sheetName, out rows))
             {
@@ -202,13 +278,13 @@ namespace RcrcGreen.Core.Kpi
         /// are written in neither side of this: the group comes off the document's phases and
         /// the sheet name comes off the map, and a group matching neither sheet is reported.
         /// </summary>
-        private static TreeRows SheetFor(string groupName, KpiTemplate template)
+        private static TreeSheet SheetFor(string groupName, KpiTemplate template)
         {
             if (string.IsNullOrWhiteSpace(groupName)) return null;
 
-            foreach (TreeRows rows in new[] { template.ExistingTrees, template.ProposedTrees })
+            foreach (TreeSheet sheet in new[] { template.ExistingTrees, template.ProposedTrees })
             {
-                if (KpiNames.Holds(rows.SheetName, groupName.Trim())) return rows;
+                if (KpiNames.Holds(sheet.SheetName, groupName.Trim())) return sheet;
             }
 
             return null;

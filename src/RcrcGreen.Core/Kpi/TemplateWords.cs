@@ -83,14 +83,28 @@ namespace RcrcGreen.Core.Kpi
             lines.Add("  " + string.Join(", ", KpiTemplates.TypedByTheTeam)
                 + "  the date, the person and their position, typed by the team, never written");
 
-            lines.Add(template.ExistingTrees.SheetName + ": quantities into "
-                + template.ExistingTrees.InWords + ", one per botanical name in column "
-                + KpiTemplates.BotanicalColumn);
-            lines.Add(template.ProposedTrees.SheetName + ": quantities into "
-                + template.ProposedTrees.InWords + ", one per botanical name in column "
-                + KpiTemplates.BotanicalColumn);
+            lines.Add(TreeListLine(template.ExistingTrees));
+            lines.Add(TreeListLine(template.ProposedTrees));
+            lines.Add("  " + RowsReadOffTheFile);
 
             return lines;
+        }
+
+        /// <summary>
+        /// **This line used to print a row range off the map, B4 to B83, and the map was wrong.**
+        /// The names on the MOSQUES existing list run to row 101 and its total reaches row 92.
+        /// Nothing here holds a number now. The rows and the total are read off the file when
+        /// Create is pressed and the report says what was found.
+        /// </summary>
+        public const string RowsReadOffTheFile =
+            "Which rows hold a name and which rows the total reaches are read off the file when "
+            + "Create is pressed, never off a range in this tool, and the report says what it found.";
+
+        private static string TreeListLine(TreeSheet sheet)
+        {
+            return sheet.SheetName + ": one quantity into column " + KpiTemplates.QuantityColumn
+                + " per botanical name in column " + KpiTemplates.BotanicalColumn
+                + ", over every row that names one";
         }
 
         /// <summary>

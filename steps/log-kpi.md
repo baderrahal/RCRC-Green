@@ -4,6 +4,141 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty sixth pass. Two faults measured on the first twenty plot run
+
+Two faults, both found by running 20 mosque plots for real at 11:16 and reading the workbook
+the run wrote. Neither could have been found by reading code. Both are fixed. **The other 43
+audit findings stay open**, not renumbered, not reordered, not annotated. Nothing else was
+touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`. **Nothing in this round has
+been observed in Revit.** The workbook the run wrote was not handed over and was not needed: the
+row numbers and the counts below are the ones stated for it, and the test workbook is built to
+that shape with made up names on every row the run did not name.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1014 tests at this branch, 0 failed and 0 skipped, 525 of them KPI, 20 added here.**
+
+### Fault 1. The tree list had three row ranges and the tool trusted the shortest
+
+Audit finding 5 made worse, three records rather than two. Measured on Tree List - Existing of
+the MOSQUES workbook the run wrote: the map and the pane said B4 to B83, the sheet's total said
+`SUM(B4:B92)`, and the botanical names ran from row 4 to row 101, 98 species. The map stopped 18
+rows before the names and the total 9 rows before them. Six species were reported as having
+nowhere to go, 85 existing trees, and four of the six sat in the list past row 83: CONOCARPUS
+LANCIFOLIUS 17 at row 84, PHOENIX DACTYLIFERA 27 at 86, WASHINGTONIA ROBUSTA 19 at 87 and FICUS
+BENJAMINA 3 at 89. PROSOPIS JULIFLORA 3 sits at row 99, past the total, and UNKNOWN 16 is
+genuinely absent. The workbook said 76 existing trees where the model holds 161.
+
+**What the map no longer claims.** `TreeRows` with its `FirstRow`, `LastRow`, `RowCount` and
+`InWords` is gone, and every template's entry is `TreeSheet`, which holds the sheet name and
+nothing else. A test reads the type's properties and goes red if a number comes back. The pane's
+line no longer prints a range: it says the rows and the total's reach are read off the file when
+Create is pressed. The one number the map still holds about a tree list is the header row, 3,
+measured on all seven templates, and the list is read down from the row under it.
+
+**What is read.** `SpeciesList.In` reads two things off each sheet and holds them apart. Every
+row of column D that names a species, from row 4 down until the first row with no name, is the
+list a species from Revit is matched against. The total's own `SUM(B4:B92)` formula, found in
+column B, says which rows a count reaches, and the cell it sits in is recorded, B93. The empty
+rows for a species the list does not hold are worked out from those two, the rows the total
+reaches that name nothing, and are stated by nothing else. The test fixture builds a list the
+same way, from names and a total range, so no test can state an empty row that is named.
+
+**A species matched to a row the total does not reach is refused**, per species. The row is
+kept on the match, nothing is written there, the reason names the row and the total, and it
+prints under a new report heading, SPECIES THE LIST HOLDS ON A ROW ITS TOTAL DOES NOT REACH, and
+in CELLS NOT WRITTEN with its cell. I read the request's word refusal as refusing that count and
+not the whole workbook, because the request weighs writing it against not writing it, and both
+sides of that weighing have the workbook written. If the whole run should refuse instead, that
+is one line in `Reconciliation.Of` and the lists would move ahead of it. A sheet with no `SUM`
+over column B refuses every species the same way, matched or not, because nothing then says
+which rows a count reaches. A name below the first empty row of the list is not the list, is
+named in the report, and a species carrying it is refused rather than written in above itself.
+Nothing measured holds such a row and the shape is stated rather than assumed.
+
+**The report prints both lists as read**, under THE WORKBOOK'S OWN TREE LISTS: the names and
+their rows, the total and its reach, the empty rows, the names the total does not reach and any
+names below the list. When the accounting refused before the template was opened it says so.
+
+**Checked against the stated shape, by hand.** Existing: 98 names in rows 4 to 101, total
+`SUM(B4:B92)` at B93, 0 empty rows, 9 names the total does not reach in rows 93 to 101. Proposed:
+83 names in rows 4 to 86, the same total, 6 empty rows 87 to 92, none outside. The five species
+match their rows, 84, 86, 87, 89 and 99. The first four are written, 66 trees, PROSOPIS
+JULIFLORA is named with row 99 and B99, and UNKNOWN is absent with no empty row to go into.
+
+**Two things about that file are stated and not seen.** The names are taken as one unbroken
+run from row 4 to 101, because 98 names in rows 4 to 101 is exactly that many rows. The total
+is placed at B93 because the rules file measured it there on the annotated set and the request
+gave the formula without the cell. Both are in the test fixture and neither was read off the
+workbook here.
+
+**One thing the measurements say that nobody asked about.** On 2026-09-09 the MOSQUES existing
+list read 80 names in rows 4 to 83. On 2026-09-10 it read 98 in rows 4 to 101. Eighteen names
+were added between the two runs, nine of them past the total's reach, and who added them and
+why the total was not extended is UNKNOWN. It is in the rules file as a question for the team.
+
+### Fault 2. One plot's trees were counted twice
+
+Audit finding 36, now measured. FM-05 holds two schedules whose names hold SOFTSCAPE.
+`KpiPlotReader` appended every one and `KpiMerge.Species` added them by name and group, so the
+species rows printed FM-05 twice, FM-05 10, FM-05 10, FM-06 15, and ALBIZIA LEBBECK proposed read
+170 where the truth is nearer 160. The shrubs and lawn read had the other half: `SubtotalHeaded`
+took the first group with the heading and any second schedule was ignored in silence.
+
+**The reader counts before it reads.** Every schedule filtered on the plot is sorted into its
+kind first, softscape or shrubs and lawn, and only a kind with exactly one schedule is read.
+`PlotReading` takes the names of every schedule of each kind in place of the two booleans, and
+`SoftscapeRead` and `ShrubsAndLawnRead` are now exactly one name. It refuses to be built holding
+species rows beside two softscape names or beside none, and subtotals beside two shrubs and
+lawn names or beside none, so the doubled count cannot be held anywhere. `Reconciliation.Of`
+refuses the write for a plot holding two of a kind, naming the plot, the kind and every schedule
+found, and a plot that gave nothing for that reason says so beside its name. The count line
+reads plots with one softscape schedule, with the plots holding none and the plots holding more
+than one both named.
+
+**The report names the schedule each number came off, per plot.** It read softscape schedule:
+11 species rows read before and could not say which. It reads softscape schedule:
+FM-06-(600) SOFTSCAPE SCHEDULE, 1 species row read now, and for FM-05 softscape schedules: 2
+FOUND AND NONE READ with both names, and for a plot with none, none filters on this plot.
+
+### What the read costs, measured in calls and not changed
+
+The run took 313.5 seconds and 312.8 of that was the read, 20 plots at 15.6 seconds each. The
+first thing to check is confirmed by reading `KpiPlotReader.Read`: **every plot walks every
+schedule in the model.** For each of the 951 schedules it calls `PlotFilteredOn`, which opens
+the schedule's definition, walks its filters and reads each filter's field name, to find the
+handful filtered on the plot. Twenty plots is 19,020 of those definition reads and 78 plots is
+74,178. Three more costs sit beside it, per plot: `FirstSheetOf` collects every sheet and sorts
+all 1,385 by natural order before reading PRX_Plot_ID down the list until it finds the plot,
+`RegionsFor` walks every filled region in every 00 link and reads two parameters off each, and
+`Printed` calls `GetCellText` once per cell of the one or two schedules that matched. Which of
+the four carries the 15.6 seconds is UNKNOWN: the report holds one number per plot and no finer
+timer exists, and nothing here runs Revit. Nothing in the read was changed.
+
+### Break watches
+
+Three, each restored byte for byte and checked with md5, the suite rerun green at 1014.
+
+- The list reader made to stop at row 83, where the map used to: **5 red**, all in
+  `TreeListRowsTests`. The existing list to row 101, the proposed list to row 86, the five
+  species and their rows, the plan's four writes and the named fifth cell, and the report's
+  tree list section
+- The two schedules refusal taken out of `Reconciliation.Of`: **1 red**,
+  `TwoSoftscapeSchedulesOnOnePlotRefuseTheWriteNamingBoth`
+- The guard taken off `PlotReading`, so it holds species rows beside two softscape names
+  again: **1 red**, `AReadingCannotCarryNumbersOffTwoSchedulesOfOneKindOrOffNone`
+
+### What worked, on the record
+
+The subtotal fix holds on every number it was predicted to move: DM-16 shrubs 30 to 84, DM-25 13
+to 241, FM-05 shrubs 361 to 820, FM-05 grass 96 to 165. Shrubs total 2517 to 3258, lawn 1058 to
+1127. The date, prepared by and position boxes reached the file. The cache section read cached
+results left 0, dropped 1674, 37 parts in and 36 out with calcChain named as the one removed on
+purpose. Three species were written into empty rows on the Proposed sheet with the name and the
+count and nothing else. All of it is in the rules file under what the first twenty plot run
+measured.
+
+---
+
 ## 2026-09-10, forty fifth pass. Four findings that can put a wrong number in front of a client
 
 Finding 2 of the first audit and findings 30, 31 and 32 of the second are fixed. **The other 43

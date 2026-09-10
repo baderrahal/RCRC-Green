@@ -43,8 +43,6 @@ namespace RcrcGreen.Core.Tests.Kpi
 
                 Assert.NotNull(template.ExistingTrees);
                 Assert.NotNull(template.ProposedTrees);
-                Assert.Equal(4, template.ExistingTrees.FirstRow);
-                Assert.Equal(4, template.ProposedTrees.FirstRow);
             }
         }
 
@@ -88,30 +86,36 @@ namespace RcrcGreen.Core.Tests.Kpi
             }
         }
 
+        /// <summary>
+        /// The map names the two sheets and nothing else about a tree list. It used to carry a
+        /// last row per template, 83 on MOSQUES, and the names on the real sheet ran to 101.
+        /// </summary>
         [Theory]
-        [InlineData("EXISTING PARKS", 92, 84)]
-        [InlineData("FUTURE PARKS", 92, 84)]
-        [InlineData("HEALTHCARE", 83, 83)]
-        [InlineData("MOSQUES", 83, 83)]
-        [InlineData("PARKING", 83, 83)]
-        [InlineData("SCHOOLS", 83, 83)]
-        [InlineData("STREETS", 83, 83)]
-        public void TheTreeListsRunFromRowFourToTheMeasuredLastRow(string name, int existingLast, int proposedLast)
+        [InlineData("EXISTING PARKS")]
+        [InlineData("FUTURE PARKS")]
+        [InlineData("HEALTHCARE")]
+        [InlineData("MOSQUES")]
+        [InlineData("PARKING")]
+        [InlineData("SCHOOLS")]
+        [InlineData("STREETS")]
+        public void TheMapNamesTheTwoTreeListSheetsAndNoRowOnEither(string name)
         {
             KpiTemplate template = Named(name);
 
             Assert.Equal("Tree List - Existing", template.ExistingTrees.SheetName);
             Assert.Equal("Tree List - Proposed", template.ProposedTrees.SheetName);
-            Assert.Equal(4, template.ExistingTrees.FirstRow);
-            Assert.Equal(4, template.ProposedTrees.FirstRow);
-            Assert.Equal(existingLast, template.ExistingTrees.LastRow);
-            Assert.Equal(proposedLast, template.ProposedTrees.LastRow);
         }
 
+        /// <summary>
+        /// Nothing on a tree sheet entry but its name, so a row range cannot come back into the
+        /// map without this going red.
+        /// </summary>
         [Fact]
-        public void TreeRowsPrintTheQuantityColumnAndBothEnds()
+        public void ATreeSheetEntryCarriesItsNameAndNoNumber()
         {
-            Assert.Equal("B4 to B92", KpiTemplates.ExistingParks.ExistingTrees.InWords);
+            Assert.Equal(
+                new[] { "SheetName" },
+                typeof(TreeSheet).GetProperties().Select(property => property.Name));
         }
 
         [Fact]
