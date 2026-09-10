@@ -3,7 +3,10 @@
 Phase: 9, ship. Forty fifth pass, the rest of steps/audit-drawing.md in two pull requests.
 The first, pull request 61 with fixes 1 to 6, merged into main as `aaf78db` with 1056
 tests on the runner, 0 failed and 0 skipped, the count main then measured locally. The
-second, fixes 7 to 11, is not merged yet.
+second, pull request 62 with fixes 7 to 11, merged into main as `6910049` with 1060 tests
+on the runner, 0 failed and 0 skipped, the same count the local run gave after the last
+file was written. Both squash messages came back off main byte for byte. Twenty eight of
+the thirty one findings are marked FIXED, and 11, 15 and 28 stay as they were.
 
 Fixes 7 to 11 are eight findings. A field a captured definition names twice is added once
 and named in the report. Every tick box and button carrying a model name goes through the
