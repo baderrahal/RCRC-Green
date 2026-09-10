@@ -278,16 +278,50 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// The accounting speaks first, because it refuses before anything is copied.
+        ///
+        /// **It counts its reasons rather than repeating them.** The pane prints them in red
+        /// above the Create button, and the 0928 run showed all four twice on one screen, once
+        /// there and once again word for word down here.
         /// </summary>
         [Fact]
-        public void AnAccountingThatRefusedIsWhatTheLineSays()
+        public void AnAccountingThatRefusedIsCountedRatherThanRepeated()
         {
             KpiCreateRun run = Refused(null);
+            string said = CreateWords.Wrote(run, Report);
 
-            Assert.StartsWith("Nothing was written. ", CreateWords.Wrote(run, Report));
-            Assert.Contains(
-                run.Reconciliation.Refusals.First(),
-                CreateWords.Wrote(run, Report));
+            Assert.Equal(
+                "Nothing was written. 1 reason, shown in full above the Create button. "
+                + "Report: " + Report,
+                said);
+            Assert.DoesNotContain(run.Reconciliation.Refusals.First(), said);
+        }
+
+        /// <summary>
+        /// The plural, written out by hand, and the reasons still absent from the line.
+        /// </summary>
+        [Fact]
+        public void SeveralReasonsAreCountedInThePluralAndStillNotRepeated()
+        {
+            Assert.Equal(
+                "Nothing was written. 4 reasons, shown in full above the Create button.",
+                CreateWords.ReasonsAreAbove(4));
+
+            Assert.Equal(
+                "Nothing was written. 1 reason, shown in full above the Create button.",
+                CreateWords.ReasonsAreAbove(1));
+        }
+
+        /// <summary>
+        /// The patch's refusal is said in full, because nothing else on the pane carries it.
+        /// Only the accounting's own reasons are already on the screen.
+        /// </summary>
+        [Fact]
+        public void APatchRefusalIsStillSaidInFullBecauseThePaneHoldsItNowhereElse()
+        {
+            string said = CreateWords.Wrote(
+                Accounted(PatchOutcome.Refused("The folder refused the workbook.")), Report);
+
+            Assert.Contains("The folder refused the workbook.", said);
         }
     }
 }

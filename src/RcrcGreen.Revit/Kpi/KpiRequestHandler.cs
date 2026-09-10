@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Autodesk.Revit.DB;
@@ -244,11 +245,18 @@ namespace RcrcGreen.Revit.Kpi
                 return;
             }
 
+            // **NOTHING TIMED THIS RUN AND IT TOOK ABOUT FIVE MINUTES OVER 20 PLOTS.** The
+            // whole press, the read apart from it, and each plot's own share, so the next run
+            // says which part is slow rather than leaving it to be reasoned about.
+            var whole = Stopwatch.StartNew();
+            var reading = Stopwatch.StartNew();
+
             IReadOnlyList<string> phases = PhaseNames(document);
             var readings = new List<PlotReading>();
 
             foreach (string plotId in asked.Ticked)
             {
+                var perPlot = Stopwatch.StartNew();
                 IReadOnlyList<RegionArea> regions = KpiPlotReader.RegionsFor(document, plotId);
 
                 // One region holding an area answers itself. More than one is a question the
@@ -263,8 +271,10 @@ namespace RcrcGreen.Revit.Kpi
 
                 readings.Add(KpiPlotReader.Read(
                     document, plotId, asked.ComponentParameter, asked.ReferenceParameter,
-                    phases, chosen, regions));
+                    phases, chosen, regions, perPlot.Elapsed.TotalSeconds));
             }
+
+            double readSeconds = reading.Elapsed.TotalSeconds;
 
             Totalled area = KpiMerge.Area(readings);
             Totalled shrubs = KpiMerge.Shrubs(readings);
@@ -306,7 +316,8 @@ namespace RcrcGreen.Revit.Kpi
                 document.Title, asked.Template, asked.TemplatePath, outputPath,
                 asked.ComponentParameter, asked.ReferenceParameter, location,
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
-                merged, KpiMerge.Ungrouped(readings), outcome);
+                merged, KpiMerge.Ungrouped(readings), outcome,
+                RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds));
 
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(

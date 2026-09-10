@@ -510,7 +510,8 @@ each name are read in full is the rule above, and it is stated there and nowhere
 
 - SHRUBS & LAWN SCHEDULE, category Floors, prints in groups. DM-11 gives GRASS 35 m² 46, then
   SHRUBS & GROUND COVER 70 m² 58, then TOTAL 105 m² 104. The workbook wants the two group
-  subtotals and not the total. **How it prints is below and the numbers alone are not enough**
+  values and not the total. **How it prints is below and the numbers alone are not enough**, and
+  **DM-11 is the special case**: every one of its groups holds one phase
 - SOFTSCAPE SCHEDULE, category Planting. Its fields are BOTANICAL NAME, which is
   PRX_Softscape Botanical Name, and COUNT (n), a Count field. DM-11 gives ALBIZIA LEBBECK 6,
   BAUHINIA PURPUREA 2, CASSIA GLAUCA 4, total 12. How it prints is the rule in `CLAUDE.md`,
@@ -524,22 +525,36 @@ Measured off the 1355 scan report, which **is not in this repository** because n
 `reports/` is ever committed. The numbers were recorded a round before the shape was, and the
 numbers alone were not enough: a reader written to them found no subtotal at all.
 
-DM-11-(600) SHRUBS & LAWN SCHEDULE is eleven columns wide and prints this:
+DM-11-(600) SHRUBS & LAWN SCHEDULE is eleven columns wide and prints this. **Every DM-11 group
+holds ONE PHASE**, which is what made it the wrong plot to learn the shape from:
 
 ```
 IMAGE | # | PLANT CODE | BOTANICAL NAME | AREA  (sqm) | COUNT (n) | HEIGHT (m) | ... | L/DAY
 GRASS                                                                     group heading
 Proposed                                                                  phase
 Pennisetum Setaceum.jpg | PEN SET | ... | GRASS: PENNISETUM ... | 35 m² | 46 | ...   species
-                                                          | 35 m² | 46 | ...        subtotal
-                                                          | 35 m² | 46 | ...        subtotal AGAIN
+                                                          | 35 m² | 46 | ...        the phase
+                                                          | 35 m² | 46 | ...        the group
 SHRUBS & GROUND COVER                                                     group heading
 Proposed                                                                  phase
 Bougainvillea glabra Pink Pixie.jpg | ... | 36 m² | 46 | ...                    species
 Carissa macrocarpa - grandiflora.jpg | ... | 34 m² | 12 | ...                   species
-                                                          | 70 m² | 58 | ...        subtotal
-                                                          | 70 m² | 58 | ...        subtotal AGAIN
+                                                          | 70 m² | 58 | ...        the phase
+                                                          | 70 m² | 58 | ...        the group
 TOTAL                                                     | 105 m² | 104 | ...      the lot
+```
+
+A group holding both phases prints THREE rows. FM-05 GRASS, off the 0928 run:
+
+```
+GRASS                                                                     group heading
+Existing                                                                  phase
+  ... species ...
+                                                          | 96 m² | 117 | ...       Existing
+Proposed                                                                  phase
+  ... species ...
+                                                          | 69 m² | 84 | ...        Proposed
+                                                          | 165 m² | 201 | ...      the group
 ```
 
 Three things follow, and `ShrubsAndLawnRows` holds all three.
@@ -548,13 +563,33 @@ Three things follow, and `ShrubsAndLawnRows` holds all three.
 than beside its numbers. A phase row sits under it in the same shape, so a structure row that
 names no wanted heading opens no group.
 
-**THE SUBTOTAL PRINTS TWICE.** Adding a group's subtotal rows gives 70 and 140. One is taken.
-Two that disagree are a failure worth naming rather than a number to pick between, so the
-disagreement travels on the `GroupSubtotal` and refuses the write.
+**A GROUP PRINTS ONE SUBTOTAL PER PHASE, THEN THE GROUP TOTAL, AND THE LAST ROW IS THE VALUE.**
+Measured on the 0928 run over 20 mosque plots, four groups out of four, and the third row is
+exactly the first two added in area and in item count:
 
-**The species rows add up to the subtotal**, 36 plus 34 is 70, so the two are held against each
-other and printed. They are not enforced, because every one of those numbers is already rounded
-to the metre on the way out of Revit and a sum of rounded numbers need not equal a rounded sum.
+```
+DM-16 SHRUBS & GROUND COVER   30 over 39,  54 over 69,   84 over 108
+DM-25 SHRUBS & GROUND COVER   13 over 9,   228 over 286, 241 over 295
+FM-05 GRASS                   96 over 117, 69 over 84,   165 over 201
+FM-05 SHRUBS & GROUND COVER   361 over 450, 459 over 570, 820 over 1020
+```
+
+**The rule this replaced said the subtotal prints twice and that one of two was taken.** That
+came off DM-11, where a one phase group prints two equal rows, and it was right on that one
+plot and wrong on every plot holding both phases. Taking the first row took one phase and called
+it the group: 30 where the group is 84, 13 where it is 241, 96 where it is 165 and 361 where it
+is 820. **The 0928 run refused rather than writing, which is the only reason those four numbers
+never reached a client.**
+
+The check is not gone, it is pointed at the right thing: **the last row must equal the rows above
+it added together**, in area and in item count, with the same relative room `Totalled.Adds`
+allows. When it does, the last row is written. When it does not, that is a real disagreement, it
+travels on the `GroupSubtotal` and it refuses the write. A group printing one row has nothing
+above it to compare against and is taken.
+
+**The species rows add up to the group**, 36 plus 34 is 70, so the two are held against each
+other. They are not enforced, because every one of those numbers is already rounded to the metre
+on the way out of Revit and a sum of rounded numbers need not equal a rounded sum.
 
 TOTAL needs no special case. It carries numbers, so it is not a structure row, and its first
 cell holds text, so it is not a subtotal.

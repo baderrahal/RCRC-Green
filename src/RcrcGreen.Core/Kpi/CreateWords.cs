@@ -309,14 +309,34 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// Where the accounting's own refusals are already on the screen. The pane prints them
+        /// in red above the Create button, which is where the user is looking when they press,
+        /// so the status line counts them and points there rather than repeating all four word
+        /// for word. **The 0928 run printed the same four lines twice on one screen.**
+        /// </summary>
+        public static string ReasonsAreAbove(int howMany)
+        {
+            return NothingWritten + " " + Count(howMany, "reason")
+                + ", shown in full above the Create button.";
+        }
+
+        /// <summary>
         /// Never empty. The accounting speaks first because it refuses before anything is
         /// copied, then the patch, and then the line that says nobody recorded a reason.
+        ///
+        /// The accounting's reasons are counted rather than repeated, because the pane has them
+        /// in red directly above the button. The patch's refusal is said in full, because
+        /// nothing else on the pane carries it.
         /// </summary>
         private static string WhyNothingWasWritten(KpiCreateRun run, string reportWhere)
         {
-            string why = Refused(run.Reconciliation);
+            string why;
 
-            if (why.Length == 0)
+            if (!run.Reconciliation.AddsUp)
+            {
+                why = ReasonsAreAbove(run.Reconciliation.Refusals.Count);
+            }
+            else
             {
                 string refusal = run.Outcome == null ? string.Empty : run.Outcome.Refusal;
                 why = NothingWritten + " "

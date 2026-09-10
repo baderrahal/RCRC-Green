@@ -79,13 +79,18 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
-    /// One group subtotal off a schedule that prints in groups, exactly as the row read.
-    /// The workbook wants the two group subtotals of SHRUBS AND LAWN and never the total.
+    /// One group's value off a schedule that prints in groups, exactly as the row read. The
+    /// workbook wants the two group values of SHRUBS AND LAWN and never the schedule's TOTAL.
     ///
-    /// **The subtotal prints twice.** DM-11 gives 35 then 35 for GRASS and 70 then 70 for
-    /// SHRUBS &amp; GROUND COVER, so adding a group's subtotal rows gives double. One is taken.
-    /// Two that disagree are not a number to pick between, so the disagreement is carried here
-    /// and refuses the write.
+    /// **A GROUP PRINTS ONE SUBTOTAL PER PHASE, THEN THE GROUP TOTAL.** Measured on the 0928
+    /// run over 20 mosque plots. A group holding Existing and Proposed planting prints three
+    /// rows and the third is the group. A group holding one phase prints two equal rows, which
+    /// is why DM-11 looked like a doubled subtotal and why the old rule, take the first of two,
+    /// was right on that one plot and wrong everywhere else.
+    ///
+    /// The last row is the value. The check is that it equals the rows above it added together,
+    /// in area and in item count, and a last row that does not is a real disagreement carried
+    /// here that refuses the write.
     /// </summary>
     public sealed class GroupSubtotal
     {
@@ -115,7 +120,9 @@ namespace RcrcGreen.Core.Kpi
         public int ItemCount { get; }
 
         /// <summary>
-        /// How many subtotal rows the group printed. Two on the measured model.
+        /// How many subtotal rows the group printed, which is one per phase plus the group
+        /// total. Three for a group holding Existing and Proposed, two for a group holding one
+        /// phase. It used to be read as how many times one subtotal repeated.
         /// </summary>
         public int Repeats { get; }
 
@@ -129,7 +136,7 @@ namespace RcrcGreen.Core.Kpi
         public double SpeciesSum { get; }
 
         /// <summary>
-        /// Empty unless the repeated subtotal rows disagreed with each other.
+        /// Empty unless the group total row disagreed with the phase subtotals above it.
         /// </summary>
         public string Disagreement { get; }
 
@@ -160,12 +167,14 @@ namespace RcrcGreen.Core.Kpi
             bool shrubsAndLawnRead,
             IEnumerable<GroupSubtotal> subtotals,
             IEnumerable<RegionArea> regions,
+            double readSeconds,
             string chosenRegionTypeName = null,
             IEnumerable<string> notes = null)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
 
             PlotId = plotId;
+            ReadSeconds = readSeconds;
             Component = component ?? string.Empty;
             Reference = reference ?? string.Empty;
             SoftscapeRead = softscapeRead;
@@ -198,6 +207,16 @@ namespace RcrcGreen.Core.Kpi
         public IReadOnlyList<RegionArea> Regions { get; }
 
         public string ChosenRegionTypeName { get; }
+
+        /// <summary>
+        /// How long this plot took to read, its schedules and its filled regions together.
+        ///
+        /// **It is per plot because the cost is per plot.** The 0928 run over 20 plots took
+        /// about five minutes, which is fifteen seconds a plot, and the STREETS button ticks 78.
+        /// A number beside each plot is what says whether they all cost the same or one of them
+        /// carries the run.
+        /// </summary>
+        public double ReadSeconds { get; }
 
         public IReadOnlyList<string> Notes { get; }
 

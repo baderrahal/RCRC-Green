@@ -33,7 +33,8 @@ namespace RcrcGreen.Core.Kpi
             AgreedValue reference,
             IEnumerable<MergedSpecies> merged,
             IEnumerable<SpeciesRow> ungrouped,
-            PatchOutcome outcome)
+            PatchOutcome outcome,
+            RunTiming timing)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");
 
@@ -55,6 +56,7 @@ namespace RcrcGreen.Core.Kpi
             Merged = Held(merged);
             Ungrouped = Held(ungrouped);
             Outcome = outcome;
+            Timing = timing ?? RunTiming.NotTimed;
         }
 
         public string DocumentTitle { get; }
@@ -101,6 +103,12 @@ namespace RcrcGreen.Core.Kpi
         /// way a run ends with no output file.
         /// </summary>
         public PatchOutcome Outcome { get; }
+
+        /// <summary>
+        /// How long the press took and how much of it was the read. Nothing recorded a duration
+        /// before, so a five minute run over 20 plots left no file saying so.
+        /// </summary>
+        public RunTiming Timing { get; }
 
         public bool Wrote
         {

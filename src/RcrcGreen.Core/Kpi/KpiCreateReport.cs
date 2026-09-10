@@ -34,6 +34,7 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "Document: " + Shown(run.DocumentTitle));
             Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
             Line(report, "Read only. Nothing in the model was changed and the template was not touched.");
+            TheClock(report, run);
             Line(report, string.Empty);
 
             TheReconciliation(report, run);
@@ -44,6 +45,28 @@ namespace RcrcGreen.Core.Kpi
             TheChoices(report, run);
 
             return report.ToString();
+        }
+
+        /// <summary>
+        /// How long it took, at the top, because the scan report has carried elements and
+        /// seconds since its first round and the other half of the tool carried nothing.
+        ///
+        /// **A run over 20 plots took about five minutes and no file recorded it.** The read is
+        /// printed apart from the rest because the read is the part that grows with the plots
+        /// ticked, and a total on its own cannot say which half to look at.
+        /// </summary>
+        private static void TheClock(StringBuilder report, KpiCreateRun run)
+        {
+            if (!run.Timing.WasTimed)
+            {
+                Line(report, "Run: NOT TIMED. Nothing recorded a duration for this run.");
+                return;
+            }
+
+            Line(report, "Run: " + Seconds(run.Timing.TotalSeconds) + ", of which reading the model took "
+                + Seconds(run.Timing.ReadSeconds) + " and everything after it "
+                + Seconds(run.Timing.RestSeconds) + ".");
+            Line(report, "Every plot's own read is beside it under EVERY PLOT THAT WENT IN.");
         }
 
         private static void TheReconciliation(StringBuilder report, KpiCreateRun run)
@@ -138,6 +161,8 @@ namespace RcrcGreen.Core.Kpi
                     ? "none chosen"
                     : chosen.TypeName + " | " + Number(chosen.SquareMetres) + " | raw "
                         + chosen.RawSquareFeet.ToString("R", CultureInfo.InvariantCulture)));
+
+                Line(report, "    read in " + Seconds(reading.ReadSeconds));
 
                 foreach (string note in reading.Notes) Line(report, "    " + note);
                 Line(report, string.Empty);
@@ -373,6 +398,15 @@ namespace RcrcGreen.Core.Kpi
         /// against what the model prints beside it. <see cref="Number"/> rounds for reading and
         /// would hide the difference this row exists to show.
         /// </summary>
+        /// <summary>
+        /// A duration for reading, to a tenth. Nothing is decided off it and nothing compares
+        /// two of these, so a tenth is as fine as a person needs.
+        /// </summary>
+        private static string Seconds(double value)
+        {
+            return value.ToString("0.0", CultureInfo.InvariantCulture) + " seconds";
+        }
+
         private static string Exactly(double value)
         {
             return value.ToString("R", CultureInfo.InvariantCulture);

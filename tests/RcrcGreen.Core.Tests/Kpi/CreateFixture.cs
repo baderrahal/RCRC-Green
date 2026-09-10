@@ -43,7 +43,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// first real run measured. Enough of it to write the report against.
         /// </summary>
         public static KpiCreateRun Run(
-            PlotReading[] readings = null, string outputPath = null, PatchOutcome outcome = null)
+            PlotReading[] readings = null,
+            string outputPath = null,
+            PatchOutcome outcome = null,
+            RunTiming timing = null)
         {
             IReadOnlyList<PlotReading> held = readings ?? new[]
             {
@@ -74,7 +77,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null,
                 null,
                 null,
-                outcome);
+                outcome,
+                timing ?? RunTiming.NotTimed);
         }
 
         public static PlotReading Plot(
@@ -87,7 +91,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             string chosenRegion = null,
             bool softscapeRead = true,
             bool shrubsAndLawnRead = true,
-            string[] notes = null)
+            string[] notes = null,
+            double readSeconds = 0.0)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
             string chosen = chosenRegion ?? (held.Length > 0 ? held[0].TypeName : null);
@@ -101,6 +106,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 shrubsAndLawnRead,
                 subtotals ?? new GroupSubtotal[0],
                 held,
+                readSeconds,
                 chosen,
                 notes);
         }

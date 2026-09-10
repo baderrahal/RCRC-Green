@@ -305,25 +305,66 @@ namespace RcrcGreen.Core.Kpi
             return found;
         }
 
+        /// <summary>
+        /// **THE LAST ROW IS THE GROUP'S VALUE.** One subtotal per phase, then the group total,
+        /// so a group holding Existing and Proposed prints three rows and the third is the
+        /// answer. Taking the first took one phase and called it the group, and on the 0928 run
+        /// that meant 30 where the group is 84 and 361 where it is 820.
+        ///
+        /// Never a sum worked out here. The group total is a row the schedule printed and this
+        /// takes it, the same rule the whole tool follows.
+        /// </summary>
         private static void Close(
             List<GroupSubtotal> found, string heading, List<GroupSubtotal> subtotals, List<double> species)
         {
             if (heading == null || subtotals.Count == 0) return;
 
-            GroupSubtotal first = subtotals[0];
+            GroupSubtotal last = subtotals[subtotals.Count - 1];
             double sum = species.Count == 0 ? double.NaN : species.Sum();
 
-            List<GroupSubtotal> differing = subtotals
-                .Where(one => one.SquareMetres != first.SquareMetres || one.ItemCount != first.ItemCount)
-                .ToList();
-
-            string disagreement = differing.Count == 0
-                ? string.Empty
-                : "its " + subtotals.Count + " subtotal rows disagree: " + string.Join(", ", subtotals
-                    .Select(one => Said(one.SquareMetres) + " over " + one.ItemCount).ToArray());
-
             found.Add(new GroupSubtotal(
-                heading, first.SquareMetres, first.ItemCount, subtotals.Count, sum, disagreement));
+                heading, last.SquareMetres, last.ItemCount, subtotals.Count, sum, Disagreeing(subtotals)));
+        }
+
+        /// <summary>
+        /// The check that replaced looking for two equal rows: the last row must equal the rows
+        /// above it added together, in area AND in item count. Four groups out of four on the
+        /// 0928 run do, and a one phase group prints two equal rows, which passes the same check
+        /// because the one row above equals the one below.
+        ///
+        /// A group printing a single row has nothing above it to check against, so it is taken
+        /// and the report says the check had nothing to compare.
+        /// </summary>
+        private static string Disagreeing(List<GroupSubtotal> subtotals)
+        {
+            if (subtotals.Count < 2) return string.Empty;
+
+            GroupSubtotal last = subtotals[subtotals.Count - 1];
+            double area = 0.0;
+            int items = 0;
+
+            for (int at = 0; at < subtotals.Count - 1; at++)
+            {
+                area += subtotals[at].SquareMetres;
+                items += subtotals[at].ItemCount;
+            }
+
+            if (Adds(last.SquareMetres, area) && last.ItemCount == items) return string.Empty;
+
+            return "its group total reads " + Said(last.SquareMetres) + " over " + last.ItemCount
+                + " and the " + (subtotals.Count - 1)
+                + (subtotals.Count == 2 ? " row" : " rows") + " above it add to "
+                + Said(area) + " over " + items + ". Every row: " + string.Join(", ", subtotals
+                    .Select(one => Said(one.SquareMetres) + " over " + one.ItemCount).ToArray());
+        }
+
+        /// <summary>
+        /// The same relative room <see cref="Totalled.Adds"/> allows, from the one constant, so
+        /// the last bits of a double moving cannot refuse a schedule that adds up.
+        /// </summary>
+        private static bool Adds(double total, double parts)
+        {
+            return Math.Abs(total - parts) <= Totalled.Tolerance * Math.Max(1.0, Math.Abs(total));
         }
 
         private static string Said(double value)

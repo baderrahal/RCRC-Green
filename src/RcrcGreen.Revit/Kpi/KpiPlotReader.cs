@@ -235,10 +235,15 @@ namespace RcrcGreen.Revit.Kpi
             string referenceParameter,
             IReadOnlyList<string> phases,
             string chosenRegionTypeName,
-            IReadOnlyList<RegionArea> regions)
+            IReadOnlyList<RegionArea> regions,
+            double regionSeconds)
         {
             if (document == null) throw new ArgumentNullException("document");
             if (plotId == null) throw new ArgumentNullException("plotId");
+
+            // The regions were read before this was called, so their cost is handed in and added
+            // rather than left out of the plot's own number.
+            var clock = System.Diagnostics.Stopwatch.StartNew();
 
             var notes = new List<string>();
             ViewSheet sheet = FirstSheetOf(document, plotId);
@@ -287,6 +292,7 @@ namespace RcrcGreen.Revit.Kpi
                 groundRead,
                 subtotals,
                 regions,
+                regionSeconds + clock.Elapsed.TotalSeconds,
                 chosenRegionTypeName,
                 notes);
         }
