@@ -1,8 +1,8 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Forty first pass, three things off the 0928 run, the first twenty plot run this
-tool has done. On branch `claude/inspiring-allen-xs113f`, 942 tests locally, 0 failed and 0
-skipped, 927 before and 15 added.
+tool has done. Pull request 53 is merged into main as `b83e3d6`, 942 tests on the runner against
+its merged head and 942 locally, 0 failed and 0 skipped on each, 927 before and 15 added.
 
 **The subtotal rule was wrong and was measured from the one plot that is the special case.** A
 group prints one subtotal per phase, then the group total, and the LAST row is the value. DM-11

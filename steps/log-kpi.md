@@ -6,9 +6,13 @@ Newest entry first.
 
 ## 2026-09-10, forty first pass. Three things off the 0928 run, the first twenty plot run
 
-Branch `claude/inspiring-allen-xs113f`. **942 tests locally, 0 failed and 0 skipped**, run after
+Pull request 53, merged into main as `b83e3d6`. **The runner executed 942 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 942 ran, 0 failed and 0 skipped**, after
 the last file was written and after all three break watches were restored byte for byte. 927
 before, 15 added.
+
+The merge went through the API with the title and the message both passed on the call, and the
+commit came back off main carrying neither a co-author credit line nor a generated-by footer.
 
 ### The subtotal rule was wrong, and the refusal is why it never reached a client
 
