@@ -23,8 +23,10 @@ the area was not read and why.
 refuses the write naming both numbers. DM-12: eight rows adding to 39, TOTAL 39.
 
 Four break watches, one per finding, went red on 2, 6, 4 and 2 tests and were restored byte for
-byte. **Locally 988 tests, 0 failed and 0 skipped, 505 of them KPI**, 46 added. **Nothing in
-this round has been observed in Revit.**
+byte. Pull request 58 is merged into main as `faa6468`, **994 tests on the runner against its
+merged head and 994 locally at that head, 0 failed and 0 skipped on each**, 505 of them KPI, 46
+added here. The 988 measured while building was at the older base, before the Drawing Sheet's
+forty fourth pass put six tests under it. **Nothing in this round has been observed in Revit.**
 
 Before that, the forty second pass, the second audit of the KPI tool alone. It built nothing
 and fixed nothing. Pull request 55 is merged into main as `5beea47`, 942 tests on the runner

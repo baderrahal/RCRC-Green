@@ -12,8 +12,15 @@ Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`, and not finding 40, the stale
 docstring, which sits in a file this round rewrote and was left standing because it is not one
 of the four.
 
-**Locally 988 tests ran, 0 failed and 0 skipped**, after the last file was written and after
-all four break watches were restored byte for byte. 942 before, 46 added, 505 of them KPI.
+Pull request 58, merged into main as `faa6468`. **The runner executed 994 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 994 ran at `faa6468`, 0 failed and 0
+skipped**, 505 of them KPI, 46 added here. The 988 measured while the round was built was
+against the older base `afbc4f7`, and the Drawing Sheet's forty fourth pass landed six tests
+under it before this branch was moved onto `a95e40c`, so 994 is 988 plus those six. Every break
+watch below was watched at the older base and the suite rerun green there.
+
+The merge went through the API with the title and the message both passed on the call, and the
+commit came back off main carrying neither a co-author credit line nor a generated-by footer.
 
 ### Finding 2. The four cell position fallbacks refuse
 
