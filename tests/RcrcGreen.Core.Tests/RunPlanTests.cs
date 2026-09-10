@@ -114,6 +114,39 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
+        /// A mark on a view type unticked in step 2 is remembered so it comes back with the
+        /// column, but the run is handed the marks the grid shows and nothing else. The panel
+        /// used to hand its whole memory over, so a view type taken off the grid was still
+        /// made, and the MARK header counted marks nobody could see.
+        /// </summary>
+        [Fact]
+        public void AMarkOnAHiddenColumnNeverReachesThePlan()
+        {
+            SheetGrid shown = SheetGrid.Build(
+                new[] { "DM-11" },
+                new[] { General },
+                null,
+                new[] { "DM-11" },
+                new[]
+                {
+                    new PlotViewKey("DM-11", General),
+                    new PlotViewKey("DM-11", CrossSection)
+                });
+
+            RunPlan plan = RunFixture.Of(
+                shown.Marked,
+                new[] { "DM-11" },
+                new[] { "DM-11" },
+                Schedules,
+                new[] { Furniture });
+
+            Assert.Equal(
+                new[] { "DM-11-(200) General Arrangement Layout" },
+                plan.Items.Select(item => item.Name).ToArray());
+            Assert.Equal(1, shown.MarkedCount);
+        }
+
+        /// <summary>
         /// Unticking a plot is the user saying they do not want it, so a mark left on it is
         /// dropped without a refusal. Nothing has gone wrong there.
         /// </summary>

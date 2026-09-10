@@ -41,9 +41,11 @@ namespace RcrcGreen.Revit
 
         /// <summary>
         /// Called back on the Revit thread when a request finishes. The panel marshals to its
-        /// own thread itself.
+        /// own thread itself. What it hands back is the clause about what the refresh cost the
+        /// user, the marks it cleared, which goes on the end of the refresh message. Empty
+        /// when nothing was cleared.
         /// </summary>
-        public Action<DrawingSheetSnapshot> Read { get; set; }
+        public Func<DrawingSheetSnapshot, string> Read { get; set; }
 
         public Action<string> Told { get; set; }
 
@@ -213,7 +215,7 @@ namespace RcrcGreen.Revit
         private void Refresh(Document document)
         {
             DrawingSheetSnapshot snapshot = DrawingSheetReader.Read(document);
-            Read?.Invoke(snapshot);
+            string costTheUser = Read == null ? string.Empty : Read(snapshot) ?? string.Empty;
 
             var said = new StringBuilder();
             said.Append(snapshot.ViewsRead).Append(" views read at ");
@@ -229,6 +231,11 @@ namespace RcrcGreen.Revit
                 said.Append(" views are named for one plot and carry PRX_Plot_ID for another. ");
                 said.Append("The grid follows the name.");
             }
+
+            // A refresh used to clear every mark and say nothing about it, so somebody who
+            // marked a screenful and pressed Refresh to pick up a colleague's change was told
+            // views, plots and counts and not what they had just lost.
+            if (costTheUser.Length > 0) said.Append(" ").Append(costTheUser);
 
             Told?.Invoke(said.ToString());
         }

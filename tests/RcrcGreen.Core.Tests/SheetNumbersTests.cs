@@ -23,17 +23,29 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The three shapes this model really uses. 010EA has its digits at the front, so the
-        /// last run of digits is the only one there and stepping it gives 011EA.
+        /// The two shapes this model really numbers with. 010EA has its digits at the front, so
+        /// the last run of digits is the only one there and stepping it gives 011EA.
         /// </summary>
         [Fact]
         public void EveryShapeInTheModelSteppedOn()
         {
-            var free = SheetNumbers.Free(new[] { "010EA", "010QE Copy 001", "L-211" });
+            var free = SheetNumbers.Free(new[] { "010EA", "L-211" });
 
             Assert.Contains("011EA", free);
-            Assert.Contains("010QE Copy 002", free);
             Assert.Contains("L-212", free);
+        }
+
+        /// <summary>
+        /// 010QE Copy 001 is what Revit writes when a sheet is duplicated, and this test used
+        /// to pin that stepping it offered 010QE Copy 002, a copy of a copy. A copy is never a
+        /// seed now. It stays taken, so nothing offered can collide with it.
+        /// </summary>
+        [Fact]
+        public void ACopyNumberIsNeverASeed()
+        {
+            var free = SheetNumbers.Free(new[] { "010EA", "010QE Copy 001", "400Q Copy 009" });
+
+            Assert.Equal(new[] { "011EA" }, free.ToArray());
         }
 
         /// <summary>
@@ -120,13 +132,22 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// 010QE Copy 001 still reads as Q, because the letter sits right after the leading
-        /// digits and the copy suffix is behind it.
+        /// 010QE Copy 001 gives no letter. This test used to pin the opposite, that the Q was
+        /// read off it because it sits right after the leading digits. That was wrong: on the
+        /// first real model only DM-11 has numbers of its own, and every other plot's copies
+        /// are DM-11's numbers duplicated onto it, so the Q in one says which plot it was
+        /// copied from and nothing about the plot it sits on. Every plot but DM-11 was being
+        /// proposed Q. A copy is skipped before its letter is read, so a plot with one number
+        /// of its own beside a copy still gets its own letter rather than a disagreement.
         /// </summary>
         [Fact]
-        public void ACopyNumberStillGivesItsLetter()
+        public void ACopyNumberGivesNoLetter()
         {
-            Assert.Equal("Q", SheetNumbers.PlotLetter(new[] { "010QE Copy 001" }));
+            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "010QE Copy 001" }));
+            Assert.Equal(
+                string.Empty,
+                SheetNumbers.PlotLetter(new[] { "010QE Copy 001", "400Q Copy 009" }));
+            Assert.Equal("R", SheetNumbers.PlotLetter(new[] { "010QE Copy 001", "200R" }));
         }
 
         /// <summary>
@@ -207,6 +228,27 @@ namespace RcrcGreen.Core.Tests
 
             Assert.False(nothing.Offered);
             Assert.Equal(string.Empty, nothing.Number);
+            Assert.Equal(
+                "This plot has no sheet numbers yet, so there is no plot letter to continue. "
+                + "Type the number.",
+                nothing.WhyNot);
+        }
+
+        /// <summary>
+        /// Every plot but DM-11 on the first real model carries numbers like 010QE Copy 001
+        /// and nothing of its own. Each used to be proposed 010QA, DM-11's letter, which would
+        /// have filed its sheet under the wrong plot in the register. It gets the refusal a
+        /// plot with no numbers gets, in the same words.
+        /// </summary>
+        [Fact]
+        public void APlotCarryingOnlyCopiesIsTreatedAsHavingNoNumbers()
+        {
+            SheetNumberProposal nothing = SheetNumbers.Propose(
+                "010",
+                new[] { "010QE", "010QE Copy 001", "400Q Copy 009" },
+                new[] { "010QE Copy 001", "400Q Copy 009" });
+
+            Assert.False(nothing.Offered);
             Assert.Equal(
                 "This plot has no sheet numbers yet, so there is no plot letter to continue. "
                 + "Type the number.",

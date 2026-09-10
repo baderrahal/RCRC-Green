@@ -103,6 +103,8 @@ namespace RcrcGreen.Core
                 .OrderBy(number => number, NaturalOrder.Comparer)
                 .ToList();
 
+            FreeSheetNumbers = SheetNumbers.Free(SheetNumbersInUse);
+
             _numbersByPlot = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             foreach (SheetOnAPlot one in (sheetNumbersByPlot ?? Enumerable.Empty<SheetOnAPlot>())
                 .Where(one => one != null && one.PlotId.Length > 0 && one.SheetNumber.Length > 0))
@@ -264,12 +266,11 @@ namespace RcrcGreen.Core
         ///
         /// It used to offer the numbers already in use, so every entry in it was certain to be
         /// refused. Three sheets were lost to that in one run. Worked out here rather than in
-        /// the panel, like every other list it shows.
+        /// the panel, like every other list it shows, and worked out once per read: it was a
+        /// getter that stepped every number in the model on every call, and every row of every
+        /// step 4 table called it on every redraw.
         /// </summary>
-        public IReadOnlyList<string> FreeSheetNumbers
-        {
-            get { return SheetNumbers.Free(SheetNumbersInUse); }
-        }
+        public IReadOnlyList<string> FreeSheetNumbers { get; }
 
         /// <summary>
         /// Every scope box name in the model, whether or not it is shaped like a plot.

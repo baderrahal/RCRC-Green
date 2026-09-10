@@ -161,6 +161,27 @@ namespace RcrcGreen.Revit
             outcome.Made(item);
             madeSoFar[item.Name] = made.Id;
 
+            Finishing(
+                outcome,
+                said => new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created, but setting it up did not finish. " + said + " Its view template, "
+                    + "crop, " + ModelScanner.PlotIdParameterName + " or scope box may not be "
+                    + "set. Check it by hand."),
+                () => FinishPlanView(made, sibling, item, outcome, boxIdByName));
+        }
+
+        /// <summary>
+        /// Everything a plan view gets after it exists and has its name.
+        /// </summary>
+        private static void FinishPlanView(
+            ViewPlan made,
+            Sibling sibling,
+            RunItem item,
+            RunOutcome outcome,
+            Dictionary<string, ElementId> boxIdByName)
+        {
             ApplySiblingTemplate(made, sibling, item, outcome);
 
             // Annotation crop is forced on rather than copied. Copying it was the last round's
@@ -188,6 +209,36 @@ namespace RcrcGreen.Revit
                         "Created, but the scope box could not be set. The view template it "
                         + "inherited may be controlling it. Set it by hand."));
                 }
+            }
+        }
+
+        /// <summary>
+        /// What runs after an item has been recorded as made.
+        ///
+        /// A throw from Revit in there used to land in the catch around the whole item as
+        /// refused, so the item sat in Created and in NotCreated at once, BothWays found it and
+        /// the report opened saying it contradicts itself and is a bug in the tool. The thing
+        /// is in the model. The true state is created and needing attention, with what Revit
+        /// said, and that is what is recorded now.
+        /// </summary>
+        private static void Finishing(
+            RunOutcome outcome, Func<string, RunRefusal> attention, Action finish)
+        {
+            try
+            {
+                finish();
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException failed)
+            {
+                outcome.NeedsAttention(attention("Revit refused it. " + failed.Message));
+            }
+            catch (InvalidOperationException failed)
+            {
+                outcome.NeedsAttention(attention("Revit would not do it. " + failed.Message));
+            }
+            catch (ArgumentException failed)
+            {
+                outcome.NeedsAttention(attention("Revit refused an argument. " + failed.Message));
             }
         }
 
@@ -270,6 +321,23 @@ namespace RcrcGreen.Revit
             outcome.Made(item);
             madeSoFar[item.Name] = made.Id;
 
+            Finishing(
+                outcome,
+                said => new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created, but setting it up did not finish. " + said + " Its view template, "
+                    + "crop or " + ModelScanner.PlotIdParameterName + " may not be set. Check "
+                    + "it by hand."),
+                () => FinishSection(made, sibling, item, outcome));
+        }
+
+        /// <summary>
+        /// Everything a section gets after it exists and has its name.
+        /// </summary>
+        private static void FinishSection(
+            ViewSection made, Sibling sibling, RunItem item, RunOutcome outcome)
+        {
             ApplySiblingTemplate(made, sibling, item, outcome);
 
             // A section still copies all three. No section has ever been created by this tool,
@@ -374,7 +442,26 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            sheet.Name = wanted.SheetName;
+            try
+            {
+                sheet.Name = wanted.SheetName;
+            }
+            catch (Autodesk.Revit.Exceptions.ArgumentException failed)
+            {
+                // A typed name can hold a character Revit forbids. The sheet is already in the
+                // model under its number by now, so it goes the way a refused number goes,
+                // rather than staying under the name Revit gave it with the report saying not
+                // made.
+                string kept = Deleted(document, sheet.Id)
+                    ? " It was deleted again."
+                    : " IT IS STILL IN THE MODEL under the name Revit gave it, and has to be "
+                        + "sorted out by hand.";
+
+                outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber, item.SheetName,
+                    item.Name + " was not made. Revit refused the name " + wanted.SheetName
+                    + ". Revit said: " + failed.Message + kept));
+                return;
+            }
 
             // The size can only be read after the sheet exists, because Sheet Width and Sheet
             // Height live on the title block Revit places on it. So the sheet is made, measured,
@@ -400,8 +487,39 @@ namespace RcrcGreen.Revit
 
             outcome.Made(item);
 
+            Finishing(
+                outcome,
+                said => RunRefusal.ForSheet(
+                    item.PlotId,
+                    item.SheetNumber,
+                    item.SheetName,
+                    item.Name + " was made, but placing its views did not finish. " + said
+                    + " Some of its views may be missing from it. Check the sheet by hand."),
+                () => FinishSheet(document, item, outcome, sheet, size, madeSoFar));
+        }
+
+        /// <summary>
+        /// Everything a sheet gets after it exists with its number and its name.
+        /// </summary>
+        private static void FinishSheet(
+            Document document,
+            RunItem item,
+            RunOutcome outcome,
+            ViewSheet sheet,
+            SheetSize size,
+            Dictionary<string, ElementId> madeSoFar)
+        {
+            // The return of Set is checked because Revit can answer false without throwing,
+            // and a sheet without its plot is not found by the Sheet List and not counted when
+            // the next sheet on that plot is proposed a number.
             Parameter plot = sheet.LookupParameter(ModelScanner.PlotIdParameterName);
-            if (plot != null && !plot.IsReadOnly) plot.Set(item.PlotId);
+            if (plot == null || plot.IsReadOnly || !plot.Set(item.PlotId))
+            {
+                outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                    item.SheetName, item.Name + " was made, but " + ModelScanner.PlotIdParameterName
+                    + " could not be set on it, so the Sheet List will not find it. Set it by "
+                    + "hand."));
+            }
 
             PlaceViews(document, item, outcome, sheet, size, madeSoFar);
         }
@@ -768,7 +886,16 @@ namespace RcrcGreen.Revit
                 return;
             }
 
-            plot.Set(item.PlotId);
+            // Checked like the scope box is, because Revit can answer false without throwing
+            // and a view without its plot is not found by the Sheet List.
+            if (!plot.Set(item.PlotId))
+            {
+                outcome.NeedsAttention(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created, but " + ModelScanner.PlotIdParameterName + " could not be set. "
+                    + "The view template it inherited may be controlling it. Set it by hand."));
+            }
         }
 
         /// <summary>
@@ -828,50 +955,76 @@ namespace RcrcGreen.Revit
 
             if (!Renamed(document, made, item, outcome, wanted.NameFor(item.PlotId))) return;
 
-            Autodesk.Revit.DB.ScheduleDefinition definition = made.Definition;
-            definition.IncludeLinkedFiles = wanted.IncludesLinkedFiles;
-
-            Dictionary<string, SchedulableField> available = definition.GetSchedulableFields()
-                .GroupBy(field => field.GetName(document), StringComparer.Ordinal)
-                .ToDictionary(byName => byName.Key, byName => byName.First(), StringComparer.Ordinal);
-
             // Added in the captured order, because the order is what the schedule looks like and
             // a field list in a different order is a different schedule to the person reading it.
             var fieldByName = new Dictionary<string, ScheduleField>(StringComparer.Ordinal);
             var missingFields = new List<ScheduleFieldEntry>();
-
-            foreach (ScheduleFieldEntry entry in wanted.FieldsInOrder)
-            {
-                if (fieldByName.ContainsKey(entry.Name)) continue;
-
-                SchedulableField schedulable;
-                if (!available.TryGetValue(entry.Name, out schedulable))
-                {
-                    missingFields.Add(entry);
-                    continue;
-                }
-
-                fieldByName.Add(entry.Name, definition.AddField(schedulable));
-            }
-
             var missingFilters = new List<string>();
-            foreach (ScheduleFilterRule rule in wanted.Filters)
+
+            // Inside the same delete-again shape the number and the rename use. A throw from
+            // AddField or AddFilter used to land in the catch around the whole item as refused,
+            // with a schedule named for the plot and short of the filter being added still in
+            // the model. Whether AddFilter throws on a filter the source schedule carried is
+            // UNKNOWN without Revit, which is why the guard is here rather than assumed away.
+            try
             {
-                ScheduleField field;
-                if (!fieldByName.TryGetValue(rule.ParameterName, out field))
+                Autodesk.Revit.DB.ScheduleDefinition definition = made.Definition;
+                definition.IncludeLinkedFiles = wanted.IncludesLinkedFiles;
+
+                Dictionary<string, SchedulableField> available = definition.GetSchedulableFields()
+                    .GroupBy(field => field.GetName(document), StringComparer.Ordinal)
+                    .ToDictionary(byName => byName.Key, byName => byName.First(), StringComparer.Ordinal);
+
+                foreach (ScheduleFieldEntry entry in wanted.FieldsInOrder)
                 {
-                    missingFilters.Add(rule.ToString());
-                    continue;
+                    if (fieldByName.ContainsKey(entry.Name)) continue;
+
+                    SchedulableField schedulable;
+                    if (!available.TryGetValue(entry.Name, out schedulable))
+                    {
+                        missingFields.Add(entry);
+                        continue;
+                    }
+
+                    fieldByName.Add(entry.Name, definition.AddField(schedulable));
                 }
 
-                ScheduleFilter rebuilt;
-                if (!TryRebuild(field.FieldId, rule, out rebuilt))
+                foreach (ScheduleFilterRule rule in wanted.Filters)
                 {
-                    missingFilters.Add(rule.ToString());
-                    continue;
-                }
+                    ScheduleField field;
+                    if (!fieldByName.TryGetValue(rule.ParameterName, out field))
+                    {
+                        missingFilters.Add(rule.ToString());
+                        continue;
+                    }
 
-                definition.AddFilter(rebuilt);
+                    ScheduleFilter rebuilt;
+                    if (!TryRebuild(field.FieldId, rule, out rebuilt))
+                    {
+                        missingFilters.Add(rule.ToString());
+                        continue;
+                    }
+
+                    definition.AddFilter(rebuilt);
+                }
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException failed)
+            {
+                UnfinishedScheduleTakenOut(document, made, item, outcome,
+                    "Revit refused it. " + failed.Message);
+                return;
+            }
+            catch (InvalidOperationException failed)
+            {
+                UnfinishedScheduleTakenOut(document, made, item, outcome,
+                    "Revit would not do it. " + failed.Message);
+                return;
+            }
+            catch (ArgumentException failed)
+            {
+                UnfinishedScheduleTakenOut(document, made, item, outcome,
+                    "Revit refused an argument. " + failed.Message);
+                return;
             }
 
             if (missingFilters.Count > 0)
@@ -942,15 +1095,49 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
+        /// A schedule Revit threw on while its fields and filters were going on. It is already
+        /// named for the plot, and one short of the filter that was being added shows every
+        /// plot's elements and reads as correct on a drawing, so it is deleted again with the
+        /// delete checked, the same way a lost filter is.
+        /// </summary>
+        private static void UnfinishedScheduleTakenOut(
+            Document document, ViewSchedule made, RunItem item, RunOutcome outcome, string said)
+        {
+            string named = made.Name;
+
+            if (Deleted(document, made.Id))
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created and then deleted again, because Revit threw while its fields and "
+                    + "filters were being added. " + said + " A schedule short of a filter shows "
+                    + "every plot's elements and reads as correct on a drawing, so it is not left "
+                    + "in the model."));
+                return;
+            }
+
+            outcome.LeftInTheModel(new RunRefusal(
+                item.PlotId,
+                item.Type,
+                "STILL IN THE MODEL, named " + named + ". Revit threw while its fields and "
+                + "filters were being added, " + said + " and then refused to delete it again, so "
+                + "it is there and may be short of a filter. It would show every plot's elements "
+                + "and read as correct on a drawing. Delete it by hand."));
+        }
+
+        /// <summary>
         /// Names a thing Revit just created, and takes it away again when the name is
         /// refused.
         ///
-        /// The name is taken when a view with it already exists, which means the mark went
-        /// stale between the panel's read and the run in a shared model. Without this the
-        /// created element stayed under Revit's default name while the report said not
-        /// created, and a report that disagrees with the model is the fault this repo treats
-        /// as worst. The plan refuses a stale mark first, and this is the writer trusting no
-        /// list it did not build, the same way MakeSheet handles a refused number.
+        /// The name is refused when a view with it already exists, which means the mark went
+        /// stale between the panel's read and the run in a shared model, and when a typed view
+        /// type name holds a character Revit forbids. Without this the created element stayed
+        /// under Revit's default name while the report said not created, and a report that
+        /// disagrees with the model is the fault this repo treats as worst. The plan refuses a
+        /// stale mark first, and this is the writer trusting no list it did not build, the same
+        /// way MakeSheet handles a refused number. Which of the two it was is Revit's to say,
+        /// so the refusal quotes it rather than blaming a duplicate that may not be there.
         /// </summary>
         private static bool Renamed(
             Document document, Element made, RunItem item, RunOutcome outcome, string wanted)
@@ -960,7 +1147,7 @@ namespace RcrcGreen.Revit
                 made.Name = wanted;
                 return true;
             }
-            catch (Autodesk.Revit.Exceptions.ArgumentException)
+            catch (Autodesk.Revit.Exceptions.ArgumentException failed)
             {
                 string kept = Deleted(document, made.Id)
                     ? " It was deleted again."
@@ -968,8 +1155,8 @@ namespace RcrcGreen.Revit
                         + "sorted out by hand.";
 
                 outcome.Refused(new RunRefusal(item.PlotId, item.Type,
-                    "A view named " + wanted + " is already in this model, so the new one "
-                    + "could not take its name." + kept));
+                    "Revit refused the name " + wanted + ", so the new one could not take it. "
+                    + "Revit said: " + failed.Message + kept));
                 return false;
             }
         }

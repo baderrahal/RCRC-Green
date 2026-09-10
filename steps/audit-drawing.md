@@ -42,6 +42,12 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    the model, and only for the first eight | A line: filter marks by shown column in
    `PlanNow` and `AskToRun`, and count `grid.MarkedCount`
 
+   FIXED. The panel reads its marks off the grid it draws, through `SheetGrid.Marked`, for
+   the MARK header, the status line, the plan preview and the run, and `_marked` stays as
+   the memory that brings a mark back with its column. A mark on a plot outside the range
+   is off the grid too, so it is neither counted nor run. Two tests go red when marked
+   columns leak into the grid, both watched.
+
 2. LOGIC | src/RcrcGreen.Core/DrawingSheet/SheetNumbers.cs:171 and :292, fed by
    src/RcrcGreen.Revit/SheetBeingDescribed.cs:147 and
    src/RcrcGreen.Revit/DrawingSheetReader.cs:124 | The plot letter is read off every sheet
@@ -57,6 +63,13 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    one letter per plot at all is UNKNOWN, and a proposal built on copies cannot be the
    answer either way | A line: drop numbers holding `CopyMark` before `LettersIn`, so a
    plot with only copies gets the no-numbers refusal it already has words for
+
+   FIXED. `LettersIn` and the seeds of `Free` skip a number holding `ScannedSheet.CopyMark`,
+   so a plot carrying only copies gets the no-numbers refusal in the words it already had,
+   and a plot with one number of its own beside a copy keeps its own letter. The test that
+   pinned the old reading is replaced by one that says why it was wrong. Three tests
+   watched red with both filters removed. Whether the team wants one letter per plot is
+   still UNKNOWN.
 
 3. WIRING | src/RcrcGreen.Revit/ModelWriter.cs:377 and :843 to :875 | The delete-again
    guard covers the sheet number at :357 and the rename at :955, and two writes between
@@ -78,6 +91,12 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    and filters inside the same delete-again shape the number and the rename use, and let
    `Renamed` say what Revit said
 
+   FIXED. The sheet name goes on inside the same delete-again shape as the number, and the
+   schedule's link setting, fields and filters go on inside one that deletes the schedule
+   again with the delete checked, or records it as left in the model when the delete
+   fails. `Renamed` quotes what Revit said instead of naming a duplicate. Neither path has
+   been through Revit.
+
 4. WIRING | src/RcrcGreen.Revit/ModelWriter.cs:404 and :771 | Two `Parameter.Set` returns
    are still ignored, both on PRX_Plot_ID: the sheet's at :404 and every new view's at
    :771, where `SetPlotId` has words for a null and for read only and none for a false.
@@ -87,6 +106,9 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    gets no proposal, and the report reads clean. The last audit ranked the same class
    WRONG and two of its four sites were fixed | Two lines each, the same NeedsAttention
    note :183 already writes
+
+   FIXED. Both returns are checked. A false on a view writes the scope box's note with the
+   parameter named, and a false on a sheet says the Sheet List will not find it.
 
 ### COSTLY
 
@@ -98,6 +120,10 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    remembered overload at :1581 | Marking ten cells down a long grid is ten re-scrolls,
    the fault the user reported for the lists | A name each
 
+   FIXED. `Remembering` keeps both offsets of any viewer by name, `Scrolling` goes through
+   it, the grid's two viewers and step 4's list and table are named, and the bare overload
+   is gone. Not observed in Revit.
+
 6. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:1763, :1813 and :1909, with
    DrawingSheetRequestHandler.cs:218 | Finding 9 of the last audit, and worse than it said.
    `Took` clears every mark, then `PutTheRangeBack` calls `RangeChosen`, which rebuilds
@@ -106,6 +132,11 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    about either | Somebody who unticks five plots, marks a screenful and presses Refresh
    to pick up a colleague's change loses both and is told neither | A clause in the
    refresh message, and keep the off set across `Took` the way `_columns` keeps its ticks
+
+   FIXED. `Took` reads the unticked plots before the range is put back and unticks them
+   again after, and hands the handler the count of marks it cleared, which goes on the end
+   of the refresh message through `BulkMarking.ClearedInWords`. `Read` on the handler is a
+   Func for that.
 
 7. REPORTS | src/RcrcGreen.Core/DrawingSheet/RunReport.cs:76 to :78 against :91 |
    Finding 10 of the last audit, unchanged. The headline counts `NotCreatedCount`, which
@@ -134,6 +165,11 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
    multiplication is not | Compute both lists once per redraw, and drop `CopyMark`
    numbers from `Free`
 
+   FIXED. `FreeSheetNumbers` is worked out once in the snapshot's constructor, the panel
+   reads both lists once per redraw into a `SheetOffers`, and every box takes them as its
+   `ItemsSource` rather than copying them item by item. Copies are no longer seeds, under
+   finding 2.
+
 10. WIRING | src/RcrcGreen.Revit/ModelWriter.cs:401, :161 and :270, with the catches at
     :49 and :95 | `Made` is recorded before the calls that finish the item: a sheet at :401
     before `PlaceViews` at :406, a plan view at :161 before the template, the crop and the
@@ -145,6 +181,10 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     Revit refused. `Regenerate` at :535 and `ScheduleSheetInstance.Create` at :506 are
     plain Revit calls with no guard of their own, and whether either throws in practice is
     UNKNOWN | Wrap what runs after `Made` so a throw there is `NeedsAttention`
+
+    FIXED. `Finishing` wraps what runs after `Made` for a plan view, a section and a sheet,
+    and a throw from Revit there is recorded as created and needing attention with what
+    Revit said, rather than as refused. Whether anything in there throws is still UNKNOWN.
 
 11. REPORTS | src/RcrcGreen.Revit/ReportFile.cs:51 to :58 against
     src/RcrcGreen.Core/DrawingSheet/ReportPlaces.cs:47 | The repo copy's
@@ -174,6 +214,10 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     over 17 plots is the most expensive thing on the panel to type, and it is the one
     thing with no way back. Run and Assign both confirm | A confirmation when any row
     holds typed text
+
+    FIXED. `SheetBatch.RowsWithTypedText` and `WhyRemovalAsks` decide it in Core with two
+    tests, each watched red on its own break, and `RemoveASheet` puts the question up as a
+    Yes and No box with No as the default, only when the count is above zero.
 
 14. NO VIBE CODING | src/RcrcGreen.Revit/RcrcGreenApplication.cs:52 to :63,
     ScanModelCommand.cs:28, AssignScopeBoxCommand.cs:34, ScanProgressWindow.cs, and

@@ -280,7 +280,7 @@ namespace RcrcGreen.Revit
                 _picked.TickedCount,
                 _columns.ShownCount,
                 _columns.All.Count,
-                _marked.Count,
+                GridNow().MarkedCount,
                 _model.TitleBlockTypes.Count,
                 _sheets.Count,
                 SheetsToMake(),
@@ -571,14 +571,27 @@ namespace RcrcGreen.Revit
             }
         }
 
+        /// <summary>
+        /// The grid as it stands, and the one place marks are read from for anything the user
+        /// sees or the run is handed. <c>_marked</c> is a memory: it keeps a mark on a view type
+        /// unticked in step 2 so the mark comes back with the column. What the header counts,
+        /// what the status line says and what reaches the plan is what this grid shows, because
+        /// a run once made a view in a column the user had unticked and could not see, while the
+        /// header counted marks over a grid showing none.
+        /// </summary>
+        private SheetGrid GridNow()
+        {
+            return SheetGrid.Build(
+                _picked.InRange, _columns.Shown, _model.Present, _model.PlotsWithAScopeBox, _marked);
+        }
+
         private UIElement InsideMark()
         {
             var block = new StackPanel();
 
             block.Children.Add(Legend());
 
-            SheetGrid grid = SheetGrid.Build(
-                _picked.InRange, _columns.Shown, _model.Present, _model.PlotsWithAScopeBox, _marked);
+            SheetGrid grid = GridNow();
 
             if (grid.Rows.Count == 0)
             {
@@ -652,7 +665,7 @@ namespace RcrcGreen.Revit
 
             // Every cell handed back was missing, so the count is what was really added rather
             // than what was asked for.
-            Say(BulkMarking.InWords(cells.Count, _marked.Count));
+            Say(BulkMarking.InWords(cells.Count, GridNow().MarkedCount));
         }
 
         private void ClearTheMarks()
@@ -764,24 +777,27 @@ namespace RcrcGreen.Revit
                 }
             }
 
+            // Both viewers come back where they were left. Every mark redraws the grid, and a
+            // fresh viewer starts at the top left, so marking ten cells down a long grid was
+            // ten re-scrolls. The user reported it twice.
             var both = new DockPanel { LastChildFill = true };
             DockPanel.SetDock(frozen, Dock.Left);
             both.Children.Add(frozen);
-            both.Children.Add(new ScrollViewer
+            both.Children.Add(Remembering(new ScrollViewer
             {
                 Content = scrolling,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Disabled
-            });
+            }, "grid columns"));
 
-            return new ScrollViewer
+            return Remembering(new ScrollViewer
             {
                 Content = both,
                 MaxHeight = PanelMetrics.GridHeight,
                 Margin = PanelMetrics.Row,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
-            };
+            }, "grid rows");
         }
 
         private void Shade(Grid grid, int row, int columns)
@@ -880,9 +896,14 @@ namespace RcrcGreen.Revit
 
             IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
 
+            // Read once here and shared by every box below. Each name box and each number box
+            // used to copy its list item by item, 1,385 names and about as many numbers per box
+            // on the measured model, for every row of every sheet on every redraw.
+            var offers = new SheetOffers(_model.SheetNamesInUse, _model.FreeSheetNumbers);
+
             for (int at = 0; at < _sheets.Count; at++)
             {
-                block.Children.Add(OneSheet(_sheets[at], at, rows));
+                block.Children.Add(OneSheet(_sheets[at], at, rows, offers));
             }
 
             block.Children.Add(Secondary("Add a sheet", AddASheet,
@@ -893,13 +914,34 @@ namespace RcrcGreen.Revit
             return block;
         }
 
+        /// <summary>
+        /// The two dropdown lists every row's boxes offer, read off the snapshot once per redraw.
+        /// </summary>
+        private sealed class SheetOffers
+        {
+            public SheetOffers(IReadOnlyList<string> namesInUse, IReadOnlyList<string> freeNumbers)
+            {
+                NamesInUse = namesInUse;
+                FreeNumbers = freeNumbers;
+            }
+
+            public IReadOnlyList<string> NamesInUse { get; }
+
+            public IReadOnlyList<string> FreeNumbers { get; }
+        }
+
         private UIElement OneSheet(
-            SheetBeingDescribed sheet, int at, IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
+            SheetBeingDescribed sheet,
+            int at,
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows,
+            SheetOffers offers)
         {
             var block = new StackPanel { Margin = PanelMetrics.StepInside };
 
             var heading = new DockPanel { LastChildFill = true };
-            Button remove = Secondary("Remove", () => RemoveASheet(sheet), "Takes this sheet out.");
+            Button remove = Secondary("Remove", () => RemoveASheet(sheet),
+                "Takes this sheet out. It asks first when a name or a number has been typed on "
+                + "any of its rows.");
             DockPanel.SetDock(remove, Dock.Right);
             heading.Children.Add(remove);
             heading.Children.Add(new TextBlock
@@ -976,7 +1018,7 @@ namespace RcrcGreen.Revit
             }
             _filling = false;
 
-            block.Children.Add(Scrolling(views, PanelMetrics.ListHeight));
+            block.Children.Add(Scrolling(views, PanelMetrics.ListHeight, "sheet " + at + " views"));
 
             SheetDefinition described = sheet.Built(_columns.Shown);
             block.Children.Add(Faint(described.InWords()));
@@ -1002,7 +1044,8 @@ namespace RcrcGreen.Revit
             _numberWarnings.Add(fresh => SayBatchLine(batchLine, whichSheet, fresh));
             SayBatchLine(batchLine, whichSheet, rows);
 
-            block.Children.Add(Scrolling(SheetTable(sheet, at, rows), PanelMetrics.ListHeight));
+            block.Children.Add(Scrolling(
+                SheetTable(sheet, at, rows, offers), PanelMetrics.ListHeight, "sheet " + at + " table"));
 
             return new Border
             {
@@ -1047,7 +1090,10 @@ namespace RcrcGreen.Revit
         /// everywhere. Editing either marks it typed, and the report says which was which.
         /// </summary>
         private UIElement SheetTable(
-            SheetBeingDescribed sheet, int at, IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
+            SheetBeingDescribed sheet,
+            int at,
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows,
+            SheetOffers offers)
         {
             var table = new Grid();
             table.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -1093,14 +1139,15 @@ namespace RcrcGreen.Revit
                     VerticalAlignment = VerticalAlignment.Center
                 }, row + 1, 1);
 
-                Put(table, NameBox(sheet, at, row, shown), row + 1, 2);
-                Put(table, NumberBox(sheet, at, row, shown, rows), row + 1, 3);
+                Put(table, NameBox(sheet, at, row, shown, offers), row + 1, 2);
+                Put(table, NumberBox(sheet, at, row, shown, rows, offers), row + 1, 3);
             }
 
             return table;
         }
 
-        private UIElement NameBox(SheetBeingDescribed sheet, int at, int row, SheetRowShown shown)
+        private UIElement NameBox(
+            SheetBeingDescribed sheet, int at, int row, SheetRowShown shown, SheetOffers offers)
         {
             var box = new ComboBox
             {
@@ -1110,8 +1157,9 @@ namespace RcrcGreen.Revit
             };
 
             // The names already in use, an offer and never a restriction. The box starts on
-            // the name built from the sheet's one view, which the user can type over.
-            foreach (string one in _model.SheetNamesInUse) box.Items.Add(one);
+            // the name built from the sheet's one view, which the user can type over. The
+            // list is the one every other box on the panel shows, not a copy of it.
+            box.ItemsSource = offers.NamesInUse;
 
             string plotId = shown.PlotId;
             string signature = shown.Planned.Signature;
@@ -1154,7 +1202,8 @@ namespace RcrcGreen.Revit
             int at,
             int row,
             SheetRowShown shown,
-            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows)
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows,
+            SheetOffers offers)
         {
             var box = new ComboBox
             {
@@ -1167,7 +1216,7 @@ namespace RcrcGreen.Revit
             // every entry in it was certain to be refused, and three sheets were lost to that
             // in one run. Free typing stays, because the list is an offer and never a
             // restriction.
-            foreach (string one in _model.FreeSheetNumbers) box.Items.Add(one);
+            box.ItemsSource = offers.FreeNumbers;
 
             var wrong = new TextBlock
             {
@@ -1313,8 +1362,32 @@ namespace RcrcGreen.Revit
             Redraw();
         }
 
+        /// <summary>
+        /// Takes a described sheet out, asking first when any of its rows holds typed text. A
+        /// row of typed numbers over seventeen plots is the most expensive thing on the panel
+        /// to type and the one thing with no way back, and Run and Assign both confirm.
+        /// </summary>
         private void RemoveASheet(SheetBeingDescribed sheet)
         {
+            int at = _sheets.IndexOf(sheet);
+            if (at < 0) return;
+
+            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
+            var batch = new SheetBatch(sheet.Built(_columns.Shown), rows[at].Select(one => one.Row));
+
+            string asks = batch.WhyRemovalAsks();
+            if (asks.Length > 0)
+            {
+                MessageBoxResult answer = MessageBox.Show(
+                    asks,
+                    "Remove sheet " + (at + 1),
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    MessageBoxResult.No);
+
+                if (answer != MessageBoxResult.Yes) return;
+            }
+
             _sheets.Remove(sheet);
             Redraw();
         }
@@ -1555,54 +1628,63 @@ namespace RcrcGreen.Revit
             return line;
         }
 
-        private static UIElement Scrolling(UIElement what, double tall)
-        {
-            return new ScrollViewer
-            {
-                Content = what,
-                MaxHeight = tall,
-                Margin = PanelMetrics.Row,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
-            };
-        }
-
         /// <summary>
         /// A scrolling list that comes back where it was left.
         ///
         /// Ticking a view type near the bottom of 84 threw the list back to the top, so the
         /// user scrolled down again for every single tick. The step is thrown away and built
-        /// again on every change, and a brand new ScrollViewer starts at nothing.
-        ///
-        /// The offset is restored on the first layout pass rather than on Loaded, because a
-        /// ScrollViewer that has not measured its content yet clamps any offset to zero and
-        /// the restore reads as though it worked.
+        /// again on every change, and a brand new ScrollViewer starts at nothing. Every list on
+        /// the panel goes through here now. The grid and the step 4 lists used to be built
+        /// bare, so every mark and every tick in step 4 threw them back to the top, the same
+        /// fault a round after it was fixed for the two lists it was reported on.
         /// </summary>
         private UIElement Scrolling(UIElement what, double tall, string remembered)
         {
-            var view = new ScrollViewer
+            return Remembering(new ScrollViewer
             {
                 Content = what,
                 MaxHeight = tall,
                 Margin = PanelMetrics.Row,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
-            };
+            }, remembered);
+        }
 
-            string key = remembered;
-            double already;
-            if (_scrolledTo.TryGetValue(key, out already) && already > 0.0)
+        /// <summary>
+        /// Keeps a viewer's position across the rebuild, by name, both ways: the grid scrolls
+        /// down through its rows and across through its columns.
+        ///
+        /// The offsets are restored on the first layout pass rather than on Loaded, because a
+        /// ScrollViewer that has not measured its content yet clamps any offset to zero and
+        /// the restore reads as though it worked.
+        /// </summary>
+        private ScrollViewer Remembering(ScrollViewer view, string remembered)
+        {
+            string down = remembered + " down";
+            string across = remembered + " across";
+
+            double wasDown;
+            double wasAcross;
+            bool hadDown = _scrolledTo.TryGetValue(down, out wasDown) && wasDown > 0.0;
+            bool hadAcross = _scrolledTo.TryGetValue(across, out wasAcross) && wasAcross > 0.0;
+
+            if (hadDown || hadAcross)
             {
                 EventHandler once = null;
                 once = (sender, e) =>
                 {
                     view.LayoutUpdated -= once;
-                    view.ScrollToVerticalOffset(already);
+                    if (hadDown) view.ScrollToVerticalOffset(wasDown);
+                    if (hadAcross) view.ScrollToHorizontalOffset(wasAcross);
                 };
                 view.LayoutUpdated += once;
             }
 
-            view.ScrollChanged += (sender, e) => _scrolledTo[key] = view.VerticalOffset;
+            view.ScrollChanged += (sender, e) =>
+            {
+                _scrolledTo[down] = view.VerticalOffset;
+                _scrolledTo[across] = view.HorizontalOffset;
+            };
 
             return view;
         }
@@ -1651,7 +1733,7 @@ namespace RcrcGreen.Revit
         private RunPlan PlanNow()
         {
             return RunPlan.Of(
-                _marked,
+                GridNow().Marked,
                 _picked.Ticked,
                 _model.PlotsWithAScopeBox,
                 _model.ScheduleTypes,
@@ -1725,7 +1807,7 @@ namespace RcrcGreen.Revit
             }
 
             Say("Working out the run.");
-            _handler.AskToRun(ticked, _marked.ToList(), SheetsWanted());
+            _handler.AskToRun(ticked, GridNow().Marked, SheetsWanted());
             _asking.Raise();
         }
 
@@ -1748,18 +1830,26 @@ namespace RcrcGreen.Revit
         ///
         /// The prefix, the first plot and the last plot are put back afterwards when the model
         /// still holds them. A refresh that emptied all three left the user unable to see what
-        /// had changed, which is most of why an early version looked broken.
+        /// had changed, which is most of why an early version looked broken. The plots the user
+        /// unticked are put back the same way, because putting the range back rebuilds the
+        /// selection with every plot ticked and a refresh used to undo five unticks in silence.
+        /// The marks are cleared, since the model they were made against has been read again,
+        /// and what comes back is the clause the refresh message carries about that.
         /// </summary>
-        private void Took(DrawingSheetSnapshot snapshot)
+        private string Took(DrawingSheetSnapshot snapshot)
         {
-            Dispatcher.Invoke(() =>
+            return Dispatcher.Invoke(() =>
             {
                 string prefixWas = _prefix.SelectedItem as string;
                 string fromWas = _from.SelectedItem as string;
                 string toWas = _to.SelectedItem as string;
+                List<string> untickedWere = _picked.InRange
+                    .Where(plotId => !_picked.IsTicked(plotId))
+                    .ToList();
 
                 _model = snapshot ?? DrawingSheetSnapshot.Nothing;
                 _readOnce = true;
+                int marksCleared = _marked.Count;
                 _marked.Clear();
                 _leftPlotsAlready = false;
                 _columns = _columns.OverTheseTypes(_model.ViewTypes);
@@ -1767,8 +1857,14 @@ namespace RcrcGreen.Revit
                 FillPrefixes();
                 PutTheRangeBack(prefixWas, fromWas, toWas);
 
+                // Ticking is a no-op for a plot no longer in the range, so a plot that has gone
+                // from the model is simply not put back.
+                foreach (string plotId in untickedWere) _picked = _picked.Ticking(plotId, false);
+
                 _stepOpen = StepsNow().FirstUnfinished;
                 Redraw();
+
+                return marksCleared == 0 ? string.Empty : BulkMarking.ClearedInWords(marksCleared);
             });
         }
 
@@ -2028,7 +2124,7 @@ namespace RcrcGreen.Revit
             if (!_marked.Remove(key)) _marked.Add(key);
 
             Redraw();
-            Say(_marked.Count + " marked. Marking records intent and changes nothing until Run.");
+            Say(GridNow().MarkedCount + " marked. Marking records intent and changes nothing until Run.");
         }
 
         private void OpenTheView(long viewId)

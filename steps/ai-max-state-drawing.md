@@ -1,6 +1,24 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Forty third pass, an audit of Drawing Sheet alone. It built nothing and
+Phase: 9, ship. Forty fourth pass, seven findings of steps/audit-drawing.md fixed and
+nothing else touched.
+
+A mark on a view type unticked in step 2 no longer reaches the run. The panel hands the
+plan the marks the grid shows, through `SheetGrid.Marked`, and the MARK header and the
+status line count that same list. The plot letter and the free number list skip copy
+numbers, so every plot but DM-11 gets the no-numbers refusal instead of DM-11's Q. A
+refused typed sheet name and a throw while a schedule's fields and filters go on both
+delete the element again with the delete checked, `Renamed` quotes what Revit said, and
+what runs after Made is wrapped so a throw there reads as created and needing attention
+rather than as a contradiction. The two remaining Parameter.Set returns on PRX_Plot_ID are
+checked. Refresh keeps the unticked plots and says how many marks it cleared. Every list on
+the panel remembers where it was scrolled, the grid both ways. Remove asks first when any
+row of the sheet holds typed text. The step 4 dropdown lists are read once per redraw and
+the free numbers once per read. Six tests added, 948 locally, four breaks each watched red
+on its own tests and reversed. Not merged yet. Nothing in this round has been through
+Revit.
+
+Before that, the forty third pass, an audit of Drawing Sheet alone. It built nothing and
 fixed nothing.
 
 Thirty one findings are in steps/audit-drawing.md, ranked by cost: no BLOCKS, four WRONG,

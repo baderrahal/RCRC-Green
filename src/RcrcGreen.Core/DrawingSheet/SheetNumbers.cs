@@ -113,9 +113,11 @@ namespace RcrcGreen.Core
         /// Numbers no sheet in this model carries, one offered for each number that is in use.
         ///
         /// Each is the number in use with its last run of digits stepped on until it is free, so
-        /// every offer is shaped like something the project already does. L-211 gives L-212,
-        /// 010QE Copy 001 gives 010QE Copy 002, and 010EA gives 011EA. A number holding no
-        /// digits at all cannot be stepped on and offers nothing.
+        /// every offer is shaped like something the project already does. L-211 gives L-212 and
+        /// 010EA gives 011EA. A number holding no digits at all cannot be stepped on and offers
+        /// nothing. A copy number such as 010QE Copy 001 is never a seed: it is what Revit
+        /// writes when a sheet is duplicated, and stepping it offers 010QE Copy 002, which is a
+        /// copy of a copy and not a number the project uses.
         /// </summary>
         public static IReadOnlyList<string> Free(IEnumerable<string> inUse)
         {
@@ -123,7 +125,7 @@ namespace RcrcGreen.Core
 
             var offered = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (string seed in taken)
+            foreach (string seed in taken.Where(one => !IsACopy(one)))
             {
                 string next = seed;
                 for (int step = 0; step < Tries; step++)
@@ -143,7 +145,10 @@ namespace RcrcGreen.Core
         /// The letter that stands for the plot in its own sheet numbers, read as the first
         /// letter after the leading digits. Every parseable number the plot has must agree, and
         /// a plot whose numbers disagree gets no letter, because picking a side would put a
-        /// wrong number into a drawing register.
+        /// wrong number into a drawing register. A copy number says nothing about the plot: on
+        /// the first real model only DM-11 has numbers of its own, and every other plot's
+        /// 010QE Copy 001 is DM-11's Q duplicated onto it, so a plot carrying only copies has
+        /// no letter.
         /// </summary>
         public static string PlotLetter(IEnumerable<string> plotsOwnNumbers)
         {
@@ -287,7 +292,9 @@ namespace RcrcGreen.Core
 
         /// <summary>
         /// The first letter after the leading digits of each parseable number. 010QE gives Q,
-        /// 200Q gives Q, and L-211 gives nothing because it does not start with digits.
+        /// 200Q gives Q, and L-211 gives nothing because it does not start with digits. A copy
+        /// number is skipped before its letter is read, because the letter in it belongs to
+        /// the plot it was duplicated from.
         /// </summary>
         private static List<string> LettersIn(IEnumerable<string> numbers)
         {
@@ -295,7 +302,8 @@ namespace RcrcGreen.Core
 
             foreach (string number in (numbers ?? Enumerable.Empty<string>())
                 .Where(one => !string.IsNullOrWhiteSpace(one))
-                .Select(one => one.Trim()))
+                .Select(one => one.Trim())
+                .Where(one => !IsACopy(one)))
             {
                 int at = 0;
                 while (at < number.Length && char.IsDigit(number[at])) at++;
@@ -308,6 +316,11 @@ namespace RcrcGreen.Core
             }
 
             return letters;
+        }
+
+        private static bool IsACopy(string number)
+        {
+            return number.IndexOf(ScannedSheet.CopyMark, StringComparison.Ordinal) >= 0;
         }
 
         /// <summary>
