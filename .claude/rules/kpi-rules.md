@@ -89,7 +89,7 @@ written into a row nothing adds up.
 
 **Family, genus, native, canopy and every code column stay empty.** Those are the client's data
 and the tool does not know them, so the KPIs that need them still cannot see a species written
-this way. That is in `steps/log.md` as an open question for the team.
+this way. That is in `steps/log-kpi.md` as an open question for the team.
 
 More unmatched species than empty rows writes what fits, names the rest, and says plainly that
 the sheet ran out of room. A species the list holds and Revit does not is left empty, which is
@@ -370,7 +370,7 @@ than no value at all.
 
 `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile` are shared with the Drawing
 Sheet and this tool changes none of them. A change one of them seems to need goes in
-`steps/log.md` with why, and the tool works round it. `PanelMetrics` is shared too and took
+`steps/log-kpi.md` with why, and the tool works round it. `PanelMetrics` is shared too and took
 two added values, `HairlineAbove` and `WideLabelWidth`, because a number written in a pane file
 is the fault that made the first pane black on black. The second is for the KPI pane's typed
 boxes, where Prepared by came out as Prepared b running into its box at the shared 54, and it is
@@ -612,7 +612,7 @@ an unmatched species by guessing**: the name and the count go in and no other co
 
 **What is still open is that a row written that way carries no family, no genus and no native
 flag**, so the KPIs that need those cannot see it, and the client's species lists are short of
-trees this project actually plants. That is for the team. `steps/log.md` carries it.
+trees this project actually plants. That is for the team. `steps/log-kpi.md` carries it.
 
 ## The area is not a schedule row
 
@@ -650,7 +650,7 @@ here. What each one turned out to be:
 4. Are the two group headings in SHRUBS & LAWN the same on every plot. **STILL OPEN**
 5. Does an Existing group ever appear in SOFTSCAPE SCHEDULE. **Yes**, DM-12 has one
 
-Two the 1355 run raised in their place are in `steps/log.md`, both about matching a species by
+Two the 1355 run raised in their place are in `steps/log-kpi.md`, both about matching a species by
 name, and nothing in the code picks an answer to either.
 
 The 1521 run raised a third, which template each value of PRX_Component means. **The 1548 run

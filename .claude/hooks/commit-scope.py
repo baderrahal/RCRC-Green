@@ -8,11 +8,13 @@ content they never looked at, in the second they refused a commit that was fine.
 
 Called as:
 
-    python3 commit-scope.py paths   <the whole bash command>
-    python3 commit-scope.py message <the whole bash command>
+    python3 commit-scope.py paths     <the whole bash command>
+    python3 commit-scope.py all-paths <the whole bash command>
+    python3 commit-scope.py message   <the whole bash command>
 
 `paths` prints NUL separated fields. The first is the mode, index or worktree, which says
 where the content of those files is going to be read from. The rest are the paths.
+`all-paths` is the same list with deletions kept in, for the territory hook.
 `message` prints the commit message text, empty when the command carries none.
 """
 
@@ -207,20 +209,22 @@ def has_head():
         ["git", "rev-parse", "--verify", "--quiet", "HEAD"], capture_output=True).returncode == 0
 
 
-def committed_paths(call):
-    staged = ["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"]
+def committed_paths(call, diff_filter="ACMR"):
+    staged = ["diff", "--cached", "--name-only", "-z", "--diff-filter=" + diff_filter]
 
     if call.pathspecs:
         if not has_head():
             return "worktree", split_paths(git(staged + ["--"] + call.pathspecs)) or []
         found = split_paths(
-            git(["diff", "--name-only", "-z", "HEAD", "--diff-filter=ACMR", "--"] + call.pathspecs))
+            git(["diff", "--name-only", "-z", "HEAD",
+                 "--diff-filter=" + diff_filter, "--"] + call.pathspecs))
         return "worktree", found or []
 
     if call.all_flag:
         if not has_head():
             return "worktree", split_paths(git(staged)) or []
-        found = split_paths(git(["diff", "--name-only", "-z", "HEAD", "--diff-filter=ACMR"]))
+        found = split_paths(
+            git(["diff", "--name-only", "-z", "HEAD", "--diff-filter=" + diff_filter]))
         return "worktree", found or []
 
     return "index", split_paths(git(staged)) or []
@@ -255,6 +259,15 @@ def main():
 
     if action == "paths":
         mode, paths = committed_paths(call)
+        sys.stdout.write("\0".join([mode] + paths))
+        return 0
+
+    if action == "all-paths":
+        # Deletions included. The territory hook needs them, because deleting another
+        # task's file is as much an edit as changing it. The plain paths action keeps
+        # its ACMR filter: its two callers read file content, which a deletion has
+        # none of, and one of them counts a deleted file as present, the wrong way.
+        mode, paths = committed_paths(call, "ACMRD")
         sys.stdout.write("\0".join([mode] + paths))
         return 0
 
