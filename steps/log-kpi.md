@@ -4,6 +4,139 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty eighth pass. The FM-05 refusal answered: a third group, out of scope by decision
+
+The refusal the forty seventh pass raised on FM-05 offered two answers, two types of one
+species or one species counted twice, and the answer is neither. The section that prints every
+schedule as the schedule prints it, added that pass, showed FM-05's softscape schedule holding
+THREE groups: Existing at row 3 with four species adding to 6, Proposed at row 9 with ALBIZIA
+LEBBECK 10, BAUHINIA PURPUREA 19 and CASSIA GLAUCA 3 adding to 32, and STREET DESIGN at row 14
+with ALBIZIA LEBBECK 10, BAUHINIA PURPUREA 20, CASSIA GLAUCA 4 and CONOCARPUS 4 adding to 38,
+then TOTAL 76 at row 20. Its shrubs and lawn schedule prints the same third phase: GRASS
+Proposed 96 over 117 and Street Design 69 over 84, total 165 over 201, SHRUBS AND GROUND COVER
+Proposed 361 over 450 and Street Design 459 over 570, total 820 over 1020. Every one of those
+numbers is off the 1536 report and none is reasoned. The FM-05 10, FM-05 10 that two rounds
+chased was one row under Proposed and one under Street Design.
+
+**Bader has decided that Street Design is somebody else's scope and does not belong on this
+plot's checklist. The model will be corrected later. Until it is, the tool leaves those rows
+out and says so.** That is a decision and not a measurement, and it is recorded here as one.
+**The other 43 audit findings stay open**, not renumbered, not reordered, not annotated.
+Nothing else was touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`. **Nothing
+in this round has been observed in Revit**, and no workbook was written or opened. Every
+expected value is written out by hand off the numbers above.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1081 tests at this branch, 0 failed and 0 skipped, 566 of them KPI, 21 added here.** The
+branch sits on `bb97dc3`, after the user's Shared round moved `PaneLabel` and its tests out of
+the KPI folder, which is why the KPI count reads 566 and not the 557 plus 21 the last entry
+would give: the bare base measures 1060 and 545.
+
+### 1. Only the groups a tree list sheet is named for count, and the arithmetic is checked
+
+The words Existing and Proposed appear nowhere in the code that decides this. `CountedGroups`
+holds the two tree list sheet names off the template, Tree List - Existing and Tree List -
+Proposed, and a group counts when a sheet's name ends in the group's name, word for word and
+without case. Nothing looser: Tree and List are words of both sheet names, TREES is the heading
+over the groups, and none of those is what either sheet is for. The reader that used to be
+handed the document's phase list is handed this instead, and `KpiRequestHandler` no longer
+reads the phases for the create path at all. A group the workbook has no sheet for is out of
+scope by construction, on every template, because all seven name their sheets the same way.
+
+`SoftscapeRows.Read` finds every group row, a text only row followed by anything but another
+text only row, reads the species rows under each, and takes that group's own subtotal, the
+first count with no name under it. Each group comes back as a `PrintedGroup` with its row, its
+species, its subtotal row, whether it was taken and why, and the reading's `Species` holds the
+taken groups' rows in printed order. Two checks, both refusals in `Reconciliation`: each group's
+species rows against its own subtotal row, and the groups taken plus the groups left out against
+the TOTAL row. FM-05: 6 plus 32 taken, 38 left out, TOTAL 76. A TOTAL of 80 refuses naming all
+three numbers.
+
+`ShrubsAndLawnRows.Read` stops taking the group total. A phase row's subtotal is that phase's,
+the phases a sheet is named for are added together, area and item count, and the group total
+row is the check on every phase, taken or not. FM-05 GRASS 96 taken, 69 left out, 165 printed.
+SHRUBS 361 taken, 459 left out, 820 printed. A group with no phase row at all keeps the rule it
+had, the last row is the value and the rows above it must add to it, because such a group has
+nothing else to offer. A group whose every phase is out of scope is nought and says so.
+
+**FM-05 reads 6 existing and 32 proposed trees, ALBIZIA LEBBECK 10 and not 20, grass 96 and
+shrubs 361**, and its accounting passes. The rule before this one refused the plot, and the one
+before that wrote 165 and 820.
+
+### 2. The report names every group row, always
+
+Under the plot, per schedule, every group row in printed order with its row number, how many
+species rows it holds and what they add to, its subtotal row and what that prints, TAKEN or LEFT
+OUT, and why. Existing and Proposed get a line each, so a schedule with the ordinary two reads
+differently from one nobody looked at. The rows left out are listed by name and count under
+their group. The shrubs and lawn block prints each phase row the same way and then the group
+total row with whether the phases add to it. The accounting at the top gained one line,
+schedules holding a group no tree list sheet is named for, with the count and the plots, which
+would have shown the street on the first twenty plot run rather than the fourth. The printed
+section's summary line names the group rows, the rows read, the rows left out, the subtotals
+passed over and the TOTAL row by number, and for the shrubs and lawn schedule which phase row
+was taken and which left out and that the group total was checked.
+
+### 3. Two rows for one species in different groups is not a refusal
+
+Under Proposed and under Street Design it is two groups, and the street's row is not in the
+reading's species at all, so nothing refuses and ALBIZIA LEBBECK is 10. Under one group it is
+the refusal it was, rows and counts named. The words in the rules file that said FM-05 printed
+one species twice under one group are corrected: it did not.
+
+### 4. A schedule can repeat a group name, and the report says which is which
+
+DM-25 prints Existing, then Proposed, then Existing again. Nothing guesses which is meant. Both
+are group rows in the list with their own row numbers and subtotals, both are named for by the
+same sheet, both are taken, and the second's reason says it is the 2nd group row so named on
+this schedule, taken as well. `SpeciesRow.GroupRowNumber` carries the group row a species sat
+under, so a species under both Existing groups is refused as a species under one group name
+twice, and the refusal names both group rows, rows 3 and 9, so a person can see it is two
+groups and not one printing twice. Whether DM-25's two Existing groups are one phase printed
+twice or two things is UNKNOWN and is for the team.
+
+### 5. The false comment
+
+`KpiPlotReader` said the one schedule guard exists because FM-05 holds two whose names hold
+SOFTSCAPE and reading both counted its trees twice. FM-05 holds one softscape schedule. The
+comment says so now, says the double was the third group, and says the guard stands for the case
+it was built for and that no plot has been measured holding two.
+
+### One shape nobody has measured
+
+A softscape schedule printing TREES and then species rows with no phase row at all would read
+TREES as a group row, because a text row followed by species rows is a group row, and TREES
+counts for nothing, so every species would be left out and named. That plot would then write
+no trees and its report would say why in the group row list and the accounting line. No such
+schedule has been seen. Whether one exists is UNKNOWN.
+
+### Break watches
+
+Six, each restored byte for byte and checked with cmp, the suite rerun green at 1081.
+
+- every group counting, which is the rule before this one: **18 red**, across `GroupRowsTests`,
+  `SubtotalShapeTests` and `SchedulesAsPrintedTests`
+- the shrubs value being the group total again: **9 red**, the four FM-05 and phase tests in
+  `SubtotalShapeTests`, three in `GroupRowsTests` and two in `SchedulesAsPrintedTests`
+- the group rows lines dropped from the report: **3 red**,
+  `TheReportNamesEveryGroupRowUnderThePlot`, `TheReportSaysItUnderThePlot` and
+  `TheReportNamesTheScheduleEachNumberCameOffPerPlot`
+- the TOTAL check forgetting the rows left out: **2 red**, both in `GroupRowsTests`
+- the accounting line dropped: **1 red**, `TheAccountingLineCountsTheSchedulesAndNamesThePlots`
+- a repeated group name taken once: **2 red**, the two DM-25 tests
+
+### Existing tests rewritten
+
+The three FM-05 tests that expected 165 and 820 expect 96 and 361 now with the street left out,
+and their fixtures name the phases the 1536 report printed, Proposed and Street Design, where
+they said Existing and Proposed. The three phase test expects 30 over 11 with Demolished left
+out. The printed section test expects the group rows and the rows left out in its summary
+line. Two report tests gained the group rows lines under the plot, one of them handing its
+hand built reading a printed group so the line reads as a real one would. A species row above
+every group row still comes back first and with no group.
+
+---
+
 ## 2026-09-10, forty seventh pass. Six things measured on the 1428 run and the workbook opened in Excel
 
 Six things, all measured on the 20 plot MOSQUES run of 2026-09-10 at 14:28, on the workbook it

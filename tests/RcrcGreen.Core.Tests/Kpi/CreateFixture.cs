@@ -19,6 +19,12 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         public const string OutOfScope = "RCRC_OUT OF SCOPE (PRESENTATION)";
 
+        /// <summary>
+        /// The groups a MOSQUES checklist counts, which are the two its tree list sheets are
+        /// named for. A group the workbook has no sheet for, Street Design on FM-05, is left out.
+        /// </summary>
+        public static readonly CountedGroups Counted = CountedGroups.Of(KpiTemplates.Mosques);
+
         public static SpeciesRow Species(string name, string group, int quantity)
         {
             return new SpeciesRow(name, group, quantity);
@@ -117,7 +123,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] softscapeSchedules = null,
             string[] shrubsAndLawnSchedules = null,
             ScannedSchedule[] printedSchedules = null,
-            int softscapeTotalRow = 0)
+            int softscapeTotalRow = 0,
+            PrintedGroup[] printedGroups = null)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
             string chosen = chosenRegion ?? (held.Length > 0 ? held[0].TypeName : null);
@@ -141,7 +148,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 softscapeTotal,
                 rowsPassedOver,
                 printedSchedules,
-                softscapeTotalRow);
+                softscapeTotalRow,
+                printedGroups);
         }
 
         public static string SoftscapeName(string plot)

@@ -27,7 +27,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Existing", "", "" },
                 new[] { "Albizia lebbeck.jpg", "ALB LEB", "13" });
 
-            SoftscapeReading reading = SoftscapeRows.Read(schedule, Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-12");
 
             Assert.False(reading.WasRead);
             Assert.Empty(reading.Species);
@@ -48,7 +48,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Proposed", "", "", "" },
                 new[] { "Albizia lebbeck.jpg", "ALBIZIA LEBBECK", "1.5", "432" });
 
-            SoftscapeReading reading = SoftscapeRows.Read(schedule, Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-12");
 
             Assert.False(reading.WasRead);
             Assert.Empty(reading.Species);
@@ -65,7 +65,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "IMAGE", "PLANT CODE" },
                 new[] { "Albizia lebbeck.jpg", "ALB LEB" });
 
-            SoftscapeReading reading = SoftscapeRows.Read(schedule, Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-12");
 
             Assert.Equal(2, reading.Refusals.Count);
             Assert.Equal(
@@ -90,7 +90,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "20 m²", "30" },
                 new[] { "", "35 m²", "46" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading });
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
 
             Assert.False(reading.WasRead);
             Assert.Empty(reading.Subtotals);
@@ -112,7 +112,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "GRASS", "", "" },
                 new[] { "", "", "46" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading });
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
 
             Assert.False(reading.WasRead);
             Assert.Equal(
@@ -129,7 +129,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "GRASS", "", "" },
                 new[] { "", "", "35 m²" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading });
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
 
             Assert.False(reading.WasRead);
             Assert.Equal(
@@ -380,7 +380,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "1,300 m²", "1,600" },
                 new[] { "", "", "2,500 m²", "3,100" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.ShrubsHeading });
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.ShrubsHeading }, CreateFixture.Counted);
 
             Assert.False(reading.WasRead);
             Assert.Empty(reading.Subtotals);
@@ -399,7 +399,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Proposed", "", "" },
                 new[] { "a.jpg", "ALBIZIA LEBBECK", "1,013" });
 
-            SoftscapeReading reading = SoftscapeRows.Read(schedule, new[] { "Existing", "Proposed" }, "EP-05");
+            SoftscapeReading reading = SoftscapeRows.Read(schedule, CreateFixture.Counted, "EP-05");
 
             Assert.False(reading.WasRead);
             Assert.Empty(reading.Species);
@@ -538,8 +538,6 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// </summary>
     public class SoftscapeTotalTests
     {
-        private static readonly string[] Phases = { "Existing", "Proposed" };
-
         private static readonly string[] Headings =
             { "IMAGE", "PLANT CODE", "BOQ CODE", "BOTANICAL NAME", "COUNT (n)" };
 
@@ -571,7 +569,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void Dm12SpeciesRowsAddToThirtyNineAndTheTotalRowPrintsThirtyNine()
         {
-            SoftscapeReading reading = SoftscapeRows.Read(Dm12("39"), Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(Dm12("39"), CreateFixture.Counted, "DM-12");
 
             Assert.True(reading.WasRead);
             Assert.Equal(8, reading.Species.Count);
@@ -585,7 +583,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void SpeciesRowsThatAddToTheTotalWriteAndAreSaidInTheReport()
         {
-            SoftscapeReading reading = SoftscapeRows.Read(Dm12("39"), Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(Dm12("39"), CreateFixture.Counted, "DM-12");
             PlotReading plot = CreateFixture.Plot(
                 "DM-12",
                 species: reading.Species.ToArray(),
@@ -652,7 +650,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Cassia glauca.jpg", "CAS GLA", "M-329343-C09", "CASSIA GLAUCA", "10" },
                 new[] { "TOTAL", "", "", "", "39" });
 
-            SoftscapeReading reading = SoftscapeRows.Read(schedule, Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-12");
 
             Assert.True(reading.WasRead);
             Assert.Equal(23, reading.SpeciesSum);
@@ -684,7 +682,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Albizia lebbeck.jpg", "ALB LEB", "M-329343-A18", "ALBIZIA LEBBECK", "6" },
                 new[] { "", "", "", "", "6" });
 
-            SoftscapeReading reading = SoftscapeRows.Read(schedule, Phases, "DM-11");
+            SoftscapeReading reading = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-11");
 
             Assert.True(reading.WasRead);
             Assert.False(reading.TotalRead);
@@ -704,7 +702,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void ATotalRowWhoseCountCannotBeReadRefuses()
         {
-            SoftscapeReading reading = SoftscapeRows.Read(Dm12(""), Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(Dm12(""), CreateFixture.Counted, "DM-12");
 
             Assert.False(reading.WasRead);
             Assert.Equal(
@@ -726,7 +724,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Albizia lebbeck.jpg", "ALB LEB", "M-329343-A18", "ALBIZIA LEBBECK", "" },
                 new[] { "TOTAL", "", "", "", "13" });
 
-            SoftscapeReading reading = SoftscapeRows.Read(schedule, Phases, "DM-12");
+            SoftscapeReading reading = SoftscapeRows.Read(schedule, CreateFixture.Counted, "DM-12");
 
             Assert.False(reading.WasRead);
             Assert.Equal(

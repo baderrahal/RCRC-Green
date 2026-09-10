@@ -17,8 +17,6 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// </summary>
     public class OneRowPerSpeciesTests
     {
-        private static readonly string[] Phases = { "Existing", "Proposed" };
-
         private static readonly string[] Headings =
             { "IMAGE", "PLANT CODE", "BOTANICAL NAME", "COUNT (n)", "HEIGHT (m)", "DIAMETER (m)" };
 
@@ -45,10 +43,10 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static PlotReading Fm05Reading()
         {
-            SoftscapeReading trees = SoftscapeRows.Read(Fm05(), Phases, "FM-05");
+            SoftscapeReading trees = SoftscapeRows.Read(Fm05(), CreateFixture.Counted, "FM-05");
             return CreateFixture.Plot("FM-05", species: trees.Species.ToArray(),
                 softscapeTotalRead: trees.TotalRead, softscapeTotal: trees.Total, rowsPassedOver: trees.RowsPassedOver,
-                printedSchedules: new[] { Fm05() }, softscapeTotalRow: trees.TotalRow);
+                printedSchedules: new[] { Fm05() }, softscapeTotalRow: trees.TotalRow, printedGroups: trees.Groups.ToArray());
         }
 
         /// <summary>
@@ -58,7 +56,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void OneScheduleReadsSixRowsThatAddToItsTotal()
         {
-            SoftscapeReading reading = SoftscapeRows.Read(Fm05(), Phases, "FM-05");
+            SoftscapeReading reading = SoftscapeRows.Read(Fm05(), CreateFixture.Counted, "FM-05");
 
             Assert.True(reading.WasRead, string.Join(" ", reading.Refusals));
             Assert.Equal(6, reading.Species.Count);
@@ -164,6 +162,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("    softscape schedule: FM-05-(600) SOFTSCAPE SCHEDULE, 6 species rows read\r\n"
                 + "      species rows add to 66, the TOTAL row prints 66 at row 11\r\n"
                 + "      1 row with a count and no botanical name passed over, the subtotals\r\n"
+                + "      group rows: 1\r\n"
+                + "        row 3 Proposed: 6 species rows adding to 66, subtotal row 10 prints 66, TAKEN, Tree List - Proposed is named for it\r\n"
                 + "      ALBIZIA LEBBECK under Proposed is printed on 2 rows, rows 4 and 5, counting 10 and 10\r\n"
                 + "      BAUHINIA PURPUREA under Proposed is printed on 2 rows, rows 6 and 7, counting 19 and 20\r\n"
                 + "      CASSIA GLAUCA under Proposed is printed on 2 rows, rows 8 and 9, counting 3 and 4\r\n", report);

@@ -107,6 +107,12 @@ namespace RcrcGreen.Core.Kpi
                 ? "  " + Counted("plots with an area", held.Read.Count - held.WithoutArea.Count, held.WithoutArea)
                 : "  plots with an area   " + AreaNotRead);
 
+            // One line that would have shown Street Design on the first twenty plot run rather
+            // than the fourth.
+            Line(report, "  schedules holding a group no tree list sheet is named for   " + held.SchedulesWithAGroupLeftOut
+                + (held.WithAGroupLeftOut.Count == 0 ? string.Empty : ", on " + string.Join(", ", held.WithAGroupLeftOut.ToArray()))
+                + (held.SchedulesWithAGroupLeftOut == 0 ? string.Empty : ". Their rows are left out and named under the plot."));
+
             Line(report, "  plots that contributed nothing at all   " + held.ContributedNothing.Count);
             foreach (PlotAndReason nothing in held.ContributedNothing)
             {
@@ -187,7 +193,8 @@ namespace RcrcGreen.Core.Kpi
                 // dropped is visible here rather than only in a workbook short of trees.
                 if (reading.SoftscapeRead)
                 {
-                    Line(report, "      species rows add to " + reading.SpeciesSum + ", "
+                    Line(report, "      species rows add to " + reading.SpeciesSum
+                        + (reading.LeftOutSum > 0 ? ", " + reading.LeftOutSum + " left out" : string.Empty) + ", "
                         + (reading.SoftscapeTotalRead
                             ? "the TOTAL row prints " + reading.SoftscapeTotal
                                 + (reading.SoftscapeTotalRow > 0 ? " at row " + reading.SoftscapeTotalRow : string.Empty)
@@ -196,6 +203,23 @@ namespace RcrcGreen.Core.Kpi
                     {
                         Line(report, "      " + Count(reading.SoftscapeRowsPassedOver, "row")
                             + " with a count and no botanical name passed over, the subtotals");
+                    }
+
+                    // Every group row, always, in the order printed, taken or left out and why.
+                    // A schedule with the ordinary two reads differently from one nobody has
+                    // checked, and the third group on FM-05 went unseen for four runs without
+                    // this.
+                    Line(report, "      group rows: " + reading.PrintedGroups.Count);
+                    foreach (PrintedGroup group in reading.PrintedGroups)
+                    {
+                        Line(report, "        row " + group.RowNumber + " " + group.Name + ": "
+                            + Count(group.Species.Count, "species row") + " adding to " + group.SpeciesSum + ", "
+                            + (group.SubtotalPrinted ? "subtotal row " + group.SubtotalRow + " prints " + group.Subtotal : "no subtotal row")
+                            + ", " + (group.Counted ? "TAKEN, " : "LEFT OUT, ") + group.Why);
+                        if (group.Counted) continue;
+
+                        Line(report, "          left out: " + string.Join(", ", group.Species
+                            .Select(one => one.BotanicalName + " " + one.Quantity.ToString(CultureInfo.InvariantCulture)).ToArray()));
                     }
 
                     // A species on two rows under one group is what FM-05 10, FM-05 10 was, and
@@ -218,7 +242,20 @@ namespace RcrcGreen.Core.Kpi
                 foreach (GroupSubtotal subtotal in reading.Subtotals)
                 {
                     Line(report, "      " + subtotal.Heading + " | " + Number(subtotal.SquareMetres)
-                        + " | " + subtotal.ItemCount + " items");
+                        + " | " + subtotal.ItemCount + " items"
+                        + (subtotal.Phases.Count == 0 ? string.Empty : ", the phase rows taken added together"));
+                    foreach (PhaseSubtotal phase in subtotal.Phases)
+                    {
+                        Line(report, "        row " + phase.RowNumber + " " + phase.Name + ": " + Number(phase.SquareMetres)
+                            + " over " + phase.ItemCount + ", " + (phase.Counted ? "TAKEN, " : "LEFT OUT, ") + phase.Why);
+                    }
+
+                    if (subtotal.Phases.Count > 0 && subtotal.GroupTotalPrinted)
+                    {
+                        Line(report, "        group total row " + subtotal.RowNumber + " prints " + Number(subtotal.GroupTotalSquareMetres)
+                            + " over " + subtotal.GroupTotalItemCount + ", "
+                            + (subtotal.Agrees ? "and the phase rows taken and left out add to it" : "AND THE PHASE ROWS DO NOT ADD TO IT"));
+                    }
                 }
 
                 RegionArea chosen = reading.ChosenRegion;
@@ -782,8 +819,11 @@ namespace RcrcGreen.Core.Kpi
             if (schedule.IsSoftscape)
             {
                 List<int> rows = reading.Species.Where(one => one.RowNumber > 0).Select(one => one.RowNumber).OrderBy(one => one).ToList();
-                return "read as species rows: " + rows.Count
+                List<int> left = reading.LeftOutSpecies.Where(one => one.RowNumber > 0).Select(one => one.RowNumber).OrderBy(one => one).ToList();
+                return "group rows: " + (reading.PrintedGroups.Count == 0 ? "none" : Rows(reading.PrintedGroups.Select(one => one.RowNumber).ToList()))
+                    + ", read as species rows: " + rows.Count
                     + (rows.Count == 0 ? string.Empty : ", rows " + Rows(rows))
+                    + (left.Count == 0 ? string.Empty : ", left out: " + left.Count + ", rows " + Rows(left))
                     + ", passed over as subtotals: " + reading.SoftscapeRowsPassedOver
                     + ", TOTAL row: " + (reading.SoftscapeTotalRead ? "row " + reading.SoftscapeTotalRow : "none found");
             }
@@ -791,11 +831,13 @@ namespace RcrcGreen.Core.Kpi
             if (reading.Subtotals.Count == 0) return "read as group values: none";
 
             return "read as group values: " + string.Join("; ", reading.Subtotals.Select(one =>
-                one.Heading + " taken off row " + one.RowNumber + ", the last of its "
-                + Count(one.RowsConsidered.Count, "subtotal row") + " (" + Rows(one.RowsConsidered) + ")"
-                + (one.RowsConsidered.Count > 1
-                    ? ", the rows above it are the phase subtotals that add to it and are not taken"
-                    : ", nothing above it to check against")).ToArray());
+                one.Phases.Count == 0
+                    ? one.Heading + " taken off row " + one.RowNumber + ", the last of its "
+                        + Count(one.RowsConsidered.Count, "subtotal row") + " (" + Rows(one.RowsConsidered) + ")"
+                        + (one.RowsConsidered.Count > 1 ? ", no phase row, so the rows above it must add to it" : ", nothing above it to check against")
+                    : one.Heading + " off " + string.Join(" and ", one.Phases.Select(phase =>
+                            phase.Name + " row " + phase.RowNumber + (phase.Counted ? " taken" : " left out")).ToArray())
+                        + (one.GroupTotalPrinted ? ", group total row " + one.RowNumber + " checked" : ", no group total row to check against")).ToArray());
         }
 
         /// <summary>

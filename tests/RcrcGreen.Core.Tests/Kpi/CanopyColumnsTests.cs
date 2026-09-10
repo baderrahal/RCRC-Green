@@ -20,8 +20,6 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// </summary>
     public class CanopyColumnsTests
     {
-        private static readonly string[] Phases = { "Existing", "Proposed" };
-
         private static readonly string[] Headings =
         {
             "IMAGE", "#", "PLANT CODE", "BOTANICAL NAME", "COUNT (n)", "HEIGHT (m)", "DIAMETER (m)",
@@ -63,7 +61,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheHeightAndTheDiameterAreReadOffTheColumnsTheHeadingRowNames()
         {
-            SoftscapeReading reading = SoftscapeRows.Read(Measured("FM-05"), Phases, "FM-05");
+            SoftscapeReading reading = SoftscapeRows.Read(Measured("FM-05"), CreateFixture.Counted, "FM-05");
 
             Assert.True(reading.WasRead, string.Join(" ", reading.Refusals));
             SpeciesRow albizia = reading.Species.Single(one => one.BotanicalName == "ALBIZIA LEBBECK");
@@ -87,7 +85,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void ADashAndANoughtAreNotHeldAndSayWhatTheyPrinted()
         {
-            SoftscapeReading reading = SoftscapeRows.Read(Measured("FM-05"), Phases, "FM-05");
+            SoftscapeReading reading = SoftscapeRows.Read(Measured("FM-05"), CreateFixture.Counted, "FM-05");
 
             SpeciesRow unknown = reading.Species.Single(one => one.BotanicalName == "UNKNOWN");
             Assert.Equal(16, unknown.Quantity);
@@ -111,7 +109,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Proposed", "", "", "", "" },
                 new[] { "Albizia lebbeck.jpg", "ALBIZIA LEBBECK", "8", "15", "10" });
 
-            SpeciesRow albizia = Assert.Single(SoftscapeRows.Read(swapped, Phases, "FM-05").Species);
+            SpeciesRow albizia = Assert.Single(SoftscapeRows.Read(swapped, CreateFixture.Counted, "FM-05").Species);
             Assert.Equal(15.0, albizia.Height.Value);
             Assert.Equal(8.0, albizia.Diameter.Value);
 
@@ -121,7 +119,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Proposed", "", "" },
                 new[] { "Albizia lebbeck.jpg", "ALBIZIA LEBBECK", "10" });
 
-            SpeciesRow counted = Assert.Single(SoftscapeRows.Read(bare, Phases, "FM-05").Species);
+            SpeciesRow counted = Assert.Single(SoftscapeRows.Read(bare, CreateFixture.Counted, "FM-05").Species);
             Assert.Equal(10, counted.Quantity);
             Assert.False(counted.Height.Held);
             Assert.Equal("the heading row names no column holding HEIGHT", counted.Height.WhyNotHeld);

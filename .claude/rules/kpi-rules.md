@@ -85,18 +85,82 @@ refuses the write naming the plot, the kind and every schedule found. The report
 schedule each number came off, per plot, and says NONE READ with every name where there were
 two. Nothing picks the first, and nothing adds them.
 
-**THE FM-05 DOUBLE WAS NOT TWO SCHEDULES, AND THE ROUND THAT SAID SO WAS WRONG.** The first
-twenty plot run printed FM-05 twice in one species row, FM-05 10, FM-05 10, FM-06 15, and the
-round that fixed it took that for a second schedule without measuring one. The 1428 run, with
-the count and the read one list, read one softscape schedule on every plot and printed the same
-rows: ALBIZIA LEBBECK 10 and 10, BAUHINIA PURPUREA 19 and 20, CASSIA GLAUCA 3 and 4. Counts
-that differ are not one row read twice. **They are two printed rows of one schedule for one
-species under one group**, and whether that is two types of the species or one counted twice
-is written down nowhere. `SpeciesRow` carries the row it printed on,
-`PlotReading.SpeciesPrintedOnMoreThanOneRow` finds every such species, and `Reconciliation`
-refuses the write naming the plot, the species, the group, the rows and the counts, and says
-the rows are printed at the end of the report. A merged row reads FM-05 20 (2 rows, 10 + 10)
-rather than FM-05 twice, and the plot's own block says it too.
+**THE FM-05 DOUBLE WAS NOT TWO SCHEDULES, AND IT WAS NOT ONE SPECIES PRINTED TWICE UNDER ONE
+GROUP EITHER. IT WAS A THIRD GROUP.** The first twenty plot run printed FM-05 twice in one
+species row, FM-05 10, FM-05 10, FM-06 15, and the round that fixed it took that for a second
+schedule without measuring one. The 1428 run read one softscape schedule on every plot and
+printed the same rows, ALBIZIA LEBBECK 10 and 10, BAUHINIA PURPUREA 19 and 20, CASSIA GLAUCA 3
+and 4, and the round that fixed that took them for two rows of one species under Proposed and
+refused the plot. The 1536 report's printed section showed the second of each pair sitting
+under a third group row, STREET DESIGN at row 14, after Proposed's own subtotal row. Two rounds
+diagnosed a shape nobody had looked at. **The section that prints the schedule as printed is
+what settled it, and it is why the report ends with what the tool read.**
+
+A species on two rows under ONE group is still refused, with the plot, the species, the group,
+the rows and the counts named, because nothing says whether that is two types of it or one
+counted twice. `SpeciesRow` carries the row it printed on and the row of the group it sat under,
+and `PlotReading.SpeciesPrintedOnMoreThanOneRow` finds every such species. A species under two
+groups is two species and refuses nothing.
+
+## Only the groups a tree list sheet is named for count
+
+**Bader has decided that Street Design is somebody else's scope and does not belong on this
+plot's checklist. The model will be corrected later. Until it is, the tool leaves those rows
+out and says so.** That is a decision, recorded in `steps/log-kpi.md` as one, and not a
+measurement.
+
+The words Existing and Proposed appear nowhere in the code that decides it. `CountedGroups`
+holds the two tree list sheet names off the template, Tree List - Existing and Tree List -
+Proposed, and a group counts when a sheet's name ends in the group's name, word for word and
+without case. Nothing looser: Tree and List are words of both sheet names, TREES is the heading
+over the groups, and none of those is what either sheet is for. All seven templates name their
+sheets that way, so a group the workbook has no sheet for is out of scope on every one.
+`KpiRequestHandler` no longer reads the document's phases for the create path. The scan still
+does, for section 7, and that is a different question.
+
+**Every group row is found and every group row is named.** `SoftscapeRows.Read` reads a text
+only row followed by anything but another text only row as a group row, the species rows under
+it as its rows, and the first count with no name under them as its subtotal. Each comes back as
+a `PrintedGroup`, in printed order, with its row, its species, its subtotal row, TAKEN or LEFT
+OUT and why. The reading's species are the taken groups' rows. Two checks, both refusals in
+`Reconciliation`: each group's species rows against its own subtotal row, and the groups taken
+plus the groups left out against the TOTAL row.
+
+```
+FM-05, off the 1536 report
+row 3   Existing        4 species rows adding to 6     subtotal row 8 prints 6     TAKEN
+row 9   Proposed        3 species rows adding to 32    subtotal row 13 prints 32   TAKEN
+row 14  Street Design   4 species rows adding to 38    subtotal row 19 prints 38   LEFT OUT
+row 20  TOTAL 76        6 plus 32 taken, 38 left out, 76
+```
+
+**The shrubs and lawn schedule prints the same third phase and the value is the phases taken
+added together**, area and item count, with the group total row as the check on every phase,
+taken or not. FM-05 GRASS: Proposed 96 over 117 taken, Street Design 69 over 84 left out, the
+group total 165 over 201 checked. SHRUBS AND GROUND COVER: 361 over 450 taken, 459 over 570 left
+out, 820 over 1020 checked. A group whose every phase is out of scope is nought and says so. A
+group with no phase row at all keeps the rule it had, because it offers nothing else: the last
+row is the value and the rows above it must add to it.
+
+**FM-05 reads 6 existing and 32 proposed trees, ALBIZIA LEBBECK 10 and not 20, grass 96 and
+shrubs 361.** The rule before this one refused the plot, the one before that wrote 165 and 820.
+
+The report says all of it under the plot: every group row with its numbers and its reason, the
+rows left out by name and count, each phase row of the shrubs and lawn groups the same way and
+the group total row with whether the phases add to it. The accounting at the top counts the
+schedules holding a group no tree list sheet is named for and names the plots, which is the
+line that would have shown the street on the first twenty plot run.
+
+**A schedule can repeat a group name, and nothing guesses which is meant.** DM-25 prints
+Existing, then Proposed, then Existing again. Both Existing rows are in the list with their own
+row numbers and subtotals, both are taken, and the second's reason says it is the 2nd group row
+so named on this schedule. A species under both is refused as a species under one group name
+twice, and the refusal names the two group rows so a person can see it is two groups. Whether
+those are one phase printed twice or two things is UNKNOWN and is for the team.
+
+**One shape nobody has measured.** A softscape schedule printing TREES and then species rows
+with no phase row would read TREES as a group row, TREES counts for nothing, and every species
+would be left out and named. No such schedule has been seen.
 
 ## Matching a species is plain or it is nothing
 
@@ -224,8 +288,9 @@ concluded, and a species printed on two rows survived two rounds because nothing
 rows. `PlotReading.PrintedSchedules` carries every schedule the plot's numbers came off, row for
 row, and `KpiCreateReport` prints each last, under EVERY SCHEDULE THIS RUN READ, AS THE SCHEDULE
 PRINTS IT: the name, how many rows it printed and how many are shown, which rows were read as
-species rows and which as subtotals and where the TOTAL row was, and for the shrubs and lawn
-schedule which subtotal row was taken for each group and why the rows above it were not. Every
+species rows, which as subtotals, which were group rows and which rows were left out, and where
+the TOTAL row was, and for the shrubs and lawn schedule which phase row was taken and which
+left out and that the group total row was checked. Every
 column, padded to its widest cell, with the row numbered the way the readers number it, the
 heading row being 1. Two hundred rows a schedule at most, said in those numbers. The top of the
 report says the section is there.
@@ -634,7 +699,8 @@ each name are read in full is the rule above, and it is stated there and nowhere
   BAUHINIA PURPUREA 2, CASSIA GLAUCA 4, total 12. How it prints is the rule in `CLAUDE.md`,
   stated there and nowhere else, because the group row is what question 8 is answered from
 - Two phases, Existing and Proposed. The split shows as a group row inside the printed
-  schedule, not as a separate schedule
+  schedule, not as a separate schedule. **FM-05 prints a third, Street Design**, measured on
+  the 1536 report, and it is out of scope under the rule above
 
 ## How a grouped schedule really prints
 
@@ -661,16 +727,17 @@ Carissa macrocarpa - grandiflora.jpg | ... | 34 m² | 12 | ...                  
 TOTAL                                                     | 105 m² | 104 | ...      the lot
 ```
 
-A group holding both phases prints THREE rows. FM-05 GRASS, off the 0928 run:
+A group holding two phases prints THREE rows. FM-05 GRASS, off the 1536 report, whose two
+phases are Proposed and Street Design and not Existing and Proposed:
 
 ```
 GRASS                                                                     group heading
-Existing                                                                  phase
-  ... species ...
-                                                          | 96 m² | 117 | ...       Existing
 Proposed                                                                  phase
   ... species ...
-                                                          | 69 m² | 84 | ...        Proposed
+                                                          | 96 m² | 117 | ...       Proposed
+Street Design                                                             phase
+  ... species ...
+                                                          | 69 m² | 84 | ...        Street Design
                                                           | 165 m² | 201 | ...      the group
 ```
 
@@ -680,9 +747,10 @@ Three things follow, and `ShrubsAndLawnRows` holds all three.
 than beside its numbers. A phase row sits under it in the same shape, so a structure row that
 names no wanted heading opens no group.
 
-**A GROUP PRINTS ONE SUBTOTAL PER PHASE, THEN THE GROUP TOTAL, AND THE LAST ROW IS THE VALUE.**
-Measured on the 0928 run over 20 mosque plots, four groups out of four, and the third row is
-exactly the first two added in area and in item count:
+**A GROUP PRINTS ONE SUBTOTAL PER PHASE, THEN THE GROUP TOTAL. THE PHASES A TREE LIST SHEET IS
+NAMED FOR ARE THE VALUE AND THE LAST ROW IS THE CHECK.** Measured on the 0928 run over 20 mosque
+plots, four groups out of four, and the third row is exactly the first two added in area and in
+item count:
 
 ```
 DM-16 SHRUBS & GROUND COVER   30 over 39,  54 over 69,   84 over 108
@@ -691,18 +759,20 @@ FM-05 GRASS                   96 over 117, 69 over 84,   165 over 201
 FM-05 SHRUBS & GROUND COVER   361 over 450, 459 over 570, 820 over 1020
 ```
 
-**The rule this replaced said the subtotal prints twice and that one of two was taken.** That
-came off DM-11, where a one phase group prints two equal rows, and it was right on that one
-plot and wrong on every plot holding both phases. Taking the first row took one phase and called
-it the group: 30 where the group is 84, 13 where it is 241, 96 where it is 165 and 361 where it
-is 820. **The 0928 run refused rather than writing, which is the only reason those four numbers
-never reached a client.**
+**Two rules came before this one and both were wrong on FM-05.** The first said the subtotal
+prints twice and took the first of two. That came off DM-11, where a one phase group prints two
+equal rows, and it was right on that one plot and wrong on every plot holding two phases: 30
+where the group is 84, 13 where it is 241. The second took the last row, the group total, which
+is right where both phases are in scope and wrote 165 and 820 on FM-05, where the second phase
+is the street. **The 0928 run refused rather than writing, which is the only reason the first
+rule's numbers never reached a client**, and the second rule's did reach a workbook on the 1428
+and 1536 runs.
 
-The check is not gone, it is pointed at the right thing: **the last row must equal the rows above
-it added together**, in area and in item count, with the same relative room `Totalled.Adds`
-allows. When it does, the last row is written. When it does not, that is a real disagreement, it
-travels on the `GroupSubtotal` and it refuses the write. A group printing one row has nothing
-above it to compare against and is taken.
+The check stands and is pointed at every phase: **the last row must equal the rows above it
+added together**, the phases left out included, in area and in item count, with the same
+relative room `Totalled.Adds` allows. When it does, the phases taken are added and written. When
+it does not, that is a real disagreement, it travels on the `GroupSubtotal` and it refuses the
+write. A group printing one row has nothing above it to compare against and is taken.
 
 **The species rows add up to the group**, 36 plus 34 is 70, so the two are held against each
 other. They are not enforced, because every one of those numbers is already rounded to the metre
@@ -857,8 +927,8 @@ the model. These are measurements off that run, not reasoning about it.
   the list past row 83. The workbook said 76 existing trees where the model holds 161. Fixed
   under the species rule
 - **FM-05 printed twice in one species row**, taken that round for two schedules whose names
-  hold SOFTSCAPE. The 1428 run showed one schedule and two printed rows, under the accounting
-  rule above
+  hold SOFTSCAPE. The 1428 run showed one schedule and two printed rows, and the 1536 report
+  showed the second row under a third group, Street Design, under the rule above
 - **313.5 seconds, 312.8 of them reading the model**, 20 plots at 15.6 seconds each, and 0.7
   seconds for everything after the read. STREETS ticks 78 plots, which is about twenty minutes
   at that rate. What the read does per plot is in the log. It is measured in calls and not in
@@ -875,7 +945,9 @@ opened in Excel. These are measurements, not reasoning.
 - **A written row broke the canopy maths**, nine #VALUE! cells from Proposed M84 to the KPI row,
   fixed under the species rule with the height and the diameter off the schedule
 - **FM-05 printed twice again** with the accounting reading one softscape schedule on all 20
-  plots, which is what showed the double to be two printed rows of one schedule
+  plots, which is what showed the double to be two printed rows of one schedule. That round
+  read them as two rows under Proposed. The 1536 report's printed section showed the second
+  under Street Design
 - **Excel opened the file and did not calculate it**, every formula cell blank until Ctrl Alt
   F9, fixed with calcMode under the patcher rule
 - **Every Meets KPI and Compliance cell read #NAME?** off `_xlfn.IFS`, sixteen cells, not the
@@ -883,6 +955,23 @@ opened in Excel. These are measurements, not reasoning.
 - **Nothing in the report was what the tool read.** The last section prints every schedule
   this run read as the schedule prints it, every column aligned, with what was read off it
   and which subtotal row was taken and why, capped at 200 rows a schedule and named at the top
+
+## What the 1536 run measured
+
+Twenty mosque plots on MOSQUES, 2026-09-10 at 15:36, the first run whose report ended with
+every schedule as printed. FM-05 refused on three species printed twice under Proposed, and
+the printed section showed why. These are measurements, not reasoning.
+
+- **FM-05's softscape schedule holds three groups.** Existing at row 3, four species, subtotal
+  6. Proposed at row 9, ALBIZIA LEBBECK 10, BAUHINIA PURPUREA 19, CASSIA GLAUCA 3, subtotal 32.
+  Street Design at row 14, ALBIZIA LEBBECK 10, BAUHINIA PURPUREA 20, CASSIA GLAUCA 4,
+  CONOCARPUS 4, subtotal 38. TOTAL 76 at row 20
+- **Its shrubs and lawn schedule holds the same third phase.** GRASS Proposed 96 over 117,
+  Street Design 69 over 84, 165 over 201. SHRUBS AND GROUND COVER Proposed 361 over 450, Street
+  Design 459 over 570, 820 over 1020. So the 165 and 820 the 1116 run wrote counted the street
+- **DM-25 prints Existing, then Proposed, then Existing again**, in its softscape schedule
+- Street Design is out of scope by Bader's decision, under the rule above, and the model will
+  be corrected later
 
 ## The area is not a schedule row
 

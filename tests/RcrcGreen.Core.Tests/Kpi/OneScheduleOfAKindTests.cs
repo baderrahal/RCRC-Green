@@ -40,15 +40,21 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static PlotReading OneOfEach(string plotId, int albizia, double squareMetres = 250.0)
         {
+            SpeciesRow[] species = { CreateFixture.Species("ALBIZIA LEBBECK", CreateFixture.Proposed, albizia) };
+
             return CreateFixture.Plot(
                 plotId,
-                species: new[] { CreateFixture.Species("ALBIZIA LEBBECK", CreateFixture.Proposed, albizia) },
+                species: species,
                 subtotals: new[]
                 {
                     CreateFixture.Subtotal(KpiMerge.ShrubsHeading, 820.0, 459),
                     CreateFixture.Subtotal(KpiMerge.LawnHeading, 165.0, 46)
                 },
-                regions: new[] { CreateFixture.Region(CreateFixture.OutOfScope, squareMetres) });
+                regions: new[] { CreateFixture.Region(CreateFixture.OutOfScope, squareMetres) },
+                printedGroups: new[]
+                {
+                    new PrintedGroup(CreateFixture.Proposed, 3, species, false, 0, 0, true, "Tree List - Proposed is named for it")
+                });
         }
 
         /// <summary>
@@ -185,6 +191,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "  FM-06\r\n    PRX_Component: FRIDAY MOSQUE\r\n    PRX_Plot_UID2: ANH-007-MO-100019\r\n"
                 + "    softscape schedule: FM-06-(600) SOFTSCAPE SCHEDULE, 1 species row read\r\n"
                 + "      species rows add to 15, no TOTAL row was found to hold that against\r\n"
+                + "      group rows: 1\r\n"
+                + "        row 3 Proposed: 1 species row adding to 15, no subtotal row, TAKEN, Tree List - Proposed is named for it\r\n"
                 + "    shrubs and lawn schedule: FM-06-(600) SHRUBS AND LAWN SCHEDULE, 2 groups read\r\n",
                 report);
 
