@@ -70,10 +70,12 @@ namespace RcrcGreen.Revit.Kpi
         private RecognisedWorkbook _picked;
         private KpiTemplate _pickedAs;
 
-        // Why the component on the ticked plots preselected nothing, empty when it preselected
-        // something or when there is nothing to say yet. A value the table does not hold used to
-        // leave the pane silent, which reads as a tool that never looked.
-        private string _whyNoTemplate = string.Empty;
+        // Why the template list stands as it does: what preselected one, or what stopped
+        // anything preselecting. Empty only when there is nothing to say yet. A value the table
+        // does not hold used to leave the pane silent, which reads as a tool that never looked,
+        // and a preselection that came off the plot prefix rather than off PRX_Component has to
+        // say which route it took rather than arriving without a word.
+        private string _whyThisTemplate = string.Empty;
 
         // What the model holds, read through the external event when the pane is shown. Plain
         // values only, so the pane still names no Revit type.
@@ -255,11 +257,11 @@ namespace RcrcGreen.Revit.Kpi
         /// The handler calls these from the Revit thread, so the hop to the pane's own thread
         /// happens here rather than being forgotten at each call site.
         /// </summary>
-        private void Took(string documentTitle, string modelFolder)
+        private void Took(string documentTitle)
         {
             Dispatcher.Invoke(() =>
             {
-                OpenModel answered = OpenModel.Of(documentTitle, modelFolder);
+                OpenModel answered = OpenModel.Of(documentTitle);
                 bool moved = !answered.Is(_model);
 
                 _model = answered;
@@ -356,8 +358,8 @@ namespace RcrcGreen.Revit.Kpi
             _templates.Children.Add(Faint(TemplateWords.Listed(
                 recognised.Count, recognised.Count(one => one.IsMatched))));
 
-            // Said above the list, because it is the reason none of these rows is preselected.
-            if (_whyNoTemplate.Length > 0) _templates.Children.Add(Faint(_whyNoTemplate));
+            // Said above the list, because it is the reason the rows below stand as they do.
+            if (_whyThisTemplate.Length > 0) _templates.Children.Add(Faint(_whyThisTemplate));
 
             foreach (RecognisedWorkbook workbook in recognised)
             {
@@ -431,10 +433,7 @@ namespace RcrcGreen.Revit.Kpi
             named.Children.Add(Reparented(_outputName));
             _templates.Children.Add(named);
 
-            _templates.Children.Add(Faint(_model.HasAFolder
-                ? TemplateWords.Output(_model.Folder)
-                : TemplateWords.NoModelPath));
-            _templates.Children.Add(Faint(CreateWords.Overwrite));
+            TheOutputFolder();
 
             ThePlots();
             TheChoices();
@@ -445,6 +444,52 @@ namespace RcrcGreen.Revit.Kpi
             // a second scan did not shift it. The answer comes back through Took, which redraws
             // only when it moved, so this does not chase its own tail.
             Ask(KpiRequest.WhichModel);
+        }
+
+        /// <summary>
+        /// Where the filled workbook goes, browsed for and remembered beside the installed
+        /// add-in, the same way the template folder is.
+        ///
+        /// **It used to be the model's own folder**, so a detached model could not be used at
+        /// all and Create sat grey saying the model had never been saved. It is read here at
+        /// the moment the pane draws rather than held, and the handler reads it again at the
+        /// moment Create is pressed, which is what decides the refusal.
+        /// </summary>
+        private void TheOutputFolder()
+        {
+            string folder = OutputFolder.Read();
+
+            var line = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+            var browse = new Button
+            {
+                Content = PaneLabel.Escaped("Browse"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Gap,
+                ToolTip = "Point at the folder the filled workbooks should be written to. "
+                    + "It is remembered beside the installed add-in."
+            };
+            browse.Click += (sender, e) => BrowseForTheOutputFolder();
+            DockPanel.SetDock(browse, Dock.Right);
+
+            var caption = new TextBlock
+            {
+                Text = "Output folder",
+                Width = PanelMetrics.WideLabelWidth,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(caption, Dock.Left);
+
+            line.Children.Add(browse);
+            line.Children.Add(caption);
+            line.Children.Add(new TextBlock
+            {
+                Text = folder.Length == 0 ? "No folder set" : folder,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            _templates.Children.Add(line);
+
+            _templates.Children.Add(Faint(TemplateWords.Output(folder)));
         }
 
         /// <summary>
@@ -478,6 +523,8 @@ namespace RcrcGreen.Revit.Kpi
             buttons.Children.Add(none);
             _templates.Children.Add(buttons);
 
+            TheGroupButtons();
+
             _templates.Children.Add(new TextBlock
             {
                 Text = _ticks.InWords,
@@ -507,6 +554,41 @@ namespace RcrcGreen.Revit.Kpi
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
                 Margin = PanelMetrics.Row
             });
+        }
+
+        /// <summary>
+        /// One button per template the model's plots point at, gathered by the plot prefix. It
+        /// is what the prefix is really for: ticking the 30 plots of one template by hand is the
+        /// same fault as marking 136 grid cells with 136 clicks.
+        ///
+        /// The prefix decides no template here. It gathers plots, the user presses the button,
+        /// and PRX_Component is still what preselects the template afterwards.
+        /// </summary>
+        private void TheGroupButtons()
+        {
+            IReadOnlyList<TemplateByPrefix> groups = PlotPrefixes.Grouped(_facts.Plots.All);
+            if (groups.Count == 0) return;
+
+            _templates.Children.Add(Faint(CreateWords.GroupsHeading));
+
+            var row = new WrapPanel { Margin = PanelMetrics.Row };
+            foreach (TemplateByPrefix group in groups)
+            {
+                TemplateByPrefix which = group;
+                var button = new Button
+                {
+                    Content = PaneLabel.Escaped(CreateWords.GroupLabel(which)),
+                    Padding = PanelMetrics.CellPad,
+                    Margin = PanelMetrics.Gap
+                };
+                button.Click += (sender, e) => Ticked(_ticks.OnlyFor(which.Template));
+                row.Children.Add(button);
+            }
+
+            _templates.Children.Add(row);
+
+            string none = CreateWords.NoGroupFor(PlotPrefixes.WithNoKnownPrefix(_facts.Plots.All));
+            if (none.Length > 0) _templates.Children.Add(Faint(none));
         }
 
         /// <summary>
@@ -572,7 +654,11 @@ namespace RcrcGreen.Revit.Kpi
         {
             _templates.Children.Add(Head(CreateWords.Create));
 
-            string cannot = CreateWords.CannotCreate(_model, _pickedAs != null, _ticks.Count > 0);
+            // The folder is read here rather than held, the same as everywhere else it is read.
+            // What really decides the refusal is the handler's own read at the moment the button
+            // is pressed: this line is what the pane can say before then.
+            string cannot = CreateWords.CannotCreate(
+                _model, OutputFolder.Read(), _pickedAs != null, _ticks.Count > 0);
 
             if (cannot.Length > 0) _templates.Children.Add(Faint(cannot));
 
@@ -610,9 +696,9 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             // Greyed out on what the PANE owns and on nothing else. Whether a model is open
-            // and whether it has a folder belong to Revit, and a button greyed out on the
-            // pane's last answer about them stayed grey after the model was saved. Those two
-            // are decided on the Revit thread against the live document when this is pressed.
+            // belongs to Revit, and a button greyed out on the pane's last answer about it
+            // stayed grey after the model was saved. That is decided on the Revit thread
+            // against the live document when this is pressed.
             var create = new Button
             {
                 Content = PaneLabel.Escaped(CreateWords.Create),
@@ -688,13 +774,19 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private void Preselect()
         {
-            _whyNoTemplate = string.Empty;
+            _whyThisTemplate = string.Empty;
             if (_facts == null || _ticks.Count == 0 || _picked != null) return;
 
             AgreedValue component = new AgreedValue(_ticks.Ticked
                 .Select(plotId => new PlotText(plotId, _facts.ComponentOn(plotId))));
 
-            TemplateChoice choice = TemplateForComponent.For(component, null);
+            TemplateChoice choice = TemplateForComponent.For(component, _ticks.Ticked, null);
+
+            // Said whichever way it went. A preselection arriving without a word is what the
+            // prefix route would otherwise be: the component could not be read on EP-05 and
+            // three plots like it, and which route placed them has to be on the screen.
+            _whyThisTemplate = choice.Why;
+
             if (choice.NeedsAPick)
             {
                 // Nothing is picked by hand here, because this method returns above when
@@ -702,7 +794,6 @@ namespace RcrcGreen.Revit.Kpi
                 // plots that are no longer the ticked ones. Leaving it would arm Create with a
                 // template beside a line saying none was preselected.
                 _pickedAs = null;
-                _whyNoTemplate = choice.Why;
                 return;
             }
 
@@ -864,12 +955,37 @@ namespace RcrcGreen.Revit.Kpi
             _picked = workbook;
             _pickedAs = workbook.Template;
 
-            // The line saying nothing was preselected describes a pane with nothing picked, so
-            // a hand pick is what makes it untrue. A line left standing beside the state that
+            // The line describes what the preselection did or did not do, so a hand pick is what
+            // makes it untrue whichever way it read. A line left standing beside the state that
             // contradicts it is the shape this repo has met seven times.
-            _whyNoTemplate = string.Empty;
+            _whyThisTemplate = string.Empty;
             _outputName.Text = OutputName.Suggested(workbook.FileName);
             RedrawTemplates();
+        }
+
+        /// <summary>
+        /// The output folder, picked the same way the template folder is. Nothing is thrown
+        /// away by this: the template pick and the ticks are about the model and the folder is
+        /// about where the file lands.
+        /// </summary>
+        private void BrowseForTheOutputFolder()
+        {
+            using (var picking = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                picking.Description = "The folder the filled GRP KPI Checklist workbooks go to";
+                string already = OutputFolder.Read();
+                if (already.Length > 0) picking.SelectedPath = already;
+
+                if (picking.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                if (!OutputFolder.Remember(picking.SelectedPath))
+                {
+                    Say("The folder could not be remembered. " + OutputFolder.PointerFileName
+                        + " beside the installed add-in refused the write.");
+                }
+
+                RedrawTemplates();
+            }
         }
 
         /// <summary>
@@ -895,7 +1011,7 @@ namespace RcrcGreen.Revit.Kpi
 
                 _picked = null;
                 _pickedAs = null;
-                _whyNoTemplate = string.Empty;
+                _whyThisTemplate = string.Empty;
                 RedrawTemplates();
             }
         }

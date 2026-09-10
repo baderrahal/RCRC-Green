@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RcrcGreen.Core.Kpi;
@@ -176,7 +177,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void FridayMosquePreselectsMosques()
         {
-            TemplateChoice choice = TemplateForComponent.For(Holding("FRIDAY MOSQUE"), null);
+            TemplateChoice choice = TemplateForComponent.For(Holding("FRIDAY MOSQUE"), null, null);
 
             Assert.False(choice.NeedsAPick);
             Assert.Equal("MOSQUES", choice.Preselected.Name);
@@ -188,7 +189,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void SchoolPreselectsSchools()
         {
-            Assert.Equal("SCHOOLS", TemplateForComponent.For(Holding("SCHOOL"), null).Preselected.Name);
+            Assert.Equal("SCHOOLS", TemplateForComponent.For(Holding("SCHOOL"), null, null).Preselected.Name);
         }
 
         /// <summary>
@@ -199,9 +200,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheTwoParkValuesEachPreselectTheirOwnTemplate()
         {
-            Assert.Equal("EXISTING PARKS", TemplateForComponent.For(Holding("EXISTING PARK"), null).Preselected.Name);
-            Assert.Equal("FUTURE PARKS", TemplateForComponent.For(Holding("FUTURE PARK"), null).Preselected.Name);
-            Assert.Equal("PARKING", TemplateForComponent.For(Holding("PARKING LOT"), null).Preselected.Name);
+            Assert.Equal("EXISTING PARKS", TemplateForComponent.For(Holding("EXISTING PARK"), null, null).Preselected.Name);
+            Assert.Equal("FUTURE PARKS", TemplateForComponent.For(Holding("FUTURE PARK"), null, null).Preselected.Name);
+            Assert.Equal("PARKING", TemplateForComponent.For(Holding("PARKING LOT"), null, null).Preselected.Name);
         }
 
         /// <summary>
@@ -212,17 +213,17 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void ThePlotPrefixChangesNothing()
         {
             Assert.Equal("STREETS",
-                TemplateForComponent.For(OnPlots("STREET 36m ROW", "MM-03", "ST-11"), null).Preselected.Name);
+                TemplateForComponent.For(OnPlots("STREET 36m ROW", "MM-03", "ST-11"), null, null).Preselected.Name);
             Assert.Equal("STREETS",
-                TemplateForComponent.For(OnPlots("NH STRT 20m ROW", "NS-06"), null).Preselected.Name);
+                TemplateForComponent.For(OnPlots("NH STRT 20m ROW", "NS-06"), null, null).Preselected.Name);
             Assert.Equal("STREETS",
-                TemplateForComponent.For(OnPlots("NH STRT LESS 20m ROW", "NS-19"), null).Preselected.Name);
+                TemplateForComponent.For(OnPlots("NH STRT LESS 20m ROW", "NS-19"), null, null).Preselected.Name);
         }
 
         [Fact]
         public void PlotsDisagreeingOnTheComponentPutThePickToTheUser()
         {
-            TemplateChoice choice = TemplateForComponent.For(Holding("FRIDAY MOSQUE", "SCHOOL"), null);
+            TemplateChoice choice = TemplateForComponent.For(Holding("FRIDAY MOSQUE", "SCHOOL"), null, null);
 
             Assert.True(choice.NeedsAPick);
             Assert.Contains("FRIDAY MOSQUE, SCHOOL", choice.Why);
@@ -236,7 +237,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void AComponentNotInTheTablePutsThePickToTheUserAndNamesIt()
         {
-            TemplateChoice choice = TemplateForComponent.For(Holding("PUMP STATION"), null);
+            TemplateChoice choice = TemplateForComponent.For(Holding("PUMP STATION"), null, null);
 
             Assert.True(choice.NeedsAPick);
             Assert.Equal(7, choice.Candidates.Count);
@@ -253,7 +254,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void ParkOnItsOwnIsNotAComponentValue()
         {
-            TemplateChoice choice = TemplateForComponent.For(Holding("PARK"), null);
+            TemplateChoice choice = TemplateForComponent.For(Holding("PARK"), null, null);
 
             Assert.True(choice.NeedsAPick);
             Assert.Contains("PARK is not one of the component values", choice.Why);
@@ -262,7 +263,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void NoComponentAtAllPutsThePickToTheUser()
         {
-            TemplateChoice choice = TemplateForComponent.For(Holding(string.Empty), null);
+            TemplateChoice choice = TemplateForComponent.For(Holding(string.Empty), null, null);
 
             Assert.True(choice.NeedsAPick);
             Assert.Equal(TemplateForComponent.NoComponent, choice.Why);
@@ -276,7 +277,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void ATemplateTheCallerDoesNotOfferIsNotPreselected()
         {
             TemplateChoice choice = TemplateForComponent.For(
-                Holding("SCHOOL"), new[] { KpiTemplates.Mosques, KpiTemplates.Streets });
+                Holding("SCHOOL"), null, new[] { KpiTemplates.Mosques, KpiTemplates.Streets });
 
             Assert.True(choice.NeedsAPick);
             Assert.Contains("SCHOOL means SCHOOLS, which is not among the templates offered", choice.Why);
@@ -365,6 +366,76 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Equal("2026-09-09", Written(plan, "E5"));
             Assert.Equal("BIM COORDINATOR", Written(plan, "H5"));
+        }
+
+        /// <summary>
+        /// An added species is two writes and no more: the botanical name into column D and the
+        /// count into column B. Family, genus, native and every code column are the client's
+        /// data and the tool does not know them.
+        /// </summary>
+        [Fact]
+        public void AnAddedSpeciesWritesItsNameAndItsCountAndNothingElse()
+        {
+            var species = new MergedSpecies("PHOENIX DACTYLIFERA", CreateFixture.Existing,
+                new[] { new PlotNumber("DM-12", 5) });
+            var added = new SpeciesMatch(species, KpiTemplates.ExistingTreesSheet, 84,
+                string.Empty, SpeciesMatching.WrittenIn, true);
+
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
+                new[] { added }, null, null, null);
+
+            List<CellWrite> onTheSheet = plan.Writes
+                .Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet)
+                .ToList();
+
+            Assert.Equal(2, onTheSheet.Count);
+            Assert.Equal("5", onTheSheet.Single(one => one.Cell.ToString() == "B84").Stored);
+            Assert.Equal("PHOENIX DACTYLIFERA", onTheSheet.Single(one => one.Cell.ToString() == "D84").Stored);
+            Assert.Empty(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet));
+        }
+
+        /// <summary>
+        /// A matched species writes the count alone. The workbook already spells its name and
+        /// overwriting it with Revit's spelling would change the client's own list.
+        /// </summary>
+        [Fact]
+        public void AMatchedSpeciesWritesTheCountAloneAndLeavesTheNameAsTheWorkbookSpellsIt()
+        {
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
+                new[] { Matched("Albizia lebbeck", CreateFixture.Proposed, 13, 7) },
+                null, null, null);
+
+            List<CellWrite> onTheSheet = plan.Writes
+                .Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet)
+                .ToList();
+
+            Assert.Single(onTheSheet);
+            Assert.Equal("B7", onTheSheet[0].Cell.ToString());
+        }
+
+        /// <summary>
+        /// A species that reached no row is still named with its count, because a quantity
+        /// dropped in silence leaves a tree list that reads as complete and is short.
+        /// </summary>
+        [Fact]
+        public void ASpeciesThatReachedNoRowIsStillNamedWithItsCount()
+        {
+            var species = new MergedSpecies("UNKNOWN", CreateFixture.Existing,
+                new[] { new PlotNumber("DM-12", 2) });
+            var nowhere = new SpeciesMatch(species, KpiTemplates.ExistingTreesSheet, 0,
+                string.Empty, SpeciesMatching.NoEmptyRowLeft);
+
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
+                new[] { nowhere }, null, null, null);
+
+            NotWritten said = plan.Skipped.Single(one => one.SheetName == KpiTemplates.ExistingTreesSheet);
+
+            Assert.Contains("UNKNOWN 2", said.What);
+            Assert.Equal(SpeciesMatching.NoEmptyRowLeft, said.Why);
+            Assert.DoesNotContain(plan.Writes, one => one.SheetName == KpiTemplates.ExistingTreesSheet);
         }
 
         private static string Written(KpiCreatePlan plan, string cell)
@@ -466,94 +537,114 @@ namespace RcrcGreen.Core.Tests.Kpi
     public class CreateWordsTests
     {
         /// <summary>
-        /// The three states the open document can be in, each written out by hand. This is the
-        /// whole of what decides Create's refusal, and it is decided against the live document
-        /// on the Revit thread. **The Revit half has never worked and no test here covers it:
+        /// What decides Create's refusal, each written out by hand. It is decided against the
+        /// live document on the Revit thread and against the pointer file at the moment the
+        /// button is pressed. **The Revit half has never worked and no test here covers it:
         /// this is a test over the decision, not over Revit.**
         /// </summary>
         private static readonly OpenModel NoDocument = OpenModel.Nothing;
 
-        private static readonly OpenModel NeverSaved = OpenModel.Of("NG05_detached", string.Empty);
+        private static readonly OpenModel NeverSaved = OpenModel.Of("NG05_detached");
 
-        private static readonly OpenModel Saved = OpenModel.Of("NG05", @"C:\models");
+        private static readonly OpenModel Saved = OpenModel.Of("NG05");
+
+        private const string Somewhere = @"C:\kpi out";
 
         [Fact]
         public void NoDocumentSaysNoModelIsOpen()
         {
             Assert.Equal(
                 "Cannot create. No model is open.",
-                CreateWords.CannotCreate(NoDocument, true, true));
+                CreateWords.CannotCreate(NoDocument, Somewhere, true, true));
         }
 
         /// <summary>
-        /// A model open and never saved is not no model. The pane's header read 96,959 elements
-        /// at 16:08:14 while Create said no model was open, on a detached model with no path.
-        /// This line has to say to save the model, because that is the whole of what to do.
+        /// **THIS REVERSES THE RULE OF THE ROUND BEFORE.** A model that has never been saved
+        /// used to be refused, with a line saying to save it, because the workbook was written
+        /// beside the model. That cost the team most of an afternoon: a detached model is what
+        /// they work on and it could not be used at all. Whether the model has been saved is
+        /// now asked nowhere, and a detached model with an output folder set creates.
         /// </summary>
         [Fact]
-        public void ADocumentWithNoPathSaysToSaveTheModel()
+        public void AModelThatWasNeverSavedIsNoLongerRefused()
         {
-            string said = CreateWords.CannotCreate(NeverSaved, true, true);
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(NeverSaved, Somewhere, true, true));
+            Assert.Equal(
+                CreateWords.CannotCreate(Saved, Somewhere, true, true),
+                CreateWords.CannotCreate(NeverSaved, Somewhere, true, true));
+        }
+
+        /// <summary>
+        /// What arms Create in its place, and the line says what to do about it.
+        /// </summary>
+        [Fact]
+        public void NoOutputFolderSaysToBrowseForOne()
+        {
+            string said = CreateWords.CannotCreate(Saved, string.Empty, true, true);
 
             Assert.Equal(
-                "Cannot create. The open model has never been saved, so there is no folder to "
-                + "write beside. Save the model first.",
+                "Cannot create. No output folder is set. Press Browse beside Output folder and "
+                + "point at where the filled workbooks should be written.",
                 said);
-            Assert.Contains("Save the model first", said);
+            Assert.Equal(said, CreateWords.CannotCreate(Saved, "   ", true, true));
+            Assert.Equal(said, CreateWords.CannotCreate(Saved, null, true, true));
         }
 
         [Fact]
-        public void ADocumentWithAPathRefusesNothing()
+        public void ADocumentAndAFolderRefuseNothing()
         {
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, true, true));
-        }
-
-        /// <summary>
-        /// The three lines are three different lines. Two of them reading the same would leave
-        /// somebody with no way to tell which state they are in.
-        /// </summary>
-        [Fact]
-        public void EachOfTheThreeStatesGivesItsOwnLine()
-        {
-            string none = CreateWords.CannotCreate(NoDocument, true, true);
-            string never = CreateWords.CannotCreate(NeverSaved, true, true);
-            string saved = CreateWords.CannotCreate(Saved, true, true);
-
-            Assert.Equal(3, new[] { none, never, saved }.Distinct().Count());
-            Assert.DoesNotContain(CreateWords.NotSaved, none);
-            Assert.DoesNotContain(CreateWords.NoModel, never);
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true));
         }
 
         /// <summary>
-        /// Saving the model is the only thing that changes between these two, and it is what
-        /// arms Create. The pane held the answer from before the save and never asked again.
+        /// The lines are different lines. Two of them reading the same would leave somebody
+        /// with no way to tell which state they are in.
         /// </summary>
         [Fact]
-        public void SavingTheModelIsWhatArmsCreate()
+        public void EachStateGivesItsOwnLine()
         {
-            Assert.NotEqual(string.Empty, CreateWords.CannotCreate(NeverSaved, true, true));
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, true, true));
+            string none = CreateWords.CannotCreate(NoDocument, Somewhere, true, true);
+            string nowhere = CreateWords.CannotCreate(Saved, string.Empty, true, true);
+            string ready = CreateWords.CannotCreate(Saved, Somewhere, true, true);
+
+            Assert.Equal(3, new[] { none, nowhere, ready }.Distinct().Count());
+            Assert.DoesNotContain(CreateWords.NoOutputFolder, none);
+            Assert.DoesNotContain(CreateWords.NoModel, nowhere);
+        }
+
+        /// <summary>
+        /// Browsing for the folder is what arms Create now, and it is the only thing that
+        /// changes between these two.
+        /// </summary>
+        [Fact]
+        public void SettingTheOutputFolderIsWhatArmsCreate()
+        {
+            Assert.NotEqual(string.Empty, CreateWords.CannotCreate(Saved, string.Empty, true, true));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true));
         }
 
         [Fact]
         public void OneRefusalListsEverythingMissingRatherThanOnePerThing()
         {
             Assert.Equal(
-                "Cannot create. No model is open. No template picked. No plot ticked.",
-                CreateWords.CannotCreate(NoDocument, false, false));
+                "Cannot create. No model is open. " + TemplateWords.NoOutputFolder
+                    + " No template picked. No plot ticked.",
+                CreateWords.CannotCreate(NoDocument, string.Empty, false, false));
 
-            Assert.Equal("Cannot create. No plot ticked.", CreateWords.CannotCreate(Saved, true, false));
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, true, true));
+            Assert.Equal("Cannot create. No plot ticked.",
+                CreateWords.CannotCreate(Saved, Somewhere, true, false));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true));
         }
 
         /// <summary>
-        /// Create says the same words as the line above it, from the one constant, rather than
-        /// a second sentence about the same condition.
+        /// Create says the same words as the output folder line above it, from the one constant,
+        /// rather than a second sentence about the same condition.
         /// </summary>
         [Fact]
-        public void TheNeverSavedRefusalIsTheLineTheOutputBlockAlreadyShows()
+        public void TheNoFolderRefusalIsTheLineTheOutputBlockAlreadyShows()
         {
-            Assert.Equal(TemplateWords.NoModelPath, CreateWords.NotSaved);
+            Assert.Equal(TemplateWords.NoOutputFolder, CreateWords.NoOutputFolder);
+            Assert.Equal(TemplateWords.NoOutputFolder, TemplateWords.Output(string.Empty));
         }
 
         /// <summary>
@@ -564,39 +655,38 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void NothingAnsweredIsNoModel()
         {
             Assert.False(OpenModel.Nothing.IsOpen);
-            Assert.False(OpenModel.Nothing.HasAFolder);
             Assert.Equal(
                 "Cannot create. No model is open.",
-                CreateWords.CannotCreate(null, true, true));
+                CreateWords.CannotCreate(null, Somewhere, true, true));
         }
 
         /// <summary>
-        /// Both come off one answer, so a caller cannot hand them over the wrong way round.
-        /// That swap is the fault this type exists for.
+        /// The title is the whole of the record now. The folder came off it with the never
+        /// saved refusal, so nothing here can go stale about where the model sits.
         /// </summary>
         [Fact]
-        public void TheTitleAndTheFolderComeOffOneAnswer()
+        public void TheModelRecordIsTheTitleAndNothingElse()
         {
-            OpenModel model = OpenModel.Of("NG05", @"C:\models");
+            OpenModel model = OpenModel.Of("NG05");
 
             Assert.True(model.IsOpen);
-            Assert.True(model.HasAFolder);
-            Assert.True(model.Is(OpenModel.Of("NG05", @"C:\models")));
-            Assert.False(model.Is(OpenModel.Of("NG05", string.Empty)));
-            Assert.False(model.Is(OpenModel.Of("NG06", @"C:\models")));
+            Assert.True(model.Is(OpenModel.Of("NG05")));
+            Assert.False(model.Is(OpenModel.Of("NG06")));
             Assert.False(model.Is(null));
+            Assert.Empty(typeof(OpenModel).GetProperties()
+                .Where(one => one.Name.IndexOf("Folder", StringComparison.OrdinalIgnoreCase) >= 0));
         }
 
         /// <summary>
-        /// A folder arriving without a title is still no model. A document is what makes a
-        /// model open and the folder says nothing about that.
+        /// A folder with no document is still no model. A document is what makes a model open
+        /// and where the file goes says nothing about that.
         /// </summary>
         [Fact]
-        public void AFolderWithNoTitleIsStillNoModel()
+        public void AFolderWithNoModelIsStillNoModel()
         {
             Assert.Equal(
                 "Cannot create. No model is open.",
-                CreateWords.CannotCreate(OpenModel.Of(string.Empty, @"C:\models"), true, true));
+                CreateWords.CannotCreate(OpenModel.Of(string.Empty), Somewhere, true, true));
         }
 
         /// <summary>

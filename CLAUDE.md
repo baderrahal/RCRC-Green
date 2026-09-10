@@ -1,8 +1,8 @@
 # RCRC Green
 
 A Revit 2024 add-in for the landscape production team. Two tools. Drawing Sheet reads the
-model, shows a grid of which views exist per plot, and creates the missing ones. KPI will fill
-the client's GRP KPI Checklist workbook from a model, and this round it only scans.
+model, shows a grid of which views exist per plot, and creates the missing ones. KPI scans a
+model and fills the client's GRP KPI Checklist workbook from it.
 
 Read `.claude/skills/ai-max/SKILL.md` before doing any work in this repo. It sets the phase
 order, the writing rules and the reporting rules that everything here follows. The current phase
@@ -22,8 +22,10 @@ once. Every dropdown comes from the model, and Scan Model reads the whole docume
 **Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
 schedules and sheets. One confirmation, one transaction, one undo, one report.
 
-**KPI Checklist** opens a pane of the model name, KPI Scan, a status line and the template
-picker. KPI Scan writes nine sections and creates nothing. **The elements a schedule lists are
+**KPI Checklist** opens a pane of the model name, KPI Scan, a status line, the template picker,
+the output folder, the plot picker and Create. KPI Scan writes nine sections and Create copies a
+template, patches it and writes a report. **Neither creates anything in the model**, and the
+template is opened for reading and never written to. **The elements a schedule lists are
 not the scheduled things:** the softscape schedule returns RVT Link instances, so its printed
 rows are its numbers' only route, and its group rows are the only place a phase shows. Every
 measured fact is in `.claude/rules/kpi-rules.md`.
@@ -128,12 +130,17 @@ Measured on the 1355 run. These are what pick a workbook and fill it:
   MOSQUES, SCHOOL SCHOOLS, HEALTH HEALTHCARE, PARKING LOT PARKING, EXISTING PARK EXISTING PARKS,
   FUTURE PARK FUTURE PARKS, and NH STRT LESS 20m ROW, NH STRT 20m ROW, STREET 30m ROW and
   STREET 36m ROW all mean STREETS. It is many to one, the two park values break the park tie, and
-  a value the table does not hold preselects nothing and says so. **Never the plot prefix**:
-  STREET 36m ROW covers MM and ST plots and NS carries two street widths
+  a value the table does not hold preselects nothing and says so. **The plot prefix never
+  overrides it**: STREET 36m ROW covers MM and ST plots and NS carries two street widths
 - KPI COMPONENT S/H is a show and hide toggle, No on 9 of 9 title block types. Its name holds
   COMPONENT and it is not a candidate for anything
-- **PRX_Plot_ID is the plot** and the thing every schedule filters on. FM-05, SC-03. Plot
-  prefixes track the asset type: FM, SC, EP, FP, PL, MM, DM, NS
+- **PRX_Plot_ID is the plot** and the thing every schedule filters on. FM-05, SC-03
+- **The plot prefix is a SECOND route to the template**, confirmed by the team, all seven:
+  STREETS NS, ST and MM, PARKING PL, MOSQUES FM and DM, SCHOOLS SC, EXISTING PARKS EP,
+  FUTURE PARKS FP, HEALTHCARE HF. It agrees with the eleven component values prefix by prefix
+  with nothing left over on either side. PRX_Component still decides and where the two disagree
+  neither does. It is what groups plots for the picker, and it is the only thing that can place
+  a plot with no sheet, as EP-05, EP-11, EP-12 and EP-13 are
 - PRX_Plot_UID is numeric with nulls. PRX_Plot_UID2 reads ANH-007-MO-100019. PRX_Plot_NH is the
   same on every sheet. None of the three is the plot
 - **The softscape schedule prints TREES, then a group row per phase, then the species under it,
@@ -143,10 +150,13 @@ Measured on the 1355 run. These are what pick a workbook and fill it:
   UNKNOWN. The image is the FIRST cell, so an existing species row starts with a dash and a row
   is a species row when the BOTANICAL NAME column holds text, never when the first cell does
 - **The client's tree list can be shorter than the model.** The first real workbook, DM-12 on
-  MOSQUES, came out correct and reads 2 existing trees where the model holds 10 and 31 in total
+  MOSQUES, came out correct and read 2 existing trees where the model holds 10 and 31 in total
   where it holds 39, because the 80 species in the MOSQUES list hold no Phoenix dactylifera, no
-  Washingtonia robusta and no Unknown row to match. **Nothing may ever place an unmatched species
-  by guessing.** It is named in the report and it is an open question for the team
+  Washingtonia robusta and no Unknown row to match. A species the list does not hold is WRITTEN
+  INTO an empty row now, its name and its count and nothing else, so the counts reach the total.
+  **Nothing may ever place an unmatched species by guessing:** no family, no genus, no native
+  flag, no code. It is named in the report and what those missing columns cost is an open
+  question for the team
 - **Every plot has two filled regions in the 00 link**, one CADASTRAL LIMIT and one OUT OF SCOPE
   (PRESENTATION), and WHICH OF THEM CARRIES THE AREA VARIES BY PLOT. DM-11, DM-12 and DM-13 hold
   it on OUT OF SCOPE with cadastral at 0. NS-19 and NS-06 hold it on cadastral. The type name

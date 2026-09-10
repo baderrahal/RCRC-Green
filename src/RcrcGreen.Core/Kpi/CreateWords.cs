@@ -6,58 +6,47 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// The open document as Revit last answered for it: its title, and the folder it sits in.
+    /// The open document as Revit last answered for it. Its title, and nothing else.
     ///
-    /// **The two are one record and neither is worked out anywhere else.** The pane used to
-    /// hold them as two loose strings and hand them to the refusal in the wrong order, so a
-    /// detached model that had never been saved was refused with No model is open. Deriving
-    /// both from one answer is what stops a caller getting them the wrong way round.
+    /// **THE MODEL'S FOLDER USED TO BE ON HERE AND IS GONE.** The workbook was written beside
+    /// the model, so a model that had never been saved could not be used at all, and a detached
+    /// one is exactly what the team works on. The workbook goes to a folder the user browses for
+    /// now, remembered the way the template folder is, and Create no longer asks whether the
+    /// model has been saved.
     ///
-    /// A title is empty only when there is no document. A folder is empty for a document that
-    /// has never been saved, and for a cloud model whose path is not a folder on disk.
+    /// The folder is not kept for anything else. A value on the screen that decides nothing is
+    /// how one stale string became a dead end here once already.
+    ///
+    /// A title is empty only when there is no document.
     /// </summary>
     public sealed class OpenModel
     {
-        private OpenModel(string title, string folder)
+        private OpenModel(string title)
         {
             Title = title ?? string.Empty;
-            Folder = folder ?? string.Empty;
         }
 
         /// <summary>
         /// No document. What the pane holds before Revit has answered and what Revit answers
         /// when the model is closed while the pane is still on screen.
         /// </summary>
-        public static readonly OpenModel Nothing = new OpenModel(string.Empty, string.Empty);
+        public static readonly OpenModel Nothing = new OpenModel(string.Empty);
 
-        public static OpenModel Of(string documentTitle, string modelFolder)
+        public static OpenModel Of(string documentTitle)
         {
-            return new OpenModel(documentTitle, modelFolder);
+            return new OpenModel(documentTitle);
         }
 
         public string Title { get; }
-
-        public string Folder { get; }
 
         public bool IsOpen
         {
             get { return Title.Length > 0; }
         }
 
-        /// <summary>
-        /// False for a model that has never been saved. The workbook is written beside the
-        /// model, so there is nowhere to write until it has one.
-        /// </summary>
-        public bool HasAFolder
-        {
-            get { return Folder.Length > 0; }
-        }
-
         public bool Is(OpenModel other)
         {
-            return other != null
-                && string.Equals(Title, other.Title, StringComparison.Ordinal)
-                && string.Equals(Folder, other.Folder, StringComparison.Ordinal);
+            return other != null && string.Equals(Title, other.Title, StringComparison.Ordinal);
         }
     }
 
@@ -76,23 +65,53 @@ namespace RcrcGreen.Core.Kpi
 
         public const string Create = "Create";
 
+        /// <summary>
+        /// Over the grouping buttons. It says the prefix is what gathers them, because a button
+        /// reading MOSQUES beside a plot list nobody can see the rule behind is a button whose
+        /// answer has to be taken on trust.
+        /// </summary>
+        public const string GroupsHeading =
+            "Or tick every plot for one template at once, gathered by the plot prefix:";
+
+        /// <summary>
+        /// One grouping button's text: the template and how many plots it would tick, so the
+        /// count is known before the press rather than after it.
+        /// </summary>
+        public static string GroupLabel(TemplateByPrefix group)
+        {
+            if (group == null) throw new ArgumentNullException("group");
+
+            return group.Name + ", " + Count(group.Plots.Count, "plot");
+        }
+
+        /// <summary>
+        /// The plots no grouping button reaches, named rather than left out. A prefix the table
+        /// does not hold is a real answer and a plot carrying one is ticked by hand.
+        /// </summary>
+        public static string NoGroupFor(IReadOnlyList<string> plots)
+        {
+            if (plots == null || plots.Count == 0) return string.Empty;
+
+            return "No button gathers " + string.Join(", ", plots.ToArray())
+                + ". The prefix table does not hold "
+                + (plots.Count == 1 ? "that prefix" : "those prefixes")
+                + ", so tick " + (plots.Count == 1 ? "it" : "them") + " by hand.";
+        }
+
         public const string NoPlots =
             "No plot in this model. Press KPI Scan first, or open a model that holds one.";
-
-        public const string Overwrite =
-            "A file of this name in that folder is overwritten without asking.";
 
         public const string NoModel = "No model is open.";
 
         /// <summary>
-        /// A model that is open and has never been saved. It is a different refusal from no
-        /// model at all, and the pane said the wrong one of the two: the header read 96,959
-        /// elements while Create said no model was open, on a detached model with no path.
+        /// The refusal that replaced the never saved one. **Whether the model has been saved is
+        /// no longer asked**, because writing beside the model meant a detached model could not
+        /// be used at all, and that cost the team most of an afternoon.
         ///
-        /// The words are TemplateWords.NoModelPath, which the line above the button already
+        /// The words are TemplateWords.NoOutputFolder, which the output folder line already
         /// shows, because two sentences for one condition is two records of one fact.
         /// </summary>
-        public const string NotSaved = TemplateWords.NoModelPath;
+        public const string NoOutputFolder = TemplateWords.NoOutputFolder;
 
         public const string NoTemplate = "No template picked.";
 
@@ -129,21 +148,22 @@ namespace RcrcGreen.Core.Kpi
         /// Create three times to be told three separate halves of the same answer is worse than
         /// being told all of it once.
         ///
-        /// **Whether a model is open and whether it has a folder are two facts.** The button
-        /// used to be handed the folder and call it the model, so a detached model that had
-        /// never been saved was reported as no model open, next to a header counting its
-        /// 96,959 elements. A model that is not open is not asked whether it has been saved.
+        /// **It no longer asks whether the model has been saved.** It asks whether there is
+        /// somewhere to write, which is the browsed output folder. The two used to be one
+        /// question because the workbook went beside the model, and a detached model was refused
+        /// with No model is open next to a header counting its 96,959 elements.
         ///
-        /// It takes an <see cref="OpenModel"/> rather than two loose flags, so a caller cannot
-        /// hand it the two the wrong way round. That is the whole of the fault it is here for.
+        /// The folder is passed in rather than held, and the Revit side reads it off disk at the
+        /// moment Create is pressed, so nothing here can be deciding on a copy taken earlier.
         /// </summary>
-        public static string CannotCreate(OpenModel model, bool hasTemplate, bool hasAPlot)
+        public static string CannotCreate(
+            OpenModel model, string outputFolder, bool hasTemplate, bool hasAPlot)
         {
             OpenModel open = model ?? OpenModel.Nothing;
 
             var missing = new List<string>();
             if (!open.IsOpen) missing.Add(NoModel);
-            else if (!open.HasAFolder) missing.Add(NotSaved);
+            if (string.IsNullOrWhiteSpace(outputFolder)) missing.Add(NoOutputFolder);
             if (!hasTemplate) missing.Add(NoTemplate);
             if (!hasAPlot) missing.Add(NoPlotTicked);
 

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 
 namespace RcrcGreen.Revit.Kpi
 {
@@ -16,6 +15,8 @@ namespace RcrcGreen.Revit.Kpi
     {
         public const string PointerFileName = "templates-folder.txt";
 
+        private static readonly RememberedFolder Pointer = new RememberedFolder(PointerFileName);
+
         /// <summary>
         /// The remembered folder, or empty when none is set, the pointer is missing or the
         /// folder it names is gone. An empty answer shows the set-the-folder line rather than
@@ -23,42 +24,12 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         public static string Read()
         {
-            try
-            {
-                string pointer = PointerPath();
-                if (pointer == null || !File.Exists(pointer)) return string.Empty;
-
-                string folder = File.ReadAllText(pointer).Trim();
-                return folder.Length > 0 && Directory.Exists(folder) ? folder : string.Empty;
-            }
-            catch (IOException)
-            {
-                return string.Empty;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return string.Empty;
-            }
+            return Pointer.Read();
         }
 
         public static bool Remember(string folder)
         {
-            try
-            {
-                string pointer = PointerPath();
-                if (pointer == null) return false;
-
-                File.WriteAllText(pointer, folder ?? string.Empty);
-                return true;
-            }
-            catch (IOException)
-            {
-                return false;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return false;
-            }
+            return Pointer.Remember(folder);
         }
 
         /// <summary>
@@ -84,12 +55,6 @@ namespace RcrcGreen.Revit.Kpi
             {
                 return new List<string>();
             }
-        }
-
-        private static string PointerPath()
-        {
-            string beside = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            return string.IsNullOrEmpty(beside) ? null : Path.Combine(beside, PointerFileName);
         }
     }
 }

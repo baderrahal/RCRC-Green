@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -42,13 +43,28 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class SpeciesList
     {
-        private SpeciesList(IReadOnlyList<SpeciesListRow> rows, string refusal)
+        private SpeciesList(IReadOnlyList<SpeciesListRow> rows, IReadOnlyList<int> emptyRows, string refusal)
         {
             Rows = rows;
+            EmptyRows = emptyRows ?? new List<int>();
             Refusal = refusal ?? string.Empty;
         }
 
         public IReadOnlyList<SpeciesListRow> Rows { get; }
+
+        /// <summary>
+        /// The rows the quantity total sums that column D does not name, in order, for writing
+        /// a species the list does not hold into.
+        ///
+        /// **THE MAP'S RANGE CANNOT SAY WHERE THESE ARE.** The MOSQUES map entry stops at row 83
+        /// and the sheet's own total is SUM(B4:B92), so rows 84 to 92 are empty AND counted, and
+        /// a range that ended at 83 would find no room at all. The total's own range is what
+        /// says which rows reach it, and that is read off the file.
+        ///
+        /// Empty when the total could not be found, so a species is reported as not placed
+        /// rather than written into a row nothing sums.
+        /// </summary>
+        public IReadOnlyList<int> EmptyRows { get; }
 
         public string Refusal { get; }
 
@@ -59,13 +75,15 @@ namespace RcrcGreen.Core.Kpi
 
         public static SpeciesList Refused(string why)
         {
-            return new SpeciesList(new List<SpeciesListRow>(), why ?? "The species list could not be read.");
+            return new SpeciesList(
+                new List<SpeciesListRow>(), null, why ?? "The species list could not be read.");
         }
 
-        public static SpeciesList Holding(IEnumerable<SpeciesListRow> rows)
+        public static SpeciesList Holding(IEnumerable<SpeciesListRow> rows, IEnumerable<int> emptyRows = null)
         {
             return new SpeciesList(
                 (rows ?? Enumerable.Empty<SpeciesListRow>()).Where(one => one != null).ToList(),
+                (emptyRows ?? Enumerable.Empty<int>()).ToList(),
                 string.Empty);
         }
 
@@ -98,7 +116,13 @@ namespace RcrcGreen.Core.Kpi
                             + Path.GetFileName(path) + ".");
                     }
 
-                    return Holding(Read(zip, partPath, SharedStrings(zip), rows));
+                    IDictionary<int, string> named = NamesByRow(zip, partPath, SharedStrings(zip));
+
+                    return Holding(
+                        named.Where(one => one.Key >= rows.FirstRow && one.Key <= rows.LastRow)
+                            .OrderBy(one => one.Key)
+                            .Select(one => new SpeciesListRow(one.Key, one.Value)),
+                        EmptyRowsIn(zip, partPath, named));
                 }
             }
             catch (IOException failed)
@@ -115,22 +139,23 @@ namespace RcrcGreen.Core.Kpi
             }
         }
 
-        private static List<SpeciesListRow> Read(
-            ZipArchive zip, string partPath, List<string> shared, TreeRows wanted)
+        /// <summary>
+        /// Every row of column D that names something, over the whole sheet rather than over the
+        /// map's range, because the empty rows below the map's last row are the ones a species
+        /// gets written into.
+        /// </summary>
+        private static IDictionary<int, string> NamesByRow(
+            ZipArchive zip, string partPath, List<string> shared)
         {
-            var found = new List<SpeciesListRow>();
+            var found = new Dictionary<int, string>();
 
             XDocument sheet = WorkbookPackage.Read(zip, partPath);
             if (sheet == null) return found;
 
-            foreach (XElement cell in sheet.Root.Elements()
-                .Where(element => element.Name.LocalName == "sheetData")
-                .Elements().Where(element => element.Name.LocalName == "row")
-                .Elements().Where(element => element.Name.LocalName == "c"))
+            foreach (XElement cell in Cells(sheet))
             {
                 CellRef where = CellRef.TryParse((string)cell.Attribute("r"));
                 if (where == null) continue;
-                if (where.Row < wanted.FirstRow || where.Row > wanted.LastRow) continue;
                 if (!string.Equals(where.Column, KpiTemplates.BotanicalColumn, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
@@ -139,10 +164,82 @@ namespace RcrcGreen.Core.Kpi
                 string text = TextOf(cell, shared);
                 if (string.IsNullOrWhiteSpace(text)) continue;
 
-                found.Add(new SpeciesListRow(where.Row, text.Trim()));
+                found[where.Row] = text.Trim();
             }
 
-            return found.OrderBy(one => one.Row).ToList();
+            return found;
+        }
+
+        /// <summary>
+        /// The rows the quantity total sums that hold no name. The total is found by its own
+        /// formula rather than by a row number, because a row number would be a second copy of
+        /// something the file already says.
+        /// </summary>
+        private static List<int> EmptyRowsIn(
+            ZipArchive zip, string partPath, IDictionary<int, string> named)
+        {
+            var free = new List<int>();
+
+            XDocument sheet = WorkbookPackage.Read(zip, partPath);
+            if (sheet == null) return free;
+
+            int first;
+            int last;
+            if (!QuantityTotal(sheet, out first, out last)) return free;
+
+            for (int row = first; row <= last; row++)
+            {
+                if (!named.ContainsKey(row)) free.Add(row);
+            }
+
+            return free;
+        }
+
+        /// <summary>
+        /// The first and last row the quantity column's total sums, off a cell in that column
+        /// holding SUM over that same column. MOSQUES holds B93 as SUM(B4:B92).
+        /// </summary>
+        private static bool QuantityTotal(XDocument sheet, out int first, out int last)
+        {
+            first = 0;
+            last = 0;
+
+            var summing = new Regex(
+                @"^\s*SUM\s*\(\s*\$?" + KpiTemplates.QuantityColumn + @"\$?(\d+)\s*:\s*\$?"
+                    + KpiTemplates.QuantityColumn + @"\$?(\d+)\s*\)\s*$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+            foreach (XElement cell in Cells(sheet))
+            {
+                CellRef where = CellRef.TryParse((string)cell.Attribute("r"));
+                if (where == null) continue;
+                if (!string.Equals(where.Column, KpiTemplates.QuantityColumn, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                XElement formula = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "f");
+                if (formula == null) continue;
+
+                Match found = summing.Match(formula.Value ?? string.Empty);
+                if (!found.Success) continue;
+
+                if (!int.TryParse(found.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out first)) continue;
+                if (!int.TryParse(found.Groups[2].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out last)) continue;
+                if (last < first) continue;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<XElement> Cells(XDocument sheet)
+        {
+            return sheet.Root.Elements()
+                .Where(element => element.Name.LocalName == "sheetData")
+                .Elements().Where(element => element.Name.LocalName == "row")
+                .Elements().Where(element => element.Name.LocalName == "c");
         }
 
         private static string TextOf(XElement cell, List<string> shared)

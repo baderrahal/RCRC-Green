@@ -73,12 +73,37 @@ namespace RcrcGreen.Core.Kpi
 
         public const string NotInTheTable = "is not one of the component values this tool knows";
 
-        public static TemplateChoice For(AgreedValue component, IReadOnlyList<KpiTemplate> templates)
+        /// <summary>
+        /// Said when the component could not be read and the plot prefix was used instead. The
+        /// 1548 scan found four plots on a schedule and on no sheet, EP-05, EP-11, EP-12 and
+        /// EP-13, and no sheet means no PRX_Component. The prefix is the only thing that can
+        /// place them, and using it in silence would hide which route the answer took.
+        /// </summary>
+        public const string ByThePrefix =
+            "The component could not be read off these plots, so the PLOT PREFIX was used";
+
+        /// <summary>
+        /// Said when the two routes disagree. Two records of one fact is the fault this repo has
+        /// met eight times, so neither wins and the user picks.
+        /// </summary>
+        public const string RoutesDisagree =
+            "The component and the plot prefix do not agree, so nothing is preselected";
+
+        public static TemplateChoice For(
+            AgreedValue component, IReadOnlyList<string> ticked, IReadOnlyList<KpiTemplate> templates)
         {
             IReadOnlyList<KpiTemplate> all = templates ?? KpiTemplates.All;
+            KpiTemplate byPrefix = OnePrefixTemplate(ticked);
 
             if (component == null || component.Distinct.Count == 0)
             {
+                // No component anywhere. The prefix is the only route left, and it is named.
+                if (byPrefix != null && Offered(all, byPrefix))
+                {
+                    return TemplateChoice.Preselecting(byPrefix,
+                        ByThePrefix + ", which preselects " + byPrefix.Name + ". Change it if it is wrong.");
+                }
+
                 return TemplateChoice.Between(all, NoComponent);
             }
 
@@ -95,20 +120,53 @@ namespace RcrcGreen.Core.Kpi
             {
                 return TemplateChoice.Between(all, held + " " + NotInTheTable
                     + ". Pick the template. The eleven it knows are in ComponentTemplates, "
-                    + "measured off the 1548 scan.");
+                    + "measured off the 1548 scan."
+                    + (byPrefix == null ? string.Empty : " The plot prefix says " + byPrefix.Name + "."));
             }
 
             // The template the table names may not be among the ones offered, which happens when
             // a caller hands in a shorter list. Preselecting one that is not on offer would show
             // a pick the user cannot see, so the pick goes back to them with the reason.
-            if (!all.Any(one => ReferenceEquals(one, meant)))
+            if (!Offered(all, meant))
             {
                 return TemplateChoice.Between(all, held + " means " + meant.Name
                     + ", which is not among the templates offered. Pick the template.");
             }
 
+            // The cross check. The component decides where they agree, and where they do not
+            // NEITHER of them does.
+            if (byPrefix != null && !ReferenceEquals(byPrefix, meant))
+            {
+                return TemplateChoice.Between(all, RoutesDisagree + ": " + held + " means "
+                    + meant.Name + " and the plot prefix says " + byPrefix.Name + ". Pick the template.");
+            }
+
             return TemplateChoice.Preselecting(meant,
-                held + " on the chosen plots preselects " + meant.Name + ". Change it if it is wrong.");
+                held + " on the chosen plots preselects " + meant.Name + ". Change it if it is wrong."
+                + (byPrefix == null ? string.Empty : " The plot prefix agrees."));
+        }
+
+        /// <summary>
+        /// The one template every chosen plot's prefix names, or null when they name more than
+        /// one or the table holds none of them. A prefix that answers nothing cross checks
+        /// nothing, which is different from one that disagrees.
+        /// </summary>
+        private static KpiTemplate OnePrefixTemplate(IReadOnlyList<string> ticked)
+        {
+            List<TemplateByPrefix> across = PlotPrefixes.Across(ticked)
+                .Where(one => one.Template != null)
+                .ToList();
+
+            if (across.Count != 1) return null;
+
+            // A plot whose prefix the table does not hold leaves the answer open rather than
+            // letting the others speak for it.
+            return PlotPrefixes.Across(ticked).Count == 1 ? across[0].Template : null;
+        }
+
+        private static bool Offered(IReadOnlyList<KpiTemplate> all, KpiTemplate one)
+        {
+            return all.Any(offered => ReferenceEquals(offered, one));
         }
     }
 }

@@ -58,6 +58,9 @@ namespace RcrcGreen.Core.Kpi
                 File.Copy(sourcePath, outputPath, true);
 
                 var changed = new List<string>();
+                int dropped = 0;
+                bool calcChainRemoved = false;
+
                 using (FileStream updating = new FileStream(outputPath, FileMode.Open, FileAccess.ReadWrite))
                 using (var zip = new ZipArchive(updating, ZipArchiveMode.Update))
                 {
@@ -68,14 +71,27 @@ namespace RcrcGreen.Core.Kpi
                         changed.Add(partPath);
                     }
 
-                    // Every formula carries a stored result, so without this the KPI
-                    // percentages show the old blanks beside the new numbers until somebody
-                    // presses recalculate.
+                    // THE FLAG ON ITS OWN IS NOT ENOUGH. The template already carried
+                    // fullCalcOnLoad="1" and Excel still showed the cached zeros, because
+                    // calcId said the cache was written by an engine as new as its own. All
+                    // three of these together are what makes it recalculate.
                     SetRecalculateOnOpen(zip, workbookPart);
-                    changed.Add(workbookPart);
+                    if (!changed.Contains(workbookPart)) changed.Add(workbookPart);
+
+                    foreach (string partPath in sheetParts.Values.Distinct(StringComparer.Ordinal))
+                    {
+                        int off = DropCachedResults(zip, partPath);
+                        if (off == 0) continue;
+
+                        dropped += off;
+                        if (!changed.Contains(partPath)) changed.Add(partPath);
+                    }
+
+                    calcChainRemoved = RemoveCalcChain(zip);
                 }
 
                 int partsInOutput;
+                CacheCheck cache;
                 var landed = new List<LandedCell>();
                 using (FileStream reading = File.OpenRead(outputPath))
                 using (var zip = new ZipArchive(reading, ZipArchiveMode.Read))
@@ -88,9 +104,14 @@ namespace RcrcGreen.Core.Kpi
                             write.Cell.ToString(),
                             CellText(zip, sheetParts[write.SheetName], write.Cell)));
                     }
+
+                    // Read back off the output, the same rule every written cell follows. A
+                    // check made against what was sent would have passed on the file that
+                    // opened showing zeros.
+                    cache = Checked(zip, workbookPart, sheetParts.Values, dropped, calcChainRemoved);
                 }
 
-                return PatchOutcome.Done(partsInSource, partsInOutput, changed, landed);
+                return PatchOutcome.Done(partsInSource, partsInOutput, changed, landed, cache);
             }
             catch (InvalidDataException)
             {
@@ -251,7 +272,103 @@ namespace RcrcGreen.Core.Kpi
             }
 
             calcPr.SetAttributeValue("fullCalcOnLoad", "1");
+
+            // Zero tells Excel it cannot know which engine wrote the cache, so it recalculates
+            // rather than trusting it. The client's template reads 191029, which is as new as
+            // Excel's own, and that is why the flag beside it changed nothing.
+            calcPr.SetAttributeValue("calcId", "0");
             Save(entry, workbook);
+        }
+
+        /// <summary>
+        /// Takes the cached result off every formula cell in one sheet and leaves the formula
+        /// alone. A cell with an f and no v is one Excel has to work out.
+        ///
+        /// Every sheet, not only the ones that received a value: Total Planting Area is =F10 on
+        /// a sheet this tool wrote to and it still showed 0, and the six other cells that showed
+        /// 0 are spread across the workbook.
+        /// </summary>
+        private static int DropCachedResults(ZipArchive zip, string partPath)
+        {
+            ZipArchiveEntry entry = zip.GetEntry(partPath);
+            if (entry == null) return 0;
+
+            XDocument sheet;
+            using (Stream reading = entry.Open())
+            {
+                sheet = XDocument.Load(reading);
+            }
+
+            List<XElement> cached = sheet.Root.Elements()
+                .Where(element => element.Name.LocalName == "sheetData")
+                .Elements().Where(element => element.Name.LocalName == "row")
+                .Elements().Where(element => element.Name.LocalName == "c")
+                .Where(cell => cell.Elements().Any(child => child.Name.LocalName == "f"))
+                .SelectMany(cell => cell.Elements().Where(child => child.Name.LocalName == "v"))
+                .ToList();
+
+            if (cached.Count == 0) return 0;
+
+            foreach (XElement value in cached) value.Remove();
+
+            Save(entry, sheet);
+            return cached.Count;
+        }
+
+        /// <summary>
+        /// The calculation chain is Excel's record of what order to work the formulas out in,
+        /// and it is written against the cached results this tool has just dropped. Excel
+        /// rebuilds it on the first recalculation, so removing it is safe and leaving it is a
+        /// file that disagrees with itself. This is the one part the output is short of, and the
+        /// report says which and why so the count does not read as a loss.
+        /// </summary>
+        private static bool RemoveCalcChain(ZipArchive zip)
+        {
+            ZipArchiveEntry entry = zip.GetEntry(CalcChainPart);
+            if (entry == null) return false;
+
+            entry.Delete();
+            return true;
+        }
+
+        public const string CalcChainPart = "xl/calcChain.xml";
+
+        private static CacheCheck Checked(
+            ZipArchive zip,
+            string workbookPart,
+            IEnumerable<string> sheetPaths,
+            int dropped,
+            bool calcChainRemoved)
+        {
+            XDocument workbook = WorkbookPackage.Read(zip, workbookPart);
+            XElement calcPr = workbook == null || workbook.Root == null
+                ? null
+                : workbook.Root.Elements().FirstOrDefault(element => element.Name.LocalName == "calcPr");
+
+            bool onLoad = calcPr != null
+                && string.Equals((string)calcPr.Attribute("fullCalcOnLoad"), "1", StringComparison.Ordinal);
+            string calcId = calcPr == null ? string.Empty : ((string)calcPr.Attribute("calcId") ?? string.Empty);
+
+            int stillCached = 0;
+            foreach (string partPath in sheetPaths.Distinct(StringComparer.Ordinal))
+            {
+                XDocument sheet = WorkbookPackage.Read(zip, partPath);
+                if (sheet == null) continue;
+
+                stillCached += sheet.Root.Elements()
+                    .Where(element => element.Name.LocalName == "sheetData")
+                    .Elements().Where(element => element.Name.LocalName == "row")
+                    .Elements().Where(element => element.Name.LocalName == "c")
+                    .Count(cell => cell.Elements().Any(child => child.Name.LocalName == "f")
+                        && cell.Elements().Any(child => child.Name.LocalName == "v"));
+            }
+
+            return new CacheCheck(
+                onLoad,
+                calcId,
+                stillCached,
+                calcChainRemoved && zip.GetEntry(CalcChainPart) == null,
+                dropped);
         }
 
         private static string CellText(ZipArchive zip, string partPath, CellRef reference)

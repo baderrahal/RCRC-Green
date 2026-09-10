@@ -46,17 +46,81 @@ namespace RcrcGreen.Core.Tests.Kpi
             };
         }
 
+        /// <summary>
+        /// One part fewer, and it is the calculation chain, which this tool removes on purpose.
+        /// Anything else missing is the resave failure wearing this tool's name.
+        /// </summary>
         [Fact]
-        public void EveryPartOfTheSourceIsInTheOutputAndNoneWasAdded()
+        public void EveryPartOfTheSourceIsInTheOutputExceptTheOneRemovedOnPurpose()
         {
             string source = Source();
             PatchOutcome outcome = WorkbookPatcher.Patch(source, Output(), OrdinaryWrites());
 
             Assert.True(outcome.Written);
-            Assert.Equal(8, outcome.PartsInSource);
+            Assert.Equal(9, outcome.PartsInSource);
             Assert.Equal(8, outcome.PartsInOutput);
+            Assert.Equal(1, outcome.PartsDeliberatelyRemoved);
             Assert.True(outcome.KeptEveryPart);
             Assert.Equal(8, WorkbookFixture.PartCount(Output()));
+            Assert.Null(WorkbookFixture.PartText(Output(), WorkbookPatcher.CalcChainPart));
+        }
+
+        /// <summary>
+        /// Excel showed 0 for seven computed cells while the inputs beside them were right. The
+        /// values were never wrong: every formula cell still carried the template's own cached
+        /// result and Excel trusted it. **fullCalcOnLoad was already on that file**, so the flag
+        /// alone is not the fix.
+        /// </summary>
+        [Fact]
+        public void EveryCachedResultIsDroppedAndTheFormulaIsLeftAlone()
+        {
+            PatchOutcome outcome = WorkbookPatcher.Patch(Source(withCalcPr: true), Output(), OrdinaryWrites());
+
+            string main = WorkbookFixture.PartText(Output(), "xl/worksheets/sheet1.xml");
+            string trees = WorkbookFixture.PartText(Output(), "xl/worksheets/sheet2.xml");
+
+            Assert.Contains("<f>SUM(D4:D8)</f>", main);
+            Assert.DoesNotContain("<f>SUM(D4:D8)</f><v>", main);
+            Assert.Contains("<f>SUM(B4:B8)</f>", trees);
+            Assert.DoesNotContain("<f>SUM(B4:B8)</f><v>", trees);
+
+            Assert.Equal(2, outcome.Cache.CachedValuesDropped);
+            Assert.Equal(0, outcome.Cache.FormulaCellsCarryingACachedValue);
+        }
+
+        /// <summary>
+        /// All three together, read back off the output. Any one of them alone leaves Excel free
+        /// to trust the cache, which is how a workbook opens showing stale zeros beside correct
+        /// inputs and looks finished.
+        /// </summary>
+        [Fact]
+        public void TheOutputIsCheckedForAllThreeThingsThatMakeExcelRecalculate()
+        {
+            PatchOutcome outcome = WorkbookPatcher.Patch(Source(withCalcPr: true), Output(), OrdinaryWrites());
+
+            Assert.True(outcome.Cache.RecalculatesOnOpen);
+            Assert.Equal("0", outcome.Cache.CalcId);
+            Assert.True(outcome.Cache.CalcIdCleared);
+            Assert.Equal(0, outcome.Cache.FormulaCellsCarryingACachedValue);
+            Assert.True(outcome.Cache.CalcChainRemoved);
+            Assert.True(outcome.Cache.WillRecalculate);
+        }
+
+        /// <summary>
+        /// A refused patch checked nothing, so nothing here may read as a check that passed.
+        /// </summary>
+        [Fact]
+        public void ARefusedPatchCarriesNoCacheCheckThatPassed()
+        {
+            PatchOutcome outcome = WorkbookPatcher.Patch(Source(), Output(), new[]
+            {
+                CellWrite.Number("No Such Sheet", "B4", 1)
+            });
+
+            Assert.False(outcome.Written);
+            Assert.False(outcome.Cache.WillRecalculate);
+            Assert.False(outcome.Cache.CalcIdCleared);
+            Assert.False(outcome.Cache.CalcChainRemoved);
         }
 
         [Fact]
@@ -144,7 +208,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             string workbook = WorkbookFixture.PartText(Output(), "xl/workbook.xml");
 
             Assert.Contains("fullCalcOnLoad=\"1\"", workbook);
-            Assert.Contains("calcId=\"191029\"", workbook);
+
+            // The template's own 191029 tells Excel the cache was written by an engine as new
+            // as its own, which is exactly why it trusted the zeros. Zero replaces it.
+            Assert.DoesNotContain("calcId=\"191029\"", workbook);
+            Assert.Contains("calcId=\"0\"", workbook);
             Assert.Equal(2, workbook.Split(new[] { "calcPr" }, StringSplitOptions.None).Length);
         }
 

@@ -96,13 +96,17 @@ namespace RcrcGreen.Core.Tests.Kpi
                 TemplateWords.Output("C:\\models"));
         }
 
+        /// <summary>
+        /// With no folder set there is nowhere to write, so the line says to set one rather
+        /// than describing an overwrite in a folder that does not exist. It used to read
+        /// Written to beside the open Revit model, which is where the workbook no longer goes.
+        /// </summary>
         [Fact]
-        public void WithNoModelFolderTheOutputLineSaysBesideTheModel()
+        public void WithNoOutputFolderTheLineSaysToSetOne()
         {
-            Assert.Equal(
-                "Written to beside the open Revit model. A file already there under this name "
-                + "is overwritten, with no confirmation and no second copy.",
-                TemplateWords.Output(""));
+            Assert.Equal(TemplateWords.NoOutputFolder, TemplateWords.Output(""));
+            Assert.Equal(TemplateWords.NoOutputFolder, TemplateWords.Output("   "));
+            Assert.Equal(TemplateWords.NoOutputFolder, TemplateWords.Output(null));
         }
 
         [Fact]
@@ -121,9 +125,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                 TemplateWords.NoFolder);
             Assert.Equal("No .xlsx in this folder.", TemplateWords.EmptyFolder);
             Assert.Equal(
-                "The open model has never been saved, so there is no folder to write beside. "
-                + "Save the model first.",
-                TemplateWords.NoModelPath);
+                "No output folder is set. Press Browse beside Output folder and point at where "
+                + "the filled workbooks should be written.",
+                TemplateWords.NoOutputFolder);
         }
     }
 }

@@ -36,12 +36,14 @@ namespace RcrcGreen.Revit.Kpi
         private KpiRequest _wanted = KpiRequest.Nothing;
 
         /// <summary>
-        /// Called back on the Revit thread with the document title and the folder the model
-        /// file sits in, empty for a model that has never been saved. The pane marshals to
-        /// its own thread itself. The folder is here because the filled workbook goes beside
-        /// the model, and only the Revit side can say where that is.
+        /// Called back on the Revit thread with the document title, empty when no document is
+        /// open. The pane marshals to its own thread itself.
+        ///
+        /// **The model's folder used to travel with it and does not any more.** The filled
+        /// workbook went beside the model, so a detached model could not be used at all. It
+        /// goes to a browsed folder now and nothing asks the document where it sits.
         /// </summary>
-        public Action<string, string> Named { get; set; }
+        public Action<string> Named { get; set; }
 
         public Action<KpiScan, DateTime> Scanned { get; set; }
 
@@ -125,7 +127,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 // The document can be closed while the pane is still on screen. That is
                 // ordinary, so it is said rather than thrown.
-                Named?.Invoke(string.Empty, string.Empty);
+                Named?.Invoke(string.Empty);
                 Told?.Invoke(KpiPaneWords.NoModel);
                 return;
             }
@@ -134,7 +136,7 @@ namespace RcrcGreen.Revit.Kpi
             // document at the moment it is read. THE PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
             // FOR: a model saved while the pane sat open left Create refusing on a folder that
             // had been read once and never again.
-            Named?.Invoke(document.Title, FolderOf(document));
+            Named?.Invoke(document.Title);
 
             try
             {
@@ -173,29 +175,6 @@ namespace RcrcGreen.Revit.Kpi
             catch (IOException failed)
             {
                 Told?.Invoke("The report could not be written. " + failed.Message);
-            }
-        }
-
-        /// <summary>
-        /// Empty for a model that has never been saved. A cloud model's path is not a folder
-        /// on disk either, so anything that does not exist as a directory comes back empty
-        /// and the pane says to save the model first.
-        /// </summary>
-        private static string FolderOf(Document document)
-        {
-            try
-            {
-                string path = document.PathName;
-                if (string.IsNullOrEmpty(path)) return string.Empty;
-
-                string folder = System.IO.Path.GetDirectoryName(path);
-                return !string.IsNullOrEmpty(folder) && System.IO.Directory.Exists(folder)
-                    ? folder
-                    : string.Empty;
-            }
-            catch (ArgumentException)
-            {
-                return string.Empty;
             }
         }
 
@@ -247,12 +226,15 @@ namespace RcrcGreen.Revit.Kpi
         {
             KpiCreateAsk asked = Asked;
 
-            // **The refusal is decided here, on the live document, at the moment Create runs.**
-            // The pane used to decide it from a folder it had read once, so a model saved while
-            // the pane sat open stayed refused with No model is open. One record built from one
-            // answer, so nothing can hand the two the wrong way round.
+            // **The refusal is decided here, at the moment Create runs**, off the live document
+            // and off the pointer file rather than off anything the pane read earlier. A pane
+            // deciding on a folder it had read once is what left Create refusing after the model
+            // was saved, and the output folder can be browsed for a moment before this runs.
+            string outputFolder = OutputFolder.Read();
+
             string cannot = CreateWords.CannotCreate(
-                OpenModel.Of(document.Title, FolderOf(document)),
+                OpenModel.Of(document.Title),
+                outputFolder,
                 asked != null && asked.Template != null,
                 asked != null && asked.Ticked.Count > 0);
 
@@ -310,7 +292,7 @@ namespace RcrcGreen.Revit.Kpi
                     SpeciesMatching.Against(merged, asked.Template, existing, proposed),
                     asked.Date, asked.PreparedBy, asked.Position);
 
-                outputPath = Path.Combine(FolderOf(document), OutputName.Final(asked.OutputName));
+                outputPath = Path.Combine(outputFolder, OutputName.Final(asked.OutputName));
                 outcome = Patched(asked.TemplatePath, outputPath, plan.Writes);
             }
             else
