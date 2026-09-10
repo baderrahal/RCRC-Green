@@ -5,17 +5,13 @@ using System.Text;
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// Names the file a command writes its report to. Both commands go through here so the
-    /// two files sort next to each other on the Desktop and clean up the same way.
+    /// Names the file a report is written to: a task's own prefix, the document title made
+    /// safe, and the minute. Every task goes through here so its files sort next to the
+    /// others on the Desktop and clean up the same way. The prefixes themselves are each
+    /// task's own and live with that task, because a report name is a thing one task means.
     /// </summary>
     public static class ScanFileName
     {
-        public const string ScanPrefix = "RCRC-Green-Scan_";
-
-        public const string ScopeBoxPrefix = "RCRC-Green-ScopeBox_";
-
-        public const string RunPrefix = "RCRC-Green-Run_";
-
         public const string Extension = ".txt";
 
         /// <summary>
@@ -24,11 +20,6 @@ namespace RcrcGreen.Core
         /// dash, a dot and a space becomes a dash, and runs of dashes collapse, so two titles
         /// that differ only in punctuation do not both come out as one row of dashes.
         /// </summary>
-        public static string For(string documentTitle, DateTime writtenAt)
-        {
-            return For(ScanPrefix, documentTitle, writtenAt);
-        }
-
         public static string For(string prefix, string documentTitle, DateTime writtenAt)
         {
             if (prefix == null) throw new ArgumentNullException("prefix");

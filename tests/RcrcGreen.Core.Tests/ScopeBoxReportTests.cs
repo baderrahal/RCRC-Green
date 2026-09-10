@@ -198,7 +198,7 @@ namespace RcrcGreen.Core.Tests
         {
             Assert.Equal(
                 "RCRC-Green-ScopeBox_NG05_2026-09-08_1405.txt",
-                ScanFileName.For(ScanFileName.ScopeBoxPrefix, "NG05", Noon));
+                ScanFileName.For(ReportFileNames.ScopeBoxPrefix, "NG05", Noon));
         }
     }
 }

@@ -75,7 +75,7 @@ namespace RcrcGreen.Revit
             DateTime writtenAt = DateTime.Now;
 
             return ReportFile.Write(
-                ScanFileName.For(ScanFileName.ScopeBoxPrefix, documentTitle, writtenAt),
+                ScanFileName.For(ReportFileNames.ScopeBoxPrefix, documentTitle, writtenAt),
                 ScopeBoxReport.Write(plan, documentTitle, writtenAt, applied, refused));
         }
 

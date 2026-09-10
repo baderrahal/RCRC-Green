@@ -4,7 +4,12 @@ using Xunit;
 
 namespace RcrcGreen.Core.Tests
 {
-    public class ScanFileNameTests
+    /// <summary>
+    /// The scan file name, which is Drawing Sheet's prefix in front of Shared's cleaning and
+    /// date. Every expected name is written out by hand, and the cleaning cases here are the
+    /// only tests of the rule in Shared, so they stay whatever the prefix is called.
+    /// </summary>
+    public class ReportFileNamesTests
     {
         private static readonly DateTime Noon = new DateTime(2026, 9, 8, 14, 5, 0);
 
@@ -13,7 +18,7 @@ namespace RcrcGreen.Core.Tests
         {
             Assert.Equal(
                 "RCRC-Green-Scan_NG05 Landscape_2026-09-08_1405.txt",
-                ScanFileName.For("NG05 Landscape", Noon));
+                ReportFileNames.ForScan("NG05 Landscape", Noon));
         }
 
         [Fact]
@@ -21,7 +26,7 @@ namespace RcrcGreen.Core.Tests
         {
             Assert.Equal(
                 "RCRC-Green-Scan_NG05_2026-09-08_0000.txt",
-                ScanFileName.For("NG05", new DateTime(2026, 9, 8, 0, 0, 0)));
+                ReportFileNames.ForScan("NG05", new DateTime(2026, 9, 8, 0, 0, 0)));
         }
 
         [Theory]
@@ -31,7 +36,7 @@ namespace RcrcGreen.Core.Tests
         [InlineData("NG05***05", "RCRC-Green-Scan_NG05-05_2026-09-08_1405.txt")]
         public void CharactersWindowsWillNotTakeInAPathBecomeADash(string title, string expected)
         {
-            Assert.Equal(expected, ScanFileName.For(title, Noon));
+            Assert.Equal(expected, ReportFileNames.ForScan(title, Noon));
         }
 
         [Theory]
@@ -41,7 +46,7 @@ namespace RcrcGreen.Core.Tests
         [InlineData("///")]
         public void ATitleThatLeavesNothingBehindStillGivesAUsableName(string title)
         {
-            Assert.Equal("RCRC-Green-Scan_untitled_2026-09-08_1405.txt", ScanFileName.For(title, Noon));
+            Assert.Equal("RCRC-Green-Scan_untitled_2026-09-08_1405.txt", ReportFileNames.ForScan(title, Noon));
         }
     }
 }

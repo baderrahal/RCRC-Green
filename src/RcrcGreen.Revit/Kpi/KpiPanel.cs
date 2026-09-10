@@ -11,6 +11,10 @@ using RcrcGreen.Core.Kpi;
 // name is pinned to the one that belongs in a UserControl.
 using TextBox = System.Windows.Controls.TextBox;
 
+// The caption escape lives in Shared now, where both panels read it. An alias rather than
+// a using of the whole Core namespace, so no other name in it can shadow a KPI one.
+using PaneLabel = RcrcGreen.Core.PaneLabel;
+
 namespace RcrcGreen.Revit.Kpi
 {
     /// <summary>

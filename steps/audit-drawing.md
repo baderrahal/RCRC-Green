@@ -429,6 +429,13 @@ needs Revit to throw from a call that has not been seen throwing, so it is ranke
     other task reads. This is the one Shared read that should live in DrawingSheet | Move
     three constants and one overload
 
+    FIXED, in the Shared round that ran alone. The three prefixes and the two-argument
+    `For` are `ReportFileNames` in Core/DrawingSheet, with the file name tests moved and
+    renamed with them, and `ScanFileName` in Shared keeps the cleaning and the three-argument
+    `For`, which both tasks name their files through. The same round moved `PaneLabel` the
+    other way, from KPI to Shared, and territory.md now says what Shared is for with both
+    as its worked examples.
+
 29. INTERFACE | src/RcrcGreen.Revit/DrawingSheetPanel.cs:452, :506, :969 and :1453, with
     CLAUDE.md:245 | String content in a CheckBox or a Button goes through WPF's access key
     reading, and CLAUDE.md records that the Drawing Sheet has the fault the KPI pane fixed

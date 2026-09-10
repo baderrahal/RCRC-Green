@@ -65,6 +65,29 @@ Two limits, known and accepted. Drawing Sheet's flat test files read as common t
 hook, because they sit mixed with the Shared ones. And the fence around the Revit root is
 a file list, so a new Drawing Sheet file at that root has to be added to it.
 
+## What Shared is for
+
+A thing belongs in Shared when more than one task reads it and no task owns its meaning.
+The plot identifier is that: every task reads it and none of them gets to say what it is.
+
+A task's own constants, names and report words do not belong in Shared, even when they sit
+in a Shared file today. They are one task's meaning, and a change to them should be that
+task's change rather than a Shared one that stops every other session.
+
+A task needing another task's code asks for it to be moved to Shared, in a round of its
+own, rather than calling across the fence or copying it. A call across the fence leaves one
+task depending on another at compile time between two sessions that cannot see each other,
+and a copy is two records of one fact, which is the shape this repo keeps paying for.
+
+Two worked examples, both from the round that wrote this section. `PaneLabel`, the WPF
+caption escape, was KPI's, and Drawing Sheet called it across the fence for one round rather
+than copy it. Both panels read it and neither owns its meaning, so it moved to Shared with
+its tests. The three Drawing Sheet report prefixes and the two-argument `For` that defaulted
+to the scan one sat on `ScanFileName` in Shared, so renaming a Drawing Sheet report was a
+Shared change. They are one task's names, so they moved to `ReportFileNames` in
+Core/DrawingSheet, and the cleaning and the three-argument `For` stayed in Shared, where
+both tasks name their files through them.
+
 ## What GitHub puts back on a squash merge
 
 Commits `e0e206a` and `4feac50` on main carry the co-author credit line that
