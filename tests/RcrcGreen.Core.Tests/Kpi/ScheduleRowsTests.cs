@@ -36,7 +36,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void EverySpeciesRowComesBackWithTheGroupItSatUnder()
         {
             IReadOnlyList<SpeciesRow> species =
-                SoftscapeRows.SpeciesIn(TheRealDm12(), Phases, "DM-12");
+                SoftscapeRows.Read(TheRealDm12(), Phases, "DM-12").Species;
 
             Assert.Equal(8, species.Count);
             Assert.Equal(
@@ -67,7 +67,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheHeadingsRowTheCategoryRowAndTheSubtotalAreNoneOfThemASpecies()
         {
             IReadOnlyList<SpeciesRow> species =
-                SoftscapeRows.SpeciesIn(TheRealDm12(), Phases, "DM-12");
+                SoftscapeRows.Read(TheRealDm12(), Phases, "DM-12").Species;
 
             Assert.DoesNotContain(species, one => one.BotanicalName == "BOTANICAL NAME");
             Assert.DoesNotContain(species, one => one.BotanicalName == "TREES");
@@ -84,7 +84,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "Proposed", "" },
                 new[] { "ALBIZIA LEBBECK", "13" });
 
-            IReadOnlyList<SpeciesRow> species = SoftscapeRows.SpeciesIn(schedule, Phases, "DM-12");
+            IReadOnlyList<SpeciesRow> species = SoftscapeRows.Read(schedule, Phases, "DM-12").Species;
 
             Assert.Equal(2, species.Count);
             Assert.Equal(string.Empty, species[0].GroupName);
@@ -97,7 +97,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             ScannedSchedule refused = KpiFixture.Schedule("DM-12-(600) SOFTSCAPE SCHEDULE", rowsRefused: true);
 
-            Assert.Empty(SoftscapeRows.SpeciesIn(refused, Phases, "DM-12"));
+            Assert.Empty(SoftscapeRows.Read(refused, Phases, "DM-12").Species);
         }
 
         /// <summary>
@@ -135,8 +135,8 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static IReadOnlyList<GroupSubtotal> SubtotalsOfDm11()
         {
-            return ShrubsAndLawnRows.SubtotalsIn(
-                TheRealDm11(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading });
+            return ShrubsAndLawnRows.Read(
+                TheRealDm11(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }).Subtotals;
         }
 
         /// <summary>
@@ -222,8 +222,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "35 m\u00b2", "46" },
                 new[] { "", "", "37 m\u00b2", "46" });
 
-            GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.SubtotalsIn(
-                schedule, new[] { KpiMerge.LawnHeading }));
+            GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
+                schedule, new[] { KpiMerge.LawnHeading }).Subtotals);
 
             Assert.False(only.Agrees);
             Assert.Contains("its group total reads 37 over 46", only.Disagreement);
@@ -337,7 +337,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             ScannedSchedule schedule = TheRealDm12WithImages();
 
-            IReadOnlyList<SpeciesRow> species = SoftscapeRows.SpeciesIn(schedule, Phases, "DM-12");
+            IReadOnlyList<SpeciesRow> species = SoftscapeRows.Read(schedule, Phases, "DM-12").Species;
             IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, Phases);
 
             Assert.Equal(
@@ -364,8 +364,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "35 m\u00b2", "46" },
                 new[] { "", "", "35 m\u00b2", "46" });
 
-            GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.SubtotalsIn(
-                schedule, new[] { KpiMerge.LawnHeading }));
+            GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
+                schedule, new[] { KpiMerge.LawnHeading }).Subtotals);
 
             Assert.Equal(35.0, only.SquareMetres);
             Assert.Equal(2, only.Repeats);
@@ -382,8 +382,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "GRASS", "", "", "" },
                 new[] { "", "", "0 m\u00b2", "0" });
 
-            GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.SubtotalsIn(
-                schedule, new[] { KpiMerge.LawnHeading }));
+            GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
+                schedule, new[] { KpiMerge.LawnHeading }).Subtotals);
 
             Assert.Equal(0.0, only.SquareMetres);
             Assert.Equal(0, only.ItemCount);
@@ -407,23 +407,22 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(-1, ScheduleColumns.Holding(headings, "VOLUME"));
         }
 
+        /// <summary>
+        /// The unit comes off by reading as far as the number goes. Revit prints the area unit
+        /// with a superscript two, which is not a digit. What a digit after the number does is
+        /// in CellNumberTests.
+        /// </summary>
         [Fact]
         public void TheNumberIsReadAsFarAsItGoesAndTheUnitIsNotStripped()
         {
-            double value;
+            Assert.Equal(35.0, CellNumber.Read("35 m\u00b2").Value);
+            Assert.Equal(1131.72, CellNumber.Read("1131.72 m\u00b2").Value);
+            Assert.Equal(0.0, CellNumber.Read("0 m\u00b2").Value);
+            Assert.True(CellNumber.Read("0 m\u00b2").IsNumber);
 
-            Assert.True(CellNumber.In("35 m2", out value));
-            Assert.Equal(35.0, value);
-
-            Assert.True(CellNumber.In("1131.72 m2", out value));
-            Assert.Equal(1131.72, value);
-
-            Assert.True(CellNumber.In("0 m\u00b2", out value));
-            Assert.Equal(0.0, value);
-
-            Assert.False(CellNumber.In("COUNT (n)", out value));
-            Assert.False(CellNumber.In("", out value));
-            Assert.False(CellNumber.In("m2", out value));
+            Assert.True(CellNumber.Read("COUNT (n)").IsEmpty);
+            Assert.True(CellNumber.Read("").IsEmpty);
+            Assert.True(CellNumber.Read("m\u00b2").IsEmpty);
         }
     }
 }

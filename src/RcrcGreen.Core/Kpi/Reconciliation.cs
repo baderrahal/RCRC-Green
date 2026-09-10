@@ -34,6 +34,16 @@ namespace RcrcGreen.Core.Kpi
     /// confirmed it, because that is either two plots of one size or one region counted twice
     /// and the tool cannot tell which.
     ///
+    /// Two more since. A schedule read that was refused, because a column its heading row did
+    /// not name or a cell holding a digit past its number, refuses with the reason. And
+    /// species rows that do not add to the TOTAL the softscape schedule prints, because the
+    /// first real workbook read 31 trees where the model held 39 and nothing could say so.
+    ///
+    /// **It knows the template.** STREETS holds no area cell, so on STREETS the area was never
+    /// read and nothing about the area is refused on. MM-03 and MM-04 read one raw area and are
+    /// street plots, and the first 78 plot run would have ended asking the user to confirm an
+    /// area the workbook has no cell for, then read all 78 again.
+    ///
     /// It refuses. It does not write a total with a note attached.
     /// </summary>
     public sealed class Reconciliation
@@ -55,8 +65,10 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<string> withoutArea,
             IReadOnlyList<PlotAndReason> contributedNothing,
             IReadOnlyList<IdenticalArea> identicalAreas,
-            IReadOnlyList<string> refusals)
+            IReadOnlyList<string> refusals,
+            bool areaWanted)
         {
+            AreaWanted = areaWanted;
             Ticked = ticked;
             Read = read;
             WithoutSoftscape = withoutSoftscape;
@@ -75,7 +87,18 @@ namespace RcrcGreen.Core.Kpi
 
         public IReadOnlyList<string> WithoutShrubsAndLawn { get; }
 
+        /// <summary>
+        /// Empty when the template takes no area, because then no region was read and no plot
+        /// is short of one.
+        /// </summary>
         public IReadOnlyList<string> WithoutArea { get; }
+
+        /// <summary>
+        /// False when the template's map holds no area cell. STREETS types the road width and
+        /// the total length by hand and the sheet works the area out, so no filled region was
+        /// read for any plot and nothing about the area is refused on.
+        /// </summary>
+        public bool AreaWanted { get; }
 
         public IReadOnlyList<PlotAndReason> ContributedNothing { get; }
 
@@ -95,8 +118,13 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<string> ticked,
             IEnumerable<PlotReading> readings,
             IEnumerable<Totalled> totals,
-            bool identicalAreasConfirmed)
+            bool identicalAreasConfirmed,
+            KpiTemplate template)
         {
+            if (template == null) throw new ArgumentNullException("template");
+
+            bool areaWanted = !template.AreaIsTypedByHand;
+
             List<string> wanted = (ticked ?? Enumerable.Empty<string>())
                 .Where(one => !string.IsNullOrWhiteSpace(one))
                 .Select(one => one.Trim())
@@ -142,12 +170,30 @@ namespace RcrcGreen.Core.Kpi
                     + which + " reads " + total.Total + " and its parts add to " + total.Sum + ".");
             }
 
+            // Every reason a schedule read was refused, and the species rows against the TOTAL
+            // the softscape schedule printed. A refused read used to be a zero, and a species
+            // row dropped on the way was invisible.
+            foreach (PlotReading reading in held.OrderBy(one => one.PlotId, NaturalOrder.Comparer))
+            {
+                foreach (string refused in reading.ReadRefusals)
+                {
+                    refusals.Add(reading.PlotId + ": " + refused);
+                }
+
+                if (reading.SoftscapeTotalRead && reading.SpeciesSum != reading.SoftscapeTotal)
+                {
+                    refusals.Add(reading.PlotId + ": its species rows add to " + reading.SpeciesSum
+                        + " and its softscape schedule prints TOTAL " + reading.SoftscapeTotal + ".");
+                }
+            }
+
             // More than one region holding an area is the plot asking a question the type name
             // cannot answer, because which of a plot's two regions carries it varies by plot.
             // The user picks and presses Create again, the same way an identical area is
-            // confirmed. Nothing here picks the larger, the first or the cadastral one.
+            // confirmed. Nothing here picks the larger, the first or the cadastral one. On a
+            // template that takes no area no region was read, so there is nothing to ask.
             foreach (PlotReading reading in held
-                .Where(one => one.ChosenRegion == null && one.RegionsHoldingAnArea.Count > 1)
+                .Where(one => areaWanted && one.ChosenRegion == null && one.RegionsHoldingAnArea.Count > 1)
                 .OrderBy(one => one.PlotId, NaturalOrder.Comparer))
             {
                 refusals.Add(reading.PlotId + " has " + reading.RegionsHoldingAnArea.Count
@@ -168,7 +214,9 @@ namespace RcrcGreen.Core.Kpi
                 }
             }
 
-            IReadOnlyList<IdenticalArea> identical = KpiMerge.IdenticalAreas(held);
+            IReadOnlyList<IdenticalArea> identical = areaWanted
+                ? KpiMerge.IdenticalAreas(held)
+                : new List<IdenticalArea>();
             if (identical.Count > 0 && !identicalAreasConfirmed)
             {
                 foreach (IdenticalArea shared in identical)
@@ -186,10 +234,13 @@ namespace RcrcGreen.Core.Kpi
                 read.OrderBy(one => one, NaturalOrder.Comparer).ToList(),
                 Named(held, one => !one.SoftscapeRead),
                 Named(held, one => !one.ShrubsAndLawnRead),
-                Named(held, one => one.ChosenRegion == null || !one.ChosenRegion.HoldsAnArea),
-                Nothing(held),
+                areaWanted
+                    ? Named(held, one => one.ChosenRegion == null || !one.ChosenRegion.HoldsAnArea)
+                    : new List<string>(),
+                Nothing(held, areaWanted),
                 identical,
-                refusals);
+                refusals,
+                areaWanted);
         }
 
         private static IReadOnlyList<string> Named(
@@ -202,7 +253,9 @@ namespace RcrcGreen.Core.Kpi
                 .ToList();
         }
 
-        private static IReadOnlyList<PlotAndReason> Nothing(List<PlotReading> readings)
+        public const string ReadRefused = "a schedule read on it was refused, see above";
+
+        private static IReadOnlyList<PlotAndReason> Nothing(List<PlotReading> readings, bool areaWanted)
         {
             var found = new List<PlotAndReason>();
 
@@ -210,15 +263,22 @@ namespace RcrcGreen.Core.Kpi
             {
                 bool trees = reading.SoftscapeRead && reading.Species.Count > 0;
                 bool ground = reading.ShrubsAndLawnRead && reading.Subtotals.Count > 0;
-                bool area = reading.ChosenRegion != null && reading.ChosenRegion.HoldsAnArea;
+                bool area = areaWanted && reading.ChosenRegion != null && reading.ChosenRegion.HoldsAnArea;
                 if (trees || ground || area) continue;
 
                 var why = new List<string>();
+                if (reading.ReadRefusals.Count > 0) why.Add(ReadRefused);
                 if (!reading.SoftscapeRead) why.Add(NoSoftscape);
-                else if (reading.Species.Count == 0) why.Add("its softscape schedule listed no species");
+                else if (reading.Species.Count == 0 && reading.ReadRefusals.Count == 0)
+                {
+                    why.Add("its softscape schedule listed no species");
+                }
                 if (!reading.ShrubsAndLawnRead) why.Add(NoShrubsAndLawn);
-                else if (reading.Subtotals.Count == 0) why.Add("its shrubs and lawn schedule held neither group");
-                if (!area) why.Add(NoArea);
+                else if (reading.Subtotals.Count == 0 && reading.ReadRefusals.Count == 0)
+                {
+                    why.Add("its shrubs and lawn schedule held neither group");
+                }
+                if (areaWanted && !area) why.Add(NoArea);
 
                 found.Add(new PlotAndReason(reading.PlotId, string.Join(", ", why.ToArray())));
             }

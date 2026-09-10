@@ -4,6 +4,124 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty fifth pass. Four findings that can put a wrong number in front of a client
+
+Finding 2 of the first audit and findings 30, 31 and 32 of the second are fixed. **The other 43
+stay open**, not renumbered, not reordered, not annotated. Nothing else was touched: not the
+Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`, and not finding 40, the stale subtotal
+docstring, which sits in a file this round rewrote and was left standing because it is not one
+of the four.
+
+**Locally 988 tests ran, 0 failed and 0 skipped**, after the last file was written and after
+all four break watches were restored byte for byte. 942 before, 46 added, 505 of them KPI.
+
+### Finding 2. The four cell position fallbacks refuse
+
+`SoftscapeRows.Read`, `ShrubsAndLawnRows.Read` and `ScheduleGroups.Of` read the botanical name,
+the count and the area off the columns the heading row names and off nothing else. A schedule
+naming none of them is refused, in one sentence from `ScheduleColumns.NothingNamed`, which names
+the column and prints the headings so a person can see what the schedule does call them. The
+shrubs reader's area, which came back as an empty list with nothing said and which the first
+audit called the correct behaviour, carries the line now too, and so does its count, which read
+nought in silence. A group whose named rows cannot be counted is still found, with the reason on
+it, because the group row needs no column.
+
+Each reader hands back what it read or every reason it refused, never both: `SoftscapeReading`
+and `ShrubsAndLawnReading`. The refusals travel on `PlotReading.ReadRefusals` with the
+schedule's name, `Reconciliation.Of` turns each into a refusal of the write naming the plot, the
+create report prints them among the reasons and again under the plot, and the pane draws the
+reasons in red above Create as it already did. Question 8 of the scan report says a group's
+named rows were not counted and why, rather than printing a count off the image column.
+
+The docstring that described the fallback as intended is rewritten.
+
+### Finding 30. A digit after the number ends is a refusal
+
+`CellNumber.Read` hands back one of three answers, `CellNumberRead`: a number, an empty cell, or
+a refusal naming what the cell held. A digit anywhere past where the number ends refuses, so
+"1,234 m2" is refused rather than read as 1, "1131,72" is refused rather than read as 1131, and
+so is "1 234". Nothing parses the separator, because which character a project groups digits
+with is a units setting this tool has never read. Every value measured on the real model still
+reads: 35, 70, 105, 820, 1161, 3729, 1131.72, 46, 1020 and 0, all written out by hand in a
+theory. Revit prints the unit with a superscript two, which is not a digit, so "35 m2" spelt with
+an ASCII two is refused too and the test says why.
+
+A refused cell refuses the whole schedule read, with the row and the cell named. A group over a
+thousand printed with separators, 1,200 and 1,300 totalling 2,500, now refuses on its first bad
+cell rather than passing its own add-up check as 1 plus 1 equals 2.
+
+### Finding 31. STREETS reads no area and refuses on none
+
+`Reconciliation.Of` takes the template, and it is a required argument so no caller can forget
+it. Where the template's map holds no area cell, which is STREETS, `KpiRequestHandler.Create`
+reads no filled region for any plot, chooses none, and the reconciliation refuses on nothing
+about the area: not two regions holding one, not two plots reading alike. `WithoutArea` is empty
+and a plot that gave nothing is not blamed for the area. The report says in three places that
+the area was not read and why, under the reconciliation, beside each plot and where the region
+table would have been, with the pane's own sentence for the condition, and it drops the paragraph
+about the area not being a schedule row while keeping the one about the schedules.
+
+MM-03 and MM-04 on MOSQUES still refuse, so the guard is where it was and only a template with
+no area cell steps round it.
+
+### Finding 32. The TOTAL row is read and held against the species rows
+
+`SoftscapeRows.Read` reads the count off the row whose first cell holds TOTAL, `PlotReading`
+carries it, and `Reconciliation.Of` refuses the write when the species rows add to something
+else, naming both numbers: "DM-12: its species rows add to 31 and its softscape schedule prints
+TOTAL 39." The report prints the sum beside the TOTAL under every plot, and says so when no
+TOTAL row was found, because a check with no subject is not a failure and silence would read as
+a check that passed.
+
+The two bare continues are gone. A row with a botanical name and no whole count refuses the
+read and names the row. A row with a count and no name is the subtotal a group prints, counted
+as passed over and printed. A one cell row such as the TREES category is a heading and is
+skipped as one, which the two column DM-12 fixture showed when the first version refused it, and
+the TOTAL row is read before that shape is looked at, because a TOTAL row with an empty count is
+one cell of text and is a refusal rather than a heading.
+
+Checked against DM-12 as the 1521 scan printed it: five existing, three proposed, the eight rows
+adding to 39, TOTAL 39, one subtotal row passed over.
+
+### What was broken to see the tests go red
+
+The four fixes change signatures, so the new tests do not compile against the code as it was.
+Each fix was reverted in behaviour with the signature kept, watched, and restored byte for byte
+with md5, then the suite rerun green at 988.
+
+- finding 2, the botanical column made to fall back to cell 0 again. **2 red**:
+  `ASoftscapeScheduleNamingNoBotanicalColumnIsRefusedRatherThanReadOffTheImageCell` and
+  `BothMissingColumnsAreBothNamed`
+- finding 30, the digit after the number read short again. **6 red**:
+  `AThousandsSeparatorIsRefusedAndTheCellIsNamed`, `ADecimalCommaIsRefusedTheSameWay`,
+  `ASpaceUsedToGroupDigitsIsRefusedToo`,
+  `AUnitSpeltWithADigitIsRefusedBecauseNothingCanTellItFromASeparator`,
+  `AGroupOverAThousandPrintedWithSeparatorsIsRefusedRatherThanAddingOneAndOne` and
+  `ASpeciesCountWithASeparatorIsRefusedRatherThanReadAsOne`
+- finding 31, the area refused on for every template again. **4 red**:
+  `OnStreetsTwoPlotsReadingOneAreaDoNotRefuse`, `OnStreetsTwoRegionsHoldingAnAreaAskNothing`,
+  `OnStreetsAPlotWithNothingElseIsNotBlamedForTheArea` and `TheReportSaysTheAreaWasNotReadAndWhy`
+- finding 32, the TOTAL held against nothing again. **2 red**:
+  `SpeciesRowsShortOfTheTotalRefuseTheWriteAndNameBothNumbers` and
+  `TheReaderHandsBackBothNumbersAndTheReconciliationRefuses`
+
+Every expected value is written out by hand. The 39 is 1 plus 1 plus 5 plus 2 plus 1 plus 13
+plus 6 plus 10, and the 31 is that list short of PHOENIX DACTYLIFERA, UNKNOWN and WASHINGTONIA
+ROBUSTA.
+
+### Never observed in Revit
+
+Everything in this round. No refused column has been seen on a real schedule, no separator has
+been seen printed, STREETS has still never been picked, and no TOTAL row has been read off a
+live model. `KpiPlotReader.Read` and `KpiRequestHandler.Create` carry the Revit side of all four
+and no test loads either.
+
+### Not touched
+
+The Drawing Sheet. `Core/Shared`. `CLAUDE.md`. The other 43 findings.
+
+---
+
 ## 2026-09-10, forty second pass. The second audit of the KPI tool
 
 Pull request 55, merged into main as `5beea47`, onto main as it stood after the Drawing Sheet's

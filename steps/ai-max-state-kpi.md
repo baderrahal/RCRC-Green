@@ -1,6 +1,32 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Forty second pass, the second audit of the KPI tool alone. It built nothing
+Phase: 9, ship. Forty fifth pass, four findings that can put a wrong number in front of a
+client: finding 2 of the first audit and findings 30, 31 and 32 of the second. **The other 43
+stay open**, not renumbered, not reordered, not annotated.
+
+**The four cell position fallbacks refuse.** Every reader of a printed schedule hands back what
+it read or every reason it refused, never both, and a column the heading row does not name is
+refused in one sentence that names the column and prints the headings. The refusal travels on
+the plot reading, refuses the write, prints under the plot and among the reasons, and the pane
+draws it in red above Create.
+
+**A digit after the number ends is a refusal.** `CellNumber.Read` refuses "1,234 m2" and
+"1131,72" with the cell named rather than reading 1 and 1131, parses no separator because the
+project's setting has never been read, and every value measured on the real model still reads.
+
+**STREETS reads no area.** The reconciliation takes the template as a required argument, and
+where the map holds no area cell no filled region is read and nothing about the area is refused
+on, so MM-03 and MM-04 reading one raw area no longer end the first 78 plot run. The report says
+the area was not read and why.
+
+**The TOTAL row is read.** The species rows are held against it and a sum that does not match
+refuses the write naming both numbers. DM-12: eight rows adding to 39, TOTAL 39.
+
+Four break watches, one per finding, went red on 2, 6, 4 and 2 tests and were restored byte for
+byte. **Locally 988 tests, 0 failed and 0 skipped, 505 of them KPI**, 46 added. **Nothing in
+this round has been observed in Revit.**
+
+Before that, the forty second pass, the second audit of the KPI tool alone. It built nothing
 and fixed nothing. Pull request 55 is merged into main as `5beea47`, 942 tests on the runner
 against its merged head and 942 locally, 0 failed and 0 skipped on each, nothing added because
 nothing changed. The only file it adds is `steps/audit-kpi-2.md`, and this file is in the

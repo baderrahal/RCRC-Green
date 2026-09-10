@@ -45,9 +45,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             var all = new List<string[]> { Headings, Structure(heading) };
             all.AddRange(rows);
 
-            return Assert.Single(ShrubsAndLawnRows.SubtotalsIn(
+            return Assert.Single(ShrubsAndLawnRows.Read(
                 CreateFixture.ShrubsAndLawn(plot, all.ToArray()),
-                new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }));
+                new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }).Subtotals);
         }
 
         /// <summary>
