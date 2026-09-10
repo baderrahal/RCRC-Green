@@ -24,8 +24,11 @@ numbers moved with the rows: sixteen species rows, the Existing subtotal on row 
 Design on row 21 with its subtotal on 24, TOTAL on row 25. No code changed, so there is no
 watch to break. **Nothing in this round has been observed in Revit.**
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1095 tests at this branch, 0 failed and 0 skipped, 580 of them KPI, none added.**
+Pull request 68, merged into main as `5d062f6`. **The runner executed 1095 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1095 ran at `5d062f6`, 0 failed and 0
+skipped**, 580 of them KPI, none added. The merge went through the API with the title and the
+message both passed on the call, and the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer. Its tree is the branch's tree, checked.
 
 ---
 
