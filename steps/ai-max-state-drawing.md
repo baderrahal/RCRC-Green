@@ -14,9 +14,11 @@ rather than as a contradiction. The two remaining Parameter.Set returns on PRX_P
 checked. Refresh keeps the unticked plots and says how many marks it cleared. Every list on
 the panel remembers where it was scrolled, the grid both ways. Remove asks first when any
 row of the sheet holds typed text. The step 4 dropdown lists are read once per redraw and
-the free numbers once per read. Six tests added, 948 locally, four breaks each watched red
-on its own tests and reversed. Not merged yet. Nothing in this round has been through
-Revit.
+the free numbers once per read. Six tests added, four breaks each watched red on its own
+tests and reversed. Pull request 56 merged into main as `6bf968e` with 948 tests on the
+runner, 0 failed and 0 skipped, the same count the local run gave after the last file was
+written. The squash message passed on the merge call came back off main byte for byte
+again. Nothing in this round has been through Revit.
 
 Before that, the forty third pass, an audit of Drawing Sheet alone. It built nothing and
 fixed nothing.

@@ -4,6 +4,115 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty fourth pass. Hidden marks stay off the run, copied numbers lend no letter, and five more fixes
+
+Pull request 56, merged into main as `6bf968e`. **The runner executed 948 tests
+against it, 0 failed and 0 skipped, the same count the local run gave after the last file
+was written, and six above the 942 main carried before the round.** Findings 1, 2, 3, 4,
+5, 6, 9, 10 and 13 of `steps/audit-drawing.md` are marked FIXED under their entries, and
+everything else there stays as it was. Drawing Sheet territory only: no Shared file, no
+KPI file and none of the five shared Revit root files is touched.
+
+### Fix 1, a mark on a column the grid does not show
+
+The ninth two-records instance, and the one that wrote to the model. A view type ticked
+in step 2, marked in step 3 and unticked again left its mark in `_marked`, the panel
+handed the whole set to `RunPlan.Of`, which filters by ticked plot and nothing else, and
+the run made the view. The MARK header and the status line counted `_marked.Count` over a
+grid built from `_columns.Shown`, so the header could say 3 over a grid showing none.
+
+`SheetGrid.Marked` is the one list now: the marked cells the grid holds, in row order,
+and `MarkedCount` is its length. The panel builds the grid through one `GridNow` and reads
+that list for the header, the status line after a mark or a sweep, the plan preview and
+the run. `_marked` stays as the memory, so a mark comes back when its column does, and a
+mark on a plot outside the range is off the grid and so neither counted nor run. Two
+tests: `AMarkOnAHiddenColumnNeverReachesThePlan` builds a grid with one column and marks on
+two view types and hands `grid.Marked` to the plan, which makes one item, and
+`MarkedListsTheMarkedSquaresAndNothingOffTheGrid` pins the list against a hidden column, a
+plot out of range and a square holding a view.
+
+### Fix 2, the plot letter read off copied numbers
+
+`LettersIn` read 010QE Copy 001 as Q and a test pinned that as intended. CLAUDE.md records
+that only DM-11 has numbers of its own and every other plot carries copies of DM-11's, so
+on the measured model every plot but DM-11 was proposed DM-11's letter, and the report
+would have said proposed from the plot's own numbering over a number that goes into a
+drawing register.
+
+A number holding `ScannedSheet.CopyMark` is skipped before its letter is read and is never
+a seed for `Free`, so a plot carrying only copies gets the no-numbers refusal it already
+had words for, a plot with one number of its own beside a copy keeps its own letter, and
+the dropdown no longer offers 010QE Copy 002. `ACopyNumberStillGivesItsLetter` is replaced
+by `ACopyNumberGivesNoLetter`, whose comment says why the old pin was wrong, with
+`APlotCarryingOnlyCopiesIsTreatedAsHavingNoNumbers` and `ACopyNumberIsNeverASeed` beside
+it. Whether the team wants one letter per plot at all is still UNKNOWN, and a proposal
+built on copies could not have been the answer either way.
+
+### The other five
+
+Finding 3 and 10, the writer. The sheet name is set inside the same delete-again shape as
+the number, with the delete checked and Revit's message quoted. A schedule's link setting,
+fields and filters go on inside one that deletes the schedule again on a throw, or records
+it under left in the model when the delete fails, because a schedule short of the filter
+being added reads as correct on a drawing. `Renamed` quotes what Revit said instead of
+naming a duplicate that may not be there. What runs after `Made` for a plan view, a
+section and a sheet moved into `FinishPlanView`, `FinishSection` and `FinishSheet`, each
+called through `Finishing`, so a throw there is recorded as created and needing attention
+with Revit's words, where it used to land in the outer catch as refused and put the item
+under created and not created at once.
+
+Finding 4. The sheet's `Parameter.Set` on PRX_Plot_ID and `SetPlotId`'s both check the
+return and write the note the scope box writes, so a false is no longer a clean report.
+
+Finding 5. `Remembering` keeps a viewer's vertical and horizontal offsets by name and
+restores both on the first layout pass. `Scrolling` goes through it, the grid's row viewer
+and column viewer are named, step 4's view list and table are named per sheet, and the
+bare two-argument overload is deleted.
+
+Finding 6. `Took` reads the unticked plots before it puts the range back and unticks them
+again after, and returns the cleared count. `Read` on the handler is a
+`Func<DrawingSheetSnapshot, string>` now, and the refresh message ends with
+`BulkMarking.ClearedInWords` when anything was cleared.
+
+Finding 9. `FreeSheetNumbers` is a stored list worked out in the snapshot's constructor,
+the panel reads both dropdown lists once per redraw into a `SheetOffers`, and every name
+box and number box takes them as its `ItemsSource`, so 1,385 names are no longer copied
+into every row of every table on every redraw.
+
+Finding 13. `SheetBatch.RowsWithTypedText` counts rows where the name or the number was
+typed rather than proposed, `WhyRemovalAsks` is the question, and `RemoveASheet` puts it
+up as a WPF Yes and No box with No as the default, only when the count is above zero.
+
+### Breaks
+
+Four, each a reversed edit rather than a checkout, with the diff hash the same before the
+first and after the last:
+
+- Marked columns leaking into the grid's column list: Failed 2 of 948, the two fix 1
+  tests and nothing else
+- Both copy filters removed from `SheetNumbers`: Failed 3 of 948, the three fix 2 tests
+- `RowsWithTypedText` ignoring the generated flags: Failed 1 of 948,
+  `RemoveAsksOnlyWhenARowCarriesTypedText`
+- `RowsWithTypedText` counting typed names only: Failed 1 of 948,
+  `ARowCountsOnceWhicheverBoxWasTypedAndAnEmptyBoxDoesNotCount`
+
+### Not observed
+
+Nothing in this round has been through Revit. Unexecuted there: the grid and the step 4
+lists coming back where they were scrolled, and whether restoring both offsets on one
+layout pass holds for a viewer with one axis disabled; the Yes and No box over a docked
+pane; the refresh clause on the status line; the unticked plots surviving a refresh; the
+empty number box on a copy-only plot and the dropdown without copies; a name box fed by
+`ItemsSource` while the user types; the sheet name delete-again; the schedule delete-again
+on a throw, and whether `AddField` or `AddFilter` throws at all; `Finishing` turning a
+throw into needs attention; and the two `Set` checks. The mockup at
+`design/pr-56/panel.html` is drawn from the code and says so.
+
+The hooks were not probed this round. They ran on the real commit and passed it, which
+is not the same as watching one refuse.
+
+---
+
 ## 2026-09-10, forty second pass. Three homes in Core, a wall between tasks, and the files split
 
 Pull request 50, merged into main as `e0a7a97`. **The runner executed 912 tests against
