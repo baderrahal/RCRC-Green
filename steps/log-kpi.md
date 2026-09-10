@@ -4,6 +4,88 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty second pass. The second audit of the KPI tool
+
+Pull request 55, merged into main as `5beea47`, onto main as it stood after the Drawing Sheet's
+own audit landed as `d60a750`. **The runner executed 942 tests against its merged head, 0 failed
+and 0 skipped. Locally the same 942 ran, 0 failed and 0 skipped**, at `82d95f4`, before the
+three breaks and again after each was restored byte for byte. Nothing added, because nothing
+was changed.
+
+The merge went through the API with the title and the message both passed on the call, and the
+commit came back off main carrying neither a co-author credit line nor a generated-by footer.
+
+### What it is
+
+`steps/audit-kpi-2.md`, read only. Part A goes through the 27 open findings of the first audit
+before anything else: **every one STILL STANDS**, with the line numbers as the files read today,
+none passed by when the code moved in pull requests 52 and 53 and none found untrue. Findings
+10 and 11 were re-proved by the same breaks that proved them at 904.
+
+Twenty new findings, numbered 30 to 49 so the two audits cite together: 0 BLOCKS, 3 WRONG,
+7 COSTLY, 10 TIDY, and 9 dropped as costless. The shape hunted was a right line of code standing
+on a fact measured once, which is what the subtotal rule was for four rounds, and the logic
+notes list every rule in the tool that rests on one observation with what it was measured on.
+
+### The three WRONG
+
+**`CellNumber` reads a digit grouping separator as the end of the number.** Every printed value
+it has met is under a thousand, and the two four figure values ever seen, 1161 and 3729, came
+off the one project, whose unit format prints no separator. Nothing reads the setting. On a
+project that groups digits a one phase group over 999 m2 prints two rows alike, both read as
+their thousands, the add-up check passes because 1 equals 1, and 1 is written into F10. Parks
+and streets are where areas run past a thousand and neither has ever been run.
+
+**The area is read, totalled and refused on for every template, and STREETS has no area
+cell.** MM-03 and MM-04 are street plots and both read 12182.05561411 in the 00 link, measured
+on the 1355 scan. So the first 78 plot run will end asking the user to confirm an area the
+workbook has no cell for, and read all 78 again after the confirm. That is a prediction and not
+an observation, because STREETS has never been picked.
+
+**The softscape TOTAL row is printed by the schedule and read by nothing.** `SoftscapeRows`
+drops a row whose count does not read as a whole number with a bare continue, and the report
+prints how many species rows it kept and never what the schedule says they add to. The first
+real workbook read 31 trees where the model held 39 and nothing in the tool said so.
+
+### What was broken to see whether a test would notice
+
+All three restored byte for byte and checked with md5, and the suite rerun green at 942.
+
+- shrubs and lawn swapped on the way to their cells in `KpiCreatePlan.Of`: **942 green**,
+  finding 10 stands
+- the read back in `WorkbookPatcher.Patch` replaced with the value that was sent: **942
+  green**, finding 11 stands
+- CELLS WRITTEN in the create report printed off the plan rather than off what landed: **942
+  green**, finding 33, new. No test builds a run that wrote
+
+### The hooks
+
+All four probed with real payloads, exit codes read, nothing committed, the tree clean after.
+`block-paths.sh` refused two writes outside the repo and passed one inside.
+`require-file-on-commit.sh` refused a commit with no state file. `territory-check.sh` passed
+Kpi alone, refused Kpi beside Drawing Sheet naming both, and refused Kpi beside `Core/Shared`
+naming the Shared file. `writing-check.sh` refused a listed word and a staged em dash and
+passed a clean message. One probe was made wrongly and is recorded in the audit.
+
+### The tally
+
+Two records of one fact, every instance this repo has named: twenty one. Eight fixed, six open
+from the first audit, five new here, one from `steps/audit.md`, one held open on purpose.
+Twelve stand in the code today.
+
+### What has run in Revit
+
+Nothing in this round. It is an audit. The user's own list stands: no workbook written since
+the cache fix, the species rows, the output folder, the two guards or the subtotal fix, the
+identical area flag never fired, STREETS never picked, the 78 plot run never attempted.
+
+### Not touched
+
+Every code file, every test, every rules file, `CLAUDE.md`, the Drawing Sheet and `Core/Shared`.
+The state file is in the commit because the commit hook requires it.
+
+---
+
 ## 2026-09-10, forty first pass. Three things off the 0928 run, the first twenty plot run
 
 Pull request 53, merged into main as `b83e3d6`. **The runner executed 942 tests against its

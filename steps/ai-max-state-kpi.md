@@ -1,7 +1,9 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Forty second pass, the second audit of the KPI tool alone. It built nothing
-and fixed nothing. The only file it adds is `steps/audit-kpi-2.md`, and this file is in the
+and fixed nothing. Pull request 55 is merged into main as `5beea47`, 942 tests on the runner
+against its merged head and 942 locally, 0 failed and 0 skipped on each, nothing added because
+nothing changed. The only file it adds is `steps/audit-kpi-2.md`, and this file is in the
 commit only because `require-file-on-commit.sh` requires it in every commit.
 
 **Part A first: all 27 open findings of `steps/audit-kpi.md` STILL STAND at `82d95f4`**, with
