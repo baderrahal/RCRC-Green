@@ -1,6 +1,22 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Forty second pass, the territory round, merged. Nothing a user can see
+Phase: 9, ship. Forty third pass, an audit of Drawing Sheet alone. It built nothing and
+fixed nothing.
+
+Thirty one findings are in steps/audit-drawing.md, ranked by cost: no BLOCKS, four WRONG,
+thirteen COSTLY, fourteen TIDY. The four WRONG: a mark on a view type unticked in step 2
+still runs while the header counts marks the grid does not show, the sheet number
+proposals read the plot letter off copied numbers so every plot but DM-11 proposes Q, a
+refused typed sheet name or a throw while a schedule's fields and filters are added leaves
+the element in the model with the report saying not made, and two Parameter.Set returns on
+PRX_Plot_ID are still ignored. All eleven unfixed findings of the last audit still stand.
+Three deliberate breaks: one test judged hollow went red and was not, two stayed green as
+judged and the suite caught both breaks elsewhere. All four hooks fired and blocked when
+probed. The audit ran at `82d95f4`, where the suite reads 942, 483 of them apart from KPI.
+This file is in the commit only because the commit hook requires a state file in every
+commit, which the audit's touch-nothing-else rule had to give way to.
+
+Before that, the forty second pass, the territory round, merged. Nothing a user can see
 changed.
 
 Pull request 50 merged into main as `e0a7a97` with 912 tests on the runner, 0 failed and
