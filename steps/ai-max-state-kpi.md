@@ -1,6 +1,33 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Forty first pass, three things off the 0928 run, the first twenty plot run this
+Phase: 9, ship. Forty second pass, the second audit of the KPI tool alone. It built nothing
+and fixed nothing. The only file it adds is `steps/audit-kpi-2.md`, and this file is in the
+commit only because `require-file-on-commit.sh` requires it in every commit.
+
+**Part A first: all 27 open findings of `steps/audit-kpi.md` STILL STAND at `82d95f4`**, with
+today's line numbers, none passed by when the code moved and none found untrue. Twenty new
+findings, numbered 30 to 49 so the two audits cite together: 0 BLOCKS, 3 WRONG, 7 COSTLY, 10
+TIDY, and 9 dropped as costless. The shape hunted was a right line standing on a fact measured
+once, and the logic notes list every such rule in the tool with what it was measured on.
+
+The three WRONG. `CellNumber` reads a digit grouping separator as the end of the number, and
+every value it has met printed under a thousand, so on a project that groups digits a one phase
+group over 999 m2 writes its thousands and the add-up check passes because 1 equals 1. The area
+is read, totalled and refused on for every template and STREETS has no area cell, so the first
+78 plot run will refuse on MM-03 and MM-04, measured identical on the 1355 scan, over a number
+it is not going to write, and read all 78 again after the confirm. The softscape TOTAL row is
+printed by the schedule and read by nothing, so a species row the reader drops with a bare
+continue is invisible, which is how 31 trees reached a workbook where the model held 39.
+
+Three breaks, each restored byte for byte with md5 and the suite rerun green at 942. The shrubs
+and lawn swap and the read back echo stayed green as they did at 904, so findings 10 and 11
+stand re-proved. Printing CELLS WRITTEN off the plan rather than off what landed stayed green
+too, because no test builds a run that wrote. All four hooks fired and blocked when probed,
+with one probe recorded as made wrongly. The two records of one fact tally is twenty one
+instances, eight fixed, twelve standing, one held open on purpose. **942 tests at `82d95f4`,
+459 KPI, and nothing was changed.**
+
+Before that, the forty first pass, three things off the 0928 run, the first twenty plot run this
 tool has done. Pull request 53 is merged into main as `b83e3d6`, 942 tests on the runner against
 its merged head and 942 locally, 0 failed and 0 skipped on each, 927 before and 15 added.
 
