@@ -14,8 +14,11 @@ been observed in Revit.** The workbook the run wrote was not handed over and was
 row numbers and the counts below are the ones stated for it, and the test workbook is built to
 that shape with made up names on every row the run did not name.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1014 tests at this branch, 0 failed and 0 skipped, 525 of them KPI, 20 added here.**
+Pull request 59, merged into main as `48bd623`. **The runner executed 1014 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1014 ran at `48bd623`, 0 failed and 0
+skipped**, 525 of them KPI, 20 added here. The merge went through the API with the title and
+the message both passed on the call, and the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer. Its tree is the branch's tree, checked.
 
 ### Fault 1. The tree list had three row ranges and the tool trusted the shortest
 

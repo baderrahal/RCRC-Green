@@ -18,9 +18,9 @@ the plot, the kind and every schedule, and the report names the schedule each nu
 
 The read cost is measured in calls in the log, every plot walking all 951 schedules, and is not
 changed. Three break watches went red on 5, 1 and 1 tests and were restored byte for byte.
-**Locally 1014 tests at this branch, 0 failed and 0 skipped, 525 of them KPI, 20 added.** The
-pull request, the merge hash and the runner's count go in the record the merge adds here.
-**Nothing in this round has been observed in Revit.**
+Pull request 59 is merged into main as `48bd623`, **1014 tests on the runner against its
+merged head and 1014 locally at that head, 0 failed and 0 skipped on each**, 525 of them KPI,
+20 added here. **Nothing in this round has been observed in Revit.**
 
 Before that, the forty fifth pass, four findings that can put a wrong number in front of a
 client: finding 2 of the first audit and findings 30, 31 and 32 of the second. **The other 43
