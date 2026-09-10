@@ -252,11 +252,15 @@ namespace RcrcGreen.Revit.Kpi
             var species = new List<SpeciesRow>();
             var subtotals = new List<GroupSubtotal>();
             var refusals = new List<string>();
-            bool softscapeRead = false;
-            bool groundRead = false;
             bool totalRead = false;
             int total = 0;
             int passedOver = 0;
+
+            // Every schedule of each kind is found first and counted. One is read. Two or more
+            // are named and none of them is read, because FM-05 holds two whose names hold
+            // SOFTSCAPE and reading both counted its trees twice.
+            var softscape = new List<ViewSchedule>();
+            var ground = new List<ViewSchedule>();
 
             foreach (ViewSchedule schedule in Schedules(document))
             {
@@ -270,44 +274,52 @@ namespace RcrcGreen.Revit.Kpi
                         + parsed.PlotId + ". Both are recorded and neither is resolved.");
                 }
 
-                ScannedSchedule read = Printed(schedule);
-
-                // A refused read travels with the schedule's name and refuses the write. It
-                // used to be a list of nothing, which the reconciliation read as a plot whose
-                // schedule listed no species.
                 if (KpiNames.HoldsAny(schedule.Name, KpiNames.SoftscapeWords))
                 {
-                    softscapeRead = true;
-                    SoftscapeReading trees = SoftscapeRows.Read(read, phases, plotId);
-                    species.AddRange(trees.Species);
-                    refusals.AddRange(trees.Refusals.Select(why => schedule.Name + ": " + why));
-                    if (trees.TotalRead)
-                    {
-                        totalRead = true;
-                        total += trees.Total;
-                    }
-
-                    passedOver += trees.RowsPassedOver;
+                    softscape.Add(schedule);
                     continue;
                 }
 
                 if (KpiNames.HoldsAny(schedule.Name, "SHRUB", "LAWN"))
                 {
-                    groundRead = true;
-                    ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(
-                        read, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading });
-                    subtotals.AddRange(ground.Subtotals);
-                    refusals.AddRange(ground.Refusals.Select(why => schedule.Name + ": " + why));
+                    ground.Add(schedule);
                 }
+            }
+
+            // A refused read travels with the schedule's name and refuses the write. It used
+            // to be a list of nothing, which the reconciliation read as a plot whose schedule
+            // listed no species.
+            if (softscape.Count == 1)
+            {
+                ViewSchedule schedule = softscape[0];
+                SoftscapeReading trees = SoftscapeRows.Read(Printed(schedule), phases, plotId);
+                species.AddRange(trees.Species);
+                refusals.AddRange(trees.Refusals.Select(why => schedule.Name + ": " + why));
+                if (trees.TotalRead)
+                {
+                    totalRead = true;
+                    total = trees.Total;
+                }
+
+                passedOver = trees.RowsPassedOver;
+            }
+
+            if (ground.Count == 1)
+            {
+                ViewSchedule schedule = ground[0];
+                ShrubsAndLawnReading read = ShrubsAndLawnRows.Read(
+                    Printed(schedule), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading });
+                subtotals.AddRange(read.Subtotals);
+                refusals.AddRange(read.Refusals.Select(why => schedule.Name + ": " + why));
             }
 
             return new PlotReading(
                 plotId,
                 sheet == null ? string.Empty : Held(sheet, componentParameter),
                 sheet == null ? string.Empty : Held(sheet, referenceParameter),
-                softscapeRead,
+                softscape.Select(one => one.Name),
                 species,
-                groundRead,
+                ground.Select(one => one.Name),
                 subtotals,
                 regions,
                 regionSeconds + clock.Elapsed.TotalSeconds,

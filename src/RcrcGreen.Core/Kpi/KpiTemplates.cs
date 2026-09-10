@@ -32,8 +32,11 @@ namespace RcrcGreen.Core.Kpi
         public const string GreenStrategySheet = "Green Strategy KPI's";
 
         /// <summary>
-        /// On both tree list sheets: the header is row 3, data runs from row 4, the botanical
-        /// name is read from column D and the quantity is written into column B.
+        /// On both tree list sheets: the header is row 3, the botanical name is read from column
+        /// D and the quantity is written into column B. The row under the header is where the
+        /// list is read down from, and it is the one number about a tree list the map still
+        /// holds, measured at row 3 on all seven templates. Where the names stop and which rows
+        /// the total reaches are read off the file and are in no map.
         /// </summary>
         public const string QuantityColumn = "B";
 
@@ -72,8 +75,8 @@ namespace RcrcGreen.Core.Kpi
                 new MappedCell(KpiValue.Shrubs, "F11"),
                 new MappedCell(KpiValue.Lawn, "H11")
             },
-            new TreeRows(ExistingTreesSheet, 4, 83),
-            new TreeRows(ProposedTreesSheet, 4, 83));
+            new TreeSheet(ExistingTreesSheet),
+            new TreeSheet(ProposedTreesSheet));
 
         public static readonly IReadOnlyList<KpiTemplate> All = new[]
         {
@@ -98,8 +101,8 @@ namespace RcrcGreen.Core.Kpi
                     new MappedCell(KpiValue.Shrubs, "F11"),
                     new MappedCell(KpiValue.Lawn, "H11")
                 },
-                new TreeRows(ExistingTreesSheet, 4, 92),
-                new TreeRows(ProposedTreesSheet, 4, 84));
+                new TreeSheet(ExistingTreesSheet),
+                new TreeSheet(ProposedTreesSheet));
         }
 
         private static KpiTemplate Standard(string name, string mainSheetName)
@@ -116,8 +119,8 @@ namespace RcrcGreen.Core.Kpi
                     new MappedCell(KpiValue.Shrubs, "F10"),
                     new MappedCell(KpiValue.Lawn, "H10")
                 },
-                new TreeRows(ExistingTreesSheet, 4, 83),
-                new TreeRows(ProposedTreesSheet, 4, 83));
+                new TreeSheet(ExistingTreesSheet),
+                new TreeSheet(ProposedTreesSheet));
         }
 
         /// <summary>

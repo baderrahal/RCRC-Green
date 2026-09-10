@@ -305,11 +305,13 @@ namespace RcrcGreen.Revit.Kpi
             KpiCreatePlan plan = null;
             PatchOutcome outcome = null;
             string outputPath = string.Empty;
+            SpeciesList existing = null;
+            SpeciesList proposed = null;
 
             if (reconciliation.AddsUp)
             {
-                SpeciesList existing = SpeciesList.In(asked.TemplatePath, asked.Template.ExistingTrees);
-                SpeciesList proposed = SpeciesList.In(asked.TemplatePath, asked.Template.ProposedTrees);
+                existing = SpeciesList.In(asked.TemplatePath, asked.Template.ExistingTrees);
+                proposed = SpeciesList.In(asked.TemplatePath, asked.Template.ProposedTrees);
 
                 plan = KpiCreatePlan.Of(
                     asked.Template, component, reference, location, area, shrubs, lawn,
@@ -331,7 +333,8 @@ namespace RcrcGreen.Revit.Kpi
                 asked.ComponentParameter, asked.ReferenceParameter, location,
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
                 merged, KpiMerge.Ungrouped(readings), outcome,
-                RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds));
+                RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
+                existing, proposed);
 
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(

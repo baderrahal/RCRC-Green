@@ -33,10 +33,30 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  F11  SHRUBS & GROUND COVER TOTAL AREA from the shrubs and lawn schedule",
                     "  H11  LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule",
                     "  E5, G5, H5  the date, the person and their position, typed by the team, never written",
-                    "Tree List - Existing: quantities into B4 to B92, one per botanical name in column D",
-                    "Tree List - Proposed: quantities into B4 to B84, one per botanical name in column D"
+                    "Tree List - Existing: one quantity into column B per botanical name in column D, over every row that names one",
+                    "Tree List - Proposed: one quantity into column B per botanical name in column D, over every row that names one",
+                    "  Which rows hold a name and which rows the total reaches are read off the file when "
+                    + "Create is pressed, never off a range in this tool, and the report says what it found."
                 },
                 TemplateWords.WouldFill(KpiTemplates.ExistingParks, Picked));
+        }
+
+        /// <summary>
+        /// The pane printed B4 to B83 off the map for MOSQUES and the sheet's names ran to row
+        /// 101. No line about a tree list carries a row number now, on any template.
+        /// </summary>
+        [Fact]
+        public void NoTreeListLineCarriesARowNumber()
+        {
+            foreach (KpiTemplate template in KpiTemplates.All)
+            {
+                foreach (string line in TemplateWords.WouldFill(template, Picked))
+                {
+                    if (!line.StartsWith("Tree List", System.StringComparison.Ordinal)) continue;
+
+                    Assert.DoesNotContain(line.ToCharArray(), character => char.IsDigit(character));
+                }
+            }
         }
 
         /// <summary>

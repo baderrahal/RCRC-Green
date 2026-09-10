@@ -77,6 +77,19 @@ the plot reading with the schedule's name, prints in red above Create, and print
 report, among the reasons and under the plot. A refused read used to come back as a list of
 nothing, which read as a plot whose schedule listed no species.
 
+**A plot holds one schedule of a kind or the kind is not read.** FM-05 holds two schedules
+whose names hold SOFTSCAPE. `KpiPlotReader` appended both, `KpiMerge.Species` added them by
+name and group, and the first twenty plot run printed FM-05 twice in one species row, FM-05 10,
+FM-05 10, FM-06 15, so that plot's trees were counted twice and ALBIZIA LEBBECK proposed read
+170 where the truth is nearer 160. The shrubs and lawn read had the other half of the same
+fault, the first group with the heading taken and a second schedule dropped in silence. The
+reader now finds every schedule of each kind filtered on the plot before it reads any, reads
+the one when there is one, and hands `PlotReading` the names of all of them. A reading refuses
+to hold species rows beside two softscape names or subtotals beside two shrubs and lawn names,
+and `Reconciliation` refuses the write naming the plot, the kind and every schedule found. The
+report names the schedule each number came off, per plot, and says NONE READ with every name
+where there were two. Nothing picks the first, and nothing adds them.
+
 ## Matching a species is plain or it is nothing
 
 The workbook's own column D is the only species list there is and `SpeciesList` reads it out of
@@ -95,11 +108,33 @@ column D and the count in column B and nothing anywhere else. This reverses the 
 named and written nowhere: a quantity that goes nowhere leaves a tree list that reads as complete
 and is short, and DM-12 came out reading 31 trees where the model holds 39.
 
-**The empty rows come from the file and never from a constant.** The MOSQUES map entry stops at
-row 83 and that sheet's own total is `SUM(B4:B92)`, so rows 84 to 92 are empty AND summed. The
-range the total sums is what says which rows reach it, so `SpeciesList` reads that formula. With
-no total found there are no empty rows and a species is reported as not placed, rather than
-written into a row nothing adds up.
+**Every row fact comes from the file and the map holds no row range.** The first twenty plot
+run measured three answers to where the MOSQUES existing list ends: the map said row 83, the
+sheet's total said `SUM(B4:B92)`, and the botanical names ran to row 101, 98 of them. The tool
+trusted the shortest, so CONOCARPUS LANCIFOLIUS at row 84, PHOENIX DACTYLIFERA at 86,
+WASHINGTONIA ROBUSTA at 87 and FICUS BENJAMINA at 89 were reported as having nowhere to go, 66
+trees with a row waiting, and the workbook went out saying 76 existing trees where the model
+holds 161. `SpeciesList` reads two things off each sheet and holds them apart: every row that
+names a species, read down column D from the row under the header until the first empty row,
+and the rows the total reaches, read off the total's own `SUM` formula. The one number left in
+the map is the header row, 3, measured on all seven templates.
+
+**A name on a row the total does not reach is refused, with the row and the total named.** On
+that same sheet rows 93 to 101 name nine species past `SUM(B4:B92)`, so PROSOPIS JULIFLORA at
+row 99 is matched, not written, and named under SPECIES THE LIST HOLDS ON A ROW ITS TOTAL DOES
+NOT REACH with its cell in CELLS NOT WRITTEN. A count written where no total adds it leaves a
+sheet that reads as complete and is short, which is worse than the gap. With no `SUM` found a
+matched name and an unmatched one are both refused the same way, because nothing says which
+rows a count reaches. The empty rows for a species the list does not hold are the rows the
+total reaches that name nothing, worked out from those two reads and stated by nothing else. A
+name below the first empty row is not the list, is named in the report, and a species carrying
+it is refused rather than written in a second time above it.
+
+**The report prints both lists as read**, under THE WORKBOOK'S OWN TREE LISTS: the names and
+their rows, the total and its reach, the empty rows, and the names the total does not reach.
+The MOSQUES list read 80 names in rows 4 to 83 on 2026-09-09 and 98 in rows 4 to 101 on
+2026-09-10. Who added the 18 and why the total was not extended to cover the last nine is
+UNKNOWN and is for the team.
 
 **Family, genus, native, canopy and every code column stay empty.** Those are the client's data
 and the tool does not know them, so the KPIs that need them still cannot see a species written
@@ -400,8 +435,9 @@ mapping out of a workbook and nothing fills on a best guess.
 
 Recognition is the main sheet name first, which settles five of seven. The two park templates
 share Park Name, so the file name breaks the tie, and a name that settles nothing puts the
-pick to the user. The tree row ranges come from the map entry and never from a constant,
-because writing 89 rows into an 80 row list puts quantities into rows no total sums.
+pick to the user. The map names the two tree list sheets and no row on either. It carried a
+last row per template until the first twenty plot run, 83 on MOSQUES, and the names on the real
+sheet ran to 101, so the rows are read off the file under the species rule above.
 
 ## A workbook is copied and patched, never loaded and resaved
 
@@ -701,8 +737,9 @@ Two things the check found that reading the map could not:
   sheet computes from, and `H9` is `=H8/Area`, which is the divide by zero that goes away when
   the area is filled
 
-Species stop where the map says: existing rows 4 to 92, proposed 4 to 84, header row 3, and the
-total at row 93 is `SUM(B4:B92)` on both sheets.
+The header is row 3 and the total at row 93 is `SUM(B4:B92)` on both sheets. Where the species
+stop is read off each sheet when Create is pressed and is in no map, because the MOSQUES
+existing names ran to row 101 on 2026-09-10 against a map entry that said 83.
 
 ## What the first real workbook measured
 
@@ -734,6 +771,30 @@ an unmatched species by guessing**: the name and the count go in and no other co
 **What is still open is that a row written that way carries no family, no genus and no native
 flag**, so the KPIs that need those cannot see it, and the client's species lists are short of
 trees this project actually plants. That is for the team. `steps/log-kpi.md` carries it.
+
+## What the first twenty plot run measured
+
+Twenty mosque plots on MOSQUES, 2026-09-10 at 11:16, and the workbook it wrote read against
+the model. These are measurements off that run, not reasoning about it.
+
+- **The subtotal rule holds on every number it was predicted to move.** DM-16 shrubs 30 to 84,
+  DM-25 13 to 241, FM-05 shrubs 361 to 820, FM-05 grass 96 to 165. Shrubs total 2517 to 3258,
+  lawn 1058 to 1127
+- **The date, the prepared by and the position reached the file.** The cache section read
+  cached results left 0, dropped 1674, 37 parts in and 36 out with `xl/calcChain.xml` named as
+  the one removed on purpose. Three species were written into empty rows on the Proposed sheet
+  with the name and the count and nothing else
+- **Tree List - Existing had three row ranges**: the map and the pane said B4 to B83, the
+  sheet's total said `SUM(B4:B92)`, and the names ran from row 4 to row 101. Six species were
+  reported as having nowhere to go, 85 existing trees between them, and four of the six sat in
+  the list past row 83. The workbook said 76 existing trees where the model holds 161. Fixed
+  under the species rule
+- **FM-05's trees were counted twice.** Two schedules whose names hold SOFTSCAPE, both read
+  and added. Fixed under the accounting rule
+- **313.5 seconds, 312.8 of them reading the model**, 20 plots at 15.6 seconds each, and 0.7
+  seconds for everything after the read. STREETS ticks 78 plots, which is about twenty minutes
+  at that rate. What the read does per plot is in the log. It is measured in calls and not in
+  seconds, because nothing here runs Revit, and it is not changed
 
 ## The area is not a schedule row
 

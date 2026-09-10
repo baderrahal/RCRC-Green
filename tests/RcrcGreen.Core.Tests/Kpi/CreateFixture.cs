@@ -47,7 +47,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             string outputPath = null,
             PatchOutcome outcome = null,
             RunTiming timing = null,
-            KpiTemplate template = null)
+            KpiTemplate template = null,
+            SpeciesMatch[] matches = null,
+            SpeciesList existingList = null,
+            SpeciesList proposedList = null)
         {
             KpiTemplate which = template ?? KpiTemplates.Mosques;
 
@@ -72,7 +75,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 held,
                 Reconciliation.Of(held.Select(one => one.PlotId).ToList(), held, null, false, which),
                 KpiCreatePlan.Of(which, null, null, "KING FAHD", area, null, null,
-                    null, "2026-09-09", "xx", "bb"),
+                    matches, "2026-09-09", "xx", "bb"),
                 area,
                 Totalled.Nothing,
                 Totalled.Nothing,
@@ -81,7 +84,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null,
                 null,
                 outcome,
-                timing ?? RunTiming.NotTimed);
+                timing ?? RunTiming.NotTimed,
+                existingList,
+                proposedList);
         }
 
         public static PlotReading Plot(
@@ -99,18 +104,22 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] readRefusals = null,
             bool softscapeTotalRead = false,
             int softscapeTotal = 0,
-            int rowsPassedOver = 0)
+            int rowsPassedOver = 0,
+            string[] softscapeSchedules = null,
+            string[] shrubsAndLawnSchedules = null)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
             string chosen = chosenRegion ?? (held.Length > 0 ? held[0].TypeName : null);
 
+            // A plot read has one schedule of each kind unless a test names otherwise, and the
+            // names are the model's own shape.
             return new PlotReading(
                 plotId,
                 component,
                 reference,
-                softscapeRead,
+                softscapeSchedules ?? (softscapeRead ? new[] { SoftscapeName(plotId) } : new string[0]),
                 species ?? new SpeciesRow[0],
-                shrubsAndLawnRead,
+                shrubsAndLawnSchedules ?? (shrubsAndLawnRead ? new[] { ShrubsAndLawnName(plotId) } : new string[0]),
                 subtotals ?? new GroupSubtotal[0],
                 held,
                 readSeconds,
@@ -122,6 +131,16 @@ namespace RcrcGreen.Core.Tests.Kpi
                 rowsPassedOver);
         }
 
+        public static string SoftscapeName(string plot)
+        {
+            return plot + "-(600) SOFTSCAPE SCHEDULE";
+        }
+
+        public static string ShrubsAndLawnName(string plot)
+        {
+            return plot + "-(600) SHRUBS AND LAWN SCHEDULE";
+        }
+
         /// <summary>
         /// A softscape schedule as the model prints one, so the row reader is tested against
         /// the shape rather than against a list of species handed to it.
@@ -129,7 +148,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public static ScannedSchedule Softscape(string plot, params string[][] rows)
         {
             return KpiFixture.Schedule(
-                plot + "-(600) SOFTSCAPE SCHEDULE",
+                SoftscapeName(plot),
                 fields: new[]
                 {
                     KpiFixture.Field("BOTANICAL NAME"),
@@ -143,7 +162,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public static ScannedSchedule ShrubsAndLawn(string plot, params string[][] rows)
         {
             return KpiFixture.Schedule(
-                plot + "-(600) SHRUBS AND LAWN SCHEDULE",
+                ShrubsAndLawnName(plot),
                 categoryName: "Floors",
                 fields: new[] { KpiFixture.Field("TYPE"), KpiFixture.Field("AREA") },
                 rowsWereRead: true,
@@ -156,9 +175,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// prints UNKNOWN and the workbook holds four rows named Unknown Tree, which is why
         /// nothing can match those on name.
         ///
-        /// It starts at row 4 with three empty rows under it that the total sums, which is the
-        /// shape the real MOSQUES lists have: 80 names, then rows 84 to 92 empty, and B93
-        /// summing B4 to B92.
+        /// It starts at row 4 with three empty rows under it that the total reaches, which is
+        /// the shape the first MOSQUES list had: 80 names, then rows 84 to 92 empty, and B93
+        /// summing B4 to B92. The empty rows are not handed in. They follow from the names and
+        /// the total's range, the way they do off a file.
         /// </summary>
         public static SpeciesList WorkbookList(params string[] names)
         {
@@ -171,10 +191,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             int at = 4;
             foreach (string name in names) rows.Add(new SpeciesListRow(at++, name));
 
-            var free = new List<int>();
-            for (int more = 0; more < emptyRows; more++) free.Add(at++);
-
-            return SpeciesList.Holding(rows, free);
+            int last = at + emptyRows - 1;
+            return SpeciesList.Holding(rows, 4, last, KpiTemplates.QuantityColumn + (last + 1));
         }
 
         public static IReadOnlyList<string> Plots(params PlotReading[] readings)

@@ -44,6 +44,12 @@ namespace RcrcGreen.Core.Kpi
     /// street plots, and the first 78 plot run would have ended asking the user to confirm an
     /// area the workbook has no cell for, then read all 78 again.
     ///
+    /// **And one more, measured on the first twenty plot run.** A plot holding two schedules of
+    /// one kind, two whose names hold SOFTSCAPE or two whose names hold SHRUB or LAWN. FM-05
+    /// holds two softscape schedules, both were read and added, and its trees were counted
+    /// twice. Nothing here can know which is the real one, so the write is refused naming the
+    /// plot, the kind and every schedule found.
+    ///
     /// It refuses. It does not write a total with a note attached.
     /// </summary>
     public sealed class Reconciliation
@@ -51,6 +57,26 @@ namespace RcrcGreen.Core.Kpi
         public const string NoSoftscape = "no softscape schedule";
 
         public const string NoShrubsAndLawn = "no shrubs and lawn schedule";
+
+        public const string SoftscapeKind = "softscape";
+
+        public const string ShrubsAndLawnKind = "shrubs and lawn";
+
+        /// <summary>
+        /// The refusal for a plot holding more than one schedule of a kind, and the reason on a
+        /// plot that gave nothing because of it.
+        /// </summary>
+        public static string MoreThanOne(string plotId, string kind, IReadOnlyList<string> names)
+        {
+            return plotId + " holds " + names.Count + " " + kind + " schedules, "
+                + string.Join(" and ", names.ToArray())
+                + ", and nothing says which is the real one, so none of them was read.";
+        }
+
+        public static string MoreThanOneInShort(string kind, int howMany)
+        {
+            return howMany + " " + kind + " schedules and none read, see above";
+        }
 
         public const string NoArea = "no filled region holding an area";
 
@@ -62,6 +88,8 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<string> read,
             IReadOnlyList<string> withoutSoftscape,
             IReadOnlyList<string> withoutShrubsAndLawn,
+            IReadOnlyList<string> withMoreThanOneSoftscape,
+            IReadOnlyList<string> withMoreThanOneShrubsAndLawn,
             IReadOnlyList<string> withoutArea,
             IReadOnlyList<PlotAndReason> contributedNothing,
             IReadOnlyList<IdenticalArea> identicalAreas,
@@ -73,6 +101,8 @@ namespace RcrcGreen.Core.Kpi
             Read = read;
             WithoutSoftscape = withoutSoftscape;
             WithoutShrubsAndLawn = withoutShrubsAndLawn;
+            WithMoreThanOneSoftscape = withMoreThanOneSoftscape;
+            WithMoreThanOneShrubsAndLawn = withMoreThanOneShrubsAndLawn;
             WithoutArea = withoutArea;
             ContributedNothing = contributedNothing;
             IdenticalAreas = identicalAreas;
@@ -83,9 +113,17 @@ namespace RcrcGreen.Core.Kpi
 
         public IReadOnlyList<string> Read { get; }
 
+        /// <summary>
+        /// Plots holding no schedule of the kind. A plot holding two is in neither this nor the
+        /// count of plots with one, it is in the list below.
+        /// </summary>
         public IReadOnlyList<string> WithoutSoftscape { get; }
 
         public IReadOnlyList<string> WithoutShrubsAndLawn { get; }
+
+        public IReadOnlyList<string> WithMoreThanOneSoftscape { get; }
+
+        public IReadOnlyList<string> WithMoreThanOneShrubsAndLawn { get; }
 
         /// <summary>
         /// Empty when the template takes no area, because then no region was read and no plot
@@ -170,6 +208,22 @@ namespace RcrcGreen.Core.Kpi
                     + which + " reads " + total.Total + " and its parts add to " + total.Sum + ".");
             }
 
+            // Two schedules of one kind on one plot. The first twenty plot run added both of
+            // FM-05's softscape schedules and counted its trees twice. Neither was read now, and
+            // this is what says so.
+            foreach (PlotReading reading in held.OrderBy(one => one.PlotId, NaturalOrder.Comparer))
+            {
+                if (reading.MoreThanOneSoftscape)
+                {
+                    refusals.Add(MoreThanOne(reading.PlotId, SoftscapeKind, reading.SoftscapeSchedules));
+                }
+
+                if (reading.MoreThanOneShrubsAndLawn)
+                {
+                    refusals.Add(MoreThanOne(reading.PlotId, ShrubsAndLawnKind, reading.ShrubsAndLawnSchedules));
+                }
+            }
+
             // Every reason a schedule read was refused, and the species rows against the TOTAL
             // the softscape schedule printed. A refused read used to be a zero, and a species
             // row dropped on the way was invisible.
@@ -232,8 +286,10 @@ namespace RcrcGreen.Core.Kpi
             return new Reconciliation(
                 wanted.OrderBy(one => one, NaturalOrder.Comparer).ToList(),
                 read.OrderBy(one => one, NaturalOrder.Comparer).ToList(),
-                Named(held, one => !one.SoftscapeRead),
-                Named(held, one => !one.ShrubsAndLawnRead),
+                Named(held, one => one.SoftscapeSchedules.Count == 0),
+                Named(held, one => one.ShrubsAndLawnSchedules.Count == 0),
+                Named(held, one => one.MoreThanOneSoftscape),
+                Named(held, one => one.MoreThanOneShrubsAndLawn),
                 areaWanted
                     ? Named(held, one => one.ChosenRegion == null || !one.ChosenRegion.HoldsAnArea)
                     : new List<string>(),
@@ -268,12 +324,20 @@ namespace RcrcGreen.Core.Kpi
 
                 var why = new List<string>();
                 if (reading.ReadRefusals.Count > 0) why.Add(ReadRefused);
-                if (!reading.SoftscapeRead) why.Add(NoSoftscape);
+                if (reading.MoreThanOneSoftscape)
+                {
+                    why.Add(MoreThanOneInShort(SoftscapeKind, reading.SoftscapeSchedules.Count));
+                }
+                else if (!reading.SoftscapeRead) why.Add(NoSoftscape);
                 else if (reading.Species.Count == 0 && reading.ReadRefusals.Count == 0)
                 {
                     why.Add("its softscape schedule listed no species");
                 }
-                if (!reading.ShrubsAndLawnRead) why.Add(NoShrubsAndLawn);
+                if (reading.MoreThanOneShrubsAndLawn)
+                {
+                    why.Add(MoreThanOneInShort(ShrubsAndLawnKind, reading.ShrubsAndLawnSchedules.Count));
+                }
+                else if (!reading.ShrubsAndLawnRead) why.Add(NoShrubsAndLawn);
                 else if (reading.Subtotals.Count == 0 && reading.ReadRefusals.Count == 0)
                 {
                     why.Add("its shrubs and lawn schedule held neither group");

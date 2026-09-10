@@ -152,9 +152,18 @@ namespace RcrcGreen.Core.Kpi
     /// across plots in one go, because every schedule and every filled region in this model is
     /// per plot and filtered on PRX_Ref Plot ID.
     ///
-    /// A read that did not happen is a false on the flag rather than an absent number, so a
-    /// plot with no softscape schedule is a named plot in the reconciliation rather than a
-    /// zero nobody notices.
+    /// A read that did not happen is a plot with no schedule of that kind rather than an absent
+    /// number, so a plot with no softscape schedule is a named plot in the reconciliation rather
+    /// than a zero nobody notices.
+    ///
+    /// **THE SCHEDULES OF EACH KIND ARE NAMED, AND THERE IS ONE OF EACH OR THE KIND IS NOT
+    /// READ.** FM-05 holds two schedules whose names hold SOFTSCAPE. The reader appended both
+    /// and the merge added them by name and group, so that plot's trees were counted twice and
+    /// ALBIZIA LEBBECK proposed read 170 across twenty plots where the truth is nearer 160. The
+    /// shrubs and lawn read had the other half of the same fault, taking the first group with
+    /// the heading and dropping the second schedule in silence. The tool cannot know which of
+    /// two is the real one, so a plot holding two of a kind carries their names and no numbers
+    /// off either, and the reconciliation refuses the write naming all of them.
     /// </summary>
     public sealed class PlotReading
     {
@@ -162,9 +171,9 @@ namespace RcrcGreen.Core.Kpi
             string plotId,
             string component,
             string reference,
-            bool softscapeRead,
+            IEnumerable<string> softscapeSchedules,
             IEnumerable<SpeciesRow> species,
-            bool shrubsAndLawnRead,
+            IEnumerable<string> shrubsAndLawnSchedules,
             IEnumerable<GroupSubtotal> subtotals,
             IEnumerable<RegionArea> regions,
             double readSeconds,
@@ -186,10 +195,27 @@ namespace RcrcGreen.Core.Kpi
             ReadSeconds = readSeconds;
             Component = component ?? string.Empty;
             Reference = reference ?? string.Empty;
-            SoftscapeRead = softscapeRead;
+            SoftscapeSchedules = Held(softscapeSchedules).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
             Species = Held(species);
-            ShrubsAndLawnRead = shrubsAndLawnRead;
+            ShrubsAndLawnSchedules = Held(shrubsAndLawnSchedules).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
             Subtotals = Held(subtotals);
+
+            // Numbers off two schedules of one kind are the doubled count, and numbers off none
+            // came from nowhere. Neither is a reading this can hold.
+            if (Species.Count > 0 && SoftscapeSchedules.Count != 1)
+            {
+                throw new ArgumentException(
+                    plotId + " carries " + Species.Count + " species rows and " + SoftscapeSchedules.Count
+                    + " softscape schedules. Species rows come off exactly one.", "species");
+            }
+
+            if (Subtotals.Count > 0 && ShrubsAndLawnSchedules.Count != 1)
+            {
+                throw new ArgumentException(
+                    plotId + " carries " + Subtotals.Count + " subtotals and " + ShrubsAndLawnSchedules.Count
+                    + " shrubs and lawn schedules. Subtotals come off exactly one.", "subtotals");
+            }
+
             Regions = Held(regions);
             ChosenRegionTypeName = chosenRegionTypeName ?? string.Empty;
             Notes = Held(notes);
@@ -201,11 +227,39 @@ namespace RcrcGreen.Core.Kpi
 
         public string Reference { get; }
 
-        public bool SoftscapeRead { get; }
+        /// <summary>
+        /// The name of every schedule filtered on this plot whose name holds SOFTSCAPE. One is
+        /// the schedule the species came off. None is a plot without one. Two or more is a plot
+        /// nothing was read from, because nothing says which is the real one.
+        /// </summary>
+        public IReadOnlyList<string> SoftscapeSchedules { get; }
+
+        public bool SoftscapeRead
+        {
+            get { return SoftscapeSchedules.Count == 1; }
+        }
+
+        public bool MoreThanOneSoftscape
+        {
+            get { return SoftscapeSchedules.Count > 1; }
+        }
 
         public IReadOnlyList<SpeciesRow> Species { get; }
 
-        public bool ShrubsAndLawnRead { get; }
+        /// <summary>
+        /// The same for the schedules whose names hold SHRUB or LAWN.
+        /// </summary>
+        public IReadOnlyList<string> ShrubsAndLawnSchedules { get; }
+
+        public bool ShrubsAndLawnRead
+        {
+            get { return ShrubsAndLawnSchedules.Count == 1; }
+        }
+
+        public bool MoreThanOneShrubsAndLawn
+        {
+            get { return ShrubsAndLawnSchedules.Count > 1; }
+        }
 
         public IReadOnlyList<GroupSubtotal> Subtotals { get; }
 

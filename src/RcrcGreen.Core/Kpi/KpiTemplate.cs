@@ -68,44 +68,25 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
-    /// Where the quantities go on one tree list sheet. The row range comes from the map entry
-    /// and never from a constant, because writing 89 rows into an 80 row list puts nine
-    /// quantities into rows no total sums.
+    /// Which sheet one tree list is on. That is all the map says about a tree list now.
+    ///
+    /// **It used to carry a first and a last row, and the last row was wrong on the first
+    /// twenty plot run.** The map said B4 to B83, the sheet's own total said SUM(B4:B92), and
+    /// the botanical names ran to row 101. Four species with a row waiting past 83 were reported
+    /// as having nowhere to go and the workbook went out 85 trees short. Which rows hold a name
+    /// and which rows the total reaches are both read off the file by SpeciesList when Create is
+    /// pressed, so the map cannot disagree with the file about either.
     /// </summary>
-    public sealed class TreeRows
+    public sealed class TreeSheet
     {
-        public TreeRows(string sheetName, int firstRow, int lastRow)
+        public TreeSheet(string sheetName)
         {
             if (sheetName == null) throw new ArgumentNullException("sheetName");
-            if (firstRow < 1) throw new ArgumentOutOfRangeException("firstRow");
-            if (lastRow < firstRow) throw new ArgumentOutOfRangeException("lastRow");
 
             SheetName = sheetName;
-            FirstRow = firstRow;
-            LastRow = lastRow;
         }
 
         public string SheetName { get; }
-
-        public int FirstRow { get; }
-
-        public int LastRow { get; }
-
-        public int RowCount
-        {
-            get { return LastRow - FirstRow + 1; }
-        }
-
-        /// <summary>
-        /// B4 to B92 as the pane prints it.
-        /// </summary>
-        public string InWords
-        {
-            get
-            {
-                return KpiTemplates.QuantityColumn + FirstRow + " to " + KpiTemplates.QuantityColumn + LastRow;
-            }
-        }
     }
 
     /// <summary>
@@ -120,8 +101,8 @@ namespace RcrcGreen.Core.Kpi
             string name,
             string mainSheetName,
             IEnumerable<MappedCell> cells,
-            TreeRows existingTrees,
-            TreeRows proposedTrees)
+            TreeSheet existingTrees,
+            TreeSheet proposedTrees)
         {
             if (name == null) throw new ArgumentNullException("name");
             if (mainSheetName == null) throw new ArgumentNullException("mainSheetName");
@@ -150,9 +131,9 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public IReadOnlyList<MappedCell> Cells { get; }
 
-        public TreeRows ExistingTrees { get; }
+        public TreeSheet ExistingTrees { get; }
 
-        public TreeRows ProposedTrees { get; }
+        public TreeSheet ProposedTrees { get; }
 
         public MappedCell CellFor(KpiValue value)
         {
