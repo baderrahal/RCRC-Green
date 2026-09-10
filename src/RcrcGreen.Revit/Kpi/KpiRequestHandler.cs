@@ -321,9 +321,22 @@ namespace RcrcGreen.Revit.Kpi
         /// An existing file of that name is overwritten, which the pane says once under the
         /// name box. The delete is here rather than left to the patcher so the overwrite is a
         /// deliberate line rather than a side effect of how a zip happens to open.
+        ///
+        /// **THE DELETE IS WHAT MAKES THE TEMPLATE GUARD URGENT.** With the output folder
+        /// browsed for, it can be the templates folder, and the name box is prefilled with the
+        /// template's own file name. One press then removed the client's GRP KPI Checklist and
+        /// the run ended saying only that the workbook could not be written. The guard stands
+        /// BEFORE the delete, and a second one stands inside the patcher, because either alone
+        /// is one refactor from being bypassed.
         /// </summary>
         private static PatchOutcome Patched(string templatePath, string outputPath, IReadOnlyList<CellWrite> writes)
         {
+            SamePath answer = FilePaths.Compare(templatePath, outputPath);
+            if (answer != SamePath.Different)
+            {
+                return PatchOutcome.Refused(CreateWords.WouldOverwriteTheTemplate(outputPath, answer));
+            }
+
             try
             {
                 if (File.Exists(outputPath)) File.Delete(outputPath);
@@ -336,7 +349,7 @@ namespace RcrcGreen.Revit.Kpi
             }
             catch (IOException failed)
             {
-                return PatchOutcome.Refused("The workbook could not be written. " + failed.Message);
+                return PatchOutcome.Refused(CreateWords.CouldNotBeWritten(failed.Message));
             }
         }
 

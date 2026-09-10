@@ -232,27 +232,98 @@ namespace RcrcGreen.Core.Kpi
             return said;
         }
 
+        public const string NothingWritten = "Nothing was written.";
+
+        /// <summary>
+        /// The last resort, said when a run ended with no file and nothing anywhere recorded a
+        /// reason. It should never print, and it says so, because a status line that goes blank
+        /// after a press reads as success and is the worst thing it can do.
+        /// </summary>
+        public const string NoReasonRecorded =
+            "No reason was recorded for it, which is a bug in this tool. The report has what "
+            + "the run knew.";
+
+        /// <summary>
+        /// **THE FILE IS USUALLY OPEN IN EXCEL.** That is what the delete before the copy meets,
+        /// and the message Windows gives for it names a process rather than a thing to do. The
+        /// thing to do is said first and the system's own words are kept after it.
+        /// </summary>
+        public static string CouldNotBeWritten(string detail)
+        {
+            return "The workbook could not be written. If it is open in Excel, close it and "
+                + "press Create again."
+                + (string.IsNullOrWhiteSpace(detail) ? string.Empty : " " + detail.Trim());
+        }
+
+        /// <summary>
+        /// The refusal both template guards give, so the two say one sentence rather than two.
+        ///
+        /// It names the file it would have overwritten and says what that file is, because
+        /// "the workbook could not be written" was all the user got when the delete had already
+        /// taken the client's template.
+        /// </summary>
+        public static string WouldOverwriteTheTemplate(string outputPath, SamePath answer)
+        {
+            string named = string.IsNullOrWhiteSpace(outputPath) ? "The output file" : outputPath.Trim();
+
+            if (answer == SamePath.Unreadable)
+            {
+                return NothingWritten + " " + named + " could not be checked against the "
+                    + "template it would be copied from, so the run was refused rather than "
+                    + "risk writing over it.";
+            }
+
+            return NothingWritten + " " + named + " IS the template this run was about to read. "
+                + "The tool never writes to a template. Change the output folder or the name in "
+                + "the box and press Create again.";
+        }
+
         public static string Refused(Reconciliation reconciliation)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");
             if (reconciliation.AddsUp) return string.Empty;
 
-            return "Nothing was written. " + string.Join(" ", reconciliation.Refusals.ToArray());
+            return NothingWritten + " " + string.Join(" ", reconciliation.Refusals.ToArray());
         }
 
         /// <summary>
-        /// The status line after a run that wrote, counting what landed rather than what was
-        /// planned.
+        /// The status line after one press of Create, counting what landed rather than what was
+        /// planned, and saying why when nothing landed.
+        ///
+        /// **It used to go blank.** A run whose accounting passed and whose patch was refused
+        /// fell to <see cref="Refused"/>, which answers the empty string when the accounting
+        /// added up, so the pane went from Creating to nothing at all. The commonest cause is
+        /// the output workbook still open in Excel from the run before. Silence after a press
+        /// reads as success, so every path that ends with no file now says why.
         /// </summary>
         public static string Wrote(KpiCreateRun run, string reportWhere)
         {
             if (run == null) throw new ArgumentNullException("run");
-            if (!run.Wrote) return Refused(run.Reconciliation);
+
+            if (!run.Wrote) return WhyNothingWasWritten(run, reportWhere);
 
             return Count(run.Outcome.Landed.Count, "cell") + " written from "
                 + Count(run.Readings.Count, "plot") + ", "
                 + Count(run.Plan.Skipped.Count, "cell") + " not written. "
                 + "Workbook: " + run.OutputPath + ". Report: " + reportWhere;
+        }
+
+        /// <summary>
+        /// Never empty. The accounting speaks first because it refuses before anything is
+        /// copied, then the patch, and then the line that says nobody recorded a reason.
+        /// </summary>
+        private static string WhyNothingWasWritten(KpiCreateRun run, string reportWhere)
+        {
+            string why = Refused(run.Reconciliation);
+
+            if (why.Length == 0)
+            {
+                string refusal = run.Outcome == null ? string.Empty : run.Outcome.Refusal;
+                why = NothingWritten + " "
+                    + (string.IsNullOrWhiteSpace(refusal) ? NoReasonRecorded : refusal.Trim());
+            }
+
+            return string.IsNullOrWhiteSpace(reportWhere) ? why : why + " Report: " + reportWhere;
         }
 
         /// <summary>

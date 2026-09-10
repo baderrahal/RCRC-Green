@@ -427,6 +427,50 @@ because it looks finished.
 short by one with no explanation reads as a loss. `PatchOutcome.PartsDeliberatelyRemoved` is what
 keeps `KeptEveryPart` true across it.
 
+## Nothing may write to a template, and two guards say so
+
+The output folder is browsed for and the name box is prefilled with the template's own file
+name, so pointing the one at the templates folder put the other one press from naming the
+template itself. `Patched` deletes the output file before the copy, and that press removed the
+client's GRP KPI Checklist. No copy, no undo, every later run of that template impossible, and
+the run ended saying only that the workbook could not be written.
+
+**Two guards, because either alone is one refactor from being bypassed.** One in
+`KpiRequestHandler.Patched` before the delete, one in `WorkbookPatcher.Patch` before it opens
+anything. Both call `FilePaths.Compare` and both refuse on the one sentence in
+`CreateWords.WouldOverwriteTheTemplate`, so the two say one thing rather than two.
+
+**The comparison is the absolute canonical form of each, without case, which is how Windows
+compares a path**, with any trailing separator off because `GetFullPath` keeps one. A path that
+cannot be resolved answers `Unreadable` and refuses the same way `Same` does, because a check
+that cannot see its own subject has to refuse.
+
+**It is textual and that is its limit.** A junction, a symbolic link, a substituted drive or an
+8.3 short name reaches one file under two names that do not resolve to one string. Asking the
+file system for an identity means opening both files, which is the thing being guarded against.
+
+**The guard refuses one file, not one folder.** Writing a differently named workbook into the
+templates folder is allowed and still goes through. What stops the user reaching the refusal at
+all is `TemplateWords.OutputIsTheTemplateFolder`, said under the output folder line when the two
+folders are one, before Create is pressed rather than after.
+
+## Every run that ends with no file says why
+
+`CreateWords.Wrote` fell to `Refused(run.Reconciliation)` whenever nothing was written, and
+that answers the empty string when the accounting added up. **So a run whose accounting passed
+and whose patch was refused set the status line to nothing at all**, and the pane went from
+Creating to blank. The commonest cause is the output workbook still open in Excel from the run
+before, which the delete answers with an IOException.
+
+`WhyNothingWasWritten` is never empty. The accounting speaks first because it refuses before
+anything is copied, then the patch's own refusal, then `NoReasonRecorded`, which says in those
+words that nobody recorded one and that it is a bug. **Silence after a press reads as success**,
+which is the worst thing a status line can do, and the test is that no run with `Written` false
+can produce an empty line rather than one test per case.
+
+`CouldNotBeWritten` says what to do before it says what Windows said, because the system's own
+words name a process and not a thing to do.
+
 **No client workbook enters this repository.** It is public and those files carry the Green
 Riyadh KPI targets, neighbourhood names and the plant palette. `*.xlsx` is ignored and tests
 build their own small workbook in the temp folder.

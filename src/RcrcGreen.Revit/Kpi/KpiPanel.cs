@@ -489,6 +489,15 @@ namespace RcrcGreen.Revit.Kpi
             });
             _templates.Children.Add(line);
 
+            // Said before Create is pressed rather than after. The per file guard refuses the
+            // press that would write over a template, and this is what stops the user reaching
+            // it: the name box is prefilled with the template's own file name, so these two
+            // folders being one is the whole of the distance to that press.
+            if (FilePaths.Compare(folder, TemplateFolder.Read()) == SamePath.Same)
+            {
+                _templates.Children.Add(Warned(TemplateWords.OutputIsTheTemplateFolder));
+            }
+
             _templates.Children.Add(Faint(TemplateWords.Output(folder)));
         }
 
