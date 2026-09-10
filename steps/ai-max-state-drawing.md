@@ -14,7 +14,9 @@ of the old shared pair, drawing and kpi each with their own, pointers left behin
 require-file-on-commit.sh now asks for the committing task's own state file. The credit
 line GitHub appends on a squash merge is written up in territory.md with the remedy that
 works from a session, passing the squash message on the merge call, and whether that
-passes clean is measured on this round's own merge.
+passes clean is measured on this round's own merge. The Shared half of the move
+landed as its own commit, touching no task's folder, the way territory.md says a
+Shared change runs.
 
 Before that, the forty first pass, the report for the seven fixes round.
 
