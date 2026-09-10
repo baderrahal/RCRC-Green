@@ -1,6 +1,15 @@
 # ai-max state
 
-Phase: 9, ship. Fortieth pass, seven audit findings fixed and nothing else touched.
+Phase: 9, ship. Forty first pass, the report for the seven fixes round.
+
+Pull request 48 merged into main as `e0e206a`. The reworked gate restored and built the whole
+solution, RcrcGreen.Revit included, and executed 912 tests against the head, 0 failed and 0
+skipped, the same count the local run gave after the last file was written. That was the
+gate's first run since it stopped building the Core test project alone, so finding 8's fix has
+now been observed on the runner rather than only reasoned about. The design folder guessed
+pr-48 and the pull request opened as 48, so the guess held. No code is touched in this pass.
+
+Before that, the fortieth pass, seven audit findings fixed and nothing else touched.
 
 The plot list is the union at last: PlotRegistry is wired into the panel read with
 PRX_Plot_ID on views as its own source, the reader walks every element through the scan's

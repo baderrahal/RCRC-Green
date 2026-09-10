@@ -4,6 +4,22 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty first pass. The report for the seven fixes round
+
+Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 48 is
+merged. The entry below went in with its work, so it could not carry its own merge or runner
+count. It carries them now.
+
+Pull request 48 merged as `e0e206a` and the gate executed 912 tests against it, 0 failed and
+0 skipped, which is the same count the local run gave. That run was the reworked gate's
+first: it restored and built the whole solution, RcrcGreen.Revit included, so the item the
+fortieth entry listed as not observed, the workflow on the runner, has now run and passed.
+
+The design folder was named pr-48 before the pull request existed and the pull request opened
+as 48, so the guess held. Nothing else changed. No code is touched.
+
+---
+
 ## 2026-09-10, fortieth pass. The plot list is the union, and capture drops nothing
 
 Branch `claude/rcrc-green-setup-wf9ham`, one commit. The merge sha and the runner count go in
