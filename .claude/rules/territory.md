@@ -75,6 +75,6 @@ there. No hook in this repo can stop it.
 Two remedies. Either the squash message is set by hand on every merge, through the commit
 title and commit message the merge call accepts, or an admin changes the default squash
 message under the repository's settings on github.com. From inside a session only the
-first is possible, because no tool here reaches repository settings. Whether GitHub still
-appends the credit to a message passed by hand was UNKNOWN when this file was written.
-The first merge after this file measured it, and the answer is in `steps/log-drawing.md`.
+first is possible, because no tool here reaches repository settings. The merge that
+landed this file measured it: the message passed on the call came back off main byte for
+byte, nothing appended, on `e0a7a97`. So pass both fields on every squash merge.
