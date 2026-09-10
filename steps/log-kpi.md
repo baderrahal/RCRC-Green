@@ -12,8 +12,11 @@ not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`. **Nothing in this rou
 observed in Revit**, and no workbook was written or opened. `CountedGroups` keying off the tree
 list sheet names is the design and stays. These sit on top of it.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1095 tests at this branch, 0 failed and 0 skipped, 580 of them KPI, 14 added here.**
+Pull request 67, merged into main as `c79c4d2`. **The runner executed 1095 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1095 ran at `c79c4d2`, 0 failed and 0
+skipped**, 580 of them KPI, 14 added here. The merge went through the API with the title and
+the message both passed on the call, and the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer. Its tree is the branch's tree, checked.
 
 ### 1. Street Design counts as Proposed, on the STREETS template only
 

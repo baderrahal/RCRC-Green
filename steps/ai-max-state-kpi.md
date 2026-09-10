@@ -16,9 +16,9 @@ names the plots and the schedules where a group no sheet takes was found, above 
 button, a note and not a refusal.
 
 Four break watches went red on 10, 21, 3 and 4 tests and were restored byte for byte.
-**Locally 1095 tests at this branch, 0 failed and 0 skipped, 580 of them KPI, 14 added.** The
-pull request, the merge hash and the runner's count go in the record the merge adds here.
-**Nothing in this round has been observed in Revit.**
+Pull request 67 is merged into main as `c79c4d2`, **1095 tests on the runner against its
+merged head and 1095 locally at that head, 0 failed and 0 skipped on each**, 580 of them KPI,
+14 added here. **Nothing in this round has been observed in Revit.**
 
 Before that, the forty eighth pass, the FM-05 refusal answered off the 1536 report: its softscape
 schedule holds THREE groups, and the third, Street Design, is somebody else's scope by Bader's
