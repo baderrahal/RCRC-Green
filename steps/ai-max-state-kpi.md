@@ -1,6 +1,29 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Thirty ninth pass, an audit of the KPI tool alone. It built nothing and
+Phase: 9, ship. Fortieth pass, two guards off the audit and nothing else. On branch
+`claude/inspiring-allen-xs113f`, 927 tests locally, 0 failed and 0 skipped, 904 before and
+23 added.
+
+**Audit findings 1 and 8 are fixed and the other 27 in steps/audit-kpi.md are untouched**, not
+renumbered, not reordered, not annotated.
+
+**Nothing may delete a template.** Two guards on one comparison, `FilePaths.Compare`, one in
+`KpiRequestHandler.Patched` before the delete and one in `WorkbookPatcher.Patch` before it opens
+anything, both refusing with the one sentence in `CreateWords.WouldOverwriteTheTemplate`. Three
+answers rather than two, so a path that cannot be resolved refuses the same way an equal one
+does. The comparison is textual and its limit is written down: a link or a substituted drive
+still reaches one file under two names. When the output folder and the template folder are one,
+the pane says so before Create is pressed.
+
+**A refused run says why.** `WhyNothingWasWritten` is never empty. Accounting first, then the
+patch's own refusal, then a line saying nobody recorded a reason and that it is a bug. The test
+is that no run with `Written` false can produce an empty status line.
+
+Both guards were watched red before being trusted, three tests each, restored byte for byte.
+**Nothing in this round has been observed in Revit**, and the Revit side guard is reached by no
+test at all.
+
+Before that, the thirty ninth pass, an audit of the KPI tool alone. It built nothing and
 fixed nothing.
 
 Twenty nine findings are in steps/audit-kpi.md, ranked by cost: two BLOCKS, six WRONG, thirteen

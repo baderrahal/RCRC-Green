@@ -34,6 +34,22 @@ namespace RcrcGreen.Core.Kpi
         /// because with none set NoOutputFolder is what shows and the name box has nowhere to
         /// write to yet.
         /// </summary>
+        /// <summary>
+        /// Said under the output folder line when it is the templates folder.
+        ///
+        /// **Before Create is pressed, not after.** The two folders being one is what makes the
+        /// name box, which is prefilled with the template's own file name, one press away from
+        /// naming the template itself. The per file guard refuses that press, and this is what
+        /// stops the user reaching it in the first place. Writing a differently named workbook
+        /// into that folder is allowed and this does not refuse it.
+        /// </summary>
+        /// It carries no path, because the line directly above it is the path.
+        public const string OutputIsTheTemplateFolder =
+            "THIS IS THE TEMPLATES FOLDER. A filled workbook written here sits beside the "
+            + "templates, and a name matching a template's is refused rather than written, "
+            + "because the tool never writes to a template. Pick another folder unless you "
+            + "meant this.";
+
         public static string Output(string outputFolder)
         {
             if (string.IsNullOrWhiteSpace(outputFolder)) return NoOutputFolder;

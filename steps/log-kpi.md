@@ -4,6 +4,95 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, fortieth pass. Two guards off the audit, and nothing else
+
+Branch `claude/inspiring-allen-xs113f`. **927 tests locally, 0 failed and 0 skipped**, run after
+the last file was written and after both break watches were restored byte for byte. 904 before,
+23 added.
+
+**Audit findings 1 and 8 are fixed. The other 27 in `steps/audit-kpi.md` are untouched**, and
+this round did not renumber, reorder or annotate any of them. The Drawing Sheet was not opened.
+
+### Nothing may delete a template
+
+Finding 1, the only BLOCKS in the KPI half. `Patched` deletes the output file before the copy,
+the name box is prefilled with the template's own file name through `OutputName.Suggested`, and
+since the browsed output folder landed that folder can be the templates folder. Point it there,
+press Create, and the client's GRP KPI Checklist was gone. No copy, no undo, every later run of
+that template impossible, and the pane said only that the workbook could not be written.
+
+**Two guards, because either alone is one refactor from being bypassed.** One in
+`KpiRequestHandler.Patched` before the delete, one in `WorkbookPatcher.Patch` before it opens
+anything. Both ask `FilePaths.Compare` and both refuse with the one sentence in
+`CreateWords.WouldOverwriteTheTemplate`, which names the file it would have written over and
+says that file is the template the run was about to read.
+
+`SamePath` has three answers rather than two. A path that cannot be resolved is not a path that
+is different, so `Unreadable` refuses the same way `Same` does. The comparison is the absolute
+canonical form of each, compared without case, with any trailing separator off because
+`GetFullPath` keeps one.
+
+**The limit is written down rather than assumed away.** The comparison is textual, so a
+junction, a symbolic link, a substituted drive or an 8.3 short name still reaches one file under
+two names that do not resolve to one string. Asking the file system for an identity means
+opening both files, which is the thing being guarded against.
+
+**The collision is now visible before the press.** When the output folder and the template
+folder are one folder, `TemplateWords.OutputIsTheTemplateFolder` says so under the output folder
+line. It does not refuse, because writing a differently named workbook into that folder is
+allowed and the per file guard is what refuses the press that is not.
+
+The class is `FilePaths` and not `FilePath` because `Autodesk.Revit.DB.FilePath` is a real type
+and the Revit half of the guard would not compile beside a Core class of that name. That is
+written in the file so nobody renames it back.
+
+### A refused run must say why
+
+Finding 8. `CreateWords.Wrote` fell to `Refused(run.Reconciliation)` whenever nothing was
+written, and that answers the empty string when the accounting added up. So a run whose
+accounting passed and whose patch was refused **set the status line to nothing at all.** The
+commonest cause is the output workbook still open in Excel from the run before, which the delete
+answers with an IOException. The pane went from Creating to blank, and silence after a press
+reads as success.
+
+`WhyNothingWasWritten` is never empty. The accounting speaks first, because it refuses before
+anything is copied. Then the patch's own refusal. Then `NoReasonRecorded`, which says in those
+words that nobody recorded a reason and that it is a bug in the tool.
+
+`CouldNotBeWritten` says what to do before it says what Windows said, because the system's own
+message names a process rather than a thing to do. The line now opens with closing Excel and
+pressing Create again.
+
+The assertion is over every shape a run with no file can take rather than one test per case,
+which is what the finding asked for: no run with `Written` false can produce an empty line.
+
+### What was broken to see the tests go red
+
+Both restored byte for byte and checked with md5, and the suite rerun green at 927.
+
+- the guard taken out of `WorkbookPatcher.Patch`. 3 red:
+  `WritingOverTheTemplateIsRefusedAndTheTemplateIsUntouched`, `TheSamePathReachedTwoWaysIsRefusedToo`
+  and `APathThatCannotBeCheckedIsRefusedRatherThanRisked`
+- `Wrote` put back to `return Refused(run.Reconciliation);`. 3 red:
+  `NoRunThatWroteNothingEndsWithAnEmptyStatusLine`, `AnAccountingThatPassedAndAPatchThatDidNotSaysWhatToDo`
+  and `AnOutcomeCarryingNoReasonSaysThatIsABugRatherThanSayingNothing`
+
+### Never observed in Revit
+
+**Everything in this round.** No guard here has been seen to refuse in Revit, no status line has
+been seen to print, and the pane line about the two folders being one has never been drawn. The
+tests are over the decision and over the patcher against a workbook they build themselves, not
+over Revit. The one Revit side call, the guard in front of the delete, is reached by no test at
+all: it is the same comparison and the same sentence as the Core one, and that is the whole of
+what says it is right.
+
+### Not touched
+
+The Drawing Sheet, in any file. The other 27 audit findings. `Core/Shared`, which a KPI round
+may not touch without every other session being stopped first.
+
+---
+
 ## 2026-09-10, thirty seventh pass. Excel showed zeros, and the workbook stops going beside the model
 
 Pull request 46, merged into main as `6f2e521`. **The runner executed 904 tests against its

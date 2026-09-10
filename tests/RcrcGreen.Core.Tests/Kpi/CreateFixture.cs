@@ -42,7 +42,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// One press of Create as the handler would hand it over, with the DM-12 numbers the
         /// first real run measured. Enough of it to write the report against.
         /// </summary>
-        public static KpiCreateRun Run(PlotReading[] readings = null, string outputPath = null)
+        public static KpiCreateRun Run(
+            PlotReading[] readings = null, string outputPath = null, PatchOutcome outcome = null)
         {
             IReadOnlyList<PlotReading> held = readings ?? new[]
             {
@@ -73,7 +74,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null,
                 null,
                 null,
-                null);
+                outcome);
         }
 
         public static PlotReading Plot(

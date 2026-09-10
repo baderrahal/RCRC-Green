@@ -25,6 +25,16 @@ namespace RcrcGreen.Core.Kpi
             if (writes == null) throw new ArgumentNullException("writes");
             if (writes.Count == 0) return PatchOutcome.Refused("Nothing to write.");
 
+            // **NOTHING MAY WRITE TO A TEMPLATE.** The second of two guards, and the reason
+            // there are two is that either alone is one refactor from being bypassed. This one
+            // stands before any file is opened, so a caller that reaches the patcher without
+            // going through the handler still cannot destroy a client workbook.
+            SamePath answer = FilePaths.Compare(sourcePath, outputPath);
+            if (answer != SamePath.Different)
+            {
+                return PatchOutcome.Refused(CreateWords.WouldOverwriteTheTemplate(outputPath, answer));
+            }
+
             try
             {
                 int partsInSource;
