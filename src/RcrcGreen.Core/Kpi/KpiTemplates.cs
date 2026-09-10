@@ -64,6 +64,14 @@ namespace RcrcGreen.Core.Kpi
 
         public static readonly KpiTemplate Schools = Standard("SCHOOLS", "<Schools>");
 
+        /// <summary>
+        /// The one group a template counts by decision rather than by a sheet name. ST-05
+        /// prints Existing 369, Proposed 2 and Street Design 68 under a TOTAL of 439, and on a
+        /// street its Street Design trees are its own proposed trees. Bader's decision, and it
+        /// holds on STREETS only.
+        /// </summary>
+        public const string StreetDesignGroup = "Street Design";
+
         public static readonly KpiTemplate Streets = new KpiTemplate(
             "STREETS",
             "<Streets>",
@@ -76,7 +84,8 @@ namespace RcrcGreen.Core.Kpi
                 new MappedCell(KpiValue.Lawn, "H11")
             },
             new TreeSheet(ExistingTreesSheet),
-            new TreeSheet(ProposedTreesSheet));
+            new TreeSheet(ProposedTreesSheet),
+            new[] { StreetDesignGroup });
 
         public static readonly IReadOnlyList<KpiTemplate> All = new[]
         {

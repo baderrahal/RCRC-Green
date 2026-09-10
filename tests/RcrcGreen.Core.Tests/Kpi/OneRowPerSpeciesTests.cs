@@ -142,7 +142,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 Fm05Reading(),
                 CreateFixture.Plot("FM-06", species: new[] { CreateFixture.Species("ALBIZIA LEBBECK", "Proposed", 15, 6, "15", "8") })
-            }).Single(one => one.BotanicalName == "ALBIZIA LEBBECK");
+            }, CreateFixture.Counted).Single(one => one.BotanicalName == "ALBIZIA LEBBECK");
 
             Assert.Equal(35, albizia.Quantity);
             Assert.Equal("FM-05 20 (2 rows, 10 + 10), FM-06 15", albizia.Working);

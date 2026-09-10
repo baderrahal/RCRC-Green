@@ -136,7 +136,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("ALBIZIA LEBBECK", "Proposed", 10, 8, "15", "8") }),
                 CreateFixture.Plot("FM-06", species: new[] { CreateFixture.Species("ALBIZIA LEBBECK", "Proposed", 15, 6, "15", "8") })
-            }));
+            }, CreateFixture.Counted));
 
             Assert.True(albizia.Height.Write);
             Assert.Equal(15.0, albizia.Height.Value);
@@ -158,7 +158,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("ALBIZIA LEBBECK", "Proposed", 10, 8, "15", "8") }),
                 CreateFixture.Plot("FM-06", species: new[] { CreateFixture.Species("ALBIZIA LEBBECK", "Proposed", 15, 6, "12", "8") })
-            }));
+            }, CreateFixture.Counted));
 
             Assert.False(albizia.Height.Write);
             Assert.Equal(
@@ -170,7 +170,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("BAUHINIA PURPUREA", "Proposed", 19, 9, "6", "5") }),
                 CreateFixture.Plot("FM-06", species: new[] { CreateFixture.Species("BAUHINIA PURPUREA", "Proposed", 20, 7, "6", "4") })
-            }));
+            }, CreateFixture.Counted));
 
             Assert.False(bauhinia.Diameter.Write);
             Assert.Equal(
@@ -189,7 +189,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             MergedSpecies unknown = Assert.Single(KpiMerge.Species(new[]
             {
                 CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("UNKNOWN", "Existing", 16, 5, "-", "0") })
-            }));
+            }, CreateFixture.Counted));
 
             Assert.False(unknown.Height.Write);
             Assert.Equal(
@@ -204,7 +204,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("WASHINGTONIA ROBUSTA", "Existing", 19, 6, "-", "5") }),
                 CreateFixture.Plot("FM-06", species: new[] { CreateFixture.Species("WASHINGTONIA ROBUSTA", "Existing", 3, 4, "25", "5") })
-            }));
+            }, CreateFixture.Counted));
 
             Assert.True(mixed.Height.Write);
             Assert.Equal(25.0, mixed.Height.Value);
@@ -271,7 +271,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiMerge.Species(new[]
                 {
                     CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("BAUHINIA PURPUREA", "Proposed", 19, 9, "6", "5") })
-                }),
+                }, CreateFixture.Counted),
                 KpiTemplates.Mosques, list, list);
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
@@ -299,7 +299,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     KpiMerge.Species(new[]
                     {
                         CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("UNKNOWN", "Proposed", 16, 5, "-", "0") })
-                    }),
+                    }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
                 null, null, null);
 
@@ -330,7 +330,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     KpiMerge.Species(new[]
                     {
                         CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("BAUHINIA PURPUREA", "Proposed", 19, 9, "6", "5") })
-                    }),
+                    }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
                 null, null, null);
 
@@ -359,7 +359,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     KpiMerge.Species(new[]
                     {
                         CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("PHOENIX DACTYLIFERA", "Existing", 27, 4, "25", "15") })
-                    }),
+                    }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
                 null, null, null);
 
@@ -401,7 +401,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         CreateFixture.Species("BAUHINIA PURPUREA", "Proposed", 19, 9, "6", "5"),
                         CreateFixture.Species("UNKNOWN", "Proposed", 16, 5, "-", "0")
                     })
-                }),
+                }, CreateFixture.Counted),
                 KpiTemplates.Mosques, list, list);
 
             string report = KpiCreateReport.Write(

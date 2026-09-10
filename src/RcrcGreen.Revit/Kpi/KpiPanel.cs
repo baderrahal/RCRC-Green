@@ -708,6 +708,16 @@ namespace RcrcGreen.Revit.Kpi
                 }
             }
 
+            // A group no sheet takes, Street Design on a mosque plot, is a note and never a
+            // refusal: the workbook was written with those rows left out, and this says where
+            // the model needs correcting, beside the button the user pressed. The report
+            // carries the full detail, and a person acts on plots and schedules, not species.
+            if (_lastRun != null && _lastRun.Template != null)
+            {
+                string leftOut = CreateWords.GroupsLeftOut(_lastRun.Readings, _lastRun.Template);
+                if (leftOut.Length > 0) _templates.Children.Add(Warned(leftOut));
+            }
+
             // Greyed out on what the PANE owns and on nothing else. Whether a model is open
             // belongs to Revit, and a button greyed out on the pane's last answer about it
             // stayed grey after the model was saved. That is decided on the Revit thread

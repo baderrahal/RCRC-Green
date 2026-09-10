@@ -4,6 +4,101 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty ninth pass. Street Design counts as Proposed on STREETS, and the note goes on the pane
+
+Two things on top of the forty eighth pass, both Bader's decisions. **The other 43 audit
+findings stay open**, not renumbered, not reordered, not annotated. Nothing else was touched:
+not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`. **Nothing in this round has been
+observed in Revit**, and no workbook was written or opened. `CountedGroups` keying off the tree
+list sheet names is the design and stays. These sit on top of it.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1095 tests at this branch, 0 failed and 0 skipped, 580 of them KPI, 14 added here.**
+
+### 1. Street Design counts as Proposed, on the STREETS template only
+
+**Bader's decision: Street Design counts as Proposed on STREETS and stays out everywhere
+else.** No template has a Tree List - Street Design sheet, so the forty eighth pass left the
+group out on every template, streets included, and on a street plot that group is the plot's
+own work. Measured on ST-05, a street plot, off its softscape schedule on screen: Existing 369,
+Proposed 2 which is ALBIZIA LEBBECK 2, Street Design 68 which is ALBIZIA LEBBECK 6 and CASSIA
+GLAUCA 62, TOTAL 439. Its proposed trees are 2 plus 68, 70, its existing are 369, and 369 plus
+70 is 439, the TOTAL the schedule prints. That is the test, and every expected value is
+written out by hand from it. The two species under Existing and their split of the 369 were
+not in the note, so the fixture uses two names earlier runs measured and a split of 300 and 69.
+
+**It is data on the template and keyed on the template, never on the plot prefix.**
+`KpiTemplate.GroupsCountedAsProposed` holds Street Design on STREETS and nothing on the other
+six, one constant, `KpiTemplates.StreetDesignGroup`. `CountedGroups.Of` reads it into a
+`GroupByDecision` pointing at the template's Proposed sheet, `Counts` answers true for it,
+`SheetFor` answers Tree List - Proposed, and `Why` reads Tree List - Proposed takes it on
+STREETS by decision, as that plot's own work. A sheet named for the group is answered first and
+a sheet that takes it by decision second. The same schedule read for MOSQUES leaves the group
+out with 68 named, and a mosque plot read for STREETS counts it: the template decides and the
+prefix decides nothing, which a test says in those two readings. A test also says the whole
+map holds exactly one group by decision, so a second name cannot slip in unnoticed. **A second
+name goes in only when the team says so.**
+
+**The rows go where the sheet takes them, and a species under Proposed and under Street Design
+adds.** `KpiMerge.Species` takes the `CountedGroups` now, a required argument, and keys every
+row on the sheet that takes its group rather than on the group's name, so ALBIZIA LEBBECK on
+ST-05 is one merged row of 8, ST-05 8 (2 rows, 2 + 6), going to Tree List - Proposed and
+saying both groups, Proposed and Street Design. `MergedSpecies.SheetName` carries the sheet
+the merge decided and `SpeciesMatching` places a species through it, and a species built with
+no sheet through the same `CountedGroups`, so the matcher's own word rule on the sheet name is
+gone and one resolver decides everywhere. Two rows under two different groups are two groups,
+so the same group refusal does not trip, and the accounting passes with nothing left out. The
+street's areas count the same way: the shrubs and lawn reader already asked `CountedGroups`
+per phase, so a Street Design phase row is taken on STREETS with the group total still checked.
+
+A first cut carried the sheet on every `SpeciesRow` from the reader and keyed the merge on it
+where a row had one and on the group name where it did not. That broke one test that merges a
+reader built row with a hand built one for the same species, and it was two sources for one
+fact, so the merge resolves every row itself instead and the row carries nothing new.
+
+**The report says which route each group took.** The reason beside every group row is one of
+three: named for it, takes it by decision, or out of scope. A Street Design group counted on
+STREETS reads differently from one left out on MOSQUES, and the accounting line reads 0 on
+STREETS and 2, on ST-05 when the same plot is read for MOSQUES.
+
+### 2. The note goes on the pane, not only in the report
+
+`CreateWords.GroupsLeftOut` builds one short block from the run's readings and its template:
+Street Design found on 2 plots on MOSQUES, which has no sheet for it: DM-16 in its softscape
+and its shrubs and lawn schedules, FM-05 in both. Those rows were left out. Fix them in the
+model. The first plot spells both schedules out and the next says in both, a plot in one
+schedule names that schedule, plots are in natural order, a plot with nothing left out is not
+named, two group names are both named, and nothing left out is no note. It names the template
+rather than saying not streets, so a group left out on any template reads right. **It is a NOTE
+and NOT A REFUSAL**: the workbook is written, the numbers are right, and the note says where the
+model needs correcting. Plots and schedules, never species.
+
+`KpiPanel.TheCreateButton` draws it in the warning colour above the Create button off the last
+run, the same place the accounting's refusals are drawn, and only when the run held a template.
+The report is unchanged and keeps the counts and the areas left out under each plot. The
+status line is unchanged too.
+
+### Break watches
+
+Four, each restored byte for byte and checked with cmp, the suite rerun green at 1095.
+
+- the decision ignored, so STREETS counts nothing by decision: **10 red**, nine in
+  `StreetDesignTests` and the template test in `GroupRowsTests`
+- the decision applied on every template: **21 red**, every FM-05 test that expects the street
+  left out on MOSQUES, across `GroupRowsTests`, `SubtotalShapeTests`, `SchedulesAsPrintedTests`
+  and `StreetDesignTests`
+- the merge keyed on the group name again: **3 red**, the ALBIZIA LEBBECK 8, the matcher and
+  the template tests in `StreetDesignTests`
+- the note dropped: **4 red**, all of `GroupsLeftOutNoteTests` that expect words
+
+### Existing tests changed
+
+Nineteen calls of `KpiMerge.Species` hand it the fixture's counted groups, because the
+argument is required. The template test in `GroupRowsTests` says only STREETS counts more than
+its two sheets. No expected value moved.
+
+---
+
 ## 2026-09-10, forty eighth pass. The FM-05 refusal answered: a third group, out of scope by decision
 
 The refusal the forty seventh pass raised on FM-05 offered two answers, two types of one

@@ -162,6 +162,56 @@ those are one phase printed twice or two things is UNKNOWN and is for the team.
 with no phase row would read TREES as a group row, TREES counts for nothing, and every species
 would be left out and named. No such schedule has been seen.
 
+## Street Design counts as Proposed on STREETS, and nowhere else
+
+**Bader's decision, on top of the rule above.** No template has a Tree List - Street Design
+sheet, so the rule alone left a Street Design group out everywhere, streets included, and on
+a street plot that group is the plot's own work. Measured on ST-05, a street plot, off its
+softscape schedule on screen:
+
+```
+Existing        369
+Proposed          2    ALBIZIA LEBBECK 2
+Street Design    68    ALBIZIA LEBBECK 6, CASSIA GLAUCA 62
+TOTAL           439
+```
+
+ST-05's proposed trees are 2 plus 68, 70, its existing are 369, and 369 plus 70 is 439, the
+TOTAL the schedule prints. That is the test.
+
+**It is data on the template and it is keyed on the template, never on the plot prefix.**
+`KpiTemplate.GroupsCountedAsProposed` holds Street Design on STREETS and nothing on the other
+six, `CountedGroups.Of` reads it into a `GroupByDecision` pointing at Tree List - Proposed,
+and `SheetFor` answers a sheet named for the group first and a sheet that takes it by decision
+second. PRX_Component picks the template and the prefix is only a cross check, which is already
+the rule, so the same schedule read for MOSQUES leaves the group out with 68 named, and a mosque
+plot read for STREETS counts it. **A second name goes into that list only when the team says
+so.**
+
+**The rows go where the sheet takes them, and a species under Proposed and under Street Design
+adds.** `KpiMerge.Species` takes the `CountedGroups` and keys every row on the sheet that takes
+its group, so ALBIZIA LEBBECK on ST-05 is one merged row of 8, ST-05 8 (2 rows, 2 + 6), going
+to Tree List - Proposed and saying both groups. That is two groups, not one species printed
+twice under one group, so the same group refusal does not trip. `SpeciesMatching` places a
+merged species through the sheet the merge decided and, for one built with none, through the
+same `CountedGroups`, so nothing here matches a word of a sheet name on its own any more. The
+street's areas count the same way: a Street Design phase row in the shrubs and lawn schedule is
+taken on STREETS and its area adds.
+
+**The report says which route each group took.** The reason beside a group row reads Tree List
+- Proposed is named for it, or Tree List - Proposed takes it on STREETS by decision, as that
+plot's own work, or no tree list sheet is named for it, so it is out of scope. A Street Design
+group counted on STREETS reads differently from one left out on MOSQUES.
+
+**The note goes on the pane, not only in the report.** `CreateWords.GroupsLeftOut` builds one
+short block above the Create button naming the plots and the schedules where a group no sheet
+takes was found, Street Design found on 2 plots on MOSQUES, which has no sheet for it: DM-16 in
+its softscape and its shrubs and lawn schedules, FM-05 in both. Those rows were left out. Fix
+them in the model. It is a NOTE and NOT A REFUSAL: the run goes through, the workbook is
+written, the numbers are right, and the note says where the model needs correcting. Plots and
+schedules, never species, because on a run of 78 plots a long list is not read. The report
+keeps the full detail with the counts and the areas left out.
+
 ## Matching a species is plain or it is nothing
 
 The workbook's own column D is the only species list there is and `SpeciesList` reads it out of
@@ -971,7 +1021,8 @@ the printed section showed why. These are measurements, not reasoning.
   Design 459 over 570, 820 over 1020. So the 165 and 820 the 1116 run wrote counted the street
 - **DM-25 prints Existing, then Proposed, then Existing again**, in its softscape schedule
 - Street Design is out of scope by Bader's decision, under the rule above, and the model will
-  be corrected later
+  be corrected later. On STREETS it counts as Proposed, by the same decision, under the section
+  that follows the rule
 
 ## The area is not a schedule row
 

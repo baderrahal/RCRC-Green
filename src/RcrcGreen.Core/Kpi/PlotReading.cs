@@ -21,23 +21,37 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class CountedGroups
     {
-        private CountedGroups(IEnumerable<string> sheetNames)
+        private CountedGroups(IEnumerable<string> sheetNames, IEnumerable<GroupByDecision> byDecision, string templateName)
         {
             SheetNames = (sheetNames ?? Enumerable.Empty<string>()).Where(one => !string.IsNullOrWhiteSpace(one)).ToList();
+            ByDecision = (byDecision ?? Enumerable.Empty<GroupByDecision>()).Where(one => one != null).ToList();
+            TemplateName = templateName ?? string.Empty;
         }
 
         public IReadOnlyList<string> SheetNames { get; }
+
+        /// <summary>
+        /// Groups a sheet takes by decision rather than by its name: Street Design into Tree
+        /// List - Proposed on STREETS and nowhere else. Read off the template, so the plot
+        /// prefix decides nothing here.
+        /// </summary>
+        public IReadOnlyList<GroupByDecision> ByDecision { get; }
+
+        public string TemplateName { get; }
 
         public static CountedGroups Of(KpiTemplate template)
         {
             if (template == null) throw new ArgumentNullException("template");
 
-            return new CountedGroups(new[] { template.ExistingTrees.SheetName, template.ProposedTrees.SheetName });
+            return new CountedGroups(
+                new[] { template.ExistingTrees.SheetName, template.ProposedTrees.SheetName },
+                template.GroupsCountedAsProposed.Select(one => new GroupByDecision(one, template.ProposedTrees.SheetName)),
+                template.Name);
         }
 
         public static CountedGroups Named(params string[] sheetNames)
         {
-            return new CountedGroups(sheetNames);
+            return new CountedGroups(sheetNames, null, null);
         }
 
         public bool Counts(string groupName)
@@ -46,23 +60,53 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Tree List - Existing is named for it, or no tree list sheet is named for it, so it is
-        /// out of scope.
+        /// Tree List - Existing is named for it, or Tree List - Proposed takes it on STREETS
+        /// by decision, or no tree list sheet is named for it, so it is out of scope. The
+        /// report prints this beside every group row, so a Street Design group counted on
+        /// STREETS reads differently from one left out on MOSQUES.
         /// </summary>
         public string Why(string groupName)
         {
-            string sheet = SheetFor(groupName);
-            return sheet != null ? sheet + " is named for it" : LeftOut;
+            string named = SheetNamedFor(groupName);
+            if (named != null) return named + " is named for it";
+
+            GroupByDecision decided = DecisionFor(groupName);
+            if (decided != null)
+            {
+                return decided.SheetName + " takes it on " + TemplateName + " by decision, as that plot's own work";
+            }
+
+            return LeftOut;
         }
 
         public const string LeftOut = "no tree list sheet is named for it, so it is out of scope";
+
+        /// <summary>
+        /// The tree list sheet a group's rows go to, or null when none takes them. A sheet
+        /// named for the group comes first, then a sheet that takes it by decision.
+        /// </summary>
+        public string SheetFor(string groupName)
+        {
+            string named = SheetNamedFor(groupName);
+            if (named != null) return named;
+
+            GroupByDecision decided = DecisionFor(groupName);
+            return decided == null ? null : decided.SheetName;
+        }
+
+        private GroupByDecision DecisionFor(string groupName)
+        {
+            if (string.IsNullOrWhiteSpace(groupName)) return null;
+
+            return ByDecision.FirstOrDefault(one => string.Equals(one.GroupName, groupName.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
 
         /// <summary>
         /// A sheet is named for a group when its name ends in the group's name, word for word
         /// and without case: Tree List - Existing ends in Existing. Nothing looser, because a
         /// group called Tree or List is not what either sheet is for.
         /// </summary>
-        private string SheetFor(string groupName)
+        private string SheetNamedFor(string groupName)
         {
             List<string> wanted = Words(groupName);
             if (wanted.Count == 0) return null;
@@ -104,6 +148,26 @@ namespace RcrcGreen.Core.Kpi
             if (run.Length > 0) words.Add(run.ToString());
             return words;
         }
+    }
+
+    /// <summary>
+    /// One group a sheet takes by decision. The name is the group as the schedule prints it
+    /// and the sheet is the one its rows go to.
+    /// </summary>
+    public sealed class GroupByDecision
+    {
+        public GroupByDecision(string groupName, string sheetName)
+        {
+            if (string.IsNullOrWhiteSpace(groupName)) throw new ArgumentException("A group by decision needs a name.", "groupName");
+            if (string.IsNullOrWhiteSpace(sheetName)) throw new ArgumentException("A group by decision needs a sheet.", "sheetName");
+
+            GroupName = groupName.Trim();
+            SheetName = sheetName;
+        }
+
+        public string GroupName { get; }
+
+        public string SheetName { get; }
     }
 
     /// <summary>

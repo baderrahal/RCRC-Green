@@ -207,7 +207,7 @@ namespace RcrcGreen.Core.Kpi
             foreach (MergedSpecies species in (merged ?? Enumerable.Empty<MergedSpecies>())
                 .Where(one => one != null))
             {
-                TreeSheet sheet = SheetFor(species.GroupName, template);
+                TreeSheet sheet = SheetFor(species, template);
                 if (sheet == null)
                 {
                     found.Add(new SpeciesMatch(species, string.Empty, 0, string.Empty, NoSheetForTheGroup));
@@ -304,18 +304,22 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// The tree list sheet a group belongs to, decided by the sheet's own name holding the
-        /// group's name. Tree List - Existing holds Existing. The words Existing and Proposed
-        /// are written in neither side of this: the group comes off the document's phases and
-        /// the sheet name comes off the map, and a group matching neither sheet is reported.
+        /// The sheet a merged species goes to. The rows carry it when a reader decided it, and
+        /// a species built with none is placed through <see cref="CountedGroups"/> off its
+        /// group name, the one resolver the readers use, so a Street Design species on STREETS
+        /// lands on Tree List - Proposed here the same way it was counted there. A sheet that
+        /// is neither of the template's two is nothing, and the species is reported.
         /// </summary>
-        private static TreeSheet SheetFor(string groupName, KpiTemplate template)
+        private static TreeSheet SheetFor(MergedSpecies species, KpiTemplate template)
         {
-            if (string.IsNullOrWhiteSpace(groupName)) return null;
+            string wanted = species.SheetName.Length > 0
+                ? species.SheetName
+                : CountedGroups.Of(template).SheetFor(species.GroupName);
+            if (wanted == null) return null;
 
             foreach (TreeSheet sheet in new[] { template.ExistingTrees, template.ProposedTrees })
             {
-                if (KpiNames.Holds(sheet.SheetName, groupName.Trim())) return sheet;
+                if (string.Equals(sheet.SheetName, wanted, StringComparison.Ordinal)) return sheet;
             }
 
             return null;

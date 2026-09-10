@@ -68,7 +68,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 })
             };
 
-            MergedSpecies merged = Assert.Single(KpiMerge.Species(plots));
+            MergedSpecies merged = Assert.Single(KpiMerge.Species(plots, CreateFixture.Counted));
 
             Assert.Equal("ALBIZIA LEBBECK", merged.BotanicalName);
             Assert.Equal("Proposed", merged.GroupName);
@@ -92,7 +92,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 })
             };
 
-            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(plots);
+            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(plots, CreateFixture.Counted);
 
             Assert.Equal(2, merged.Count);
             Assert.Equal(1, merged.Single(one => one.GroupName == "Existing").Quantity);
@@ -114,7 +114,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 })
             };
 
-            MergedSpecies merged = Assert.Single(KpiMerge.Species(plots));
+            MergedSpecies merged = Assert.Single(KpiMerge.Species(plots, CreateFixture.Counted));
 
             Assert.Equal(18, merged.Quantity);
             Assert.Equal("ALBIZIA LEBBECK", merged.BotanicalName);
@@ -132,7 +132,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 })
             };
 
-            Assert.Single(KpiMerge.Species(plots));
+            Assert.Single(KpiMerge.Species(plots, CreateFixture.Counted));
 
             SpeciesRow loose = Assert.Single(KpiMerge.Ungrouped(plots));
             Assert.Equal("CASSIA GLAUCA", loose.BotanicalName);

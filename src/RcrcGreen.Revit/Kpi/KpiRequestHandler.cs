@@ -303,7 +303,7 @@ namespace RcrcGreen.Revit.Kpi
                 asked.Template);
 
             string location = KpiPlotReader.Location(document, asked.LocationParameter);
-            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings);
+            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings, counted);
 
             KpiCreatePlan plan = null;
             PatchOutcome outcome = null;

@@ -147,7 +147,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void APlotWithTwoSoftscapeSchedulesContributesNoSpeciesToTheMerge()
         {
-            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(new[] { TwoOfEach(), OneOfEach("FM-06", 15) });
+            IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(new[] { TwoOfEach(), OneOfEach("FM-06", 15) }, CreateFixture.Counted);
 
             MergedSpecies albizia = Assert.Single(merged);
             Assert.Equal(15, albizia.Quantity);
