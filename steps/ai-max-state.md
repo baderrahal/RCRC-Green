@@ -1,6 +1,24 @@
 # ai-max state
 
-Phase: 9, ship. Thirty eighth pass, an audit. It built nothing and fixed nothing.
+Phase: 9, ship. Thirty ninth pass, an audit of the KPI tool alone. It built nothing and fixed
+nothing.
+
+Twenty nine findings are in steps/audit-kpi.md, ranked by cost: two BLOCKS, six WRONG, thirteen
+COSTLY, eight TIDY. The two BLOCKS: nothing stops the browsed output path from being the
+template path, and the delete that clears the way for the copy would destroy the client's
+template. The other is that the three schedule readers still fall back to a cell position when
+the heading row names no column, which is the rule CLAUDE.md states and the fault it names three
+rounds running.
+The largest of the WRONG is that `Preselect` in the KPI pane can never run past its own guard,
+so the component table, the prefix cross check and the line saying which route chose the
+template are all unreachable in the shipped pane. Three deliberate breaks: the read back and the
+binding of a value to its cell both left the suite green at 904, and the species group merge went
+red, so that rule alone is covered. All three hooks fired and blocked when probed. The audit ran
+at `92dd36c`, where the suite reads 904, 429 of them KPI. `steps/ai-max-state.md` is in the
+commit only because the commit hook requires it in every commit, which the audit's
+touch-nothing-else rule had to give way to.
+
+Before that, the thirty eighth pass, an audit. It built nothing and fixed nothing.
 
 Nineteen findings are in steps/audit.md, ranked by cost: one BLOCKS, four WRONG, six COSTLY,
 eight TIDY. The BLOCKS is a filter dropped silently at schedule capture. The WRONG four: the
