@@ -102,6 +102,16 @@ namespace RcrcGreen.Core.Kpi
 
         public const string BotanicalWord = "BOTANIC";
 
+        /// <summary>
+        /// HEIGHT (m) and DIAMETER (m) on the real softscape schedule, which are the workbook's
+        /// Mature Height and Average Mature Canopy Diameter, measured identical on six species
+        /// sitting in both. Optional: a schedule naming neither still counts its species and the
+        /// report says the measure was not there.
+        /// </summary>
+        public const string HeightWord = "HEIGHT";
+
+        public const string DiameterWord = "DIAMETER";
+
         public static int Holding(IReadOnlyList<string> headings, string word)
         {
             if (headings == null) return -1;
@@ -194,6 +204,8 @@ namespace RcrcGreen.Core.Kpi
             if (refusals.Count > 0) return SoftscapeReading.Refused(refusals);
 
             string countHeading = (headings[countColumn] ?? string.Empty).Trim();
+            int heightColumn = ScheduleColumns.Holding(headings, ScheduleColumns.HeightWord);
+            int diameterColumn = ScheduleColumns.Holding(headings, ScheduleColumns.DiameterWord);
 
             IReadOnlyList<ScheduleGroup> groups = ScheduleGroups.Of(schedule, phaseNames);
             var groupAt = new Dictionary<int, string>();
@@ -203,6 +215,7 @@ namespace RcrcGreen.Core.Kpi
             string carrying = string.Empty;
             bool totalRead = false;
             int total = 0;
+            int totalRow = 0;
             int passedOver = 0;
 
             for (int index = 1; index < rows.Count; index++)
@@ -229,6 +242,7 @@ namespace RcrcGreen.Core.Kpi
                     {
                         totalRead = true;
                         total = count.Whole;
+                        totalRow = index + 1;
                         continue;
                     }
 
@@ -261,7 +275,13 @@ namespace RcrcGreen.Core.Kpi
 
                 if (count.IsWhole)
                 {
-                    found.Add(new SpeciesRow(botanical.Trim(), carrying, count.Whole, plotId));
+                    // The height and the diameter come off the columns the heading row names,
+                    // and a schedule naming neither still counts the row. A cell that does not
+                    // read is carried with its reason rather than refusing the schedule.
+                    found.Add(new SpeciesRow(
+                        botanical.Trim(), carrying, count.Whole, plotId, index + 1,
+                        Measure(row, heightColumn, ScheduleColumns.HeightWord),
+                        Measure(row, diameterColumn, ScheduleColumns.DiameterWord)));
                     continue;
                 }
 
@@ -272,7 +292,14 @@ namespace RcrcGreen.Core.Kpi
 
             if (refusals.Count > 0) return SoftscapeReading.Refused(refusals);
 
-            return SoftscapeReading.Of(found, totalRead, total, passedOver);
+            return SoftscapeReading.Of(found, totalRead, total, passedOver, totalRow);
+        }
+
+        private static PrintedMeasure Measure(IReadOnlyList<string> row, int column, string word)
+        {
+            return column < 0
+                ? PrintedMeasure.NoColumn(word)
+                : PrintedMeasure.Of(ScheduleColumns.At(row, column));
         }
     }
 
@@ -402,7 +429,7 @@ namespace RcrcGreen.Core.Kpi
                     continue;
                 }
 
-                subtotals.Add(new GroupSubtotal(heading, area.Value, count.Whole));
+                subtotals.Add(new GroupSubtotal(heading, area.Value, count.Whole, rowNumber: index + 1));
             }
 
             if (refusals.Count > 0) return ShrubsAndLawnReading.Refused(refusals);
@@ -428,8 +455,11 @@ namespace RcrcGreen.Core.Kpi
             GroupSubtotal last = subtotals[subtotals.Count - 1];
             double sum = species.Count == 0 ? double.NaN : species.Sum();
 
+            // The row taken and every row considered travel with the value, so the report can
+            // say which subtotal row was taken and why the others were not.
             found.Add(new GroupSubtotal(
-                heading, last.SquareMetres, last.ItemCount, subtotals.Count, sum, Disagreeing(subtotals)));
+                heading, last.SquareMetres, last.ItemCount, subtotals.Count, sum, Disagreeing(subtotals),
+                last.RowNumber, subtotals.Select(one => one.RowNumber)));
         }
 
         /// <summary>

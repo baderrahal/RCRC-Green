@@ -78,6 +78,26 @@ namespace RcrcGreen.Core.Kpi
             return howMany + " " + kind + " schedules and none read, see above";
         }
 
+        /// <summary>
+        /// The refusal for one species the softscape schedule prints on more than one row under
+        /// one group on one plot.
+        ///
+        /// **This is what FM-05 10, FM-05 10 in the species rows was.** Two rounds read it as
+        /// one plot counted twice and went looking for a second schedule. There is one, the
+        /// count and the read are one list, and the two entries are two printed rows of it,
+        /// with counts that differ, 19 and 20, 3 and 4, so they are not one row read twice.
+        /// Whether two rows for one species under one group are two types of it or one counted
+        /// twice is written down nowhere, so the accounting refuses and the rows are printed at
+        /// the end of the report for a person to look at.
+        /// </summary>
+        public static string RepeatedRows(string plotId, RepeatedSpecies repeated)
+        {
+            return plotId + " prints " + repeated.BotanicalName + " on " + repeated.Rows.Count + " rows under "
+                + repeated.GroupName + ", " + repeated.InWords
+                + ". Nothing says whether that is two types of one species or one counted twice, so the "
+                + "write is refused until somebody says which. The rows are printed at the end of the report.";
+        }
+
         public const string NoArea = "no filled region holding an area";
 
         public const string ChooseTheRegion =
@@ -232,6 +252,11 @@ namespace RcrcGreen.Core.Kpi
                 foreach (string refused in reading.ReadRefusals)
                 {
                     refusals.Add(reading.PlotId + ": " + refused);
+                }
+
+                foreach (RepeatedSpecies repeated in reading.SpeciesPrintedOnMoreThanOneRow)
+                {
+                    refusals.Add(RepeatedRows(reading.PlotId, repeated));
                 }
 
                 if (reading.SoftscapeTotalRead && reading.SpeciesSum != reading.SoftscapeTotal)

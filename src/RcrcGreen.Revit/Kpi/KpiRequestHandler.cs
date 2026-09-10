@@ -319,7 +319,7 @@ namespace RcrcGreen.Revit.Kpi
                     asked.Date, asked.PreparedBy, asked.Position);
 
                 outputPath = Path.Combine(outputFolder, OutputName.Final(asked.OutputName));
-                outcome = Patched(asked.TemplatePath, outputPath, plan.Writes);
+                outcome = Patched(asked.TemplatePath, outputPath, plan.Writes, plan.ComputesFrom);
             }
             else
             {
@@ -357,7 +357,8 @@ namespace RcrcGreen.Revit.Kpi
         /// BEFORE the delete, and a second one stands inside the patcher, because either alone
         /// is one refactor from being bypassed.
         /// </summary>
-        private static PatchOutcome Patched(string templatePath, string outputPath, IReadOnlyList<CellWrite> writes)
+        private static PatchOutcome Patched(
+            string templatePath, string outputPath, IReadOnlyList<CellWrite> writes, IReadOnlyList<WorkbookCell> computesFrom)
         {
             SamePath answer = FilePaths.Compare(templatePath, outputPath);
             if (answer != SamePath.Different)
@@ -369,7 +370,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 if (File.Exists(outputPath)) File.Delete(outputPath);
 
-                return WorkbookPatcher.Patch(templatePath, outputPath, writes);
+                return WorkbookPatcher.Patch(templatePath, outputPath, writes, computesFrom);
             }
             catch (UnauthorizedAccessException denied)
             {

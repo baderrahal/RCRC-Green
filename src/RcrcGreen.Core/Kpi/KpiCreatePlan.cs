@@ -29,6 +29,37 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
+    /// A matched species whose height or diameter in Revit is not what the client's row holds.
+    /// Named and left alone: PHOENIX DACTYLIFERA prints 15 metres across in the model and the
+    /// MOSQUES existing list holds 8 at row 86, two numbers for one species, and which is
+    /// right is a question for the team rather than a cell to overwrite.
+    /// </summary>
+    public sealed class MeasureDifference
+    {
+        public MeasureDifference(string sheetName, int row, string workbookName, string what, string revitPrints, string workbookHolds)
+        {
+            SheetName = sheetName ?? string.Empty;
+            Row = row;
+            WorkbookName = workbookName ?? string.Empty;
+            What = what ?? string.Empty;
+            RevitPrints = revitPrints ?? string.Empty;
+            WorkbookHolds = workbookHolds ?? string.Empty;
+        }
+
+        public string SheetName { get; }
+
+        public int Row { get; }
+
+        public string WorkbookName { get; }
+
+        public string What { get; }
+
+        public string RevitPrints { get; }
+
+        public string WorkbookHolds { get; }
+    }
+
+    /// <summary>
     /// Every cell this fill would write, and every cell it would not, with the reason.
     ///
     /// The plan is worked out in full before anything is copied, so a refusal writes no file.
@@ -54,15 +85,32 @@ namespace RcrcGreen.Core.Kpi
             KpiTemplate template,
             IReadOnlyList<CellWrite> writes,
             IReadOnlyList<NotWritten> skipped,
-            IReadOnlyList<SpeciesMatch> matches)
+            IReadOnlyList<SpeciesMatch> matches,
+            IReadOnlyList<MeasureDifference> differences)
         {
             Template = template;
             Writes = writes;
             Skipped = skipped;
             Matches = matches;
+            Differences = differences;
         }
 
         public KpiTemplate Template { get; }
+
+        /// <summary>
+        /// Every matched species whose height or diameter in Revit differs from what its row
+        /// already holds. Reported, and nothing written over the client's own numbers.
+        /// </summary>
+        public IReadOnlyList<MeasureDifference> Differences { get; }
+
+        /// <summary>
+        /// Every cell the map names on the main sheet, written or not, for the formula check
+        /// to say whether the workbook's own arithmetic has its inputs.
+        /// </summary>
+        public IReadOnlyList<WorkbookCell> ComputesFrom
+        {
+            get { return Template.Cells.Select(cell => new WorkbookCell(Template.MainSheetName, cell.Cell)).ToList(); }
+        }
 
         public IReadOnlyList<CellWrite> Writes { get; }
 
@@ -116,6 +164,7 @@ namespace RcrcGreen.Core.Kpi
             List<SpeciesMatch> held = (matches ?? Enumerable.Empty<SpeciesMatch>())
                 .Where(one => one != null)
                 .ToList();
+            var differences = new List<MeasureDifference>();
 
             foreach (SpeciesMatch match in held)
             {
@@ -139,18 +188,80 @@ namespace RcrcGreen.Core.Kpi
                     KpiTemplates.QuantityColumn + match.Row.ToString(CultureInfo.InvariantCulture),
                     match.Species.Quantity));
 
-                if (!match.Added) continue;
+                if (!match.Added)
+                {
+                    // The client's row keeps its own height and diameter. A Revit value that
+                    // differs is named and nothing is written over it.
+                    Differing(differences, match, "height", match.Species.Height, match.WorkbookHeight);
+                    Differing(differences, match, "diameter", match.Species.Diameter, match.WorkbookDiameter);
+                    continue;
+                }
 
                 // The name as Revit spells it, because there is nothing else to spell it from,
-                // and NOTHING in any other column. Family, genus, native and every code column
-                // are the client's data and the tool does not know them.
+                // then the height and the diameter the schedule printed beside it, into the
+                // columns the sheet's header row names, and NOTHING in any other column.
+                // Family, genus, native and every code column are the client's data and Revit
+                // does not print them. A row written with a name and a count alone broke the
+                // canopy maths on the 1428 run: the sheet's own formula returns a space for a
+                // blank diameter and the cell beside it multiplied that space by the count.
                 writes.Add(CellWrite.Text(
                     match.SheetName,
                     KpiTemplates.BotanicalColumn + match.Row.ToString(CultureInfo.InvariantCulture),
                     match.Species.BotanicalName));
+
+                Measured(match, "height", match.Species.Height, match.HeightColumn, match.WhyNoHeightColumn, writes, skipped);
+                Measured(match, "diameter", match.Species.Diameter, match.DiameterColumn, match.WhyNoDiameterColumn, writes, skipped);
             }
 
-            return new KpiCreatePlan(template, writes, skipped, held);
+            return new KpiCreatePlan(template, writes, skipped, held, differences);
+        }
+
+        /// <summary>
+        /// One of the two measures into its column, or not, with the reason: no column on the
+        /// sheet, no row that printed a value, or rows that disagree. Nothing is averaged and
+        /// nothing is taken first.
+        /// </summary>
+        private static void Measured(
+            SpeciesMatch match,
+            string what,
+            MeasureAnswer answer,
+            string column,
+            string whyNoColumn,
+            List<CellWrite> writes,
+            List<NotWritten> skipped)
+        {
+            string label = match.Species.BotanicalName + " " + what;
+            string row = match.Row.ToString(CultureInfo.InvariantCulture);
+
+            if (string.IsNullOrEmpty(column))
+            {
+                skipped.Add(new NotWritten(match.SheetName, string.Empty, label, whyNoColumn));
+                return;
+            }
+
+            if (!answer.Write)
+            {
+                skipped.Add(new NotWritten(match.SheetName, column + row, label, answer.Why));
+                return;
+            }
+
+            writes.Add(CellWrite.Number(match.SheetName, column + row, answer.Value));
+        }
+
+        private static void Differing(
+            List<MeasureDifference> differences, SpeciesMatch match, string what, MeasureAnswer answer, string workbookHolds)
+        {
+            if (!answer.Write) return;
+
+            CellNumberRead held = CellNumber.Read(workbookHolds);
+            bool same = held.IsNumber
+                && Math.Abs(held.Value - answer.Value) <= Totalled.Tolerance * Math.Max(1.0, Math.Abs(answer.Value));
+            if (same) return;
+
+            differences.Add(new MeasureDifference(
+                match.SheetName, match.Row, match.WorkbookName, what,
+                answer.Value.ToString("0.##", CultureInfo.InvariantCulture),
+                string.IsNullOrWhiteSpace(workbookHolds) ? "(blank)" : workbookHolds.Trim()));
         }
 
         private static void Typed(

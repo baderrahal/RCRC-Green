@@ -4,6 +4,174 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty seventh pass. Six things measured on the 1428 run and the workbook opened in Excel
+
+Six things, all measured on the 20 plot MOSQUES run of 2026-09-10 at 14:28, on the workbook it
+wrote and on that workbook opened in Excel. Five are fixed and the sixth is reported and not
+fixed, as asked. **The other 43 audit findings stay open**, not renumbered, not reordered, not
+annotated. Nothing else was touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`.
+**Nothing in this round has been observed in Revit, and nothing in it has been observed in
+Excel.** The workbook and the model were not handed over and were not needed: every number
+below is the one stated for the run, and the test workbooks are built to those shapes with made
+up names.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1046 tests at this branch, 0 failed and 0 skipped, 557 of them KPI, 32 added here.**
+
+### 1. A written row broke the canopy maths, and the schedule had the fix
+
+The three species written into Proposed rows 84, 85 and 86 carried a name and a count and
+nothing else, L84 read `IF(ISBLANK(J84), " ", ROUND(PI()*(J84/2)^2, 0))` and returned a space,
+M84 multiplied that space by the count, and #VALUE! ran through M93, F8, D8, E31 and the KPI
+row, nine errors that survive a full recalculation.
+
+`SoftscapeRows.Read` reads HEIGHT (m) and DIAMETER (m) off the columns the heading row names,
+never by position, into `PrintedMeasure` on every `SpeciesRow`, with the row number beside
+them. A measure is held when it reads as a number greater than nought. UNKNOWN prints a dash for
+its height and 0 for its diameter, so neither is held and each says what it printed. A cell
+holding a digit past its number is not held either, with the reader's own reason, and does not
+refuse the schedule, because the species counts whether or not its height reads.
+`MergedSpecies.FromRows` holds every row's value against the others and answers per column:
+every row that holds a value agrees, and that value is written, or the rows disagree and nothing
+is written with every value named and, for the diameter, the words that the row will not compute
+its canopy. Nothing is averaged and nothing is taken first. A row printing a dash beside rows
+that agree is named and does not stop them.
+
+`SpeciesList.In` finds the sheet's height and diameter columns by what its header row, row 3,
+calls them, the words HEIGHT and DIAMETER, and a header naming none or more than one of either
+gives no column and the reason. Measured I and J on MOSQUES, Mature Height (m) and Average Mature
+Canopy Diameter (m), and a test moves the same headings to N and O and finds them there. The
+letters are written nowhere. `KpiCreatePlan.Of` writes four things for a species written in, the
+name into D, the count into B, the height and the diameter into those two columns, and nothing
+else. Each of the two that cannot be written is named under CELLS NOT WRITTEN with its cell and
+the reason. The report's species table gained a height and a diameter column saying what went
+into each cell or why nothing did.
+
+**Two things stated and not seen.** The header row is row 3 on both tree sheets, which is the
+one number the map holds and was measured on all seven templates. And whether the empty rows of
+the client's sheet already hold anything in their height and diameter cells is UNKNOWN. The
+patcher replaces whatever a written cell holds, so a formula sitting in I84 would be replaced by
+the number. Nothing measured says there is one.
+
+### 2. The double count, and why the guard counted one
+
+**The guard was right and the diagnosis it was built on was wrong.** The count and the read have
+been one list in one pass since the forty sixth pass: `KpiPlotReader.Read` sorts every schedule
+filtered on the plot into its kind before it reads any, and reads the one when there is one. The
+1428 report read one softscape schedule on all 20 plots because there is one. The two FM-05
+entries in a species row are two printed rows of that one schedule for one species under one
+group, ALBIZIA LEBBECK 10 and 10, BAUHINIA PURPUREA 19 and 20, CASSIA GLAUCA 3 and 4. Counts that
+differ are not one row read twice, and the workbook was written, so the species rows added to
+the printed TOTAL on every plot that printed one. The forty sixth pass took the user's reading of
+a second schedule as measured and fixed a fault the model does not have. That is in the rules
+file in those words.
+
+**Whether two rows for one species under one group are two types of it or one counted twice is
+written down nowhere**, so the tool refuses rather than choosing. `SpeciesRow.RowNumber` is the
+printed row, `PlotReading.SpeciesPrintedOnMoreThanOneRow` finds every such species, and
+`Reconciliation.Of` refuses the write naming the plot, the species, the group, the rows and the
+counts, and says the rows are printed at the end of the report. Three refusals for FM-05 on the
+fixture. A merged row's working reads FM-05 20 (2 rows, 10 + 10), FM-06 15 rather than FM-05
+twice, and the plot's own block says which species printed on which rows. **This refuses the
+next 20 plot run until Bader says which the FM-05 rows are.** The section under item 6 will show
+the rows, with their PLANT CODE, HEIGHT and DIAMETER columns, which is what can settle it. If
+they are two types, the refusal comes out and the rows are added, which is what the schedule's
+own TOTAL does. If they are one counted twice, the cause is in the model and the tool cannot
+know it from here.
+
+### 3. Nothing checked the output still computes, and now something does
+
+`WorkbookFormulas.Check` reads every formula in the output, by its text and never by evaluating
+one, after the read back. It finds three things off the text. A formula holding ISBLANK on a cell
+that is blank in the output and a string literal returns that text. A formula doing arithmetic on
+such a cell is #VALUE!. Every formula reading a cell in error carries it, through ranges and
+across sheets, resolved through the workbook's defined names. A shared formula's dependents get
+the master's text shifted to their own row, which is how Excel stores a column of one formula.
+When the chain starts on a row this run wrote into, `WorkbookPatcher.Patch` deletes the output
+again and returns `PatchOutcome.RefusedAfterWriting`, so the run ends with no file and the
+report says NOTHING WAS WRITTEN with every formula named. On the fixture shaped like the 1428
+workbook, a species written into row 7 with no diameter refuses on 8 formulas: M7, M10, F8, D8,
+D9, E31, F31 and G31, with L7 as the cause. The template's own empty rows return a space from
+the same formula and are not an error, because the cell beside them guards the blank count.
+
+The section WHAT THE WORKBOOK WILL COMPUTE FROM THIS prints every formula at risk with the
+reason, every formula reading a row this run wrote into with the reference it reads it through,
+the six cells the map names with whether each is present and which formulas read it and which of
+their inputs are blank, and the functions under item 5. `KpiRequestHandler` hands the patcher
+the map's cells for that. **A consequence, stated outright:** a species with no diameter written
+into an empty row of the client's list refuses the run, because the row's canopy formula cannot
+compute from it. UNKNOWN on a proposed list does exactly that. The request asked for a refusal
+and not a note, and this is it.
+
+### 4. calcMode auto, the fifth check, and what else the package can hold
+
+`calcPr` carries `calcMode="auto"` beside `calcId="0"` and `fullCalcOnLoad="1"`. `CacheCheck`
+reads it back and `WillRecalculate` requires it, five checks and not four, and the report prints
+the fifth line. The patcher also looks for every other place in the package that can hold a
+calculation setting: a `sheetCalcPr` element in any sheet part, an `xl/vbaProject.bin` part, and
+any attribute on `calcPr` other than the three it sets. On the test workbooks it found none, a
+`sheetCalcPr` planted in one is found and named, and the report says what was looked for either
+way. On the client's MOSQUES template what it will find is UNKNOWN until the next run.
+
+**I cannot test this in Excel and neither can the gate.** The check is over what the file says
+and not over what Excel does with it. Whether an explicit `calcMode="auto"` overrides a manual
+session in every version of Excel is not measured here.
+
+### 5. The formulas the reader's Excel may not have
+
+Every formula whose text holds `_xlfn.` is counted, by the function named after the prefix and
+by cells. On the fixture that is IFS in 2 cells, and the section says those cells need a version
+of Excel that has IFS and read #NAME? in one that does not. Which version is not worked out, as
+asked. The tool writes no formula and the section says so.
+
+### 6. The report shows what Revit printed
+
+`PlotReading.PrintedSchedules` carries every schedule the plot's numbers came off, as
+`KpiPlotReader.Printed` read it, and the report's last section prints each under EVERY SCHEDULE
+THIS RUN READ, AS THE SCHEDULE PRINTS IT: the plot and the schedule's name, which rows were read
+as species rows, how many were passed over as subtotals and where the TOTAL row was, and for a
+shrubs and lawn schedule which subtotal row each group's value was taken off, the last of its
+subtotal rows, with the rows above it named as the phase subtotals that add to it and are not
+taken. `GroupSubtotal.RowNumber` and `RowsConsidered` carry that. Every column is padded to its
+widest cell, rows are numbered the way the readers number them with the heading row as 1, and a
+schedule is cut at 200 rows saying how many of how many are shown. The top of the report says
+the section is there.
+
+### Reported and not fixed
+
+**Phoenix dactylifera reads 15 metres across in the model and 8 on the client's existing list at
+row 86.** `KpiCreatePlan.Differences` names every matched species whose height or diameter in
+Revit is not what its row holds, the report prints them under MATCHED SPECIES WHOSE HEIGHT OR
+DIAMETER IN REVIT DIFFERS FROM THE ROW'S with CHANGED NOTHING on every line, and nothing is
+written over the client's number. **Open question for Bader:** two numbers for one species, one
+from the client's palette and one from the model. Which is right, and should the tool ever say?
+
+### Break watches
+
+Five, each restored byte for byte and checked with md5, the suite rerun green at 1046.
+
+- the height and diameter no longer written for a species written in: **4 red**, three in
+  `CanopyColumnsTests` and the rewritten `KpiCreatePlanTests` one
+- a species on two rows under one group no longer refusing: **1 red**,
+  `ASpeciesOnTwoRowsUnderOneGroupRefusesTheWriteNamingTheRows`
+- a formula reading an error off a written row no longer refusing: **2 red**, both in
+  `WorkbookFormulasTests`
+- `calcMode` no longer set: **2 red**, the fifth check test and the patcher's own recalculate
+  test
+- the schedules section dropped from the report: **5 red**, all of `SchedulesAsPrintedTests`
+
+Item 5 has no watch of its own: the function count is asserted in `WorkbookFormulasTests` and
+would go red with the check.
+
+### Two existing tests rewritten
+
+`AnAddedSpeciesWritesItsNameAndItsCountAndNothingElse` said an added species writes two things.
+It writes four now, and a match built with no list behind it names the other two, so the test
+says that. The TOTAL line under a plot names its row now, so the DM-12 test passes the row
+through the fixture and expects row 14, written out by hand.
+
+---
+
 ## 2026-09-10, forty sixth pass. Two faults measured on the first twenty plot run
 
 Two faults, both found by running 20 mosque plots for real at 11:16 and reading the workbook

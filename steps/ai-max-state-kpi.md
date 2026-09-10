@@ -1,6 +1,26 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Forty sixth pass, two faults measured on the first twenty plot run, 2026-09-10
+Phase: 9, ship. Forty seventh pass, six things measured on the 20 plot MOSQUES run of
+2026-09-10 at 14:28 and on its workbook opened in Excel. Five fixed, one reported and not
+fixed. **The other 43 audit findings stay open**, not renumbered, not reordered, not annotated.
+
+**A species written in carries its height and its diameter off the schedule**, read by heading,
+agreed across every row, written into the columns the sheet's header row names, and named with
+the reason where a dash, a nought or a disagreement means nothing is written. **The FM-05
+double is two printed rows of one schedule**, not two schedules, and the write is refused naming
+the rows and the counts until Bader says which. **The output's formulas are read for what they
+will compute**, and a written row a formula cannot compute from deletes the output again and
+refuses the run. **calcMode is auto and the fifth check**, with the package searched for any
+other calculation setting. **The _xlfn. functions are counted** by name and by cell. **The report
+ends with every schedule read, as the schedule prints it.** Phoenix dactylifera's two diameters
+are named and nothing is changed, an open question for Bader.
+
+Five break watches went red on 4, 1, 2, 2 and 5 tests and were restored byte for byte.
+**Locally 1046 tests at this branch, 0 failed and 0 skipped, 557 of them KPI, 32 added.** The
+pull request, the merge hash and the runner's count go in the record the merge adds here.
+**Nothing in this round has been observed in Revit or in Excel.**
+
+Before that, the forty sixth pass, two faults measured on the first twenty plot run, 2026-09-10
 at 11:16, and fixed. **The other 43 audit findings stay open**, not renumbered, not reordered,
 not annotated.
 

@@ -18,7 +18,16 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public static class WorkbookPatcher
     {
-        public static PatchOutcome Patch(string sourcePath, string outputPath, IReadOnlyList<CellWrite> writes)
+        /// <summary>
+        /// <paramref name="computesFrom"/> is every cell the map names on the main sheet, written
+        /// or not, so the formula check can say whether the workbook's own arithmetic has all its
+        /// inputs. Null checks the written cells alone.
+        /// </summary>
+        public static PatchOutcome Patch(
+            string sourcePath,
+            string outputPath,
+            IReadOnlyList<CellWrite> writes,
+            IEnumerable<WorkbookCell> computesFrom = null)
         {
             if (sourcePath == null) throw new ArgumentNullException("sourcePath");
             if (outputPath == null) throw new ArgumentNullException("outputPath");
@@ -102,6 +111,7 @@ namespace RcrcGreen.Core.Kpi
 
                 int partsInOutput;
                 CacheCheck cache;
+                FormulaCheck formulas;
                 var landed = new List<LandedCell>();
                 using (FileStream reading = File.OpenRead(outputPath))
                 using (var zip = new ZipArchive(reading, ZipArchiveMode.Read))
@@ -119,9 +129,27 @@ namespace RcrcGreen.Core.Kpi
                     // check made against what was sent would have passed on the file that
                     // opened showing zeros.
                     cache = Checked(zip, workbookPart, sheetParts.Values, dropped, calcChainRemoved);
+
+                    // What the output's formulas will make of the cells that landed. A written
+                    // row whose neighbouring formula returns a space, and a formula that
+                    // multiplies that space, is #VALUE! whatever Excel recalculates.
+                    formulas = WorkbookFormulas.Check(
+                        zip, workbookPart, sheetParts,
+                        writes.Select(write => new WorkbookCell(write.SheetName, write.Cell.ToString())),
+                        computesFrom);
                 }
 
-                return PatchOutcome.Done(partsInSource, partsInOutput, changed, landed, cache);
+                // A run that writes cells nobody can compute from is a refusal and not a note.
+                // The file was written to be checked, and it is taken away again, because a
+                // workbook whose KPI row reads #VALUE! looks finished to anyone who does not
+                // scroll to it.
+                if (formulas.RefusesTheWrite)
+                {
+                    File.Delete(outputPath);
+                    return PatchOutcome.RefusedAfterWriting(formulas.Refusal, formulas);
+                }
+
+                return PatchOutcome.Done(partsInSource, partsInOutput, changed, landed, cache, formulas);
             }
             catch (InvalidDataException)
             {
@@ -287,6 +315,11 @@ namespace RcrcGreen.Core.Kpi
             // rather than trusting it. The client's template reads 191029, which is as new as
             // Excel's own, and that is why the flag beside it changed nothing.
             calcPr.SetAttributeValue("calcId", "0");
+
+            // Auto, said outright. The template carried no calcMode, and Excel takes its
+            // calculation mode from the first workbook opened in the session, so the 1428 file
+            // opened into a manual session showing every formula cell blank.
+            calcPr.SetAttributeValue("calcMode", "auto");
             Save(entry, workbook);
         }
 
@@ -358,6 +391,27 @@ namespace RcrcGreen.Core.Kpi
             bool onLoad = calcPr != null
                 && string.Equals((string)calcPr.Attribute("fullCalcOnLoad"), "1", StringComparison.Ordinal);
             string calcId = calcPr == null ? string.Empty : ((string)calcPr.Attribute("calcId") ?? string.Empty);
+            string calcMode = calcPr == null ? string.Empty : ((string)calcPr.Attribute("calcMode") ?? string.Empty);
+
+            // Anything else in the package that can hold a calculation setting the workbook
+            // part does not: a sheet's own sheetCalcPr, a macro, or another attribute on calcPr.
+            // Found or not, the report says what was looked for.
+            var other = new List<string>();
+            if (calcPr != null)
+            {
+                foreach (XAttribute attribute in calcPr.Attributes())
+                {
+                    string name = attribute.Name.LocalName;
+                    if (name == "fullCalcOnLoad" || name == "calcId" || name == "calcMode") continue;
+
+                    other.Add("calcPr also carries " + name + "=\"" + attribute.Value + "\"");
+                }
+            }
+
+            if (zip.GetEntry(VbaPart) != null)
+            {
+                other.Add(VbaPart + " is in the package, and a macro can set the calculation mode when the file opens");
+            }
 
             int stillCached = 0;
             foreach (string partPath in sheetPaths.Distinct(StringComparer.Ordinal))
@@ -371,6 +425,12 @@ namespace RcrcGreen.Core.Kpi
                     .Elements().Where(element => element.Name.LocalName == "c")
                     .Count(cell => cell.Elements().Any(child => child.Name.LocalName == "f")
                         && cell.Elements().Any(child => child.Name.LocalName == "v"));
+
+                foreach (XElement sheetCalcPr in sheet.Root.Elements().Where(element => element.Name.LocalName == "sheetCalcPr"))
+                {
+                    other.Add(partPath + " carries sheetCalcPr"
+                        + string.Concat(sheetCalcPr.Attributes().Select(one => " " + one.Name.LocalName + "=\"" + one.Value + "\"")));
+                }
             }
 
             return new CacheCheck(
@@ -378,8 +438,12 @@ namespace RcrcGreen.Core.Kpi
                 calcId,
                 stillCached,
                 calcChainRemoved && zip.GetEntry(CalcChainPart) == null,
-                dropped);
+                dropped,
+                calcMode,
+                other);
         }
+
+        public const string VbaPart = "xl/vbaProject.bin";
 
         private static string CellText(ZipArchive zip, string partPath, CellRef reference)
         {

@@ -35,7 +35,9 @@ namespace RcrcGreen.Core.Kpi
             string workbookName,
             string why,
             bool added = false,
-            bool notReachedByTheTotal = false)
+            bool notReachedByTheTotal = false,
+            SpeciesList list = null,
+            SpeciesListRow listRow = null)
         {
             if (species == null) throw new ArgumentNullException("species");
             if (row < 0) throw new ArgumentOutOfRangeException("row");
@@ -47,7 +49,36 @@ namespace RcrcGreen.Core.Kpi
             Why = why ?? string.Empty;
             Added = added;
             NotReachedByTheTotal = notReachedByTheTotal;
+            HeightColumn = list == null ? string.Empty : list.HeightColumn;
+            DiameterColumn = list == null ? string.Empty : list.DiameterColumn;
+            WhyNoHeightColumn = list == null ? ListNotRead : list.WhyNoHeightColumn;
+            WhyNoDiameterColumn = list == null ? ListNotRead : list.WhyNoDiameterColumn;
+            WorkbookHeight = listRow == null ? string.Empty : listRow.Height;
+            WorkbookDiameter = listRow == null ? string.Empty : listRow.Diameter;
         }
+
+        public const string ListNotRead = "the sheet's list was not read here";
+
+        /// <summary>
+        /// The letter of the sheet's height column, found by its heading, or empty with the
+        /// reason beside it. Where a species is written in, its height goes here.
+        /// </summary>
+        public string HeightColumn { get; }
+
+        public string DiameterColumn { get; }
+
+        public string WhyNoHeightColumn { get; }
+
+        public string WhyNoDiameterColumn { get; }
+
+        /// <summary>
+        /// What the matched row already holds for its height and its diameter, as the cells
+        /// print, so the report can name a species Revit measures differently. The client's row
+        /// is theirs and nothing changes it.
+        /// </summary>
+        public string WorkbookHeight { get; }
+
+        public string WorkbookDiameter { get; }
 
         /// <summary>
         /// True when the list holds the name on <see cref="Row"/> and the sheet's total does not
@@ -204,7 +235,7 @@ namespace RcrcGreen.Core.Kpi
                     if (lower != null)
                     {
                         found.Add(new SpeciesMatch(species, sheet.SheetName, lower.Row, lower.BotanicalName,
-                            BelowTheList(lower.Row, list), false, true));
+                            BelowTheList(lower.Row, list), false, true, list, lower));
                         continue;
                     }
 
@@ -224,19 +255,19 @@ namespace RcrcGreen.Core.Kpi
                 if (!list.TotalFound)
                 {
                     found.Add(new SpeciesMatch(species, sheet.SheetName, row.Row, row.BotanicalName,
-                        NoTotalToReach(list), false, true));
+                        NoTotalToReach(list), false, true, list, row));
                     continue;
                 }
 
                 if (!list.Reaches(row.Row))
                 {
                     found.Add(new SpeciesMatch(species, sheet.SheetName, row.Row, row.BotanicalName,
-                        OutsideTheTotal(row.Row, list), false, true));
+                        OutsideTheTotal(row.Row, list), false, true, list, row));
                     continue;
                 }
 
                 found.Add(new SpeciesMatch(
-                    species, sheet.SheetName, row.Row, row.BotanicalName, string.Empty));
+                    species, sheet.SheetName, row.Row, row.BotanicalName, string.Empty, false, false, list, row));
             }
 
             return found;
@@ -254,7 +285,7 @@ namespace RcrcGreen.Core.Kpi
         {
             if (!list.TotalFound)
             {
-                return new SpeciesMatch(species, sheetName, 0, string.Empty, NoTotalToReach(list));
+                return new SpeciesMatch(species, sheetName, 0, string.Empty, NoTotalToReach(list), false, false, list);
             }
 
             Queue<int> rows;
@@ -266,10 +297,10 @@ namespace RcrcGreen.Core.Kpi
 
             if (rows.Count == 0)
             {
-                return new SpeciesMatch(species, sheetName, 0, string.Empty, NoEmptyRowLeft);
+                return new SpeciesMatch(species, sheetName, 0, string.Empty, NoEmptyRowLeft, false, false, list);
             }
 
-            return new SpeciesMatch(species, sheetName, rows.Dequeue(), string.Empty, WrittenIn, true);
+            return new SpeciesMatch(species, sheetName, rows.Dequeue(), string.Empty, WrittenIn, true, false, list);
         }
 
         /// <summary>

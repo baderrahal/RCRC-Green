@@ -369,12 +369,14 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// An added species is two writes and no more: the botanical name into column D and the
-        /// count into column B. Family, genus, native and every code column are the client's
-        /// data and the tool does not know them.
+        /// An added species is the botanical name into column D, the count into column B, and
+        /// the height and the diameter into the columns the sheet's header row names. A match
+        /// built with no list behind it has no such columns, so those two are named under the
+        /// cells not written rather than written by a letter somebody assumed. Family, genus,
+        /// native and every code column are the client's data and the tool does not know them.
         /// </summary>
         [Fact]
-        public void AnAddedSpeciesWritesItsNameAndItsCountAndNothingElse()
+        public void AnAddedSpeciesWithNoListColumnsWritesItsNameAndItsCountAndNamesTheOtherTwo()
         {
             var species = new MergedSpecies("PHOENIX DACTYLIFERA", CreateFixture.Existing,
                 new[] { new PlotNumber("DM-12", 5) });
@@ -392,7 +394,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(2, onTheSheet.Count);
             Assert.Equal("5", onTheSheet.Single(one => one.Cell.ToString() == "B84").Stored);
             Assert.Equal("PHOENIX DACTYLIFERA", onTheSheet.Single(one => one.Cell.ToString() == "D84").Stored);
-            Assert.Empty(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet));
+
+            List<NotWritten> named = plan.Skipped.Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet).ToList();
+            Assert.Equal(new[] { "PHOENIX DACTYLIFERA height", "PHOENIX DACTYLIFERA diameter" }, named.Select(one => one.What));
+            Assert.All(named, one => Assert.Equal(SpeciesMatch.ListNotRead, one.Why));
         }
 
         /// <summary>

@@ -24,6 +24,15 @@ namespace RcrcGreen.Core.Tests.Kpi
             return new SpeciesRow(name, group, quantity);
         }
 
+        /// <summary>
+        /// A species row with the row it printed on and the height and diameter beside it, as
+        /// the softscape schedule prints them. A nought or a dash is what UNKNOWN prints.
+        /// </summary>
+        public static SpeciesRow Species(string name, string group, int quantity, int row, string height, string diameter)
+        {
+            return new SpeciesRow(name, group, quantity, null, row, PrintedMeasure.Of(height), PrintedMeasure.Of(diameter));
+        }
+
         public static GroupSubtotal Subtotal(string heading, double squareMetres, int items)
         {
             return new GroupSubtotal(heading, squareMetres, items);
@@ -106,7 +115,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             int softscapeTotal = 0,
             int rowsPassedOver = 0,
             string[] softscapeSchedules = null,
-            string[] shrubsAndLawnSchedules = null)
+            string[] shrubsAndLawnSchedules = null,
+            ScannedSchedule[] printedSchedules = null,
+            int softscapeTotalRow = 0)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
             string chosen = chosenRegion ?? (held.Length > 0 ? held[0].TypeName : null);
@@ -128,7 +139,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                 readRefusals,
                 softscapeTotalRead,
                 softscapeTotal,
-                rowsPassedOver);
+                rowsPassedOver,
+                printedSchedules,
+                softscapeTotalRow);
         }
 
         public static string SoftscapeName(string plot)
