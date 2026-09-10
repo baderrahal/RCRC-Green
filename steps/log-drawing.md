@@ -4,6 +4,118 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty fifth pass. The rest of the audit in two pull requests, all but three findings
+
+Two pull requests, because eleven fixes over thirty files was too large for one review and
+the brief allowed the split. Pull request 61, fixes 1 to 6, merged into main as `aaf78db`.
+**The runner executed 1056 tests against it, 0 failed and 0 skipped.** Locally the head read
+1024, and the 32 between are KPI tests pull request 60 landed on main while this one was
+open, which the gate builds in: main measured 1056 after the merge. Pull request 62, fixes
+7 to 11, merged into main as `6910049`. **The runner executed 1060 tests against
+it, 0 failed and 0 skipped, the same count the local run gave after the last file was
+written.** Twenty eight of the thirty one findings in `steps/audit-drawing.md` are marked
+FIXED, and 11, 15 and 28 stay as they were, for the reasons the brief gave. Drawing Sheet
+territory and common files only: no Shared file, no KPI file and no shared Revit root file
+was edited, and the one KPI thing this round uses, the caption escape, is called across the
+fence rather than copied.
+
+### Fixes 1 to 6
+
+Finding 7 and 19, the report saying two things. `RunReport.Headline` is one number for
+everything not made, split the way its sections split it, refused before the run, refused
+by Revit during it, created wrong and still in the model, and the line under it says which
+count is the plan's. Four before, two during and one left behind read 7 were not, where the
+old line read 3. One refusal reads 1 thing cannot be made, and the test that pinned 1 things
+pins the singular.
+
+Finding 12 and 17, facts computed and thrown away. The registry's WrongCase entries reach
+the snapshot, kept once per text, and the refresh line says them in `IgnoredName`'s own
+words. A view whose PRX_Plot_ID holds something that is not a plot is a fourth count, apart
+from with no plot at all, and `ViewOnAPlot` carries the raw value so the line shows it. A
+schedule whose name does not parse is recorded at capture with the same classification,
+counted on the refresh line and named where the name is a plot in the wrong case. The three
+clauses are `RefreshWords`, each empty when there is nothing to say. Shared was read and not
+edited.
+
+Finding 14 and 21, what nothing reaches. `ScanModelCommand.cs` and `ScanProgressWindow.cs`
+are deleted, `AssignScopeBoxCommand` keeps its three statics and loses its Execute, and the
+rules file, the hook's list and territory.md follow. Ten members checked again against the
+tree: nine deleted with their tests, `SheetGrid.MarkedCount` kept with the four callers the
+last round gave it, and `SheetNumbers.PlotLetter` kept with `Propose` calling it through an
+overload that hands back the reason, so the letter rule has one home.
+
+Finding 20 and 26, two copies of one fact. `ModelScanner.Number` is the one reader of a
+length parameter, `RunReport` writes with `ScanReport.LineEnd`, and
+`ScopeBoxScanner.StateOf` is the one reader of a view's scope box state for the counts on
+screen and the assignment both.
+
+Finding 24 and 25, step 4 saying the wrong thing. Run names what is unfinished, the title
+block, the rows short of a name or a number, or both, then finish that in step 4. The
+control is captioned Title block and sheet type appears nowhere.
+
+Finding 16, the tally nobody could act on. Both sheet tallies are gone from the parse
+summary and it says why. Measured against the real sheet names this repo records,
+LIST OF DRAWINGS, GENERAL ARRANGEMENT LAYOUT, LANDSCAPE CROSS SECTION and SOFTSCAPE
+SCHEDULES, none carries a plot or a code, and the tool's own `SheetNaming` makes names of
+that shape, so the sheet name tally could only ever read 0 of N. No real model was measured.
+CLAUDE.md said sheets are named like views and now says how a sheet is named.
+
+### Fixes 7 to 11
+
+Finding 27. A field the captured definition names twice is added once and named under needs
+attention, with the note saying that whether a source schedule really holds two fields under
+one name is UNKNOWN.
+
+Finding 29. Every tick box and button carrying a model name goes through
+`PaneLabel.Escaped`, the KPI pane's own escape in Core under Kpi, called across the fence
+rather than copied, because two copies of one rule is the shape this repo keeps paying for
+and territory.md allows the call. Its home should be Shared, which needs a round of its own.
+The title block names in the ComboBoxes are left as the audit left them.
+
+Finding 30. `SiblingView.WrongKindInWords` names the kind the nearest view is and the kind
+that was wanted, and the writer refuses on it before asking a section for a level or handing
+a plan's family type to `ViewSection.CreateSection`.
+
+Finding 8, 18, 23 and 31. The not available message no longer names a ribbon panel that was
+removed. Two far clip comments say crop, one moved to the field it describes. The sentence
+for a model with no plots names all four sources and lives once, in `PanelSteps`, read by
+step 1 and the empty grid, with core-rules.md and the reader's comment saying four. Six
+messages the panel formatted itself are `PanelSteps` methods with tests.
+
+Finding 22, and it was two folders. `git log --diff-filter=A` says `design/pr-31/panel.html`,
+titled pull request 28, was added by the commit for pull request 28, and
+`design/pr-28/panel.html`, titled pull request 28, by the commit for pull request 29. Both
+sessions had guessed 28 and the KPI one landed it. So pr-28 is pr-29 with its title changed
+and pr-31 is pr-28 with its title kept. The same fault nearly recurred in this round: the
+first mockup was named pr-60 from the highest number on the list, the KPI session opened 60
+ten minutes later, and the folder was renamed to 61 before the merge.
+
+### Breaks
+
+Six, three per pull request, each a reversed edit with the tree hash the same before and
+after:
+
+- The headline dropping the plan's refusals from its sum: Failed 1 of 1024
+- Run ignoring the rows short of a name or a number: Failed 2 of 1024
+- The wrong case clause listing every ignored name: Failed 1 of 1024
+- The kind refusal naming the wanted kind as the kind it is: Failed 1 of 1060
+- The no plots sentence dropping the scope box source: Failed 2 of 1060
+- The scope box line losing its singular: Failed 1 of 1060
+
+### Not observed
+
+Nothing in this round has been through Revit. Unexecuted there: the three refresh clauses on
+a real status line, the Title block caption, the Run reason under a shut step, the scope box
+counts and the assignment reading through one `StateOf`, the schedule capture recording its
+skips, Scan Model writing the shorter parse summary, the two deleted commands leaving the
+ribbon and the panel as they were, the escape on a real name with an underscore, the two
+kind refusals on a model that draws a view type both ways, the duplicate field note, the not
+available message, and the six moved messages on the panel. Whether any real view or scope
+box name holds an underscore is UNKNOWN. The hooks were not probed this round. They ran on
+the real commits and passed them, which is not the same as watching one refuse.
+
+---
+
 ## 2026-09-10, forty fourth pass. Hidden marks stay off the run, copied numbers lend no letter, and five more fixes
 
 Pull request 56, merged into main as `6bf968e`. **The runner executed 948 tests
