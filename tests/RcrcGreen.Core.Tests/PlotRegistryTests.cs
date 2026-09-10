@@ -160,6 +160,76 @@ namespace RcrcGreen.Core.Tests
             Assert.Empty(result.Ignored);
         }
 
+        /// <summary>
+        /// PRX_Plot_ID on a view is its own source, because 1,269 views on the real model
+        /// have a plot in the parameter and a name that does not parse, and a plot found that
+        /// way still has views. Filing it under elements would mark it as needing everything.
+        /// </summary>
+        [Fact]
+        public void APlotFoundOnlyThroughAViewParameterStillHasViews()
+        {
+            PlotRegistryResult result = PlotRegistry.Build(
+                new[] { "Site Plan" },
+                new[] { "DM-41" },
+                null,
+                null);
+
+            PlotRecord only = Assert.Single(result.Plots);
+
+            Assert.Equal("DM-41", only.PlotId);
+            Assert.Equal(new[] { PlotSource.ViewParameter }, only.Sources);
+            Assert.True(only.HasViews);
+            Assert.Equal(string.Empty, only.NoViewsInWords());
+        }
+
+        [Fact]
+        public void TheNameAndTheParameterAreTwoSourcesOnOnePlot()
+        {
+            PlotRegistryResult result = PlotRegistry.Build(
+                new[] { "DM-41-(200) General Arrangement Layout" },
+                new[] { "DM-41" },
+                null,
+                null);
+
+            PlotRecord only = Assert.Single(result.Plots);
+
+            Assert.Equal(
+                new[] { PlotSource.ViewName, PlotSource.ViewParameter }, only.Sources);
+        }
+
+        /// <summary>
+        /// The suffix on a plot's row in step 1, written out by hand. A plot with views says
+        /// nothing, because the quiet case is the ordinary one.
+        /// </summary>
+        [Fact]
+        public void APlotWithNoViewsSaysWhatItHasInstead()
+        {
+            PlotRecord boxOnly = new PlotRecord("AB-7", new[] { PlotSource.ScopeBox });
+            PlotRecord elementsOnly = new PlotRecord("AB-8", new[] { PlotSource.ElementParameter });
+            PlotRecord both = new PlotRecord(
+                "AB-9", new[] { PlotSource.ScopeBox, PlotSource.ElementParameter });
+
+            Assert.Equal("box only, no views", boxOnly.NoViewsInWords());
+            Assert.Equal("elements only, no views", elementsOnly.NoViewsInWords());
+            Assert.Equal("box and elements, no views", both.NoViewsInWords());
+        }
+
+        [Fact]
+        public void EverySourceHasItsTooltipWords()
+        {
+            PlotRecord all = new PlotRecord("DM-41", new[]
+            {
+                PlotSource.ViewName,
+                PlotSource.ViewParameter,
+                PlotSource.ScopeBox,
+                PlotSource.ElementParameter
+            });
+
+            Assert.Equal(
+                "view names, a scope box, PRX_Plot_ID on elements, PRX_Plot_ID on views",
+                all.SourcesInWords());
+        }
+
         [Fact]
         public void AScopeBoxNamedWithSomethingLongerThanThePlotIsNotAPlot()
         {

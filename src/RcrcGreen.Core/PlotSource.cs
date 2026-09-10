@@ -7,6 +7,13 @@ namespace RcrcGreen.Core
     {
         ViewName,
         ScopeBox,
-        ElementParameter
+        ElementParameter,
+
+        /// <summary>
+        /// PRX_Plot_ID on a view. It is the first place the grid looks for a view's plot, and
+        /// it is its own source here so a plot found only this way still reads as having
+        /// views, which a plot found only on model elements does not.
+        /// </summary>
+        ViewParameter
     }
 }

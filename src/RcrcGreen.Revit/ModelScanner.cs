@@ -340,11 +340,48 @@ namespace RcrcGreen.Revit
         /// </summary>
         private static PlotIdScan ReadPlotIds(Document document, IScanWatcher watcher)
         {
+            Stopwatch clock = Stopwatch.StartNew();
+
+            ElementPlotIdRead walked = PlotIdValuesAcrossElements(document, watcher);
+            if (walked == null) return null;
+
+            clock.Stop();
+
+            return new PlotIdScan
+            {
+                Values = walked.Counts
+                    .Select(pair => new ScannedParameterValue(pair.Key, pair.Value))
+                    .ToList(),
+                ElementsRead = walked.ElementsRead,
+                Seconds = clock.Elapsed.TotalSeconds
+            };
+        }
+
+        /// <summary>
+        /// What one walk over every element found in PRX_Plot_ID.
+        /// </summary>
+        internal sealed class ElementPlotIdRead
+        {
+            public Dictionary<string, int> Counts;
+
+            public int ElementsRead;
+        }
+
+        /// <summary>
+        /// Every distinct PRX_Plot_ID value across every element, with how many carry each.
+        ///
+        /// One walk shared by the scan and the panel read, because the plot list is the union
+        /// of views, scope boxes and element values and a second copy of this loop would be
+        /// two records of one rule. Null when the watcher stopped it, and a null watcher
+        /// never stops. 96,934 elements came back in 1.4 seconds on the first real model, so
+        /// the panel read can afford it on every refresh.
+        /// </summary>
+        internal static ElementPlotIdRead PlotIdValuesAcrossElements(
+            Document document, IScanWatcher watcher)
+        {
             var counts = new Dictionary<string, int>(StringComparer.Ordinal);
             var byType = new Dictionary<ElementId, string>();
             int read = 0;
-
-            Stopwatch clock = Stopwatch.StartNew();
 
             // The identifiers are taken first so the total is known. Without a total the bar
             // has nothing to fill and the user cannot tell a slow read from a stuck one.
@@ -354,13 +391,13 @@ namespace RcrcGreen.Revit
 
             foreach (ElementId id in everyElement)
             {
-                if (watcher.Cancelled) return null;
+                if (watcher != null && watcher.Cancelled) return null;
 
                 Element element = document.GetElement(id);
                 if (element == null) continue;
 
                 read++;
-                watcher.Report(read, total);
+                watcher?.Report(read, total);
 
                 string value = ValueOf(element.LookupParameter(PlotIdParameterName));
 
@@ -387,16 +424,7 @@ namespace RcrcGreen.Revit
                 counts[value] = already + 1;
             }
 
-            clock.Stop();
-
-            return new PlotIdScan
-            {
-                Values = counts
-                    .Select(pair => new ScannedParameterValue(pair.Key, pair.Value))
-                    .ToList(),
-                ElementsRead = read,
-                Seconds = clock.Elapsed.TotalSeconds
-            };
+            return new ElementPlotIdRead { Counts = counts, ElementsRead = read };
         }
 
         /// <summary>

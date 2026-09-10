@@ -4,6 +4,121 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, fortieth pass. The plot list is the union, and capture drops nothing
+
+Branch `claude/rcrc-green-setup-wf9ham`, one commit. The merge sha and the runner count go in
+the next entry, because this one is written before the pull request exists. Seven audit
+findings fixed, numbers 1 to 6, 8 and 12 in steps/audit.md, and nothing else touched. Every
+other finding stays written down as it was.
+
+### Fix 1. A loss at capture is as loud as a loss at write time
+
+ScheduleCapture read a filter whose value Revit refused and a field whose id resolved to
+nothing with a bare continue each, so the writer's lost filter guard never saw either. Both
+are recorded on the definition now, in FiltersNotRead and FieldsNotRead. A definition that
+lost a filter never reaches the usable set: the plan refuses its type with
+WhyTheCaptureLossRefusesIt, naming each lost filter, and MakeSchedule checks again before
+CreateSchedule because the writer trusts no list it did not build. A lost field still builds
+the schedule and lands under CREATED, BUT NEEDS ATTENTION, named by position, the same split
+as write time: a missing filter lies, a missing column shows.
+
+### Fix 2. The plot the panel silently dropped
+
+The panel's plot list came from views alone. PlotRegistry, which held the union rule with
+tests all along, is wired in: the reader hands it every view name, every PRX_Plot_ID read off
+a view, every scope box name and every element value, and the element values come through
+PlotIdValuesAcrossElements, the scan's own walk pulled out of ReadPlotIds so the two reads
+are one loop. PRX_Plot_ID on a view is a new source, ViewParameter, because filing it under
+elements would mark a plot that has views as needing everything. The snapshot carries the
+records, and step 1 shows box only, no views, elements only, no views, or box and elements,
+no views on the rows no view carries, with every source in the tooltip. The refresh now walks
+every element, which the measured 1.4 seconds for 96,934 elements says the panel can afford.
+
+Deleted, with their tests: PlotViewGrid, MissingViewFinder, MissingViewType and
+PlotMissingViews, still called by nothing after the wiring, and PlotViewGridTests whole. The
+flow test was rewritten to the live seam, registry to grid, and its box-only plot now proves
+the fixed behaviour instead of a dead one. Kept: PlotRegistryResult, PlotRecord, PlotSource
+and IgnoredName, because Build returns them and the product reads them now. Kept too:
+PlotId.PatternAnyCase, FailsOnlyOnCase and ViewNameParser.FailsOnlyOnPlotCase, because the
+ignored-name classification inside Build executes them on every read, even though nothing
+shows the Ignored list yet. That list having no reader is written down here as an open
+question rather than deleted, since a mistyped dm-41 scope box is exactly what it catches.
+
+### Fix 3. A stale mark no longer leaves an orphan
+
+RunPlan takes the fresh read's cells and refuses a mark whose view already exists, before
+kind or scope box. If a name is still taken when the writer renames, Renamed catches the
+refusal, deletes the just-created view, schedule or section again with the delete checked,
+and says IT IS STILL IN THE MODEL when Revit refuses that delete, the same way MakeSheet
+handles a refused number. The handler comment that claimed the re-read already stopped this
+now says what the code does.
+
+### Fix 4. Parameter.Set is checked everywhere it is called for a new view
+
+The scope box set and the annotation crop set both ignored the bool Revit hands back while
+AssignScopeBoxCommand treated the same false as a refusal. Both are checked now and a false
+lands under CREATED, BUT NEEDS ATTENTION. Whether this explains the user's repeated report of
+views coming out with annotation crop off while the report read clean is now TELLABLE: if Set
+answers false on those views, the next run will say so against each one. Whether it does
+answer false there is UNKNOWN until a run. Noted while fixing: SetPlotId and MakeSheet's plot
+parameter ignore the same return, are not on this fix list, and stay as they are, written
+down here as the same shape.
+
+### Fix 5. One rule for which schedules can be made
+
+The panel passed every ScheduleType as capturable while the handler passed the captured
+definitions' keys. ScheduleCapture.Read now classifies every schedule once: usable, lost a
+filter at capture, or filters on no plot, and the snapshot carries the same three answers
+from its own read. Both sides hand RunPlan the same rule and only the data can differ. An
+uncapturable schedule is refused with its own reason, so a schedule that exists and filters
+on no plot is no longer denied outright, and the old wording survives only for a type with no
+reason recorded.
+
+### Fix 6. The gate sees the whole solution
+
+tests.yml restores and builds RcrcGreen.sln before testing, runs on pushes to main as well as
+pull requests, and its comment now says the add-in compiles without Revit because the
+Nice3point packages supply the reference assemblies, which this repo's own builds prove. The
+exact restore, build, test sequence was run here before committing it.
+
+### Fix 7. The snapshot is pinned
+
+DrawingSheetSnapshotTests covers the numbers grouped per plot, the scope box names narrowed
+to plot identifiers, the free numbers built from the numbers rather than the names, the plot
+records with their words, and the capturable lists. The three audit breaks were made again
+with the tests in place:
+
+- NumbersOnPlot returning empty always: 1 failed, 911 passed
+- the PlotId filter dropped from PlotsWithAScopeBox: 1 failed, 911 passed
+- FreeSheetNumbers fed SheetNamesInUse: 1 failed, 911 passed
+
+Two more breaks on the new rules: the ViewParameter source dropped from the union failed 2,
+and the presence refusal disabled failed 1. All five restored, suite green at 912 after each.
+
+### What ran here
+
+dotnet restore, build of the whole solution and the full suite, repeatedly and after the last
+file: 912 tests, 0 failed, 0 skipped, up from 904 with the deleted PlotViewGridTests out and
+the new snapshot, registry, definition and plan tests in. One slip worth recording: restoring
+a break with git checkout wiped the uncommitted snapshot work once, it was reapplied from the
+session's own record, and every restore after that reversed the edit instead.
+
+### What did not run, item by item
+
+Nothing in this round has been through Revit.
+
+- The element walk inside the panel refresh has never run there, and its cost on the real
+  model is inferred from the scan's measured 1.4 seconds, not measured in the panel
+- No box-only plot has been seen on a row, and how the suffix wraps at pane width is UNKNOWN
+- No capture has recorded a real unreadable filter or field, and whether Revit ever throws on
+  those reads in practice is exactly what the guards exist for and is UNKNOWN
+- No stale mark has been refused in Revit and the rename-then-delete path has never executed
+- Whether Parameter.Set answers false for a template-controlled scope box or annotation crop
+  is UNKNOWN until a run says so
+- The reworked gate has not run on the runner yet when this entry is written
+
+---
+
 ## 2026-09-10, thirty seventh pass. Excel showed zeros, and the workbook stops going beside the model
 
 Pull request 46, merged into main as `6f2e521`. **The runner executed 904 tests against its

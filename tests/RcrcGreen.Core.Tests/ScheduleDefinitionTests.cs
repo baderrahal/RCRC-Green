@@ -40,6 +40,79 @@ namespace RcrcGreen.Core.Tests
                 false);
         }
 
+        /// <summary>
+        /// A filter or a field the capture could not read is recorded on the definition, not
+        /// skipped. Both were bare continues once, and a schedule that lost the filter
+        /// telling HARDSCAPE from SHRUBS AND LAWN was one unreadable value away from being
+        /// built and reading as correct on a drawing.
+        /// </summary>
+        [Fact]
+        public void ALossAtCaptureIsRecordedAndRefusesTheDefinition()
+        {
+            var lossy = new ScheduleDefinition(
+                new ViewType("600", "HARDSCAPE SCHEDULE"),
+                "Floors",
+                Fields("PRX_Hardscape Code"),
+                new[] { new ScheduleFilterRule("PRX_Ref Plot ID", "DM-11") },
+                true,
+                false,
+                0L,
+                new[] { "the filter on PRX_Element Grouping, whose value could not be read" },
+                new[] { "the field at position 3, whose id resolved to nothing" });
+
+            Assert.True(lossy.LostAFilterAtCapture);
+            Assert.Equal(
+                "1 filter on the source schedule could not be read when it was captured: "
+                + "the filter on PRX_Element Grouping, whose value could not be read. A "
+                + "schedule missing a filter shows every plot's elements and reads as correct "
+                + "on a drawing, so nothing is built from this definition.",
+                lossy.WhyTheCaptureLossRefusesIt());
+        }
+
+        [Fact]
+        public void TheLossesSurviveTheSwapToAnotherPlot()
+        {
+            var lossy = new ScheduleDefinition(
+                new ViewType("600", "HARDSCAPE SCHEDULE"),
+                "Floors",
+                Fields("PRX_Hardscape Code"),
+                new[] { new ScheduleFilterRule("PRX_Ref Plot ID", "DM-11") },
+                true,
+                false,
+                0L,
+                new[] { "the filter at position 2, on a field that could not be resolved" },
+                new[] { "the field at position 3, whose id resolved to nothing" });
+
+            ScheduleDefinition aimed = lossy.ForPlot("DM-12");
+
+            Assert.Equal(lossy.FiltersNotRead, aimed.FiltersNotRead);
+            Assert.Equal(lossy.FieldsNotRead, aimed.FieldsNotRead);
+            Assert.True(aimed.LostAFilterAtCapture);
+        }
+
+        [Fact]
+        public void ACleanCaptureLosesNothingAndRefusesNothing()
+        {
+            Assert.False(Hardscape().LostAFilterAtCapture);
+            Assert.Empty(Hardscape().FiltersNotRead);
+            Assert.Empty(Hardscape().FieldsNotRead);
+        }
+
+        /// <summary>
+        /// The words for a schedule that exists and filters on no plot. The run used to say
+        /// no plot has that schedule, which sent the user looking for a schedule that is
+        /// plainly there.
+        /// </summary>
+        [Fact]
+        public void AScheduleThatFiltersOnNoPlotSaysSoRatherThanDenyingItExists()
+        {
+            Assert.Equal(
+                "That schedule exists in this model and filters on no plot, so there is no "
+                + "plot filter to swap and it cannot be aimed at another plot. Add the plot "
+                + "filter to the source schedule and refresh.",
+                Hardscape().WhyItCannotBeAimed());
+        }
+
         private static ScheduleDefinition SheetList()
         {
             return new ScheduleDefinition(

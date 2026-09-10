@@ -14,6 +14,85 @@ namespace RcrcGreen.Core.Tests
 
         private static readonly ViewType[] Schedules = { Furniture, Irrigation };
 
+        /// <summary>
+        /// A mark can go stale while the panel sits open in a shared model. The plan refuses
+        /// it against the freshest read rather than letting the writer create over the
+        /// existing name and leave an orphan view behind the refused rename.
+        /// </summary>
+        [Fact]
+        public void AMarkWhoseViewNowExistsIsRefusedRatherThanAttempted()
+        {
+            RunPlan plan = RunPlan.Of(
+                new[] { new PlotViewKey("DM-11", General), new PlotViewKey("DM-12", General) },
+                new[] { "DM-11", "DM-12" },
+                new[] { "DM-11", "DM-12" },
+                null,
+                null,
+                null,
+                null,
+                new[] { new PlotViewKey("DM-11", General) });
+
+            RunItem only = Assert.Single(plan.Items);
+            Assert.Equal("DM-12", only.PlotId);
+
+            RunRefusal refused = Assert.Single(plan.Refusals);
+            Assert.Equal("DM-11", refused.PlotId);
+            Assert.Equal(
+                "A view with this name is already in the model, added since the panel last "
+                + "read it, so nothing is made over it. Press Refresh to see it.",
+                refused.Because);
+        }
+
+        /// <summary>
+        /// The reason travels with the type. Every uncapturable schedule used to be answered
+        /// with no plot has that schedule, which is false for a schedule that exists and
+        /// filters on no plot, and sent the user looking for the wrong thing.
+        /// </summary>
+        [Fact]
+        public void AnUncapturableScheduleIsRefusedWithItsOwnReason()
+        {
+            RunPlan plan = RunPlan.Of(
+                new[] { new PlotViewKey("DM-12", Furniture) },
+                new[] { "DM-12" },
+                new[] { "DM-12" },
+                Schedules,
+                null,
+                null,
+                null,
+                null,
+                new[]
+                {
+                    new UncapturableSchedule(
+                        Furniture,
+                        "That schedule exists in this model and filters on no plot, so there "
+                        + "is no plot filter to swap and it cannot be aimed at another plot. "
+                        + "Add the plot filter to the source schedule and refresh.")
+                });
+
+            Assert.Empty(plan.Items);
+            RunRefusal only = Assert.Single(plan.Refusals);
+            Assert.StartsWith("That schedule exists in this model and filters on no plot", only.Because);
+        }
+
+        [Fact]
+        public void AScheduleWithNoReasonStillGetsTheOldWording()
+        {
+            RunPlan plan = RunPlan.Of(
+                new[] { new PlotViewKey("DM-12", Furniture) },
+                new[] { "DM-12" },
+                new[] { "DM-12" },
+                Schedules,
+                null,
+                null,
+                null);
+
+            RunRefusal only = Assert.Single(plan.Refusals);
+            Assert.Equal(
+                "No plot in this model has that schedule, so there is no definition to "
+                + "capture and nothing to build from.",
+                only.Because);
+        }
+
         [Fact]
         public void OnlyMarkedCellsOnTickedPlotsAreMade()
         {

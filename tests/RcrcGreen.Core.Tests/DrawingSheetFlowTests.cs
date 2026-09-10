@@ -26,22 +26,16 @@ namespace RcrcGreen.Core.Tests
 
         private static readonly string[] ElementPlotIds = { "DM-41", "AB-7", "AB-7" };
 
+        /// <summary>
+        /// The live seam: the registry's union makes the plot list, the grid draws a row for
+        /// every plot in it, and the plot found through no view at all is the row with
+        /// nothing in it. That plot was silently dropped when the list came from views alone.
+        /// </summary>
         [Fact]
         public void ThePlotWithOnlyAScopeBoxAndTaggedElementsIsTheOneWithEverythingMissing()
         {
-            PlotRegistryResult plots = PlotRegistry.Build(ViewNamesInModel, ScopeBoxNames, ElementPlotIds);
-
-            List<ParsedViewName> parsedNames = ViewNamesInModel
-                .Select(name =>
-                {
-                    ParsedViewName parsed;
-                    return ViewNameParser.TryParse(name, out parsed) ? parsed : null;
-                })
-                .Where(parsed => parsed != null)
-                .ToList();
-
-            PlotViewGrid grid = PlotViewGrid.Build(parsedNames, plots.Plots.Select(plot => plot.PlotId));
-            IReadOnlyList<PlotMissingViews> reports = MissingViewFinder.Find(grid);
+            PlotRegistryResult plots = PlotRegistry.Build(
+                ViewNamesInModel, null, ScopeBoxNames, ElementPlotIds);
 
             Assert.Equal(new[] { "AB-7", "DM-41", "PF-12" }, plots.Plots.Select(plot => plot.PlotId));
             Assert.Equal(new[] { "Site Plan", "Level 00" }, plots.Ignored.Select(entry => entry.Text));
@@ -49,23 +43,55 @@ namespace RcrcGreen.Core.Tests
 
             PlotRecord ab7 = plots.Plots.Single(plot => plot.PlotId == "AB-7");
             Assert.Equal(new[] { PlotSource.ScopeBox, PlotSource.ElementParameter }, ab7.Sources);
+            Assert.False(ab7.HasViews);
+            Assert.Equal("box and elements, no views", ab7.NoViewsInWords());
+            Assert.Equal("a scope box, PRX_Plot_ID on elements", ab7.SourcesInWords());
 
-            PlotMissingViews ab7Report = reports.Single(report => report.PlotId == "AB-7");
-            Assert.Equal(grid.ViewTypes.Count, ab7Report.Missing.Count);
-            Assert.Equal(4, ab7Report.Missing.Count);
+            Assert.Equal(string.Empty, plots.Plots.Single(plot => plot.PlotId == "DM-41").NoViewsInWords());
 
-            Assert.True(reports.Single(report => report.PlotId == "DM-41").IsComplete);
+            var columns = new[]
+            {
+                new ViewType("010", "Location Key Plan"),
+                new ViewType("010", "Overall Key Plan"),
+                new ViewType("200", "General Arrangement Layout"),
+                new ViewType("400", "Landscape Cross Section")
+            };
 
-            // PF-12 holds the general arrangement layout and nothing else, so it lacks the two
-            // key plans and the cross section.
+            // Filled the way the reader fills cells, one presence per parseable view name.
+            var present = new[]
+            {
+                new PlotViewPresence("DM-41", columns[0], 1),
+                new PlotViewPresence("DM-41", columns[1], 2),
+                new PlotViewPresence("DM-41", columns[2], 3),
+                new PlotViewPresence("DM-41", columns[3], 4),
+                new PlotViewPresence("PF-12", columns[2], 5)
+            };
+
+            SheetGrid grid = SheetGrid.Build(
+                plots.Plots.Select(plot => plot.PlotId),
+                columns,
+                present,
+                ScopeBoxNames,
+                null);
+
+            SheetGridRow ab7Row = grid.Rows.Single(row => row.PlotId == "AB-7");
+            Assert.All(ab7Row.Cells, cell => Assert.Equal(SheetCellState.Missing, cell.State));
+
+            SheetGridRow dm41Row = grid.Rows.Single(row => row.PlotId == "DM-41");
+            Assert.All(dm41Row.Cells, cell => Assert.Equal(SheetCellState.Exists, cell.State));
+
+            // PF-12 holds the general arrangement layout and nothing else, so it lacks the
+            // two key plans and the cross section.
+            SheetGridRow pf12Row = grid.Rows.Single(row => row.PlotId == "PF-12");
             Assert.Equal(
                 new[]
                 {
-                    new ViewType("010", "Location Key Plan"),
-                    new ViewType("010", "Overall Key Plan"),
-                    new ViewType("400", "Landscape Cross Section")
+                    SheetCellState.Missing,
+                    SheetCellState.Missing,
+                    SheetCellState.Exists,
+                    SheetCellState.Missing
                 },
-                reports.Single(report => report.PlotId == "PF-12").Missing.Select(entry => entry.ViewType));
+                pf12Row.Cells.Select(cell => cell.State));
         }
 
         [Fact]

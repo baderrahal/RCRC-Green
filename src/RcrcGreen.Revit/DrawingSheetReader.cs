@@ -14,14 +14,16 @@ namespace RcrcGreen.Revit
     /// Reads a document into a <see cref="DrawingSheetSnapshot"/>. Nothing here writes and
     /// nothing here opens a transaction.
     ///
-    /// One pass over the views gives the plot list, the columns, which cells are filled and the
-    /// scope box state of every view. The panel then works the six case counts out again on
-    /// every tick without asking Revit anything, which is what makes those counts follow the
-    /// tick boxes instantly.
+    /// One pass over the views gives the columns, which cells are filled and the scope box
+    /// state of every view. The panel then works the six case counts out again on every tick
+    /// without asking Revit anything, which is what makes those counts follow the tick boxes
+    /// instantly.
     ///
-    /// There is no progress window on this read. The first real model, 96,934 elements, came
-    /// back in 1.4 seconds, and this one touches only views and scope boxes rather than every
-    /// element. A progress window on a read that fast is a flicker, not information.
+    /// The plot list is the union of three places a plot shows up: views, scope boxes and
+    /// PRX_Plot_ID on elements. It was built from views alone once, and a plot existing only
+    /// as a scope box with tagged elements, which is the plot with everything missing, never
+    /// got a row. The element walk is what pays for that: 96,934 elements came back in 1.4
+    /// seconds on the first real model, so there is still no progress window here.
     /// </summary>
     internal static class DrawingSheetReader
     {
@@ -30,6 +32,8 @@ namespace RcrcGreen.Revit
             if (document == null) throw new ArgumentNullException("document");
 
             var plotIds = new List<string>();
+            var viewNames = new List<string>();
+            var viewPlotParameterValues = new List<string>();
             var viewTypes = new List<ViewType>();
             var present = new List<PlotViewPresence>();
             var states = new List<ViewScopeBoxState>();
@@ -53,6 +57,13 @@ namespace RcrcGreen.Revit
 
                 string onTheView = ValueOf(view.LookupParameter(ModelScanner.PlotIdParameterName));
                 ViewOnAPlot read = ViewReading.Read(onTheView, view.Name, view.Id.Value);
+
+                // Both raw readings go to the registry as well, which owns the union that
+                // makes the plot list. The per-view decision below still answers which plot
+                // each view belongs to, and the registry never contradicts it because both
+                // run the same parser and the same identifier rule.
+                viewNames.Add(view.Name);
+                if (onTheView != null) viewPlotParameterValues.Add(onTheView);
 
                 if (read.Found)
                 {
@@ -132,6 +143,22 @@ namespace RcrcGreen.Revit
                 titleBlocks.Add(new TitleBlockType(symbol.FamilyName ?? string.Empty, symbol.Name));
             }
 
+            // The union of every place a plot shows up, with the sources kept per plot so the
+            // panel can mark the ones no view carries. The walk over every element is what
+            // brings in a plot that exists only on tagged elements.
+            ModelScanner.ElementPlotIdRead elements =
+                ModelScanner.PlotIdValuesAcrossElements(document, null);
+
+            PlotRegistryResult registry = PlotRegistry.Build(
+                viewNames,
+                viewPlotParameterValues,
+                scopeBoxNames,
+                elements == null ? null : elements.Counts.Keys);
+
+            // The same capture the run builds from, run here so the plan preview reads the
+            // same rule for which schedules can be made rather than a rule of its own.
+            ScheduleCapture.CapturedSchedules captured = ScheduleCapture.Read(document);
+
             return new DrawingSheetSnapshot(
                 document.Title,
                 DateTime.Now,
@@ -150,7 +177,10 @@ namespace RcrcGreen.Revit
                 fromViewName,
                 withNoPlot,
                 disagree,
-                numbersByPlot);
+                numbersByPlot,
+                registry.Plots,
+                captured.Usable.Keys,
+                captured.Refused);
         }
 
         private static ViewScopeBoxState ScopeBoxStateOf(Document document, View view)

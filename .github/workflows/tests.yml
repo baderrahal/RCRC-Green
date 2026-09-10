@@ -1,11 +1,15 @@
-# Runs the Core tests on every pull request into main.
-# Only tests/RcrcGreen.Core.Tests runs here. The add-in project targets .NET Framework 4.8
-# and needs Revit on the machine, so it is built in Visual Studio rather than on this runner.
+# Builds the whole solution and runs the Core tests, on every pull request into main and on
+# every push to main. The add-in project compiles with no Revit installed, because the two
+# Nice3point packages supply the reference assemblies, so a compile break in RcrcGreen.Revit
+# is this gate's to catch. Only the Core tests run, because the add-in can only be executed
+# inside Revit.
 
 name: tests
 
 on:
   pull_request:
+    branches: [main]
+  push:
     branches: [main]
 
 jobs:
@@ -19,12 +23,15 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+        run: dotnet restore RcrcGreen.sln
+
+      - name: Build the whole solution
+        run: dotnet build RcrcGreen.sln --no-restore
 
       - name: Run tests
         run: >
           dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFileName=results.trx"
           --results-directory TestResults
 

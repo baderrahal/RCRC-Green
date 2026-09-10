@@ -5,20 +5,33 @@ using System.Linq;
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// Gathers the plot list from all three places a plot shows up in the model.
-    /// The list that matters is the union, not any one source.
+    /// Gathers the plot list from every place a plot shows up in the model: view names,
+    /// PRX_Plot_ID on views, scope box names and PRX_Plot_ID on elements. The list that
+    /// matters is the union, not any one source.
     /// </summary>
     public static class PlotRegistry
     {
+        public static PlotRegistryResult Build(
+            IEnumerable<string> viewNames,
+            IEnumerable<string> scopeBoxNames,
+            IEnumerable<string> elementPlotIdValues)
+        {
+            return Build(viewNames, null, scopeBoxNames, elementPlotIdValues);
+        }
+
         /// <summary>
         /// A plot that only has a scope box and some tagged elements has no views at all,
         /// which is exactly the plot the team needs to see. It has to survive into the result.
         /// </summary>
         /// <param name="viewNames">Full view or sheet names. The plot is read off the front.</param>
+        /// <param name="viewPlotIdValues">Values of PRX_Plot_ID read off views. On the real
+        /// model the parameter answers for 1,269 views whose names do not parse, so a plot can
+        /// exist here and in no view name.</param>
         /// <param name="scopeBoxNames">Scope box names. A scope box is named with the plot identifier.</param>
         /// <param name="elementPlotIdValues">Values read from the PRX_Plot_ID parameter on elements.</param>
         public static PlotRegistryResult Build(
             IEnumerable<string> viewNames,
+            IEnumerable<string> viewPlotIdValues,
             IEnumerable<string> scopeBoxNames,
             IEnumerable<string> elementPlotIdValues)
         {
@@ -42,6 +55,7 @@ namespace RcrcGreen.Core
                 }
             }
 
+            AddDirect(sourcesByPlot, ignored, viewPlotIdValues, PlotSource.ViewParameter);
             AddDirect(sourcesByPlot, ignored, scopeBoxNames, PlotSource.ScopeBox);
             AddDirect(sourcesByPlot, ignored, elementPlotIdValues, PlotSource.ElementParameter);
 

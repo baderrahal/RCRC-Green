@@ -440,11 +440,21 @@ namespace RcrcGreen.Revit
             foreach (string plotId in _picked.InRange)
             {
                 string which = plotId;
+
+                // The suffix marks the plots no view carries, which are the ones with
+                // everything missing and the ones the old view-only list silently dropped.
+                // The words come from the record so the panel formats no rule of its own.
+                PlotRecord record = _model.RecordOf(which);
+                string suffix = record == null ? string.Empty : record.NoViewsInWords();
+
                 var tick = new CheckBox
                 {
-                    Content = which,
+                    Content = suffix.Length == 0 ? which : which + "   " + suffix,
                     IsChecked = _picked.IsTicked(which),
-                    Margin = PanelMetrics.Row
+                    Margin = PanelMetrics.Row,
+                    ToolTip = record == null
+                        ? which
+                        : which + ", found through " + record.SourcesInWords() + "."
                 };
 
                 tick.Checked += (sender, e) => PlotTicked(which, true);
@@ -1646,8 +1656,10 @@ namespace RcrcGreen.Revit
                 _model.PlotsWithAScopeBox,
                 _model.ScheduleTypes,
                 _model.SectionTypes,
-                _model.ScheduleTypes,
-                SheetsWanted());
+                _model.CapturableScheduleTypes,
+                SheetsWanted(),
+                _model.Present.Select(one => one.Where),
+                _model.UncapturableSchedules);
         }
 
         /// <summary>

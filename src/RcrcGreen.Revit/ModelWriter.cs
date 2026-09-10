@@ -157,7 +157,7 @@ namespace RcrcGreen.Revit
             }
 
             ViewPlan made = ViewPlan.Create(document, familyTypeId, siblingPlan.GenLevel.Id);
-            made.Name = item.Name;
+            if (!Renamed(document, made, item, outcome, item.Name)) return;
             outcome.Made(item);
             madeSoFar[item.Name] = made.Id;
 
@@ -176,19 +176,17 @@ namespace RcrcGreen.Revit
             if (boxIdByName.TryGetValue(item.PlotId, out boxId))
             {
                 // A plan view gets the scope box. A section does not, because a real one in this
-                // model has none and its own section box is what bounds it.
+                // model has none and its own section box is what bounds it. The return of Set
+                // is checked because Revit can answer false without throwing, and the scope
+                // box assignment command already treats that false as a refusal worth naming.
                 Parameter holder = made.get_Parameter(ScopeBoxScanner.ScopeBoxParameter);
-                if (holder == null || holder.IsReadOnly)
+                if (holder == null || holder.IsReadOnly || !holder.Set(boxId))
                 {
                     outcome.NeedsAttention(new RunRefusal(
                         item.PlotId,
                         item.Type,
                         "Created, but the scope box could not be set. The view template it "
                         + "inherited may be controlling it. Set it by hand."));
-                }
-                else
-                {
-                    holder.Set(boxId);
                 }
             }
         }
@@ -268,7 +266,7 @@ namespace RcrcGreen.Revit
             ViewSection made = ViewSection.CreateSection(
                 document, sibling.View.GetTypeId(), SectionBoxFor(plot, across));
 
-            made.Name = item.Name;
+            if (!Renamed(document, made, item, outcome, item.Name)) return;
             outcome.Made(item);
             madeSoFar[item.Name] = made.Id;
 
@@ -722,16 +720,16 @@ namespace RcrcGreen.Revit
                 refused.Add("Crop View and Crop Region Visible");
             }
 
+            // The return of Set is checked because Revit can answer false without throwing.
+            // Ignoring it here is how annotation crop could come out still off while the
+            // report read clean, which is the fault the user has reported more than once.
             Parameter annotation =
                 made.get_Parameter(BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE);
 
-            if (annotation == null || annotation.IsReadOnly)
+            if (annotation == null || annotation.IsReadOnly
+                || !annotation.Set(annotationCrop ? 1 : 0))
             {
                 refused.Add("Annotation Crop");
-            }
-            else
-            {
-                annotation.Set(annotationCrop ? 1 : 0);
             }
 
             if (refused.Count == 0) return;
@@ -797,6 +795,17 @@ namespace RcrcGreen.Revit
                 return;
             }
 
+            // The capture excludes these already, and the writer checks again because it
+            // trusts no list it did not build. A definition that lost a filter at capture
+            // must never reach CreateSchedule, for the same reason a filter lost at write
+            // time deletes the schedule again.
+            if (captured.LostAFilterAtCapture)
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId, item.Type, captured.WhyTheCaptureLossRefusesIt()));
+                return;
+            }
+
             CapturedSchedule wanted = captured.ForPlot(item.PlotId);
 
             ViewSchedule made;
@@ -817,7 +826,7 @@ namespace RcrcGreen.Revit
                 made = ViewSchedule.CreateSchedule(document, category);
             }
 
-            made.Name = wanted.NameFor(item.PlotId);
+            if (!Renamed(document, made, item, outcome, wanted.NameFor(item.PlotId))) return;
 
             Autodesk.Revit.DB.ScheduleDefinition definition = made.Definition;
             definition.IncludeLinkedFiles = wanted.IncludesLinkedFiles;
@@ -914,6 +923,54 @@ namespace RcrcGreen.Revit
                         : " A calculated field has to be written again in the new schedule by "
                             + "hand, because Revit keeps it inside the schedule that defines it "
                             + "rather than offering it to a new one.")));
+            }
+
+            // A field capture could not read is a column this schedule silently lacks, and
+            // whatever it was cannot even be named. Said here for the same reason a field the
+            // category refuses is said, so the schedule is never one column short in silence.
+            if (wanted.FieldsNotRead.Count > 0)
+            {
+                outcome.NeedsAttention(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created without " + wanted.FieldsNotRead.Count
+                    + (wanted.FieldsNotRead.Count == 1 ? " field" : " fields")
+                    + " the source schedule holds that could not be read at capture: "
+                    + string.Join("; ", wanted.FieldsNotRead.ToArray())
+                    + ". Open the source schedule to see what sits there and add it by hand."));
+            }
+        }
+
+        /// <summary>
+        /// Names a thing Revit just created, and takes it away again when the name is
+        /// refused.
+        ///
+        /// The name is taken when a view with it already exists, which means the mark went
+        /// stale between the panel's read and the run in a shared model. Without this the
+        /// created element stayed under Revit's default name while the report said not
+        /// created, and a report that disagrees with the model is the fault this repo treats
+        /// as worst. The plan refuses a stale mark first, and this is the writer trusting no
+        /// list it did not build, the same way MakeSheet handles a refused number.
+        /// </summary>
+        private static bool Renamed(
+            Document document, Element made, RunItem item, RunOutcome outcome, string wanted)
+        {
+            try
+            {
+                made.Name = wanted;
+                return true;
+            }
+            catch (Autodesk.Revit.Exceptions.ArgumentException)
+            {
+                string kept = Deleted(document, made.Id)
+                    ? " It was deleted again."
+                    : " IT IS STILL IN THE MODEL under the name Revit gave it, and has to be "
+                        + "sorted out by hand.";
+
+                outcome.Refused(new RunRefusal(item.PlotId, item.Type,
+                    "A view named " + wanted + " is already in this model, so the new one "
+                    + "could not take its name." + kept));
+                return false;
             }
         }
 
