@@ -29,6 +29,10 @@
           },
           {
             "type": "command",
+            "command": "sh -c 'H=\"$CLAUDE_PROJECT_DIR/.claude/hooks/territory-check.sh\"; if [ ! -x \"$H\" ]; then echo \"Refused. The hook $H is missing or not executable, so this command was not checked.\" >&2; exit 2; fi; exec \"$H\"'"
+          },
+          {
+            "type": "command",
             "command": "sh -c 'H=\"$CLAUDE_PROJECT_DIR/.claude/hooks/writing-check.sh\"; if [ ! -x \"$H\" ]; then echo \"Refused. The hook $H is missing or not executable, so this command was not checked.\" >&2; exit 2; fi; exec \"$H\"'"
           }
         ]

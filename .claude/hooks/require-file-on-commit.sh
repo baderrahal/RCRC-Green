@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# PreToolUse hook on Bash. Refuses a commit that does not carry the phase state file.
+# PreToolUse hook on Bash. Refuses a commit that does not carry a phase state file.
 #
-# The state file is the only record of which ai-max phase this repo is in. A commit that
-# moves the work without moving the state file leaves the next session guessing.
+# A state file is the only record of where its task stands. A commit that moves the work
+# without moving the state leaves the next session guessing. Each task keeps its own,
+# steps/ai-max-state-<task>.md, and a commit carries the one belonging to the task that
+# made it, so any one of them satisfies this.
 
 set -euo pipefail
 
@@ -22,10 +24,12 @@ if [ ! -f "$SCOPE" ]; then
   exit 2
 fi
 
-REQUIRED="steps/ai-max-state.md"
+# Anchored so a near miss such as steps/ai-max-state-drawing.md.bak does not count, and
+# the old undivided steps/ai-max-state.md, now a pointer, does not either.
+REQUIRED_PATTERN='^steps/ai-max-state-[A-Za-z0-9-]+\.md$'
 
-if [ ! -f "$REQUIRED" ]; then
-  echo "Refused. $REQUIRED does not exist and every commit here needs it current." >&2
+if ! ls steps/ai-max-state-*.md >/dev/null 2>&1; then
+  echo "Refused. No steps/ai-max-state-<task>.md exists and every commit here needs its task's one current." >&2
   exit 2
 fi
 
@@ -40,11 +44,9 @@ if ! CARRIED=$(python3 "$SCOPE" paths "$COMMAND" | tr '\0' '\n'); then
   exit 2
 fi
 
-# -F and -x together, so the dots and the slash in the path are read as themselves and a
-# near miss such as steps/ai-max-state.md.bak does not count as the file being present.
-if printf '%s\n' "$CARRIED" | tail -n +2 | grep -qxF "$REQUIRED"; then
+if printf '%s\n' "$CARRIED" | tail -n +2 | grep -qE "$REQUIRED_PATTERN"; then
   exit 0
 fi
 
-echo "Refused. $REQUIRED is not in this commit. Update it, stage it, then commit." >&2
+echo "Refused. No steps/ai-max-state-<task>.md is in this commit. Update your task's state file, stage it, then commit." >&2
 exit 2

@@ -1,12 +1,14 @@
 # RCRC Green
 
-A Revit 2024 add-in for the landscape production team. Two tools. Drawing Sheet reads the
-model, shows a grid of which views exist per plot, and creates the missing ones. KPI scans a
-model and fills the client's GRP KPI Checklist workbook from it.
+A Revit 2024 add-in for the landscape production team, built as four tasks by sessions that
+cannot see each other. Drawing Sheet reads the model, shows a grid of which views exist per
+plot, and creates the missing ones. KPI scans a model and fills the client's GRP KPI
+Checklist workbook from it. Coordination Layout and BOQ Schedules are next.
 
-Read `.claude/skills/ai-max/SKILL.md` before doing any work in this repo. It sets the phase
-order, the writing rules and the reporting rules that everything here follows. The current phase
-is in `steps/ai-max-state.md`.
+Read `.claude/skills/ai-max/SKILL.md` and `.claude/rules/territory.md` before doing any work
+in this repo. The first sets the phase order, the writing rules and the reporting rules. The
+second says which files your task may edit. Your task's phase is in its own
+`steps/ai-max-state-<task>.md`.
 
 Done means: the tool lists every plot in a model, shows which known view types each is missing,
 and creates them with correct names and, for a cross section, a cut across the middle of a plot.
@@ -44,10 +46,12 @@ The whole suite. It is what the pull request gate runs and nothing in it needs R
 
 ## How this is laid out
 
-- `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation, and
-  `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the panes, each tool
-  under its own folder. `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/`
-  holds the PowerShell scripts and `.claude/rules/` the rules per project
+- `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation, in three
+  homes: `Shared/` for what every task reads, and one folder per task, `DrawingSheet/` and
+  `Kpi/` so far. `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the
+  panes. `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/` holds the
+  PowerShell scripts and `.claude/rules/` the rules per project. Who owns which folder is in
+  `.claude/rules/territory.md`
 - `reports/` holds what a run wrote and **nothing in it is ever committed.** This repository is
   public and a report carries client view names, sheet numbers and plot identifiers, so
   `reports/README.md` is the only file in it that is tracked
@@ -166,11 +170,13 @@ Real names are in `.claude/rules/core-rules.md`, next to the rule they illustrat
 
 ## Hooks
 
-Three, wired in `.claude/settings.json`. Both commit hooks read the command rather than the
-index, through `commit-scope.py`, and a hook script that cannot be found blocks.
+Four, wired in `.claude/settings.json`. The three commit hooks read the command rather than
+the index, through `commit-scope.py`, and a hook script that cannot be found blocks.
 
 - `block-paths.sh` refuses any write that resolves outside this repo
-- `require-file-on-commit.sh` refuses a commit not carrying `steps/ai-max-state.md`
+- `require-file-on-commit.sh` refuses a commit not carrying a `steps/ai-max-state-<task>.md`
+- `territory-check.sh` refuses a commit touching two tasks' files, or `Core/Shared` next to
+  any task's files. The map is in `.claude/rules/territory.md`
 - `writing-check.sh` refuses a commit whose message or files hold an em dash, a generated-by
   footer, a co-author credit line, an emoji, or a word from the list in
   `.claude/skills/ai-max/references/writing-rules.md`, which it skips. landscape is kept
@@ -256,4 +262,5 @@ lines apart, but nothing said which view. Record where a value came from as you 
 No em dash, no semicolon in prose, no emoji anywhere, commit messages included. No generated-by
 footer and no co-author line. Comments say why, not what. Full list in the ai-max writing rules.
 Never report a test result from a run made before the last file was written. Say UNKNOWN rather
-than filling a gap. Write what happened in `steps/log.md`, newest entry at the top.
+than filling a gap. Write what happened in your task's own log, `steps/log-drawing.md` or
+`steps/log-kpi.md`, newest entry at the top.
