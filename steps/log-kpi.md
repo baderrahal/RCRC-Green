@@ -11,8 +11,11 @@ audit findings stay open**, not renumbered, not reordered, not annotated. Nothin
 touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`. **Nothing in this round
 has been observed in Revit**, and no workbook was opened in Excel.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1103 tests at this branch, 0 failed and 0 skipped, 588 of them KPI, 8 added here.**
+Pull request 69, merged into main as `9e966fa`. **The runner executed 1103 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1103 ran at `9e966fa`, 0 failed and 0
+skipped**, 588 of them KPI, 8 added here. The merge went through the API with the title and the
+message both passed on the call, and the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer. Its tree is the branch's tree, checked.
 
 ### What happened on the 1707 run
 
