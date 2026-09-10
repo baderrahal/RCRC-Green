@@ -16,9 +16,9 @@ ends with every schedule read, as the schedule prints it.** Phoenix dactylifera'
 are named and nothing is changed, an open question for Bader.
 
 Five break watches went red on 4, 1, 2, 2 and 5 tests and were restored byte for byte.
-**Locally 1046 tests at this branch, 0 failed and 0 skipped, 557 of them KPI, 32 added.** The
-pull request, the merge hash and the runner's count go in the record the merge adds here.
-**Nothing in this round has been observed in Revit or in Excel.**
+Pull request 60 is merged into main as `8eb289b`, **1046 tests on the runner against its
+merged head and 1046 locally at that head, 0 failed and 0 skipped on each**, 557 of them KPI,
+32 added here. **Nothing in this round has been observed in Revit or in Excel.**
 
 Before that, the forty sixth pass, two faults measured on the first twenty plot run, 2026-09-10
 at 11:16, and fixed. **The other 43 audit findings stay open**, not renumbered, not reordered,
