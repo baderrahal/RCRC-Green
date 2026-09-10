@@ -119,7 +119,7 @@ namespace RcrcGreen.Core.Kpi
 
             foreach (SpeciesMatch match in held)
             {
-                if (!match.Matched)
+                if (!match.Placed)
                 {
                     skipped.Add(new NotWritten(
                         match.SheetName,
@@ -134,6 +134,16 @@ namespace RcrcGreen.Core.Kpi
                     match.SheetName,
                     KpiTemplates.QuantityColumn + match.Row.ToString(CultureInfo.InvariantCulture),
                     match.Species.Quantity));
+
+                if (!match.Added) continue;
+
+                // The name as Revit spells it, because there is nothing else to spell it from,
+                // and NOTHING in any other column. Family, genus, native and every code column
+                // are the client's data and the tool does not know them.
+                writes.Add(CellWrite.Text(
+                    match.SheetName,
+                    KpiTemplates.BotanicalColumn + match.Row.ToString(CultureInfo.InvariantCulture),
+                    match.Species.BotanicalName));
             }
 
             return new KpiCreatePlan(template, writes, skipped, held);

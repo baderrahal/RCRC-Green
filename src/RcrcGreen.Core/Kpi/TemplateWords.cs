@@ -16,21 +16,29 @@ namespace RcrcGreen.Core.Kpi
 
         public const string EmptyFolder = "No .xlsx in this folder.";
 
-        public const string NoModelPath =
-            "The open model has never been saved, so there is no folder to write beside. Save "
-            + "the model first.";
+        /// <summary>
+        /// **This replaced the never saved line.** The workbook used to be written beside the
+        /// Revit model, so a detached model, which is what the team works on, could not be used
+        /// at all. The folder is browsed for and remembered the way the template folder is, and
+        /// whether the model has been saved is asked nowhere.
+        /// </summary>
+        public const string NoOutputFolder =
+            "No output folder is set. Press Browse beside Output folder and point at where the "
+            + "filled workbooks should be written.";
 
         /// <summary>
         /// Said once, under the name box, so nobody is surprised by the overwrite. The team
         /// asked for no confirmation and no second copy.
+        ///
+        /// The folder is the browsed one. It takes no fallback wording for an empty folder,
+        /// because with none set NoOutputFolder is what shows and the name box has nowhere to
+        /// write to yet.
         /// </summary>
-        public static string Output(string modelFolder)
+        public static string Output(string outputFolder)
         {
-            string where = string.IsNullOrEmpty(modelFolder)
-                ? "beside the open Revit model"
-                : modelFolder;
+            if (string.IsNullOrWhiteSpace(outputFolder)) return NoOutputFolder;
 
-            return "Written to " + where + ". A file already there under this name is "
+            return "Written to " + outputFolder + ". A file already there under this name is "
                 + "overwritten, with no confirmation and no second copy.";
         }
 

@@ -18,6 +18,12 @@ namespace RcrcGreen.Core.Kpi
     {
         public const string Refused = "NOTHING WAS WRITTEN";
 
+        /// <summary>
+        /// Printed where a species reached no row at all. It is the one case where a count does
+        /// not reach the sheet's total, so it is said in those words rather than left blank.
+        /// </summary>
+        public const string NowhereAtAll = "NOWHERE, so its count is not in the total";
+
         public static string Write(KpiCreateRun run, DateTime writtenAt)
         {
             if (run == null) throw new ArgumentNullException("run");
@@ -169,12 +175,51 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  parts in the template " + run.Outcome.PartsInSource
                 + ", parts in the output " + run.Outcome.PartsInOutput
                 + ", " + Count(run.Outcome.ChangedParts.Count, "part") + " changed");
+
+            // One part fewer is expected and the reason is said, so the count does not read as
+            // a loss. Anything else short is the resave failure wearing this tool's name.
+            if (run.Outcome.PartsDeliberatelyRemoved > 0)
+            {
+                Line(report, "  " + WorkbookPatcher.CalcChainPart + " was removed on purpose, which is "
+                    + "the one part fewer. It is Excel's record of");
+                Line(report, "  what order to work the formulas out in, written against the cached results "
+                    + "this run dropped.");
+                Line(report, "  Excel rebuilds it on the first recalculation.");
+            }
+
             if (!run.Outcome.KeptEveryPart)
             {
                 Line(report, "  THE OUTPUT DOES NOT HOLD EVERY PART THE TEMPLATE HELD. That is a bug.");
             }
 
+            TheCache(report, run.Outcome.Cache);
             Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// Whether the output will really recalculate, read back off it.
+        ///
+        /// **Excel showed 0 for seven computed cells while the inputs beside them were right.**
+        /// The values were never wrong: the template's own cached results were still there and
+        /// Excel trusted them. fullCalcOnLoad was already on, so the flag alone is not the fix,
+        /// and this prints all three things that are.
+        /// </summary>
+        private static void TheCache(StringBuilder report, CacheCheck cache)
+        {
+            Line(report, string.Empty);
+            Line(report, "  WILL EXCEL RECALCULATE THIS FILE: " + (cache.WillRecalculate ? "YES" : "NO"));
+            Line(report, "    recalculate on open   " + (cache.RecalculatesOnOpen ? "set" : "NOT SET"));
+            Line(report, "    calcId                " + Shown(cache.CalcId)
+                + (cache.CalcIdCleared ? string.Empty : "   NOT CLEARED, so Excel may trust the cache"));
+            Line(report, "    cached results left   " + cache.FormulaCellsCarryingACachedValue
+                + ", dropped " + cache.CachedValuesDropped);
+            Line(report, "    " + WorkbookPatcher.CalcChainPart + "     "
+                + (cache.CalcChainRemoved ? "removed" : "STILL THERE"));
+
+            if (cache.WillRecalculate) return;
+
+            Line(report, "  THE FILE MAY OPEN SHOWING THE TEMPLATE'S OWN CACHED NUMBERS RATHER THAN THESE.");
+            Line(report, "  Press Ctrl Alt F9 in Excel to force it, and treat this as a bug in the tool.");
         }
 
         private static void TheCellsNotWritten(StringBuilder report, KpiCreateRun run)
@@ -223,9 +268,11 @@ namespace RcrcGreen.Core.Kpi
 
             Line(report, string.Empty);
 
+            // Where each one landed, not that it was written nowhere. A row here says the count
+            // reaches the sheet's total, and an empty one says it did not.
             Heading(report, "SPECIES REVIT HELD THAT THE WORKBOOK'S LIST DOES NOT", missed.Count,
-                "named with the count, never dropped, and written nowhere");
-            Line(report, "  Revit name | group | merged | from | why");
+                "named with the count, never dropped, and written into an empty row where there was one");
+            Line(report, "  Revit name | group | merged | from | where it landed | why");
             foreach (SpeciesMatch match in missed)
             {
                 Line(report, "  " + Join(
@@ -233,7 +280,19 @@ namespace RcrcGreen.Core.Kpi
                     Shown(match.Species.GroupName),
                     match.Species.Quantity.ToString(CultureInfo.InvariantCulture),
                     Working(match.Species),
+                    match.Placed
+                        ? match.SheetName + " " + KpiTemplates.BotanicalColumn
+                            + match.Row.ToString(CultureInfo.InvariantCulture) + " and "
+                            + KpiTemplates.QuantityColumn + match.Row.ToString(CultureInfo.InvariantCulture)
+                        : NowhereAtAll,
                     match.Why));
+            }
+
+            if (missed.Any(one => one.Placed))
+            {
+                Line(report, "  A written row carries the botanical name and the count and NOTHING ELSE.");
+                Line(report, "  Family, genus, native and every code column are the client's data, so they");
+                Line(report, "  stay empty and any KPI that needs one still cannot see this species.");
             }
 
             Line(report, string.Empty);

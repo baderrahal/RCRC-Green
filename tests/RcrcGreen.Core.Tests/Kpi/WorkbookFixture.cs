@@ -41,6 +41,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
                     + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
                     + "<Override PartName=\"/xl/worksheets/sheet2.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/calcChain.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml\"/>"
                     + "</Types>");
 
                 Add(zip, "_rels/.rels",
@@ -80,14 +81,27 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "</sheetData>"
                     + "</worksheet>");
 
+                // Rows 4 and 5 are named and 6 to 8 are empty, and B9 sums B4 to B8, so the
+                // empty rows an unmatched species can be written into are read off the file the
+                // way the real MOSQUES list is: its map range stops at 83 and its total sums to
+                // 92, so the map cannot be what says where the empties are.
                 Add(zip, "xl/worksheets/sheet2.xml",
                     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                     + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                     + "<sheetData>"
                     + "<row r=\"4\"><c r=\"D4\" t=\"inlineStr\"><is><t>Acacia tortilis</t></is></c></row>"
                     + "<row r=\"5\"><c r=\"D5\" t=\"inlineStr\"><is><t>Ziziphus spina-christi</t></is></c></row>"
+                    + "<row r=\"9\"><c r=\"B9\"><f>SUM(B4:B8)</f><v>0</v></c></row>"
                     + "</sheetData>"
                     + "</worksheet>");
+
+                // Excel's record of what order to work the formulas out in, written against the
+                // cached results. The patch removes it, so it has to be here to be removed.
+                Add(zip, "xl/calcChain.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<calcChain xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+                    + "<c r=\"E9\" i=\"1\"/><c r=\"B9\" i=\"2\"/>"
+                    + "</calcChain>");
 
                 Add(zip, "docProps/custom.xml",
                     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"

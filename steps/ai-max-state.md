@@ -1,6 +1,36 @@
 # ai-max state
 
-Phase: 9, ship. Thirty sixth pass, the first real workbook. Pull request 44 is merged into main as
+Phase: 9, ship. Thirty seventh pass, four things off the first real run. On branch
+`claude/inspiring-allen-xs113f`, 904 tests locally, 0 failed and 0 skipped.
+
+**Excel showed zeros where the numbers were right.** Stale cached results in the output, and
+`fullCalcOnLoad` alone was never enough. calcId set to 0, the cached `<v>` dropped from every
+formula cell, `xl/calcChain.xml` removed, and `CacheCheck` reads all four facts back off the
+output the way the written cells already are. 37 parts in and 36 out, and the report says which
+part went and why.
+
+**Unmatched species go into the workbook**, which reverses last round's rule. Name in column D,
+count in column B, nothing else, into the empty rows the sheet's own total sums. The empty rows
+come from the file, never from the map: MOSQUES stops at row 83 and B93 sums B4 to B92.
+
+**The plot prefix is a second route to the template and does not decide.** PRX_Component decides,
+the prefix cross checks, and where they disagree neither wins. What it is really for is grouping,
+one button per template beside Select all and Clear. It is the only thing that can place EP-05,
+EP-11, EP-12 and EP-13, which are on a schedule and on no sheet.
+
+**The output folder is browsed for.** Writing beside the model meant a detached model could not
+be used at all. Create no longer asks whether the model has been saved and the model's folder
+came off `OpenModel` with that question.
+
+**Two things to raise**: three of the seven asked for were already delivered in pull request 44
+and were not done again, and the ask says eight prefixes where its own table lists ten. Ten are
+built and tested.
+
+**Open for the team**: the client's species lists are short of trees this project plants, and a
+species written into an empty row carries no family, no genus and no native flag, so the KPIs
+that need those still cannot see it.
+
+Before that, the thirty sixth pass, the first real workbook. Pull request 44 is merged into main as
 `116afdb`, 867 tests on the runner against its merged head and 867 locally, 0 failed and 0
 skipped on each.
 

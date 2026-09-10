@@ -137,14 +137,26 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// The workbook's own species list, as the four measured hard cases have it. The model
         /// prints UNKNOWN and the workbook holds four rows named Unknown Tree, which is why
         /// nothing can match those on name.
+        ///
+        /// It starts at row 4 with three empty rows under it that the total sums, which is the
+        /// shape the real MOSQUES lists have: 80 names, then rows 84 to 92 empty, and B93
+        /// summing B4 to B92.
         /// </summary>
         public static SpeciesList WorkbookList(params string[] names)
+        {
+            return WorkbookListWithRoomFor(3, names);
+        }
+
+        public static SpeciesList WorkbookListWithRoomFor(int emptyRows, params string[] names)
         {
             var rows = new List<SpeciesListRow>();
             int at = 4;
             foreach (string name in names) rows.Add(new SpeciesListRow(at++, name));
 
-            return SpeciesList.Holding(rows);
+            var free = new List<int>();
+            for (int more = 0; more < emptyRows; more++) free.Add(at++);
+
+            return SpeciesList.Holding(rows, free);
         }
 
         public static IReadOnlyList<string> Plots(params PlotReading[] readings)

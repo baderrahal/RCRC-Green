@@ -4,6 +4,148 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, thirty seventh pass. Excel showed zeros, and the workbook stops going beside the model
+
+Branch `claude/inspiring-allen-xs113f`. **904 tests locally, 0 failed and 0 skipped**, run after
+the last file was written and after every break watch was restored byte for byte.
+
+Seven things came out of the first real run. **Three of them were already delivered in pull
+request 44** and were not done again: the typed date and name boxes reaching the fill, the area
+claim, and most of the measured record. What is here is the other four and two additions to the
+record.
+
+### Excel showed zeros where the numbers were right
+
+The filled MOSQUES workbook read 0 for Total Green cover, Canopy Area, Total Trees, Total Trees
+Native, Total Trees Adaptive, Total Planting Area and Total Lawn Area, beside Planting 410, Lawn
+60 and Mosques Area 3,729 which all read correctly. **The values were not wrong. They were stale
+cached results and Excel never recalculated.** Total Planting Area is `=F10` and F10 held 410, so
+a 0 there could only be a cache.
+
+`fullCalcOnLoad="1"` was already set, so **the flag alone was never enough.** Three things
+together, measured on the output: `calcId` set to 0 in `calcPr` with the flag kept, the cached
+`<v>` dropped from every formula cell in every sheet leaving the `<f>` alone, and
+`xl/calcChain.xml` removed.
+
+**The output is checked the way the written cells already are.** `CacheCheck` is read back off
+the file, not off what was sent: recalculate on open, calcId cleared, no formula cell carrying a
+cached value, and the calc chain gone. All four or the report says the file may open showing the
+template's own numbers and calls it a bug in the tool. A workbook that opens showing zeros beside
+correct inputs is the worst thing this tool can produce, because it looks finished.
+
+**The part count reads 37 in and 36 out now and the report says which part went and why.**
+`PartsDeliberatelyRemoved` is what keeps the kept-every-part check true across a removal on
+purpose, so a count short by one does not read as a loss.
+
+### Unmatched species go into the workbook, which reverses last round's rule
+
+A species Revit holds that the workbook's list does not is **written in**, the botanical name in
+column D and the count in column B and nothing in any other column. On DM-12 that is three, all
+under Existing: PHOENIX DACTYLIFERA 5, UNKNOWN 2 and WASHINGTONIA ROBUSTA 1. Last round they were
+named and written nowhere, and the workbook read 31 trees where the model holds 39.
+
+**The empty rows come from the file and never from a constant.** The MOSQUES map entry stops at
+row 83 and that sheet's own total is `SUM(B4:B92)`, so rows 84 to 92 are empty AND summed. A range
+taken from the map would have found no room at all. `SpeciesList` reads column D across the whole
+sheet and finds the total by its own formula, so the rows that reach the total are the rows a
+species can be written into. No total found means no empty rows, and a species is reported as not
+placed rather than written where nothing adds it up.
+
+More unmatched species than empty rows writes what fits, names the rest and says plainly that the
+sheet ran out of room. The report's section listing them says where each one landed instead of
+that it was written nowhere, with the three lines saying what a written row does not carry.
+
+Three tests in `SpeciesMatchingTests` went red on this and had to be rewritten, because they
+encoded the rule being reversed. They are named here rather than quietly updated.
+
+### The plot prefix is a second route, and it does not decide
+
+Confirmed by the team: STREETS NS, ST and MM, PARKING PL, MOSQUES FM and DM, SCHOOLS SC,
+EXISTING PARKS EP, FUTURE PARKS FP, HEALTHCARE HF. It agrees with the eleven component values
+prefix by prefix with nothing left over on either side, and a test written out by hand says so.
+
+**Two records of one fact is the fault this repo has met eight times, so they do not get equal
+standing.** `PRX_Component` decides. Where the prefix agrees the pane says so, where they
+disagree neither decides and nothing is preselected, and a prefix the table does not hold cross
+checks nothing, which is different from one that disagrees.
+
+**The line saying which route the answer took is shown whichever way it went.** It used to appear
+only when nothing was preselected, so a preselection arrived without a word. EP-05, EP-11, EP-12
+and EP-13 are on a schedule and on no sheet, which means no component at all, and the prefix is
+the only thing that can place them.
+
+**The grouping is what the prefix is really for.** One button per template beside Select all and
+Clear ticks every plot of that template at once, with its count on the button. It replaces the
+ticks rather than adding to them, because one checklist is one template. Plots whose prefix the
+table does not hold are named under the buttons, so a plot no button reaches is visible.
+
+**One thing to raise: the ask says eight prefixes and the table in it lists ten.** NS, ST, MM,
+PL, FM, DM, SC, EP, FP and HF. Ten are built and ten are tested, one line per prefix. Seven
+templates either way, since STREETS takes three and MOSQUES takes two.
+
+### The output folder is browsed for, and the model no longer has to be saved
+
+Writing beside the Revit model meant a detached model could not be used at all, which cost most
+of an afternoon. `OutputFolder` is browsed for and remembered in `kpi-output-folder.txt` beside
+the installed assembly, the same way the template folder is. Both go through one
+`RememberedFolder` rather than two copies of the same quiet read, and `install.ps1` creates the
+new pointer empty and never overwrites one the user has set.
+
+**Create no longer asks whether the model has been saved.** It asks whether a model is open and
+whether an output folder is set. The never saved refusal is gone and so is
+`TemplateWords.NoModelPath`. The silent overwrite and the editable name box are unchanged.
+
+**The model's folder came off `OpenModel` with it.** Nothing read it once the output folder
+existed, and a value on the screen that decides nothing is how one stale string became a dead end
+here already. The rule it was built for still stands: the title is a record built from one answer,
+and the refusal is decided at the moment Create is pressed, the document off the live document
+and the folder off the pointer file in the same breath.
+
+The test that covered the never saved refusal is rewritten to assert the reversal outright: a
+model that was never saved is refused nothing, and its refusal is the same as a saved model's.
+
+**One line went with it.** The pane drew `TemplateWords.Output` and `CreateWords.Overwrite`
+directly under each other, both saying the file is overwritten without asking. Two sentences for
+one fact. The second is deleted.
+
+### Open, and not to be guessed at in code
+
+**THE CLIENT'S SPECIES LISTS ARE SHORT OF TREES THIS PROJECT PLANTS.** The MOSQUES list holds 80
+species and none of them is Phoenix dactylifera, Washingtonia robusta or any Unknown row, checked
+against the output file itself.
+
+**A species written into an empty row carries no family, no genus and no native flag**, because
+those are the client's data and the tool does not know them. The counts reach the total now, and
+the KPIs that need those columns still cannot see it. Whether the lists should grow, or those
+columns be filled some other way, is a question for the team about their own template.
+
+Nothing in the tool may ever place an unmatched species by guessing. The name and the count go
+in, and no other column does, whatever the totals look like.
+
+### Measured, from the first real output
+
+DM-12 on the MOSQUES template. 37 parts in, 37 out, 4 changed, zero recalculation errors. The six
+values landed and the client's own formulas gave 28.1 percent canopy against a 13 percent target,
+Excessive, NOT COMPLIANT, and the tool wrote no verdict anywhere. ACACIA / VACHELLIA FARNESIANA
+found Acacia / Vachellia farnesiana at row 11. Three species were not in the list. Excel showed
+zeros for seven computed cells while the inputs beside them were right.
+
+With the calc chain removed on purpose it reads 37 in and 36 out.
+
+### What was broken to see the tests go red
+
+Each restored byte for byte and checked with md5.
+
+- The grouping button adding to the ticks rather than replacing them, and the unknown prefix left
+  in the button list. 3 red
+- The output folder dropped from the refusal. 4 red
+- Earlier in the round, the four on the cache, the empty rows and the written species
+
+### Not touched
+
+The Drawing Sheet, in any file.
+
+---
 ## 2026-09-09, thirty sixth pass. The first real workbook, and two things it showed
 
 Pull request 44, merged into main as `116afdb`. **The runner executed 867 tests against its

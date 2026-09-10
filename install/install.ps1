@@ -15,6 +15,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
 
 .PARAMETER Configuration
 Which build to install. Release unless you are debugging.
@@ -103,6 +104,15 @@ if (-not (Test-Path -LiteralPath $templatesPointer)) {
     Set-Content -LiteralPath $templatesPointer -Value '' -Encoding UTF8 -NoNewline
 }
 $copied.Add($templatesPointer)
+
+# Where the filled workbooks go. Set with Browse in the KPI pane the same way, and left alone
+# by an install for the same reason. It used to be the model's own folder, which meant a
+# detached model could not be used at all.
+$outputPointer = Join-Path $assemblyFolder 'kpi-output-folder.txt'
+if (-not (Test-Path -LiteralPath $outputPointer)) {
+    Set-Content -LiteralPath $outputPointer -Value '' -Encoding UTF8 -NoNewline
+}
+$copied.Add($outputPointer)
 
 Write-Host "Installed RCRC Green from $BuildOutput"
 foreach ($file in $copied) {

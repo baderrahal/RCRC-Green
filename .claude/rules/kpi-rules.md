@@ -75,9 +75,25 @@ nothing can match those on name. ACACIA / VACHELLIA FARNESIANA carries a slash.
 BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an apostrophe, and the shrub rows are prefixed
 SHRUBS: and GRASS: where the workbook's list is not.
 
-**A species Revit holds that the list does not is named in the report and never dropped.** A
-quantity that goes nowhere leaves a tree list that reads as complete and is short. A species
-the list holds and Revit does not is left empty, which is correct and needs no line.
+**A species Revit holds that the list does not is WRITTEN IN and named in the report.** It goes
+into the first empty row below the list on the sheet its group points at, the botanical name in
+column D and the count in column B and nothing anywhere else. This reverses the rule that it was
+named and written nowhere: a quantity that goes nowhere leaves a tree list that reads as complete
+and is short, and DM-12 came out reading 31 trees where the model holds 39.
+
+**The empty rows come from the file and never from a constant.** The MOSQUES map entry stops at
+row 83 and that sheet's own total is `SUM(B4:B92)`, so rows 84 to 92 are empty AND summed. The
+range the total sums is what says which rows reach it, so `SpeciesList` reads that formula. With
+no total found there are no empty rows and a species is reported as not placed, rather than
+written into a row nothing adds up.
+
+**Family, genus, native, canopy and every code column stay empty.** Those are the client's data
+and the tool does not know them, so the KPIs that need them still cannot see a species written
+this way. That is in `steps/log.md` as an open question for the team.
+
+More unmatched species than empty rows writes what fits, names the rest, and says plainly that
+the sheet ran out of room. A species the list holds and Revit does not is left empty, which is
+correct and needs no line.
 
 ## The note text can never be matched against the model
 
@@ -173,9 +189,10 @@ name was the only thing that could separate the two workbooks and no rule on a n
 separate the components. The table can. Recognising a WORKBOOK FILE is still the sheet name then
 the file name, which is a different job and unchanged.
 
-**The plot prefix decides nothing and is read nowhere.** STREET 36m ROW covers MM and ST plots
-and NS carries two different street widths, so a rule on the prefix would answer three of them
-wrongly.
+**The plot prefix does not decide.** STREET 36m ROW covers MM and ST plots and NS carries two
+different street widths, so a rule on the prefix alone would answer three of them wrongly. It is
+read, as the cross check and the grouping in the section below, and it never overrides this
+table.
 
 **A value the table does not hold preselects nothing, says so on the pane, and the user picks.**
 Nothing guesses and nothing falls back to matching a word of the value against a word of the
@@ -189,6 +206,36 @@ later prints as one the table does not hold. The plot beside each value is `PRX_
 off the sheet, said in the block, and a value on sheets carrying no plot is counted and named
 rather than dropped. A title block type is not a sheet, so a component name on one is named with
 that reason and left out of the counts.
+
+## The plot prefix is the second route, and it does not decide
+
+Confirmed by the team, all seven templates and every prefix, and `PlotPrefixes` is that table:
+
+```
+STREETS   NS, ST, MM        SCHOOLS          SC
+PARKING   PL                EXISTING PARKS   EP
+MOSQUES   FM, DM            FUTURE PARKS     FP
+                            HEALTHCARE       HF
+```
+
+It agrees with the eleven component values prefix by prefix with nothing left over on either
+side, and a test written out by hand says so.
+
+**Two records of one fact is the fault this repo has met eight times, so the two do not get equal
+standing.** `PRX_Component` decides. The prefix is a cross check: where they agree the pane says
+the prefix agrees, and where they disagree NEITHER decides, both are named and nothing is
+preselected. A prefix the table does not hold cross checks nothing, which is different from one
+that disagrees.
+
+**What the prefix is really for is grouping.** One button per template beside Select all and
+Clear ticks every plot of that template at once. It REPLACES the ticks rather than adding to
+them, because one checklist is one template. A plot whose prefix the table does not hold is
+reached by no button and the pane names it, so it is ticked by hand rather than left invisible.
+
+**It is also the only thing that can place a plot with no sheet.** The 1548 scan found four on a
+schedule and on none, EP-05, EP-11, EP-12 and EP-13. No sheet means no PRX_Component. The pane
+says the component could not be read and the prefix was used, rather than preselecting in
+silence, and the line saying which route the answer took shows whichever way it went.
 
 ## Three places a sheet value can live
 
@@ -258,13 +305,25 @@ because those are the ones that will be read. With nothing picked yet it names t
 look at rather than a parameter nobody chose. A test walks every template and refuses any line
 holding PRX_COMPONENT or the words title block.
 
-## No model open and a model never saved are two refusals
+## The workbook goes where the user browsed, not beside the model
 
-`CreateWords.CannotCreate` is given both, and a model that is not open is not asked whether it
-has been saved. It used to be handed the model's FOLDER and call it the model, so a detached
-model that has never been saved was refused with No model is open, next to a header counting its
-96,959 elements and directly under the line that already said the truth. The never saved words
-are `TemplateWords.NoModelPath`, the one that line uses, rather than a second sentence.
+**Writing beside the Revit model meant a detached model could not be used at all**, and a
+detached model is what the team works on. It cost most of an afternoon. `OutputFolder` is
+browsed for and remembered in `kpi-output-folder.txt` beside the installed assembly, the same way
+the template folder is, through the one `RememberedFolder` both use.
+
+`CreateWords.CannotCreate` asks whether a model is open and whether an output folder is set.
+**Whether the model has been saved is asked nowhere now**, and the never saved refusal and
+`TemplateWords.NoModelPath` are both gone. The no folder words are `TemplateWords.NoOutputFolder`,
+the ones the output folder line already shows, rather than a second sentence.
+
+The model's folder came off `OpenModel` with them. It decided nothing once the output folder
+existed, and a value on the screen that decides nothing is how one stale string became a dead end
+here already. The silent overwrite and the editable name box are unchanged.
+
+The refusal is still decided at the moment Create is pressed: the document off the live document
+on the Revit thread, and the folder read off the pointer file in the same breath, so neither can
+be a copy the pane took earlier.
 
 ## The pane holds no copy of anything it can ask for
 
@@ -275,8 +334,11 @@ nothing else, so the two halves of one fact went stale on different schedules.
 
 Four things hold the fix up.
 
-**`OpenModel` is one record**, title and folder together, built from one answer. `CannotCreate`
-takes it rather than two loose flags, so nothing can hand it the pair the wrong way round.
+**`OpenModel` is one record.** It carried the title and the folder together, built from one
+answer, so nothing could hand `CannotCreate` the pair the wrong way round. The folder is off it
+now: the workbook goes to the browsed output folder and the model's own folder decides nothing.
+The rule that got it there stands and is why the title is still a record rather than a loose
+string.
 
 **Every answer from `KpiRequestHandler` carries the model state**, whatever was asked for, read
 off the live document at that moment. `WhichModel` is only the request that asks for that and
@@ -342,6 +404,28 @@ and reported as it landed, never as it was sent.
 The untouched client file recalculates with 45 errors and a correctly filled one with 44. The
 44 are the PARK PROGRAMME section failing on an empty Criteria table either way, so a filled
 file showing 44 errors is correct.
+
+**EXCEL SHOWED ZEROS WHERE THE NUMBERS WERE RIGHT.** The first real output read 0 for Total Green
+cover, Canopy Area, Total Trees, Total Trees Native, Total Trees Adaptive, Total Planting Area and
+Total Lawn Area, beside Planting 410, Lawn 60 and Mosques Area 3,729 which all read correctly.
+The values were not wrong. They were stale cached results and Excel never recalculated. Total
+Planting Area is `=F10` and F10 held 410, so a 0 there could only be a cache.
+
+`fullCalcOnLoad="1"` was already there, so **the flag alone is not enough.** Three things
+together, measured on that file: `calcId` set to 0 in `calcPr` with the flag kept, the cached
+`<v>` dropped from every formula cell in every sheet leaving the `<f>` alone, 301 of them in that
+file, and `xl/calcChain.xml` removed. Forcing a recalculation gave Total Green cover 1518, Canopy
+1048, Total Trees 31, Planting 410, Lawn 60.
+
+**The output is then checked the way the written cells already are.** `CacheCheck` is read back
+off the file: recalculate on open, calcId cleared, no formula cell carrying a cached value, and
+the calc chain gone. All four, or the report says the file may open showing stale numbers. A
+workbook that opens showing zeros beside correct inputs is the worst thing this tool can produce,
+because it looks finished.
+
+**The part count reads 37 in and 36 out and the report says which part went and why.** A count
+short by one with no explanation reads as a loss. `PatchOutcome.PartsDeliberatelyRemoved` is what
+keeps `KeptEveryPart` true across it.
 
 **No client workbook enters this repository.** It is public and those files carry the Green
 Riyadh KPI targets, neighbourhood names and the plant palette. `*.xlsx` is ignored and tests
@@ -505,22 +589,30 @@ One press of Create on DM-12 with the MOSQUES template, 2026-09-09. **The workbo
 and correct.** These are measurements off that output file, not reasoning about it.
 
 - **37 parts in, 37 out, 4 changed**, and the output recalculates with ZERO errors. The parks
-  figure above, 45 against 44, is EXISTING PARKS and is a different template. Both stand
+  figure above, 45 against 44, is EXISTING PARKS and is a different template. Both stand. It
+  reads 37 in and 36 out now, because the calc chain is removed on purpose
+- **Excel opened it showing zeros for seven computed cells** while the inputs beside them were
+  right. That is the stale cache in the patcher section above, measured on this same file
 - The six values landed and the client's own formulas ran on them: **28.1 percent canopy against
   a 13 percent target, Excessive, NOT COMPLIANT.** The tool wrote no verdict anywhere. That is
   the workbook's arithmetic on the numbers Revit gave it
 - **The slash case matched.** ACACIA / VACHELLIA FARNESIANA found Acacia / Vachellia farnesiana
   at row 11, which is why nothing is stripped or split on the way to a comparison
-- **Three species were correctly refused.** The MOSQUES tree list holds 80 species and not one
+- **Three species were not in the list**, all under Existing: PHOENIX DACTYLIFERA 5, UNKNOWN 2
+  and WASHINGTONIA ROBUSTA 1. The MOSQUES tree list holds 80 species in rows 4 to 83 and not one
   of them is Phoenix dactylifera, Washingtonia robusta, or any of the Unknown rows. Checked
   against the output file itself rather than against the map
 
-The last one has a consequence and it is an open question rather than a fault:
+The last one has a consequence, and the fix and the open question are two different things:
 
-**The workbook reads 2 existing trees where the model holds 10, and 31 in total where the model
-holds 39.** The tool is right and the client's list is short. **Nothing in the tool may ever
-place an unmatched species by guessing**, so the three are named in the report and the numbers
-stay as they are until the team answers. `steps/log.md` carries it as the open question.
+**That run read 2 existing trees where the model holds 10, and 31 in total where the model holds
+39**, because the three were named and written nowhere. They are written into the empty rows now,
+under the species rule above, so the counts reach the total. **Nothing in the tool may ever place
+an unmatched species by guessing**: the name and the count go in and no other column does.
+
+**What is still open is that a row written that way carries no family, no genus and no native
+flag**, so the KPIs that need those cannot see it, and the client's species lists are short of
+trees this project actually plants. That is for the team. `steps/log.md` carries it.
 
 ## The area is not a schedule row
 

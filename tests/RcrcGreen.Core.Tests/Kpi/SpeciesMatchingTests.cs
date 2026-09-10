@@ -56,10 +56,13 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { CreateFixture.Species("UNKNOWN", CreateFixture.Existing, 2) },
                 "Unknown Tree", "Unknown Tree", "Unknown Tree", "Unknown Tree"));
 
+            // Not matched, and written in rather than dropped. The four Unknown Tree rows are
+            // the client's and nothing may put a quantity on one of them by guessing.
             Assert.False(match.Matched);
-            Assert.Equal(0, match.Row);
+            Assert.True(match.Added);
+            Assert.Equal(8, match.Row);
             Assert.Equal(2, match.Species.Quantity);
-            Assert.Equal(SpeciesMatching.NotInTheList, match.Why);
+            Assert.Equal(SpeciesMatching.WrittenIn, match.Why);
         }
 
         /// <summary>
@@ -95,7 +98,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "Acacia farnesiana"));
 
             Assert.False(missed.Matched);
-            Assert.Equal(SpeciesMatching.NotInTheList, missed.Why);
+            Assert.True(missed.Added);
+            Assert.Equal(SpeciesMatching.WrittenIn, missed.Why);
         }
 
         /// <summary>
@@ -129,7 +133,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "Bougainvillea glabra"));
 
             Assert.False(missed.Matched);
-            Assert.Equal(SpeciesMatching.NotInTheList, missed.Why);
+            Assert.True(missed.Added);
+            Assert.Equal(SpeciesMatching.WrittenIn, missed.Why);
         }
 
         [Fact]
@@ -174,6 +179,81 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "Albizia lebbeck", "Cassia glauca", "Phoenix dactylifera");
 
             Assert.Single(matches);
+        }
+
+        /// <summary>
+        /// The three DM-12 measured, all under Existing. The MOSQUES list holds 80 species and
+        /// none of them, so all three are written into the empty rows under the list rather than
+        /// left out, which is what made the workbook read 31 trees where the model held 39.
+        /// </summary>
+        [Fact]
+        public void EveryUnmatchedSpeciesGoesIntoAnEmptyRowInOrder()
+        {
+            IReadOnlyList<SpeciesMatch> matches = Matching(
+                new[]
+                {
+                    CreateFixture.Species("PHOENIX DACTYLIFERA", CreateFixture.Existing, 5),
+                    CreateFixture.Species("UNKNOWN", CreateFixture.Existing, 2),
+                    CreateFixture.Species("WASHINGTONIA ROBUSTA", CreateFixture.Existing, 1)
+                },
+                "Albizia lebbeck", "Cassia glauca");
+
+            Assert.All(matches, one => Assert.True(one.Added));
+            Assert.All(matches, one => Assert.True(one.Placed));
+            Assert.All(matches, one => Assert.False(one.Matched));
+
+            // Rows 4 and 5 hold the two names, so the three empty rows are 6, 7 and 8, taken
+            // in order. Two species landing on one row would double a count and lose one.
+            Assert.Equal(new[] { 6, 7, 8 }, matches.Select(one => one.Row));
+            Assert.Equal(new[] { 5, 2, 1 }, matches.Select(one => one.Species.Quantity));
+        }
+
+        /// <summary>
+        /// More unmatched species than empty rows: what fits goes in, the rest are named, and
+        /// the reason says the sheet ran out of room rather than blaming the name.
+        /// </summary>
+        [Fact]
+        public void MoreUnmatchedSpeciesThanEmptyRowsWritesWhatFitsAndNamesTheRest()
+        {
+            SpeciesList list = CreateFixture.WorkbookListWithRoomFor(1, "Albizia lebbeck");
+
+            IReadOnlyList<SpeciesMatch> matches = SpeciesMatching.Against(
+                new[]
+                {
+                    new MergedSpecies("PHOENIX DACTYLIFERA", CreateFixture.Existing,
+                        new[] { new PlotNumber("DM-12", 5) }),
+                    new MergedSpecies("WASHINGTONIA ROBUSTA", CreateFixture.Existing,
+                        new[] { new PlotNumber("DM-12", 1) })
+                },
+                KpiTemplates.Mosques, list, list);
+
+            Assert.Equal(5, matches[0].Row);
+            Assert.True(matches[0].Added);
+
+            Assert.Equal(0, matches[1].Row);
+            Assert.False(matches[1].Placed);
+            Assert.Equal(SpeciesMatching.NoEmptyRowLeft, matches[1].Why);
+        }
+
+        /// <summary>
+        /// A list with no empty row at all places nothing and says why, rather than writing
+        /// into a row the total does not sum.
+        /// </summary>
+        [Fact]
+        public void AListWithNoRoomPlacesNothingAndSaysWhy()
+        {
+            SpeciesList list = CreateFixture.WorkbookListWithRoomFor(0, "Albizia lebbeck");
+
+            SpeciesMatch match = Assert.Single(SpeciesMatching.Against(
+                new[]
+                {
+                    new MergedSpecies("UNKNOWN", CreateFixture.Existing,
+                        new[] { new PlotNumber("DM-12", 2) })
+                },
+                KpiTemplates.Mosques, list, list));
+
+            Assert.False(match.Placed);
+            Assert.Equal(SpeciesMatching.NoEmptyRowLeft, match.Why);
         }
     }
 }
