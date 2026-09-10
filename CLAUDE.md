@@ -150,6 +150,12 @@ Measured on the 1355 run. These are what pick a workbook and fill it:
 - **The softscape schedule prints TREES, then a group row per phase, then the species under it,
   then a subtotal per group, then TOTAL.** A species can appear under BOTH groups: ALBIZIA
   LEBBECK is 1 existing and 13 proposed on DM-12. THE GROUP ROW MUST TRAVEL WITH THE SPECIES ROW
+- **A SHRUBS AND LAWN GROUP PRINTS ONE SUBTOTAL PER PHASE, THEN THE GROUP TOTAL.** Measured on
+  the 0928 run over 20 mosque plots. A group holding Existing and Proposed prints three rows and
+  the LAST is the group's value. A group holding one phase prints two equal rows, which is what
+  DM-11 does and what made it the wrong plot to learn the shape from. Four out of four, the last
+  row is exactly the ones above it added, in area and in item count: DM-16 shrubs 30, 54, 84 and
+  FM-05 shrubs 361, 459, 820
 - **Existing species print with no image and often NO BOQ CODE AVAILABLE.** One is called
   UNKNOWN. The image is the FIRST cell, so an existing species row starts with a dash and a row
   is a species row when the BOTANICAL NAME column holds text, never when the first cell does
@@ -219,7 +225,12 @@ recorded now, a lost filter refuses the schedule, and that delete is checked.
 **One example is not a rule, and the model may hold no rule at all.** The family type was
 matched on the view type because one Properties panel showed a type named exactly that. The next
 plot's is `(010) Key Location Plan`. Copying a sibling replaced it, and then three (010) views
-copied three different family types. Annotation crop went the same way one round later.
+copied three different family types. Annotation crop went the same way one round later. **The
+worst of them was the shrubs and lawn subtotal**: DM-11 prints two equal rows per group, that
+was read as one subtotal printed twice, and the tool took the first of the two for four rounds.
+It is one subtotal per PHASE and then the group total, and DM-11 is the one plot where taking
+the first cannot be wrong, because every one of its groups holds a single phase. The 0928 run
+over 20 plots is what showed it. **One plot is not a sample.**
 
 **A name is not an identity and a word is not a value.** Sheet Width was read off a title block
 TYPE, where that instance parameter does not exist, so null became 0.0 and three sheets came out

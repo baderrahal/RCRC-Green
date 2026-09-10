@@ -159,11 +159,13 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// The subtotal prints twice, 35 then 35 and 70 then 70. Adding a group's subtotal rows
-        /// would give 70 and 140.
+        /// DM-11's groups each hold ONE PHASE, so each prints its phase subtotal and then the
+        /// group total, two equal rows, 35 then 35 and 70 then 70. That is what was read as one
+        /// subtotal printed twice, and it is why the old rule was right on this plot and wrong
+        /// on the 20 of the 0928 run. The last row is taken and here it is the same number.
         /// </summary>
         [Fact]
-        public void TheSubtotalPrintsTwiceAndOnlyOneIsTaken()
+        public void Dm11sGroupsEachHoldOnePhaseSoEachPrintsTwoEqualRows()
         {
             IReadOnlyList<GroupSubtotal> subtotals = SubtotalsOfDm11();
 
@@ -210,7 +212,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Fact]
-        public void TwoSubtotalRowsThatDisagreeAreNamedRatherThanChosenBetween()
+        public void AGroupTotalThatDoesNotEqualTheRowsAboveItIsNamedRatherThanChosenBetween()
         {
             ScannedSchedule schedule = CreateFixture.ShrubsAndLawn(
                 "DM-11",
@@ -224,9 +226,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 schedule, new[] { KpiMerge.LawnHeading }));
 
             Assert.False(only.Agrees);
-            Assert.Contains("2 subtotal rows disagree", only.Disagreement);
-            Assert.Contains("35 over 46", only.Disagreement);
-            Assert.Contains("37 over 46", only.Disagreement);
+            Assert.Contains("its group total reads 37 over 46", only.Disagreement);
+            Assert.Contains("1 row above it add to 35 over 46", only.Disagreement);
         }
 
         /// <summary>

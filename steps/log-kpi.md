@@ -4,6 +4,159 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, forty first pass. Three things off the 0928 run, the first twenty plot run
+
+Branch `claude/inspiring-allen-xs113f`. **942 tests locally, 0 failed and 0 skipped**, run after
+the last file was written and after all three break watches were restored byte for byte. 927
+before, 15 added.
+
+### The subtotal rule was wrong, and the refusal is why it never reached a client
+
+**A group prints ONE SUBTOTAL PER PHASE, then the GROUP TOTAL.** Measured on the 0928 run over
+20 mosque plots. A group holding Existing and Proposed prints three rows. A group holding one
+phase prints two equal rows, which is what every DM-11 group does and why DM-11 looked like a
+doubled subtotal.
+
+Four out of four, the last row is exactly the ones above it added, in area and in item count:
+
+```
+DM-16 SHRUBS & GROUND COVER   30 over 39,   54 over 69,   84 over 108
+DM-25 SHRUBS & GROUND COVER   13 over 9,    228 over 286, 241 over 295
+FM-05 GRASS                   96 over 117,  69 over 84,   165 over 201
+FM-05 SHRUBS & GROUND COVER   361 over 450, 459 over 570, 820 over 1020
+```
+
+The old rule took the FIRST row, which took one phase and called it the group. DM-16 shrubs took
+30 where the group is 84. DM-25 shrubs took 13 where it is 241. FM-05 grass took 96 where it is
+165. FM-05 shrubs took 361 where it is 820. **The 0928 run refused rather than writing, so none
+of those four numbers reached a workbook.**
+
+`Close` takes the last row now. The check is not gone, it is pointed at the right thing: **the
+last row must equal the rows above it added together**, in area and in item count, with the same
+relative room `Totalled.Adds` allows so the last bits of a double cannot refuse a schedule that
+adds up. When it does, the last row is written. When it does not, that is a real disagreement, it
+travels on the `GroupSubtotal` and it refuses the write, which is what the old check was for and
+what it was pointed at wrongly. A group printing one row has nothing above it to compare against
+and is taken.
+
+**The record is corrected in three places.** `kpi-rules.md` carried the wrong rule and now
+carries the measured one with both shapes drawn out and the four numbers. `CLAUDE.md` did NOT
+carry the wrong claim, checked by grep: its only subtotal sentence is about the SOFTSCAPE
+schedule and that one is untouched. The measured shape is added there as a project fact, and the
+one example is not a rule entry gains this as its worst instance. **The log entry that recorded
+the old rule as measured is corrected in place**, at the forty first pass note inside the thirty
+first pass entry, with the wrong paragraph left standing above the correction rather than
+quietly replaced.
+
+### The run is not timed, so nobody knows why it is slow
+
+The 0928 run over 20 plots took about five minutes on the clock and no file recorded a duration.
+The checklist report carried one timestamp, Written, and nothing else, while the scan report has
+carried elements and seconds at the top since its first round.
+
+Three numbers now, and `RunTiming` is the one record of the first two:
+
+- the whole press, at the top of the report
+- the model read apart from it, so the part that grows with the plots ticked is separable
+- each plot's own read, beside that plot under EVERY PLOT THAT WENT IN
+
+A run nothing timed says NOT TIMED rather than printing nought seconds, because a zero reads as
+an answer and this one would mean a five minute run took no time at all.
+
+**What the slow part is. UNKNOWN as a duration, and countable as work.** No Revit ran here, so
+this round cannot say how many of the five minutes went where, and the timing added above is
+what will say it on the next run. What can be said without Revit is what the code does per plot,
+counted off the code against the element counts already measured on this model:
+
+- `FirstSheetOf` builds a collector over ALL 1385 sheets, SORTS them by sheet number through
+  `NaturalOrder`, and reads `PRX_Plot_ID` off each until it matches. Once per plot
+- `Read` builds a collector over every non template schedule, and for EVERY one of them reads
+  `schedule.Definition`, then `GetFilters()`, then `GetField` and `GetName` per filter, to find
+  the two it wants. Once per plot. Bader's guess about this is right and it is worse than a name
+  comparison: each of those is a Revit API call rather than a string compare
+- `RegionsFor` builds a collector over every filled region in the 00 link, 279 of them, and
+  reads `PRX_Ref Plot ID` off each. Once per plot
+
+Bader counted 951 schedules. On 20 plots that is 19,020 schedule definition reads, 27,700 sheet
+parameter reads with 20 full sorts of 1385, and 5,580 region parameter reads. On the 78 street
+plots it is 74,178, 108,030 and 21,762. Two schedules per plot are used, not three: the softscape
+one and the shrubs and lawn one.
+
+**Gathering once would cost one pass each.** One walk of the schedules keyed on the plot their
+filter names, one walk of the sheets keyed on `PRX_Plot_ID`, one walk of the regions keyed on
+`PRX_Ref Plot ID`, all three built before the plot loop. That turns 19,020 definition reads into
+951 and 74,178 into 951, and the same shape for the other two. **Nothing was changed this round.
+Measure first, then decide, which is what Bader asked for.**
+
+### The refusal printed twice
+
+Four refusal lines printed in red above the Create button and again word for word in the status
+line at the bottom. Say it once. The red block is the right place, because it is where the user
+is looking when they press.
+
+`CreateWords.ReasonsAreAbove` counts them and points there: nothing was written, how many
+reasons there are, and where the report is. The patch's own refusal is still said in full down
+there, because nothing else on the pane carries that one. This narrows guard 2 from the round
+before rather than undoing it: the line still never goes blank.
+
+### What was broken to see the tests go red
+
+All three restored byte for byte and checked with md5, and the suite rerun green at 942.
+
+- `Close` put back to `subtotals[0]`. **5 red**, the four measured groups and the three phase
+  case: `Dm16ShrubsIsEightyFourAndNotThirty`, `Dm25ShrubsIsTwoHundredAndFortyOneAndNotThirteen`,
+  `Fm05GrassIsOneHundredAndSixtyFiveAndNotNinetySix`,
+  `Fm05ShrubsIsEightHundredAndTwentyAndNotThreeHundredAndSixtyOne` and
+  `AGroupHoldingThreePhasesPrintsFourRowsAndTheLastIsStillTheGroup`
+- the `TheClock` call taken out of the report header. **2 red**,
+  `TheHeaderSaysTheWholeRunTheReadAndWhatIsLeft` and
+  `ARunThatWasNotTimedSaysSoRatherThanPrintingNought`
+- the status line put back to `Refused(run.Reconciliation)`. **1 red**,
+  `AnAccountingThatRefusedIsCountedRatherThanRepeated`
+
+Two tests written in earlier rounds encoded the rules being replaced and were rewritten rather
+than deleted: `TheSubtotalPrintsTwiceAndOnlyOneIsTaken`, now
+`Dm11sGroupsEachHoldOnePhaseSoEachPrintsTwoEqualRows`, and
+`TwoSubtotalRowsThatDisagreeAreNamedRatherThanChosenBetween`, now
+`AGroupTotalThatDoesNotEqualTheRowsAboveItIsNamedRatherThanChosenBetween`.
+
+### Open, and for Bader rather than for code
+
+**WHAT SHOULD THE COMPONENT AND THE REFERENCE READ ON A CHECKLIST COVERING A WHOLE TEMPLATE.**
+Ticking a whole template's plots gives 20 mosque plots holding two component values, DAILY
+MOSQUE and FRIDAY MOSQUE, and 20 different references, so D3 and C5 come out empty.
+
+**That is correct today and nothing here is a fault.** `AgreedValue` writes a value only when
+every chosen plot holds the same one, because joining them with commas, taking the first and
+taking the most common all write something nobody chose. The report names the distinct values
+so the emptiness is never silent.
+
+What is not written down is what those two cells are FOR when a checklist covers a whole asset
+type. Nothing in the tool may pick an answer to that.
+
+### What worked, on the record
+
+All six interface fixes from the round before hold on the real pane. The underscore is back in
+PRX_Component. The reference sample names DM-11 as the first ticked plot. What MOSQUES would
+fill says read off the plot's first sheet rather than the title block. The grouping buttons reach
+every plot, 15 plus 11 plus 1 plus 20 plus 24 plus 6 plus 78 is 155, and EXISTING PARKS shows 15
+because the prefix reaches EP-05, EP-11, EP-12 and EP-13, which have no sheet. The overwrite line
+appears once. **The status line named the refusal instead of going blank**, which is guard 2 from
+the round before on its first real refusal.
+
+### Never observed in Revit
+
+The three changes of this round. No corrected subtotal has been written into a workbook, no
+timing has been printed by a real run, and no shortened status line has been seen on the pane.
+The subtotal rule is tested against the four measured groups and the timing against a report the
+test builds, neither against Revit.
+
+### Not touched
+
+The Drawing Sheet. `Core/Shared`. The schedule gathering, which is measured and not changed.
+
+---
+
 ## 2026-09-10, fortieth pass. Two guards off the audit, and nothing else
 
 Pull request 52, merged into main as `1430f22`. **The runner executed 927 tests against its
@@ -800,6 +953,15 @@ group.
 **THE SUBTOTAL PRINTS TWICE.** 35 then 35, and 70 then 70. Adding a group's subtotal rows gives
 70 and 140. One is taken, and two that disagree are named and refuse the write rather than being
 chosen between.
+
+> **CORRECTED ON 2026-09-10, THE FORTY FIRST PASS. THE PARAGRAPH ABOVE IS WRONG.** It was
+> measured from DM-11 alone and DM-11 is the special case. A group prints ONE SUBTOTAL PER
+> PHASE, then the GROUP TOTAL. Every DM-11 group holds one phase, so each prints two equal rows
+> and that read as one subtotal printed twice. Taking the first row then took one phase and
+> called it the group, which on the 0928 run over 20 plots meant 30 where the group is 84 and
+> 361 where it is 820. The last row is the group's value and the check is that it equals the
+> rows above it added together. The correction is left beside the claim rather than replacing
+> it, because a wrong claim that quietly vanishes teaches nobody how it was arrived at.
 
 **The species rows add up to the subtotal**, 36 plus 34 is 70, so the two are held against each
 other and both are printed. That one is recorded rather than enforced: every number there is

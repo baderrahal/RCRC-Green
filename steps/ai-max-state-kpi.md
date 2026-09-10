@@ -1,6 +1,40 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Fortieth pass, two guards off the audit and nothing else. Pull request 52 is
+Phase: 9, ship. Forty first pass, three things off the 0928 run, the first twenty plot run this
+tool has done. On branch `claude/inspiring-allen-xs113f`, 942 tests locally, 0 failed and 0
+skipped, 927 before and 15 added.
+
+**The subtotal rule was wrong and was measured from the one plot that is the special case.** A
+group prints one subtotal per phase, then the group total, and the LAST row is the value. DM-11
+groups each hold one phase, so each prints two equal rows, which read as one subtotal printed
+twice. Taking the first took one phase and called it the group: 30 where the group is 84, 13
+where it is 241, 96 where it is 165, 361 where it is 820. The 0928 run refused rather than
+writing, so none of the four reached a workbook. The check now is that the last row equals the
+rows above it added, in area and in item count. Corrected in `kpi-rules.md`, added to
+`CLAUDE.md` as a project fact, and the old log entry corrected in place with the wrong claim
+left standing above it. `CLAUDE.md` never carried the wrong claim, checked by grep.
+
+**The run is timed.** The whole press, the model read apart from it, and each plot's own read,
+all in the checklist report. A run nothing timed says NOT TIMED rather than printing nought. What
+the slow part is stays UNKNOWN as a duration, because no Revit ran here, and is countable as
+work: every plot walks all 1385 sheets with a full sort, all 951 schedules reading each one's
+definition and filters, and all 279 filled regions. Gathering each once before the plot loop
+would turn 19,020 schedule definition reads into 951 over 20 plots and 74,178 into 951 over the
+78 street plots. **Nothing was changed. Measure first, then decide.**
+
+**The refusal printed twice**, in red above the button and again in full in the status line. The
+status line counts the reasons and points at the red block now. The patch's own refusal is still
+said in full there, because nothing else on the pane carries it.
+
+All three were watched red before being trusted, five, two and one test. Two tests that encoded
+the replaced rules were rewritten rather than deleted. **Nothing in this round has been observed
+in Revit.**
+
+**Open for Bader**: what the component and the reference cells are for on a checklist covering a
+whole template, where 20 mosque plots hold two component values and 20 references and both cells
+correctly come out empty.
+
+Before that, the fortieth pass, two guards off the audit and nothing else. Pull request 52 is
 merged into main as `1430f22`, 927 tests on the runner against its merged head and 927 locally,
 0 failed and 0 skipped on each, 904 before and 23 added.
 
