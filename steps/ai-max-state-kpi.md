@@ -19,9 +19,9 @@ the second says so. The false comment in `KpiPlotReader` is corrected: FM-05 hol
 schedule.
 
 Six break watches went red on 18, 9, 3, 2, 1 and 2 tests and were restored byte for byte.
-**Locally 1081 tests at this branch, 0 failed and 0 skipped, 566 of them KPI, 21 added.** The
-pull request, the merge hash and the runner's count go in the record the merge adds here.
-**Nothing in this round has been observed in Revit.**
+Pull request 66 is merged into main as `ee13e8c`, **1081 tests on the runner against its
+merged head and 1081 locally at that head, 0 failed and 0 skipped on each**, 566 of them KPI,
+21 added here. **Nothing in this round has been observed in Revit.**
 
 Before that, the forty seventh pass, six things measured on the 20 plot MOSQUES run of
 2026-09-10 at 14:28 and on its workbook opened in Excel. Five fixed, one reported and not

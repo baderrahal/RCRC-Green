@@ -26,9 +26,12 @@ Nothing else was touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.
 in this round has been observed in Revit**, and no workbook was written or opened. Every
 expected value is written out by hand off the numbers above.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1081 tests at this branch, 0 failed and 0 skipped, 566 of them KPI, 21 added here.** The
-branch sits on `bb97dc3`, after the user's Shared round moved `PaneLabel` and its tests out of
+Pull request 66, merged into main as `ee13e8c`. **The runner executed 1081 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1081 ran at `ee13e8c`, 0 failed and 0
+skipped**, 566 of them KPI, 21 added here. The merge went through the API with the title and
+the message both passed on the call, and the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer. Its tree is the branch's tree, checked. The
+branch sat on `bb97dc3`, after the user's Shared round moved `PaneLabel` and its tests out of
 the KPI folder, which is why the KPI count reads 566 and not the 557 plus 21 the last entry
 would give: the bare base measures 1060 and 545.
 
