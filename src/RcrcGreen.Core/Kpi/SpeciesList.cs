@@ -75,13 +75,17 @@ namespace RcrcGreen.Core.Kpi
             string heightColumn,
             string diameterColumn,
             string whyNoHeightColumn,
-            string whyNoDiameterColumn)
+            string whyNoDiameterColumn,
+            string heightColumnChosen = null,
+            string diameterColumnChosen = null)
         {
             Refusal = refusal ?? string.Empty;
             HeightColumn = heightColumn ?? string.Empty;
             DiameterColumn = diameterColumn ?? string.Empty;
             WhyNoHeightColumn = HeightColumn.Length > 0 ? string.Empty : (whyNoHeightColumn ?? NoColumn(ScheduleColumns.HeightWord));
             WhyNoDiameterColumn = DiameterColumn.Length > 0 ? string.Empty : (whyNoDiameterColumn ?? NoColumn(ScheduleColumns.DiameterWord));
+            HeightColumnChosen = HeightColumn.Length > 0 ? (heightColumnChosen ?? TheOneColumn(ScheduleColumns.HeightWord)) : string.Empty;
+            DiameterColumnChosen = DiameterColumn.Length > 0 ? (diameterColumnChosen ?? TheOneColumn(ScheduleColumns.DiameterWord)) : string.Empty;
             TotalFound = totalFound;
             TotalFirstRow = totalFound ? totalFirstRow : 0;
             TotalLastRow = totalFound ? totalLastRow : 0;
@@ -200,6 +204,15 @@ namespace RcrcGreen.Core.Kpi
 
         public string WhyNoDiameterColumn { get; }
 
+        /// <summary>
+        /// How the height column was chosen: the one column holding the word, or of two the
+        /// one the sheet's own formulas read. Recorded as it is used, so the report can say
+        /// it. Empty when no column was chosen.
+        /// </summary>
+        public string HeightColumnChosen { get; }
+
+        public string DiameterColumnChosen { get; }
+
         public bool WasRead
         {
             get { return Refusal.Length == 0; }
@@ -252,13 +265,16 @@ namespace RcrcGreen.Core.Kpi
             string heightColumn = null,
             string diameterColumn = null,
             string whyNoHeightColumn = null,
-            string whyNoDiameterColumn = null)
+            string whyNoDiameterColumn = null,
+            string heightColumnChosen = null,
+            string diameterColumnChosen = null)
         {
             if (totalFirstRow < 1) throw new ArgumentOutOfRangeException("totalFirstRow");
             if (totalLastRow < totalFirstRow) throw new ArgumentOutOfRangeException("totalLastRow");
 
             return new SpeciesList(named, true, totalFirstRow, totalLastRow, totalCell, string.Empty,
-                heightColumn, diameterColumn, whyNoHeightColumn, whyNoDiameterColumn);
+                heightColumn, diameterColumn, whyNoHeightColumn, whyNoDiameterColumn,
+                heightColumnChosen, diameterColumnChosen);
         }
 
         public static SpeciesList WithNoTotal(
@@ -305,11 +321,15 @@ namespace RcrcGreen.Core.Kpi
 
                     // The height and the diameter columns are found by what the header row calls
                     // them, never by a letter. Measured I and J on MOSQUES, and the letters are
-                    // written nowhere.
+                    // written nowhere. Where two headings hold the word, the sheet's own formulas
+                    // say which: J and K both hold DIAMETER on MOSQUES, and L reads J.
+                    HashSet<string> read = ColumnsFormulasRead(part);
                     string whyNoHeight;
-                    string heightColumn = ColumnHeaded(cells, ScheduleColumns.HeightWord, out whyNoHeight);
+                    string heightChosen;
+                    string heightColumn = ColumnHeaded(cells, read, ScheduleColumns.HeightWord, out whyNoHeight, out heightChosen);
                     string whyNoDiameter;
-                    string diameterColumn = ColumnHeaded(cells, ScheduleColumns.DiameterWord, out whyNoDiameter);
+                    string diameterChosen;
+                    string diameterColumn = ColumnHeaded(cells, read, ScheduleColumns.DiameterWord, out whyNoDiameter, out diameterChosen);
 
                     var named = new List<SpeciesListRow>();
                     foreach (KeyValuePair<int, Dictionary<string, string>> row in cells.OrderBy(one => one.Key))
@@ -325,9 +345,10 @@ namespace RcrcGreen.Core.Kpi
                     int last;
                     string cell;
                     return QuantityTotal(part, out first, out last, out cell)
-                        ? Holding(named, first, last, cell, heightColumn, diameterColumn, whyNoHeight, whyNoDiameter)
+                        ? Holding(named, first, last, cell, heightColumn, diameterColumn, whyNoHeight, whyNoDiameter,
+                            heightChosen, diameterChosen)
                         : new SpeciesList(named, false, 0, 0, null, string.Empty,
-                            heightColumn, diameterColumn, whyNoHeight, whyNoDiameter);
+                            heightColumn, diameterColumn, whyNoHeight, whyNoDiameter, heightChosen, diameterChosen);
                 }
             }
             catch (IOException failed)
@@ -380,12 +401,23 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// The one column of the header row whose heading holds the word. None is said, and so
-        /// is more than one, because a value written under the wrong one of two is a value on
-        /// a row nobody chose.
+        /// The one column of the header row whose heading holds the word. None is said. Where
+        /// more than one does, the one the sheet's own formulas read is taken, because that is
+        /// the column the workbook computes from: MOSQUES names J, Average Mature Canopy
+        /// Diameter (m), and K, Mature Canopy Diameter (m), and L reads J and nothing reads K.
+        /// Where the formulas read none of them, or more than one, nothing is chosen and both
+        /// are named, because a value written under the wrong one of two is a value on a row
+        /// nobody chose. Never a position.
         /// </summary>
-        private static string ColumnHeaded(Dictionary<int, Dictionary<string, string>> cells, string word, out string whyNot)
+        private static string ColumnHeaded(
+            Dictionary<int, Dictionary<string, string>> cells,
+            HashSet<string> readByFormulas,
+            string word,
+            out string whyNot,
+            out string chosenBy)
         {
+            chosenBy = string.Empty;
+
             Dictionary<string, string> header;
             if (!cells.TryGetValue(KpiTemplates.TreeHeaderRow, out header))
             {
@@ -403,15 +435,69 @@ namespace RcrcGreen.Core.Kpi
             if (holding.Count == 1)
             {
                 whyNot = string.Empty;
+                chosenBy = TheOneColumn(word);
                 return holding[0];
             }
 
-            whyNot = holding.Count == 0
-                ? NoColumn(word)
-                : "the sheet's header row, row " + KpiTemplates.TreeHeaderRow + ", names " + holding.Count
-                    + " columns holding " + word + ", " + string.Join(", ", holding.ToArray())
-                    + ", so nothing says which";
+            if (holding.Count == 0)
+            {
+                whyNot = NoColumn(word);
+                return string.Empty;
+            }
+
+            List<string> read = holding.Where(readByFormulas.Contains).ToList();
+            string named = string.Join(", ", holding.ToArray());
+            if (read.Count == 1)
+            {
+                whyNot = string.Empty;
+                chosenBy = "of " + named + " holding " + word + ", the one the sheet's own formulas read";
+                return read[0];
+            }
+
+            string formulasRead = read.Count == 0
+                ? "none of them"
+                : read.Count == holding.Count
+                    ? (holding.Count == 2 ? "both of them" : "all " + holding.Count + " of them")
+                    : read.Count + " of them, " + string.Join(", ", read.ToArray());
+            whyNot = "the sheet's header row, row " + KpiTemplates.TreeHeaderRow + ", names " + holding.Count
+                + " columns holding " + word + ", " + named + ", and its own formulas read " + formulasRead
+                + ", so nothing says which";
             return string.Empty;
+        }
+
+        private static string TheOneColumn(string word)
+        {
+            return "the one column of the header row holding " + word;
+        }
+
+        private static readonly Regex CellReference =
+            new Regex(@"(?<![A-Za-z_])\$?([A-Z]{1,3})\$?[0-9]+(?![0-9(])", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Every column a formula below the header row reads, off the formula text the sheet
+        /// stores. A shared formula carries its text on the master cell alone and the rest
+        /// carry an index, so the master is what is read. A function name followed by digits,
+        /// LOG10, is not a cell, which the bracket after it says.
+        /// </summary>
+        private static HashSet<string> ColumnsFormulasRead(XDocument sheet)
+        {
+            var read = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (XElement cell in Cells(sheet))
+            {
+                CellRef where = CellRef.TryParse((string)cell.Attribute("r"));
+                if (where == null || where.Row <= KpiTemplates.TreeHeaderRow) continue;
+
+                XElement formula = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "f");
+                if (formula == null || string.IsNullOrWhiteSpace(formula.Value)) continue;
+
+                foreach (Match reference in CellReference.Matches(formula.Value))
+                {
+                    read.Add(reference.Groups[1].Value.ToUpperInvariant());
+                }
+            }
+
+            return read;
         }
 
         /// <summary>

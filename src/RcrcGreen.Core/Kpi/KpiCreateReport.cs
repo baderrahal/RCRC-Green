@@ -490,6 +490,12 @@ namespace RcrcGreen.Core.Kpi
                 : run.Plan.Differences;
             Heading(report, "MATCHED SPECIES WHOSE HEIGHT OR DIAMETER IN REVIT DIFFERS FROM THE ROW'S", differences.Count,
                 "named and CHANGED NOTHING, the client's row keeps its own number");
+
+            // How many of the matches disagree, so the size of it is visible without counting.
+            // The 1707 run read 22 of its matches differing, nearly every one.
+            int differing = differences.Select(one => one.SheetName + "!" + one.Row.ToString(CultureInfo.InvariantCulture)).Distinct().Count();
+            Line(report, "  " + differing + " of " + matched.Count + " matched species"
+                + " differ in a height, a diameter or both, and nothing was changed on any row");
             Line(report, "  sheet | row | workbook name | what | Revit prints | the row holds");
             foreach (MeasureDifference one in differences)
             {
@@ -614,6 +620,12 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "    empty rows the total reaches, for a species the list does not hold: "
                 + list.EmptyRows.Count
                 + (list.EmptyRows.Count == 0 ? string.Empty : ", rows " + Rows(list.EmptyRows)));
+            Line(report, "    height column: " + (list.HeightColumn.Length > 0
+                ? list.HeightColumn + ", " + list.HeightColumnChosen
+                : "none, " + list.WhyNoHeightColumn));
+            Line(report, "    diameter column: " + (list.DiameterColumn.Length > 0
+                ? list.DiameterColumn + ", " + list.DiameterColumnChosen
+                : "none, " + list.WhyNoDiameterColumn));
 
             if (list.OutsideTheTotal.Count > 0)
             {

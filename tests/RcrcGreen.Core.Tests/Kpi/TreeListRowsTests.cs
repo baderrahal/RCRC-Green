@@ -318,10 +318,14 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.Contains("  Tree List - Existing\r\n    botanical names in column D: 98 names, rows 4 to 101\r\n"
                     + "    the quantity total: SUM(B4:B92) at B93, reaching rows 4 to 92\r\n"
                     + "    empty rows the total reaches, for a species the list does not hold: 0\r\n"
+                    + "    height column: none, the sheet's header row, row 3, names no column holding HEIGHT\r\n"
+                    + "    diameter column: none, the sheet's header row, row 3, names no column holding DIAMETER\r\n"
                     + "    NAMES THE TOTAL DOES NOT REACH: 9, rows 93 to 101. A count written there would never reach the total, so a species matching\r\n", report);
                 Assert.Contains("  Tree List - Proposed\r\n    botanical names in column D: 83 names, rows 4 to 86\r\n"
                     + "    the quantity total: SUM(B4:B92) at B93, reaching rows 4 to 92\r\n"
-                    + "    empty rows the total reaches, for a species the list does not hold: 6, rows 87 to 92\r\n", report);
+                    + "    empty rows the total reaches, for a species the list does not hold: 6, rows 87 to 92\r\n"
+                    + "    height column: none, the sheet's header row, row 3, names no column holding HEIGHT\r\n"
+                    + "    diameter column: none, the sheet's header row, row 3, names no column holding DIAMETER\r\n", report);
 
                 Assert.Contains("== SPECIES THE LIST HOLDS ON A ROW ITS TOTAL DOES NOT REACH (1) ==", report);
                 Assert.Contains("  Tree List - Existing | 99 | Prosopis juliflora | PROSOPIS JULIFLORA | Existing | 3 | DM-11 3 | "

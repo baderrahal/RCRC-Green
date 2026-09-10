@@ -274,6 +274,26 @@ does not read is not written and is named: UNKNOWN prints a dash and a 0. Rows o
 one plot that disagree write nothing into that column, every value is named, and the report
 says the row will not compute its canopy. Nothing is averaged and nothing is taken first.
 
+**Two headings can hold the word, and the sheet's own formulas say which.** Measured on the
+1707 run: the tree list header row holds I Mature Height (m), J Average Mature Canopy Diameter
+(m) and K Mature Canopy Diameter (m). Both J and K hold DIAMETER, the reader found two, refused
+to choose and wrote nothing into J, L84 returned a space off the blank, M84 went #VALUE!, and
+the canopy guard deleted the output. Correct at every step, and the cause was one column choice.
+J is the column the workbook computes from: L reads J and nothing reads K. So where more than
+one column holds the word, `SpeciesList` reads every formula below the header row off the
+sheet part, collects the columns those formulas reference, and takes the one candidate the
+formulas read. Where that still leaves more than one, or none, nothing is written and both are
+named with what the formulas read, and its own formulas read none of them, or both of them.
+Never a position. How each column was chosen is recorded on the list, the one column of the
+header row holding the word, or of J, K holding DIAMETER, the one the sheet's own formulas
+read, and the report prints it beside each tree list. The check: PHOENIX DACTYLIFERA writes 18
+into I and 15 into J, and UNKNOWN writes neither and still refuses through the guard.
+
+**The matches that disagree are counted.** The 1707 run read 22 matched species whose height
+or diameter in Revit differs from the row the workbook holds, nearly every match. Both numbers
+stay named and nothing is changed, and one line under that heading says how many of the
+matches differ in a height, a diameter or both, so the size of it is visible without counting.
+
 **Family, genus, native and every code column stay empty.** Revit does not print them, so the
 KPIs that need them still cannot see a species written this way. That is in `steps/log-kpi.md`
 as an open question for the team.

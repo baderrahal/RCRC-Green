@@ -277,7 +277,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             string diameterHeading = "Average Mature Canopy Diameter (m)",
             string heightColumn = "I",
             string diameterColumn = "J",
-            bool withSheetCalcPr = false)
+            bool withSheetCalcPr = false,
+            string secondDiameterHeading = null,
+            string secondDiameterColumn = "K",
+            string canopyReads = null,
+            string alsoReads = null)
         {
             string path = Path.Combine(folder, fileName);
 
@@ -350,15 +354,26 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + (withSheetCalcPr ? "<sheetCalcPr fullCalcOnLoad=\"1\"/>" : string.Empty)
                     + "</worksheet>");
 
-                Add(zip, "xl/worksheets/sheet2.xml", TreeSheetComputing(existing, heightHeading, diameterHeading, heightColumn, diameterColumn));
-                Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn));
+                Add(zip, "xl/worksheets/sheet2.xml", TreeSheetComputing(existing, heightHeading, diameterHeading, heightColumn, diameterColumn,
+                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads));
+                Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn,
+                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads));
             }
 
             return path;
         }
 
+        /// <summary>
+        /// A second heading holding DIAMETER, the shape of the MOSQUES sheet where J is Average
+        /// Mature Canopy Diameter (m) and K is Mature Canopy Diameter (m), goes into
+        /// <paramref name="secondDiameterColumn"/> when a heading is given. The canopy formula
+        /// in L reads <paramref name="canopyReads"/>, which is the diameter column unless a test
+        /// points it elsewhere, and <paramref name="alsoReads"/> adds a formula column N reading
+        /// that column, so a sheet whose formulas read both candidates can be built.
+        /// </summary>
         private static string TreeSheetComputing(
-            TreeRow[] named, string heightHeading, string diameterHeading, string heightColumn, string diameterColumn)
+            TreeRow[] named, string heightHeading, string diameterHeading, string heightColumn, string diameterColumn,
+            string secondDiameterHeading = null, string secondDiameterColumn = "K", string canopyReads = null, string alsoReads = null)
         {
             var byRow = new Dictionary<int, TreeRow>();
             foreach (TreeRow one in named ?? new TreeRow[0]) byRow[one.Row] = one;
@@ -371,9 +386,13 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "<c r=\"D3\" t=\"inlineStr\"><is><t>Botanical Name</t></is></c>"
                 + "<c r=\"" + heightColumn + "3\" t=\"inlineStr\"><is><t>" + heightHeading + "</t></is></c>"
                 + "<c r=\"" + diameterColumn + "3\" t=\"inlineStr\"><is><t>" + diameterHeading + "</t></is></c>"
+                + (secondDiameterHeading == null ? string.Empty
+                    : "<c r=\"" + secondDiameterColumn + "3\" t=\"inlineStr\"><is><t>" + secondDiameterHeading + "</t></is></c>")
                 + "<c r=\"L3\" t=\"inlineStr\"><is><t>Canopy per tree</t></is></c>"
                 + "<c r=\"M3\" t=\"inlineStr\"><is><t>Canopy area</t></is></c>"
+                + (alsoReads == null ? string.Empty : "<c r=\"N3\" t=\"inlineStr\"><is><t>Spread check</t></is></c>")
                 + "</row>");
+            string reads = canopyReads ?? diameterColumn;
 
             for (int row = 4; row <= 9; row++)
             {
@@ -389,13 +408,17 @@ namespace RcrcGreen.Core.Tests.Kpi
                 // Shared from row 4, the way Excel stores one formula filled down a column: the
                 // master carries the text and the ref, the rest carry the index alone.
                 string canopy = row == 4
-                    ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L9\" si=\"0\">IF(ISBLANK(" + diameterColumn + "4),\" \",ROUND(PI()*(" + diameterColumn + "4/2)^2,0))</f><v> </v></c>"
+                    ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L9\" si=\"0\">IF(ISBLANK(" + reads + "4),\" \",ROUND(PI()*(" + reads + "4/2)^2,0))</f><v> </v></c>"
                     : "<c r=\"L" + row + "\" t=\"str\"><f t=\"shared\" si=\"0\"/><v> </v></c>";
                 string area = row == 4
                     ? "<c r=\"M4\" t=\"str\"><f t=\"shared\" ref=\"M4:M9\" si=\"1\">IF(ISBLANK(B4),\" \",L4*B4)</f><v> </v></c>"
                     : "<c r=\"M" + row + "\" t=\"str\"><f t=\"shared\" si=\"1\"/><v> </v></c>";
+                string spread = alsoReads == null ? string.Empty
+                    : row == 4
+                        ? "<c r=\"N4\" t=\"str\"><f t=\"shared\" ref=\"N4:N9\" si=\"2\">IF(ISBLANK(" + alsoReads + "4),\" \"," + alsoReads + "4)</f><v> </v></c>"
+                        : "<c r=\"N" + row + "\" t=\"str\"><f t=\"shared\" si=\"2\"/><v> </v></c>";
 
-                xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + "</row>");
+                xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + spread + "</row>");
             }
 
             xml.Append("<row r=\"10\"><c r=\"B10\"><f>SUM(B4:B9)</f><v>0</v></c><c r=\"M10\"><f>SUM(M4:M9)</f><v>0</v></c></row>");

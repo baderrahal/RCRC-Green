@@ -1,6 +1,24 @@
 # ai-max state, KPI
 
-Phase: 9, ship. After the forty ninth pass, one fixture correction: ST-05's Existing group is
+Phase: 9, ship. Fiftieth pass, one word too loose, measured on the 1707 run. **The other 43
+audit findings stay open**, not renumbered, not reordered, not annotated.
+
+**Where two headings hold DIAMETER, the column the sheet's own formulas read is taken.** J
+Average Mature Canopy Diameter (m) and K Mature Canopy Diameter (m) both hold the word, the
+reader found two and wrote nothing into J, and the canopy guard deleted the output. L reads J
+and nothing reads K, so `SpeciesList` reads the formulas below the header row off the file and
+takes the one candidate they read, worked out from the file and never from a letter. Still more
+than one, or none, and nothing is written with both named and what the formulas read. How each
+column was chosen is recorded and printed beside the tree list. PHOENIX DACTYLIFERA writes 18
+into I and 15 into J, UNKNOWN writes neither and still refuses through the guard. **The report
+counts the matches that disagree**, 22 of them on the 1707 run, and changes nothing.
+
+Three break watches went red on 3, 2 and 2 tests and were restored byte for byte. **Locally
+1103 tests at this branch, 0 failed and 0 skipped, 588 of them KPI, 8 added.** The pull
+request, the merge hash and the runner's count go in the record the merge adds here. **Nothing
+in this round has been observed in Revit.**
+
+Before that, after the forty ninth pass, one fixture correction: ST-05's Existing group is
 the thirteen species measured off the schedule on screen, adding to 369, in place of an
 assumed split of two. CASSIA GLAUCA under Existing at 1 and Street Design at 62 covers a species
 in a named group and a by-decision group at once. No code changed. Pull request 68 is merged

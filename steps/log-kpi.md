@@ -4,6 +4,79 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, fiftieth pass. One word too loose: two headings hold DIAMETER, and the formulas say which
+
+One column choice, measured on the 1707 run, and one line added to the report. **The other 43
+audit findings stay open**, not renumbered, not reordered, not annotated. Nothing else was
+touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`. **Nothing in this round
+has been observed in Revit**, and no workbook was opened in Excel.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1103 tests at this branch, 0 failed and 0 skipped, 588 of them KPI, 8 added here.**
+
+### What happened on the 1707 run
+
+The run wrote the output, checked it, found 8 formulas that would read an error and deleted
+it. Correct at every step. The report said: not written: the sheet's header row, row 3, names
+2 columns holding DIAMETER, J, K, so nothing says which. The tree list header row holds I
+Mature Height (m), J Average Mature Canopy Diameter (m) and K Mature Canopy Diameter (m). Both
+J and K hold DIAMETER, so the reader found two, refused to choose and wrote nothing into J.
+L84 is IF(ISBLANK(J84), " ", ROUND(PI()*(J84/2)^2, 0)), so it returned a space, M84 did
+arithmetic on the space and went #VALUE!, and the canopy guard deleted the output.
+
+### The fix: prefer the column the workbook's own formulas read
+
+J is the column the workbook computes from. Measured: L reads J and nothing reads K.
+`SpeciesList.In` reads every formula below the header row off the sheet part, the master cell
+of a shared formula carrying the text, collects the columns those formulas reference off the
+formula text with a cell reference pattern that leaves a function name such as LOG10 alone, and
+hands the set to `ColumnHeaded`. One heading holding the word is taken as before. More than
+one, and the one candidate the formulas read is taken. Where that still leaves more than one,
+or none, nothing is written and both are named, with what the formulas read added to the
+reason: names 2 columns holding DIAMETER, J, K, and its own formulas read none of them, so
+nothing says which. Never a position. It is worked out from the file and from no letter.
+
+How each column was chosen is recorded as it is used, `HeightColumnChosen` and
+`DiameterColumnChosen` on the list, the one column of the header row holding HEIGHT, or of J, K
+holding DIAMETER, the one the sheet's own formulas read, and the report prints both beside each
+tree list under THE WORKBOOK'S OWN TREE LISTS, or none with the reason.
+
+**The check asked for.** On the two column sheet PHOENIX DACTYLIFERA writes 18 into I and 15
+into J, on the fixture's row 5 where the real sheet's is row 84, and UNKNOWN writes neither,
+because DM-25 row 19 prints nothing for its height and 0 for its diameter. UNKNOWN's blank J
+still refuses the output through the canopy guard, L6 named as reading a blank J6, and the row
+Phoenix landed on computes. The two column header, a one column header, a header naming none,
+the formulas reading neither and the formulas reading both are each a test, every expected
+value written out by hand.
+
+### Said in the report and not fixed
+
+**22 matched species have a height or a diameter in Revit that differs from the row the
+workbook already holds, nearly every match.** Both numbers stay named and nothing is changed,
+and one line under that heading now says how many of the matches differ in a height, a
+diameter or both, so the size of it is visible without counting: 2 of 3 matched species on the
+fixture, 0 of 0 with no match. Which number is right is still the question for the team the
+forty seventh pass raised.
+
+### Break watches
+
+Three, each restored byte for byte and checked with cmp, the suite rerun green at 1103.
+
+- the tie break dropped, so two columns refuse as before: **3 red**, the two column test, the
+  Phoenix and UNKNOWN check and the report line in `DiameterColumnTests`
+- the first column taken when the formulas do not decide, which is a position: **2 red**, the
+  formulas reading neither and the formulas reading both
+- the count line dropped from the report: **2 red**, both of `MeasureDifferenceCountTests`
+
+### Existing tests changed
+
+The tree lists report test in `TreeListRowsTests` gained the two column lines, none with the
+reason, because its fixture's header names only the botanical column. The `Computing` fixture
+takes a second diameter heading, the column the canopy formula reads and a second formula
+column, so the three shapes can be built. No expected value moved.
+
+---
+
 ## 2026-09-10, after the forty ninth pass. ST-05's Existing group is the thirteen measured species
 
 One fixture correction and nothing else. The forty ninth pass built ST-05's Existing group
