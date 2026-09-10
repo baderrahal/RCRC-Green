@@ -1,8 +1,8 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Fortieth pass, two guards off the audit and nothing else. On branch
-`claude/inspiring-allen-xs113f`, 927 tests locally, 0 failed and 0 skipped, 904 before and
-23 added.
+Phase: 9, ship. Fortieth pass, two guards off the audit and nothing else. Pull request 52 is
+merged into main as `1430f22`, 927 tests on the runner against its merged head and 927 locally,
+0 failed and 0 skipped on each, 904 before and 23 added.
 
 **Audit findings 1 and 8 are fixed and the other 27 in steps/audit-kpi.md are untouched**, not
 renumbered, not reordered, not annotated.

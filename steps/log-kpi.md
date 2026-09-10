@@ -6,9 +6,14 @@ Newest entry first.
 
 ## 2026-09-10, fortieth pass. Two guards off the audit, and nothing else
 
-Branch `claude/inspiring-allen-xs113f`. **927 tests locally, 0 failed and 0 skipped**, run after
+Pull request 52, merged into main as `1430f22`. **The runner executed 927 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 927 ran, 0 failed and 0 skipped**, after
 the last file was written and after both break watches were restored byte for byte. 904 before,
 23 added.
+
+The merge went through the API with the title and the message both passed on the call, which is
+the remedy `territory.md` measured. **The merge commit came back off main byte for byte, with no
+co-author credit line and no generated-by footer.**
 
 **Audit findings 1 and 8 are fixed. The other 27 in `steps/audit-kpi.md` are untouched**, and
 this round did not renumber, reorder or annotate any of them. The Drawing Sheet was not opened.
