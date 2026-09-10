@@ -1,6 +1,14 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Forty ninth pass, two things on top of the forty eighth, both Bader's
+Phase: 9, ship. After the forty ninth pass, one fixture correction: ST-05's Existing group is
+the thirteen species measured off the schedule on screen, adding to 369, in place of an
+assumed split of two. CASSIA GLAUCA under Existing at 1 and Street Design at 62 covers a species
+in a named group and a by-decision group at once. No code changed. **Locally 1095 tests at
+this branch, 0 failed and 0 skipped, 580 of them KPI, none added.** The pull request, the merge
+hash and the runner's count go in the record the merge adds here. **Nothing in this round has
+been observed in Revit.**
+
+Before that, the forty ninth pass, two things on top of the forty eighth, both Bader's
 decisions. **The other 43 audit findings stay open**, not renumbered, not reordered, not
 annotated.
 

@@ -4,6 +4,31 @@ Newest entry first.
 
 ---
 
+## 2026-09-10, after the forty ninth pass. ST-05's Existing group is the thirteen measured species
+
+One fixture correction and nothing else. The forty ninth pass built ST-05's Existing group
+from two names and an assumed split of 300 and 69, because the note gave the subtotal alone.
+The thirteen species are measured off the schedule on screen now and the fixture holds them:
+ACACIA / VACHELLIA FARNESIANA 25, AZADIRACHTA INDICA 7, CASSIA GLAUCA 1, CONOCARPUS ERECTUS 76,
+CONOCARPUS LANCIFOLIUS 129, FICUS BENJAMINA 13, HIBISCUS TILIACEUS 4, MORINGA OLEIFERA 3,
+PHOENIX DACTYLIFERA 18, PROSOPIS JULIFLORA 16, UNKNOWN 20, WASHINGTONIA ROBUSTA 48 and
+ZIZIPHUS SPINA-CHRISTI 9. They add to 369, which is the subtotal the schedule prints, and 369
+plus 70 is the 439 of the TOTAL row. **Every number in that fixture is measured rather than
+assumed.**
+
+CASSIA GLAUCA sits under Existing at 1 and under Street Design at 62, so the fixture now covers
+one species in a named group and a by-decision group at once: two merged rows, 1 on Tree List -
+Existing and 62 on Tree List - Proposed, two groups and not one species printed twice under
+one, so the same group refusal does not trip. The tests say so in those numbers, and the row
+numbers moved with the rows: sixteen species rows, the Existing subtotal on row 17, Street
+Design on row 21 with its subtotal on 24, TOTAL on row 25. No code changed, so there is no
+watch to break. **Nothing in this round has been observed in Revit.**
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1095 tests at this branch, 0 failed and 0 skipped, 580 of them KPI, none added.**
+
+---
+
 ## 2026-09-10, forty ninth pass. Street Design counts as Proposed on STREETS, and the note goes on the pane
 
 Two things on top of the forty eighth pass, both Bader's decisions. **The other 43 audit

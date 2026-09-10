@@ -12,12 +12,13 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// one left the group out everywhere, streets included, and on a street plot that group
     /// is the plot's own work.
     ///
-    /// ST-05, a street plot, measured off its softscape schedule on screen: Existing 369,
-    /// Proposed 2 which is ALBIZIA LEBBECK 2, Street Design 68 which is ALBIZIA LEBBECK 6 and
-    /// CASSIA GLAUCA 62, TOTAL 439. Its proposed trees are 2 plus 68, 70, its existing are
-    /// 369, and 369 plus 70 is 439, the TOTAL the schedule prints. That is the test. The
-    /// species under Existing and their split of the 369 were not in the note, so the two
-    /// names below are ones earlier runs measured on this project and the split is 300 and 69.
+    /// ST-05, a street plot, measured off its softscape schedule on screen: Existing 369 over
+    /// thirteen species, Proposed 2 which is ALBIZIA LEBBECK 2, Street Design 68 which is
+    /// ALBIZIA LEBBECK 6 and CASSIA GLAUCA 62, TOTAL 439. Its proposed trees are 2 plus 68,
+    /// 70, its existing are 369, and 369 plus 70 is 439, the TOTAL the schedule prints. That
+    /// is the test. Every species and count below is measured, none assumed. CASSIA GLAUCA
+    /// sits under Existing at 1 and under Street Design at 62, so one species in a named
+    /// group and a by-decision group at once is covered too.
     ///
     /// It is keyed on the TEMPLATE and never on the plot prefix: the same schedule read for
     /// the MOSQUES template leaves the group out, and a mosque plot read for STREETS counts it.
@@ -51,8 +52,19 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Headings,
                 Structure("TREES"),
                 Structure("Existing"),
-                Species("PHOENIX DACTYLIFERA", 300),
-                Species("UNKNOWN", 69),
+                Species("ACACIA / VACHELLIA FARNESIANA", 25),
+                Species("AZADIRACHTA INDICA", 7),
+                Species("CASSIA GLAUCA", 1),
+                Species("CONOCARPUS ERECTUS", 76),
+                Species("CONOCARPUS LANCIFOLIUS", 129),
+                Species("FICUS BENJAMINA", 13),
+                Species("HIBISCUS TILIACEUS", 4),
+                Species("MORINGA OLEIFERA", 3),
+                Species("PHOENIX DACTYLIFERA", 18),
+                Species("PROSOPIS JULIFLORA", 16),
+                Species("UNKNOWN", 20),
+                Species("WASHINGTONIA ROBUSTA", 48),
+                Species("ZIZIPHUS SPINA-CHRISTI", 9),
                 Subtotal(369),
                 Structure("Proposed"),
                 Species("ALBIZIA LEBBECK", 2),
@@ -150,8 +162,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// ST-05 on STREETS: three groups, all taken, five species rows adding to 439, nothing
-        /// left out, TOTAL 439 at row 14.
+        /// ST-05 on STREETS: three groups, all taken, sixteen species rows adding to 439,
+        /// nothing left out, TOTAL 439 at row 25. Rows by hand: thirteen existing species on
+        /// rows 4 to 16, their subtotal on 17, Proposed on 18 with its row on 19, Street Design
+        /// on 21 with its rows on 22 and 23 and its subtotal on 24.
         /// </summary>
         [Fact]
         public void St05ReadsEveryGroupAndNothingIsLeftOut()
@@ -159,17 +173,24 @@ namespace RcrcGreen.Core.Tests.Kpi
             SoftscapeReading reading = SoftscapeRows.Read(Softscape("ST-05"), Streets, "ST-05");
 
             Assert.True(reading.WasRead, string.Join(" ", reading.Refusals));
-            Assert.Equal(5, reading.Species.Count);
-            Assert.Equal(new[] { 4, 5, 8, 11, 12 }, reading.Species.Select(one => one.RowNumber));
+            Assert.Equal(16, reading.Species.Count);
+            Assert.Equal(
+                new[] { 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 22, 23 },
+                reading.Species.Select(one => one.RowNumber));
             Assert.Equal(439, reading.SpeciesSum);
             Assert.Empty(reading.LeftOut);
             Assert.Equal(439, reading.Total);
-            Assert.Equal(14, reading.TotalRow);
+            Assert.Equal(25, reading.TotalRow);
 
             Assert.Equal(3, reading.Groups.Count);
             Assert.All(reading.Groups, one => Assert.True(one.Counted));
+            Assert.Equal("Existing", reading.Groups[0].Name);
+            Assert.Equal(13, reading.Groups[0].Species.Count);
+            Assert.Equal(369, reading.Groups[0].SpeciesSum);
+            Assert.Equal(369, reading.Groups[0].Subtotal);
+            Assert.Equal(17, reading.Groups[0].SubtotalRow);
             Assert.Equal("Street Design", reading.Groups[2].Name);
-            Assert.Equal(10, reading.Groups[2].RowNumber);
+            Assert.Equal(21, reading.Groups[2].RowNumber);
             Assert.Equal(68, reading.Groups[2].SpeciesSum);
             Assert.Equal(68, reading.Groups[2].Subtotal);
             Assert.Equal("Tree List - Proposed takes it on STREETS by decision, as that plot's own work", reading.Groups[2].Why);
@@ -177,7 +198,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// 369 existing, 70 proposed, 439 in all. ALBIZIA LEBBECK is one merged row of 8, off
-        /// two rows on one plot, going to Tree List - Proposed, and it says both groups.
+        /// two rows on one plot, going to Tree List - Proposed, and it says both groups. CASSIA
+        /// GLAUCA is two merged rows, 1 on Tree List - Existing and 62 on Tree List - Proposed,
+        /// because Existing and Street Design go to different sheets.
         /// </summary>
         [Fact]
         public void St05ProposedIsSeventyExistingIsThreeSixtyNineAndTheyReachTheTotal()
@@ -196,10 +219,14 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("Proposed and Street Design", albizia.GroupName);
             Assert.Equal("Tree List - Proposed", albizia.SheetName);
 
-            MergedSpecies cassia = Assert.Single(merged, one => one.BotanicalName == "CASSIA GLAUCA");
-            Assert.Equal(62, cassia.Quantity);
-            Assert.Equal("Street Design", cassia.GroupName);
-            Assert.Equal("Tree List - Proposed", cassia.SheetName);
+            List<MergedSpecies> cassia = merged.Where(one => one.BotanicalName == "CASSIA GLAUCA").ToList();
+            Assert.Equal(2, cassia.Count);
+            MergedSpecies cassiaExisting = Assert.Single(cassia, one => one.SheetName == "Tree List - Existing");
+            Assert.Equal(1, cassiaExisting.Quantity);
+            Assert.Equal("Existing", cassiaExisting.GroupName);
+            MergedSpecies cassiaProposed = Assert.Single(cassia, one => one.SheetName == "Tree List - Proposed");
+            Assert.Equal(62, cassiaProposed.Quantity);
+            Assert.Equal("Street Design", cassiaProposed.GroupName);
         }
 
         /// <summary>
@@ -212,6 +239,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PlotReading reading = Reading("ST-05", Streets);
 
+            // ALBIZIA LEBBECK under Proposed and Street Design, CASSIA GLAUCA under Existing and
+            // Street Design: two groups each, and neither is a species printed twice under one.
+            Assert.Equal(2, reading.Species.Count(one => one.BotanicalName == "CASSIA GLAUCA"));
             Assert.Empty(reading.SpeciesPrintedOnMoreThanOneRow);
             Assert.False(reading.HoldsAGroupLeftOut);
 
@@ -239,12 +269,14 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("Tree List - Proposed", albizia.SheetName);
             Assert.Equal(8, albizia.Species.Quantity);
 
-            SpeciesMatch cassia = Assert.Single(matches, one => one.Species.BotanicalName == "CASSIA GLAUCA");
+            SpeciesMatch cassia = Assert.Single(matches,
+                one => one.Species.BotanicalName == "CASSIA GLAUCA" && one.SheetName == "Tree List - Proposed");
             Assert.True(cassia.Matched, cassia.Why);
-            Assert.Equal("Tree List - Proposed", cassia.SheetName);
+            Assert.Equal(62, cassia.Species.Quantity);
 
             SpeciesMatch phoenix = Assert.Single(matches, one => one.Species.BotanicalName == "PHOENIX DACTYLIFERA");
             Assert.Equal("Tree List - Existing", phoenix.SheetName);
+            Assert.Equal(18, phoenix.Species.Quantity);
         }
 
         /// <summary>
@@ -258,6 +290,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             SoftscapeReading streetPlotOnMosques = SoftscapeRows.Read(Softscape("ST-05"), mosques, "ST-05");
             Assert.Equal(371, streetPlotOnMosques.SpeciesSum);
+            Assert.Equal(14, streetPlotOnMosques.Species.Count);
             Assert.Equal(68, streetPlotOnMosques.LeftOut.Sum(one => one.Quantity));
             Assert.False(streetPlotOnMosques.Groups[2].Counted);
             Assert.Equal(CountedGroups.LeftOut, streetPlotOnMosques.Groups[2].Why);
@@ -300,7 +333,11 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             string streets = Report(KpiTemplates.Streets, Reading("ST-05", Streets));
             Assert.Contains(
-                "        row 10 Street Design: 2 species rows adding to 68, subtotal row 13 prints 68, TAKEN, "
+                "        row 3 Existing: 13 species rows adding to 369, subtotal row 17 prints 369, TAKEN, "
+                + "Tree List - Existing is named for it\r\n"
+                + "        row 18 Proposed: 1 species row adding to 2, subtotal row 20 prints 2, TAKEN, "
+                + "Tree List - Proposed is named for it\r\n"
+                + "        row 21 Street Design: 2 species rows adding to 68, subtotal row 24 prints 68, TAKEN, "
                 + "Tree List - Proposed takes it on STREETS by decision, as that plot's own work\r\n",
                 streets);
             Assert.Contains(
@@ -310,7 +347,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             string mosques = Report(KpiTemplates.Mosques, Reading("ST-05", CountedGroups.Of(KpiTemplates.Mosques)));
             Assert.Contains(
-                "        row 10 Street Design: 2 species rows adding to 68, subtotal row 13 prints 68, LEFT OUT, "
+                "        row 21 Street Design: 2 species rows adding to 68, subtotal row 24 prints 68, LEFT OUT, "
                 + "no tree list sheet is named for it, so it is out of scope\r\n",
                 mosques);
             Assert.Contains("  schedules holding a group no tree list sheet is named for   2, on ST-05.", mosques);
