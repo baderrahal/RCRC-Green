@@ -1,6 +1,19 @@
 # ai-max state
 
-Phase: 9, ship. Thirty seventh pass, four things off the first real run. Pull request 46 is
+Phase: 9, ship. Thirty eighth pass, an audit. It built nothing and fixed nothing.
+
+Nineteen findings are in steps/audit.md, ranked by cost: one BLOCKS, four WRONG, six COSTLY,
+eight TIDY. The BLOCKS is a filter dropped silently at schedule capture. The WRONG four: the
+plot list omits plots existing only as a scope box, a stale mark can leave an orphan view
+behind a refusal, two Parameter.Set returns are ignored where a third caller checks the same
+call, and the panel and the handler use two rules for which schedules can be made. Three
+deliberate breaks proved DrawingSheetSnapshot carries no test, the suite green through all
+three, everything restored. All three hooks fired and blocked when probed. The audit ran at
+`e343fe1`, where the suite reads 619, and every cited file is unchanged on the main it merged
+into. This file is in the commit only because the commit hook requires it in every commit,
+which the audit's touch-nothing-else rule had to give way to.
+
+Before that, the thirty seventh pass, four things off the first real run. Pull request 46 is
 merged into main as `6f2e521`, 904 tests on the runner against its merged head and 904 locally,
 0 failed and 0 skipped on each.
 
