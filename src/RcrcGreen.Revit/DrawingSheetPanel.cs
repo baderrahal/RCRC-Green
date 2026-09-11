@@ -55,6 +55,12 @@ namespace RcrcGreen.Revit
         private readonly TextBox _newName = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
 
 
+        // The two settings files, read when the panel is built and again after every save.
+        // This is a copy, and it is the one copy the panel is allowed: the panel is what writes
+        // the user's file, so nothing else moves it while the pane is open.
+        private TitleBlockSettings _titleBlocks = TitleBlockSettings.Nothing;
+        private IReadOnlyList<string> _settingsNotRead = new List<string>();
+
         private readonly StackPanel _steps = new StackPanel();
         private readonly TextBlock _modelName = new TextBlock();
         private readonly TextBlock _readAt = new TextBlock();
@@ -128,6 +134,8 @@ namespace RcrcGreen.Revit
             _from.SelectionChanged += (sender, e) => RangeChosen();
             _to.SelectionChanged += (sender, e) => RangeChosen();
             _search.TextChanged += (sender, e) => Redraw();
+
+            ReadTheTitleBlockSettings();
 
             Content = Layout();
             PaintFromTheTheme();
@@ -892,6 +900,14 @@ namespace RcrcGreen.Revit
                     + "gets the whole set."));
             }
 
+            // A settings line that could not be read is said once, at the top, rather than
+            // against every sheet. Dropping it would leave a pairing that silently never
+            // arrives, which reads exactly like a pairing nobody ever wrote.
+            foreach (string line in _settingsNotRead)
+            {
+                block.Children.Add(Faint("A title block setting could not be read: " + line));
+            }
+
             IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
 
             // Read once here and shared by every box below. Each name box and each number box
@@ -957,12 +973,19 @@ namespace RcrcGreen.Revit
             {
                 if (_filling) return;
                 sheet.TitleBlock = type.SelectedItem as TitleBlockType;
-                RefreshHeaders();
+                RememberTheTitleBlock(sheet);
+                Redraw();
             };
             // Title block, in those words, everywhere. It was captioned Type here, called a
             // sheet type in the shut step and the refusal, and sat over a list of view type
             // tick boxes, three words for one control next to a fourth thing called a type.
             block.Children.Add(Labelled("Title block", type));
+
+            // Where this one came from: the user's own settings, the shipped defaults, or
+            // neither. A value that filled itself in is a different thing to the person
+            // deciding whether to trust it than one they picked.
+            block.Children.Add(Faint(
+                _titleBlocks.WhereItCameFrom(sheet.Built(_columns.Shown).Views)));
 
             var perSheet = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
             perSheet.Children.Add(new TextBlock
@@ -1068,7 +1091,76 @@ namespace RcrcGreen.Revit
             if (_filling) return;
 
             sheet.Carry(which, carried);
+
+            // Eleven title blocks were picked by hand on the first real run and the same eleven
+            // would have been picked again for every plot. A sheet with none yet takes the one
+            // the settings name for the view just ticked. One already picked is left alone,
+            // because it was a choice and this is only an offer.
+            if (carried && sheet.TitleBlock == null)
+            {
+                TitleBlockPairing pairing = _titleBlocks.For(which);
+                TitleBlockType held = pairing == null ? null : TitleBlockNamed(pairing);
+
+                if (held != null) sheet.TitleBlock = held;
+                else if (pairing != null) Say(TitleBlockSettings.WhyUnset(pairing));
+            }
+
             Redraw();
+        }
+
+        /// <summary>
+        /// The title block type this model holds under the name the settings give, or null when
+        /// it holds none. The settings are shared across projects, so that is ordinary.
+        /// </summary>
+        private TitleBlockType TitleBlockNamed(TitleBlockPairing pairing)
+        {
+            foreach (TitleBlockType one in _model.TitleBlockTypes)
+            {
+                if (string.Equals(one.FamilyName, pairing.FamilyName, StringComparison.Ordinal)
+                    && string.Equals(one.TypeName, pairing.TypeName, StringComparison.Ordinal))
+                {
+                    return one;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Remembers the title block against every view type ticked on that sheet, because those
+        /// are the views the user has just said it is for. A sheet with nothing ticked pairs it
+        /// with nothing, since there is no view type to remember it against.
+        /// </summary>
+        private void RememberTheTitleBlock(SheetBeingDescribed sheet)
+        {
+            if (sheet.TitleBlock == null) return;
+
+            TitleBlockSettings settings = _titleBlocks;
+            foreach (ViewType which in sheet.Built(_columns.Shown).Views)
+            {
+                settings = settings.With(
+                    which, sheet.TitleBlock.FamilyName, sheet.TitleBlock.TypeName);
+            }
+
+            if (ReferenceEquals(settings, _titleBlocks)) return;
+
+            _titleBlocks = settings;
+
+            string refused = TitleBlockSettingsStore.Save(settings);
+            if (refused.Length > 0) Say(refused);
+        }
+
+        /// <summary>
+        /// The user's own file first, then the defaults shipped beside the add-in. Every line
+        /// neither could read is kept, because a settings file one line short reads exactly like
+        /// one that never had the line.
+        /// </summary>
+        private void ReadTheTitleBlockSettings()
+        {
+            StoredSettings stored = TitleBlockSettingsStore.Read();
+
+            _titleBlocks = stored.Settings;
+            _settingsNotRead = stored.NotRead;
         }
 
         /// <summary>
@@ -1447,7 +1539,7 @@ namespace RcrcGreen.Revit
         ///
         /// A count on its own is not enough. On the real model F was 1, one view carrying a
         /// scope box that is not its plot's, and finding out which view that was meant opening
-        /// a text file on the Desktop.
+        /// a report file and reading down it.
         ///
         /// B is left as a number. It is 102 schedules that cannot hold a scope box, which is
         /// nothing anyone acts on.

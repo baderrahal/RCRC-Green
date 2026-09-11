@@ -121,25 +121,133 @@ every sheet line of the report, the same way `SectionDepth` and `AnnotationCropC
 number with no source would have been the invention the brief refused, and this one has a
 source and says so.
 
+### Fix 5, a view reads Custom against a scaled template
+
+**The report and the model agree about the number, and the report was short of a word.**
+DM-11-(200) General Arrangement Layout reads View Scale Custom with a Scale Value of 250,
+under the template (200) General Arrangement Layout SC - Scale 250, and the report recorded
+1:250. Checked against the API documentation before anything moved, the way the sheet scale
+question was: the View.Scale page says the property is the ratio of true model size to paper
+size and that setting a scale which does not correspond to a predefined one applies a custom
+scale. So 250 is the number in both places, and Custom is the label Revit puts on a value
+its own list of scales does not carry. The template is named for 250 and 250 is what it
+drives.
+
+Nothing in the tool sets a scale, checked by grep: the only two reads of View.Scale in the
+Revit project are the scan's and the run's, and both are reads.
+
+So there was nothing to correct in the model and one thing to correct in the report, which
+now reads 1:250, shown as Custom when the two differ and 1:250 when they do not. A report
+and a model that differ by a word are the same class of fault as a report that says created
+and not created, and the word was the only gap.
+
+### Fix 6, the viewport type nobody chose
+
+Every viewport the run placed came out PRX_Title With Line. Where it comes from is
+Viewport.Create, which takes the document's own default viewport type: no brief, no rule
+here and nothing the team said ever picked it, and the report did not even record which type
+a placement got.
+
+It comes off the sibling now, the same one view the family type, the level, the template and
+the crop come off. SiblingReader reads the viewport type of the viewport placing each
+candidate in one pass over the document, SiblingView carries it, and the writer changes the
+new viewport's type after it is created. The kind is read off the view being placed rather
+than off its code, because a sheet places views the model already held as well as ones this
+run made.
+
+**A sibling on no sheet lends no viewport type, and that is said.** The run records which
+type the placement really got, names the sibling and says plainly that the type is the
+model's default rather than a choice. A type the settings name that the model does not hold
+is said the same way. Nothing falls back in silence, which is what the brief asked for and
+what the tool did until now. The scan reads the same thing off every existing sheet, so what
+the team places their own views with is now in the one section built to be held against the
+tool's.
+
+### Fix 7, the eleven title blocks the tool now remembers
+
+Two files, read in this order, first match wins: the user's own at %APPDATA%\RCRC
+Green\title-blocks.txt, then the defaults install.ps1 copies beside the add-in from
+install/title-blocks.txt. Nothing goes in the model, because a pairing is how this team
+works rather than a fact about one project.
+
+Reading, merging and writing are Core with tests, and only the paths are Revit side. Three
+rules hold it up, each with a test. **Only what the user set is written back**, never the
+shipped ones as well, or this version's defaults would freeze into their file and no later
+install could move them. **Views that disagree about the title block are both named and
+neither wins**, the rule this repo follows everywhere two sources answer one question. **A
+title block the settings name and this model does not hold is not an error**, because the
+settings are shared across projects, and the line says which and asks for one the model has.
+
+**The format is tab separated and only the code is trimmed.** A title block in this model is
+named LOD /  HARDSCAPE SCHEDULES with two spaces in the middle, so a format that split on
+whitespace or tidied its fields would quietly produce a name the model does not hold. The
+code and the view name are separate fields so the (010) Overall Plan format lives on
+ViewType and nowhere else. A line that is not four fields is kept with its number and shown
+at the top of step 4, because a settings file one line short reads exactly like one that
+never had the line.
+
+One test reads install/title-blocks.txt itself, walking up from the test assembly, and holds
+it to eleven pairings on one family with the double space intact. A broken shipped file
+fails the gate rather than somebody's install. Writing the expected order out by hand caught
+my own mistake there: a space sorts before a letter, so LOD /  HARDSCAPE SCHEDULES comes
+before LOD / SCHEDULES, and the test said so.
+
+On the panel: ticking a view type fills a sheet's title block from the settings when the
+sheet has none, changing the picker remembers it against every view ticked on that sheet,
+and a line under the picker says whether it came from the user's file, the shipped defaults
+or neither. A sheet that already carries a title block is left alone, because that was a
+choice and this is an offer. A save that fails says so on the status line, since a setting
+that looks saved and is not would have somebody pick the same title block again next week.
+
+### Fix 8, one place for a report
+
+ReportFile writes into the repo's reports folder and nowhere else. Two copies meant two
+files per run, two places to look and two to tidy up, and the Desktop copy was the one
+nothing reading the code could ever reach.
+
+**No pointer file means no report at all.** reports-folder.txt is the only thing that says
+where the folder is, so with it missing there is nowhere to write, and the line now opens NO
+REPORT WAS WRITTEN and says to run install.ps1 again. Falling back to the Desktop would put
+the file exactly where nobody agreed to look for it. Every status line, the installer's own
+closing line, its layout list and four comments follow.
+
+**This reaches the KPI pane and the KPI session has to be told.** ReportFile.cs is one of
+the five shared Revit root files and ReportPlaces is Drawing Sheet's own, read across the
+fence by the KPI handler at three call sites, so KPI's reports stop going to the Desktop too
+and its status lines change wording with them. KpiRequestHandler still carries a line of its
+own reading The Desktop folder refused the report, and KpiFile's comment still says its
+files sort together on the Desktop. Both are that task's files and neither was touched.
+ScanFileName in Shared says the same thing and is Shared, so it was not touched either.
+
 ### The breaks
 
-Two, each a reversed edit with the diff hash the same before the first and after the last:
+Four across the round, each a reversed edit with the diff hash the same before the first and
+after the last:
 
-- `InsideTheTitleBlock` not taking the strip off: Failed 3 of 1193, all three drawing area
-  tests
+- `InsideTheTitleBlock` not taking the strip off: Failed 3 of 1193
 - `MoveToPutTheCentreAt` running the wrong way: Failed 2 of 1193
+- the shipped default winning over the user's own: Failed 1 of 1216
+- the settings file trimming the names it reads: Failed 1 of 1216
 
 ### Not observed
 
-Nothing in this pull request has been through Revit. Unexecuted there: the schedule
-correction itself, and whether `ElementTransformUtils.MoveElement` moves a
-`ScheduleSheetInstance` on a sheet as it moves anything else; whether a schedule ever comes
-back with no bounding box at all, which is the path that names it instead of moving it; the
-second regeneration's cost on a sheet holding four schedules; and how a view centred in the
-drawing area sits against the strip on a real A1, which is the number the fifth was taken
-from and the one worth checking first. The fifth itself is one person's reading of one title
-block and the report now says so on every sheet, so a team that measures it properly changes
-one constant.
+Nothing in this round has been through Revit at all. From fixes 1 to 4, unexecuted there:
+the schedule correction itself, and whether ElementTransformUtils.MoveElement moves a
+ScheduleSheetInstance on a sheet as it moves anything else. Whether a schedule ever comes
+back with no bounding box, which is the path that names it instead of moving it. The second
+regeneration's cost on a sheet holding four schedules. And how a view centred in the drawing
+area sits against the strip on a real A1, which is the number the fifth was taken from and
+the one worth checking first. The fifth is one person's reading of one title block and the
+report now says so on every sheet, so a team that measures it properly changes one constant.
+
+From fixes 5 to 8, unexecuted there: the viewport type being changed after a placement, and
+whether `ChangeTypeId` takes on a viewport Revit has only just made. Whether
+`VIEW_SCALE_PULLDOWN_METRIC` really reads Custom on that view, which the build proves exists
+as a parameter and nothing here proves the value of. The sibling on no sheet path. Both
+settings files on a real machine, the %APPDATA% folder being made, and what the panel does
+when the shipped file is missing because an older install put none there. A pairing saved
+and read back in a second session. And every report landing in one place, which is the one
+thing in this round a single run would show immediately.
 
 ---
 

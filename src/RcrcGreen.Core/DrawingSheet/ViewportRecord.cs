@@ -25,12 +25,16 @@ namespace RcrcGreen.Core
             double heightFeet,
             double sheetWidthFeet,
             double sheetHeightFeet,
-            bool isASchedule)
+            bool isASchedule,
+            string scaleAsShown = null,
+            string viewportTypeName = null)
         {
             SheetNumber = sheetNumber ?? string.Empty;
             SheetName = sheetName ?? string.Empty;
             ViewName = viewName ?? string.Empty;
             Scale = scale;
+            ScaleAsShown = scaleAsShown ?? string.Empty;
+            ViewportTypeName = viewportTypeName ?? string.Empty;
             CentreXFeet = centreXFeet;
             CentreYFeet = centreYFeet;
             WidthFeet = widthFeet;
@@ -53,6 +57,29 @@ namespace RcrcGreen.Core
         /// </summary>
         public int Scale { get; }
 
+        /// <summary>
+        /// The scale as the Properties panel shows it, which is not always 1: and the number.
+        /// DM-11-(200) General Arrangement Layout reads Custom with a Scale Value of 250, under
+        /// a template named for 250, and the report said 1:250 with nothing about the Custom.
+        ///
+        /// The two do not disagree. `View.Scale` is the ratio and the documentation is plain
+        /// that setting one Revit does not hold in its own list applies a custom scale, so 250
+        /// is the number in both places and Custom is the label Revit puts on a value its list
+        /// does not carry. Printing both is what stops the report reading as though it had found
+        /// something the model does not show. Empty when it could not be read.
+        /// </summary>
+        public string ScaleAsShown { get; }
+
+        /// <summary>
+        /// The viewport type the view was placed with, empty for a schedule, which has none.
+        ///
+        /// Every viewport the first real run made came out PRX_Title With Line, which nothing in
+        /// this repo ever chose: `Viewport.Create` uses the document's own default type. It is
+        /// taken off the sibling now, like the family type and the template, and named here so
+        /// the report says which it was rather than leaving it to a Properties panel.
+        /// </summary>
+        public string ViewportTypeName { get; }
+
         public double CentreXFeet { get; }
 
         public double CentreYFeet { get; }
@@ -67,9 +94,22 @@ namespace RcrcGreen.Core
 
         public bool IsASchedule { get; }
 
+        /// <summary>
+        /// The ratio, and what Properties shows for it where that is something else. A view
+        /// reading Custom over a Scale Value of 250 is not a report and a model disagreeing, it
+        /// is Revit labelling a value its own list does not carry, and the report says both so
+        /// nobody has to open the view to find that out.
+        /// </summary>
         public string ScaleInWords()
         {
-            return Scale > 0 ? "1:" + Scale.ToString(CultureInfo.InvariantCulture) : "no scale";
+            string ratio = Scale > 0
+                ? "1:" + Scale.ToString(CultureInfo.InvariantCulture)
+                : "no scale";
+
+            if (ScaleAsShown.Length == 0) return ratio;
+            if (string.Equals(ScaleAsShown, ratio, StringComparison.Ordinal)) return ratio;
+
+            return ratio + ", shown as " + ScaleAsShown;
         }
 
         public string CentreInWords()
@@ -96,7 +136,10 @@ namespace RcrcGreen.Core
             return "On " + SheetNumber + " " + SheetName + ": " + ViewName
                 + (IsASchedule ? ", a schedule, " : " at " + ScaleInWords() + ", ")
                 + SizeInWords() + ", centre at " + CentreInWords()
-                + ", on a sheet of " + SheetSizeInWords() + ".";
+                + ", on a sheet of " + SheetSizeInWords() + "."
+                + (ViewportTypeName.Length == 0
+                    ? string.Empty
+                    : " Viewport type " + ViewportTypeName + ".");
         }
 
         private static string Millimetres(double feet)

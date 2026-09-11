@@ -66,8 +66,8 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Every place the report landed, Desktop first. The repo copy is what lets anybody
-        /// reading the code see what a real run produced.
+        /// Where the report landed, which is the reports folder inside the repo or nowhere. It
+        /// is what lets anybody reading the code see what a real run produced.
         /// </summary>
         internal static IReadOnlyList<string> WriteReport(
             ScopeBoxPlan plan, string documentTitle, bool applied, IEnumerable<long> refused)

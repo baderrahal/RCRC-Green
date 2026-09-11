@@ -113,41 +113,55 @@ namespace RcrcGreen.Core.Tests
 
     public class ReportPlacesTests
     {
+        /// <summary>
+        /// One place, said in full. A report used to go to the Desktop as well, so the line
+        /// named two paths and somebody had two files per run to keep straight.
+        /// </summary>
         [Fact]
-        public void TwoPlacesAreBothNamed()
+        public void TheOnePlaceItLandedIsNamed()
         {
             Assert.Equal(
-                @"Report at C:\Users\bader\Desktop\run.txt and C:\repo\reports\run.txt.",
-                ReportPlaces.Written(new[] { @"C:\Users\bader\Desktop\run.txt", @"C:\repo\reports\run.txt" }));
+                @"Report at C:\repo\reports\run.txt.",
+                ReportPlaces.Written(new[] { @"C:\repo\reports\run.txt" }));
         }
 
         /// <summary>
-        /// One place means the repo folder was not found, and saying so beats leaving somebody
-        /// looking for a file that was never written.
+        /// Nothing written is not a footnote. The pointer file is the only thing that says where
+        /// the reports folder is, and with it missing there is no second place the file might be
+        /// in, so the line leads with that and says what to do about it.
         /// </summary>
         [Fact]
-        public void OnePlaceSaysWhyTheOtherIsMissingAndHowToFixIt()
+        public void NothingWrittenSaysWhyAndWhatToDo()
         {
-            string said = ReportPlaces.Written(new[] { @"C:\Users\bader\Desktop\run.txt" });
-
-            Assert.Contains(@"Report at C:\Users\bader\Desktop\run.txt", said);
-            Assert.Contains("reports-folder.txt", said);
-            Assert.Contains("install.ps1", said);
+            foreach (string said in new[]
+            {
+                ReportPlaces.Written(null),
+                ReportPlaces.Written(new string[0]),
+                ReportPlaces.Written(new[] { string.Empty, null })
+            })
+            {
+                Assert.StartsWith("NO REPORT WAS WRITTEN", said);
+                Assert.Contains("reports-folder.txt", said);
+                Assert.Contains("install.ps1", said);
+            }
         }
 
+        /// <summary>
+        /// The old line for one path said the Desktop copy was the only one and the repo folder
+        /// was not found. There is no Desktop copy now, so no line may read that way.
+        /// </summary>
         [Fact]
-        public void NowhereAtAllSaysSo()
+        public void NoLineOffersASecondPlaceAnyMore()
         {
-            Assert.Equal("The report could not be written anywhere.", ReportPlaces.Written(null));
-            Assert.Equal("The report could not be written anywhere.", ReportPlaces.Written(new string[0]));
-        }
+            Assert.DoesNotContain("Desktop", ReportPlaces.Written(null));
 
-        [Fact]
-        public void AnEmptyPathIsNotAPlace()
-        {
-            string said = ReportPlaces.Written(new[] { @"C:\Desktop\run.txt", string.Empty, null });
+            string written = ReportPlaces.Written(new[] { @"C:\repo\reports\run.txt" });
 
-            Assert.Contains("reports-folder.txt", said);
+            Assert.DoesNotContain("Desktop", written);
+
+            // The paths were joined with this, so its absence is what says one place is one
+            // place. The refusal line above is prose and is allowed the word.
+            Assert.DoesNotContain(" and ", written);
         }
     }
 }

@@ -144,7 +144,8 @@ namespace RcrcGreen.Core
             string familyTypeName,
             string templateName,
             string levelName,
-            ViewCrop crop)
+            ViewCrop crop,
+            string viewportTypeName = null)
         {
             if (viewName == null) throw new ArgumentNullException("viewName");
             if (type == null) throw new ArgumentNullException("type");
@@ -156,6 +157,7 @@ namespace RcrcGreen.Core
             TemplateName = templateName ?? string.Empty;
             LevelName = levelName ?? string.Empty;
             Crop = crop ?? new ViewCrop(false, false, false);
+            ViewportTypeName = viewportTypeName ?? string.Empty;
         }
 
         /// <summary>
@@ -180,6 +182,20 @@ namespace RcrcGreen.Core
         public ViewCrop Crop { get; }
 
         /// <summary>
+        /// The viewport type this view is placed with on a sheet, empty when it is on none.
+        ///
+        /// Every viewport the first real run made came out PRX_Title With Line, which no brief
+        /// and no rule in this repo ever chose: `Viewport.Create` takes the document's own
+        /// default. It is one more thing the team has already answered by placing their own
+        /// views, so it comes off the sibling like the family type, the level and the template.
+        ///
+        /// Empty is a real answer and not a fallback. A sibling on no sheet has no viewport type
+        /// to lend, and the report says so against the view rather than letting Revit's default
+        /// pass as a choice.
+        /// </summary>
+        public string ViewportTypeName { get; }
+
+        /// <summary>
         /// What the report says about where a new view was set up from. One line, naming the
         /// view and every setting taken off it, so a Properties panel is never needed to check
         /// it again.
@@ -189,7 +205,10 @@ namespace RcrcGreen.Core
             return "Set up from " + ViewName + ": family type " + Named(FamilyTypeName)
                 + ", view template " + Named(TemplateName)
                 + (Kind == SiblingKind.Plan ? ", level " + Named(LevelName) : string.Empty)
-                + ", " + Crop.CopiedInWords() + ".";
+                + ", " + Crop.CopiedInWords() + "."
+                + (ViewportTypeName.Length == 0
+                    ? " That view is on no sheet, so it lends no viewport type."
+                    : " Viewport type " + ViewportTypeName + ", off that view's own placement.");
         }
 
         private static string Named(string what)

@@ -64,6 +64,7 @@ DRAWING_SHEET_AT_REVIT_ROOT = {
     "src/RcrcGreen.Revit/SheetBeingDescribed.cs",
     "src/RcrcGreen.Revit/ShowDrawingSheetCommand.cs",
     "src/RcrcGreen.Revit/SiblingReader.cs",
+    "src/RcrcGreen.Revit/TitleBlockSettingsStore.cs",
 }
 
 

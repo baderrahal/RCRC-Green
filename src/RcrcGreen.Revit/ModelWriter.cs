@@ -48,7 +48,7 @@ namespace RcrcGreen.Revit
             {
                 try
                 {
-                    MakeSheet(document, item, outcome, madeSoFar);
+                    MakeSheet(document, item, outcome, siblings, madeSoFar);
                 }
                 catch (Autodesk.Revit.Exceptions.ApplicationException failed)
                 {
@@ -424,6 +424,7 @@ namespace RcrcGreen.Revit
             Document document,
             RunItem item,
             RunOutcome outcome,
+            SiblingReader siblings,
             Dictionary<string, ElementId> madeSoFar)
         {
             SheetToMake wanted = item.Sheet;
@@ -521,7 +522,7 @@ namespace RcrcGreen.Revit
                     item.SheetName,
                     item.Name + " was made, but placing its views did not finish. " + said
                     + " Some of its views may be missing from it. Check the sheet by hand."),
-                () => FinishSheet(document, item, outcome, sheet, size, area, madeSoFar));
+                () => FinishSheet(document, item, outcome, sheet, size, area, madeSoFar, siblings));
         }
 
         /// <summary>
@@ -534,7 +535,8 @@ namespace RcrcGreen.Revit
             ViewSheet sheet,
             SheetSize size,
             DrawingArea area,
-            Dictionary<string, ElementId> madeSoFar)
+            Dictionary<string, ElementId> madeSoFar,
+            SiblingReader siblings)
         {
             // The return of Set is checked because Revit can answer false without throwing,
             // and a sheet without its plot is not found by the Sheet List and not counted when
@@ -548,7 +550,7 @@ namespace RcrcGreen.Revit
                     + "hand."));
             }
 
-            PlaceViews(document, item, outcome, sheet, size, area, madeSoFar);
+            PlaceViews(document, item, outcome, sheet, size, area, madeSoFar, siblings);
         }
 
         /// <summary>
@@ -607,7 +609,8 @@ namespace RcrcGreen.Revit
             ViewSheet sheet,
             SheetSize size,
             DrawingArea area,
-            Dictionary<string, ElementId> madeSoFar)
+            Dictionary<string, ElementId> madeSoFar,
+            SiblingReader siblings)
         {
             SheetToMake wanted = item.Sheet;
             IReadOnlyList<ViewType> placing = wanted.Views;
@@ -668,9 +671,12 @@ namespace RcrcGreen.Revit
                     continue;
                 }
 
+                Viewport placed = Viewport.Create(document, sheet.Id, viewId, point);
+                ShowItTheWayTheTeamDoes(document, item, outcome, siblings, type, viewId, placed, named);
+
                 landed.Add(new OnTheSheet
                 {
-                    Viewport = Viewport.Create(document, sheet.Id, viewId, point),
+                    Viewport = placed,
                     ViewName = named,
                     Wanted = spots[at]
                 });
@@ -697,6 +703,109 @@ namespace RcrcGreen.Revit
             {
                 NotePlacement(document, outcome, sheet, one, size);
             }
+        }
+
+        /// <summary>
+        /// Gives a new viewport the type the team places that view type with.
+        ///
+        /// Every viewport the first real run made came out PRX_Title With Line, which no brief
+        /// and no rule here ever chose. `Viewport.Create` takes the document's own default type,
+        /// so the tool was accepting whatever that happened to be and the report did not even
+        /// say which it was. It comes off the sibling now, the same one view the family type,
+        /// the level and the template come off, and the kind is read off the view being placed
+        /// rather than guessed from its code.
+        ///
+        /// **A sibling on no sheet lends no viewport type**, and that is said rather than passed
+        /// over, because Revit's default is then what the view is placed with and nobody chose
+        /// it. The type it really got is named either way.
+        /// </summary>
+        private static void ShowItTheWayTheTeamDoes(
+            Document document,
+            RunItem item,
+            RunOutcome outcome,
+            SiblingReader siblings,
+            ViewType type,
+            ElementId viewId,
+            Viewport placed,
+            string named)
+        {
+            if (placed == null) return;
+
+            Element viewBeingPlaced = document.GetElement(viewId);
+            SiblingKind kind = viewBeingPlaced is ViewPlan
+                ? SiblingKind.Plan
+                : viewBeingPlaced is ViewSection ? SiblingKind.Section : SiblingKind.Other;
+
+            Sibling sibling = siblings.For(type, kind);
+            string wantedType = sibling == null ? string.Empty : sibling.Facts.ViewportTypeName;
+            string gotByDefault = NameOfType(document, placed);
+
+            if (wantedType.Length == 0)
+            {
+                outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                    item.SheetName, item.Name + " holds " + named + " in viewport type "
+                    + Named(gotByDefault) + ", which is this model's default rather than a "
+                    + "choice. " + (sibling == null
+                        ? "No view of that type is in the model to take one from."
+                        : sibling.Facts.ViewName + " is the view it was set up from and it is on "
+                            + "no sheet, so it lends no viewport type.")
+                    + " Set it by hand if that is not the one."));
+                return;
+            }
+
+            if (string.Equals(wantedType, gotByDefault, StringComparison.Ordinal)) return;
+
+            // By name, the way the title block type is found. Revit keeps viewport type names
+            // unique in a document, so the name resolves to one type, and the name is what Core
+            // can carry across the fence between the reader and here.
+            ElementType wanted = new FilteredElementCollector(document)
+                .OfCategory(BuiltInCategory.OST_Viewports)
+                .WhereElementIsElementType()
+                .OfType<ElementType>()
+                .FirstOrDefault(one => string.Equals(one.Name, wantedType, StringComparison.Ordinal));
+
+            if (wanted == null)
+            {
+                outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                    item.SheetName, item.Name + " holds " + named + " in viewport type "
+                    + Named(gotByDefault) + ". " + sibling.Facts.ViewName + " uses " + wantedType
+                    + " and this model has no viewport type of that name to change it to."));
+                return;
+            }
+
+            placed.ChangeTypeId(wanted.Id);
+        }
+
+        private static string NameOfType(Document document, Viewport placed)
+        {
+            Element type = document.GetElement(placed.GetTypeId());
+            return type == null ? string.Empty : type.Name;
+        }
+
+        /// <summary>
+        /// The scale as the Properties panel shows it.
+        ///
+        /// DM-11-(200) General Arrangement Layout reads Custom over a Scale Value of 250, under
+        /// a template named for 250, and the report said 1:250 and nothing about the Custom.
+        /// Neither is wrong: the documented behaviour of `View.Scale` is that a value Revit does
+        /// not hold in its own list of scales is applied as a custom one, so the number is 250
+        /// in both places and Custom is the label on a value the list does not carry. The report
+        /// prints both, so a number in it can be held against a Properties panel without a gap
+        /// for one to hide in.
+        /// </summary>
+        private static string ScaleAsShown(View view)
+        {
+            if (view == null) return string.Empty;
+
+            Parameter shown = view.get_Parameter(BuiltInParameter.VIEW_SCALE_PULLDOWN_METRIC);
+            if (shown == null) return string.Empty;
+
+            return shown.AsValueString() ?? string.Empty;
+        }
+
+        private static string Named(string what)
+        {
+            return string.IsNullOrEmpty(what) ? "one this tool could not read" : what;
         }
 
         /// <summary>
@@ -798,7 +907,9 @@ namespace RcrcGreen.Revit
                     box == null ? 0.0 : box.MaximumPoint.Y - box.MinimumPoint.Y,
                     size.WidthFeet,
                     size.HeightFeet,
-                    false));
+                    false,
+                    ScaleAsShown(view),
+                    NameOfType(document, placed.Viewport)));
                 return;
             }
 

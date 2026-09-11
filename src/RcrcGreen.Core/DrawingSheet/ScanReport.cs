@@ -120,9 +120,11 @@ namespace RcrcGreen.Core
                 .ThenBy(one => one.ViewName, NaturalOrder.Comparer)
                 .ToList();
             Heading(report, "VIEWPORTS ON EXISTING SHEETS", viewports.Count,
-                "sheet | view | scale | centre | size | sheet size");
+                "sheet | view | scale | centre | size | sheet size | viewport type");
             Line(report, "Millimetres. What the team's own sheets look like, so a placement the "
-                + "tool makes can be held against a real one instead of against a guess.");
+                + "tool makes can be held against a real one instead of against a guess. The "
+                + "viewport type is where the tool takes its own from, off the one view a new "
+                + "one is set up from.");
             foreach (ViewportRecord placed in viewports)
             {
                 Line(report, Join(
@@ -131,7 +133,8 @@ namespace RcrcGreen.Core
                     placed.ScaleInWords(),
                     placed.CentreInWords(),
                     placed.SizeInWords(),
-                    placed.SheetSizeInWords()));
+                    placed.SheetSizeInWords(),
+                    placed.ViewportTypeName.Length == 0 ? "(none)" : placed.ViewportTypeName));
             }
             Line(report, string.Empty);
 

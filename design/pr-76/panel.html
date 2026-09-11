@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The title block remembers itself, pull request 76</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .card { background: #e4e4e4; border: 1px solid #c8c8c8; }
+  .dark  .card { background: #3a3a3a; border: 1px solid #4a4a4a; }
+  .body { padding: 8px; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .card { padding: 6px; margin: 4px 0; }
+  .row { margin: 3px 0; }
+  .box { display: inline-block; border: 1px solid #adadad; background: #fff; color: #1a1a1a;
+         padding: 1px 5px; min-width: 210px; }
+  .dark .box { background: #1f1f1f; color: #e6e6e6; border-color: #5e5e5e; }
+  .label { display: inline-block; width: 72px; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 2px 6px; margin: 2px 0; }
+  .light .btn { background: #e1e1e1; color: #1a1a1a; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+</style>
+</head>
+<body>
+
+<h1>The title block fills itself in and remembers what it was told</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup, not a screenshot.</strong> It is drawn by hand from
+  <code>DrawingSheetPanel.cs</code>, <code>TitleBlockSettings.cs</code> and
+  <code>PanelMetrics.cs</code>, and it cannot show how Revit will really render WPF: font
+  metrics, the dockable pane's width and the theme's own chrome all differ.</p>
+  <p>What it is for is reading the wording and the order of the new lines before somebody
+  spends an install on them. Nothing here has been through Revit.</p>
+</div>
+
+<p class="caption">Step 4, one described sheet, at the pane's docked width. Three lines are new:
+the one under the picker saying where the title block came from, the one at the top of the step
+for a settings line that could not be read, and nothing else moves.</p>
+
+<h2>Filled from the shipped defaults</h2>
+
+<div class="pair">
+
+<div class="panel light">
+  <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, 2 to make</div>
+  <div class="inside">
+    <div class="card">
+      <div class="row"><b>Sheet 1</b> <span class="btn" style="float:right">Remove</span></div>
+      <div class="row"><span class="label">Title block</span><span class="box">AR-PRX-Title_Block_A1&nbsp;&nbsp;&nbsp;KEYPLAN</span></div>
+      <div class="row faint">AR-PRX-Title_Block_A1 KEYPLAN, from the shipped defaults.</div>
+      <div class="row"><span class="label">Views per sheet</span> <b>1</b> &nbsp; 2 &nbsp; 4</div>
+      <div class="row faint">Tick the views that go on it, from the types ticked in step 2. They
+        go onto sheets in the order they are ticked here.</div>
+      <div class="row">&#9745; (010) Overall Plan&nbsp;&nbsp;&nbsp;plan</div>
+      <div class="row">&#9744; (400) Landscape Cross Section&nbsp;&nbsp;&nbsp;section</div>
+      <div class="row faint">On AR-PRX-Title_Block_A1 KEYPLAN, 1 view per sheet, 1 sheet per
+        ticked plot: (010) Overall Plan.</div>
+      <div class="row">Makes 2 sheets across the ticked plots.</div>
+    </div>
+    <div class="row"><span class="btn">Add a sheet</span></div>
+  </div>
+</div>
+
+<div class="panel dark">
+  <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;1 described, 2 to make</div>
+  <div class="inside">
+    <div class="card">
+      <div class="row"><b>Sheet 1</b> <span class="btn" style="float:right">Remove</span></div>
+      <div class="row"><span class="label">Title block</span><span class="box">AR-PRX-Title_Block_A1&nbsp;&nbsp;&nbsp;KEYPLAN</span></div>
+      <div class="row faint">AR-PRX-Title_Block_A1 KEYPLAN, from the shipped defaults.</div>
+      <div class="row"><span class="label">Views per sheet</span> <b>1</b> &nbsp; 2 &nbsp; 4</div>
+      <div class="row faint">Tick the views that go on it, from the types ticked in step 2. They
+        go onto sheets in the order they are ticked here.</div>
+      <div class="row">&#9745; (010) Overall Plan&nbsp;&nbsp;&nbsp;plan</div>
+      <div class="row">&#9744; (400) Landscape Cross Section&nbsp;&nbsp;&nbsp;section</div>
+      <div class="row faint">On AR-PRX-Title_Block_A1 KEYPLAN, 1 view per sheet, 1 sheet per
+        ticked plot: (010) Overall Plan.</div>
+      <div class="row">Makes 2 sheets across the ticked plots.</div>
+    </div>
+    <div class="row"><span class="btn">Add a sheet</span></div>
+  </div>
+</div>
+
+</div>
+
+<h2>The other three lines that line can read</h2>
+
+<p class="caption">Same place, same faint colour, one per state. The first is after the user has
+changed the picker once. The second is two ticked views whose settings disagree, where neither
+wins and both are named. The third is a view type neither file knows.</p>
+
+<div class="panel light">
+  <div class="body">
+    <div class="row faint">AR-PRX-Title_Block_A1 GA-SCHEMATIC, from your own settings.</div>
+    <div class="row faint">These views disagree about the title block: (010) Overall Plan wants
+      AR-PRX-Title_Block_A1 KEYPLAN, (200) General Arrangement Layout wants
+      AR-PRX-Title_Block_A1 GA-SCHEMATIC. Pick the one this sheet should use and it is
+      remembered for all of them.</div>
+    <div class="row faint">The settings hold no title block for (600) KERBS SCHEDULE. Pick one
+      and it is remembered for next time.</div>
+  </div>
+</div>
+
+<h2>A settings file with a line that could not be read</h2>
+
+<p class="caption">At the top of step 4, once, above every described sheet. A pairing that never
+arrives reads exactly like a pairing nobody ever wrote, so the line is kept.</p>
+
+<div class="panel light">
+  <div class="head"><span class="sign">-</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;none added</div>
+  <div class="inside">
+    <div class="row faint">No sheet added yet. A sheet is described once here, its views divide
+      into as many sheets as they need, and each ticked plot gets the whole set.</div>
+    <div class="row faint">A title block setting could not be read: your own settings, line 4,
+      600 SOFTSCAPE SCHEDULE AR-PRX-Title_Block_A1 LOD / SCHEDULES</div>
+    <div class="row"><span class="btn">Add a sheet</span></div>
+  </div>
+</div>
+
+<h2>What a status line says when a pairing cannot be saved</h2>
+
+<p class="caption">Docked at the foot of the pane, where every other message goes. A setting that
+looks saved and is not would have somebody pick the same title block again next week.</p>
+
+<div class="panel light">
+  <div class="body">
+    <div class="row">That title block could not be remembered. Access to the path
+      'C:\Users\bader\AppData\Roaming\RCRC Green\title-blocks.txt' is denied.</div>
+  </div>
+</div>
+
+</body>
+</html>

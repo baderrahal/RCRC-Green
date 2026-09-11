@@ -209,38 +209,50 @@ because the code is already the front of the number. One holding more is typed, 
 `PlannedSheet.WhyNothingIsProposed` says so next to the empty boxes. A row short of a name or a
 number is refused by name, and `SheetBatch` counts what one definition really makes.
 
-`SheetLayout.For` is the maths: a `DrawingArea` and a count of 1, 2 or 4, back comes the centre
-of each viewport in reading order. It divides that area evenly, so the margin outside equals the
-gap between. Y counts up from the bottom, which is Revit's convention and the reason the first
-row back is the top one.
+`SheetLayout.For` is the maths: a `DrawingArea` and a count of 1, 2 or 4, back comes the
+centre of each viewport in reading order. It divides that area evenly, so the margin outside
+equals the gap between. Y counts up from the bottom, which is Revit's convention and the
+reason the first row back is the top one.
 
-**It divides the drawing area and not the whole sheet.** `DrawingArea.InsideTheTitleBlock` takes
-the title strip down the right hand edge off the width, because that is not somewhere a view may
-sit, and the first real run centred every schedule across it. **How wide the strip is cannot be
-read off a title block**: Revit gives a placed block Sheet Width and Sheet Height and nothing
-else, and where the strip begins is drawn inside the family. So `TitleStripAcross` is a fifth,
-the tool's own setting, measured by the team on the run of 2026-09-11, and `InWords` says whose
-setting it is in the report the same way `SectionDepth` and `AnnotationCropChoice` do.
+**It divides the drawing area and not the whole sheet.** `DrawingArea.InsideTheTitleBlock`
+takes the title strip down the right hand edge off the width, because that is not somewhere
+a view may sit, and the first real run centred every schedule across it. **How wide the
+strip is cannot be read off a title block**: Revit gives a placed block Sheet Width and
+Sheet Height and nothing else, and where the strip begins is drawn inside the family. So
+`TitleStripAcross` is a fifth, the tool's own setting, measured by the team on the run of
+2026-09-11, and `InWords` says whose setting it is in the report the same way `SectionDepth`
+and `AnnotationCropChoice` do.
 
-**A schedule on a sheet is placed by its top left corner and a viewport by its centre.** Both
-were handed the centre this maths works out, so on that run every plan view landed correctly and
-every schedule landed half its own size right and down. 010QA measured it: 207.4 by 187.4 mm
-asked for 420.5 by 297.0 came back centred on 522.1 by 203.3, which is 93.7 low and exactly half
-its own height. `CornerPlacement` holds the correction and the writer applies it after the
-placement, because how big a schedule comes out is not known until Revit has drawn it. Nothing
-moves a viewport: those were right, and a viewport's bounding box takes in the view title under
-it, so correcting one against its box would move a placement that is already correct.
+**A schedule on a sheet is placed by its top left corner and a viewport by its centre.**
+Both were handed the centre this maths works out, so on that run every plan view landed
+correctly and every schedule landed half its own size right and down. 010QA measured it:
+207.4 by 187.4 mm asked for 420.5 by 297.0 came back centred on 522.1 by 203.3, which is
+93.7 low and exactly half its own height. `CornerPlacement` holds the correction and the
+writer applies it after the placement, because how big a schedule comes out is not known
+until Revit has drawn it. Nothing moves a viewport: those were right, and a viewport's
+bounding box takes in the view title under it, so correcting one against its box would move
+a placement that is already correct.
 
 `SheetSize` is the width and the height in feet AND which read produced them, because a size
 that came from nowhere reads exactly like a size that was measured. Three sheets were made
 empty on a real A1 title block. A size that is zero, negative, NaN or infinite is not a size,
 and the factory turns it into `NotRead` rather than letting it reach `SheetLayout.For`.
 
-`ViewportRecord` is one placement in plain numbers: sheet, view, the view's own scale, centre,
-size and the sheet's size, said in millimetres. The run records one per placement and the scan
-reads the same shape off sheets the team made, so the two can be held against each other. A
-sheet has no scale of its own: what a sheet shows under Scale is a readout of the views placed
-on it, and each view's comes from its template, so nothing anywhere sets one.
+`ViewportRecord` is one placement in plain numbers: sheet, view, the view's own scale,
+centre, size and the sheet's size, said in millimetres, with the viewport type it was placed
+in and the scale as the Properties panel shows it. The run records one per placement and the
+scan reads the same shape off sheets the team made, so the two can be held against each
+other. A sheet has no scale of its own: what a sheet shows under Scale is a readout of the
+views placed on it, and each view's comes from its template, so nothing anywhere sets one.
+
+**A scale can read Custom over a number the report prints plainly.** DM-11-(200) General
+Arrangement Layout reads Custom with a Scale Value of 250, under a template named for 250,
+and the report said 1:250 and nothing more. Neither is wrong: `View.Scale` is the ratio and
+the API documentation is plain that a value Revit does not hold in its own list of scales is
+applied as a custom one, so 250 is the number in both places and Custom is the label on a
+value the list does not carry. `ScaleInWords` prints both when they differ and once when
+they do not, because a report and a model that differ by a word are the same class of fault
+as a report that says created and not created.
 
 ## Every count the panel shows is worked out here
 
@@ -257,10 +269,10 @@ caught that, and it was the code that was wrong.
 
 ## The settings a new view takes travel together on one object
 
-`SiblingView` holds the view name, the family type, the template, the level and the three crop
-settings of ONE view the model already has. `SiblingChoice.For` picks one and returns it whole.
-Nothing anywhere assembles a set of settings from more than one view, and two tests go red if
-anything starts to.
+`SiblingView` holds the view name, the family type, the template, the level, the three crop
+settings and the viewport type of ONE view the model already has. `SiblingChoice.For` picks
+one and returns it whole. Nothing anywhere assembles a set of settings from more than one
+view, and two tests go red if anything starts to.
 
 A run produced a view whose template read `(010) Overall Plan` and whose family type read
 `(200) General Arrangement Layout`. The Revit code read both off the same local four lines
@@ -280,6 +292,26 @@ nobody reads it as something found in the model.
 
 `ViewCrop.CopiedInWords` prints the two that really were copied. Printing all three in the
 setup line would read as though the annotation crop had come off a view.
+
+## Which title block a view type's sheets are made on
+
+`TitleBlockSettings` merges two files, the user's own first and the shipped defaults second,
+and hands back one pairing per view type with which file it came from. Eleven were picked by
+hand on the run of 2026-09-11 and the same eleven would have been picked again for every
+plot.
+
+Three rules hold it up. **Only what the user set is written back**, so this version's
+defaults never freeze into their file. **Views that disagree about the title block are both
+named and neither wins**, the same rule the plot on a cell and the schedule kinds follow.
+**A title block the settings name and the model does not hold is not an error**, because the
+settings are shared across projects, and `WhyUnset` says so.
+
+`TitleBlockSettingsFile` is the format: tab separated, four fields, only the code trimmed. A
+type in this model is named `LOD /  HARDSCAPE SCHEDULES`, with two spaces, so a format that
+tidied its fields would produce a name the model does not hold. A line that is not four
+fields is kept with its number rather than dropped, because a settings file one line short
+reads exactly like one that never had the line. The code and the view name are separate
+fields, so the `(010) Overall Plan` format lives on `ViewType` and nowhere else.
 
 ## Which family type a view type is really built with
 
