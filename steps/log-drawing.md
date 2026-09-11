@@ -4,6 +4,101 @@ Newest entry first.
 
 ---
 
+## 2026-09-11, forty seventh pass. The run sheet: what gets run before any more code lands
+
+Branch `claude/rcrc-green-setup-wf9ham`, one commit, off main at `2e0c0ab`, which carries
+pull request 69 as `9e966fa` and 1103 tests, 588 of them KPI and 515 Drawing Sheet. The
+merge sha and the runner count go in the next entry, because this one is written before the
+pull request exists. One file, `steps/run-drawing.md`. Nothing in `src/` or `tests/` changes,
+and **the suite read 1103 locally after the sheet was written, the count main carries,
+because the round adds no test.**
+
+### Why
+
+Drawing Sheet has not been in Revit since its third full run, the one that created 13 with 0
+refused, reported in pull request 32. Every round since says nothing in it has been through
+Revit: the twenty fifth pass, the fortieth, the forty second, the forty fourth, the forty
+fifth in pull requests 61 and 62, and the forty sixth Shared move. That is 28 audit fixes and
+the plot list union sitting unobserved. No more code lands on Drawing Sheet until it has been
+run, and this round writes what gets run.
+
+### What the sheet is
+
+Forty two numbered steps in the shape of `steps/kpi-create.md`: VS Code run order, one action
+per step, the exact command per step, then what to check on screen and what passing reads
+like. Eight steps build and install, the same eight the KPI sheet opens with. Three open the
+model and the pane and say what the pane has, read off the code rather than off what the
+ribbon used to hold: Scan Model and the scope box assignment run from inside the pane through
+its external event, and the two `Execute` methods went in pull request 62. Twenty steps, 12
+to 31, cover the unobserved changes, grouped by pane step, PLOTS, VIEW TYPES, MARK, SHEETS,
+RUN, then the KPI pane for the Shared move. Six steps are one full run over two plots making
+two plan views, two sections, two schedules and four sheets at two views per sheet, with the
+report's headline as one number, the sizes, the placements and the sibling each view was set
+up from written out as they must read. Four steps are the questions only Revit or the team
+can answer, each a yes or a no: the step headers at a docked width, eight grid columns and the
+four column table, whether Revit's uniqueness rule on sheet numbers is case sensitive, and
+finding 15, which is asked of the team. One step says what to send back.
+
+### Where the list came from and how it was cut
+
+Three sources, merged: the never executed list in section 5 of `steps/audit-drawing.md`,
+every log entry from pull request 32 onward saying nothing in its round has been through
+Revit, and every FIXED note in the audit ending Not observed in Revit. Merged, they gave 46
+distinct items by my count, many named in two or three of the sources. The brief capped the
+steps at thirty. Twenty were enough, because one status line after a refresh carries all
+three new clauses, one full run shows the division, the placements, the setup lines and the
+Set checks together, and one typed sheet row shows the proposal, the warning and the
+keystroke refresh. Ranked by what breaks the tool if it is wrong: a mark on a hidden column
+reaching the run, a stale mark making an orphan, the delete-again paths, the Set checks and
+the sheet proposals come first, and the scroll memory, the Remove question and the moved
+messages come last.
+
+Nine items cannot be forced from the pane on this model and are listed at the end under not
+covered by this pass, each with what would force it: a name taken between the run's read and
+its rename, a throw while a schedule's fields and filters go on, the duplicate field note, a
+throw after Made, the two kind refusals, the uncapturable wording, the not available message,
+a Set answering false under a controlling template, and four views per sheet.
+
+### Found while writing it, and not fixed
+
+Three things the code says that the sheet could not ask for, written down here for the next
+audit rather than changed in a round that changes no code.
+
+- `PanelSteps.NoPlotsTicked("assign")` and the handler's own no plots line for Assign cannot be
+  reached. The scope box block returns before it draws the Assign button when no plot is
+  ticked, so the two messages have no path. The Run one is reachable and the sheet checks it
+- `PanelSteps.NothingToRunYet` says nothing is marked, and the one way to reach it is a mark
+  that the plan refused, on a plot with no scope box or gone stale, so it is reachable only
+  when it is wrong
+- A view type added by hand in step 2 can never be made. `ModelWriter` refuses it with no
+  sibling to set it up from, which is right for the settings and means the Add row produces a
+  column that marks and always refuses. core-rules.md says inventing a view type is allowed.
+  What a new type should be set up from is UNKNOWN and is a question for the team
+
+### Client data
+
+CLAUDE.md and core-rules.md hold client facts, and this repository is public. The count per
+file and the kinds of fact found are in the pull request body and nowhere else, because a
+tidy index in a second public file makes the exposure worse. Neither file is changed. The sheet
+names only identifiers those two files and the audit already carry, the model file, one plot,
+three sheet numbers, the four codes with their view names and two parameter names, and nothing
+new.
+
+### What ran here
+
+`dotnet test` on the suite before anything was written and again after the sheet was written,
+1103 both times, 0 failed, 0 skipped. The banned word scan, the em dash scan and a scan for
+any character outside ASCII over the new file found nothing. No agent run was started. The
+hooks ran on the real commit.
+
+### Not observed
+
+Nothing in this round has been through Revit, which is the point: the sheet is what goes
+through it next. Every passing line in it is what the code says it will print, read off the
+code this round, and not one of them has been seen on a screen.
+
+---
+
 ## 2026-09-10, forty sixth pass. The Shared round: one thing in, three things out, and what Shared is for
 
 Pull request 64, merged into main as `45138ae`. **The runner executed 1060 tests against it,
