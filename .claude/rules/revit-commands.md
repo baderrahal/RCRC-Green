@@ -316,10 +316,20 @@ make a sheet the screen never showed. The refresh actions rewrite box text and w
 place, skipping the box that has the keyboard, because rebuilding the tree under the cursor
 takes the cursor out of the box.
 
-**Where the views sit is worked out, not read.** `SheetLayout.For` takes the title block's
-width and height and a count of 1, 2 or 4 and hands back the centre of each viewport in reading
-order. The last sheet of a division can hold fewer views than the count, and they sit in the
-first cells of the same grid.
+**Where the views sit is worked out, not read.** `SheetLayout.For` takes a `DrawingArea` and a
+count of 1, 2 or 4 and hands back the centre of each viewport in reading order. The last sheet
+of a division can hold fewer views than the count, and they sit in the first cells of the same
+grid. The area is the sheet less the title strip down its right, which is the tool's own
+setting because a placed title block reports its size and nothing about where its strip begins,
+and the sheet's line in the report says so.
+
+**A schedule is moved after it is placed.** `ScheduleSheetInstance.Create` takes the top left
+corner and `Viewport.Create` takes the centre, and both were handed the centre, so every
+schedule the first real run placed sat half its own size right and down. `ModelWriter` measures
+each schedule's bounding box after the regeneration and moves it by what `CornerPlacement` works
+out, rather than working the corner out from a size it cannot know before Revit draws it. A
+schedule with no bounding box is left where it is and named in the report. Viewports are not
+touched: they landed correctly, and a viewport's box takes in the view title drawn under it.
 
 **The size comes off the title block PLACED ON THE SHEET, never off the type.** Sheet Width and
 Sheet Height are read-only INSTANCE parameters. On a `FamilySymbol` `get_Parameter` returns

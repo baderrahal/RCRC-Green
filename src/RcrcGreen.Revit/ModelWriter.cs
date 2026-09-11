@@ -486,6 +486,8 @@ namespace RcrcGreen.Revit
             // Height live on the title block Revit places on it. So the sheet is made, measured,
             // and taken away again when it cannot be measured and views were ticked for it.
             SheetSize size = SheetSize.NotRead(wanted.TitleBlock);
+            DrawingArea area = null;
+
             if (wanted.Views.Count > 0)
             {
                 size = SizeOf(document, sheet, wanted);
@@ -501,7 +503,12 @@ namespace RcrcGreen.Revit
                     return;
                 }
 
-                SaySheetSetUpFrom(item, outcome, size.InWords() + " " + wanted.ProvenanceInWords());
+                // Worked out here rather than where the views are placed, so the line the report
+                // carries about this sheet names the area the views really went into.
+                area = DrawingArea.InsideTheTitleBlock(size.WidthFeet, size.HeightFeet);
+
+                SaySheetSetUpFrom(item, outcome,
+                    size.InWords() + " " + area.InWords() + " " + wanted.ProvenanceInWords());
             }
 
             outcome.Made(item);
@@ -514,7 +521,7 @@ namespace RcrcGreen.Revit
                     item.SheetName,
                     item.Name + " was made, but placing its views did not finish. " + said
                     + " Some of its views may be missing from it. Check the sheet by hand."),
-                () => FinishSheet(document, item, outcome, sheet, size, madeSoFar));
+                () => FinishSheet(document, item, outcome, sheet, size, area, madeSoFar));
         }
 
         /// <summary>
@@ -526,6 +533,7 @@ namespace RcrcGreen.Revit
             RunOutcome outcome,
             ViewSheet sheet,
             SheetSize size,
+            DrawingArea area,
             Dictionary<string, ElementId> madeSoFar)
         {
             // The return of Set is checked because Revit can answer false without throwing,
@@ -540,7 +548,7 @@ namespace RcrcGreen.Revit
                     + "hand."));
             }
 
-            PlaceViews(document, item, outcome, sheet, size, madeSoFar);
+            PlaceViews(document, item, outcome, sheet, size, area, madeSoFar);
         }
 
         /// <summary>
@@ -598,14 +606,16 @@ namespace RcrcGreen.Revit
             RunOutcome outcome,
             ViewSheet sheet,
             SheetSize size,
+            DrawingArea area,
             Dictionary<string, ElementId> madeSoFar)
         {
             SheetToMake wanted = item.Sheet;
             IReadOnlyList<ViewType> placing = wanted.Views;
             if (placing.Count == 0) return;
 
-            IReadOnlyList<ViewportSpot> spots =
-                SheetLayout.For(size.WidthFeet, size.HeightFeet, wanted.ViewsPerSheet);
+            IReadOnlyList<ViewportSpot> spots = SheetLayout.For(
+                area ?? DrawingArea.InsideTheTitleBlock(size.WidthFeet, size.HeightFeet),
+                wanted.ViewsPerSheet);
 
             var landed = new List<OnTheSheet>();
 
@@ -641,7 +651,8 @@ namespace RcrcGreen.Revit
                     landed.Add(new OnTheSheet
                     {
                         Schedule = ScheduleSheetInstance.Create(document, sheet.Id, viewId, point),
-                        ViewName = named
+                        ViewName = named,
+                        Wanted = spots[at]
                     });
                     continue;
                 }
@@ -660,7 +671,8 @@ namespace RcrcGreen.Revit
                 landed.Add(new OnTheSheet
                 {
                     Viewport = Viewport.Create(document, sheet.Id, viewId, point),
-                    ViewName = named
+                    ViewName = named,
+                    Wanted = spots[at]
                 });
             }
 
@@ -671,10 +683,71 @@ namespace RcrcGreen.Revit
             if (landed.Count == 0) return;
             document.Regenerate();
 
+            bool moved = false;
+            foreach (OnTheSheet one in landed)
+            {
+                moved |= PutTheCentreWhereItWasAsked(document, item, outcome, sheet, one);
+            }
+
+            // Only when something really moved. A regeneration nobody needs is time the user
+            // waits for and a second chance for Revit to refuse something.
+            if (moved) document.Regenerate();
+
             foreach (OnTheSheet one in landed)
             {
                 NotePlacement(document, outcome, sheet, one, size);
             }
+        }
+
+        /// <summary>
+        /// Puts a schedule where the layout asked for it.
+        ///
+        /// **A viewport is placed by its centre and a schedule by its top left corner**, and both
+        /// are handed the centre Core works out, so every schedule on the first real run landed
+        /// half its own size right and down. 010QA measured it: a schedule 207.4 by 187.4 mm
+        /// asked for 420.5 by 297.0 came out centred on 522.1 by 203.3, which is 93.7 low and
+        /// exactly half its height.
+        ///
+        /// The correction is measured rather than worked out from the size, because how big a
+        /// schedule comes out is not known until Revit has drawn it, and measuring means nothing
+        /// here has to assume which corner Revit used.
+        ///
+        /// **Only a schedule is moved.** Every plan view on that run landed on the centre it was
+        /// asked for, so the viewports are right and nothing here touches them. A viewport's
+        /// bounding box is not its centre either: it takes in the view title drawn under the
+        /// view, so correcting one against its box would move a placement that is already right.
+        /// </summary>
+        private static bool PutTheCentreWhereItWasAsked(
+            Document document, RunItem item, RunOutcome outcome, ViewSheet sheet, OnTheSheet placed)
+        {
+            if (placed.Schedule == null || placed.Wanted == null) return false;
+
+            BoundingBoxXYZ across = placed.Schedule.get_BoundingBox(sheet);
+            if (across == null)
+            {
+                // A skip with nothing written down is the fault this repo has paid for twice.
+                // The placement is still reported, so the centre in the report is the wrong one
+                // and this line is what says why.
+                outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                    item.SheetName, item.Name + " holds " + placed.ViewName
+                    + " and Revit gave no bounding box for it, so it could not be moved to the "
+                    + "centre it was asked for. A schedule is placed by its corner and sits half "
+                    + "its own size right and down until it is moved. Drag it by hand."));
+                return false;
+            }
+
+            SheetMove move = CornerPlacement.MoveToPutTheCentreAt(
+                (across.Min.X + across.Max.X) / 2.0,
+                (across.Min.Y + across.Max.Y) / 2.0,
+                placed.Wanted.CentreX,
+                placed.Wanted.CentreY);
+
+            if (move.Nowhere) return false;
+
+            ElementTransformUtils.MoveElement(
+                document, placed.Schedule.Id, new XYZ(move.Across, move.Up, 0.0));
+
+            return true;
         }
 
         /// <summary>
@@ -687,6 +760,12 @@ namespace RcrcGreen.Revit
             public ScheduleSheetInstance Schedule;
 
             public string ViewName;
+
+            /// <summary>
+            /// Where Core asked for its centre. Kept so what landed can be held against what was
+            /// asked for, which is the whole of the correction above.
+            /// </summary>
+            public ViewportSpot Wanted;
         }
 
         /// <summary>

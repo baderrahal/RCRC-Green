@@ -21,10 +21,16 @@ namespace RcrcGreen.Core.Tests
 
         private const double Tall = 600.0;
 
+        /// <summary>
+        /// The whole sheet, so these hold the even division on its own. What the title
+        /// strip takes off it is DrawingArea's, and is tested there.
+        /// </summary>
+        private static readonly DrawingArea Whole = DrawingArea.WholeSheet(Wide, Tall);
+
         [Fact]
         public void OneViewSitsInTheMiddle()
         {
-            var spots = SheetLayout.For(Wide, Tall, 1).ToArray();
+            var spots = SheetLayout.For(Whole, 1).ToArray();
 
             Assert.Single(spots);
             Assert.Equal(400.0, spots[0].CentreX);
@@ -38,7 +44,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TwoSitSideBySideAtTheSameHeight()
         {
-            var spots = SheetLayout.For(Wide, Tall, 2).ToArray();
+            var spots = SheetLayout.For(Whole, 2).ToArray();
 
             Assert.Equal(2, spots.Length);
             Assert.Equal(200.0, spots[0].CentreX);
@@ -50,7 +56,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void FourMakeATwoByTwoGrid()
         {
-            var spots = SheetLayout.For(Wide, Tall, 4).ToArray();
+            var spots = SheetLayout.For(Whole, 4).ToArray();
 
             Assert.Equal(4, spots.Length);
 
@@ -71,7 +77,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheyComeBackInReadingOrder()
         {
-            var spots = SheetLayout.For(Wide, Tall, 4).ToArray();
+            var spots = SheetLayout.For(Whole, 4).ToArray();
 
             Assert.True(spots[0].CentreX < spots[1].CentreX);
             Assert.True(spots[0].CentreY > spots[2].CentreY);
@@ -84,7 +90,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheMarginIsEvenOnEverySide()
         {
-            var spots = SheetLayout.For(Wide, Tall, 4).ToArray();
+            var spots = SheetLayout.For(Whole, 4).ToArray();
 
             double leftEdge = spots[0].CentreX;
             double rightEdge = Wide - spots[1].CentreX;
@@ -108,20 +114,17 @@ namespace RcrcGreen.Core.Tests
             Assert.False(SheetLayout.IsACount(3));
             Assert.False(SheetLayout.IsACount(0));
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => SheetLayout.For(Wide, Tall, 3));
+            Assert.Throws<ArgumentOutOfRangeException>(() => SheetLayout.For(Whole, 3));
         }
 
         /// <summary>
-        /// A title block reporting no size has nowhere worked out to put a view, so it is
-        /// refused at the door rather than placing everything at the origin.
+        /// No area is not an area. It used to take two lengths and refuse them here, and those
+        /// refusals moved with them.
         /// </summary>
         [Fact]
-        public void ASheetWithNoSizeIsRefused()
+        public void NoAreaIsRefused()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => SheetLayout.For(0.0, Tall, 1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => SheetLayout.For(Wide, -1.0, 1));
-            Assert.Throws<ArgumentException>(() => SheetLayout.For(double.NaN, Tall, 1));
-            Assert.Throws<ArgumentException>(() => SheetLayout.For(Wide, double.PositiveInfinity, 1));
+            Assert.Throws<ArgumentNullException>(() => SheetLayout.For(null, 1));
         }
     }
 

@@ -209,10 +209,27 @@ because the code is already the front of the number. One holding more is typed, 
 `PlannedSheet.WhyNothingIsProposed` says so next to the empty boxes. A row short of a name or a
 number is refused by name, and `SheetBatch` counts what one definition really makes.
 
-`SheetLayout.For` is the maths: a title block's width and height and a count of 1, 2 or 4, back
-comes the centre of each viewport in reading order. It divides the sheet evenly, so the margin
-outside equals the gap between. Y counts up from the bottom, which is Revit's convention and
-the reason the first row back is the top one.
+`SheetLayout.For` is the maths: a `DrawingArea` and a count of 1, 2 or 4, back comes the centre
+of each viewport in reading order. It divides that area evenly, so the margin outside equals the
+gap between. Y counts up from the bottom, which is Revit's convention and the reason the first
+row back is the top one.
+
+**It divides the drawing area and not the whole sheet.** `DrawingArea.InsideTheTitleBlock` takes
+the title strip down the right hand edge off the width, because that is not somewhere a view may
+sit, and the first real run centred every schedule across it. **How wide the strip is cannot be
+read off a title block**: Revit gives a placed block Sheet Width and Sheet Height and nothing
+else, and where the strip begins is drawn inside the family. So `TitleStripAcross` is a fifth,
+the tool's own setting, measured by the team on the run of 2026-09-11, and `InWords` says whose
+setting it is in the report the same way `SectionDepth` and `AnnotationCropChoice` do.
+
+**A schedule on a sheet is placed by its top left corner and a viewport by its centre.** Both
+were handed the centre this maths works out, so on that run every plan view landed correctly and
+every schedule landed half its own size right and down. 010QA measured it: 207.4 by 187.4 mm
+asked for 420.5 by 297.0 came back centred on 522.1 by 203.3, which is 93.7 low and exactly half
+its own height. `CornerPlacement` holds the correction and the writer applies it after the
+placement, because how big a schedule comes out is not known until Revit has drawn it. Nothing
+moves a viewport: those were right, and a viewport's bounding box takes in the view title under
+it, so correcting one against its box would move a placement that is already correct.
 
 `SheetSize` is the width and the height in feet AND which read produced them, because a size
 that came from nowhere reads exactly like a size that was measured. Three sheets were made

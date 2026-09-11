@@ -4,6 +4,145 @@ Newest entry first.
 
 ---
 
+## 2026-09-11, fifty third pass. The crop is the sections' own, and two placement faults off the first real run
+
+Off the run of 2026-09-11 at 17:52: 22 created, 0 refused, the first time the tool has been
+in Revit since pull request 32. Eight items came back. This round is two pull requests,
+because fix 7 alone is a new Core file family with tests, a panel change and an installer
+change, and the brief allowed the split. Fixes 1 to 4 are the first, 5 to 8 the second.
+
+### Fix 3 first, because it is the one that had to be found rather than fixed
+
+**Annotation crop is not the answer and has not been for nine rounds.** DM-11-(010) Overall
+Plan came out with Annotation Crop ON, which is the tool's own setting and which the
+Properties panel confirms, and DM-20-(400) and NS-32-(400) are still selectable inside it.
+That disproves the thing nine rounds assumed. It is worth saying plainly: the fix that was
+applied over and over was to a view that was already set the way the fix wanted it.
+
+**The two sections that bleed are the model's own and not this tool's.** DM-20-(400) is the
+sibling DM-11-(400) was set up from, so it predates the run, and NS-32-(400) is one of the
+four real sections this repo measured for the far clip rounds ago. Nothing the run created
+put them there. What the run created is a view that shows them.
+
+**What they have in common is measured: Crop View off, Scope Box none.** The brief records
+it for DM-20-(400), and DM-11-(400), which the tool made, came out the same way.
+
+**A section with its crop off is not bounded sideways, and that is where both symptoms come
+from.** The extent of what a section draws is its crop region. With the crop off there is
+nothing bounding it across the cut, so what it draws runs as far as the model does, its
+marker in plan runs with it, and any plan view that marker crosses shows it. Annotation crop
+cannot help: it hides annotation that falls OUTSIDE the annotation crop region, and a marker
+running through the middle of the view is inside it. No setting on DM-11's own view can hide
+an annotation that is genuinely inside DM-11.
+
+The same thing on the section's own side is symptom b. 400QA read 13250.5 by 198.3 mm on an
+841 by 594 sheet. A viewport fifteen times wider than the sheet it sits on is a view showing
+something far bigger than one plot, which is exactly what an unbounded section draws.
+
+**The tool is now making more of them, and the code says how.** `MakeSection` works the
+section box out from the plot's scope box through `SectionPlacement.Across`, hands it to
+`ViewSection.CreateSection`, which is what sets the new section's crop region, and then
+`FinishSection` calls `ApplySiblingCrop`, which sets `CropBoxActive` from the sibling. The
+sibling has it off. So the tool computes the right bounds and then switches them off four
+calls later. That is the tenth two-records-of-one-fact in this repo: where a section reaches
+is decided twice, once by the plot's scope box and once by a flag copied off another view,
+and the copy wins.
+
+**What would bound it is the crop box the tool already computes.** Nothing else is needed
+and nothing new has to be measured. Whether the tool should set Crop View on for a section
+it makes: yes, on the same reasoning that made the annotation crop and the section depth the
+tool's own settings, because `SectionPlacement` exists to say where a section reaches and
+copying a flag off a sibling throws that answer away. It is not done in this round. The
+brief said investigate and do not patch, and it reverses a rule this repo wrote down on
+purpose, that a section copies all three crop settings, so it is the next round's and it is
+named here rather than slipped in.
+
+**What is still UNKNOWN, and exactly what would settle it.** Whether those foreign markers
+sit inside DM-11's crop region or in the margin between its model crop and its annotation
+crop. Revit holds the annotation crop as a separate rectangle offset outward from the model
+crop, and those offsets are readable and settable through `ViewCropRegionShapeManager`. If
+the markers are inside the region, the cause is the sections' own extents and nothing about
+DM-11's view will fix it. If they sit in that margin, the offsets are a second contributor.
+**The check is to open DM-11-(010) Overall Plan in Revit and look at where DM-20-(400)'s
+marker sits against the crop rectangle.** One look answers it. Nothing here can, and nothing
+here guessed.
+
+### Fix 4, the three sections referencing 010QD
+
+It follows from fix 3 and one of the three is not a fault. Revit sets Referencing Sheet from
+the sheet holding a view in which the section's marker is displayed. DM-11-(010) Overall
+Plan went onto 010QD and all three markers are visible in it, so all three took 010QD and
+detail 1.
+
+**DM-11-(400)'s reference is correct** and should stay: its marker belongs in DM-11's plan.
+DM-20-(400)'s and NS-32-(400)'s are wrong, and they are wrong for exactly the reason fix 3
+names, because those two are only visible there at all through their own unbounded extents.
+
+Whether it clears by itself once they are bounded is UNKNOWN. Revit works the reference out
+from where the marker shows, so a marker that no longer shows in DM-11's plan should take a
+different sheet or none. Whether it recomputes on the next regeneration or needs the file
+reopened is not something this session can say. Nothing was changed about it, as the brief
+asked.
+
+### Fix 1, a schedule is placed by its corner
+
+Every schedule on a sheet was wrong and every plan view was right, and the run report's own
+numbers say why. 010QA: a schedule 207.4 by 187.4 mm, asked for the centre 420.5 by 297.0
+that every plan view landed on, came back centred on 522.1 by 203.3. That is 93.7 low, and
+half its own height is 93.7 exactly. `ScheduleSheetInstance.Create` takes the top left
+corner and `Viewport.Create` takes the centre, and both were handed the centre.
+
+**The conversion is on the Revit side, after the placement, and it is measured rather than
+worked out.** How big a schedule comes out on a sheet is not known until Revit has drawn it,
+so there is no size to subtract from beforehand. `ModelWriter` places, regenerates, reads
+each schedule's bounding box, and moves it by what `CornerPlacement.MoveToPutTheCentreAt`
+hands back. Measuring also means nothing in the code has to assume which corner Revit used.
+Core keeps working in centres throughout and knows nothing about corners except in its own
+words.
+
+**Nothing moves a viewport.** Those landed correctly, and a viewport's bounding box takes in
+the view title drawn under it, so correcting one against its box would move a placement that
+is already right. A schedule Revit gives no bounding box for is left where it is and named
+under needs attention, because a skip with nothing written down is the fault this repo has
+paid for twice.
+
+### Fix 2, the views divide the drawing area
+
+`SheetLayout.For` divided the whole 841 by 594, so a wide view centred in it crossed the
+title strip down the right. It takes a `DrawingArea` now.
+
+**The drawing area cannot be read off a title block.** Revit gives a placed block Sheet
+Width and Sheet Height and nothing else, and where the strip begins is drawn inside the
+family, so reading it would mean opening the family document, which is not something to do
+inside a run. So the strip is the tool's own setting, a fifth of the width, which is the
+team's own measurement off this run, stated in the brief. It is one constant in one place
+with its source in its own comment, and `DrawingArea.InWords` says whose setting it is on
+every sheet line of the report, the same way `SectionDepth` and `AnnotationCropChoice` do. A
+number with no source would have been the invention the brief refused, and this one has a
+source and says so.
+
+### The breaks
+
+Two, each a reversed edit with the diff hash the same before the first and after the last:
+
+- `InsideTheTitleBlock` not taking the strip off: Failed 3 of 1193, all three drawing area
+  tests
+- `MoveToPutTheCentreAt` running the wrong way: Failed 2 of 1193
+
+### Not observed
+
+Nothing in this pull request has been through Revit. Unexecuted there: the schedule
+correction itself, and whether `ElementTransformUtils.MoveElement` moves a
+`ScheduleSheetInstance` on a sheet as it moves anything else; whether a schedule ever comes
+back with no bounding box at all, which is the path that names it instead of moving it; the
+second regeneration's cost on a sheet holding four schedules; and how a view centred in the
+drawing area sits against the strip on a real A1, which is the number the fifth was taken
+from and the one worth checking first. The fifth itself is one person's reading of one title
+block and the report now says so on every sheet, so a team that measures it properly changes
+one constant.
+
+---
+
 ## 2026-09-11, forty eighth pass. The report for the run sheet round
 
 Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 70 is
