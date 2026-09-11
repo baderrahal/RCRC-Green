@@ -288,7 +288,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// named under CELLS NOT WRITTEN with what the schedule printed.
         /// </summary>
         [Fact]
-        public void ASpeciesWithNoMeasureHasItsTwoCellsNamedAndNotWritten()
+        public void ASpeciesWithNoMeasureIsNotWrittenAtAllAndIsNamedWithItsCount()
         {
             SpeciesList list = SpeciesList.Holding(
                 new[] { new SpeciesListRow(4, "Albizia lebbeck", "15", "8") }, 4, 9, "B10", "I", "J");
@@ -303,16 +303,46 @@ namespace RcrcGreen.Core.Tests.Kpi
                     KpiTemplates.Mosques, list, list),
                 null, null, null);
 
-            Assert.Equal(new[] { "B5", "D5" },
-                plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet).Select(one => one.Cell.ToString()));
+            // No name, no count, no measure. A row written with a name and a count alone is
+            // what put seven error formulas into the 1836 workbook and deleted it.
+            Assert.Empty(plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet));
 
-            List<NotWritten> skipped = plan.Skipped.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet).ToList();
-            Assert.Equal(new[] { "I5", "J5" }, skipped.Select(one => one.Cell));
-            Assert.Equal("UNKNOWN height", skipped[0].What);
+            NotWritten skipped = Assert.Single(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet));
+            Assert.Equal(string.Empty, skipped.Cell);
+            Assert.Equal("UNKNOWN 16 under Proposed", skipped.What);
             Assert.Equal(
-                "no row printed a height a workbook can compute with: FM-05 row 5 prints '-', so nothing is written",
-                skipped[0].Why);
-            Assert.Contains("will not compute its canopy", skipped[1].Why);
+                "the workbook's list does not hold this name, and a row written into an empty one carries only "
+                + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
+                + "so no row was written: FM-05 row 5 prints '-', FM-05 row 5 prints 0, which is no size",
+                skipped.Why);
+        }
+
+        /// <summary>
+        /// One measure is enough to refuse the row. The model sizes the canopy and prints no
+        /// height, so the row is not written and the reason names the one that is missing.
+        /// </summary>
+        [Fact]
+        public void ASpeciesMissingOneOfTheTwoMeasuresIsNotWrittenEither()
+        {
+            SpeciesList list = SpeciesList.Holding(
+                new[] { new SpeciesListRow(4, "Albizia lebbeck", "15", "8") }, 4, 9, "B10", "I", "J");
+
+            IReadOnlyList<SpeciesMatch> matches = SpeciesMatching.Against(
+                KpiMerge.Species(new[]
+                {
+                    CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("UNKNOWN", "Proposed", 16, 5, "-", "5") })
+                }, CreateFixture.Counted),
+                KpiTemplates.Mosques, list, list);
+
+            SpeciesMatch match = Assert.Single(matches);
+            Assert.False(match.Placed);
+            Assert.False(match.Added);
+            Assert.Equal(0, match.Row);
+            Assert.Equal(
+                "the workbook's list does not hold this name, and a row written into an empty one carries only "
+                + "what the model prints, which is no height a workbook can compute with, "
+                + "so no row was written: FM-05 row 5 prints '-'",
+                match.Why);
         }
 
         /// <summary>
@@ -410,8 +440,14 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Contains("  BAUHINIA PURPUREA | Proposed | 19 | FM-05 19 | Tree List - Proposed D5 and B5 | 6 into I5 | 5 into J5 | "
                 + SpeciesMatching.WrittenIn, report);
-            Assert.Contains("  UNKNOWN | Proposed | 16 | FM-05 16 | Tree List - Proposed D6 and B6 | not written: no row printed a height", report);
+            Assert.Contains("  UNKNOWN | Proposed | 16 | FM-05 16 | NOWHERE, so its count is not in the total | - | - | "
+                + "the workbook's list does not hold this name, and a row written into an empty one carries only "
+                + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
+                + "so no row was written: FM-05 row 5 prints '-', FM-05 row 5 prints 0, which is no size", report);
             Assert.Contains("  A written row carries the botanical name, the count, and the height and the canopy", report);
+
+            // 16 of 35, so a workbook one tree short and one sixteen short do not read alike.
+            Assert.Contains("  NOT WRITTEN, THE WHOLE RUN: 16 trees of 35, over every species this run merged.", report);
         }
     }
 }

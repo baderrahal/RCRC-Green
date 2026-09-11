@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -173,7 +174,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         Existing("WASHINGTONIA ROBUSTA", 19),
                         Existing("FICUS BENJAMINA", 3),
                         Existing("PROSOPIS JULIFLORA", 3),
-                        Existing("UNKNOWN", 16)
+                        UnknownExisting(16)
                     },
                     KpiTemplates.Mosques, existing, proposed);
 
@@ -197,12 +198,18 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "reaches rows 4 to 92 and not that one, so the count was not written where no total would add it",
                     prosopis.Why);
 
-                // Absent, and no empty row the total reaches to write it into.
+                // Absent from the list, and the model prints no size for it, so it takes no
+                // row. This sheet also has no empty row the total reaches, so both are true and
+                // the size is said first, because it holds wherever the row would have been.
                 SpeciesMatch unknown = matches[5];
                 Assert.False(unknown.Placed);
                 Assert.False(unknown.NotReachedByTheTotal);
                 Assert.Equal(0, unknown.Row);
-                Assert.Equal(SpeciesMatching.NoEmptyRowLeft, unknown.Why);
+                Assert.Equal(16, unknown.Species.Quantity);
+                Assert.StartsWith(
+                    "the workbook's list does not hold this name, and a row written into an empty one carries only "
+                    + "what the model prints, which is no height and no canopy diameter a workbook can compute with",
+                    unknown.Why, StringComparison.Ordinal);
 
                 // 17 + 27 + 19 + 3, the trees that reach the total.
                 Assert.Equal(66, matches.Where(one => one.Placed).Sum(one => one.Species.Quantity));
@@ -276,8 +283,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 IReadOnlyList<SpeciesMatch> matches = SpeciesMatching.Against(
                     new[]
                     {
-                        new MergedSpecies("UNKNOWN", CreateFixture.Proposed, new[] { new PlotNumber("FM-05", 2) }),
-                        new MergedSpecies("SHRUBS: BOUGAINVILLEA GLABRA", CreateFixture.Proposed, new[] { new PlotNumber("FM-05", 4) })
+                        CreateFixture.Merged("PHOENIX DACTYLIFERA", CreateFixture.Proposed, "FM-05", 2),
+                        CreateFixture.Merged("SHRUBS: BOUGAINVILLEA GLABRA", CreateFixture.Proposed, "FM-05", 4)
                     },
                     KpiTemplates.Mosques, existing, proposed);
 
@@ -374,7 +381,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.Equal(SpeciesList.NoTotalFound, existing.TotalInWords);
 
                 IReadOnlyList<SpeciesMatch> matches = SpeciesMatching.Against(
-                    new[] { Existing("ALBIZIA LEBBECK", 1), Existing("UNKNOWN", 2) },
+                    new[] { Existing("ALBIZIA LEBBECK", 1), UnknownExisting(2) },
                     KpiTemplates.Mosques, existing, existing);
 
                 Assert.True(matches[0].NotReachedByTheTotal);
@@ -424,19 +431,22 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.Empty(existing.OutsideTheTotal);
 
                 IReadOnlyList<SpeciesMatch> matches = SpeciesMatching.Against(
-                    new[] { Existing("ZIZIPHUS SPINA-CHRISTI", 5), Existing("UNKNOWN", 2) },
+                    new[] { Existing("ZIZIPHUS SPINA-CHRISTI", 5), CreateFixture.Merged("PHOENIX DACTYLIFERA", CreateFixture.Existing, "DM-11", 2) },
                     KpiTemplates.Mosques, existing, existing);
 
-                Assert.False(matches[0].Placed);
-                Assert.True(matches[0].NotReachedByTheTotal);
-                Assert.Equal(8, matches[0].Row);
+                // Found by name rather than by index, because the merge orders by name.
+                SpeciesMatch ziziphus = matches.Single(one => one.Species.BotanicalName == "ZIZIPHUS SPINA-CHRISTI");
+                Assert.False(ziziphus.Placed);
+                Assert.True(ziziphus.NotReachedByTheTotal);
+                Assert.Equal(8, ziziphus.Row);
                 Assert.Equal(
                     "the workbook holds this name on row 8, below the first empty row of its list at row 7, "
                     + "so it was neither matched nor written in a second time",
-                    matches[0].Why);
+                    ziziphus.Why);
 
-                Assert.True(matches[1].Added);
-                Assert.Equal(7, matches[1].Row);
+                SpeciesMatch phoenix = matches.Single(one => one.Species.BotanicalName == "PHOENIX DACTYLIFERA");
+                Assert.True(phoenix.Added);
+                Assert.Equal(7, phoenix.Row);
             }
             finally
             {
@@ -473,7 +483,18 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static MergedSpecies Existing(string name, int count)
         {
-            return new MergedSpecies(name, CreateFixture.Existing, new[] { new PlotNumber("DM-11", count) });
+            return CreateFixture.Merged(name, CreateFixture.Existing, "DM-11", count);
+        }
+
+        /// <summary>
+        /// UNKNOWN as the model prints it, a dash for its height and 0 for its canopy diameter,
+        /// measured on DM-25 row 19. It is the one species that carries no size, so no fixture
+        /// here may hand it one.
+        /// </summary>
+        private static MergedSpecies UnknownExisting(int count)
+        {
+            return MergedSpecies.FromRows("UNKNOWN", CreateFixture.Existing,
+                new[] { CreateFixture.Species("UNKNOWN", CreateFixture.Existing, count, 19, "-", "0").OnPlot("DM-11") });
         }
 
         private static void AssertMatchedOn(SpeciesMatch match, int row, string workbookName)

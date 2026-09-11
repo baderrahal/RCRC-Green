@@ -1,5 +1,39 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty third pass, one rule measured on the 1836 run over 20 mosque plots. **No
+audit finding is closed here**, because this is a fault off a run rather than an audit entry,
+and none was renumbered or annotated. The count in the round message, 32 open, does not
+reconcile with the two audit files at this branch, which hold 49 numbered findings and 5 FIXED
+marks. That is written down in the log rather than resolved.
+
+**A species the model does not size gets no row at all.** 34 cells were ready, the run wrote the
+workbook, the formula check found 7 formulas that would read an error and deleted it, and every
+one traced to UNKNOWN written into Tree List - Proposed row 85 with a name and a count and no
+canopy diameter, because DM-25 row 19 prints nothing for its height and 0 for its diameter.
+`SpeciesMatching.WrittenInto` asks both measures before it takes a row. A species missing either
+is named with its count and the reason, which quotes what every row printed, and the run goes
+through. **The canopy guard is untouched, byte for byte.** The size is asked before a row is
+taken so nothing is used up, the sheet's own total is still said first, and both measures are
+required, which is Bader's wording rather than a measurement.
+
+**The report says how many trees went nowhere and out of what**, NOT WRITTEN, THE WHOLE RUN: 1
+tree of 528, over every species this run merged, off the one list of matches the section above
+prints from.
+
+12 existing tests went red, which is what a rule change should do. Nine were fixtures that
+predate measures and three were the old rule written down. **The blanket fixture fix was itself
+a fault and the review caught it**: it gave UNKNOWN a size, and UNKNOWN is the one species
+measured to print neither a height nor a diameter. Every test that names UNKNOWN says what the
+model says now.
+
+Three break watches went red on 10, 1 and 1 tests and were restored byte for byte. One of them
+passed first time against a test that was not testing what it said, which is how that test was
+corrected. **Locally 1187 tests at this branch, 0 failed and 0 skipped, 672 of them KPI, 5 added
+net, against the 1182 main carries.** The pull request, the merge hash and the runner's count go
+in the record the merge adds here. **Nothing in this round has been observed in Revit.** Two
+things wait on Bader, both in the log: whether both measures should be required or the diameter
+alone, and what a withheld count costs.
+
 Phase: 9, ship. Fifty second pass, one correction on finding 39's filled file test, measured
 by Bader on two template sets. **The 38 open audit findings stay open**, not renumbered, not
 reordered, not annotated, and 39 keeps its FIXED mark with the correction under it.

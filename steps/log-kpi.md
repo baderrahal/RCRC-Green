@@ -4,6 +4,124 @@ Newest entry first.
 
 ---
 
+## 2026-09-11, fifty third pass. A species the model does not size gets no row at all
+
+One rule, measured on the 1836 run over 20 mosque plots. **The other audit findings stay open**,
+not renumbered, not reordered, not annotated, and this round closes none of them: it is a fault
+off a run rather than an audit entry. Nothing else was touched: not the Drawing Sheet, not
+`Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
+this round has been observed in Revit.** The branch came off a fresh pull of main at `c47bccb`.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1187 tests at this branch, 0 failed and 0 skipped, 672 of them KPI, 5 added here**, against
+the 1182 main carries.
+
+**A count I could not reconcile.** The round message says the other 32 audit findings stay
+open. At this branch the two audit files hold 49 numbered findings and 5 FIXED marks, 9 and 16
+in `steps/audit-kpi.md` and 34, 35 and 39 in `steps/audit-kpi-2.md`, so 44 stand as marked here.
+The round that was to close 3, 4, 6, 12, 21 and 26 has still not landed on main. Nothing was
+renumbered or annotated either way, and the difference is written down rather than resolved.
+
+### What happened, and what the fix is
+
+34 cells were ready. The run wrote the output, checked it, found 7 formulas that would read an
+error and deleted it. Every one traced to one row: UNKNOWN written into Tree List - Proposed row
+85 with a name and a count and no diameter, because DM-25 row 19 prints nothing for its height
+and 0 for its canopy diameter. `PrintedMeasure.Held` already means a number greater than nought,
+so a nought was never a size, and the row went in without one.
+
+**The guard is right and the rule it caught was wrong.** Writing a name and a count into an
+empty row cannot work for a species the model does not size. `SpeciesMatching.WrittenInto` now
+asks the height and the canopy diameter before it takes a row, and a species missing either
+gets no row, is named with its count and its reason, and the run goes through. The canopy guard
+is untouched, byte for byte: it caught this, which is why it exists.
+
+The reason names what is missing and what every row printed, so a person can see it without
+opening the model:
+
+```
+the workbook's list does not hold this name, and a row written into an empty one carries only
+what the model prints, which is no height and no canopy diameter a workbook can compute with,
+so no row was written: DM-25 row 19 prints '-', DM-25 row 19 prints 0, which is no size
+```
+
+Three decisions inside it, none of them settled by the code:
+
+- **The size is asked before a row is taken**, so a refused species leaves the empty row for
+  the next one. A test proves it, and it only proves it because the merge orders by name and
+  the unsized species is reached first. The first version of that test put the unsized species
+  second, so the broken code passed it. **It went green on a watch that should have turned it
+  red**, which is how it was caught
+- **The sheet's own total is asked first.** A sheet with no total writes nothing for anybody
+  and that is the larger fact, so it is still said first for a species that is also unsized
+- **Both measures are required**, which is the round message's wording. Only the diameter is
+  known to break a formula: `L` reads `J` through `ISBLANK` and nothing measured says a row with
+  a diameter and no height is safe. Requiring both withholds a row from a species the model
+  half sizes, its count is named in the report, and loosening it to the diameter alone is
+  Bader's call
+
+### One line added to the report
+
+Under SPECIES REVIT HELD THAT THE WORKBOOK'S LIST DOES NOT:
+
+```
+  NOT WRITTEN, THE WHOLE RUN: 1 tree of 528, over every species this run merged.
+```
+
+Both numbers come off the one list of matches the section above prints from, so nothing counts
+the trees a second way. It covers the whole run rather than that section, because a tree that
+went nowhere for any reason is a tree the workbook does not hold, and the line says so.
+
+### What the 12 red tests turned out to be
+
+The rule turned 12 existing tests red, which is what a rule change should do. Four readers, one
+per file, said which were fixtures and which were expectations. Two kinds:
+
+- **Nine were fixtures that predate measures.** They build a species with no height and no
+  diameter because they are about matching a name, taking rows in order, or room on a sheet.
+  `CreateFixture.Species` gives the ordinary case a size now, 15 and 8, and `CreateFixture.Merged`
+  builds a sized species off a row rather than off a plot number
+- **Three were the old rule written down**, all about UNKNOWN, and their expectations changed.
+  `PhoenixWritesEighteenAndFifteenAndUnknownWritesNeitherAndStillRefuses` asserted the workbook
+  being deleted by the guard. It asserts the opposite now and is the round in one test:
+  PHOENIX goes in whole, UNKNOWN takes no row, and **the workbook is written**
+
+**The blanket fixture change was itself a fault, and the review caught it.** Giving every three
+argument fixture species a size made UNKNOWN carry 15 and 8, and UNKNOWN is the one species
+measured to print neither. Every test that names UNKNOWN now says what the model says, a dash
+and a 0, and the tests that only needed a species the list does not hold use one that is
+measured to have a size. Where UNKNOWN was left in a test about room, its reason changed from
+the sheet ran out of room to the model does not size it. Both are true on that sheet and the
+size one is said first, which is what makes the two UNKNOWN rows of the 1836 run read the same
+way afterwards.
+
+### Break watches
+
+Three, each restored byte for byte and checked with cmp, the suite rerun green at 1187.
+
+- the size never asked, so an unsized species takes a row: **10 red**, across
+  `SpeciesMatchingTests`, `CanopyColumnsTests`, `TreeListRowsTests` and `DiameterColumnTests`
+- the report not saying how many trees went nowhere: **1 red**, the canopy report test
+- the refused species taking its row before the check: **1 red**, the ordering test, and only
+  after that test was corrected. It passed the same watch before, which is what showed it was
+  not testing what it said
+
+### Existing tests changed
+
+`CreateFixture.Species` gained a size and `CreateFixture.Merged` is new. `SpeciesMatchingTests`
+and `TreeListRowsTests` moved to them, three tests were renamed for what they now assert, and
+`DiameterColumnTests` and `CanopyColumnsTests` each had one expectation rewritten. 5 tests added
+net, 1182 to 1187.
+
+### Open, and for Bader
+
+- **Whether both measures should be required or the diameter alone.** Only the diameter is known
+  to break a formula. A species the model gives a diameter and no height is withheld today
+- **What a withheld count costs.** A tree not written is a tree the workbook's totals do not
+  hold. The report says how many, and the answer to the species themselves is in the model
+
+---
+
 ## 2026-09-11, fifty second pass. A workbook is filled when a cell the tool writes holds what the tool writes
 
 One correction, on finding 39's filled file test, measured by Bader on two template sets. The
