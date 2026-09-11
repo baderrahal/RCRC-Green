@@ -10,7 +10,11 @@ namespace RcrcGreen.Core.Tests
     /// </summary>
     public class ViewportRecordTests
     {
-        private static ViewportRecord Placed(int scale = 250, bool schedule = false)
+        private static ViewportRecord Placed(
+            int scale = 250,
+            bool schedule = false,
+            string scaleAsShown = null,
+            string viewportType = null)
         {
             return new ViewportRecord(
                 "200QA",
@@ -20,7 +24,9 @@ namespace RcrcGreen.Core.Tests
                 1.0, 0.5,
                 2.0, 1.0,
                 2.5, 1.5,
-                schedule);
+                schedule,
+                scaleAsShown,
+                viewportType);
         }
 
         [Fact]
@@ -52,6 +58,49 @@ namespace RcrcGreen.Core.Tests
         {
             Assert.Equal("1:250", Placed().ScaleInWords());
             Assert.Equal("no scale", Placed(0).ScaleInWords());
+        }
+
+        /// <summary>
+        /// DM-11-(200) General Arrangement Layout reads Custom over a Scale Value of 250, under
+        /// a template named for 250, and the report said 1:250 with nothing about the Custom.
+        /// The two do not disagree about the number, so both are printed and neither is dropped.
+        /// A report and a model that differ by a word are the same class of fault as a report
+        /// that says created and not created.
+        /// </summary>
+        [Fact]
+        public void AScaleRevitLabelsCustomSaysBothTheRatioAndTheLabel()
+        {
+            Assert.Equal("1:250, shown as Custom", Placed(scaleAsShown: "Custom").ScaleInWords());
+
+            Assert.Contains(
+                "at 1:250, shown as Custom, 609.6 by 304.8 mm",
+                Placed(scaleAsShown: "Custom").InWords());
+        }
+
+        /// <summary>
+        /// Where Revit shows exactly the ratio, saying it twice would be noise.
+        /// </summary>
+        [Fact]
+        public void AScaleShownAsTheRatioIsSaidOnce()
+        {
+            Assert.Equal("1:250", Placed(scaleAsShown: "1:250").ScaleInWords());
+            Assert.Equal("1:250", Placed(scaleAsShown: "").ScaleInWords());
+        }
+
+        /// <summary>
+        /// Every viewport the first real run made came out PRX_Title With Line and the report
+        /// did not say so, because nothing recorded it. It is taken off the sibling now and
+        /// named here, so which type a placement got is readable without opening the sheet.
+        /// </summary>
+        [Fact]
+        public void TheViewportTypeIsNamedWhereThereIsOne()
+        {
+            Assert.EndsWith(
+                "on a sheet of 762 by 457.2 mm. Viewport type PRX_Title With Line.",
+                Placed(viewportType: "PRX_Title With Line").InWords());
+
+            Assert.EndsWith("on a sheet of 762 by 457.2 mm.", Placed().InWords());
+            Assert.Equal(string.Empty, Placed().ViewportTypeName);
         }
 
         [Fact]

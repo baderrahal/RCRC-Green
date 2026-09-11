@@ -36,6 +36,7 @@ namespace RcrcGreen.Revit
             if (document == null) throw new ArgumentNullException("document");
 
             var reader = new SiblingReader();
+            Dictionary<ElementId, string> viewportTypeByView = ViewportTypes(document);
 
             foreach (View view in new FilteredElementCollector(document)
                 .OfClass(typeof(View))
@@ -49,11 +50,37 @@ namespace RcrcGreen.Revit
                 // plain values Core chose between to the element itself.
                 if (reader._byName.ContainsKey(view.Name)) continue;
 
+                string viewportType;
+                viewportTypeByView.TryGetValue(view.Id, out viewportType);
+
                 reader._byName.Add(view.Name, view);
-                reader._facts.Add(FactsAbout(document, view, parsed.Type));
+                reader._facts.Add(FactsAbout(document, view, parsed.Type, viewportType));
             }
 
             return reader;
+        }
+
+        /// <summary>
+        /// The viewport type each placed view is shown with, read once for the whole document.
+        ///
+        /// Revit will not place one view on two sheets, so a view has one viewport or none, and
+        /// none is a real answer rather than a gap to fill in.
+        /// </summary>
+        private static Dictionary<ElementId, string> ViewportTypes(Document document)
+        {
+            var byView = new Dictionary<ElementId, string>();
+
+            foreach (Viewport viewport in new FilteredElementCollector(document)
+                .OfClass(typeof(Viewport))
+                .Cast<Viewport>())
+            {
+                if (byView.ContainsKey(viewport.ViewId)) continue;
+
+                Element type = document.GetElement(viewport.GetTypeId());
+                if (type != null) byView.Add(viewport.ViewId, type.Name);
+            }
+
+            return byView;
         }
 
         /// <summary>
@@ -70,7 +97,8 @@ namespace RcrcGreen.Revit
             return _byName.TryGetValue(chosen.ViewName, out view) ? new Sibling(view, chosen) : null;
         }
 
-        private static SiblingView FactsAbout(Document document, View view, ViewType type)
+        private static SiblingView FactsAbout(
+            Document document, View view, ViewType type, string viewportTypeName)
         {
             var plan = view as ViewPlan;
             var section = view as ViewSection;
@@ -86,7 +114,8 @@ namespace RcrcGreen.Revit
                 NameOf(document, view.GetTypeId()),
                 NameOf(document, view.ViewTemplateId),
                 plan == null || plan.GenLevel == null ? string.Empty : plan.GenLevel.Name,
-                CropOf(view));
+                CropOf(view),
+                viewportTypeName);
         }
 
         /// <summary>

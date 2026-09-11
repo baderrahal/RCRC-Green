@@ -84,7 +84,7 @@ namespace RcrcGreen.Core
 
         /// <summary>
         /// The views in one case, plot order then name order, so a person can open the one they
-        /// need rather than reading a file on the Desktop to find out which it is.
+        /// need rather than opening the report file to find out which it is.
         /// </summary>
         public IReadOnlyList<ViewScopeBoxDecision> In(ScopeBoxCase outcome)
         {

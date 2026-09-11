@@ -7,9 +7,9 @@ namespace RcrcGreen.Core
     /// <summary>
     /// Where a report gets written, and what to say about it afterwards.
     ///
-    /// The Desktop is where the team looks. A folder inside the repo is where anything reading
-    /// the code can look, which is what makes a report useful to whoever picks this up next.
-    /// The same file name goes in both, so a run is findable by date and model in either place.
+    /// One place: the reports folder inside the repo. It went to the Desktop as well until the
+    /// round after the first real run, which meant two files per run, two places to look and
+    /// two to tidy up, and the Desktop one was the copy nothing reading the code could reach.
     ///
     /// That folder is in .gitignore and stays there. This repository is public and a report
     /// carries client view names, sheet numbers, plot identifiers and schedule setups.
@@ -24,9 +24,14 @@ namespace RcrcGreen.Core
         public const string PathFileName = "reports-folder.txt";
 
         /// <summary>
-        /// What the panel says once a report is written. Names every place it really landed and
-        /// says plainly when the repo folder was not one of them, because a report nobody can
-        /// find is the same as no report.
+        /// What the panel says once a report is written. It names where the file really is, and
+        /// when there is no file it says why and what to do, because a report nobody can find is
+        /// the same as no report.
+        ///
+        /// Nothing is written at all when the pointer is missing. That used to be the case where
+        /// one path came back and the line said the Desktop copy was the only one, and the whole
+        /// point of dropping the Desktop copy is that there is no second place for a report to
+        /// be hiding in.
         /// </summary>
         public static string Written(IEnumerable<string> paths)
         {
@@ -36,14 +41,9 @@ namespace RcrcGreen.Core
 
             if (real.Count == 0)
             {
-                return "The report could not be written anywhere.";
-            }
-
-            if (real.Count == 1)
-            {
-                return "Report at " + real[0]
-                    + ". Not written into the repo, because " + PathFileName
-                    + " is not next to the add-in. Run install.ps1 again to put it there.";
+                return "NO REPORT WAS WRITTEN, because " + PathFileName + " is not next to the "
+                    + "add-in and it is the only thing that says where the reports folder is. "
+                    + "Run install.ps1 again to put it there, then run this again.";
             }
 
             return "Report at " + string.Join(" and ", real.ToArray()) + ".";

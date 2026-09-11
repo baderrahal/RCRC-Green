@@ -186,7 +186,7 @@ namespace RcrcGreen.Revit
             }
             catch (UnauthorizedAccessException denied)
             {
-                Told?.Invoke("The Desktop folder refused the report. " + denied.Message);
+                Told?.Invoke("The reports folder refused the report. " + denied.Message);
             }
             catch (IOException failed)
             {

@@ -182,8 +182,41 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(
                 "Set up from DM-18-(010) Overall Plan: family type (200) General Arrangement "
                 + "Layout, view template (010) Overall Plan, level Level 1, crop on, "
-                + "crop region hidden.",
+                + "crop region hidden. That view is on no sheet, so it lends no viewport type.",
                 plan.InWords());
+        }
+
+        /// <summary>
+        /// Every viewport the first real run made came out PRX_Title With Line, which nothing
+        /// here ever chose: Revit's own default type is what Viewport.Create takes. It comes off
+        /// the sibling now, and the line says which view lent it.
+        /// </summary>
+        [Fact]
+        public void TheWordsNameTheViewportTypeAndWhichViewLentIt()
+        {
+            var placed = new SiblingView(
+                "DM-18-(010) Overall Plan", Overall, SiblingKind.Plan,
+                "TYPE A", "TEMPLATE", "Level 1", new ViewCrop(true, false, true),
+                "PRX_Title With Line");
+
+            Assert.Equal("PRX_Title With Line", placed.ViewportTypeName);
+            Assert.EndsWith(
+                "Viewport type PRX_Title With Line, off that view's own placement.",
+                placed.InWords());
+        }
+
+        /// <summary>
+        /// A sibling on no sheet has no viewport type to lend, and that is said rather than
+        /// left for Revit's default to pass as a choice.
+        /// </summary>
+        [Fact]
+        public void ASiblingOnNoSheetSaysItLendsNoViewportType()
+        {
+            var plan = Plan("DM-18-(010) Overall Plan", Overall, "TYPE A", "TEMPLATE");
+
+            Assert.Equal(string.Empty, plan.ViewportTypeName);
+            Assert.EndsWith(
+                "That view is on no sheet, so it lends no viewport type.", plan.InWords());
         }
 
         /// <summary>

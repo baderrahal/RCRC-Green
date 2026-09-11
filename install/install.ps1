@@ -14,6 +14,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
 
@@ -86,9 +87,10 @@ foreach ($symbols in @('RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb')) {
 }
 
 # Revit runs the add-in out of the Addins folder and has no idea where this repo is, so the
-# path is written down here. Without it the reports go to the Desktop only and nothing reading
-# the code can find them. The folder itself is in .gitignore and stays there, because a report
-# carries client view names, sheet numbers and plot identifiers and this repository is public.
+# path is written down here. It is the only thing that says where a report goes: without it
+# nothing is written at all and the panel says so. The folder itself is in .gitignore and stays
+# there, because a report carries client view names, sheet numbers and plot identifiers and this
+# repository is public.
 $reportsFolder = Join-Path $repoRoot 'reports'
 New-Item -ItemType Directory -Path $reportsFolder -Force | Out-Null
 
@@ -99,6 +101,15 @@ $copied.Add($pointer)
 # Where the GRP KPI Checklist templates live. The user sets it with Browse in the KPI pane
 # and the pane writes it here, so an install must not wipe a folder already chosen. The file
 # is made empty only when it is missing, and empty means the pane says to set the folder.
+# Which title block goes with which view type, the eleven the team picked by hand on the run
+# of 2026-09-11. The panel reads this after the user's own file, so it is a starting point and
+# never overwrites a choice: a changed pairing goes to %APPDATA%\RCRC Green\title-blocks.txt.
+$titleBlocks = Join-Path $PSScriptRoot 'title-blocks.txt'
+if (Test-Path -LiteralPath $titleBlocks) {
+    Copy-Item -LiteralPath $titleBlocks -Destination $assemblyFolder -Force
+    $copied.Add((Join-Path $assemblyFolder 'title-blocks.txt'))
+}
+
 $templatesPointer = Join-Path $assemblyFolder 'templates-folder.txt'
 if (-not (Test-Path -LiteralPath $templatesPointer)) {
     Set-Content -LiteralPath $templatesPointer -Value '' -Encoding UTF8 -NoNewline
@@ -119,4 +130,4 @@ foreach ($file in $copied) {
     Write-Host "  $file"
 }
 Write-Host "$($copied.Count) files copied. Restart Revit 2024 and look for the RCRC Green tab."
-Write-Host "Reports go to the Desktop and to $reportsFolder"
+Write-Host "Reports go to $reportsFolder"

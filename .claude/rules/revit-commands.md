@@ -219,6 +219,15 @@ anything is created, so no view this run makes can become the sibling of a later
 cannot come from two views, and a Core test goes red if any future change pairs one view's
 family type with another's template.
 
+**The viewport type is the sixth thing, and it comes off the same one view.** Every viewport
+the first real run made came out `PRX_Title With Line`, which no brief and no rule here ever
+chose: `Viewport.Create` takes the document's own default. It is read off the viewport
+placing the sibling now, set with `ChangeTypeId` after the placement, and named in the
+report. **A sibling on no sheet lends no viewport type**, and that is said against the view
+rather than letting Revit's default pass as a choice. The kind is read off the view being
+placed rather than off its code, because a sheet places views the model already held as well
+as ones this run made.
+
 **The report names the view they came from**, under WHERE EACH NEW VIEW WAS SET UP FROM, with
 the family type and the template printed next to it. A run produced a view whose template read
 `(010) Overall Plan` and whose family type read `(200) General Arrangement Layout`, and there
@@ -316,20 +325,21 @@ make a sheet the screen never showed. The refresh actions rewrite box text and w
 place, skipping the box that has the keyboard, because rebuilding the tree under the cursor
 takes the cursor out of the box.
 
-**Where the views sit is worked out, not read.** `SheetLayout.For` takes a `DrawingArea` and a
-count of 1, 2 or 4 and hands back the centre of each viewport in reading order. The last sheet
-of a division can hold fewer views than the count, and they sit in the first cells of the same
-grid. The area is the sheet less the title strip down its right, which is the tool's own
-setting because a placed title block reports its size and nothing about where its strip begins,
-and the sheet's line in the report says so.
+**Where the views sit is worked out, not read.** `SheetLayout.For` takes a `DrawingArea` and
+a count of 1, 2 or 4 and hands back the centre of each viewport in reading order. The last
+sheet of a division can hold fewer views than the count, and they sit in the first cells of
+the same grid. The area is the sheet less the title strip down its right, which is the
+tool's own setting because a placed title block reports its size and nothing about where its
+strip begins, and the sheet's line in the report says so.
 
-**A schedule is moved after it is placed.** `ScheduleSheetInstance.Create` takes the top left
-corner and `Viewport.Create` takes the centre, and both were handed the centre, so every
-schedule the first real run placed sat half its own size right and down. `ModelWriter` measures
-each schedule's bounding box after the regeneration and moves it by what `CornerPlacement` works
-out, rather than working the corner out from a size it cannot know before Revit draws it. A
-schedule with no bounding box is left where it is and named in the report. Viewports are not
-touched: they landed correctly, and a viewport's box takes in the view title drawn under it.
+**A schedule is moved after it is placed.** `ScheduleSheetInstance.Create` takes the top
+left corner and `Viewport.Create` takes the centre, and both were handed the centre, so
+every schedule the first real run placed sat half its own size right and down. `ModelWriter`
+measures each schedule's bounding box after the regeneration and moves it by what
+`CornerPlacement` works out, rather than working the corner out from a size it cannot know
+before Revit draws it. A schedule with no bounding box is left where it is and named in the
+report. Viewports are not touched: they landed correctly, and a viewport's box takes in the
+view title drawn under it.
 
 **The size comes off the title block PLACED ON THE SHEET, never off the type.** Sheet Width and
 Sheet Height are read-only INSTANCE parameters. On a `FamilySymbol` `get_Parameter` returns
@@ -398,18 +408,59 @@ been run, so the failing case is written down rather than assumed away. The rule
 that costs nothing to keep. A report that says a thing was deleted when the model still holds
 it is worse than the wrong schedule, because the wrong schedule can still be found.
 
-## A report goes to two places and the panel names both
+## A report goes to one place and the panel names it
 
-`ReportFile.Write` writes the Desktop copy first and lets it throw, because a report that cannot
-be written at all is worth a message. The repo copy is guarded and never costs the first one.
-It comes back with the list of paths that really landed, and `ReportPlaces.Written` turns that
-list into the line the panel shows. One path means the repo folder was not found, and the line
-says so and says to run `install.ps1` again, rather than leaving somebody hunting for a file
-that was never written.
+`ReportFile.Write` writes into the reports folder inside the repo and nowhere else. It went
+to the Desktop as well until the round after the first real run, which meant two files per
+run, two places to look and two to tidy up, and the Desktop copy was the one nothing reading
+the code could ever reach.
+
+**No pointer file means no report at all.** `reports-folder.txt` is the only thing that says
+where the folder is, so without it there is nowhere to write, and `ReportPlaces.Written`
+opens with NO REPORT WAS WRITTEN and says to run `install.ps1` again. Falling back to the
+Desktop would put the file exactly where nobody agreed to look for it. The write itself is
+allowed to throw, because it is the only copy now and a report that cannot be written is
+worth a message.
 
 Nothing in the Revit project knows where the repo is. `install.ps1` writes the absolute path
 into `reports-folder.txt` next to the installed assembly and `ReportFile` reads it from there.
 That folder is in `.gitignore` and never leaves the machine.
+
+`ReportPlaces` is Drawing Sheet's and the KPI pane reads it across the fence, so this moved
+where the KPI reports land too. The KPI handler still has a line of its own naming the
+Desktop, which is that task's file and is left for that session.
+
+## Which title block goes with which view type is remembered
+
+Eleven were picked by hand on the run of 2026-09-11 and the same eleven would have been
+picked again for every plot after it.
+
+**Two files, read in this order, first match wins.** The user's own, at `%APPDATA%\RCRC
+Green\title-blocks.txt`, written whenever they change a pairing, then the defaults
+`install.ps1` copies beside the add-in from `install/title-blocks.txt`. Nothing is stored in
+the model: a pairing is how this team works rather than a fact about one project. **Only the
+user's own pairings go into their file**, never the shipped ones as well, or this version's
+defaults would freeze into it and no later install could move them.
+
+`TitleBlockSettingsStore` holds the two paths and nothing else. Reading, merging and writing
+is `TitleBlockSettings` and `TitleBlockSettingsFile` in Core, with tests, and one of those
+tests reads `install/title-blocks.txt` itself so a broken shipped file fails the gate rather
+than somebody's install. No Revit API call is made to read or write either file, so the
+panel does it directly rather than through the external event.
+
+**The file is tab separated, four fields: code, view name, family, type.** A title block in
+this model is named `LOD /  HARDSCAPE SCHEDULES` with two spaces in the middle, so a format
+that split on whitespace or trimmed its fields would quietly turn it into a name the model
+does not hold. Only the code is trimmed. The code and the name are separate fields so the
+`(010) Overall Plan` format lives on `ViewType` and nowhere else.
+
+On the panel: ticking a view type fills a sheet's title block from the settings when it has
+none, changing the picker remembers it against every view ticked on that sheet, and a line
+under the picker says whether it came from the user's file, the shipped defaults or neither.
+**Views that disagree are both named and neither wins**, the rule everywhere here that two
+sources answer one question. A title block the settings name and the model does not hold is
+not an error, because the settings are shared across projects: it reads as unset with the
+reason.
 
 ## A count on the panel opens into the thing it counted
 

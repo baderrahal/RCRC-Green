@@ -163,6 +163,7 @@ namespace RcrcGreen.Revit
                 XYZ centre = viewport.GetBoxCenter();
                 Outline box = viewport.GetBoxOutline();
                 SheetFootprint footprint = FootprintOf(footprints, sheet.Id);
+                Element viewportType = document.GetElement(viewport.GetTypeId());
 
                 placements.Add(new ViewportRecord(
                     sheet.SheetNumber,
@@ -175,7 +176,13 @@ namespace RcrcGreen.Revit
                     box == null ? 0.0 : box.MaximumPoint.Y - box.MinimumPoint.Y,
                     footprint.WidthFeet,
                     footprint.HeightFeet,
-                    false));
+                    false,
+
+                    // Both are here so a placement the team made can be held against one the
+                    // tool made, line for line, which is what this section is for. The viewport
+                    // type is also where the answer comes from when the tool has to pick one.
+                    ScaleAsShown(view),
+                    viewportType == null ? string.Empty : viewportType.Name));
             }
 
             foreach (ScheduleSheetInstance placed in new FilteredElementCollector(document)
@@ -206,6 +213,21 @@ namespace RcrcGreen.Revit
             }
 
             return placements;
+        }
+
+        /// <summary>
+        /// What the Properties panel shows under View Scale, which is not always 1: and the
+        /// number. A value Revit does not hold in its own list of scales is applied as a custom
+        /// one and reads Custom, and a report printing only the ratio hides that.
+        /// </summary>
+        private static string ScaleAsShown(View view)
+        {
+            if (view == null) return string.Empty;
+
+            Parameter shown = view.get_Parameter(BuiltInParameter.VIEW_SCALE_PULLDOWN_METRIC);
+            if (shown == null) return string.Empty;
+
+            return shown.AsValueString() ?? string.Empty;
         }
 
         private static SheetFootprint FootprintOf(
