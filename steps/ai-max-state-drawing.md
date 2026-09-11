@@ -17,7 +17,7 @@ sibling instead of the document's default, the eleven title blocks are remembere
 settings files read user first and Core merges them with tests, and every report goes to the
 repo folder only with nothing written when the pointer is missing. That last one reaches the
 KPI pane through ReportFile and ReportPlaces and THE KPI SESSION HAS TO BE TOLD. Suite reads
-1216 locally. Four breaks watched red. The second pull request is not merged yet.
+1216 locally. Four breaks watched red. The second pull request is not merged yet, and its mockup is design/pr-76.
 
 Before that, the forty seventh pass, the run sheet, merged into main as `fc5cf7a` from
 pull request 70 with 1103 tests on the runner. `steps/run-drawing.md` holds the forty two
