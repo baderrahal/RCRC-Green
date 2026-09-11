@@ -29,8 +29,12 @@ model says now.
 Three break watches went red on 10, 1 and 1 tests and were restored byte for byte. One of them
 passed first time against a test that was not testing what it said, which is how that test was
 corrected. **Locally 1187 tests at this branch, 0 failed and 0 skipped, 672 of them KPI, 5 added
-net, against the 1182 main carries.** The pull request, the merge hash and the runner's count go
-in the record the merge adds here. **Nothing in this round has been observed in Revit.** Two
+net, against the 1182 main carries.** Pull request 75, merged into main as `be72119` through the
+API with the squash message on the call: **the runner executed 1198 tests against its merged
+head, 0 failed and 0 skipped, and locally the same 1198 ran at `be72119`**, 672 of them KPI. The
+11 above the branch's own 1187 are the Drawing Sheet round that landed on main in between,
+`f72834e`, whose files are the only ones that differ from this branch and none of them KPI. The
+merge commit carries no co-author line and no generated-by footer. **Nothing in this round has been observed in Revit.** Two
 things wait on Bader, both in the log: whether both measures should be required or the diameter
 alone, and what a withheld count costs.
 

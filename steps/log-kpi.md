@@ -12,9 +12,15 @@ off a run rather than an audit entry. Nothing else was touched: not the Drawing 
 `Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
 this round has been observed in Revit.** The branch came off a fresh pull of main at `c47bccb`.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1187 tests at this branch, 0 failed and 0 skipped, 672 of them KPI, 5 added here**, against
-the 1182 main carries.
+Pull request 75, merged into main as `be72119`. **The runner executed 1198 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1198 ran at `be72119`, 0 failed and 0
+skipped**, 672 of them KPI. **The branch itself carried 1187**, 5 added here against the 1182
+main held at `c47bccb`. The other 11 are the Drawing Sheet round that landed on main while this
+one was being written, `f72834e`, and the merged head is the first place the two counts meet.
+The only files that differ between this branch and main are that round's, none of them KPI,
+checked. The merge went through the API with the title and the message both passed on the call,
+and the commit came back off main carrying neither a co-author credit line nor a generated-by
+footer.
 
 **A count I could not reconcile.** The round message says the other 32 audit findings stay
 open. At this branch the two audit files hold 49 numbered findings and 5 FIXED marks, 9 and 16
