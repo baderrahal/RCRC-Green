@@ -222,11 +222,16 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     not the placeholder named as filled rather than offered, which the tool can tell because it
     is what wrote it
 
-    FIXED. The peek reads E5 of the first sheet with a shared string resolved, `Recognise`
-    names a file whose E5 is not `KpiTemplates.DatePlaceholder` as a filled checklist of its
-    template with the cell's text in the reason, and the pane lists it greyed in the same list.
-    Nothing is deleted or moved and browsing is untouched. The placeholder is one observation
-    and is for Bader to confirm on all seven. Not observed in Revit.
+    FIXED, and the test corrected in the round after. The first test was E5 against the one
+    placeholder `<Date>`, which Bader measured as wrong: the KPI CHECKLIST R1 set holds a
+    placeholder in E5, G5, H5 and C5, and an earlier production set holds nothing at E5, G5 or
+    C5 with real values at D3 and H5. A workbook is filled when a cell the tool writes holds
+    something the tool would have written, `FilledMarks`, which is a date at E5 or a plot
+    reference at the template's own reference cell, and nothing is withheld on a cell the tool
+    has never written. The peek reads those cells with a shared string resolved, the reason and
+    the report name the cell that decided and what it held, and the pane lists the file greyed
+    in the same list. Nothing is deleted or moved and browsing is untouched. Not observed in
+    Revit.
 
 ### TIDY
 

@@ -1,5 +1,39 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty second pass, one correction on finding 39's filled file test, measured
+by Bader on two template sets. **The 38 open audit findings stay open**, not renumbered, not
+reordered, not annotated, and 39 keeps its FIXED mark with the correction under it.
+
+**A workbook is filled when a cell the tool writes holds something the tool would have written**,
+`FilledMarks`, never when one cell differs from one expected string. Two marks, both cells the
+tool writes: a date at E5, which parses and holds at least two numbers, and a plot reference at
+the template's own reference cell, C5, which is one unbroken run holding a letter and a digit
+and no angle bracket. **Nothing is withheld on a cell the tool has never written**, so an empty
+or absent cell is never a filled file. The cell that decided and what it held are in the reason
+and on their own line in the report, so a template wrongly withheld is traced in one line.
+`KpiTemplates.DatePlaceholder` is deleted, because it decided nothing and was a second record
+of a measurement. The peek reads both cells rather than one.
+
+The two sets it was measured on: KPI CHECKLIST R1 MOSQUES holds `<Date>`, `<Name>`, `<Position>`
+and `<UID>` at E5, G5, H5 and C5, and an earlier production set holds nothing at E5, G5 or C5
+with real values at D3 and H5. One thing in the round message does not hold against the code and
+is said in the log: the old rule offered a template whose E5 was empty, because it refused to
+decide on a blank cell. It was wrong for the reason given rather than for that consequence.
+
+A review of the round found two limits, both now stated in the rules and the log and neither
+guarded against: a filled workbook the tool wrote neither cell into reads as a template, and a
+client set hinting a reference's shape rather than bracketing it would be withheld. It changed
+three things: the sheet part is parsed once per file rather than once per mark, the pane's line
+saying the three typed cells are never written now says they are typed on the pane and copied
+through, and a theory pins what a shape-alike hint does today.
+
+Five break watches went red on 5, 8, 1, 1 and 1 tests and were restored byte for byte.
+**Locally 1182 tests at this branch, 0 failed and 0 skipped, 667 of them KPI, 29 added, against
+the 1153 main carries.** The pull request, the merge hash and the runner's count go in the record the
+merge adds here. **Nothing in this round has been observed in Revit.** Two things wait on
+Bader, both in the log: whether a filled workbook the tool wrote neither cell into matters, and
+whether any client set hints a reference's shape rather than bracketing it.
+
 Phase: 9, ship. Fifty first pass, the five that cost a whole run. **Findings 34, 35, 39, 9 and
 16 are FIXED and marked under their entries. The other 38 audit findings stay open**, not
 renumbered, not reordered, not annotated. All five stood at today's lines before the fix, and

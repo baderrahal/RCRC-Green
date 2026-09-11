@@ -32,7 +32,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  D8  PRX_Intervention Area, totalled off the chosen filled regions in the 00 link",
                     "  F11  SHRUBS & GROUND COVER TOTAL AREA from the shrubs and lawn schedule",
                     "  H11  LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule",
-                    "  E5, G5, H5  the date, the person and their position, typed by the team, never written",
+                    "  E5, G5, H5  the date, the person and their position, typed by the team on this pane and copied through, from no model",
                     "Tree List - Existing: one quantity into column B per botanical name in column D, over every row that names one",
                     "Tree List - Proposed: one quantity into column B per botanical name in column D, over every row that names one",
                     "  Which rows hold a name and which rows the total reaches are read off the file when "

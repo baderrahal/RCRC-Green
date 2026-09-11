@@ -367,13 +367,13 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             // Opened once per file per folder. A filled checklist keeps its template's first
-            // sheet, so the peek also reads the date cell the tool writes and the file is named
-            // as filled rather than offered.
+            // sheet, so the peek also reads the cells the tool writes and the file is named as
+            // filled rather than offered.
             _templatesListed = _templatesListed.For(folder, paths, path =>
             {
                 PeekedWorkbook peeked = PeekedWorkbook.Of(path);
                 return RecognisedWorkbook.Recognise(
-                    Path.GetFileName(path), peeked.SheetNames, peeked.Refusal, peeked.FirstSheetDateCell);
+                    Path.GetFileName(path), peeked.SheetNames, peeked.Refusal, peeked.FirstSheetCells);
             });
             IReadOnlyList<RecognisedWorkbook> recognised = _templatesListed.Workbooks;
 

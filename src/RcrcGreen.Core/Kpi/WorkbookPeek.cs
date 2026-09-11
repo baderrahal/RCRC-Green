@@ -8,9 +8,9 @@ using System.Xml.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// The sheet names of one .xlsx, in order, read straight out of the zip, and the one cell
+    /// The sheet names of one .xlsx, in order, read straight out of the zip, and the few cells
     /// on the first sheet the tool itself writes. The first name is how a template is
-    /// recognised, and the cell is how a filled checklist is told from one, so this reads
+    /// recognised, and those cells are how a filled checklist is told from one, so this reads
     /// those two things and nothing more.
     ///
     /// Parsing compares local names rather than namespaces, because a strict and a
@@ -18,21 +18,21 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PeekedWorkbook
     {
-        private PeekedWorkbook(IReadOnlyList<string> sheetNames, string refusal, string firstSheetDateCell)
+        private PeekedWorkbook(IReadOnlyList<string> sheetNames, string refusal, IReadOnlyDictionary<string, string> firstSheetCells)
         {
             SheetNames = sheetNames ?? new List<string>();
             Refusal = refusal ?? string.Empty;
-            FirstSheetDateCell = firstSheetDateCell;
+            FirstSheetCells = firstSheetCells ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
 
         public IReadOnlyList<string> SheetNames { get; }
 
         /// <summary>
-        /// What the first sheet holds in the date cell the tool writes, E5, with a shared
-        /// string resolved to its text. Null when the file, the sheet or the cell is not
-        /// there, which is not a filled file.
+        /// What the first sheet holds in each cell <see cref="FilledMarks"/> reads, with a
+        /// shared string resolved to its text. A cell that is not in the file is not in here,
+        /// and a file with no cell of them in it is not a filled file.
         /// </summary>
-        public string FirstSheetDateCell { get; }
+        public IReadOnlyDictionary<string, string> FirstSheetCells { get; }
 
         /// <summary>
         /// Why the file could not be read, or empty. A refusal is shown beside the file name
@@ -72,7 +72,7 @@ namespace RcrcGreen.Core.Kpi
                         .Select(sheet => (string)sheet.Attribute("name") ?? string.Empty)
                         .ToList();
 
-                    return new PeekedWorkbook(names, null, DateCellOf(zip, workbookPart, names));
+                    return new PeekedWorkbook(names, null, CellsOf(zip, workbookPart, names));
                 }
             }
             catch (InvalidDataException)
@@ -94,18 +94,21 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// The date cell of the first sheet, the one the tool writes. Read inside the same open
-        /// as the names, off the sheet part the workbook's relationships point at.
+        /// The cells of the first sheet the marks read, the ones the tool writes. Read inside
+        /// the same open as the names, off the sheet part the workbook's relationships point
+        /// at, and in one pass over the shared strings rather than one per cell.
         /// </summary>
-        private static string DateCellOf(ZipArchive zip, string workbookPart, List<string> names)
+        private static IReadOnlyDictionary<string, string> CellsOf(ZipArchive zip, string workbookPart, List<string> names)
         {
-            if (names.Count == 0) return null;
+            var held = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (names.Count == 0) return held;
 
             Dictionary<string, string> parts = WorkbookPackage.SheetParts(zip, workbookPart);
             string partPath;
-            if (!parts.TryGetValue(names[0], out partPath)) return null;
+            if (!parts.TryGetValue(names[0], out partPath)) return held;
 
-            return WorkbookPackage.CellText(zip, partPath, KpiTemplates.TypedByTheTeam[0], WorkbookPackage.SharedStrings(zip));
+            return WorkbookPackage.CellTexts(
+                zip, partPath, FilledMarks.CellsRead, WorkbookPackage.SharedStrings(zip));
         }
     }
 
@@ -175,16 +178,34 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// One cell's text off one sheet part, or null when the part or the cell is not there.
+        /// The text of each wanted cell off one sheet part, with a cell that is not there left
+        /// out. The part is parsed once however many cells are wanted, because reading it per
+        /// cell reopens the entry and parses the whole sheet again, and every mark added to
+        /// <see cref="FilledMarks"/> would have cost another pass.
         /// </summary>
-        public static string CellText(ZipArchive zip, string partPath, string cellRef, List<string> shared)
+        public static IReadOnlyDictionary<string, string> CellTexts(
+            ZipArchive zip, string partPath, IEnumerable<string> cellRefs, List<string> shared)
         {
-            XDocument part = Read(zip, partPath);
-            if (part == null || part.Root == null) return null;
+            var found = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            XElement cell = Cells(part).FirstOrDefault(one =>
-                string.Equals((string)one.Attribute("r"), cellRef, StringComparison.OrdinalIgnoreCase));
-            return cell == null ? null : TextOf(cell, shared);
+            var wanted = new HashSet<string>(
+                (cellRefs ?? Enumerable.Empty<string>()).Where(one => !string.IsNullOrWhiteSpace(one)),
+                StringComparer.OrdinalIgnoreCase);
+            if (wanted.Count == 0) return found;
+
+            XDocument part = Read(zip, partPath);
+            if (part == null || part.Root == null) return found;
+
+            foreach (XElement cell in Cells(part))
+            {
+                string where = (string)cell.Attribute("r");
+                if (where == null || !wanted.Contains(where) || found.ContainsKey(where)) continue;
+
+                found[where] = TextOf(cell, shared);
+                if (found.Count == wanted.Count) break;
+            }
+
+            return found;
         }
 
         public static string WorkbookPartPath(ZipArchive zip)

@@ -698,6 +698,13 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  templates folder: " + (run.TemplatesListed.IsNothing
                 ? "NOT LISTED. Nothing recorded how many times a workbook was opened."
                 : run.TemplatesListed.InWords));
+
+            // A workbook the tool withheld is named here with the cell that decided it, so a
+            // template wrongly withheld is traced in one line rather than by opening the file.
+            foreach (RecognisedWorkbook withheld in run.TemplatesListed.Workbooks.Where(one => one.IsFilled))
+            {
+                Line(report, "    not offered: " + withheld.FileName + ", " + withheld.DecidedBy.InWords);
+            }
             Line(report, "  written to: " + Shown(run.OutputPath));
             Line(report, "  component parameter, chosen by the user: " + Shown(run.ComponentParameter));
             Line(report, "  reference parameter, chosen by the user: " + Shown(run.ReferenceParameter));
