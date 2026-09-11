@@ -765,18 +765,37 @@ folders are one, before Create is pressed rather than after.
 **A filled checklist in the templates folder is named as filled and not offered.** Recognition
 is the first sheet's name and a filled MOSQUES output keeps `<Mosques>`, so the next redraw
 offered MOSQUES DM-12.xlsx as a template beside the client's, and picking it would copy last
-time's typing and last time's written species as the template. The tool can tell, because it
-is what wrote it: E5 is the cell it writes the date into. `PeekedWorkbook` reads E5 of the
-first sheet in the same open as the names, with a shared string resolved to its text because
-an Excel re-save stores it that way, and `RecognisedWorkbook.Recognise` names a file whose E5
-is not `KpiTemplates.DatePlaceholder` as a filled checklist of its template, with what E5 holds
-in the reason, greyed in the same list. A cell that is not there or empty is not a filled file,
-because a template must not be withheld on a cell it never had. Nothing is deleted or moved,
-and browsing to a folder that holds one is untouched. **The placeholder is one observation**,
-`<Date>` off the first real workbook on 2026-09-09, and whether all seven production templates
-hold exactly that at E5 is for Bader to confirm. A template that holds something else there
-would be withheld with its E5 printed on its own row, which is visible, and the annotated set
-reads DATE OF THE DAY there and is not what the team fills.
+time's typing and last time's written species as the template. The tool can tell, because it is
+what wrote it.
+
+**A workbook is filled when a cell the tool writes holds something the tool would have written,
+never when one cell differs from one expected string.** The first rule was E5 against the
+angle bracketed `<Date>` and Bader measured two template sets that break it. The KPI CHECKLIST
+R1 set holds a placeholder in every cell the team fills, `<Date>` at E5, `<Name>` at G5,
+`<Position>` at H5 and `<UID>` at C5. An earlier production set holds NOTHING at E5, G5 or C5
+and real values at D3 and H5, its D3 reading Future Park and its E4 KING ABDULLAH South. So a
+placeholder is one set's habit rather than a rule, an empty cell is not a placeholder either,
+and a clean template can hold real text in a mapped cell.
+
+`FilledMarks` is the rule. Two cells can decide, and both are cells the tool writes: E5, where
+a date reads as filled, and the template's own reference cell, C5 on all seven, where a plot
+reference does. A date has at least two numbers in it and parses as one, so `<Date>`, the
+annotated set's DATE OF THE DAY, a bare 10 and an empty cell are all templates. A plot
+reference is one unbroken run holding a letter and a digit and no angle bracket, which both
+parameters the team picks read as, DM-12 and ANH-007-MO-100019, so `<UID>`, KING ABDULLAH South
+and an empty cell are all templates. The other cells the tool writes decide nothing, because a
+clean template already holds real text in some of them.
+
+**Nothing is withheld on a cell the tool has never written**, so an absent or empty cell is
+never a filled file. The reason and the report both name the cell that decided and what it
+held, `not offered: MOSQUES DM-12.xlsx, C5 holds ANH-007-MO-100019, which is a plot reference
+the tool writes`, so a template wrongly withheld is traced in one line rather than by opening
+the file. `PeekedWorkbook` reads those cells off the first sheet in the same open as the names,
+with a shared string resolved to its text because an Excel re-save stores it that way, and the
+pane lists a filled file greyed in the same list. Nothing is deleted or moved, and browsing to
+a folder that holds one is untouched. **A filled workbook where the tool wrote neither cell
+reads as a template**, which is the stated limit and the safe way round: offering a filled file
+costs a rerun, withholding a real template leaves the team unable to fill anything.
 
 ## Every run that ends with no file says why
 

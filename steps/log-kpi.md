@@ -4,6 +4,106 @@ Newest entry first.
 
 ---
 
+## 2026-09-11, fifty second pass. A workbook is filled when a cell the tool writes holds what the tool writes
+
+One correction, on finding 39's filled file test, measured by Bader on two template sets. The
+audit entry for 39 carries it under its FIXED mark. **The other 38 findings stay open**, not
+renumbered, not reordered, not annotated. Nothing else was touched: not the Drawing Sheet, not
+`Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
+this round has been observed in Revit.** The branch came off a fresh pull of main at `d370add`.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1180 tests at this branch, 0 failed and 0 skipped, 665 of them KPI, 27 added here**, against
+the 1153 main carries.
+
+### What was measured, and what the old rule really did
+
+Two sets, Bader's measurement:
+
+```
+KPI CHECKLIST - R1 MOSQUES   E5 <Date>   G5 <Name>   H5 <Position>   C5 <UID>
+an earlier production set    E5 empty    G5 empty    C5 empty
+                             D3 Future Park   E4 KING ABDULLAH South   H5 a real value
+```
+
+So E5 is a placeholder in one set and empty in the other, a placeholder is one set's habit
+rather than a rule, and a clean template holds real text in a mapped cell.
+
+**One thing in the round message does not hold against the code, and it is worth saying.** A
+clean template from the second set was NOT withheld by the old rule: `ReadsAsFilled` required
+the cell to be non blank before it compared, so an empty E5 read as a template. The old rule
+was still wrong, for the reason given rather than that consequence. What it really withheld was
+any template whose E5 holds text that is not exactly `<Date>`, which is the annotated set's
+DATE OF THE DAY and any set the client issues with different wording there. The correction is
+the same either way and is the one asked for.
+
+### The rule now
+
+`FilledMarks` is a cell the tool writes, what the tool writes there, and the test of whether
+what the cell holds is that. A workbook is filled when one of them reads, and **nothing is
+withheld on a cell the tool has never written**, so an absent or empty cell is never a filled
+file. Two marks, both cells the tool writes:
+
+- **E5, a date.** It parses as one AND holds at least two numbers. The second half is not
+  decoration: the invariant culture reads a bare 10 as a day of this month, and a template
+  holding a lone number where a date goes would have been withheld for it. `<Date>`, Date,
+  DATE OF THE DAY, March, TBC and empty are all templates. 2026-09-10, 09/09/2026,
+  9 September 2026 and 2026-09-09 14:07 are all filled
+- **The template's own reference cell, a plot reference.** C5 on all seven, read off
+  `KpiTemplate.CellFor` rather than a second copy of the map. It is one unbroken run holding a
+  letter and a digit and no angle bracket, which is what both parameters the team picks read
+  as, DM-12 and ANH-007-MO-100019. `<UID>`, KING ABDULLAH South, Future Park, TBC, 100019,
+  ANH 007 MO 100019 and empty are all templates
+
+The other cells the tool writes decide nothing. D3 and E4 hold real text in a clean template,
+G5 and H5 hold a name and a position that no shape tells from a placeholder, and a number cell
+says nothing about who put the number there.
+
+**The cell that decided is said in the reason and in the report.** The reason reads It is a
+filled MOSQUES checklist, not a template. C5 holds ANH-007-MO-100019, which is a plot reference
+the tool writes. The report prints one line per withheld workbook under the templates folder
+line, not offered: MOSQUES DM-12.xlsx, C5 holds ANH-007-MO-100019, which is a plot reference
+the tool writes, so a template wrongly withheld is traced in one line rather than by opening
+the file. The date is read first, so a workbook holding both names one cell rather than two.
+
+**`KpiTemplates.DatePlaceholder` is deleted.** It decided nothing any more, and a constant
+holding a measurement that no longer decides is a second record of a fact. The measurement is
+in `FilledMarks` next to the rule it explains, with both sets.
+
+**The peek reads the marks' cells rather than one.** `PeekedWorkbook.FirstSheetCells` is a
+dictionary of the cells `FilledMarks.CellsRead` names, E5 and C5, read off the first sheet in
+one open with one pass over the shared strings. A cell not in the file is not in the dictionary.
+
+**A filled workbook where the tool wrote neither cell reads as a template.** That is the stated
+limit. It is the safe way round: offering a filled file costs a rerun, and withholding a real
+template leaves the team unable to fill anything at all.
+
+### Break watches
+
+Four, each restored byte for byte and checked with cmp, the suite rerun green at 1180.
+
+- the date mark back to anything but the placeholder: **5 red**, every row of the theory that
+  is not a date, DATE OF THE DAY and the bare 10 among them
+- the reference mark taking any text: **8 red**, every row of the reference theory, the R1 set
+  and the park that still needs a pick
+- the report not naming the cell that decided: **1 red**, the report test
+- the peek reading the date cell only: **1 red**, the patcher round trip through both cells
+
+### Existing tests changed
+
+`FilledWorkbookTests` is rewritten around the new rule, 9 tests before and 18 now, both
+measured sets among them. Nothing else moved: `Recognise`'s fourth argument is still optional,
+so every earlier call proves the sheet rule unchanged.
+
+### Seen and not changed
+
+`TemplateWords` line 83 prints E5, G5 and H5 as the date, the person and their position, typed
+by the team, never written. In a list whose other lines name where a value is read from, never
+written reads as a claim that the tool does not write them, and it does. Whether it means never
+read from a model is UNKNOWN from the line itself. Not this round's ask, so it stands.
+
+---
+
 ## 2026-09-11, fifty first pass. The five that cost a whole run: findings 35, 34, 39, 9 and 16
 
 Five findings from the two audits, all about the 78 plot STREETS run the team is about to try,
