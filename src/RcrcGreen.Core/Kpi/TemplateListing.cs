@@ -11,8 +11,9 @@ namespace RcrcGreen.Core.Kpi
     /// open and peek every .xlsx in the folder on the interface thread: seven zips for each of
     /// 155 ticks. This is the one copy the pane holds under THE PANE HOLDS NO COPY OF
     /// ANYTHING IT CAN ASK FOR: keyed on the folder, cleared when the folder changes and
-    /// after a write into it, and the folder itself is listed on every draw so a file added or
-    /// gone is seen on the next redraw and opened once.
+    /// after any press of Create that reached the patcher with an output path in it, wrote or
+    /// not, and the folder itself is listed on every draw so a file added or gone is seen on
+    /// the next redraw and opened once.
     ///
     /// It records and does not decide: <see cref="Opened"/> and <see cref="Drawn"/> go into
     /// the report so the seven opens per tick cannot come back unnoticed.

@@ -15,7 +15,11 @@ offered**, off E5 against `KpiTemplates.DatePlaceholder`, in the same list, noth
 moved, and a filled park file whose name cannot tell the park names neither. **The templates folder is opened once per folder**,
 `TemplateListing`, the opens counted on the pane and in the report. **The plot list keeps its
 place across a tick**, `Scrolling` and `Remembering` in the KPI pane with `ScrollMemory` in Core.
-The read cost is in the log in calls and is unchanged.
+The read cost is in the log in calls and is unchanged. A review pass over the diff, four
+lenses and a refutation, confirmed four findings of eleven and three changed code, named in
+the log: a refused reading no longer reused, a filled park file that names neither park when
+its name cannot tell, and the templates listing cleared on any press that reached the patcher
+into its folder rather than on every write anywhere.
 
 Eight break watches went red on 4, 2, 2, 2, 6, 2, 2 and 2 tests and were restored byte for
 byte. **Locally 1153 tests at this branch, 0 failed and 0 skipped, 638 of them KPI, 50 added,

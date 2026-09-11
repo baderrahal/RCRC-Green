@@ -113,8 +113,8 @@ namespace RcrcGreen.Revit.Kpi
         // used to open and peek every .xlsx in the folder, seven zips for each of 155 ticks.
         // The one copy the pane holds under THE PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
         // FOR: the folder is listed on every draw, only each file's recognition is kept, it is
-        // keyed on the folder, and it is cleared when the folder changes and after a write
-        // into it.
+        // keyed on the folder, and it is cleared when the folder changes and after any press
+        // of Create that reached the patcher with an output path in it, wrote or not.
         private TemplateListing _templatesListed = TemplateListing.Nothing;
 
         // Where the plot list was scrolled to, kept here because the list is thrown away on
@@ -958,10 +958,13 @@ namespace RcrcGreen.Revit.Kpi
                 _lastRun = run;
 
                 // Create is the one thing in this tool that writes a workbook, and it can write
-                // into the templates folder, so a write into that folder lists it afresh on the
-                // redraw. A write anywhere else leaves the listing and its counts standing,
-                // because nothing in that folder moved.
-                if (run.Wrote && run.OutputPath.Length > 0
+                // into the templates folder. Any press that reached the patcher with an output
+                // path in that folder lists it afresh on the redraw, whether or not it wrote,
+                // because the copy lands at the output path before the patch and a patch that
+                // fails after it leaves the copy behind under a name the listing may hold. An
+                // output path anywhere else leaves the listing and its counts standing, because
+                // nothing in that folder moved.
+                if (run.Outcome != null && run.OutputPath.Length > 0
                     && _templatesListed.IsFor(Path.GetDirectoryName(run.OutputPath)))
                 {
                     _templatesListed = TemplateListing.Nothing;

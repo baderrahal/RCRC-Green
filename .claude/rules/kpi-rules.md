@@ -615,13 +615,15 @@ is shown, so the plot list never arrived at all.
 redraw opened and peeked every .xlsx in the templates folder on the interface thread, and every
 tick redraws: seven zips for each of 155 ticks, 1,085 opens. `TemplateListing` holds each
 file's recognition once per folder, keyed on the folder compared without case and with a
-trailing separator off, cleared when the folder changes and after a run that wrote into it, and
-the folder itself is still listed on every draw so a file added or gone is seen on the next redraw
+trailing separator off, cleared when the folder changes and after any press of Create that
+reached the patcher with an output path in it, wrote or not, because the copy lands before the
+patch and a patch that fails after it leaves the copy behind. The folder itself is still listed
+on every draw so a file added or gone is seen on the next redraw
 and opened once. It counts the opens and the redraws, the pane prints the count under the list
 and the report prints it under WHERE EVERY VALUE CAME FROM, seven opens over 155 redraws, so
 the seven per tick cannot come back unnoticed. A workbook overwritten in place under the same
-name in that folder keeps its held recognition until the folder is browsed again or a run
-writes, which is written down here as the limit.
+name in that folder by anything other than this tool keeps its held recognition until the folder
+is browsed again or Create reaches the patcher into it, which is written down here as the limit.
 
 **The plot list keeps its place across a tick.** The list is a new viewer on every redraw and
 every tick redraws, so 155 tick boxes threw themselves back to the top on every tick, the fault

@@ -138,13 +138,17 @@ pane holds it as the one copy under THE PANE HOLDS NO COPY OF ANYTHING IT CAN AS
 in its comment, clears it when the folder is browsed and after a run that wrote, prints the
 count under the list, and hands it on the ask so the report prints templates folder: 7
 workbooks in the folder, opened 7 times over 158 redraws since the folder was listed, or NOT
-LISTED when nothing recorded it. A workbook overwritten in place under the same name keeps its
-held recognition until the folder is browsed again or a run writes into it, which is the
-stated limit. The clear after a run that wrote is narrowed to a write into the listed folder,
-`IsFor` on the output path's folder, so filling several plots into another folder leaves the
-listing and its counts standing. The review asked whether a write refused after its copy leaves
-a stray file unseen: it does not, because the folder is listed on every draw and a new path is
-opened once.
+LISTED when nothing recorded it. A workbook overwritten in place under the same name by
+anything other than this tool keeps its held recognition until the folder is browsed again or
+Create reaches the patcher into it, which is the stated limit. The clear after a press of Create
+is keyed on the output path's folder, `IsFor`, so filling several plots into another folder
+leaves the listing and its counts standing, and it fires on any press that reached the patcher
+into the listed folder, wrote or not: the copy lands at the output path before the patch, and a
+patch that fails after it leaves the copy behind under a name the listing may already hold as
+something else. The review found both, the clear on every write anywhere and the clear missing
+on a refused patch. It also asked whether a write refused after its copy leaves a stray file
+unseen under a new name: it does not, because the folder is listed on every draw and a new path
+is opened once.
 
 `Scrolling` and `Remembering` in `KpiPanel` are the Drawing Sheet's shape written in the KPI
 folder, read and not edited at `DrawingSheetPanel.cs:1653-1702`: the remembered offsets read
@@ -182,9 +186,10 @@ measure in the round message is Bader's and is recorded nowhere in this reposito
 
 ### What the review found and what stayed
 
-Four readers over the diff, one lens each, then a pass trying to refute what they found. Two
-findings changed code, above: the refused reading reused, and the park named on a guess. The
-rest stayed, each for a reason:
+Four readers over the diff, one lens each, then a pass trying to refute what they found,
+eleven findings, four confirmed and seven refuted. Three changed code, above: the refused
+reading reused, the park named on a guess, and the templates listing cleared on every write
+anywhere and not on a refused patch into its folder. The rest stayed, each for a reason:
 
 - The region read sits inside the plot's guard rather than under one of its own, so a throw
   reading a plot's filled regions refuses the whole plot, named, and its schedules are not read.
