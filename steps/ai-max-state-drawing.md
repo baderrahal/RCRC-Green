@@ -1,19 +1,24 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Forty seventh pass, the run sheet. Drawing Sheet has not been in Revit since
-its third full run, reported in pull request 32, and 28 audit fixes and the plot list union
-sit unobserved, so no more code lands on it until it has been run. `steps/run-drawing.md` is
-what gets run: forty two steps in the shape of the KPI sheet, eight to build and install,
-three to open the model and the pane as the code has it, twenty over the unobserved changes
-grouped by pane step and merged from the audit's never executed list, every log entry since
-pull request 32 and every FIXED note ending Not observed in Revit, six for one full run over
-two plots with what the report must read, four questions only Revit or the team can answer,
-one on what to send back, and nine things the pane cannot force listed as not covered.
-Nothing in src or tests changes. The suite read 1103 locally after the sheet was written,
-the count main carries at `2e0c0ab`. Merged into main as `fc5cf7a` from pull request 70,
-with 1103 tests on the runner, 0 failed and 0 skipped, and the squash message back off main
-byte for byte. The client data count for CLAUDE.md and core-rules.md is in the pull request
-body only.
+Phase: 9, ship. Fifty third pass, off the first run in Revit since pull request 32. The run
+sheet was worked through on 2026-09-11 and the run made 22 with 0 refused, and eight items
+came back. Two pull requests, because fix 7 is a new Core file family with tests, a panel
+change and an installer change: fixes 1 to 4 first, 5 to 8 second. The first holds fix 1, a
+schedule is placed by its top left corner and a viewport by its centre and both were handed
+the centre, so a schedule is measured after it is placed and moved to the centre it was
+asked for, and fix 2, the views divide a DrawingArea rather than the whole sheet, the strip
+being the tool's own setting because a placed title block reports its size and nothing about
+where its strip begins. Fixes 3 and 4 are findings and no code. THE CROP IS NOT ANNOTATION
+CROP: DM-11-(010) Overall Plan has it ON and two foreign sections still draw in it, the two
+are the model's own with Crop View off and unbounded extents, and the tool computes a
+section box from the plot's scope box and then copies Crop View off from the sibling four
+calls later, which is the tenth two-records-of-one-fact here. What is UNKNOWN and what would
+settle it are in the log. Suite reads 1193 locally, up from the 1182 main carries at
+`c47bccb`. Two breaks watched red. Not merged yet.
+
+Before that, the forty seventh pass, the run sheet, merged into main as `fc5cf7a` from
+pull request 70 with 1103 tests on the runner. `steps/run-drawing.md` holds the forty two
+steps that were worked through to produce this round's eight items.
 
 Before that, the forty sixth pass, the Shared round, with every other session stopped for
 it, merged into main as `45138ae` from pull request 64. **The runner executed 1060 tests

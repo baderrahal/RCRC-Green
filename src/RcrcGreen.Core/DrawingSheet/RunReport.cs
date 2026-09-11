@@ -225,6 +225,18 @@ namespace RcrcGreen.Core
             Line(report, "size still cannot be read is refused rather than made empty. A view");
             Line(report, "already sitting on another sheet is refused rather than moved, because it");
             Line(report, "belongs to whoever put it there.");
+            Line(report, "THE VIEWS DIVIDE THE DRAWING AREA rather than the whole sheet, because the");
+            Line(report, "title strip down the right hand edge is not somewhere a view may sit. How");
+            Line(report, "much of the width that strip takes is the tool's own setting, and the sheet");
+            Line(report, "lines above say so against each sheet, because a placed title block reports");
+            Line(report, "its Sheet Width and its Sheet Height and nothing about where its strip");
+            Line(report, "begins. Dividing the whole sheet is what ran wide views across the strip.");
+            Line(report, "A SCHEDULE IS PLACED BY ITS TOP LEFT CORNER and a viewport by its centre.");
+            Line(report, "Both are handed a centre, so a schedule is measured after it is placed and");
+            Line(report, "moved until its centre is the one it was asked for. Before that it landed");
+            Line(report, "half its own size right and down, off the edge of the sheet on a long one.");
+            Line(report, "A schedule Revit gives no bounding box for cannot be measured, so it is");
+            Line(report, "left where it landed and named above rather than moved by a guess.");
         }
 
         private static void Section(StringBuilder report, string heading, IEnumerable<string> lines)
