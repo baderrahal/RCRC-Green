@@ -151,7 +151,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// the output through the canopy guard, so the guard keeps working.
         /// </summary>
         [Fact]
-        public void PhoenixWritesEighteenAndFifteenAndUnknownWritesNeitherAndStillRefuses()
+        public void PhoenixWritesEighteenAndFifteenAndUnknownTakesNoRowSoTheWorkbookLands()
         {
             string folder = WorkbookFixture.Folder();
             try
@@ -175,27 +175,32 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiCreatePlan plan = KpiCreatePlan.Of(
                     KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null);
 
+                // PHOENIX is sized and goes in whole. UNKNOWN is not sized, so it takes no row
+                // at all and row 6 stays empty: no B6, no D6, and nothing for its measures.
                 List<CellWrite> onTheSheet = plan.Writes.Where(one => one.SheetName == Existing).ToList();
-                Assert.Equal(new[] { "B5", "D5", "I5", "J5", "B6", "D6" }, onTheSheet.Select(one => one.Cell.ToString()));
+                Assert.Equal(new[] { "B5", "D5", "I5", "J5" }, onTheSheet.Select(one => one.Cell.ToString()));
                 Assert.Equal("18", onTheSheet.Single(one => one.Cell.ToString() == "I5").Stored);
                 Assert.Equal("15", onTheSheet.Single(one => one.Cell.ToString() == "J5").Stored);
                 Assert.DoesNotContain(onTheSheet, one => one.Cell.ToString().StartsWith("K", StringComparison.Ordinal));
 
-                List<NotWritten> skipped = plan.Skipped.Where(one => one.SheetName == Existing).ToList();
-                Assert.Equal(new[] { "I6", "J6" }, skipped.Select(one => one.Cell));
-                Assert.StartsWith("no row printed a height a workbook can compute with: DM-25 row 19", skipped[0].Why, StringComparison.Ordinal);
-                Assert.StartsWith("no row printed a diameter a workbook can compute with: DM-25 row 19", skipped[1].Why, StringComparison.Ordinal);
-                Assert.EndsWith("so nothing is written and the row will not compute its canopy", skipped[1].Why, StringComparison.Ordinal);
+                NotWritten skipped = Assert.Single(plan.Skipped.Where(one => one.SheetName == Existing));
+                Assert.Equal(string.Empty, skipped.Cell);
+                Assert.Equal("UNKNOWN 16 under Existing", skipped.What);
+                Assert.StartsWith(
+                    "the workbook's list does not hold this name, and a row written into an empty one carries only "
+                    + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
+                    + "so no row was written: DM-25 row 19", skipped.Why, StringComparison.Ordinal);
 
+                // The whole point of the round: the workbook lands, because nothing was written
+                // that its own formulas cannot compute from. The guard is unchanged and finds
+                // nothing to refuse.
                 string output = Path.Combine(folder, "out.xlsx");
                 PatchOutcome outcome = WorkbookPatcher.Patch(template, output, plan.Writes);
 
-                Assert.False(outcome.Written);
-                Assert.False(File.Exists(output), "the output stays deleted");
-                Assert.True(outcome.Formulas.RefusesTheWrite);
-                FormulaAtRisk unknown = outcome.Formulas.AtRisk.Single(one => one.SheetName == Existing && one.Cell == "L6");
-                Assert.True(unknown.FromWrittenRow);
-                Assert.Equal("IF(ISBLANK(J6),\" \",ROUND(PI()*(J6/2)^2,0))", unknown.Text);
+                Assert.True(outcome.Written, outcome.Refusal);
+                Assert.True(File.Exists(output), "the output is written");
+                Assert.False(outcome.Formulas.RefusesTheWrite);
+                Assert.DoesNotContain(outcome.Formulas.AtRisk, one => one.FromWrittenRow);
                 Assert.DoesNotContain(outcome.Formulas.AtRisk, one => one.SheetName == Existing && one.Cell == "L5" && one.IsAnError);
                 Assert.DoesNotContain(outcome.Formulas.AtRisk, one => one.SheetName == Existing && one.Cell == "M5");
             }

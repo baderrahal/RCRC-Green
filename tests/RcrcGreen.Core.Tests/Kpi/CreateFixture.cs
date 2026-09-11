@@ -25,9 +25,26 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         public static readonly CountedGroups Counted = CountedGroups.Of(KpiTemplates.Mosques);
 
+        /// <summary>
+        /// One merged species off one plot, sized, for a test about placement rather than
+        /// about measures. Built from a row rather than from a plot number, because a species
+        /// built from numbers alone carries no measures and is no longer written into an empty
+        /// row at all.
+        /// </summary>
+        public static MergedSpecies Merged(string name, string group, string plotId, int quantity)
+        {
+            return MergedSpecies.FromRows(name, group, new[] { Species(name, group, quantity).OnPlot(plotId) });
+        }
+
+        /// <summary>
+        /// A species the model sizes, which is the ordinary case. The height and the canopy
+        /// diameter are here because a species carrying neither is no longer written into an
+        /// empty row at all, so a fixture without them would test the refusal rather than
+        /// whatever the test is about. The unsized case is built by naming the two measures.
+        /// </summary>
         public static SpeciesRow Species(string name, string group, int quantity)
         {
-            return new SpeciesRow(name, group, quantity);
+            return new SpeciesRow(name, group, quantity, null, 0, PrintedMeasure.Of("15"), PrintedMeasure.Of("8"));
         }
 
         /// <summary>

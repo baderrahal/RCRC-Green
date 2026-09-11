@@ -562,6 +562,14 @@ namespace RcrcGreen.Core.Kpi
                     match.Why));
             }
 
+            // A workbook one tree short and a workbook eighty five short read the same without
+            // this. It counts every species the run merged, this section's and every other, so
+            // it is the shortfall of the whole run rather than of the rows above.
+            Line(report, "  NOT WRITTEN, THE WHOLE RUN: "
+                + Count(matches.Where(one => !one.Placed).Sum(one => one.Species.Quantity), "tree")
+                + " of " + matches.Sum(one => one.Species.Quantity).ToString(CultureInfo.InvariantCulture)
+                + ", over every species this run merged.");
+
             if (missed.Any(one => one.Placed))
             {
                 Line(report, "  A written row carries the botanical name, the count, and the height and the canopy");
