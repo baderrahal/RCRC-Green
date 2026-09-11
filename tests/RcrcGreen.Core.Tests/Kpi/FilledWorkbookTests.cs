@@ -203,6 +203,27 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// **What the rule does with a placeholder shaped like the thing it stands for, which
+        /// is an open question rather than a measurement.** Neither measured set holds one:
+        /// the R1 set brackets every placeholder and the earlier set leaves the cell empty. A
+        /// client set that hinted the shape instead, DM-00 or REF-0001 at C5, would be named as
+        /// filled and withheld. This test says what happens today rather than that it is right,
+        /// and the report prints C5 holds DM-00 so a person sees it in one line. Whether such a
+        /// set exists is for Bader.
+        /// </summary>
+        [Theory]
+        [InlineData("DM-00")]
+        [InlineData("REF-0001")]
+        public void AnUnbracketedPlaceholderShapedLikeAReferenceReadsAsFilledToday(string held)
+        {
+            RecognisedWorkbook filled = RecognisedWorkbook.Recognise(
+                "GRP KPI Checklist - MOSQUES.xlsx", new[] { Mosques }, null, Cells("C5", held));
+
+            Assert.True(filled.IsFilled);
+            Assert.Equal("C5 holds " + held + ", which is a plot reference the tool writes.", filled.DecidedBy.InWords);
+        }
+
+        /// <summary>
         /// The date is read before the reference, so a workbook holding both is decided by the
         /// date and the report names one cell rather than two.
         /// </summary>

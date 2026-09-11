@@ -81,7 +81,8 @@ namespace RcrcGreen.Core.Kpi
             }
 
             lines.Add("  " + string.Join(", ", KpiTemplates.TypedByTheTeam)
-                + "  the date, the person and their position, typed by the team, never written");
+                + "  the date, the person and their position, typed by the team on this pane "
+                + "and copied through, from no model");
 
             lines.Add(TreeListLine(template.ExistingTrees));
             lines.Add(TreeListLine(template.ProposedTrees));

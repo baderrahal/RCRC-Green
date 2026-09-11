@@ -107,14 +107,8 @@ namespace RcrcGreen.Core.Kpi
             string partPath;
             if (!parts.TryGetValue(names[0], out partPath)) return held;
 
-            List<string> shared = WorkbookPackage.SharedStrings(zip);
-            foreach (string cell in FilledMarks.CellsRead)
-            {
-                string text = WorkbookPackage.CellText(zip, partPath, cell, shared);
-                if (text != null) held[cell] = text;
-            }
-
-            return held;
+            return WorkbookPackage.CellTexts(
+                zip, partPath, FilledMarks.CellsRead, WorkbookPackage.SharedStrings(zip));
         }
     }
 
@@ -184,16 +178,34 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// One cell's text off one sheet part, or null when the part or the cell is not there.
+        /// The text of each wanted cell off one sheet part, with a cell that is not there left
+        /// out. The part is parsed once however many cells are wanted, because reading it per
+        /// cell reopens the entry and parses the whole sheet again, and every mark added to
+        /// <see cref="FilledMarks"/> would have cost another pass.
         /// </summary>
-        public static string CellText(ZipArchive zip, string partPath, string cellRef, List<string> shared)
+        public static IReadOnlyDictionary<string, string> CellTexts(
+            ZipArchive zip, string partPath, IEnumerable<string> cellRefs, List<string> shared)
         {
-            XDocument part = Read(zip, partPath);
-            if (part == null || part.Root == null) return null;
+            var found = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            XElement cell = Cells(part).FirstOrDefault(one =>
-                string.Equals((string)one.Attribute("r"), cellRef, StringComparison.OrdinalIgnoreCase));
-            return cell == null ? null : TextOf(cell, shared);
+            var wanted = new HashSet<string>(
+                (cellRefs ?? Enumerable.Empty<string>()).Where(one => !string.IsNullOrWhiteSpace(one)),
+                StringComparer.OrdinalIgnoreCase);
+            if (wanted.Count == 0) return found;
+
+            XDocument part = Read(zip, partPath);
+            if (part == null || part.Root == null) return found;
+
+            foreach (XElement cell in Cells(part))
+            {
+                string where = (string)cell.Attribute("r");
+                if (where == null || !wanted.Contains(where) || found.ContainsKey(where)) continue;
+
+                found[where] = TextOf(cell, shared);
+                if (found.Count == wanted.Count) break;
+            }
+
+            return found;
         }
 
         public static string WorkbookPartPath(ZipArchive zip)

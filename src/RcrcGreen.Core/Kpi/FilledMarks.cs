@@ -79,9 +79,17 @@ namespace RcrcGreen.Core.Kpi
     /// other cells the tool writes cannot, because a clean template already holds real text in
     /// some of them and a number cell says nothing about who put the number there.
     ///
-    /// A filled workbook where the tool wrote neither of the two reads as a template. That is
-    /// the stated limit and it is the safe way round: offering a filled file costs a rerun,
-    /// withholding a real template leaves the team unable to fill anything at all.
+    /// **Two limits, both stated rather than guarded against.** A filled workbook the tool wrote
+    /// neither cell into reads as a template. The reference cell is skipped when the ticked
+    /// plots disagree on it or none of them holds it, which a checklist covering several plots
+    /// usually does, so on such a run the typed date is the only mark left, and the date box is
+    /// prefilled with today but can be cleared. And a client set that hinted the shape of a
+    /// reference rather than bracketing it, DM-00 at C5, would be withheld, because nothing
+    /// separates a hint from the thing it stands for. Neither measured set does that.
+    ///
+    /// The first is the safe way round: offering a filled file costs a rerun, and withholding a
+    /// real template leaves the team unable to fill anything at all. The second is visible in
+    /// one line, because the report prints what the cell held.
     /// </summary>
     public static class FilledMarks
     {

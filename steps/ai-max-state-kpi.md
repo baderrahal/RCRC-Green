@@ -20,12 +20,19 @@ with real values at D3 and H5. One thing in the round message does not hold agai
 is said in the log: the old rule offered a template whose E5 was empty, because it refused to
 decide on a blank cell. It was wrong for the reason given rather than for that consequence.
 
-Four break watches went red on 5, 8, 1 and 1 tests and were restored byte for byte. **Locally
-1180 tests at this branch, 0 failed and 0 skipped, 665 of them KPI, 27 added, against the 1153
-main carries.** The pull request, the merge hash and the runner's count go in the record the
+A review of the round found two limits, both now stated in the rules and the log and neither
+guarded against: a filled workbook the tool wrote neither cell into reads as a template, and a
+client set hinting a reference's shape rather than bracketing it would be withheld. It changed
+three things: the sheet part is parsed once per file rather than once per mark, the pane's line
+saying the three typed cells are never written now says they are typed on the pane and copied
+through, and a theory pins what a shape-alike hint does today.
+
+Five break watches went red on 5, 8, 1, 1 and 1 tests and were restored byte for byte.
+**Locally 1182 tests at this branch, 0 failed and 0 skipped, 667 of them KPI, 29 added, against
+the 1153 main carries.** The pull request, the merge hash and the runner's count go in the record the
 merge adds here. **Nothing in this round has been observed in Revit.** Two things wait on
 Bader, both in the log: whether a filled workbook the tool wrote neither cell into matters, and
-the `TemplateWords` line that says the three typed cells are never written.
+whether any client set hints a reference's shape rather than bracketing it.
 
 Phase: 9, ship. Fifty first pass, the five that cost a whole run. **Findings 34, 35, 39, 9 and
 16 are FIXED and marked under their entries. The other 38 audit findings stay open**, not

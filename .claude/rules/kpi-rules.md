@@ -793,9 +793,18 @@ the tool writes`, so a template wrongly withheld is traced in one line rather th
 the file. `PeekedWorkbook` reads those cells off the first sheet in the same open as the names,
 with a shared string resolved to its text because an Excel re-save stores it that way, and the
 pane lists a filled file greyed in the same list. Nothing is deleted or moved, and browsing to
-a folder that holds one is untouched. **A filled workbook where the tool wrote neither cell
-reads as a template**, which is the stated limit and the safe way round: offering a filled file
-costs a rerun, withholding a real template leaves the team unable to fill anything.
+a folder that holds one is untouched.
+
+**Two limits, both stated rather than guarded against.** A filled workbook the tool wrote
+neither cell into reads as a template. `KpiCreatePlan` skips the reference cell when the ticked
+plots disagree on it or none of them holds it, which a checklist covering several plots usually
+does, so on such a run the typed date is the only mark left, and the date box is prefilled with
+today but can be cleared. And a client set that hinted the shape of a reference rather than
+bracketing it, DM-00 at C5, would be withheld, because nothing separates a hint from the thing
+it stands for, and neither measured set does that. The first is the safe way round: offering a
+filled file costs a rerun, and withholding a real template leaves the team unable to fill
+anything. The second is visible in one line, because the report prints what the cell held. Both
+are for Bader.
 
 ## Every run that ends with no file says why
 

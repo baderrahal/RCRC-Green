@@ -13,7 +13,7 @@ renumbered, not reordered, not annotated. Nothing else was touched: not the Draw
 this round has been observed in Revit.** The branch came off a fresh pull of main at `d370add`.
 
 Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1180 tests at this branch, 0 failed and 0 skipped, 665 of them KPI, 27 added here**, against
+**1182 tests at this branch, 0 failed and 0 skipped, 667 of them KPI, 29 added here**, against
 the 1153 main carries.
 
 ### What was measured, and what the old rule really did
@@ -74,13 +74,41 @@ in `FilledMarks` next to the rule it explains, with both sets.
 dictionary of the cells `FilledMarks.CellsRead` names, E5 and C5, read off the first sheet in
 one open with one pass over the shared strings. A cell not in the file is not in the dictionary.
 
-**A filled workbook where the tool wrote neither cell reads as a template.** That is the stated
-limit. It is the safe way round: offering a filled file costs a rerun, and withholding a real
-template leaves the team unable to fill anything at all.
+### Two limits the review of this round found, both stated and neither guarded against
+
+**A filled workbook the tool wrote neither cell into reads as a template.** `KpiCreatePlan`
+skips the reference cell when the ticked plots disagree on it or none of them holds it, and a
+checklist covering several plots usually disagrees, so on such a run the typed date is the only
+mark left. `CannotCreate` does not ask for a date, and the box is prefilled with today, so it
+takes clearing it by hand. It is the safe way round of the two: offering a filled file costs a
+rerun, and withholding a real template leaves the team unable to fill anything at all.
+
+**A client set that hinted the shape of a reference rather than bracketing it would be
+withheld.** DM-00 or REF-0001 at C5 holds a letter and a digit and no space, so nothing
+separates it from ANH-007-MO-100019. Neither measured set does that: the R1 set brackets every
+placeholder and the earlier set leaves the cell empty. A theory in `FilledWorkbookTests` says
+what the rule does with one today rather than that it is right, and the report prints C5 holds
+DM-00, so a person sees it in one line rather than by opening the file. **For Bader**, with the
+other open questions.
+
+### Three things the review changed
+
+**The sheet part is parsed once per file rather than once per mark.** The reader reopened the
+zip entry and parsed the whole sheet again for each cell, so going from one mark to two doubled
+it and every mark added later would have cost another pass. `WorkbookPackage.CellTexts` walks
+the part once and stops when it has them all.
+
+**The pane's line about the three typed cells said never written**, in a list whose other lines
+name where a value is read from, and the tool does write them, which is the very thing
+`FilledMarks.Date` relies on to tell a filled file. It reads typed by the team on this pane and
+copied through, from no model. Its test moved with it.
+
+**A theory pins what a shape-alike hint does today**, so the second limit above is in a test
+rather than only in prose.
 
 ### Break watches
 
-Four, each restored byte for byte and checked with cmp, the suite rerun green at 1180.
+Five, each restored byte for byte and checked with cmp, the suite rerun green at 1182.
 
 - the date mark back to anything but the placeholder: **5 red**, every row of the theory that
   is not a date, DATE OF THE DAY and the bare 10 among them
@@ -88,19 +116,14 @@ Four, each restored byte for byte and checked with cmp, the suite rerun green at
   and the park that still needs a pick
 - the report not naming the cell that decided: **1 red**, the report test
 - the peek reading the date cell only: **1 red**, the patcher round trip through both cells
+- the one pass reader stopping at the first cell it finds: **1 red**, the same round trip
 
 ### Existing tests changed
 
-`FilledWorkbookTests` is rewritten around the new rule, 9 tests before and 18 now, both
-measured sets among them. Nothing else moved: `Recognise`'s fourth argument is still optional,
-so every earlier call proves the sheet rule unchanged.
-
-### Seen and not changed
-
-`TemplateWords` line 83 prints E5, G5 and H5 as the date, the person and their position, typed
-by the team, never written. In a list whose other lines name where a value is read from, never
-written reads as a claim that the tool does not write them, and it does. Whether it means never
-read from a model is UNKNOWN from the line itself. Not this round's ask, so it stands.
+`FilledWorkbookTests` is rewritten around the new rule, 9 tests before and 20 now, both
+measured sets among them. `TemplateWordsTests` moved one expected line with the pane text above.
+Nothing else moved: `Recognise`'s fourth argument is still optional, so every earlier call
+proves the sheet rule unchanged.
 
 ---
 
