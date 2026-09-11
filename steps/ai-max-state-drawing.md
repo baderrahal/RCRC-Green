@@ -10,9 +10,10 @@ pull request 32 and every FIXED note ending Not observed in Revit, six for one f
 two plots with what the report must read, four questions only Revit or the team can answer,
 one on what to send back, and nine things the pane cannot force listed as not covered.
 Nothing in src or tests changes. The suite read 1103 locally after the sheet was written,
-the count main carries at `2e0c0ab`. Not merged yet: the merge sha and the runner count go
-in the follow-up. The client data count for CLAUDE.md and core-rules.md is in the pull
-request body only.
+the count main carries at `2e0c0ab`. Merged into main as `fc5cf7a` from pull request 70,
+with 1103 tests on the runner, 0 failed and 0 skipped, and the squash message back off main
+byte for byte. The client data count for CLAUDE.md and core-rules.md is in the pull request
+body only.
 
 Before that, the forty sixth pass, the Shared round, with every other session stopped for
 it, merged into main as `45138ae` from pull request 64. **The runner executed 1060 tests
