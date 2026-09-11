@@ -264,33 +264,27 @@ namespace RcrcGreen.Revit.Kpi
             // workbook has no cell for, and read all 78 again after the confirm.
             bool areaWanted = !asked.Template.AreaIsTypedByHand;
 
-            foreach (string plotId in asked.Ticked)
+            // **A CHOICE MADE AFTER A REFUSAL IS APPLIED TO WHAT WAS ALREADY READ.** Every region
+            // choice and the identical areas confirm used to read every ticked plot from the
+            // start, about eight minutes on 78 plots. The run the pane holds is the record, Core
+            // says whether it can answer this press, and the model is read only when it cannot.
+            ReadingsSource source = HeldReadings.Decide(
+                asked.HeldRun, document.Title, asked.Template, asked.TemplatePath,
+                asked.ComponentParameter, asked.ReferenceParameter, asked.Ticked);
+
+            if (source.Reused)
             {
-                var perPlot = Stopwatch.StartNew();
-                IReadOnlyList<RegionArea> regions = areaWanted
-                    ? KpiPlotReader.RegionsFor(document, plotId)
-                    : new List<RegionArea>();
-
-                // One region holding an area answers itself. More than one is a question the
-                // type name cannot settle, so it is left unchosen and the reconciliation
-                // refuses until a person picks.
-                string chosen = string.Empty;
-                if (areaWanted)
+                readings.AddRange(HeldReadings.Applied(asked.HeldRun.Readings, asked.RegionChosenFor));
+            }
+            else
+            {
+                foreach (string plotId in asked.Ticked)
                 {
-                    chosen = asked.RegionChosenFor(plotId);
-                    if (chosen.Length == 0)
-                    {
-                        List<RegionArea> holding = regions.Where(one => one.HoldsAnArea).ToList();
-                        if (holding.Count == 1) chosen = holding[0].TypeName;
-                    }
+                    readings.Add(GuardedRead(document, asked, plotId, counted, areaWanted));
                 }
-
-                readings.Add(KpiPlotReader.Read(
-                    document, plotId, asked.ComponentParameter, asked.ReferenceParameter,
-                    counted, chosen, regions, perPlot.Elapsed.TotalSeconds));
             }
 
-            double readSeconds = reading.Elapsed.TotalSeconds;
+            double readSeconds = source.Reused ? 0.0 : reading.Elapsed.TotalSeconds;
 
             Totalled area = KpiMerge.Area(readings);
             Totalled shrubs = KpiMerge.Shrubs(readings);
@@ -337,7 +331,7 @@ namespace RcrcGreen.Revit.Kpi
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
                 merged, KpiMerge.Ungrouped(readings), outcome,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
-                existing, proposed);
+                existing, proposed, source, asked.TemplatesListed);
 
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(
@@ -346,6 +340,48 @@ namespace RcrcGreen.Revit.Kpi
 
             Created?.Invoke(run, ReportPlaces.Written(written));
             Told?.Invoke(CreateWords.Wrote(run, ReportPlaces.Written(written)));
+        }
+
+        /// <summary>
+        /// One plot's read under a guard of its own. A throw on plot 60 of 78 used to fall to
+        /// Run's catches, which say Revit would not do that now with no plot named and write no
+        /// report. Every exception type is caught here on purpose, the same as the scan side's
+        /// guard: the plot, the type and the message go on the reading as a refusal, the run
+        /// carries on to the rest, the reconciliation refuses the write naming the plot, and
+        /// the report is written either way. Twenty minutes that end with a report naming the
+        /// bad plot are worth something, and twenty minutes that end with one sentence are not.
+        /// </summary>
+        private static PlotReading GuardedRead(Document document, KpiCreateAsk asked, string plotId, CountedGroups counted, bool areaWanted)
+        {
+            var perPlot = Stopwatch.StartNew();
+            try
+            {
+                IReadOnlyList<RegionArea> regions = areaWanted
+                    ? KpiPlotReader.RegionsFor(document, plotId)
+                    : new List<RegionArea>();
+
+                // One region holding an area answers itself. More than one is a question the
+                // type name cannot settle, so it is left unchosen and the reconciliation
+                // refuses until a person picks.
+                string chosen = string.Empty;
+                if (areaWanted)
+                {
+                    chosen = asked.RegionChosenFor(plotId);
+                    if (chosen.Length == 0)
+                    {
+                        List<RegionArea> holding = regions.Where(one => one.HoldsAnArea).ToList();
+                        if (holding.Count == 1) chosen = holding[0].TypeName;
+                    }
+                }
+
+                return KpiPlotReader.Read(
+                    document, plotId, asked.ComponentParameter, asked.ReferenceParameter,
+                    counted, chosen, regions, perPlot.Elapsed.TotalSeconds);
+            }
+            catch (Exception failed)
+            {
+                return PlotReading.NotRead(plotId, failed.GetType().Name + ": " + failed.Message, perPlot.Elapsed.TotalSeconds);
+            }
         }
 
         /// <summary>

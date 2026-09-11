@@ -11,13 +11,25 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class RecognisedWorkbook
     {
-        private RecognisedWorkbook(string fileName, KpiTemplate template, IReadOnlyList<KpiTemplate> candidates, string reason)
+        private RecognisedWorkbook(string fileName, KpiTemplate template, IReadOnlyList<KpiTemplate> candidates, string reason, bool filled = false, KpiTemplate filledAs = null)
         {
             FileName = fileName;
             Template = template;
             Candidates = candidates ?? new List<KpiTemplate>();
             Reason = reason ?? string.Empty;
+            IsFilled = filled;
+            FilledAs = filledAs;
         }
+
+        /// <summary>
+        /// The template a filled checklist was made from, when this file is one and its
+        /// template can be told. Null for a filled park checklist whose file name names
+        /// neither park or both, because naming one would be a guess. It is in the same list
+        /// as the templates, named as filled with the reason, and never offered.
+        /// </summary>
+        public KpiTemplate FilledAs { get; }
+
+        public bool IsFilled { get; }
 
         public string FileName { get; }
 
@@ -53,6 +65,7 @@ namespace RcrcGreen.Core.Kpi
             {
                 if (IsMatched) return Template.Name;
                 if (NeedsAPick) return "EXISTING PARKS or FUTURE PARKS. Pick one, nothing is guessed.";
+                if (IsFilled) return "filled, not offered. " + Reason;
                 return "not offered. " + Reason;
             }
         }
@@ -81,11 +94,61 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// A checklist the tool filled, told by the date cell it writes: E5 no longer holds the
+        /// template's placeholder. Picking one would copy last time's typing and last time's
+        /// written species as the template, so it stays in the list, greyed, saying why.
+        /// Nothing is deleted or moved.
+        /// </summary>
+        public static RecognisedWorkbook Filled(string fileName, KpiTemplate template, string dateCell)
+        {
+            if (fileName == null) throw new ArgumentNullException("fileName");
+            if (template == null) throw new ArgumentNullException("template");
+
+            return new RecognisedWorkbook(fileName, null, null,
+                "It is a filled " + template.Name + " checklist, not a template." + WhereATemplateHolds(dateCell),
+                true, template);
+        }
+
+        /// <summary>
+        /// A filled park checklist whose file name names neither park or both. It is filled
+        /// and not offered either way, and which park it was for is not guessed: the reason
+        /// names both and says the file name cannot tell them apart.
+        /// </summary>
+        public static RecognisedWorkbook FilledPark(string fileName, string dateCell)
+        {
+            if (fileName == null) throw new ArgumentNullException("fileName");
+
+            return new RecognisedWorkbook(fileName, null, null,
+                "It is a filled " + KpiTemplates.ExistingParks.Name + " or " + KpiTemplates.FutureParks.Name
+                + " checklist, which its file name cannot tell apart, not a template." + WhereATemplateHolds(dateCell),
+                true);
+        }
+
+        private static string WhereATemplateHolds(string dateCell)
+        {
+            return " " + KpiTemplates.TypedByTheTeam[0] + " holds " + (dateCell ?? string.Empty).Trim()
+                + " where a template holds " + KpiTemplates.DatePlaceholder + ".";
+        }
+
+        /// <summary>
+        /// The one test that tells a filled checklist from a template: the date cell reads
+        /// something other than the placeholder. A cell that is not there, or empty, is not
+        /// a filled file, because a template must not be withheld on a cell it never had.
+        /// </summary>
+        public static bool ReadsAsFilled(string dateCell)
+        {
+            return !string.IsNullOrWhiteSpace(dateCell)
+                && !string.Equals(dateCell.Trim(), KpiTemplates.DatePlaceholder, StringComparison.Ordinal);
+        }
+
+        /// <summary>
         /// The recognition rule. The main sheet name settles five of the seven outright.
         /// Park Name is two templates, so the file name breaks the tie, and a file name
-        /// holding both park words or neither leaves the user to pick.
+        /// holding both park words or neither leaves the user to pick. Before any of those
+        /// is offered, the date cell says whether the file is a checklist the tool already
+        /// filled, because a filled MOSQUES output keeps the sheet name that recognises it.
         /// </summary>
-        public static RecognisedWorkbook Recognise(string fileName, IReadOnlyList<string> sheetNames, string readRefusal)
+        public static RecognisedWorkbook Recognise(string fileName, IReadOnlyList<string> sheetNames, string readRefusal, string dateCell = null)
         {
             if (fileName == null) throw new ArgumentNullException("fileName");
 
@@ -112,11 +175,20 @@ namespace RcrcGreen.Core.Kpi
 
             if (byName.Count == 1)
             {
-                return Matched(fileName, byName[0]);
+                return ReadsAsFilled(dateCell) ? Filled(fileName, byName[0], dateCell) : Matched(fileName, byName[0]);
             }
 
             bool existing = KpiNames.Holds(fileName, "EXISTING");
             bool future = KpiNames.Holds(fileName, "FUTURE");
+
+            if (ReadsAsFilled(dateCell))
+            {
+                // A filled park checklist is not offered either way, and its file name says
+                // which park it was for when it can. When it cannot, neither is named.
+                if (existing && !future) return Filled(fileName, KpiTemplates.ExistingParks, dateCell);
+                if (future && !existing) return Filled(fileName, KpiTemplates.FutureParks, dateCell);
+                return FilledPark(fileName, dateCell);
+            }
 
             if (existing && !future) return Matched(fileName, KpiTemplates.ExistingParks);
             if (future && !existing) return Matched(fileName, KpiTemplates.FutureParks);

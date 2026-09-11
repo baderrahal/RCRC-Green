@@ -105,8 +105,22 @@ namespace RcrcGreen.Revit.Kpi
             new Dictionary<string, string>(StringComparer.Ordinal);
 
         // What the last press of Create really did, so the pane can offer the region choices
-        // a refusal asked for without reading anything itself.
+        // a refusal asked for without reading anything itself, and so the next press can
+        // apply a choice to the readings it holds rather than reading the model again.
         private KpiCreateRun _lastRun;
+
+        // The templates folder's workbooks as recognised, held once per folder. Every redraw
+        // used to open and peek every .xlsx in the folder, seven zips for each of 155 ticks.
+        // The one copy the pane holds under THE PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
+        // FOR: the folder is listed on every draw, only each file's recognition is kept, it is
+        // keyed on the folder, and it is cleared when the folder changes and after any press
+        // of Create that reached the patcher with an output path in it, wrote or not.
+        private TemplateListing _templatesListed = TemplateListing.Nothing;
+
+        // Where the plot list was scrolled to, kept here because the list is thrown away on
+        // every redraw and every tick redraws. 155 tick boxes threw themselves back to the
+        // top on every tick.
+        private readonly ScrollMemory _scrolled = new ScrollMemory();
 
         // These three outlive every redraw, because each carries what somebody is halfway
         // through typing. None of them comes from Revit.
@@ -339,6 +353,7 @@ namespace RcrcGreen.Revit.Kpi
 
             if (folder.Length == 0)
             {
+                _templatesListed = TemplateListing.Nothing;
                 _templates.Children.Add(Faint(TemplateWords.NoFolder));
                 return;
             }
@@ -346,21 +361,25 @@ namespace RcrcGreen.Revit.Kpi
             IReadOnlyList<string> paths = TemplateFolder.WorkbooksIn(folder);
             if (paths.Count == 0)
             {
+                _templatesListed = TemplateListing.Nothing;
                 _templates.Children.Add(Faint(TemplateWords.EmptyFolder));
                 return;
             }
 
-            List<RecognisedWorkbook> recognised = paths
-                .Select(path =>
-                {
-                    PeekedWorkbook peeked = PeekedWorkbook.Of(path);
-                    return RecognisedWorkbook.Recognise(
-                        Path.GetFileName(path), peeked.SheetNames, peeked.Refusal);
-                })
-                .ToList();
+            // Opened once per file per folder. A filled checklist keeps its template's first
+            // sheet, so the peek also reads the date cell the tool writes and the file is named
+            // as filled rather than offered.
+            _templatesListed = _templatesListed.For(folder, paths, path =>
+            {
+                PeekedWorkbook peeked = PeekedWorkbook.Of(path);
+                return RecognisedWorkbook.Recognise(
+                    Path.GetFileName(path), peeked.SheetNames, peeked.Refusal, peeked.FirstSheetDateCell);
+            });
+            IReadOnlyList<RecognisedWorkbook> recognised = _templatesListed.Workbooks;
 
             _templates.Children.Add(Faint(TemplateWords.Listed(
                 recognised.Count, recognised.Count(one => one.IsMatched))));
+            _templates.Children.Add(Faint(_templatesListed.InWords));
 
             // Said above the list, because it is the reason the rows below stand as they do.
             if (_whyThisTemplate.Length > 0) _templates.Children.Add(Faint(_whyThisTemplate));
@@ -559,14 +578,53 @@ namespace RcrcGreen.Revit.Kpi
                 list.Children.Add(box);
             }
 
-            _templates.Children.Add(new ScrollViewer
+            _templates.Children.Add(Scrolling(list, PanelMetrics.ListHeight, "plots"));
+        }
+
+        /// <summary>
+        /// A list in a viewer that keeps its place across the rebuild, the shape the Drawing
+        /// Sheet settled on for the same fault on its own lists. Written here rather than
+        /// called across the fence, because that helper is another task's, and a shared one
+        /// cannot live in Core, which has no WPF.
+        /// </summary>
+        private UIElement Scrolling(UIElement what, double tall, string remembered)
+        {
+            return Remembering(new ScrollViewer
             {
-                Content = list,
-                MaxHeight = PanelMetrics.ListHeight,
+                Content = what,
+                MaxHeight = tall,
+                Margin = PanelMetrics.Row,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                Margin = PanelMetrics.Row
-            });
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            }, remembered);
+        }
+
+        /// <summary>
+        /// Keeps a viewer's position across the rebuild, by name. The remembered offsets are
+        /// read into locals before any handler is attached, because the fresh viewer's own
+        /// first scroll change would note nought over them. They are restored on the first
+        /// layout pass rather than on Loaded, because a viewer that has not measured its
+        /// content yet clamps any offset to zero and the restore reads as though it worked.
+        /// </summary>
+        private ScrollViewer Remembering(ScrollViewer view, string remembered)
+        {
+            double wasDown;
+            double wasAcross;
+            if (_scrolled.Wants(remembered, out wasDown, out wasAcross))
+            {
+                EventHandler once = null;
+                once = (sender, e) =>
+                {
+                    view.LayoutUpdated -= once;
+                    if (wasDown > 0.0) view.ScrollToVerticalOffset(wasDown);
+                    if (wasAcross > 0.0) view.ScrollToHorizontalOffset(wasAcross);
+                };
+                view.LayoutUpdated += once;
+            }
+
+            view.ScrollChanged += (sender, e) => _scrolled.Note(remembered, view.VerticalOffset, view.HorizontalOffset);
+
+            return view;
         }
 
         /// <summary>
@@ -858,7 +916,9 @@ namespace RcrcGreen.Revit.Kpi
                 _chosenRegions,
                 _date.Text,
                 _preparedBy.Text,
-                _position.Text);
+                _position.Text,
+                _lastRun,
+                _templatesListed);
 
             Say("Creating.");
             Ask(KpiRequest.Create);
@@ -896,6 +956,19 @@ namespace RcrcGreen.Revit.Kpi
             Dispatcher.Invoke(() =>
             {
                 _lastRun = run;
+
+                // Create is the one thing in this tool that writes a workbook, and it can write
+                // into the templates folder. Any press that reached the patcher with an output
+                // path in that folder lists it afresh on the redraw, whether or not it wrote,
+                // because the copy lands at the output path before the patch and a patch that
+                // fails after it leaves the copy behind under a name the listing may hold. An
+                // output path anywhere else leaves the listing and its counts standing, because
+                // nothing in that folder moved.
+                if (run.Outcome != null && run.OutputPath.Length > 0
+                    && _templatesListed.IsFor(Path.GetDirectoryName(run.OutputPath)))
+                {
+                    _templatesListed = TemplateListing.Nothing;
+                }
                 RedrawTemplates();
             });
         }
@@ -1035,6 +1108,7 @@ namespace RcrcGreen.Revit.Kpi
                 _picked = null;
                 _pickedAs = null;
                 _whyThisTemplate = string.Empty;
+                _templatesListed = TemplateListing.Nothing;
                 RedrawTemplates();
             }
         }

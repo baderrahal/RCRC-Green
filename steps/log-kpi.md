@@ -4,6 +4,233 @@ Newest entry first.
 
 ---
 
+## 2026-09-11, fifty first pass. The five that cost a whole run: findings 35, 34, 39, 9 and 16
+
+Five findings from the two audits, all about the 78 plot STREETS run the team is about to try,
+about twenty minutes on the measured rate. Each either wasted it, threw it away, or made it
+worse. **Findings 34, 35, 39, 9 and 16 are FIXED and marked under their entries in
+`steps/audit-kpi.md` and `steps/audit-kpi-2.md`. The other 38 stay open**, not renumbered,
+not reordered, not annotated. Nothing else was touched: not the Drawing Sheet, not
+`Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
+this round has been observed in Revit.** The branch came off a fresh pull of main at `2e0c0ab`.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1153 tests at this branch, 0 failed and 0 skipped, 638 of them KPI, 50 added here**, against
+the 1103 main carries.
+
+### Each of the five at today's lines
+
+The audits' line numbers were written at `92dd36c` and have moved. Read again at today's lines
+before anything was fixed, every one of the five still stood:
+
+- **35** stood at `KpiRequestHandler.cs:267-291`, the loop over the ticked plots with
+  `RegionsFor` at :270 and `Read` at :288 under no try of their own, falling to the catches at
+  :160-179. The two reconciliation refusals at `Reconciliation.cs:212-232` were reached by
+  `ReconciliationTests` alone
+- **34** stood at `KpiPanel.cs:760-764`, the region choice click calling `AskedToCreate`, and
+  :706, the confirm redrawing so Create is pressed again. The choice was applied at read time,
+  `KpiRequestHandler.cs:277-290`, and nothing of the last run travelled on the ask
+- **39** stood at `KpiPanel.cs:353-360` with `RecognisedWorkbook.cs:102-116`, the first sheet's
+  name and nothing else, and the peek read no cell
+- **9** stood at `KpiPanel.cs:562-569`, a bare `ScrollViewer` built on every redraw, with no
+  scroll handling anywhere on the KPI side
+- **16** stood at `KpiPanel.cs:353-360`, `PeekedWorkbook.Of` per path on every redraw, byte for
+  byte what `92dd36c` held
+
+**The round before this one, findings 3, 4, 6, 12, 21 and 26, has not landed.** Main held
+nothing after `2e0c0ab` and no Kpi commit names any of the six, so finding 35 is built here
+and not on finding 6. The catch inside `KpiPlotReader.Printed` that swallows an
+`ApplicationException` with nothing recorded is finding 6's and is untouched: a throw of that
+one type inside `Printed` still comes back as a schedule with no rows and no refusal, and that
+round is where it is answered.
+
+### 35. A guard per plot, and a guard per schedule
+
+`PlotReading.NotRead(plotId, why, seconds)` is a reading whose one refusal is the read threw
+and nothing on this plot was read, with the exception's type and message, every other field at
+its empty default. `GuardedRead` in `KpiRequestHandler` wraps each plot's regions and read and
+hands that back on a throw, catching every type on purpose with the same sentence the scan
+side's `Guarded` carries. Inside `KpiPlotReader.Read` each schedule's read is guarded the same
+way, so a throw reading one schedule names the schedule and leaves the rest of the plot read.
+Nothing downstream changed: `Reconciliation` already turns the refusal into DM-60: the read
+threw and nothing on this plot was read. InvalidOperationException: The schedule is not valid.
+and refuses the write, lists the plot under contributed nothing with the refusal first, the
+report prints it among the reasons and under the plot as REFUSED, the status line counts it,
+and the pane draws it in red. Three ticked, three read, one refused: the other two still add
+up around it, 1000 plus 250 is 1250 and 13 plus 13 is 26, and the plot's empty component does
+not make the others disagree. The refusals for a plot list that comes out shorter or longer
+than it went in stay as the backstop tests reach, by design now.
+
+The guard itself runs only in Revit and has never fired on a live model. Which exception type
+a real refused plot throws is UNKNOWN, so the message shape is the only thing the tests pin.
+
+### 34. The choice applied to the run already read
+
+`KpiCreateAsk` carries the run the pane holds, the same object and not a copy, and
+`HeldReadings.Decide` in Core says whether it can answer this press. It is not a cache with a
+lifetime: the run before is trusted when it wrote nothing and the model title, the template and
+its file, the two parameters and the plots are the same, ordered the way `Reconciliation`
+orders them, and every ticked plot has a reading. Anything else reads the model again with the
+reason named, and each is a test: no run held, the run before wrote its workbook, the model or
+the template or the template file or either parameter or the plots differ, a plot has no
+reading. `HeldReadings.Applied` puts each plot's chosen region on its reading through
+`PlotReading.WithChosenRegion`, and a plot with no choice keeps the reading it had, the single
+region a first run settled on included. The reconciliation that refused NS-19 on two regions
+passes on the applied readings with the area 900 and nothing read, and the identical areas
+confirm passes the same way with the pair still named.
+
+The report says which under the Run line: Readings: reused, nothing was read from the model on
+this press, or read from the model on this press, with the reason. A reused run reads 0.0
+seconds of model read, and that line is what makes the number true. The confirm button still
+redraws and Create is pressed again, which now reuses, so the two presses cost one read where
+they cost two. Making the confirm one press is an interface change Bader has not asked for.
+
+**A plot whose read was refused is not reused.** The review of this round found that a reading
+made by `NotRead` carries the plot's identifier and so passed the every plot has a reading
+check, and a press after the model was fixed, with nothing else changed, would have handed the
+same refusal back for ever. `Decide` reads again when any held reading carries a read refusal,
+naming the plots: the run before could not read DM-60, so the model was read again. That costs
+a full read on the press after a thrown plot, and reading only the refused plots is the
+refinement not built.
+
+**What no cheap comparison can see is a model edited between the refusal and the pick.** A
+region's area typed in or a schedule's filter changed in those minutes would be read off the
+run before. The pane throws the run away on every tick and every picker change, the report
+says reused in so many words, and whether that is acceptable is for Bader.
+
+### 39. A filled checklist named as filled
+
+The peek reads E5 of the first sheet in the same open as the names, off the part the workbook's
+relationships point at, with a shared string resolved to its text because an Excel re-save
+stores a filled cell that way. `Recognise` takes it as a fourth argument and names a file whose
+E5 is not `KpiTemplates.DatePlaceholder` as a filled checklist of its template, with what E5
+holds in the reason: It is a filled MOSQUES checklist, not a template. E5 holds 2026-09-10 where
+a template holds <Date>. It sits in the same list greyed, its reason in the tooltip, and
+nothing is deleted or moved. A cell that is not there or empty is not a filled file. A filled
+park file is not offered and needs no pick. A read refusal still wins. The two private cell
+readers in `SpeciesList` moved into the package plumbing the peek and the patcher share, so
+there is one cell reader rather than three.
+
+A filled park file whose name names neither park, or both, is named as a filled EXISTING PARKS
+or FUTURE PARKS checklist which its file name cannot tell apart, `FilledPark`, with `FilledAs`
+null. The first draft named EXISTING PARKS for it, the first of the two in the list, which was
+a guess printed as a fact, and the review caught it. Nothing reads `FilledAs` but the tests.
+
+**The placeholder is one observation.** `<Date>` is what E5 held on the first real workbook on
+2026-09-09, recorded until now only in a comment. Whether all seven production templates hold
+exactly that is UNKNOWN and is for Bader to open and confirm before the team's folder holds a
+filled file. A template holding something else there would be withheld, with its E5 printed on
+its own row so the withholding is visible rather than a file that vanished. The annotated set
+reads DATE OF THE DAY there and is not what the team fills.
+
+### 9 and 16. One press, one design
+
+Both are the same press: a tick calls `Ticked`, `Changed`, `RedrawTemplates`, and the redraw
+both reopened the workbooks and rebuilt the plot list bare. `Changed` and `RedrawTemplates`
+stay the one path in and out of every change.
+
+`TemplateListing` in Core holds the folder's workbooks as recognised, keyed on the folder
+compared without case and with a trailing separator off, and `For(folder, paths, recognise)`
+opens only the paths it has not seen, drops the ones gone and keeps the rest. The folder is
+still listed on every draw. It counts the opens and the redraws: seven files over 155 draws is
+seven opens where it was 1,085, and a fake counts them in the tests so no disk is touched. The
+pane holds it as the one copy under THE PANE HOLDS NO COPY OF ANYTHING IT CAN ASK FOR, says so
+in its comment, clears it when the folder is browsed and after a run that wrote, prints the
+count under the list, and hands it on the ask so the report prints templates folder: 7
+workbooks in the folder, opened 7 times over 158 redraws since the folder was listed, or NOT
+LISTED when nothing recorded it. A workbook overwritten in place under the same name by
+anything other than this tool keeps its held recognition until the folder is browsed again or
+Create reaches the patcher into it, which is the stated limit. The clear after a press of Create
+is keyed on the output path's folder, `IsFor`, so filling several plots into another folder
+leaves the listing and its counts standing, and it fires on any press that reached the patcher
+into the listed folder, wrote or not: the copy lands at the output path before the patch, and a
+patch that fails after it leaves the copy behind under a name the listing may already hold as
+something else. The review found both, the clear on every write anywhere and the clear missing
+on a refused patch. It also asked whether a write refused after its copy leaves a stray file
+unseen under a new name: it does not, because the folder is listed on every draw and a new path
+is opened once.
+
+`Scrolling` and `Remembering` in `KpiPanel` are the Drawing Sheet's shape written in the KPI
+folder, read and not edited at `DrawingSheetPanel.cs:1653-1702`: the remembered offsets read
+into locals before any handler is attached, restored on the first layout pass and noted on
+every scroll change. `ScrollMemory` in Core holds the rule half with tests, a restore wanted
+only when something above the top was noted, because restoring nought is a scroll to the top
+that reads as though it worked. A tick still redraws the whole block, because a tick moves the
+count line, the preselection, the reference values and the Create button, and remembering the
+offset is the minimal change and the one the Drawing Sheet chose. Whether the restore holds on
+a real run is UNKNOWN for both panes: the Drawing Sheet's own log records no observation of it
+either. **Lifting the helper into a shared file is a round of its own**: it cannot live in
+Core, which has no WPF, so it would be a new common file at the Revit root and a hook change,
+and that is Bader's call.
+
+### What inside the read costs, in calls, and unchanged
+
+Measured on the code and not in seconds, because nothing here runs Revit. Per ticked plot:
+
+- `FirstSheetOf` collects every sheet, reads `SheetNumber` off all 1,385 to sort them, then
+  `GetParameters` and the getter down the sorted list until the plot matches
+- `Schedules` collects every schedule reading `IsTemplate` off each, and for every one of the
+  951 that is not a template `PlotFilteredOn` asks `Definition`, `GetFilters`, and per filter
+  `GetField`, `GetName`, `IsStringValue` and `GetStringValue` until the plot filter is found.
+  951 per plot, 74,178 over 78
+- `RegionsFor`, on a template with an area cell only, so not on STREETS: one collector over the
+  link instances, and per 00 link one collector over its filled regions with `GetParameters`
+  and the getter for PRX_Ref Plot ID on every one of the 279, and the area, the type name and
+  the printed form on the regions matching the plot alone. The forty sixth pass entry said two
+  parameters off each region, which overstated it
+- `Printed`, on at most two schedules: `GetTableData`, the body section, the counts, and
+  `GetCellText` once per cell. Nothing regenerates, refreshes or exports a schedule
+
+Which of the four carries the 125.5 seconds is UNKNOWN, and none is changed. The 126.6 second
+measure in the round message is Bader's and is recorded nowhere in this repository.
+
+### What the review found and what stayed
+
+Four readers over the diff, one lens each, then a pass trying to refute what they found,
+eleven findings, four confirmed and seven refuted. Three changed code, above: the refused
+reading reused, the park named on a guess, and the templates listing cleared on every write
+anywhere and not on a refused patch into its folder. The rest stayed, each for a reason:
+
+- The region read sits inside the plot's guard rather than under one of its own, so a throw
+  reading a plot's filled regions refuses the whole plot, named, and its schedules are not read.
+  Finding 35 asked for a guard per plot and that is what it got. STREETS reads no region
+- A template whose own placeholder is not `<Date>` is named as filled, with its E5 printed. That
+  is the open question for Bader above, and the line shows what it read rather than hiding it
+- `CellRef.TryParse` reads upper case column letters only, which is what Excel writes. A sheet
+  re-saved with lower case references would read as empty rather than refuse. Not this round's
+  code and not touched
+- `PeekedWorkbook.Of` catches four types, and an unlisted one thrown inside a redraw would take
+  the template list down with it. The same four it caught before this round. Not touched
+- A templates folder that fails to list reads as empty, `WorkbooksIn`'s shape before this round,
+  and now costs one re-open per file when it comes back rather than seven per tick. Not touched
+
+### Break watches
+
+Eight, each restored byte for byte and checked with cmp, the suite rerun green at 1153.
+
+- 35, a plot that threw carrying no refusal: **4 red**, all of `PlotReadThrewTests` bar the
+  merge test
+- 34, a choice not applied to the held reading: **2 red**, the applied and the reconciliation
+  tests in `HeldReadingsTests`
+- 34, the plots ticked not compared: **2 red**, the two ticked rows of the theory
+- 39, nothing reading as filled: **2 red**, the filled mosque and the filled park
+- 16, every draw opening every workbook again: **6 red**, across `TemplateListingTests`, the
+  155 draws test reading 1,085
+- 9, nought restored: **2 red**, both `ScrollMemoryTests` that say nought is not worth restoring
+- 34, a refused reading reused: **2 red**, the thrown plot and the two schedule refusals in
+  `HeldReadingsTests`
+- 39, an untellable filled park guessed as EXISTING PARKS: **2 red**, both rows of the theory
+  in `FilledWorkbookTests`
+
+### Existing tests changed
+
+None moved. `CreateFixture.Run` gained three optional arguments, the readings source, the
+templates listing and the ticked list. `WorkbookFixture` gained a workbook whose one cell is a
+shared string. `Recognise` gained an optional fourth argument, so every earlier call proves the
+sheet rule unchanged.
+
+---
+
 ## 2026-09-10, fiftieth pass. One word too loose: two headings hold DIAMETER, and the formulas say which
 
 One column choice, measured on the 1707 run, and one line added to the report. **The other 43

@@ -1,6 +1,35 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Fiftieth pass, one word too loose, measured on the 1707 run. **The other 43
+Phase: 9, ship. Fifty first pass, the five that cost a whole run. **Findings 34, 35, 39, 9 and
+16 are FIXED and marked under their entries. The other 38 audit findings stay open**, not
+renumbered, not reordered, not annotated. All five stood at today's lines before the fix, and
+the round before this one, findings 3, 4, 6, 12, 21 and 26, had not landed on main, so 35 is
+built fresh and finding 6's catch is untouched.
+
+**A throw on one plot names the plot and the run carries on**, `GuardedRead` in the handler
+and a guard per schedule in the reader, the refusal on the reading and the report written. **A
+choice made after a refusal is applied to the run already read**, `HeldReadings.Decide` and
+`Applied`, the model read again only for a named reason and the report saying which, a plot
+whose read was refused among the reasons. **A filled checklist is named as filled and not
+offered**, off E5 against `KpiTemplates.DatePlaceholder`, in the same list, nothing deleted or
+moved, and a filled park file whose name cannot tell the park names neither. **The templates folder is opened once per folder**,
+`TemplateListing`, the opens counted on the pane and in the report. **The plot list keeps its
+place across a tick**, `Scrolling` and `Remembering` in the KPI pane with `ScrollMemory` in Core.
+The read cost is in the log in calls and is unchanged. A review pass over the diff, four
+lenses and a refutation, confirmed four findings of eleven and three changed code, named in
+the log: a refused reading no longer reused, a filled park file that names neither park when
+its name cannot tell, and the templates listing cleared on any press that reached the patcher
+into its folder rather than on every write anywhere.
+
+Eight break watches went red on 4, 2, 2, 2, 6, 2, 2 and 2 tests and were restored byte for
+byte. **Locally 1153 tests at this branch, 0 failed and 0 skipped, 638 of them KPI, 50 added,
+against the 1103 main carries.** The pull request, the merge hash and the runner's count go in the
+record the merge adds here. **Nothing in this round has been observed in Revit.** Three things
+wait on Bader: whether all seven production templates hold `<Date>` at E5, whether a model
+edited between a refusal and a pick matters, and whether the scrolling helper becomes a shared
+Revit root file in a round of its own.
+
+Before that, the fiftieth pass, one word too loose, measured on the 1707 run. **The other 43
 audit findings stay open**, not renumbered, not reordered, not annotated.
 
 **Where two headings hold DIAMETER, the column the sheet's own formulas read is taken.** J

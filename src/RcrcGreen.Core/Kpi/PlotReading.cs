@@ -703,6 +703,36 @@ namespace RcrcGreen.Core.Kpi
             Notes = Held(notes);
         }
 
+        public const string ReadThrew = "the read threw and nothing on this plot was read.";
+
+        /// <summary>
+        /// A plot whose read threw. The refusal travels on the reading with what was thrown,
+        /// the same as a column the heading row did not name, and never as a plot missing
+        /// from the list: a throw on plot 60 of 78 used to end the run with one sentence
+        /// naming no plot and no report, and twenty minutes that end with a report naming
+        /// the bad plot are worth something. Every other field stays at its empty default, so
+        /// the reading reads as not read and the reconciliation refuses the write.
+        /// </summary>
+        public static PlotReading NotRead(string plotId, string why, double readSeconds)
+        {
+            if (string.IsNullOrWhiteSpace(why)) throw new ArgumentException("A read that threw needs what was thrown.", "why");
+
+            return new PlotReading(plotId, string.Empty, string.Empty, null, null, null, null, null, readSeconds,
+                null, null, new[] { ReadThrew + " " + why.Trim() });
+        }
+
+        /// <summary>
+        /// The same reading with the region the user chose, so a choice made after a refusal
+        /// is applied to what was already read rather than read again. Every argument is this
+        /// reading's own, and the two counts the constructor checks are unchanged.
+        /// </summary>
+        public PlotReading WithChosenRegion(string typeName)
+        {
+            return new PlotReading(PlotId, Component, Reference, SoftscapeSchedules, Species, ShrubsAndLawnSchedules,
+                Subtotals, Regions, ReadSeconds, typeName, Notes, ReadRefusals, SoftscapeTotalRead, SoftscapeTotal,
+                SoftscapeRowsPassedOver, PrintedSchedules, SoftscapeTotalRow, PrintedGroups);
+        }
+
         public string PlotId { get; }
 
         public string Component { get; }

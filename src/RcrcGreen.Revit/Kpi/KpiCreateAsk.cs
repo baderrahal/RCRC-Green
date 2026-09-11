@@ -87,7 +87,9 @@ namespace RcrcGreen.Revit.Kpi
             IDictionary<string, string> chosenRegions,
             string date,
             string preparedBy,
-            string position)
+            string position,
+            KpiCreateRun heldRun = null,
+            TemplateListing templatesListed = null)
         {
             Ticked = (ticked ?? Enumerable.Empty<string>()).Where(one => one != null).ToList();
             Template = template;
@@ -102,7 +104,22 @@ namespace RcrcGreen.Revit.Kpi
             Date = date ?? string.Empty;
             PreparedBy = preparedBy ?? string.Empty;
             Position = position ?? string.Empty;
+            HeldRun = heldRun;
+            TemplatesListed = templatesListed ?? TemplateListing.Nothing;
         }
+
+        /// <summary>
+        /// The run the pane holds from the press before, the same object and not a copy, so a
+        /// choice made after a refusal can be applied to its readings. Null when the pane holds
+        /// none, and Core decides whether it can be trusted.
+        /// </summary>
+        public KpiCreateRun HeldRun { get; }
+
+        /// <summary>
+        /// The templates folder as the pane holds it, so the report can say how many times a
+        /// workbook was opened.
+        /// </summary>
+        public TemplateListing TemplatesListed { get; }
 
         /// <summary>
         /// The three the team types on the pane, for E5, G5 and H5. They come from no model, so

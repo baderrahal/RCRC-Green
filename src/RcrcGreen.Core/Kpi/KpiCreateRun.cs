@@ -36,12 +36,16 @@ namespace RcrcGreen.Core.Kpi
             PatchOutcome outcome,
             RunTiming timing,
             SpeciesList existingList = null,
-            SpeciesList proposedList = null)
+            SpeciesList proposedList = null,
+            ReadingsSource readingsSource = null,
+            TemplateListing templatesListed = null)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");
 
             ExistingList = existingList;
             ProposedList = proposedList;
+            ReadingsSource = readingsSource ?? ReadingsSource.ReadOnThisPress;
+            TemplatesListed = templatesListed ?? TemplateListing.Nothing;
 
             DocumentTitle = documentTitle ?? string.Empty;
             Template = template;
@@ -123,6 +127,19 @@ namespace RcrcGreen.Core.Kpi
         public SpeciesList ExistingList { get; }
 
         public SpeciesList ProposedList { get; }
+
+        /// <summary>
+        /// Read from the model on this press, or reused off the run before with the choices
+        /// applied. The report says which, beside the seconds the read took.
+        /// </summary>
+        public ReadingsSource ReadingsSource { get; }
+
+        /// <summary>
+        /// How many times the pane opened a workbook in the templates folder since it listed
+        /// the folder, so seven opens per tick cannot come back unnoticed. Nothing when the
+        /// pane recorded none.
+        /// </summary>
+        public TemplateListing TemplatesListed { get; }
 
         public bool Wrote
         {
