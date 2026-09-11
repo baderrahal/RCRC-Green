@@ -65,7 +65,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiTemplate template = null,
             SpeciesMatch[] matches = null,
             SpeciesList existingList = null,
-            SpeciesList proposedList = null)
+            SpeciesList proposedList = null,
+            ReadingsSource readingsSource = null,
+            TemplateListing templatesListed = null,
+            string[] ticked = null)
         {
             KpiTemplate which = template ?? KpiTemplates.Mosques;
 
@@ -88,7 +91,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "PRX_Plot_UID2",
                 "KING FAHD",
                 held,
-                Reconciliation.Of(held.Select(one => one.PlotId).ToList(), held, null, false, which),
+                Reconciliation.Of(ticked ?? held.Select(one => one.PlotId).ToArray(), held, null, false, which),
                 KpiCreatePlan.Of(which, null, null, "KING FAHD", area, null, null,
                     matches, "2026-09-09", "xx", "bb"),
                 area,
@@ -101,7 +104,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                 outcome,
                 timing ?? RunTiming.NotTimed,
                 existingList,
-                proposedList);
+                proposedList,
+                readingsSource,
+                templatesListed);
         }
 
         public static PlotReading Plot(

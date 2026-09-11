@@ -147,6 +147,11 @@ any of the nineteen.
    Drawing Sheet's plot and view type lists, fixed there and never carried across | A helper in
    the KPI pane, or a shared one
 
+   FIXED. `Scrolling` and `Remembering` in `KpiPanel` keep the plot list's offsets across the
+   redraw by name, the Drawing Sheet's shape written in the KPI folder rather than called
+   across the fence, and `ScrollMemory` in Core holds the rule half, a note on every scroll and
+   a restore wanted only above the top, with tests. Not observed in Revit.
+
 10. QA | `tests/RcrcGreen.Core.Tests/Kpi/KpiCreateTests.cs:311` | The plan test asserts the nine
     cell references in order and asserts the sheet name on each, and **never which value went
     into which cell**. Proved: swapping the shrubs and lawn totals on the way to their cells in
@@ -208,6 +213,12 @@ any of the nineteen.
     every picker press and every grouping press | Seven zip files opened and their workbook parts
     parsed for each of 155 ticks. The pane is doing file reads on the interface thread in
     response to a tick box | A cache keyed on the folder, cleared when the folder changes
+
+    FIXED. `TemplateListing` holds the folder's workbooks as recognised, keyed on the folder,
+    cleared when the folder changes and after a write, with the folder still listed on every
+    draw so a file added or gone is seen. It counts the opens and the redraws, the pane shows
+    the count under the list and the report carries it: seven opens over 155 redraws where it
+    was 1,085. Not observed in Revit.
 
 17. WIRING | `src/RcrcGreen.Revit/Kpi/KpiRequestHandler.cs:167` | The `ArgumentException` catch
     reports every such fault as "Revit refused that as a bad argument", and the create path

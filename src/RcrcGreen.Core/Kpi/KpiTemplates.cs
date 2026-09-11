@@ -52,6 +52,16 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static readonly string[] TypedByTheTeam = { "E5", "G5", "H5" };
 
+        /// <summary>
+        /// What E5 of the client's production template held on the first real workbook,
+        /// 2026-09-09, before the pane's date box was carried through: the template's own
+        /// placeholder. The tool writes the typed date over it, so a workbook in the templates
+        /// folder whose E5 no longer holds this has been filled and is named as filled rather
+        /// than offered. One observation on one template, recorded as such. The annotated set
+        /// reads DATE OF THE DAY there and is not what the team fills.
+        /// </summary>
+        public const string DatePlaceholder = "<Date>";
+
         public static readonly KpiTemplate ExistingParks = Parks("EXISTING PARKS");
 
         public static readonly KpiTemplate FutureParks = Parks("FUTURE PARKS");

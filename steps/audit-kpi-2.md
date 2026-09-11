@@ -149,6 +149,13 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     costs a whole run each | The choices collected before a rerun, or the regions read once and
     held on the run for the next press
 
+    FIXED. The run the pane holds travels on the ask, `HeldReadings.Decide` says whether it
+    can answer this press, and a region choice or a confirm is applied to its readings with
+    `Applied` and nothing read. The model is read again when there is no run, the run before
+    wrote, or the model, template, template file, a parameter or the plots differ, or a plot
+    has no reading, each named, and the report says which under the Run line. Not observed in
+    Revit.
+
 35. WIRING | `src/RcrcGreen.Revit/Kpi/KpiRequestHandler.cs:257-276` with `:160-179` and
     `src/RcrcGreen.Core/Kpi/Reconciliation.cs:113-133` | **One refused plot read ends the whole
     run with no report, and the two refusals built for exactly that can never fire.** The loop
@@ -161,6 +168,13 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     create side, which takes twenty minutes on the run the team is about to try, has no such
     guard, so a bad plot costs the run and the report that would have named it | A guard per
     plot that records the refusal on the reading, which finding 6 asks for as well
+
+    FIXED. `GuardedRead` in the handler wraps each plot's regions and read and hands back
+    `PlotReading.NotRead` with the type and the message, and each schedule's read inside
+    `KpiPlotReader.Read` is guarded the same way naming the schedule. The run carries on, the
+    reconciliation refuses naming the plot, and the report is written. The two refusals for a
+    short or a long list stay as the backstop tests reach. Finding 6's catch in `Printed` is
+    untouched. Not observed in Revit.
 
 36. LOGIC | `src/RcrcGreen.Revit/Kpi/KpiPlotReader.cs:271-283` with
     `src/RcrcGreen.Core/Kpi/PlotReading.cs:241` and `src/RcrcGreen.Core/Kpi/KpiMerge.cs:293-308`
@@ -207,6 +221,12 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     fewer, and E5, G5 and H5 hold last time's typing under this run's | A workbook whose E5 is
     not the placeholder named as filled rather than offered, which the tool can tell because it
     is what wrote it
+
+    FIXED. The peek reads E5 of the first sheet with a shared string resolved, `Recognise`
+    names a file whose E5 is not `KpiTemplates.DatePlaceholder` as a filled checklist of its
+    template with the cell's text in the reason, and the pane lists it greyed in the same list.
+    Nothing is deleted or moved and browsing is untouched. The placeholder is one observation
+    and is for Bader to confirm on all seven. Not observed in Revit.
 
 ### TIDY
 

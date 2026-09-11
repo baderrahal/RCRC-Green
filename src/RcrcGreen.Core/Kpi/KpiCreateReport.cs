@@ -74,13 +74,26 @@ namespace RcrcGreen.Core.Kpi
             if (!run.Timing.WasTimed)
             {
                 Line(report, "Run: NOT TIMED. Nothing recorded a duration for this run.");
+                TheReadings(report, run);
                 return;
             }
 
             Line(report, "Run: " + Seconds(run.Timing.TotalSeconds) + ", of which reading the model took "
                 + Seconds(run.Timing.ReadSeconds) + " and everything after it "
                 + Seconds(run.Timing.RestSeconds) + ".");
+            TheReadings(report, run);
             Line(report, "Every plot's own read is beside it under EVERY PLOT THAT WENT IN.");
+        }
+
+        /// <summary>
+        /// A read of 0.0 seconds is true on a press that reused the run before, and only this
+        /// line under it says why, so the two stay together.
+        /// </summary>
+        private static void TheReadings(StringBuilder report, KpiCreateRun run)
+        {
+            Line(report, "Readings: " + (run.ReadingsSource.Reused
+                ? "reused, nothing was read from the model on this press, "
+                : "read from the model on this press, ") + run.ReadingsSource.Why + ".");
         }
 
         private static void TheReconciliation(StringBuilder report, KpiCreateRun run)
@@ -682,6 +695,9 @@ namespace RcrcGreen.Core.Kpi
 
             Line(report, "  template: " + (run.Template == null ? "(none)" : run.Template.Name)
                 + ", read from " + Shown(run.TemplatePath));
+            Line(report, "  templates folder: " + (run.TemplatesListed.IsNothing
+                ? "NOT LISTED. Nothing recorded how many times a workbook was opened."
+                : run.TemplatesListed.InWords));
             Line(report, "  written to: " + Shown(run.OutputPath));
             Line(report, "  component parameter, chosen by the user: " + Shown(run.ComponentParameter));
             Line(report, "  reference parameter, chosen by the user: " + Shown(run.ReferenceParameter));

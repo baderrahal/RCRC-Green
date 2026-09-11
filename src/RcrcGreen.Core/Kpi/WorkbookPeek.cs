@@ -8,21 +8,31 @@ using System.Xml.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// The sheet names of one .xlsx, in order, read straight out of the zip. The first name
-    /// is how a template is recognised, so this reads and nothing more.
+    /// The sheet names of one .xlsx, in order, read straight out of the zip, and the one cell
+    /// on the first sheet the tool itself writes. The first name is how a template is
+    /// recognised, and the cell is how a filled checklist is told from one, so this reads
+    /// those two things and nothing more.
     ///
     /// Parsing compares local names rather than namespaces, because a strict and a
     /// transitional workbook carry different ones and both are real files.
     /// </summary>
     public sealed class PeekedWorkbook
     {
-        private PeekedWorkbook(IReadOnlyList<string> sheetNames, string refusal)
+        private PeekedWorkbook(IReadOnlyList<string> sheetNames, string refusal, string firstSheetDateCell)
         {
             SheetNames = sheetNames ?? new List<string>();
             Refusal = refusal ?? string.Empty;
+            FirstSheetDateCell = firstSheetDateCell;
         }
 
         public IReadOnlyList<string> SheetNames { get; }
+
+        /// <summary>
+        /// What the first sheet holds in the date cell the tool writes, E5, with a shared
+        /// string resolved to its text. Null when the file, the sheet or the cell is not
+        /// there, which is not a filled file.
+        /// </summary>
+        public string FirstSheetDateCell { get; }
 
         /// <summary>
         /// Why the file could not be read, or empty. A refusal is shown beside the file name
@@ -47,13 +57,13 @@ namespace RcrcGreen.Core.Kpi
                     string workbookPart = WorkbookPackage.WorkbookPartPath(zip);
                     if (workbookPart == null)
                     {
-                        return new PeekedWorkbook(null, "It is a zip and not a workbook. No workbook part is in it.");
+                        return new PeekedWorkbook(null, "It is a zip and not a workbook. No workbook part is in it.", null);
                     }
 
                     XDocument workbook = WorkbookPackage.Read(zip, workbookPart);
                     if (workbook == null)
                     {
-                        return new PeekedWorkbook(null, "Its workbook part could not be read.");
+                        return new PeekedWorkbook(null, "Its workbook part could not be read.", null);
                     }
 
                     List<string> names = workbook.Root
@@ -62,34 +72,121 @@ namespace RcrcGreen.Core.Kpi
                         .Select(sheet => (string)sheet.Attribute("name") ?? string.Empty)
                         .ToList();
 
-                    return new PeekedWorkbook(names, null);
+                    return new PeekedWorkbook(names, null, DateCellOf(zip, workbookPart, names));
                 }
             }
             catch (InvalidDataException)
             {
-                return new PeekedWorkbook(null, "It is not a zip, so it is not an .xlsx however it is named.");
+                return new PeekedWorkbook(null, "It is not a zip, so it is not an .xlsx however it is named.", null);
             }
             catch (IOException failed)
             {
-                return new PeekedWorkbook(null, "It could not be opened. " + failed.Message);
+                return new PeekedWorkbook(null, "It could not be opened. " + failed.Message, null);
             }
             catch (UnauthorizedAccessException failed)
             {
-                return new PeekedWorkbook(null, "It could not be opened. " + failed.Message);
+                return new PeekedWorkbook(null, "It could not be opened. " + failed.Message, null);
             }
             catch (System.Xml.XmlException failed)
             {
-                return new PeekedWorkbook(null, "Its workbook part is not readable XML. " + failed.Message);
+                return new PeekedWorkbook(null, "Its workbook part is not readable XML. " + failed.Message, null);
             }
+        }
+
+        /// <summary>
+        /// The date cell of the first sheet, the one the tool writes. Read inside the same open
+        /// as the names, off the sheet part the workbook's relationships point at.
+        /// </summary>
+        private static string DateCellOf(ZipArchive zip, string workbookPart, List<string> names)
+        {
+            if (names.Count == 0) return null;
+
+            Dictionary<string, string> parts = WorkbookPackage.SheetParts(zip, workbookPart);
+            string partPath;
+            if (!parts.TryGetValue(names[0], out partPath)) return null;
+
+            return WorkbookPackage.CellText(zip, partPath, KpiTemplates.TypedByTheTeam[0], WorkbookPackage.SharedStrings(zip));
         }
     }
 
     /// <summary>
-    /// The package plumbing the peek and the patcher share: finding the workbook part and
-    /// the part behind each sheet, by the relationships rather than by assuming a path.
+    /// The package plumbing the peek, the patcher and the species list share: finding the
+    /// workbook part and the part behind each sheet, by the relationships rather than by
+    /// assuming a path, and reading one cell's text with a shared string resolved.
     /// </summary>
     internal static class WorkbookPackage
     {
+        /// <summary>
+        /// Every cell of a sheet part, in document order.
+        /// </summary>
+        public static IEnumerable<XElement> Cells(XDocument sheet)
+        {
+            return sheet.Root.Elements()
+                .Where(element => element.Name.LocalName == "sheetData")
+                .Elements().Where(element => element.Name.LocalName == "row")
+                .Elements().Where(element => element.Name.LocalName == "c");
+        }
+
+        /// <summary>
+        /// The text of one cell as a person reads it: an inline string, a shared string
+        /// resolved through the table, or the raw value. Empty for a cell holding nothing.
+        /// </summary>
+        public static string TextOf(XElement cell, List<string> shared)
+        {
+            XElement inline = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "is");
+            if (inline != null)
+            {
+                return string.Concat(inline.Descendants()
+                    .Where(child => child.Name.LocalName == "t").Select(child => child.Value));
+            }
+
+            XElement value = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "v");
+            if (value == null) return string.Empty;
+
+            if (!string.Equals((string)cell.Attribute("t"), "s", StringComparison.Ordinal))
+            {
+                return value.Value;
+            }
+
+            int index;
+            if (!int.TryParse(value.Value, System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture, out index))
+            {
+                return string.Empty;
+            }
+
+            return shared != null && index >= 0 && index < shared.Count ? shared[index] : string.Empty;
+        }
+
+        public static List<string> SharedStrings(ZipArchive zip)
+        {
+            var held = new List<string>();
+
+            XDocument table = Read(zip, "xl/sharedStrings.xml");
+            if (table == null || table.Root == null) return held;
+
+            foreach (XElement item in table.Root.Elements().Where(one => one.Name.LocalName == "si"))
+            {
+                held.Add(string.Concat(item.Descendants()
+                    .Where(child => child.Name.LocalName == "t").Select(child => child.Value)));
+            }
+
+            return held;
+        }
+
+        /// <summary>
+        /// One cell's text off one sheet part, or null when the part or the cell is not there.
+        /// </summary>
+        public static string CellText(ZipArchive zip, string partPath, string cellRef, List<string> shared)
+        {
+            XDocument part = Read(zip, partPath);
+            if (part == null || part.Root == null) return null;
+
+            XElement cell = Cells(part).FirstOrDefault(one =>
+                string.Equals((string)one.Attribute("r"), cellRef, StringComparison.OrdinalIgnoreCase));
+            return cell == null ? null : TextOf(cell, shared);
+        }
+
         public static string WorkbookPartPath(ZipArchive zip)
         {
             XDocument rels = Read(zip, "_rels/.rels");

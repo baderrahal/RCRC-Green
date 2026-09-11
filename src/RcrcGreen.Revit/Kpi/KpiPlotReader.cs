@@ -298,34 +298,54 @@ namespace RcrcGreen.Revit.Kpi
             // listed no species.
             // The rows as printed travel with the reading, so the report can show what was read
             // and not only what was made of it.
+            // A throw inside one schedule's read names that schedule on the plot's refusals and
+            // leaves the rest of the plot read, so the reconciliation refuses naming the plot
+            // and the schedule rather than the run ending with one sentence naming neither.
+            // Every type is caught here on purpose, the same as the scan side's guard, and the
+            // type and message go in the file. The ApplicationException Printed itself swallows
+            // is finding 6's and is not touched here.
             if (softscape.Count == 1)
             {
                 ViewSchedule schedule = softscape[0];
-                ScannedSchedule rows = Printed(schedule);
-                printed.Add(rows);
-                SoftscapeReading trees = SoftscapeRows.Read(rows, counted, plotId);
-                species.AddRange(trees.Species);
-                groups.AddRange(trees.Groups);
-                refusals.AddRange(trees.Refusals.Select(why => schedule.Name + ": " + why));
-                if (trees.TotalRead)
+                try
                 {
-                    totalRead = true;
-                    total = trees.Total;
-                    totalRow = trees.TotalRow;
-                }
+                    ScannedSchedule rows = Printed(schedule);
+                    printed.Add(rows);
+                    SoftscapeReading trees = SoftscapeRows.Read(rows, counted, plotId);
+                    species.AddRange(trees.Species);
+                    groups.AddRange(trees.Groups);
+                    refusals.AddRange(trees.Refusals.Select(why => schedule.Name + ": " + why));
+                    if (trees.TotalRead)
+                    {
+                        totalRead = true;
+                        total = trees.Total;
+                        totalRow = trees.TotalRow;
+                    }
 
-                passedOver = trees.RowsPassedOver;
+                    passedOver = trees.RowsPassedOver;
+                }
+                catch (Exception failed)
+                {
+                    refusals.Add(Threw(schedule, failed));
+                }
             }
 
             if (ground.Count == 1)
             {
                 ViewSchedule schedule = ground[0];
-                ScannedSchedule rows = Printed(schedule);
-                printed.Add(rows);
-                ShrubsAndLawnReading read = ShrubsAndLawnRows.Read(
-                    rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted);
-                subtotals.AddRange(read.Subtotals);
-                refusals.AddRange(read.Refusals.Select(why => schedule.Name + ": " + why));
+                try
+                {
+                    ScannedSchedule rows = Printed(schedule);
+                    printed.Add(rows);
+                    ShrubsAndLawnReading read = ShrubsAndLawnRows.Read(
+                        rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted);
+                    subtotals.AddRange(read.Subtotals);
+                    refusals.AddRange(read.Refusals.Select(why => schedule.Name + ": " + why));
+                }
+                catch (Exception failed)
+                {
+                    refusals.Add(Threw(schedule, failed));
+                }
             }
 
             return new PlotReading(
@@ -347,6 +367,12 @@ namespace RcrcGreen.Revit.Kpi
                 printed,
                 totalRow,
                 groups);
+        }
+
+        private static string Threw(ViewSchedule schedule, Exception failed)
+        {
+            return schedule.Name + ": " + PlotReading.ReadThrew.Replace("nothing on this plot", "nothing off this schedule")
+                + " " + failed.GetType().Name + ": " + failed.Message;
         }
 
         /// <summary>

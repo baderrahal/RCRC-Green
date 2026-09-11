@@ -317,7 +317,7 @@ namespace RcrcGreen.Core.Kpi
                             + Path.GetFileName(path) + " could not be read.");
                     }
 
-                    Dictionary<int, Dictionary<string, string>> cells = CellsByRow(part, SharedStrings(zip));
+                    Dictionary<int, Dictionary<string, string>> cells = CellsByRow(part, WorkbookPackage.SharedStrings(zip));
 
                     // The height and the diameter columns are found by what the header row calls
                     // them, never by a letter. Measured I and J on MOSQUES, and the letters are
@@ -373,12 +373,12 @@ namespace RcrcGreen.Core.Kpi
         {
             var found = new Dictionary<int, Dictionary<string, string>>();
 
-            foreach (XElement cell in Cells(sheet))
+            foreach (XElement cell in WorkbookPackage.Cells(sheet))
             {
                 CellRef where = CellRef.TryParse((string)cell.Attribute("r"));
                 if (where == null) continue;
 
-                string text = TextOf(cell, shared);
+                string text = WorkbookPackage.TextOf(cell, shared);
                 if (string.IsNullOrWhiteSpace(text)) continue;
 
                 Dictionary<string, string> row;
@@ -483,7 +483,7 @@ namespace RcrcGreen.Core.Kpi
         {
             var read = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (XElement cell in Cells(sheet))
+            foreach (XElement cell in WorkbookPackage.Cells(sheet))
             {
                 CellRef where = CellRef.TryParse((string)cell.Attribute("r"));
                 if (where == null || where.Row <= KpiTemplates.TreeHeaderRow) continue;
@@ -517,7 +517,7 @@ namespace RcrcGreen.Core.Kpi
                     + KpiTemplates.QuantityColumn + @"\$?(\d+)\s*\)\s*$",
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-            foreach (XElement candidate in Cells(sheet))
+            foreach (XElement candidate in WorkbookPackage.Cells(sheet))
             {
                 CellRef where = CellRef.TryParse((string)candidate.Attribute("r"));
                 if (where == null) continue;
@@ -541,56 +541,6 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return false;
-        }
-
-        private static IEnumerable<XElement> Cells(XDocument sheet)
-        {
-            return sheet.Root.Elements()
-                .Where(element => element.Name.LocalName == "sheetData")
-                .Elements().Where(element => element.Name.LocalName == "row")
-                .Elements().Where(element => element.Name.LocalName == "c");
-        }
-
-        private static string TextOf(XElement cell, List<string> shared)
-        {
-            XElement inline = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "is");
-            if (inline != null)
-            {
-                return string.Concat(inline.Descendants()
-                    .Where(child => child.Name.LocalName == "t").Select(child => child.Value));
-            }
-
-            XElement value = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "v");
-            if (value == null) return string.Empty;
-
-            if (!string.Equals((string)cell.Attribute("t"), "s", StringComparison.Ordinal))
-            {
-                return value.Value;
-            }
-
-            int index;
-            if (!int.TryParse(value.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
-            {
-                return string.Empty;
-            }
-
-            return index >= 0 && index < shared.Count ? shared[index] : string.Empty;
-        }
-
-        private static List<string> SharedStrings(ZipArchive zip)
-        {
-            var held = new List<string>();
-
-            XDocument table = WorkbookPackage.Read(zip, "xl/sharedStrings.xml");
-            if (table == null || table.Root == null) return held;
-
-            foreach (XElement item in table.Root.Elements().Where(one => one.Name.LocalName == "si"))
-            {
-                held.Add(string.Concat(item.Descendants()
-                    .Where(child => child.Name.LocalName == "t").Select(child => child.Value)));
-            }
-
-            return held;
         }
     }
 }

@@ -124,5 +124,17 @@ namespace RcrcGreen.Core.Kpi
             return workbooks + (workbooks == 1 ? " workbook" : " workbooks") + " in the folder, "
                 + matched + " recognised.";
         }
+
+        /// <summary>
+        /// How often the folder's workbooks were opened against how often the pane drew the
+        /// list, since the folder was listed. Seven opens over 158 redraws is the fix, 1,106
+        /// would be the fault back.
+        /// </summary>
+        public static string Opened(int workbooks, int opened, int drawn)
+        {
+            return workbooks + (workbooks == 1 ? " workbook" : " workbooks") + " in the folder, opened "
+                + opened + (opened == 1 ? " time" : " times") + " over " + drawn + (drawn == 1 ? " redraw" : " redraws")
+                + " since the folder was listed.";
+        }
     }
 }
