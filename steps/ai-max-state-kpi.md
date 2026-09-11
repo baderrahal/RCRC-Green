@@ -29,8 +29,11 @@ through, and a theory pins what a shape-alike hint does today.
 
 Five break watches went red on 5, 8, 1, 1 and 1 tests and were restored byte for byte.
 **Locally 1182 tests at this branch, 0 failed and 0 skipped, 667 of them KPI, 29 added, against
-the 1153 main carries.** The pull request, the merge hash and the runner's count go in the record the
-merge adds here. **Nothing in this round has been observed in Revit.** Two things wait on
+the 1153 main carries.** Pull request 73, merged into main as `ba805b1` through the API with the
+squash message on the call: **the runner executed 1182 tests against its merged head, 0 failed
+and 0 skipped, and locally the same 1182 ran at `ba805b1`, 0 failed and 0 skipped**, 667 of them
+KPI. The merge commit carries no co-author line and no generated-by footer, and its tree is the
+branch's tree. **Nothing in this round has been observed in Revit.** Two things wait on
 Bader, both in the log: whether a filled workbook the tool wrote neither cell into matters, and
 whether any client set hints a reference's shape rather than bracketing it.
 

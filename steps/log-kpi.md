@@ -12,9 +12,12 @@ renumbered, not reordered, not annotated. Nothing else was touched: not the Draw
 `Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
 this round has been observed in Revit.** The branch came off a fresh pull of main at `d370add`.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1182 tests at this branch, 0 failed and 0 skipped, 667 of them KPI, 29 added here**, against
-the 1153 main carries.
+Pull request 73, merged into main as `ba805b1`. **The runner executed 1182 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1182 ran at `ba805b1`, 0 failed and 0
+skipped**, 667 of them KPI, 29 added here, against the 1153 main carried at `d370add`. The
+merge went through the API with the title and the message both passed on the call, and the
+commit came back off main carrying neither a co-author credit line nor a generated-by footer.
+Its tree is the branch's tree, checked.
 
 ### What was measured, and what the old rule really did
 
