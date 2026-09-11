@@ -23,8 +23,11 @@ into its folder rather than on every write anywhere.
 
 Eight break watches went red on 4, 2, 2, 2, 6, 2, 2 and 2 tests and were restored byte for
 byte. **Locally 1153 tests at this branch, 0 failed and 0 skipped, 638 of them KPI, 50 added,
-against the 1103 main carries.** The pull request, the merge hash and the runner's count go in the
-record the merge adds here. **Nothing in this round has been observed in Revit.** Three things
+against the 1103 main carries.** Pull request 72, merged into main as `adf164f` through the API
+with the squash message on the call: **the runner executed 1153 tests against its merged head,
+0 failed and 0 skipped, and locally the same 1153 ran at `adf164f`, 0 failed and 0 skipped**,
+638 of them KPI. The merge commit carries no co-author line and no generated-by footer.
+**Nothing in this round has been observed in Revit.** Three things
 wait on Bader: whether all seven production templates hold `<Date>` at E5, whether a model
 edited between a refusal and a pick matters, and whether the scrolling helper becomes a shared
 Revit root file in a round of its own.

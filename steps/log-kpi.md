@@ -14,9 +14,14 @@ not reordered, not annotated. Nothing else was touched: not the Drawing Sheet, n
 `Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
 this round has been observed in Revit.** The branch came off a fresh pull of main at `2e0c0ab`.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1153 tests at this branch, 0 failed and 0 skipped, 638 of them KPI, 50 added here**, against
-the 1103 main carries.
+Pull request 72, merged into main as `adf164f`. **The runner executed 1153 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1153 ran at `adf164f`, 0 failed and 0
+skipped**, 638 of them KPI, 50 added here, against the 1103 main carried at `2e0c0ab`. The
+merge went through the API with the title and the message both passed on the call, and the
+commit came back off main carrying neither a co-author credit line nor a generated-by footer.
+Its tree is the branch's tree plus the two Drawing Sheet commits that landed on main between
+the branch point and the merge, `fc5cf7a` and `2aa529b`, checked: the only files that differ
+between the branch and main are the three of theirs, and no KPI commit landed.
 
 ### Each of the five at today's lines
 
