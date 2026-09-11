@@ -2,22 +2,25 @@
 
 Phase: 9, ship. Fifty third pass, off the first run in Revit since pull request 32. The run
 sheet was worked through on 2026-09-11, the run made 22 with 0 refused, and eight items came
-back. Two pull requests. The first, fixes 1 to 4, merged into main as `f72834e` with 1193
-tests on the runner: a schedule is placed by its top left corner and a viewport by its
-centre, so a schedule is measured after placement and moved to the centre it was asked for,
-and the views divide a DrawingArea rather than the whole sheet, the title strip being the
-tool's own setting because a placed block reports its size and nothing about where its strip
-begins. THE CROP IS NOT ANNOTATION CROP: DM-11-(010) Overall Plan has it ON and two foreign
-sections still draw in it, both the model's own with Crop View off and unbounded extents,
-and the tool computes a section box from the plot's scope box and then copies Crop View off
-from the sibling four calls later. What is UNKNOWN there and what would settle it in Revit
-are in the log, with the referencing sheet finding. The second, fixes 5 to 8: the report
-says a scale Revit labels Custom as well as its ratio, a new viewport takes its type off the
-sibling instead of the document's default, the eleven title blocks are remembered in two
-settings files read user first and Core merges them with tests, and every report goes to the
-repo folder only with nothing written when the pointer is missing. That last one reaches the
-KPI pane through ReportFile and ReportPlaces and THE KPI SESSION HAS TO BE TOLD. Suite reads
-1216 locally. Four breaks watched red. The second pull request is not merged yet, and its mockup is design/pr-76.
+back. Two pull requests, both merged. Pull request 74, fixes 1 to 4, merged as `f72834e`
+with 1193 tests on the runner, 0 failed and 0 skipped: a schedule is placed by its top left
+corner and a viewport by its centre, so a schedule is measured after placement and moved to
+the centre it was asked for, and the views divide a DrawingArea rather than the whole sheet,
+the title strip being the tool's own setting because a placed block reports its size and
+nothing about where its strip begins. THE CROP IS NOT ANNOTATION CROP: DM-11-(010) Overall
+Plan has it ON and two foreign sections still draw in it, both the model's own with Crop
+View off and unbounded extents, and the tool computes a section box from the plot's scope
+box and then copies Crop View off from the sibling four calls later. What is UNKNOWN there
+and what would settle it in Revit are in the log, with the referencing sheet finding. Pull
+request 76, fixes 5 to 8, merged as `148e44b` with 1221 tests on the runner, 0 failed and 0
+skipped, which is this branch's 1216 plus the five KPI pull request 75 landed while it was
+open: the report says a scale Revit labels Custom as well as its ratio, a new viewport takes
+its type off the sibling instead of the document's default, the eleven title blocks are
+remembered in two settings files read user first with Core merging them under test, and
+every report goes to the repo folder only with nothing written when the pointer is missing.
+That last one reaches the KPI pane through ReportFile and ReportPlaces and THE KPI SESSION
+HAS TO BE TOLD. Main reads 1221 locally on `148e44b`. Four breaks watched red. Both squash
+messages came back byte for byte. The mockup is design/pr-76.
 
 Before that, the forty seventh pass, the run sheet, merged into main as `fc5cf7a` from
 pull request 70 with 1103 tests on the runner. `steps/run-drawing.md` holds the forty two

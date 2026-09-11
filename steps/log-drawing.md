@@ -11,6 +11,14 @@ in Revit since pull request 32. Eight items came back. This round is two pull re
 because fix 7 alone is a new Core file family with tests, a panel change and an installer
 change, and the brief allowed the split. Fixes 1 to 4 are the first, 5 to 8 the second.
 
+Pull request 74, fixes 1 to 4, merged into main as `f72834e`. **The runner executed 1193
+tests against it, 0 failed and 0 skipped**, the same count the local run gave after the last
+file was written, and eleven above the 1182 main carried. Pull request 76, fixes 5 to 8,
+merged into main as `148e44b`. **The runner executed 1221 tests against it, 0 failed and 0
+skipped.** Locally the head read 1216, and the five between are KPI tests pull request 75
+landed on main while this one was open, which the gate builds in: main measured 1221 after
+the merge. Both squash messages came back off main byte for byte.
+
 ### Fix 3 first, because it is the one that had to be found rather than fixed
 
 **Annotation crop is not the answer and has not been for nine rounds.** DM-11-(010) Overall
