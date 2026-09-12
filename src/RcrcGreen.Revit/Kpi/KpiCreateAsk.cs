@@ -18,10 +18,12 @@ namespace RcrcGreen.Revit.Kpi
             IDictionary<string, string> componentPerPlot = null,
             IDictionary<string, IReadOnlyList<PlotParameterValue>> referenceValuesPerPlot = null,
             int elementInstances = 0,
-            double readSeconds = 0.0)
+            double readSeconds = 0.0,
+            LinksLoaded links = null)
         {
             ElementInstances = elementInstances;
             ReadSeconds = readSeconds;
+            Links = links ?? LinksLoaded.NotRead;
             Plots = plots ?? PlotsInTheModel.Of(null, null);
             ComponentNames = componentNames ?? new List<string>();
             LocationNames = locationNames ?? new List<string>();
@@ -41,6 +43,12 @@ namespace RcrcGreen.Revit.Kpi
         public int ElementInstances { get; }
 
         public double ReadSeconds { get; }
+
+        /// <summary>
+        /// What the linked models were doing when the plots were read, so the pane can say a
+        /// run will find nothing before anybody presses Create rather than after 78 plots.
+        /// </summary>
+        public LinksLoaded Links { get; }
 
         /// <summary>
         /// What each plot's first sheet holds for the component, read with the first name the

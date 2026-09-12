@@ -1,5 +1,43 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty ninth pass, two items measured on two runs. **The audit files stay the
+one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**Item 1(b) was already correct and the round found it out rather than fixing it.** The no
+diameter rule already applies to the empty row route alone, `NotSized` is built nowhere else,
+and a matched row already gets its count in column B with the client's own cells untouched.
+There was one reason UNKNOWN went unwritten on the 1552 run, not two, and it is the name. The
+rule is pinned by a test now instead of being an assertion in a log entry. **A third blocker
+nobody named is in the way too**: an exactly matching name held past the list's first empty row
+is refused, and whether that bites for the real row 101 is UNKNOWN here, because no workbook and
+no report is in this repository. The create report already prints those names and their rows,
+so the 1552 report answers it off the file.
+
+**The match is not widened and no rule was invented.** `SpeciesMatching.ClosestName` prints the
+workbook name sharing the longest opening with each unmatched Revit name, as the second column
+of the unmatched species list, printed and never matched on. The 1552 run's misses cannot be
+enumerated from this repository, so the next run is what tells Bader whether it is one name or
+a family of them. **The name rule itself is his to give and this round does not choose one.**
+
+**A run with no link loaded now says so in three places.** `LinksLoaded` in Core is five states
+with one line each, a note and never a refusal: at the top of the checklist report above the
+reconciliation, on the pane above Create before the press, and beside two counts that cannot
+read green over an empty run, `GroupRowsFound` and `SchedulesWithABody`. The 16:06 STREETS run
+reads 0 group rows and 0 of 156 schedules with a body where every count it already carried read
+green.
+
+**STILL NEVER EXERCISED: Street Design counting as Proposed on STREETS.** It has tests and no
+run. The words appear nowhere in the 2,292 line report of the only STREETS run there has been,
+and they could not, because no link was loaded so no schedule printed a body. ST-05's 369, 2,
+68 and 439 read off a screen are the only measurement behind the whole rule.
+
+Two break watches went red on 3 and 4 tests, one per item, and were restored byte for byte. The
+first attempt at the second was a no-op that changed no behaviour and is recorded as one.
+**Locally 1332 tests at this branch, 0 failed and 0 skipped, 723 of them KPI, 16 added, against
+the 1316 main carries** at the branch point `e3ba145`, measured there in a worktree rather than
+remembered. Build zero warnings. PULL REQUEST AND MERGE NUMBERS GO HERE AFTER THE MERGE.
+**Nothing in this round has been observed in Revit.**
+
 Phase: 9, ship. Fifty eighth pass, item 1 of the two Bader asked for, on its own so the first
 real run can say which half broke anything. **Item 2, several templates in one run, is NOT in
 this round.** The audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this

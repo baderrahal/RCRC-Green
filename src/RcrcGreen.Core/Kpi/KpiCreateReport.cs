@@ -44,6 +44,7 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
             Line(report, "Read only. Nothing in the model was changed and the template was not touched.");
             TheClock(report, run);
+            TheLinks(report, run);
             TheCoarseStep(report, run);
             Line(report, "Every schedule this run read is printed as the schedule prints it, at the end of this");
             Line(report, "file under " + SchedulesHeading + ", so every number above it can be held against the drawing.");
@@ -84,6 +85,23 @@ namespace RcrcGreen.Core.Kpi
                 + Seconds(run.Timing.RestSeconds) + ".");
             TheReadings(report, run);
             Line(report, "Every plot's own read is beside it under EVERY PLOT THAT WENT IN.");
+        }
+
+        /// <summary>
+        /// **The reason a run found nothing, at the top, before the reconciliation.** The
+        /// 16:06 STREETS run over 78 plots ended with 78 identical lines saying each plot
+        /// contributed nothing, and the one fact that explained all of them, that not one of
+        /// the six link instances was loaded, appeared nowhere in this file. The scan report
+        /// said it in section 4 and the checklist report said nothing about links at all.
+        ///
+        /// A note and never a refusal: a model with no link loaded is a legitimate thing to
+        /// open, and the run still reads and still writes what it can.
+        /// </summary>
+        private static void TheLinks(StringBuilder report, KpiCreateRun run)
+        {
+            if (!run.Links.Worth) return;
+
+            Line(report, run.Links.Warning);
         }
 
         /// <summary>
@@ -144,6 +162,13 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  schedules holding a group no tree list sheet is named for   " + held.SchedulesWithAGroupLeftOut
                 + (held.WithAGroupLeftOut.Count == 0 ? string.Empty : ", on " + string.Join(", ", held.WithAGroupLeftOut.ToArray()))
                 + (held.SchedulesWithAGroupLeftOut == 0 ? string.Empty : ". Their rows are left out and named under the plot."));
+
+            // The two a zero cannot fake. The line above reads 0 when the rule worked and 0
+            // when nothing was found at all, and on the 16:06 run it read green over a run
+            // where all 156 schedules printed one row, the header, and no body.
+            Line(report, "  group rows found across the run   " + held.GroupRowsFound);
+            Line(report, "  schedules that printed a body   " + held.SchedulesWithABody
+                + " of " + held.SchedulesPrinted);
 
             Line(report, "  plots that contributed nothing at all   " + held.ContributedNothing.Count);
             foreach (PlotAndReason nothing in held.ContributedNothing)
@@ -595,11 +620,16 @@ namespace RcrcGreen.Core.Kpi
             // reaches the sheet's total, and an empty one says it did not.
             Heading(report, "SPECIES REVIT HELD THAT THE WORKBOOK'S LIST DOES NOT", missed.Count,
                 "named with the count, never dropped, and written into an empty row where there was one");
-            Line(report, "  Revit name | group | merged | from | where it landed | height | diameter | why");
+            Line(report, "  Revit name | nearest name in the list | group | merged | from | where it landed | height | diameter | why");
             foreach (SpeciesMatch match in missed)
             {
                 Line(report, "  " + Join(
                     match.Species.BotanicalName,
+                    // PRINTED AND NEVER MATCHED ON. UNKNOWN against Unknown Tree is a question
+                    // about names that a report saying only not held cannot answer, so the run
+                    // says what each was nearest to and a person decides whether it is one name
+                    // or a family of them.
+                    Shown(match.NearestInTheList),
                     Shown(match.Species.GroupName),
                     match.Species.Quantity.ToString(CultureInfo.InvariantCulture),
                     Working(match.Species),

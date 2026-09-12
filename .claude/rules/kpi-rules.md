@@ -134,6 +134,41 @@ counted twice. `SpeciesRow` carries the row it printed on and the row of the gro
 and `PlotReading.SpeciesPrintedOnMoreThanOneRow` finds every such species. A species under two
 groups is two species and refuses nothing.
 
+## A run with no link loaded says so before it says anything else
+
+**Measured on the first STREETS run, NG05 at 16:06, 78 plots.** All 78 contributed nothing.
+All 156 schedules printed one row, the header, and no body, and the group rows read none on
+every one of them. The scan from the same session says six link instances and NONE LOADED. The
+plants are in the linked component models, which is the rule this file already carries, so with
+no link loaded a schedule has nothing to list, and ST-05-(600) SOFTSCAPE SCHEDULE opens empty on
+screen. **Every number the tool printed was right and every plot carried its own reason.** What
+it never said was the one thing that explains all 78 at once, and a 2,292 line report opening
+with a reconciliation of nothing is a tool watching a person work out what it already knew.
+
+`LinksLoaded.Of` is the whole rule. It is a NOTE and never a refusal, because a model with no
+link loaded is a legitimate thing to open and the team may be working on the host alone. Five
+states, one line each. The links were not read at all, which claims nothing either way. The
+model holds no linked model. No link is loaded, with the count and every name. Some loaded and
+some not, with the count and the names of the ones that are not. And every link loaded, which
+is the one state worth saying nothing about.
+
+**It is at the TOP of the checklist report, above the reconciliation**, through `TheLinks` in
+`KpiCreateReport` sitting between the clock and the first step, with a test asserting the
+warning's position is before RECONCILIATION's rather than asserting both are present.
+
+**It is on the pane too, before the press**, above Create beside the refusal line, off
+`KpiPlotFacts.Links`, which the plot read fills from the host document's own link instances. So
+the one thing that would have made the 16:06 run pointless is on screen before the twenty
+minutes are spent rather than in the file afterwards.
+
+**And the reconciliation counts what was FOUND, not only what was left out.** Every count it
+carried read green over that run: 78 ticked, 78 read, 156 schedules found, nothing refused and
+nothing missing, because a schedule that printed no body is a schedule that was read. Two
+counts cannot do that. `Reconciliation.GroupRowsFound` is how many group rows the whole run
+found and `SchedulesWithABody` how many of the schedules printed one, said as a count of the
+schedules printed. The 16:06 run reads 0 group rows and 0 of 156 with a body, and no wording
+makes that look like a run that worked.
+
 ## Only the groups a tree list sheet is named for count
 
 **Bader has decided that Street Design is somebody else's scope and does not belong on this
@@ -286,6 +321,38 @@ Three things hold it up. **The diameter is asked before a row is taken**, so a r
 leaves the empty row for the next one rather than using it up. **The sheet's own total is asked
 first**, because a sheet with no total writes nothing for anybody and that is the larger fact.
 And **the diameter alone decides**, off the row 21 measurement above.
+
+**THE NO DIAMETER RULE IS THE EMPTY ROW ROUTE'S AND NOTHING ELSE'S. A MATCHED ROW IS THE
+CLIENT'S ROW AND ITS OWN CELLS DECIDE.** Writing into an empty row means writing a name where
+the workbook has none, so what the sheet computes from has to come with it or the row breaks
+the canopy maths. A row the workbook already holds is the client's own: its measures are
+already in it, the formulas beside it already read them, and the only thing Revit is adding is
+the count in column B. So `SpeciesMatching.Against` asks the diameter on the `WrittenInto`
+route alone, and `NotSized` lives only there. Measured on the MOSQUES Existing list row 101:
+D101 reads Unknown Tree, I101 0, J101 0 as a plain value rather than a blank, K101 0, L101 0 as
+a plain value rather than the `IF(ISBLANK(J))` formula the written rows carry, and M101 is
+empty. Writing B101 gives that row a canopy of nought and breaks nothing. **This was already
+true at today's lines and is pinned by a test now**, because it was named as one of the two
+reasons UNKNOWN went unwritten on the 1552 run and it was not one of them.
+
+**A NAME PAST THE LIST'S FIRST EMPTY ROW IS REFUSED EVEN WHEN IT MATCHES WORD FOR WORD.** That
+is the third thing between UNKNOWN and row 101 and it is not in the round message. `SpeciesList`
+reads the names down column D as far as the first empty row and holds anything past that gap in
+`BelowTheList`, and `SpeciesMatching.Against` refuses a species whose only name sits there
+rather than writing it in a second time above the gap. Whether the MOSQUES Existing list's
+Unknown Tree at row 101 is above or below its first gap is UNKNOWN from this repository: no
+workbook is in it and no report is committed. The create report already prints the names below
+the first empty row with their rows under THE WORKBOOK'S OWN TREE LISTS, so the 1552 report
+answers it off the file.
+
+**THE MATCH IS NOT WIDENED AND THE REPORT NAMES WHAT IT MISSED.** Matching is still the
+botanical name without case and with edge whitespace off and nothing else, so UNKNOWN and
+Unknown Tree still do not match. `SpeciesMatching.ClosestName` finds the workbook name sharing
+the longest opening with the Revit name, ties broken by the shorter name and then naturally,
+and empty where nothing is shared. It is carried on `SpeciesMatch.NearestInTheList`, printed as
+the second column of the unmatched species list in the create report, and **it is printed and
+never matched on**. It exists so the next run answers whether the misses are one name or a
+family of them before anybody writes a rule, and what rule to write is Bader's to give.
 
 **The report says how many trees went nowhere and out of what.** One line under the species the
 list does not hold: NOT WRITTEN, THE WHOLE RUN: 1 tree of 528, over every species this run

@@ -39,10 +39,12 @@ namespace RcrcGreen.Core.Kpi
             SpeciesList proposedList = null,
             ReadingsSource readingsSource = null,
             TemplateListing templatesListed = null,
-            ProjectUnit areaUnit = null)
+            ProjectUnit areaUnit = null,
+            LinksLoaded links = null)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");
 
+            Links = links ?? LinksLoaded.NotRead;
             ExistingList = existingList;
             ProposedList = proposedList;
             ReadingsSource = readingsSource ?? ReadingsSource.ReadOnThisPress;
@@ -150,6 +152,14 @@ namespace RcrcGreen.Core.Kpi
         /// document again, because the notes were earned against that one.
         /// </summary>
         public ProjectUnit AreaUnit { get; }
+
+        /// <summary>
+        /// What the linked models were doing when this run read. It travels on the run so the
+        /// report can open with the reason a run found nothing, rather than ending with one
+        /// identical line per plot. Nothing when the readings were held from a press that
+        /// carried no link read.
+        /// </summary>
+        public LinksLoaded Links { get; }
 
         public bool Wrote
         {

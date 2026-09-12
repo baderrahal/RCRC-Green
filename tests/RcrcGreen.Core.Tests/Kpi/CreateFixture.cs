@@ -86,7 +86,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             ReadingsSource readingsSource = null,
             TemplateListing templatesListed = null,
             string[] ticked = null,
-            ProjectUnit areaUnit = null)
+            ProjectUnit areaUnit = null,
+            LinksLoaded links = null)
         {
             KpiTemplate which = template ?? KpiTemplates.Mosques;
 
@@ -125,7 +126,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 proposedList,
                 readingsSource,
                 templatesListed,
-                areaUnit);
+                areaUnit,
+                links);
         }
 
         public static PlotReading Plot(

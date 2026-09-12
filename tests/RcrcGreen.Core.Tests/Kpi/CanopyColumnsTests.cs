@@ -446,9 +446,12 @@ namespace RcrcGreen.Core.Tests.Kpi
                 CreateFixture.Run(matches: matches.ToArray(), existingList: list, proposedList: list),
                 new System.DateTime(2026, 9, 10, 14, 28, 0));
 
-            Assert.Contains("  BAUHINIA PURPUREA | Proposed | 19 | FM-05 19 | Tree List - Proposed D5 and B5 | 6 into I5 | 5 into J5 | "
+            // The nearest name column sits between the Revit name and the group. This list holds
+            // only Albizia lebbeck, which shares no opening with either name, so both read
+            // (empty) rather than being pushed at a name they are nothing like.
+            Assert.Contains("  BAUHINIA PURPUREA | (empty) | Proposed | 19 | FM-05 19 | Tree List - Proposed D5 and B5 | 6 into I5 | 5 into J5 | "
                 + SpeciesMatching.WrittenIn, report);
-            Assert.Contains("  UNKNOWN | Proposed | 16 | FM-05 16 | NOWHERE, so its count is not in the total | - | - | "
+            Assert.Contains("  UNKNOWN | (empty) | Proposed | 16 | FM-05 16 | NOWHERE, so its count is not in the total | - | - | "
                 + "the workbook's list does not hold this name, and a row written into an empty one carries only "
                 + "what the model prints, which is no canopy diameter a workbook can compute with, "
                 + "so no row was written: FM-05 row 5 prints 0, which is no size", report);

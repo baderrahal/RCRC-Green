@@ -42,6 +42,11 @@ namespace RcrcGreen.Revit.Kpi
         // the scan a step inside Create rather than a button somebody has to know to press.
         private string _scannedTitle = string.Empty;
 
+        // What the linked models were doing when that scan read. It travels onto the run so
+        // the checklist report can open with the reason a run found nothing, which the 16:06
+        // STREETS run over 78 plots had nowhere to say.
+        private LinksLoaded _scannedLinks = LinksLoaded.NotRead;
+
         /// <summary>
         /// Called back on the Revit thread with the document title, empty when no document is
         /// open. The pane marshals to its own thread itself.
@@ -207,6 +212,7 @@ namespace RcrcGreen.Revit.Kpi
 
             // What was read, so a second Create on the same model does not read it again.
             _scannedTitle = scan.Document.Title ?? string.Empty;
+            _scannedLinks = LinksLoaded.Of(scan.Links);
 
             Scanned?.Invoke(scan, writtenAt);
 
@@ -239,6 +245,12 @@ namespace RcrcGreen.Revit.Kpi
             // which meant the header sat empty until somebody pressed a button, and the button
             // is gone. Counted the same way the scan counts it, instances and not types.
             int instances = new FilteredElementCollector(document).WhereElementIsNotElementType().GetElementCount();
+
+            // The link state comes back with the plots so the pane can say, BEFORE anybody
+            // presses Create, that no link is loaded and the schedules will list nothing. Read
+            // off the instances alone, never their contents, because what each link holds is
+            // the scan's job and costs minutes.
+            LinksLoaded links = LinksLoaded.Of(new LinkFacts(null, LinkInstances(document), null));
             clock.Stop();
 
             FoundPlots?.Invoke(new KpiPlotFacts(
@@ -248,7 +260,29 @@ namespace RcrcGreen.Revit.Kpi
                 perPlot,
                 references,
                 instances,
-                clock.Elapsed.TotalSeconds));
+                clock.Elapsed.TotalSeconds,
+                links));
+        }
+
+        /// <summary>
+        /// Every link instance with whether it handed back a document, which is what loaded
+        /// means here. The same read <see cref="KpiLinkReader"/> makes, without the contents,
+        /// because the pane needs the state and never the regions.
+        /// </summary>
+        private static IEnumerable<ScannedLinkInstance> LinkInstances(Document document)
+        {
+            var found = new List<ScannedLinkInstance>();
+            foreach (RevitLinkInstance instance in new FilteredElementCollector(document)
+                .OfClass(typeof(RevitLinkInstance))
+                .Cast<RevitLinkInstance>())
+            {
+                found.Add(new ScannedLinkInstance(
+                    instance.Name,
+                    ParameterReading.NameOf(document, instance.GetTypeId()),
+                    instance.GetLinkDocument() != null));
+            }
+
+            return found;
         }
 
         /// <summary>
@@ -393,7 +427,7 @@ namespace RcrcGreen.Revit.Kpi
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
                 merged, KpiMerge.Ungrouped(readings), outcome,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
-                existing, proposed, source, asked.TemplatesListed, areaUnit);
+                existing, proposed, source, asked.TemplatesListed, areaUnit, _scannedLinks);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;

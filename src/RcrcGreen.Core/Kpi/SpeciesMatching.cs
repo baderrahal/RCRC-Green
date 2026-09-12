@@ -55,7 +55,22 @@ namespace RcrcGreen.Core.Kpi
             WhyNoDiameterColumn = list == null ? ListNotRead : list.WhyNoDiameterColumn;
             WorkbookHeight = listRow == null ? string.Empty : listRow.Height;
             WorkbookDiameter = listRow == null ? string.Empty : listRow.Diameter;
+
+            // Worked out here, where the list is in hand, and carried as a plain value so the
+            // report holds no list of its own. Only ever printed: the match above is exact and
+            // this never widens it.
+            NearestInTheList = WorkbookName.Length > 0
+                ? string.Empty
+                : SpeciesMatching.ClosestName(list, species.BotanicalName);
         }
+
+        /// <summary>
+        /// The name in the workbook's list this one came nearest to, for a species the list
+        /// does not hold, and empty for one it does. **UNKNOWN came nearest to Unknown Tree on
+        /// the 1552 run and was written nowhere**, and the report could not say that, so
+        /// whether the fault was one name or a family of them could not be read off a run.
+        /// </summary>
+        public string NearestInTheList { get; }
 
         public const string ListNotRead = "the sheet's list was not read here";
 
@@ -367,6 +382,68 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// The name in the workbook's list nearest to a name the list does not hold, PRINTED
+        /// AND NEVER MATCHED ON. The match itself stays exact, and widening it is the user's
+        /// decision rather than this tool's.
+        ///
+        /// **Measured on the 1552 run.** Revit prints a species called UNKNOWN, 16 trees, and
+        /// the MOSQUES Existing list holds Unknown Tree at row 101. Compared without case and
+        /// with the edge spaces off they still differ, so it never reached that row and fell
+        /// to the empty row route instead, where the no diameter rule withheld it. Which of
+        /// those two is the fault is a question about names, and a person cannot answer it
+        /// from a report that says only that a name was not held. This prints what it was
+        /// nearest to, so a run answers whether it is one name or a family of them.
+        ///
+        /// Nearest is the longest shared opening, compared without case, and nothing at all
+        /// where they share no opening. Longer is nearer, ties go to the shorter name and then
+        /// to the natural order, so one run and the next print the same answer.
+        /// </summary>
+        public static string ClosestName(SpeciesList list, string revitName)
+        {
+            string wanted = (revitName ?? string.Empty).Trim();
+            if (list == null || wanted.Length == 0) return string.Empty;
+
+            string nearest = string.Empty;
+            int shared = 0;
+
+            foreach (SpeciesListRow row in list.Rows.Concat(list.BelowTheList))
+            {
+                string held = (row.BotanicalName ?? string.Empty).Trim();
+                if (held.Length == 0) continue;
+
+                int opening = SharedOpening(held, wanted);
+                if (opening == 0) continue;
+
+                if (opening > shared
+                    || (opening == shared && held.Length < nearest.Length)
+                    || (opening == shared && held.Length == nearest.Length
+                        && NaturalOrder.Comparer.Compare(held, nearest) < 0))
+                {
+                    nearest = held;
+                    shared = opening;
+                }
+            }
+
+            return nearest;
+        }
+
+        /// <summary>
+        /// How many characters two names open with in common, without case. UNKNOWN and
+        /// Unknown Tree share seven.
+        /// </summary>
+        private static int SharedOpening(string one, string other)
+        {
+            int at = 0;
+            while (at < one.Length && at < other.Length
+                && char.ToUpperInvariant(one[at]) == char.ToUpperInvariant(other[at]))
+            {
+                at++;
+            }
+
+            return at;
         }
 
         private static bool Same(string workbook, string revit)
