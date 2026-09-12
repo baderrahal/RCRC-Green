@@ -12,10 +12,15 @@ MeasuredTitleBlock carries the sheet its size was read off. ViewNaming.Of is now
 of DM-11-(010) Location Key Plan, where there were four, and it belongs in Shared beside the
 parser, which is a round of its own and the user's call. DrawingSheetReader.SizeOnPaper is the
 one outline read and the writer calls it. Clicking a card opens step 4 at the described sheet
-whose row carries that number. Suite reads 1400 locally, the 1369 on merged main plus 31. Two
-breaks watched red and reversed byte for byte. The pull request is 99 and the mockup is
-design/pr-99/panel.html. A card with no size says only that, rather than also saying no views
-and not all measured, which are the same one fact said three ways.
+whose row carries that number. Two
+breaks watched red and reversed byte for byte. A card with no size says only that, rather than
+also saying no views and not all measured, which are the same one fact said three ways. Pull
+request 99 is merged as `105d750` with 1416 on the runner, 0 failed and 0 skipped, and the
+squash message back byte for byte. The runner read 16 above this branch's local 1400 because
+main moved under it, `6275bf3` and `1bd0f58` from KPI: main alone reads 1385 now against 1369
+when this branch was cut, and 1385 plus 31 is 1416. Merged main reads 1416 locally. The mockup
+is design/pr-99/panel.html. The sixty second pass is done, three features in three pull
+requests, 96, 98 and 99, each merged before the next began.
 
 Phase: 9, ship. Sixty second pass, second of three pull requests. Presets: a saved answer to
 steps 2 and 4, holding the ticked view types and the sheet definitions, and NO plot, NO sub plot
@@ -28,7 +33,8 @@ files so a preset can never name a block its own pairing does not. The strip gai
 a picker with a blank entry, Save as and Manage, on its own row because the first is full at
 pane width. Steps 2 and 4 say which preset filled them, worked out by comparing rather than by a
 flag. InTheModel is now the one title block lookup on the panel, where there were three. Suite
-reads 1369 locally, the 1320 on merged main plus 49. Two breaks watched red and reversed byte
+reads 1369 locally, the 1320 on merged main plus 49. Merged as `e2aa4ad` with 1369 on the
+runner. Two breaks watched red and reversed byte
 for byte. The pull request is 98 and the mockup is design/pr-98/panel.html.
 
 Phase: 9, ship. Sixty second pass, three features split into three pull requests, this is
