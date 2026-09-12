@@ -1,7 +1,16 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Sixty first pass, the seven fix round after the panel was run in Revit, one
-pull request. The new number scheme works on real sheets, 600DM11A, 400DM11 and 200DM11, and
+Phase: 9, ship. Sixty first pass closed. Pull request 94 is merged as `717e2f4` with 1316
+tests on the runner, 0 failed and 0 skipped, the squash message back byte for byte, and the
+merged main reads 1316 locally. Seven fixes off the first Revit run of the new panel: no
+jump on a plot tick, the labelled sub plot stem, a free 01 to 99 range with the list still
+coming from the model, a search box with All and None over a bounded list, a no-view sheet
+taking its code off its title block, the 18.2374 metre section cut, and two views stacked
+with SheetFit carrying what does not fit onto another numbered sheet. The mockup is
+design/pr-94/panel.html and the sixty first pass log entry this commit carries leads with
+the fix 5 cause, file and line.
+
+Before that, the sixty first pass's own pull request. The new number scheme works on real sheets, 600DM11A, 400DM11 and 200DM11, and
 Crop View came on for the first time on a created section. Fix 1, ticking a plot no longer
 folds step 1, and MoveOnFrom goes with the flag because Next was its only other caller. Fix
 2, the sub plot line read DM-02DM02 and the stem is labelled and spaced through

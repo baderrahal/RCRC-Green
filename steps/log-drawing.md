@@ -4,6 +4,86 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, sixty first pass. Seven fixes from the first run of the new panel
+
+Branch `claude/rcrc-green-setup-wf9ham`, one pull request, 94, merged as `717e2f4`
+with 1316 tests on the runner, 0 failed and 0 skipped, and the squash message back byte
+for byte. The panel was installed and
+run in Revit for the first time since the number scheme changed. It works: 600DM11A,
+400DM11 and 200DM11 are on real sheets, and Crop View came on for the first time on a
+created section. Seven faults came back.
+
+**Fix 5 first, because it is the one that needed finding.** A COVER PAGE sheet showed a red
+warning under its number box, and the user first read that as a cover page needing no
+number. Their own models say otherwise: RCRC_NG05_NU_MAIN numbers two TITLE SHEETs 010QE
+Copy 003 and 010QE Copy 004, and RCRC_NG03_EZ_MAIN numbers one 010001A. The cause, with
+file and line, read off the pre-fix branch at `a7cd601`:
+
+- `PlannedSheet.SingleCode` returns `string.Empty` when a sheet holds no views, at
+  `src/RcrcGreen.Core/DrawingSheet/SheetDivision.cs:66`
+- the panel turns that empty code into `SheetNumberRun.NoViewsWords()` at
+  `src/RcrcGreen.Revit/DrawingSheetPanel.cs:2250` through `2257`
+- `SayRowFault` paints that reason in `_theme.Warning` under the box, at
+  `src/RcrcGreen.Revit/DrawingSheetPanel.cs:1581`
+
+So the red line was the tool saying it had no view code to front the number with, which was
+true of the sheet and false of the repo: `install/title-blocks.txt` has shipped
+`010 TITLE SHEET AR-PRX-Title_Block_A1 COVER PAGE` since the fifty sixth pass, and nothing
+anywhere read a code back off a title block. COVER PAGE is the title block TYPE and TITLE
+SHEET is the sheet NAME, and the pairing between them carries the code the sheet could not
+find. `TitleBlockSettings.CodeFor` reads it now: the one code every pairing on a block
+agrees on, so KEYPLAN answers 010 from its three pairings and a block carrying a 400 and a
+600 pairing answers nothing rather than picking one. A no-view sheet numbers itself like any
+other row, code, plot stem, sheet letter, and the old words are kept for the case that is
+left, a block the settings pair with no single code.
+
+The other six. Ticking a plot in step 1 folded the step and opened step 2 while the user was
+still choosing sub plots, so that jump is gone and `MoveOnFrom` with it, because the Next
+button does its own `OpenAfter` and nothing else called it. The sub plot line read DM-02DM02,
+the identifier and the stem with no margin between them, and the words moved into
+`PanelSteps.SubPlotSaid` with a label and a test. From and To offer the digits 01 to 99 on
+every model rather than the sub plots the open one holds, because the team works across
+models and a range filled from the open model cannot be set up for the model it is meant for,
+while the LIST under them still holds only what this model really carries inside the range,
+so no plot is invented anywhere. Each ticked plot has a search box with All and None over
+what it shows, and its sub plot lines sit in their own bounded scroller while the plot lines
+never do. The section cut is 18.2374 metres, centred on the scope box, the tool's own setting
+said in the report in the depth line's words. And two views on a sheet stack rather than
+sitting side by side, because each was wider than half the drawing area.
+
+**The fit is the new rule under fix 7.** `SheetFit` in Core takes the drawing area, the count
+per sheet and each view's size on paper, and decides which views belong on which sheet: each
+into the next cell it fits, one that fits nothing starting a fresh sheet, and one too big
+even for a cell of its own placed alone so it covers nothing. Nothing is dropped. The writer
+measures each view through `View.Outline` before placing anything, and carries what does not
+fit onto another sheet of the same definition, numbered on by `SheetNumberRun` over the
+numbers the document holds at that moment rather than off a stale list.
+
+Two limits inside that, both stated rather than hidden. A schedule cannot be measured before
+it is placed, because how big it comes out is not known until Revit has drawn it, which is
+the same reason its corner is corrected afterwards, so it counts as fitting and is named as
+unmeasured. And a carried sheet whose views do not share one view code cannot be numbered
+without a guess, so it is not created at all and its views are named in the report instead.
+A third limit belongs to fix 3: a sub plot numbered above 99 falls outside every range the
+picker offers, which is the cost of the two digit ends the round asked for.
+
+Suite reads 1308 locally, the 1281 this branch started from plus 27. The runner reads 1316,
+which is not a disagreement: KPI merged pull requests 92 and 93 while this one was open, main
+now reads 1289 on its own, and 1289 plus the same 27 is 1316. Three deliberate breaks watched
+red and reversed with the staged diff hash equal before and after: two views laid side by
+side again took 2 red, a view that does not fit no longer starting a fresh sheet took 2, and
+a title block with two codes answering the first of them took 1.
+
+Not observed in Revit, all of it. Nothing in this round has been run. Specifically: the new
+step 1 with its search boxes and bounded lists, the 01 to 99 pickers, the auto-open that no
+longer happens, a COVER PAGE sheet taking 010 and numbering itself, the 18.2374 metre cut on
+a real scope box, two views stacked on a real sheet, `View.Outline` answering for a plan and
+for a section, a carried sheet being created and numbered inside the transaction, and every
+report line this round adds. The mockup at `design/pr-94/panel.html` is drawn by hand from
+the code and says so in its own first lines.
+
+---
+
 ## 2026-09-12, sixtieth pass. The sub plot number round
 
 Branch `claude/rcrc-green-setup-wf9ham`. Two pull requests, the split the brief named: fix
