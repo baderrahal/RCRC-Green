@@ -1,6 +1,23 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Fifty fourth pass, merged, the two fixes the fifty third found and was told
+Phase: 9, ship. Fifty sixth pass, the sheet numbering round, split as the brief allows:
+fixes 1 and 2 in this pull request, fixes 3 and 4 in the next. The marker is the user's, set
+in step 1 beside each ticked plot through two dropdowns, letters A to ZZZ or numbers 001 to
+999, remembered per model in plot-markers.txt beside the title block settings and keyed on
+the document title. MarkerLedger bars markers other plots' numbers already use, both
+readings of an ambiguous tail on purpose, except that 010001A gives 001 and never A. The
+number is built by SheetNumberRun, code then marker then a sheet letter within the code,
+bare when the code holds one sheet, occupied slots read off the plot's own numbers plus what
+is typed, so a second run continues after 600QD rather than colliding. PlotLetter,
+LettersIn, Free and Propose are deleted with their tests, the free-numbers dropdown is gone
+and the number box is a plain box showing the built number, which can be typed over with the
+warnings kept. A plot with no marker gets no sheet and the refusal names the plot and step
+1. Letters follow the order sheets were described until the sheet order fix lands in the
+second pull request. Suite reads 1230 locally, up six from the 1224 main carries at
+`07f16ba`, 22 tests deleted with the old rules and 28 added. Two breaks watched red, 1 of
+1230 each. Not merged yet.
+
+Before that, the fifty fourth pass, merged, the two fixes the fifty third found and was told
 not to make. Crop View is the tool's own on a section now: `SectionCropChoice` says on
 always, the writer passes it where a plan view still passes the sibling's, and the region
 visibility and the annotation crop stay copied, so which one of the three is the tool's own

@@ -86,21 +86,29 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
+        /// What the user typed into one row's number box, so the panel can count it as an
+        /// occupied slot when it builds the other rows' numbers.
+        /// </summary>
+        public bool TypedNumber(string plotId, string signature, out string number)
+        {
+            return Typed(_numbersTyped, plotId, signature, out number);
+        }
+
+        /// <summary>
         /// One row per sheet this definition will make, per ticked plot, each carrying its
-        /// name and number, prefilled or typed, or the reason nothing could be proposed.
+        /// name and number, built or typed, or the reason nothing could be built.
         ///
-        /// takenNumbers is shared across every described sheet and grows with each row, so two
-        /// proposals on one panel can never offer the same number. It starts as the numbers
-        /// the model already holds and gains what this panel asks for, typed or proposed.
+        /// The built numbers arrive from the panel, worked out across every described sheet
+        /// at once, because a plot's sheet letters run in one sequence per view code however
+        /// many definitions add sheets to it. Working them out here per definition is how a
+        /// plot would get two sheets both lettered A.
         /// </summary>
         public IReadOnlyList<SheetRowShown> RowsFor(
             IReadOnlyList<ViewType> stillTicked,
             IEnumerable<string> plots,
-            DrawingSheetSnapshot model,
-            HashSet<string> takenNumbers)
+            IReadOnlyDictionary<string, SheetNumberProposal> numbersBuilt)
         {
-            if (model == null) throw new ArgumentNullException("model");
-            if (takenNumbers == null) throw new ArgumentNullException("takenNumbers");
+            if (numbersBuilt == null) throw new ArgumentNullException("numbersBuilt");
 
             SheetDefinition definition = Built(stillTicked);
             IReadOnlyList<PlannedSheet> planned = definition.Planned;
@@ -110,21 +118,35 @@ namespace RcrcGreen.Revit
             foreach (string plotId in (plots ?? Enumerable.Empty<string>())
                 .Where(one => !string.IsNullOrEmpty(one)))
             {
-                foreach (PlannedSheet sheet in planned)
+                for (int sheetAt = 0; sheetAt < planned.Count; sheetAt++)
                 {
-                    rows.Add(OneRow(definition, plotId, sheet, model, takenNumbers));
+                    rows.Add(OneRow(
+                        definition,
+                        plotId,
+                        planned[sheetAt],
+                        numbersBuilt,
+                        NumberKey(plotId, sheetAt)));
                 }
             }
 
             return rows;
         }
 
+        /// <summary>
+        /// How the panel and this type address one row's built number. The plot and the
+        /// position, because the signature repeats when two plots get the same set of views.
+        /// </summary>
+        public static string NumberKey(string plotId, int sheetAt)
+        {
+            return plotId + "|" + sheetAt.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         private SheetRowShown OneRow(
             SheetDefinition definition,
             string plotId,
             PlannedSheet sheet,
-            DrawingSheetSnapshot model,
-            HashSet<string> takenNumbers)
+            IReadOnlyDictionary<string, SheetNumberProposal> numbersBuilt,
+            string key)
         {
             string typedName;
             bool nameTyped = Typed(_namesTyped, plotId, sheet.Signature, out typedName);
@@ -141,20 +163,16 @@ namespace RcrcGreen.Revit
             {
                 number = typedNumber;
             }
-            else if (sheet.NamedFromItsView)
+            else
             {
-                SheetNumberProposal proposal = SheetNumbers.Propose(
-                    sheet.Views[0].Code, takenNumbers, model.NumbersOnPlot(plotId));
-
-                number = proposal.Number;
-                numberGenerated = proposal.Offered;
-                whyNoNumber = proposal.WhyNot;
+                SheetNumberProposal proposal;
+                if (numbersBuilt.TryGetValue(key, out proposal))
+                {
+                    number = proposal.Number;
+                    numberGenerated = proposal.Offered;
+                    whyNoNumber = proposal.WhyNot;
+                }
             }
-
-            // Whatever this row asks for is taken from here on, typed or proposed, so no later
-            // proposal on this panel can offer it again.
-            string asked = (number ?? string.Empty).Trim();
-            if (asked.Length > 0) takenNumbers.Add(asked);
 
             return new SheetRowShown(
                 plotId,
@@ -168,7 +186,8 @@ namespace RcrcGreen.Revit
                     definition.TitleBlockFamilyName,
                     definition.TitleBlockTypeName,
                     !nameTyped && sheet.NamedFromItsView,
-                    numberGenerated),
+                    numberGenerated,
+                    whyNoNumber),
                 whyNoNumber);
         }
 
@@ -236,7 +255,7 @@ namespace RcrcGreen.Revit
         public SheetToMake Row { get; }
 
         /// <summary>
-        /// Why the number box starts empty on a sheet that would have been proposed one, said
+        /// Why the number box starts empty on a sheet whose number could not be built, said
         /// next to the box rather than left as a surprise at Run.
         /// </summary>
         public string WhyNoNumber { get; }

@@ -106,17 +106,24 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The dropdown offers numbers stepped on from the NUMBERS in use. Fed the names, it
-        /// would offer LIST OF DRAWINGS 10, and the audit proved nothing failed when it was.
+        /// The number and plot pairs are kept as they came, because the marker ledger reads
+        /// them to work out which markers other plots' numbers already use, and a pair short
+        /// of either half says nothing about markers.
         /// </summary>
         [Fact]
-        public void TheFreeNumbersComeFromTheNumbersAndNeverTheNames()
+        public void TheNumberAndPlotPairsAreKeptAndTheHalfEmptyOnesAreNot()
         {
             DrawingSheetSnapshot snapshot = Snapshot(
-                sheetNamesInUse: new[] { "LIST OF DRAWINGS 9" },
-                sheetNumbersInUse: new[] { "L-211" });
+                sheetNumbersByPlot: new[]
+                {
+                    new SheetOnAPlot("DM-11", "200Q"),
+                    new SheetOnAPlot(string.Empty, "600QD"),
+                    new SheetOnAPlot("DM-12", string.Empty)
+                });
 
-            Assert.Equal(new[] { "L-212" }, snapshot.FreeSheetNumbers);
+            SheetOnAPlot kept = Assert.Single(snapshot.SheetNumbersOnPlots);
+            Assert.Equal("DM-11", kept.PlotId);
+            Assert.Equal("200Q", kept.SheetNumber);
         }
 
         /// <summary>

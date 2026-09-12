@@ -84,8 +84,11 @@ These come from the team and from real models. They are not guesses.
   then digits, as in DM-41, and lowercase is invalid. The code is digits in round brackets and
   the view name is free text after the bracket and one space. A plot is also a scope box
   named with the PlotID. A SHEET IS NOT NAMED THAT WAY: its name is the view name upper cased
-  with no plot and no code, LIST OF DRAWINGS and SOFTSCAPE SCHEDULES on the first real model,
-  and its number is the code, the plot letter and a sheet letter, 010QF and 600QD
+  with no plot and no code, LIST OF DRAWINGS and SOFTSCAPE SCHEDULES on the first real model.
+  Its number is the view code, then a plot MARKER the user sets once per plot, then a sheet
+  letter within one code, absent when the code holds a single sheet: 010001A and 200001 on
+  NG03, 010QF and 200Q on NG05. The marker is letters or three digits and is NEVER derived
+  from the model, whose numbers are copies on every plot but one
 - **There are two plot parameters, not one.** `PRX_Plot_ID` sits on views and on sheets and the
   Sheet List filters on it. `PRX_Ref Plot ID`, with spaces rather than underscores, sits on
   model elements and every quantity schedule filters on that one. A schedule built against the

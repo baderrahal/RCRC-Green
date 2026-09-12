@@ -116,18 +116,36 @@ Reading a schedule as PRINTED is a different job and Core does that too, in `Sch
 `ScheduleGroups`. **Never read a schedule value by cell position**, which is the rule in
 `CLAUDE.md`, stated there and nowhere else.
 
-## A sheet number is proposed from the pattern the model already uses
+## A sheet number is built from the marker, never proposed from the model
 
-`SheetNumbers.Propose` continues what the plot already does: the view code, then the plot's
-letter, then the first sheet letter from A not in use anywhere. The plot letter comes off
-`PlotLetter`, read as the first letter after the leading digits of the plot's own numbers, and
-every parseable number must agree. DM-11's real numbers, 010QE to 600QD, all read Q. A plot
-with no numbers, or with disagreeing ones, gets `SheetNumberProposal.Nothing` with the reason,
-because a wrong number in a drawing register cannot be corrected later. Never random: a caller
-threads one growing set of taken numbers through every row, so two proposals cannot collide.
+The convention, read off two models and confirmed by the team: the view code, then a plot
+MARKER the user sets once per plot in step 1, then A, B, C within one code in sheet order,
+and no letter when the code holds a single sheet. FP-39 on NG03, marker 001, reads 010001A
+to 010001D and 200001. DM-11 on NG05, marker Q, reads 010QE to 010QH and 200Q. The two
+models differ only in the marker, and the marker is never derived: on NG05 every plot but
+DM-11 carries only copy numbers, so anything read off the model is a guess on 159 of 160
+plots. The old `PlotLetter` and `Free` rules are deleted rather than left beside the new
+one, because two records of one fact is the shape this repo keeps paying for.
 
-`SheetNumbers.Free` still offers numbers no sheet carries, each a number in use with its last
-run of digits stepped on until it is free, for the dropdown the user can pick past.
+`SheetNumberRun` builds one code's numbers for one plot. Occupied slots come off the plot's
+own numbers plus everything typed on the panel, a bare number holds the first letter's
+place, and the next letter continues after the highest, so a second run continues rather
+than collides: 600QC and 600QD in the model give 600QE, and 200Q gives 200QB because
+renaming the model's own sheet is not this tool's to do. A sheet whose views carry more
+than one code gets `SheetNumberProposal.Nothing` with the reason, since picking either code
+would be a guess.
+
+`MarkerChoices` is the two dropdown lists, letters A to ZZZ and numbers 001 to 999.
+`PlotMarkers` is one model's markers with where each came from, set now, remembered or
+unset. `PlotMarkerFile` is the tab separated file that remembers them per model, three
+fields, model then plot then marker, keyed on the document title because that is the one
+name a detached model that has never been saved still carries. `MarkerLedger` reads which
+markers the model's own numbers already use, so no plot is offered another plot's. That
+read is ambiguous on purpose: 010QE cannot say whether its marker is Q or QE, so both are
+counted in use. The one exception is four or more digits with at most one trailing letter,
+the 001 kind, where the letter is the sheet letter and only the three digits before it
+count. Counting A off 010001A would bar most of the alphabet on a model numbered the NG03
+way.
 
 `FaultIn` and `Problems` answer the same question twice over: the line under one box, and the
 count in the run summary. One place decides, so the panel can never say a number is fine while

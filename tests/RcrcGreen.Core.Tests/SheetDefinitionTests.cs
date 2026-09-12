@@ -379,7 +379,7 @@ namespace RcrcGreen.Core.Tests
             Assert.False(pair.NamedFromItsView);
             Assert.Equal(string.Empty, pair.ProposedName);
             Assert.Equal(
-                "Holds 2 views, so the name and the number are typed rather than proposed.",
+                "Holds 2 views, so the name is typed rather than proposed.",
                 pair.WhyNothingIsProposed());
         }
 
@@ -464,8 +464,8 @@ namespace RcrcGreen.Core.Tests
                 RunFixture.TitleBlockFamily, RunFixture.TitleBlockType, true, true);
 
             Assert.Equal(
-                "The name was built from its view and the number was proposed from the plot's "
-                + "own numbering.",
+                "The name was built from its view and the number was built from the view code "
+                + "and the plot's marker.",
                 generated.ProvenanceInWords());
 
             Assert.Equal(

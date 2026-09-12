@@ -24,7 +24,8 @@ namespace RcrcGreen.Core
             string titleBlockFamilyName,
             string titleBlockTypeName,
             bool nameWasGenerated,
-            bool numberWasGenerated)
+            bool numberWasGenerated,
+            string whyTheNumberIsMissing = "")
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
 
@@ -42,6 +43,7 @@ namespace RcrcGreen.Core
             TitleBlockTypeName = titleBlockTypeName ?? string.Empty;
             NameWasGenerated = nameWasGenerated && SheetName.Length > 0;
             NumberWasGenerated = numberWasGenerated && SheetNumber.Length > 0;
+            WhyTheNumberIsMissing = HasNumber ? string.Empty : (whyTheNumberIsMissing ?? string.Empty);
         }
 
         public string PlotId { get; }
@@ -74,6 +76,13 @@ namespace RcrcGreen.Core
         public bool NameWasGenerated { get; }
 
         public bool NumberWasGenerated { get; }
+
+        /// <summary>
+        /// Why this row has no number when it has none, so the run refusal can name the plot
+        /// whose marker is not set rather than only saying a number is missing. Empty on a
+        /// row that has its number.
+        /// </summary>
+        public string WhyTheNumberIsMissing { get; }
 
         public bool HasName
         {
@@ -120,7 +129,9 @@ namespace RcrcGreen.Core
         {
             return "The name was " + (NameWasGenerated ? "built from its view" : "typed")
                 + " and the number was "
-                + (NumberWasGenerated ? "proposed from the plot's own numbering" : "typed") + ".";
+                + (NumberWasGenerated
+                    ? "built from the view code and the plot's marker"
+                    : "typed") + ".";
         }
 
         public override string ToString()

@@ -336,13 +336,18 @@ namespace RcrcGreen.Core
 
                     if (!row.CanBeMade)
                     {
+                        // The marker line rides along when the number is missing because no
+                        // marker is set, so the refusal names the plot to fix in step 1.
                         refusals.Add(RunRefusal.ForSheet(
                             row.PlotId,
                             row.SheetNumber,
                             row.SheetName.Length == 0 ? row.ViewsInWords() : row.SheetName,
                             "No sheet was made for " + row.PlotId + " holding "
                             + row.ViewsInWords() + ", because it is still missing "
-                            + row.WhatIsMissing + ". The tool invents neither."));
+                            + row.WhatIsMissing + ". The tool invents neither."
+                            + (row.WhyTheNumberIsMissing.Length == 0
+                                ? string.Empty
+                                : " " + row.WhyTheNumberIsMissing)));
                         continue;
                     }
 

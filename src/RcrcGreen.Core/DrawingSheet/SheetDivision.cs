@@ -36,6 +36,25 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
+        /// The one code every view on this sheet shares, empty when they disagree or there
+        /// are none. It is what fronts the built number: a sheet of two 600 schedules is
+        /// still a 600 sheet, the way 600QC and 600QD are, and a sheet mixing codes gets no
+        /// number built because picking either code would be a guess.
+        /// </summary>
+        public string SingleCode
+        {
+            get
+            {
+                if (Views.Count == 0) return string.Empty;
+
+                string code = Views[0].Code;
+                return Views.All(one => string.Equals(one.Code, code, StringComparison.Ordinal))
+                    ? code
+                    : string.Empty;
+            }
+        }
+
+        /// <summary>
         /// What the views on this sheet are, for the identity of a typed name or number across
         /// a redraw. Two planned sheets holding the same views the same way are the same sheet
         /// to the person typing into its row.
@@ -51,15 +70,15 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// Why the name and the number boxes start empty, said next to them rather than left as
-        /// a surprise at Run.
+        /// Why the name box starts empty, said next to it rather than left as a surprise at
+        /// Run. Only the name: the number is built whenever the views share one code, and a
+        /// row whose number could not be built says why under its own box.
         /// </summary>
         public string WhyNothingIsProposed()
         {
             return NamedFromItsView
                 ? string.Empty
-                : "Holds " + Views.Count + " views, so the name and the number are typed rather "
-                    + "than proposed.";
+                : "Holds " + Views.Count + " views, so the name is typed rather than proposed.";
         }
 
         public override string ToString()

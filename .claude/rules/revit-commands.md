@@ -312,19 +312,34 @@ its empty sheet for a viewless definition is superseded too, because no views ne
 
 **Every sheet that will be made is a row the user can read before Run.** Step 4 holds a table,
 one row per sheet per ticked plot: the views, read only, then a name box and a number box. A
-sheet holding one view gets its name proposed from the view, upper cased with the code removed,
-and its number proposed as the code, the plot's own letter and the first free sheet letter. A
-sheet holding more gets typed boxes and a line saying why. Proposals are editable offers: the
-tool still invents nothing it cannot read, so a plot with no sheet numbers gets an empty box
-with the reason, and a row still short of a name or a number is refused by name.
+sheet holding one view gets its name proposed from the view, upper cased with the code removed.
+The number is BUILT for any sheet whose views share one code: the code, the plot's marker from
+step 1, then its sheet letter, worked out by `SheetNumberRun` in Core. Every built number shows
+in its box and can be typed over, the number box is a plain box now because the free numbers
+list it offered was stepped off numbers that are mostly copies, and a sheet mixing codes gets
+an empty box with the reason. The tool still invents nothing: a plot with no marker gets empty
+number boxes, the reason under each names the plot, and the run refusal carries the same words.
+
+**The marker is set in step 1 and remembered per model.** Beside each ticked plot sit two
+dropdowns, letters and numbers, and the user uses one or the other. `MarkerLedger` bars the
+markers other plots' numbers or other panel rows already use, a typed one is warned about
+rather than refused, and the line beside the plot says set now, remembered, or that there is
+no marker and no sheet without one. `PlotMarkerStore` keeps the file at
+`%APPDATA%\RCRC Green\plot-markers.txt`, beside the user's title block settings, keyed on the
+document title, and it re-reads the file at every save so another model's rows written since
+the panel loaded are kept. Nothing ships a marker: the file starts empty and every row in it
+was set by a person.
 
 `SheetBeingDescribed` in the Revit project is the mutable half the panel owns. Its views are an
 ordered list, because a HashSet loses the tick order the division depends on. What the user
 types is filed under the plot and the planned sheet's own views, so an edit survives the redraw
 and stays with its sheet while the division changes shape around it. What it hands out is the
 Core `SheetDefinition` and the `SheetToMake` rows, narrowed to the view types still ticked in
-step 2, with one growing set of taken numbers threaded through every described sheet so two
-proposals on one panel can never offer the same number.
+step 2. The built numbers are handed IN rather than worked out per definition: the panel's
+`NumbersBuilt` gathers every definition's planned sheets per plot, counts the typed numbers as
+occupied slots, and runs one `SheetNumberRun` per view code, so one plot's letters run in one
+sequence however many definitions add sheets to it. Worked out per definition, a plot would
+get two sheets both lettered A.
 
 **A keystroke refreshes the other boxes rather than rebuilding them.** Typing a number can move
 another row's proposal out of the way, and a box left showing the old one would have the run
