@@ -1,5 +1,19 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty fourth pass, in two halves, this state written between them. **The
+diameter alone decides whether a species the list does not hold gets an empty row**, measured
+on the MOSQUES template row 21: L reads J, M reads L and the count, O reads N, which is typed,
+and nothing reads I or K. A species with a diameter and no height is written and its height
+cell is named as not written, `ASpeciesWithADiameterAndNoHeightIsWrittenAndItsHeightCellIsNamed`,
+and a species with no usable diameter is still withheld, UNKNOWN included, whose DM-25 row 19
+prints 0. Two break watches went red on 1 and 9 tests and were restored byte for byte. Locally
+1221 tests at this commit, 0 failed and 0 skipped, the same 1221 main carries, no test added
+net in this half.
+
+The second half of the round, verifying findings 1, 2, 3, 4, 5, 6, 8, 12, 21, 26, 30, 31, 32
+and 36 at today's lines and marking FIXED what really is, is being verified now and lands in
+this round's next commit with the log entry and the open count read off the audit files.
+
 Phase: 9, ship. Fifty third pass, one rule measured on the 1836 run over 20 mosque plots. **No
 audit finding is closed here**, because this is a fault off a run rather than an audit entry,
 and none was renumbered or annotated. The count in the round message, 32 open, does not

@@ -69,8 +69,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(2, match.Species.Quantity);
             Assert.Equal(
                 "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
-                + "so no row was written: DM-12 row 19 prints '-', DM-12 row 19 prints 0, which is no size",
+                + "what the model prints, which is no canopy diameter a workbook can compute with, "
+                + "so no row was written: DM-12 row 19 prints 0, which is no size",
                 match.Why);
         }
 
@@ -288,8 +288,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(1, match.Species.Quantity);
             Assert.Equal(
                 "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
-                + "so no row was written: DM-12 row 19 prints nothing, DM-12 row 19 prints 0, which is no size",
+                + "what the model prints, which is no canopy diameter a workbook can compute with, "
+                + "so no row was written: DM-12 row 19 prints 0, which is no size",
                 match.Why);
         }
 

@@ -312,37 +312,45 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("UNKNOWN 16 under Proposed", skipped.What);
             Assert.Equal(
                 "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
-                + "so no row was written: FM-05 row 5 prints '-', FM-05 row 5 prints 0, which is no size",
+                + "what the model prints, which is no canopy diameter a workbook can compute with, "
+                + "so no row was written: FM-05 row 5 prints 0, which is no size",
                 skipped.Why);
         }
 
         /// <summary>
-        /// One measure is enough to refuse the row. The model sizes the canopy and prints no
-        /// height, so the row is not written and the reason names the one that is missing.
+        /// **The height is not load bearing, measured on the MOSQUES template row 21**: L reads
+        /// J, the diameter, M reads L and the count, O reads N, which is typed, and nothing
+        /// reads I or K. So a species with a diameter and no height IS written, its name, its
+        /// count and its diameter into their cells, and its height cell is named as not written
+        /// the way every other measure cell already is. The rule before this one withheld the
+        /// whole row for a cell no formula reads.
         /// </summary>
         [Fact]
-        public void ASpeciesMissingOneOfTheTwoMeasuresIsNotWrittenEither()
+        public void ASpeciesWithADiameterAndNoHeightIsWrittenAndItsHeightCellIsNamed()
         {
             SpeciesList list = SpeciesList.Holding(
                 new[] { new SpeciesListRow(4, "Albizia lebbeck", "15", "8") }, 4, 9, "B10", "I", "J");
 
-            IReadOnlyList<SpeciesMatch> matches = SpeciesMatching.Against(
-                KpiMerge.Species(new[]
-                {
-                    CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("UNKNOWN", "Proposed", 16, 5, "-", "5") })
-                }, CreateFixture.Counted),
-                KpiTemplates.Mosques, list, list);
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
+                SpeciesMatching.Against(
+                    KpiMerge.Species(new[]
+                    {
+                        CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("CONOCARPUS", "Proposed", 16, 5, "-", "5") })
+                    }, CreateFixture.Counted),
+                    KpiTemplates.Mosques, list, list),
+                null, null, null);
 
-            SpeciesMatch match = Assert.Single(matches);
-            Assert.False(match.Placed);
-            Assert.False(match.Added);
-            Assert.Equal(0, match.Row);
+            List<CellWrite> written = plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet).ToList();
+            Assert.Equal(new[] { "B5", "D5", "J5" }, written.Select(one => one.Cell.ToString()));
+            Assert.Equal("5", written.Single(one => one.Cell.ToString() == "J5").Stored);
+
+            NotWritten height = Assert.Single(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet));
+            Assert.Equal("I5", height.Cell);
+            Assert.Equal("CONOCARPUS height", height.What);
             Assert.Equal(
-                "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                + "what the model prints, which is no height a workbook can compute with, "
-                + "so no row was written: FM-05 row 5 prints '-'",
-                match.Why);
+                "no row printed a height a workbook can compute with: FM-05 row 5 prints '-', so nothing is written",
+                height.Why);
         }
 
         /// <summary>
@@ -442,8 +450,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + SpeciesMatching.WrittenIn, report);
             Assert.Contains("  UNKNOWN | Proposed | 16 | FM-05 16 | NOWHERE, so its count is not in the total | - | - | "
                 + "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
-                + "so no row was written: FM-05 row 5 prints '-', FM-05 row 5 prints 0, which is no size", report);
+                + "what the model prints, which is no canopy diameter a workbook can compute with, "
+                + "so no row was written: FM-05 row 5 prints 0, which is no size", report);
             Assert.Contains("  A written row carries the botanical name, the count, and the height and the canopy", report);
 
             // 16 of 35, so a workbook one tree short and one sixteen short do not read alike.

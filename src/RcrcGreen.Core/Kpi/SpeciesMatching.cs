@@ -161,37 +161,36 @@ namespace RcrcGreen.Core.Kpi
         public const string WrittenIn = "the list did not hold it, so it was written into an empty row";
 
         /// <summary>
-        /// **A row written into an empty one carries only what the model prints, so a species
-        /// the model does not size cannot have one.** The client's own formulas read the canopy
-        /// diameter column: a row with a name and a count and no diameter leaves them computing
-        /// on a blank, which is an error that runs through the canopy total to the KPI row.
+        /// **A row written into an empty one carries only what the model prints, and the canopy
+        /// diameter is the one measure the sheet computes from**, so a species with no usable
+        /// diameter cannot have a row. Measured on the MOSQUES template, Tree List - Proposed
+        /// row 21: L21 reads J21, the diameter, M21 reads L21 and the count, O21 reads N21,
+        /// which is typed and never written, and nothing reads I21, the height, or K21. A name
+        /// and a count with no diameter leave L computing on a blank, an error that ran through
+        /// seven formulas on the 1836 run and deleted the workbook. The guard was right and the
+        /// rule it caught was wrong: that species has no row to be written into.
         ///
-        /// Measured on the 1836 run over 20 mosque plots. UNKNOWN went into Tree List - Proposed
-        /// row 85 with its name and its count, because DM-25 row 19 prints nothing for its
-        /// height and 0 for its canopy diameter and a nought is no size. The formula check found
-        /// seven formulas that would read an error and deleted the workbook. The guard was
-        /// right and the rule it caught was wrong: that species has no row to be written into.
+        /// **The height is not load bearing.** The first rule required both measures off the
+        /// round message's wording, which made a species with a diameter and no height take no
+        /// row for a cell no formula reads. It is written when the model prints one and its
+        /// cell is named as not written when it does not, through the same skip every other
+        /// measure cell already uses.
         ///
-        /// So it is reported with its count and its reason, the way a species the sheet has no
-        /// room for already is, and the run goes through. **A species that cannot be sized is
-        /// not a refusal.** It is one line in the report and a workbook that computes.
+        /// So a species with no usable diameter is reported with its count and its reason, the
+        /// way a species the sheet has no room for already is, and the run goes through. **A
+        /// species that cannot be sized is not a refusal.** It is one line in the report and a
+        /// workbook that computes. UNKNOWN stays withheld: DM-25 row 19 prints 0 for its
+        /// diameter, and a nought is no size.
         /// </summary>
         public static string NotSized(MergedSpecies species)
         {
             if (species == null) throw new ArgumentNullException("species");
 
-            var missing = new List<string>();
-            if (!species.Height.Write) missing.Add("height");
-            if (!species.Diameter.Write) missing.Add("canopy diameter");
-
-            List<string> printed = (species.Height.Write ? Enumerable.Empty<string>() : species.Height.Found)
-                .Concat(species.Diameter.Write ? Enumerable.Empty<string>() : species.Diameter.Found)
-                .Distinct(StringComparer.Ordinal)
-                .ToList();
+            IReadOnlyList<string> printed = species.Diameter.Found;
 
             return "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                + "what the model prints, which is no " + string.Join(" and no ", missing.ToArray())
-                + " a workbook can compute with, so no row was written"
+                + "what the model prints, which is no canopy diameter a workbook can compute with, "
+                + "so no row was written"
                 + (printed.Count == 0 ? string.Empty : ": " + string.Join(", ", printed.ToArray()));
         }
 
@@ -323,10 +322,12 @@ namespace RcrcGreen.Core.Kpi
                 return new SpeciesMatch(species, sheetName, 0, string.Empty, NoTotalToReach(list), false, false, list);
             }
 
-            // Asked before a row is taken, so an unsized species never uses one up, and after
-            // the sheet's own total, because a sheet with no total writes nothing for anybody
-            // and that is the larger fact.
-            if (!species.Height.Write || !species.Diameter.Write)
+            // Asked before a row is taken, so a species refused for it never uses one up, and
+            // after the sheet's own total, because a sheet with no total writes nothing for
+            // anybody and that is the larger fact. The diameter alone decides: it is the one
+            // measure the sheet's formulas read, and the height is written when the model
+            // prints one and named as not written when it does not.
+            if (!species.Diameter.Write)
             {
                 return new SpeciesMatch(species, sheetName, 0, string.Empty, NotSized(species), false, false, list);
             }

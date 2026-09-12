@@ -262,24 +262,30 @@ column D and the count in column B and nothing anywhere else. This reverses the 
 named and written nowhere: a quantity that goes nowhere leaves a tree list that reads as complete
 and is short, and DM-12 came out reading 31 trees where the model holds 39.
 
-**Unless the model does not size it, and then it gets no row at all.** A row written into an
-empty one carries only what the model prints, and the client's own formulas read the canopy
-diameter column, so a name and a count with no diameter leaves them computing on a blank.
-Measured on the 1836 run over 20 mosque plots: 34 cells were ready, UNKNOWN went into Tree List
-- Proposed row 85 with its name and its count, DM-25 row 19 prints nothing for its height and 0
-for its canopy diameter and a nought is no size, the formula check found seven formulas that
-would read an error, and the workbook was deleted. **The guard was right and the rule it caught
-was wrong.** `SpeciesMatching.WrittenInto` asks `MeasureAnswer.Write` of the height and of the
-canopy diameter before a row is taken, and a species missing either gets `NotSized`, which names
-which measure is missing and what every row printed. **A species that cannot be sized is not a
-refusal.** It is one line in the report, its count among the trees not written, and a workbook
-that computes.
+**Unless the model prints no canopy diameter for it, and then it gets no row at all.** A row
+written into an empty one carries only what the model prints, and the diameter is the one
+measure the sheet computes from. Measured on the MOSQUES template, Tree List - Proposed row 21:
+L21 reads J21, the diameter, M21 reads L21 and the count, O21 reads N21, which is typed and
+never written, and nothing reads I21, the height, or K21. Measured on the 1836 run over 20
+mosque plots: 34 cells were ready, UNKNOWN went into Tree List - Proposed row 85 with its name
+and its count, DM-25 row 19 prints 0 for its canopy diameter and a nought is no size, the
+formula check found seven formulas that would read an error, and the workbook was deleted.
+**The guard was right and the rule it caught was wrong.** `SpeciesMatching.WrittenInto` asks
+`MeasureAnswer.Write` of the canopy diameter before a row is taken, and a species with no
+usable one gets `NotSized`, which quotes what every row printed. **A species that cannot be
+sized is not a refusal.** It is one line in the report, its count among the trees not written,
+and a workbook that computes.
 
-Three things hold it up. **The size is asked before a row is taken**, so a refused species
+**The height is not load bearing.** The rule's first round required both measures off the round
+message's wording, so a species with a diameter and no height took no row for a cell no formula
+reads. It is written now: the name, the count and the diameter go in, the height goes in when
+the model prints one, and when it does not the height cell is named as not written with what
+the rows printed, through the same skip every other measure cell already uses.
+
+Three things hold it up. **The diameter is asked before a row is taken**, so a refused species
 leaves the empty row for the next one rather than using it up. **The sheet's own total is asked
 first**, because a sheet with no total writes nothing for anybody and that is the larger fact.
-And **both measures are required**, which is Bader's wording: only the diameter is known to
-break a formula, and nothing measured says a row with a diameter and no height is safe.
+And **the diameter alone decides**, off the row 21 measurement above.
 
 **The report says how many trees went nowhere and out of what.** One line under the species the
 list does not hold: NOT WRITTEN, THE WHOLE RUN: 1 tree of 528, over every species this run
