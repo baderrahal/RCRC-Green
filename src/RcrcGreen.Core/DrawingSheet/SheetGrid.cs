@@ -7,9 +7,19 @@ namespace RcrcGreen.Core
     public enum SheetCellState
     {
         /// <summary>
-        /// The view is in the model. Clicking it selects it.
+        /// The view is in the model and sits on a sheet. Clicking it selects it.
         /// </summary>
         Exists,
+
+        /// <summary>
+        /// The view is in the model and sits on NO sheet. Clicking it selects it the same
+        /// way, because it is a view like any other, and it is drawn apart because a view
+        /// nobody put on a sheet is a different job from a view that is missing.
+        ///
+        /// On the first real model 2,430 views are on no sheet against 953 that are, so this
+        /// is the ordinary state rather than the exception.
+        /// </summary>
+        ExistsNoSheet,
 
         /// <summary>
         /// No view for this plot and type. Clicking it marks it.
@@ -24,13 +34,15 @@ namespace RcrcGreen.Core
 
     public sealed class SheetGridCell
     {
-        public SheetGridCell(ViewType viewType, SheetCellState state, long viewId)
+        public SheetGridCell(
+            ViewType viewType, SheetCellState state, long viewId, string sheetNumber = null)
         {
             if (viewType == null) throw new ArgumentNullException("viewType");
 
             ViewType = viewType;
             State = state;
             ViewId = viewId;
+            SheetNumber = (sheetNumber ?? string.Empty).Trim();
         }
 
         public ViewType ViewType { get; }
@@ -41,6 +53,29 @@ namespace RcrcGreen.Core
         /// Zero unless the cell holds a view that exists.
         /// </summary>
         public long ViewId { get; }
+
+        /// <summary>
+        /// The number of the sheet this view sits on, empty when it sits on none.
+        ///
+        /// It is on the cell because it is what tells somebody at a glance that a sub plot is
+        /// running on copy numbers, which every sub plot but DM-11 does on the first real
+        /// model. A count of sheets could never say that.
+        /// </summary>
+        public string SheetNumber { get; }
+
+        /// <summary>
+        /// True when the model holds a view for this cell, on a sheet or not. The two states
+        /// are one answer to whether the cell can be marked and whether clicking it opens
+        /// something, so that question is asked here rather than compared against two states
+        /// at every call site.
+        /// </summary>
+        public bool IsInTheModel
+        {
+            get
+            {
+                return State == SheetCellState.Exists || State == SheetCellState.ExistsNoSheet;
+            }
+        }
     }
 
     public sealed class SheetGridRow
@@ -127,13 +162,13 @@ namespace RcrcGreen.Core
                 .OrderBy(column => column)
                 .ToList();
 
-            var viewIdByCell = new Dictionary<PlotViewKey, long>();
+            var presenceByCell = new Dictionary<PlotViewKey, PlotViewPresence>();
             foreach (PlotViewPresence one in (present ?? Enumerable.Empty<PlotViewPresence>()).Where(one => one != null))
             {
                 // A plot can hold two views of the same type. The first found wins, because
                 // the cell only needs something to select and the duplicate is a model
                 // problem the reports already show.
-                if (!viewIdByCell.ContainsKey(one.Where)) viewIdByCell.Add(one.Where, one.ViewId);
+                if (!presenceByCell.ContainsKey(one.Where)) presenceByCell.Add(one.Where, one);
             }
 
             var withScopeBox = new HashSet<string>(
@@ -152,12 +187,18 @@ namespace RcrcGreen.Core
                 {
                     var cell = new PlotViewKey(plotId, column);
 
-                    long viewId;
-                    if (viewIdByCell.TryGetValue(cell, out viewId))
+                    PlotViewPresence found;
+                    if (presenceByCell.TryGetValue(cell, out found))
                     {
                         // A view that exists cannot be marked. Marking is a note that one is
                         // wanted, and this one is already there.
-                        cells.Add(new SheetGridCell(column, SheetCellState.Exists, viewId));
+                        cells.Add(new SheetGridCell(
+                            column,
+                            found.SheetNumber.Length == 0
+                                ? SheetCellState.ExistsNoSheet
+                                : SheetCellState.Exists,
+                            found.ViewId,
+                            found.SheetNumber));
                         continue;
                     }
 

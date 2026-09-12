@@ -58,12 +58,14 @@ namespace RcrcGreen.Core.Tests
             };
 
             // Filled the way the reader fills cells, one presence per parseable view name.
+            // DM-41's four are on sheets and PF-12's one is on none, which is the split the
+            // real model has: 953 views placed against 2,430 that are not.
             var present = new[]
             {
-                new PlotViewPresence("DM-41", columns[0], 1),
-                new PlotViewPresence("DM-41", columns[1], 2),
-                new PlotViewPresence("DM-41", columns[2], 3),
-                new PlotViewPresence("DM-41", columns[3], 4),
+                new PlotViewPresence("DM-41", columns[0], 1, "010DM41A"),
+                new PlotViewPresence("DM-41", columns[1], 2, "010DM41B"),
+                new PlotViewPresence("DM-41", columns[2], 3, "200DM41"),
+                new PlotViewPresence("DM-41", columns[3], 4, "400DM41"),
                 new PlotViewPresence("PF-12", columns[2], 5)
             };
 
@@ -81,17 +83,22 @@ namespace RcrcGreen.Core.Tests
             Assert.All(dm41Row.Cells, cell => Assert.Equal(SheetCellState.Exists, cell.State));
 
             // PF-12 holds the general arrangement layout and nothing else, so it lacks the
-            // two key plans and the cross section.
+            // two key plans and the cross section. The one view it has is on no sheet, which
+            // is its own state rather than done.
             SheetGridRow pf12Row = grid.Rows.Single(row => row.PlotId == "PF-12");
             Assert.Equal(
                 new[]
                 {
                     SheetCellState.Missing,
                     SheetCellState.Missing,
-                    SheetCellState.Exists,
+                    SheetCellState.ExistsNoSheet,
                     SheetCellState.Missing
                 },
                 pf12Row.Cells.Select(cell => cell.State));
+
+            Assert.Equal(
+                new[] { "010DM41A", "010DM41B", "200DM41", "400DM41" },
+                dm41Row.Cells.Select(cell => cell.SheetNumber));
         }
 
         [Fact]

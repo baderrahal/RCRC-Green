@@ -95,6 +95,11 @@ is wanted and that one is there. An unticked plot is never swept up either, beca
 not act on it and the marks would be dropped without a word. A single click on one square is
 still allowed anywhere, because that is a deliberate act rather than a sweep.
 
+Every one of those four was already built and wired when the round that asked for them
+came round again. They are listed here so the next round checks before building a second
+copy: the plot name at `WholeRow`, the column header at `WholeColumn`, Mark every missing
+at `EveryMissing`, and Clear all marks.
+
 A plot name and a column header are labels sitting inside a borderless button. `Flat` builds
 them with `PanelTheme.Clear` and `PanelMetrics.Nothing`, so the frozen column stays in step with
 the scrolling cells beside it. A real button there would put chrome down the side and across the

@@ -44,6 +44,12 @@ namespace RcrcGreen.Revit
 
         private const string MarkedMark = "\u25CF";
 
+        /// <summary>
+        /// A view that is in the model and on no sheet. Half filled, because it is half way
+        /// between a view that is done and a square with nothing in it.
+        /// </summary>
+        private const string NoSheetMark = "\u25E7";
+
         private readonly ExternalEvent _asking;
         private readonly DrawingSheetRequestHandler _handler;
 
@@ -861,9 +867,11 @@ namespace RcrcGreen.Revit
         {
             var legend = new WrapPanel { Margin = PanelMetrics.Row };
 
-            legend.Children.Add(LegendEntry(ExistsMark, "exists, click to open it"));
-            legend.Children.Add(LegendEntry(MissingMark, "missing, click to mark it"));
-            legend.Children.Add(LegendEntry(MarkedMark, "marked to be made"));
+            foreach (SheetCellState state in PanelSteps.LegendOrder)
+            {
+                legend.Children.Add(
+                    LegendEntry(Face(state), PanelSteps.LegendInWords(state)));
+            }
 
             return legend;
         }
@@ -2647,16 +2655,45 @@ namespace RcrcGreen.Revit
             return PanelSteps.NothingToDraw(_readOnce, _model.Empty, _plots.TickedPlotCount > 0);
         }
 
+        /// <summary>
+        /// One square of the grid: its mark, and under it the number of the sheet its view
+        /// sits on when it has one.
+        ///
+        /// The number is on the square rather than in a count somewhere, because it is what
+        /// says at a glance that a sub plot is running on copy numbers. On the first real
+        /// model that is every sub plot but DM-11. The content is a TextBlock rather than a
+        /// string, so nothing on it goes through WPF's access key handling and a number
+        /// holding an underscore cannot come out short a character.
+        /// </summary>
         private Button CellButton(string plotId, SheetGridCell cell, bool ticked)
         {
+            var inside = new StackPanel();
+            inside.Children.Add(new TextBlock
+            {
+                Text = Face(cell.State),
+                FontSize = PanelMetrics.Cell,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+
+            if (cell.SheetNumber.Length > 0)
+            {
+                inside.Children.Add(new TextBlock
+                {
+                    Text = cell.SheetNumber,
+                    FontSize = PanelMetrics.Body,
+                    Foreground = _theme.Faint,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                });
+            }
+
             var button = new Button
             {
-                Content = Face(cell.State),
-                FontSize = PanelMetrics.Cell,
+                Content = inside,
                 Margin = new Thickness(1.0),
                 MinWidth = PanelMetrics.RowHeight,
                 Opacity = ticked ? 1.0 : 0.45,
-                ToolTip = plotId + " " + cell.ViewType + ", " + InWords(cell.State)
+                ToolTip = plotId + " " + cell.ViewType + ", "
+                    + PanelSteps.CellInWords(cell.State, cell.SheetNumber)
             };
 
             button.Click += (sender, e) => CellClicked(plotId, cell);
@@ -2668,18 +2705,9 @@ namespace RcrcGreen.Revit
             switch (state)
             {
                 case SheetCellState.Exists: return ExistsMark;
+                case SheetCellState.ExistsNoSheet: return NoSheetMark;
                 case SheetCellState.Marked: return MarkedMark;
                 default: return MissingMark;
-            }
-        }
-
-        private static string InWords(SheetCellState state)
-        {
-            switch (state)
-            {
-                case SheetCellState.Exists: return "exists, click to open it";
-                case SheetCellState.Marked: return "marked, click to unmark";
-                default: return "missing, click to mark it";
             }
         }
 
@@ -2689,7 +2717,7 @@ namespace RcrcGreen.Revit
         /// </summary>
         private void CellClicked(string plotId, SheetGridCell cell)
         {
-            if (cell.State == SheetCellState.Exists)
+            if (cell.IsInTheModel)
             {
                 OpenTheView(cell.ViewId);
                 return;

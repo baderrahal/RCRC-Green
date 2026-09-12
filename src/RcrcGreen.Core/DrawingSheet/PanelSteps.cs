@@ -235,6 +235,69 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
+        /// What one grid cell means, for its tooltip and for the legend under the grid.
+        ///
+        /// The four states are one list in one place. The legend and the tooltip used to be
+        /// two lists written out next to the controls that showed them, which is the shape
+        /// that has been the bug here more than once.
+        /// </summary>
+        public static string CellInWords(SheetCellState state, string sheetNumber)
+        {
+            string number = (sheetNumber ?? string.Empty).Trim();
+
+            switch (state)
+            {
+                case SheetCellState.Exists:
+                    return number.Length == 0
+                        ? "exists, click to open it"
+                        : "exists on sheet " + number + ", click to open it";
+
+                case SheetCellState.ExistsNoSheet:
+                    return "exists but is on no sheet, click to open it";
+
+                case SheetCellState.Marked:
+                    return "marked, click to unmark";
+
+                default:
+                    return "missing, click to mark it";
+            }
+        }
+
+        /// <summary>
+        /// The legend under the grid, one line per state in the order a cell moves through
+        /// them. The words are the tooltip's own, so a square cannot mean one thing in the
+        /// key and another under the pointer.
+        /// </summary>
+        public static IReadOnlyList<SheetCellState> LegendOrder
+        {
+            get
+            {
+                return new List<SheetCellState>
+                {
+                    SheetCellState.Exists,
+                    SheetCellState.ExistsNoSheet,
+                    SheetCellState.Missing,
+                    SheetCellState.Marked
+                };
+            }
+        }
+
+        /// <summary>
+        /// The legend's own wording for one state, which drops the click instruction the
+        /// tooltip carries and says what the square is.
+        /// </summary>
+        public static string LegendInWords(SheetCellState state)
+        {
+            switch (state)
+            {
+                case SheetCellState.Exists: return "exists, and the number of its sheet";
+                case SheetCellState.ExistsNoSheet: return "exists, on no sheet";
+                case SheetCellState.Marked: return "marked to be made";
+                default: return "missing, click to mark it";
+            }
+        }
+
+        /// <summary>
         /// The status line after one cell is clicked.
         /// </summary>
         public static string MarkedLine(int marked)
