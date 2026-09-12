@@ -62,6 +62,16 @@ a plot takes its whole span with everything ticked, changing its range rebuilds 
 selection with everything in the new range ticked, unticking a plot forgets its range and
 its ticks, and nothing outside the model can be ticked at all.
 
+**The range is free and the list is not.** From and To offer 01 to 99 on every model,
+digits only, because the team works across models and a range filled from the open one
+could not be set up for the model it is meant for. The LIST under them still holds only
+the sub plots this model really carries inside the range, so a free range picker is not an
+invented plot, it is two numbers, and the count line says how many of the range exist
+here. A sub plot numbered above 99 falls outside every range, which is the known cost of
+two digit ends. `Matching` is what the search box narrows to and what All and None act on,
+so the sweep and the single tick mean the same thing, the rule `BulkMarking` already
+follows.
+
 ## One state, drawn again, never two
 
 `GridColumns` is the only record of which view types are ticked. The panel draws the whole
@@ -210,11 +220,18 @@ the number the transaction writes were different numbers, and the whole reason t
 are on screen is that they are the same one. The Revit side calls `ScopeBoxCounts.Narrow`
 before it writes, so there is one narrowing and not two.
 
-## SectionPlacement takes the axis and the depth as required arguments
+## SectionPlacement takes the axis, the depth and the cut length as required arguments
 
-The code picks no default for either. The interface preselects ShortSide, because the default
-cut is the short way across the plot. The depth is a plain number in whatever unit the box
-numbers are in.
+The code picks no default for any of them. The interface preselects ShortSide, because the
+default cut is the short way across the plot. The depth and the cut length are plain numbers
+in whatever unit the box numbers are in.
+
+`SectionCutLength.Metres` is 18.2374, the team's decision, and it is the only record of that
+number. The cut used to run the whole width of the plot's scope box, which is 36.4747 metres
+on NS-32, and on a real sheet the viewport was still far wider than the drawing area, so they
+halved it. The line is CENTRED on the box now and is the length it is given, so a box ten
+times the size gives the same line. `SectionDefaults` converts it to feet at the Revit
+boundary, beside the depth.
 
 `SectionDepth.Metres` is 1, the team's decision, and it is the only record of that number.
 `SectionDefaults` in the Revit project reads it and converts, because Revit works in feet and
@@ -276,6 +293,23 @@ number is refused by name, and `SheetBatch` counts what one definition really ma
 centre of each viewport in reading order. It divides that area evenly, so the margin outside
 equals the gap between. Y counts up from the bottom, which is Revit's convention and the
 reason the first row back is the top one.
+
+**Two sit one above the other.** Side by side is what the first sheets did and the two views
+overlapped, because each was wider than half the drawing area, which a landscape drawing on
+a landscape sheet always will be. Four still makes a two by two grid, because halving both
+is the only way to get four cells.
+
+**A view is measured before it is placed, and one that does not fit is carried rather than
+laid over its neighbour.** `SheetFit.Of` takes the drawing area, the count per sheet and each
+view's size on paper, and hands back the sheets the views really divide into: each view into
+the next cell it fits, a view that fits nothing starting a fresh sheet, and one too big even
+for a cell of its own placed alone so it covers nothing and named. Nothing is ever dropped.
+`ViewOnPaper.NotMeasured` is the honest answer for a schedule, whose size is not known until
+Revit has drawn it, and it fits whatever it is put in because nothing else can be said. The
+writer reads a view's size off `View.Outline`, which needs no viewport, and numbers a carried
+sheet with `SheetNumberRun` over the numbers the document holds at that moment. A carried
+sheet whose views do not share one code cannot be numbered without a guess, so it is not
+made and its views are named in the report instead.
 
 **It divides the drawing area and not the whole sheet.** `DrawingArea.InsideTheTitleBlock`
 takes the title strip down the right hand edge off the width, because that is not somewhere

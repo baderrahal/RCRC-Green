@@ -62,16 +62,19 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// Two side by side inside 640: quarters at 160 and 480. Both are left of the strip,
-        /// which is the whole point of taking it off.
+        /// Two one above the other inside the 640 wide area: both centred at 320, neither
+        /// anywhere near the strip, which is the whole point of taking it off. They stack
+        /// now rather than sitting side by side, because side by side overlapped.
         /// </summary>
         [Fact]
-        public void TwoSitSideBySideInsideTheAreaAndNeitherReachesTheStrip()
+        public void TwoStackInsideTheAreaAndNeitherReachesTheStrip()
         {
             var spots = SheetLayout.For(DrawingArea.InsideTheTitleBlock(Wide, Tall), 2).ToArray();
 
-            Assert.Equal(160.0, spots[0].CentreX);
-            Assert.Equal(480.0, spots[1].CentreX);
+            Assert.Equal(320.0, spots[0].CentreX);
+            Assert.Equal(320.0, spots[1].CentreX);
+            Assert.Equal(450.0, spots[0].CentreY);
+            Assert.Equal(150.0, spots[1].CentreY);
             Assert.True(spots[1].CentreX < 640.0);
         }
 

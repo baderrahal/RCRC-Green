@@ -104,34 +104,39 @@ namespace RcrcGreen.Core.Tests
                 new
                 {
                     Box = new PlotBox("DM-41", 0, 0, 0, 300, 80, 20),
-                    Start = new Point3D(150, 0, 10),
-                    End = new Point3D(150, 80, 10),
+                    Start = new Point3D(150, 20, 10),
+                    End = new Point3D(150, 60, 10),
                     Direction = new Vector3D(1, 0, 0),
-                    Length = 80.0
+                    Length = 40.0
                 },
                 new
                 {
                     Box = new PlotBox("PF-12", 400, 0, 0, 480, 350, 20),
-                    Start = new Point3D(400, 175, 10),
-                    End = new Point3D(480, 175, 10),
+                    Start = new Point3D(420, 175, 10),
+                    End = new Point3D(460, 175, 10),
                     Direction = new Vector3D(0, -1, 0),
-                    Length = 80.0
+                    Length = 40.0
                 },
                 new
                 {
                     Box = new PlotBox("AB-7", -100, -100, -5, -40, -30, 5),
-                    Start = new Point3D(-100, -65, 0),
-                    End = new Point3D(-40, -65, 0),
+                    Start = new Point3D(-90, -65, 0),
+                    End = new Point3D(-50, -65, 0),
                     Direction = new Vector3D(0, -1, 0),
-                    Length = 60.0
+                    Length = 40.0
                 }
             };
 
             const double depth = 32.808398950131235;
 
+            // One cut length for all three, so the line is the same size on a 300 wide box
+            // and a 60 wide one and only its middle moves.
+            const double cut = 40.0;
+
             foreach (var one in expected)
             {
-                SectionPlacement placement = SectionPlacement.Across(one.Box, SectionAxis.ShortSide, depth);
+                SectionPlacement placement = SectionPlacement.Across(
+                    one.Box, SectionAxis.ShortSide, depth, cut);
 
                 Assert.Equal(one.Box.PlotName, placement.PlotName);
                 Assert.Equal(one.Length, placement.Length, 9);

@@ -162,12 +162,14 @@ namespace RcrcGreen.Core
             + "a sheet in step 4 and give it views, a name and a number.";
 
         /// <summary>
-        /// The count at the foot of step 1's list: how many sub plots across how many
-        /// plots, and how many of them are ticked.
+        /// The count at the foot of step 1's list: how many plots are ticked, how many of
+        /// their sub plots are, and how much of the range picked this model actually
+        /// holds. The last of those is what stops a range set up for another model reading
+        /// as an empty step.
         /// </summary>
         public static string PlotsLine(
             bool modelEmpty, int subPlotsTicked, int subPlotsInRange, int plotsTicked,
-            int plotsInModel)
+            int numbersInRange, int plotsInModel)
         {
             if (modelEmpty) return "No plots in this model.";
 
@@ -179,9 +181,29 @@ namespace RcrcGreen.Core
 
             return plotsTicked + (plotsTicked == 1 ? " plot" : " plots") + " ticked, "
                 + subPlotsTicked + " of " + subPlotsInRange
-                + (subPlotsInRange == 1 ? " sub plot" : " sub plots") + " ticked, "
-                + plotsInModel + " in the model. Untick a sub plot to leave it out of the "
-                + "counts and out of anything that writes.";
+                + (subPlotsInRange == 1 ? " sub plot" : " sub plots") + " ticked. The "
+                + (plotsTicked == 1 ? "range covers " : "ranges cover ") + numbersInRange
+                + (numbersInRange == 1 ? " number" : " numbers") + " and this model holds "
+                + subPlotsInRange + " of them, out of " + plotsInModel
+                + ". Untick a sub plot to leave it out of the counts and out of anything "
+                + "that writes.";
+        }
+
+        /// <summary>
+        /// What follows the identifier on one sub plot's line. The two used to sit next to
+        /// each other with nothing between them, so the line read DM-02DM02 and the stem
+        /// looked like the name printed twice. It is labelled now and says what it is for.
+        /// </summary>
+        public static string SubPlotSaid(string stem, string noViews)
+        {
+            string said = (stem ?? string.Empty).Trim().Length == 0
+                ? string.Empty
+                : "sheet numbers " + stem.Trim();
+
+            string extra = (noViews ?? string.Empty).Trim();
+            if (extra.Length == 0) return said;
+
+            return said.Length == 0 ? extra : said + ", " + extra;
         }
 
         /// <summary>

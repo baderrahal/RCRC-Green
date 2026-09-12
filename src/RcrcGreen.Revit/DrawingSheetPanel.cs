@@ -90,6 +90,16 @@ namespace RcrcGreen.Revit
         // every sub plot. The controls are rebuilt from it on every change, so it is the
         // one record, the same rule GridColumns follows.
         private PlotTickList _plots = PlotTickList.Nothing;
+
+        // One search box per plot and the list of lines it narrows. The box is made once and
+        // kept, because a keystroke refills the lines under it and a box rebuilt with them
+        // would take the cursor out of itself. What it holds is a filter and nothing else,
+        // so no tick and no count is read back off it.
+        private readonly Dictionary<string, TextBox> _subPlotSearch =
+            new Dictionary<string, TextBox>(StringComparer.Ordinal);
+
+        private readonly Dictionary<string, StackPanel> _subPlotLines =
+            new Dictionary<string, StackPanel>(StringComparer.Ordinal);
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
 
         /// <summary>
@@ -118,11 +128,6 @@ namespace RcrcGreen.Revit
         private readonly List<SheetBeingDescribed> _sheets = new List<SheetBeingDescribed>();
 
         private PanelStep _stepOpen = PanelStep.Plots;
-
-        // Step 1 opens step 2 by itself the first time a range is picked, because that is the
-        // one act that unlocks everything below it. Once per read, so somebody who comes back
-        // to change the range later is not thrown out of it again.
-        private bool _leftPlotsAlready;
 
         private bool _filling;
         private bool _readOnce;
@@ -431,16 +436,6 @@ namespace RcrcGreen.Revit
             Redraw();
         }
 
-        /// <summary>
-        /// Opens the next step that can be used. Nothing to open leaves this one where it is,
-        /// because shutting everything would look like the panel had lost its place.
-        /// </summary>
-        private void MoveOnFrom(PanelStep finished)
-        {
-            PanelStep? next = StepsNow().OpenAfter(finished);
-            if (next.HasValue) _stepOpen = next.Value;
-        }
-
         private UIElement InsidePlots()
         {
             var block = new StackPanel();
@@ -448,26 +443,26 @@ namespace RcrcGreen.Revit
             block.Children.Add(Faint("Tick a plot to work on it. Several can be ticked at "
                 + "once, and one Run covers every ticked sub plot on every ticked plot."));
 
-            var list = new StackPanel();
             foreach (string prefix in _plots.Prefixes)
             {
-                list.Children.Add(PlotBlock(prefix));
+                block.Children.Add(PlotBlock(prefix));
             }
-
-            block.Children.Add(Scrolling(list, PanelMetrics.ListHeight, "plots"));
 
             block.Children.Add(Faint(PanelSteps.PlotsLine(
                 _model.Empty, _plots.TickedCount, _plots.InRangeCount,
-                _plots.TickedPlotCount, _model.PlotIds.Count)));
+                _plots.TickedPlotCount, _plots.NumbersInRange, _model.PlotIds.Count)));
             block.Children.Add(NextButton(PanelStep.Plots));
             return block;
         }
 
         /// <summary>
-        /// One plot in step 1's list: its tick, and when it is ticked, the From and To
-        /// over its sub plots and one line per sub plot in that range. Everything here is
-        /// rebuilt from the tick list on every change, so no control holds the only copy
-        /// of anything.
+        /// One plot in step 1's list: its tick, and when it is ticked, the From and To over
+        /// the sub plot numbers, a search box with All and None over what it shows, and the
+        /// sub plot lines in a list of their own that scrolls.
+        ///
+        /// The plot lines themselves are never inside a scroller, so the plots stay in view
+        /// and the steps below stay reachable. Everything here is rebuilt from the tick list
+        /// on every change, so no control holds the only copy of anything.
         /// </summary>
         private UIElement PlotBlock(string prefix)
         {
@@ -493,15 +488,16 @@ namespace RcrcGreen.Revit
 
             var inside = new StackPanel { Margin = PanelMetrics.CellPad };
 
-            // Built fresh on every redraw, with the handlers wired only after the
-            // selection is set, so filling them fires nothing. Their state lives on the
-            // tick list, not on the boxes.
+            // Built fresh on every redraw, with the handlers wired only after the selection
+            // is set, so filling them fires nothing. Their state lives on the tick list, not
+            // on the boxes. The lists are the same 01 to 99 on every model, because a range
+            // filled from the open model cannot be set up for the model it is meant for.
             var from = new ComboBox();
             var to = new ComboBox();
-            foreach (string subPlot in under)
+            foreach (string end in PlotTickList.RangeEnds)
             {
-                from.Items.Add(subPlot);
-                to.Items.Add(subPlot);
+                from.Items.Add(end);
+                to.Items.Add(end);
             }
             from.SelectedItem = _plots.FromOf(which);
             to.SelectedItem = _plots.ToOf(which);
@@ -513,20 +509,110 @@ namespace RcrcGreen.Revit
 
             inside.Children.Add(Labelled("From", from));
             inside.Children.Add(Labelled("To", to));
+            inside.Children.Add(SubPlotSearch(which));
 
-            foreach (string subPlot in _plots.InRangeOf(which))
-            {
-                inside.Children.Add(SubPlotRow(subPlot));
-            }
+            var lines = new StackPanel();
+            _subPlotLines[which] = lines;
+            FillSubPlots(which);
+
+            inside.Children.Add(Scrolling(lines, PanelMetrics.ListHeight, "subplots " + which));
 
             block.Children.Add(inside);
             return block;
         }
 
         /// <summary>
-        /// One sub plot's line: its tick, its identifier, and the stem its sheet numbers
-        /// take, DM-42 showing DM42, so what the built numbers will hold is read here
-        /// rather than met in step 4.
+        /// The search box over one plot's sub plots, with All and None beside it. Both act
+        /// on what the search is showing, which is the point of having them, and the rule
+        /// is PlotTickList's rather than a loop written here.
+        ///
+        /// The box outlives the redraw the way the other kept controls do, because a
+        /// keystroke rebuilds the list under it and a box thrown away takes the cursor with
+        /// it. One box per plot, kept by prefix.
+        /// </summary>
+        private UIElement SubPlotSearch(string prefix)
+        {
+            string which = prefix;
+            TextBox box = SearchBoxFor(which);
+
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            row.Children.Add(Reparented(box));
+            row.Children.Add(Secondary(
+                "All",
+                () => TickWhatTheSearchShows(which, true),
+                "Ticks every sub plot the search is showing."));
+            row.Children.Add(Secondary(
+                "None",
+                () => TickWhatTheSearchShows(which, false),
+                "Unticks every sub plot the search is showing."));
+
+            return Labelled("Search", row);
+        }
+
+        /// <summary>
+        /// One search box per plot, made once and kept, so typing into it does not lose the
+        /// cursor when the list below is rebuilt.
+        /// </summary>
+        private TextBox SearchBoxFor(string prefix)
+        {
+            TextBox box;
+            if (_subPlotSearch.TryGetValue(prefix, out box)) return box;
+
+            box = new TextBox { MinWidth = PanelMetrics.LabelWidth };
+            box.TextChanged += (sender, e) =>
+            {
+                if (_filling) return;
+
+                // The lines only. Redrawing the step would rebuild the tree under the
+                // cursor and take the keyboard out of this box, which is the fault the
+                // sheet number boxes already carry a refresh action to avoid.
+                FillSubPlots(prefix);
+            };
+
+            _subPlotSearch.Add(prefix, box);
+            return box;
+        }
+
+        /// <summary>
+        /// Rewrites one plot's sub plot lines from the tick list and the search, leaving
+        /// every other control alone. Nothing is hidden that the search is not hiding, and
+        /// the count line below is untouched because a filter changes no tick.
+        /// </summary>
+        private void FillSubPlots(string prefix)
+        {
+            StackPanel lines;
+            if (!_subPlotLines.TryGetValue(prefix, out lines)) return;
+
+            lines.Children.Clear();
+            foreach (string subPlot in _plots.Matching(prefix, SearchIn(prefix)))
+            {
+                lines.Children.Add(SubPlotRow(subPlot));
+            }
+        }
+
+        private string SearchIn(string prefix)
+        {
+            TextBox box;
+            return _subPlotSearch.TryGetValue(prefix, out box)
+                ? box.Text ?? string.Empty
+                : string.Empty;
+        }
+
+        /// <summary>
+        /// All and None: one change to the tick list over what the search shows, rather
+        /// than a redraw per line.
+        /// </summary>
+        private void TickWhatTheSearchShows(string prefix, bool ticked)
+        {
+            _plots = _plots.TickingThese(_plots.Matching(prefix, SearchIn(prefix)), ticked);
+            Redraw();
+        }
+
+        /// <summary>
+        /// One sub plot's line: its tick, its identifier, and what its sheet numbers will
+        /// be built from, labelled. The stem used to sit straight after the identifier with
+        /// no gap and no label, so the line read DM-02DM02 and the second half looked like
+        /// the name printed twice.
         /// </summary>
         private UIElement SubPlotRow(string plotId)
         {
@@ -550,13 +636,14 @@ namespace RcrcGreen.Revit
             tick.Checked += (sender, e) => PlotTicked(which, true);
             tick.Unchecked += (sender, e) => PlotTicked(which, false);
 
-            TextBlock stem = Faint(SheetNumberRun.StemOf(which)
-                + (suffix.Length == 0 ? string.Empty : "   " + suffix));
-            stem.VerticalAlignment = VerticalAlignment.Center;
+            TextBlock said = Faint(
+                PanelSteps.SubPlotSaid(SheetNumberRun.StemOf(which), suffix));
+            said.Margin = PanelMetrics.CellPad;
+            said.VerticalAlignment = VerticalAlignment.Center;
 
             var row = new StackPanel { Orientation = Orientation.Horizontal };
             row.Children.Add(tick);
-            row.Children.Add(stem);
+            row.Children.Add(said);
             return row;
         }
 
@@ -2247,7 +2334,18 @@ namespace RcrcGreen.Revit
                         }
 
                         string key = SheetBeingDescribed.NumberKey(plotId, sheetAt);
-                        string code = sheet.SingleCode;
+
+                        // A sheet with no views carries no view type, so its code comes off
+                        // the title block it is described on. Both models number their title
+                        // sheets, 010001A on NG03 and 010QE on NG05, and the shipped settings
+                        // have paired 010 TITLE SHEET with COVER PAGE all along.
+                        string code = sheet.Views.Count == 0
+                            ? _titleBlocks.CodeFor(
+                                _sheets[at].TitleBlock == null
+                                    ? string.Empty : _sheets[at].TitleBlock.FamilyName,
+                                _sheets[at].TitleBlock == null
+                                    ? string.Empty : _sheets[at].TitleBlock.TypeName)
+                            : sheet.SingleCode;
 
                         if (code.Length == 0)
                         {
@@ -2399,7 +2497,6 @@ namespace RcrcGreen.Revit
                 _readOnce = true;
                 int marksCleared = _marked.Count;
                 _marked.Clear();
-                _leftPlotsAlready = false;
                 _columns = _columns.OverTheseTypes(_model.ViewTypes);
 
                 _plots = PlotTickList.Over(_model.PlotIds);
@@ -2489,22 +2586,18 @@ namespace RcrcGreen.Revit
 
         /// <summary>
         /// One tick takes the plot's whole span with every sub plot ticked, so a plot is
-        /// one click's worth of work, and ticking the first one is the act that opens
-        /// everything below, so it opens the next step too. Once per read, so ticking a
-        /// second plot later does not throw the user out of the step they are in.
+        /// one click's worth of work.
+        ///
+        /// It opens no other step. Ticking a plot used to fold step 1 and open step 2 while
+        /// the user was still choosing sub plots, which threw them out of the step they were
+        /// working in. Next at the foot of the step is how somebody moves on, and it was
+        /// already there.
         /// </summary>
         private void PlotPrefixTicked(string prefix, bool ticked)
         {
             if (_filling) return;
 
             _plots = _plots.TickingPlot(prefix, ticked);
-
-            if (!_leftPlotsAlready && _plots.InRangeCount > 0 && _stepOpen == PanelStep.Plots)
-            {
-                _leftPlotsAlready = true;
-                MoveOnFrom(PanelStep.Plots);
-            }
-
             Redraw();
         }
 

@@ -39,6 +39,42 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
+        /// The way round a sheet with no views has to ask: the code off the title block
+        /// rather than off a view type it does not have.
+        ///
+        /// A COVER PAGE sheet used to carry a red line under its number box saying there
+        /// was no code to build from, and both measured models number their title sheets,
+        /// 010001A on NG03 and 010QE on NG05. The code was in the settings all along.
+        /// </summary>
+        [Fact]
+        public void ATitleBlockAnswersTheCodeItsPairingsAgreeOn()
+        {
+            TitleBlockSettings settings = TitleBlockSettings.Of(null, new[]
+            {
+                Pairing(new ViewType("010", "TITLE SHEET"), "COVER PAGE"),
+                Pairing(new ViewType("010", "Location Key Plan"), "KEYPLAN"),
+                Pairing(new ViewType("010", "Overall Plan"), "KEYPLAN"),
+                Pairing(General, "GA-SCHEMATIC"),
+                Pairing(Softscape, "MIXED"),
+                Pairing(new ViewType("400", "Landscape Cross Section"), "MIXED")
+            });
+
+            Assert.Equal("010", settings.CodeFor(Family, "COVER PAGE"));
+
+            // Three pairings, one code, so the block still answers.
+            Assert.Equal("010", settings.CodeFor(Family, "KEYPLAN"));
+            Assert.Equal("200", settings.CodeFor(Family, "GA-SCHEMATIC"));
+
+            // 600 and 400 on one block. Picking either would be a guess, so neither.
+            Assert.Equal(string.Empty, settings.CodeFor(Family, "MIXED"));
+
+            Assert.Equal(string.Empty, settings.CodeFor(Family, "NOT IN THE SETTINGS"));
+            Assert.Equal(string.Empty, settings.CodeFor("Another Family", "COVER PAGE"));
+            Assert.Equal(string.Empty, settings.CodeFor(Family, string.Empty));
+            Assert.Equal(string.Empty, settings.CodeFor(null, null));
+        }
+
+        /// <summary>
         /// The user's file is read first and wins. The shipped file is a starting point and a
         /// choice somebody made beats it, whatever an install puts back.
         /// </summary>
@@ -309,6 +345,19 @@ namespace RcrcGreen.Core.Tests
             Assert.Empty(TitleBlockSettingsFile.Read(null).Pairings);
             Assert.Empty(TitleBlockSettingsFile.Read(string.Empty).Pairings);
             Assert.Empty(TitleBlockSettingsFile.Read(null).NotRead);
+        }
+
+        /// <summary>
+        /// The shipped file answers 010 for COVER PAGE, which is what a described title
+        /// sheet numbers itself from on a fresh install with no user file at all.
+        /// </summary>
+        [Fact]
+        public void TheShippedFileAnswersTheCoverPagesCode()
+        {
+            TitleBlockSettings settings = TitleBlockSettings.Of(
+                null, TitleBlockSettingsFile.Read(File.ReadAllText(ShippedFile())).Pairings);
+
+            Assert.Equal("010", settings.CodeFor("AR-PRX-Title_Block_A1", "COVER PAGE"));
         }
 
         /// <summary>

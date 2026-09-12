@@ -16,6 +16,13 @@ namespace RcrcGreen.Core.Tests
         private const double SomeDepth = 32.8;
 
         /// <summary>
+        /// The cut length these tests use, picked so it is neither a box dimension nor a
+        /// half of one and every expected coordinate below is worked out by hand from it.
+        /// The real number the tool applies is SectionCutLength.Metres.
+        /// </summary>
+        private const double SomeCut = 12.0;
+
+        /// <summary>
         /// Wide along X, narrow along Y. The short way across it is the Y direction.
         /// </summary>
         private static PlotBox WideBox()
@@ -23,27 +30,54 @@ namespace RcrcGreen.Core.Tests
             return new PlotBox("DM-41", 0, 0, 0, 100, 20, 10);
         }
 
+        /// <summary>
+        /// The box is 100 by 20 with its centre at 50, 10. The short way is along Y, and a
+        /// 12 long cut runs from 4 to 16 rather than from edge to edge.
+        /// </summary>
         [Fact]
-        public void TheShortAxisRunsTheShortWayAcrossAWideBox()
+        public void TheShortAxisRunsTheShortWayThroughTheCentre()
         {
-            SectionPlacement placement = SectionPlacement.Across(WideBox(), SectionAxis.ShortSide, SomeDepth);
+            SectionPlacement placement = SectionPlacement.Across(
+                WideBox(), SectionAxis.ShortSide, SomeDepth, SomeCut);
 
-            Assert.Equal(20.0, placement.Length, Places);
+            Assert.Equal(12.0, placement.Length, Places);
             Assert.Equal(50.0, placement.Start.X, Places);
-            Assert.Equal(0.0, placement.Start.Y, Places);
+            Assert.Equal(4.0, placement.Start.Y, Places);
             Assert.Equal(50.0, placement.End.X, Places);
-            Assert.Equal(20.0, placement.End.Y, Places);
+            Assert.Equal(16.0, placement.End.Y, Places);
+        }
+
+        /// <summary>
+        /// The cut used to run the whole width of the box, which is what made the viewport
+        /// on a real sheet wider than the drawing area. A box ten times the size now gives
+        /// exactly the same line.
+        /// </summary>
+        [Fact]
+        public void TheCutIsTheLengthItIsGivenWhateverTheBoxMeasures()
+        {
+            SectionPlacement small = SectionPlacement.Across(
+                WideBox(), SectionAxis.ShortSide, SomeDepth, SomeCut);
+
+            SectionPlacement large = SectionPlacement.Across(
+                new PlotBox("DM-41", 0, 0, 0, 1000, 200, 10),
+                SectionAxis.ShortSide, SomeDepth, SomeCut);
+
+            Assert.Equal(12.0, small.Length, Places);
+            Assert.Equal(12.0, large.Length, Places);
+            Assert.Equal(94.0, large.Start.Y, Places);
+            Assert.Equal(106.0, large.End.Y, Places);
         }
 
         [Fact]
         public void TheLongAxisRunsTheOtherWayAcrossTheSameBox()
         {
-            SectionPlacement placement = SectionPlacement.Across(WideBox(), SectionAxis.LongSide, SomeDepth);
+            SectionPlacement placement = SectionPlacement.Across(
+                WideBox(), SectionAxis.LongSide, SomeDepth, SomeCut);
 
-            Assert.Equal(100.0, placement.Length, Places);
-            Assert.Equal(0.0, placement.Start.X, Places);
+            Assert.Equal(12.0, placement.Length, Places);
+            Assert.Equal(44.0, placement.Start.X, Places);
             Assert.Equal(10.0, placement.Start.Y, Places);
-            Assert.Equal(100.0, placement.End.X, Places);
+            Assert.Equal(56.0, placement.End.X, Places);
             Assert.Equal(10.0, placement.End.Y, Places);
         }
 
@@ -52,11 +86,12 @@ namespace RcrcGreen.Core.Tests
         {
             PlotBox tall = new PlotBox("PF-12", 0, 0, 0, 20, 100, 10);
 
-            SectionPlacement placement = SectionPlacement.Across(tall, SectionAxis.ShortSide, SomeDepth);
+            SectionPlacement placement = SectionPlacement.Across(
+                tall, SectionAxis.ShortSide, SomeDepth, SomeCut);
 
-            Assert.Equal(20.0, placement.Length, Places);
-            Assert.Equal(0.0, placement.Start.X, Places);
-            Assert.Equal(20.0, placement.End.X, Places);
+            Assert.Equal(12.0, placement.Length, Places);
+            Assert.Equal(4.0, placement.Start.X, Places);
+            Assert.Equal(16.0, placement.End.X, Places);
             Assert.Equal(50.0, placement.Start.Y, Places);
         }
 
@@ -67,7 +102,8 @@ namespace RcrcGreen.Core.Tests
 
             foreach (SectionAxis axis in new[] { SectionAxis.ShortSide, SectionAxis.LongSide })
             {
-                SectionPlacement placement = SectionPlacement.Across(offOrigin, axis, SomeDepth);
+                SectionPlacement placement = SectionPlacement.Across(
+                    offOrigin, axis, SomeDepth, SomeCut);
 
                 Assert.Equal(60.0, placement.Midpoint.X, Places);
                 Assert.Equal(-20.0, placement.Midpoint.Y, Places);
@@ -78,7 +114,8 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void BothEndsSitAtTheMiddleHeightOfTheBox()
         {
-            SectionPlacement placement = SectionPlacement.Across(WideBox(), SectionAxis.ShortSide, SomeDepth);
+            SectionPlacement placement = SectionPlacement.Across(
+                WideBox(), SectionAxis.ShortSide, SomeDepth, SomeCut);
 
             Assert.Equal(5.0, placement.Start.Z, Places);
             Assert.Equal(5.0, placement.End.Z, Places);
@@ -87,8 +124,10 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheViewLooksAcrossTheLineAndStaysHorizontal()
         {
-            SectionPlacement shortWay = SectionPlacement.Across(WideBox(), SectionAxis.ShortSide, SomeDepth);
-            SectionPlacement longWay = SectionPlacement.Across(WideBox(), SectionAxis.LongSide, SomeDepth);
+            SectionPlacement shortWay = SectionPlacement.Across(
+                WideBox(), SectionAxis.ShortSide, SomeDepth, SomeCut);
+            SectionPlacement longWay = SectionPlacement.Across(
+                WideBox(), SectionAxis.LongSide, SomeDepth, SomeCut);
 
             Assert.Equal(1.0, shortWay.ViewDirection.X, Places);
             Assert.Equal(0.0, shortWay.ViewDirection.Y, Places);
@@ -108,8 +147,14 @@ namespace RcrcGreen.Core.Tests
         {
             PlotBox box = WideBox();
 
-            Assert.Equal(depth, SectionPlacement.Across(box, SectionAxis.ShortSide, depth).Depth, Places);
-            Assert.Equal(depth, SectionPlacement.Across(box, SectionAxis.LongSide, depth).Depth, Places);
+            Assert.Equal(
+                depth,
+                SectionPlacement.Across(box, SectionAxis.ShortSide, depth, SomeCut).Depth,
+                Places);
+            Assert.Equal(
+                depth,
+                SectionPlacement.Across(box, SectionAxis.LongSide, depth, SomeCut).Depth,
+                Places);
         }
 
         [Fact]
@@ -119,8 +164,8 @@ namespace RcrcGreen.Core.Tests
             PlotBox large = new PlotBox("DM-41", 0, 0, 0, 4000, 900, 10);
 
             Assert.Equal(
-                SectionPlacement.Across(small, SectionAxis.ShortSide, SomeDepth).Depth,
-                SectionPlacement.Across(large, SectionAxis.ShortSide, SomeDepth).Depth,
+                SectionPlacement.Across(small, SectionAxis.ShortSide, SomeDepth, SomeCut).Depth,
+                SectionPlacement.Across(large, SectionAxis.ShortSide, SomeDepth, SomeCut).Depth,
                 Places);
         }
 
@@ -131,7 +176,23 @@ namespace RcrcGreen.Core.Tests
         public void ADepthThatIsNotARealNumberIsRefused(double depth)
         {
             Assert.Throws<ArgumentException>(
-                () => SectionPlacement.Across(WideBox(), SectionAxis.ShortSide, depth));
+                () => SectionPlacement.Across(WideBox(), SectionAxis.ShortSide, depth, SomeCut));
+        }
+
+        /// <summary>
+        /// A cut length that is not a real length is refused the same way, zero included,
+        /// because a zero long cut is a section that draws nothing and would come back
+        /// looking like a placement.
+        /// </summary>
+        [Theory]
+        [InlineData(double.NaN)]
+        [InlineData(double.PositiveInfinity)]
+        [InlineData(0.0)]
+        [InlineData(-1.0)]
+        public void ACutLengthThatIsNotARealLengthIsRefused(double cut)
+        {
+            Assert.Throws<ArgumentException>(
+                () => SectionPlacement.Across(WideBox(), SectionAxis.ShortSide, SomeDepth, cut));
         }
 
         [Fact]
@@ -139,12 +200,14 @@ namespace RcrcGreen.Core.Tests
         {
             PlotBox square = new PlotBox("AB-7", 0, 0, 0, 50, 50, 5);
 
-            SectionPlacement shortWay = SectionPlacement.Across(square, SectionAxis.ShortSide, SomeDepth);
-            SectionPlacement longWay = SectionPlacement.Across(square, SectionAxis.LongSide, SomeDepth);
+            SectionPlacement shortWay = SectionPlacement.Across(
+                square, SectionAxis.ShortSide, SomeDepth, SomeCut);
+            SectionPlacement longWay = SectionPlacement.Across(
+                square, SectionAxis.LongSide, SomeDepth, SomeCut);
 
             Assert.Equal(25.0, shortWay.Start.X, Places);
-            Assert.Equal(0.0, shortWay.Start.Y, Places);
-            Assert.Equal(0.0, longWay.Start.X, Places);
+            Assert.Equal(19.0, shortWay.Start.Y, Places);
+            Assert.Equal(19.0, longWay.Start.X, Places);
             Assert.Equal(25.0, longWay.Start.Y, Places);
         }
 
@@ -154,7 +217,7 @@ namespace RcrcGreen.Core.Tests
             PlotBox flat = new PlotBox("DM-41", 0, 5, 0, 100, 5, 10);
 
             Assert.Throws<ArgumentException>(
-                () => SectionPlacement.Across(flat, SectionAxis.ShortSide, SomeDepth));
+                () => SectionPlacement.Across(flat, SectionAxis.ShortSide, SomeDepth, SomeCut));
         }
 
         [Fact]
@@ -178,7 +241,8 @@ namespace RcrcGreen.Core.Tests
         {
             PlotBox tiny = new PlotBox("DM-41", 0, 0, 0, 1e-200, 4e-200, 1e-200);
 
-            SectionPlacement placement = SectionPlacement.Across(tiny, SectionAxis.ShortSide, SomeDepth);
+            SectionPlacement placement = SectionPlacement.Across(
+                tiny, SectionAxis.ShortSide, SomeDepth, 1e-200);
 
             // Compared as a ratio, because rounding to a fixed number of decimal places
             // cannot say anything about a number this small.
@@ -191,7 +255,8 @@ namespace RcrcGreen.Core.Tests
         {
             PlotBox huge = new PlotBox("DM-41", 0, 0, 0, 1e200, 4e200, 1e200);
 
-            SectionPlacement placement = SectionPlacement.Across(huge, SectionAxis.ShortSide, SomeDepth);
+            SectionPlacement placement = SectionPlacement.Across(
+                huge, SectionAxis.ShortSide, SomeDepth, 1e200);
 
             Assert.False(double.IsInfinity(placement.Length));
             Assert.Equal(1.0, placement.Length / 1e200, Places);

@@ -572,11 +572,16 @@ namespace RcrcGreen.Revit
                     extent.Min.X, extent.Min.Y, extent.Min.Z,
                     extent.Max.X, extent.Max.Y, extent.Max.Z);
 
-                // One depth on every section the tool makes. It used to come off the sibling,
-                // and four real sections in this model read 0.93, 0.93, 1.53 and 12.83 metres,
-                // so the model had no rule to copy and the sibling decided it by accident.
+                // One depth and one cut length on every section the tool makes. The depth
+                // used to come off the sibling, and four real sections in this model read
+                // 0.93, 0.93, 1.53 and 12.83 metres, so the model had no rule to copy. The
+                // cut used to run the whole width of the box, 36.4747 metres on NS-32, and
+                // the viewport that produced was wider than the drawing area.
                 across = SectionPlacement.Across(
-                    plot, SectionAxis.ShortSide, SectionDefaults.SectionDepthFeet);
+                    plot,
+                    SectionAxis.ShortSide,
+                    SectionDefaults.SectionDepthFeet,
+                    SectionDefaults.SectionCutLengthFeet);
             }
             catch (ArgumentException refused)
             {
@@ -868,11 +873,17 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Every view the row carries, at the spot Core worked out for it.
+        /// Every view the row carries, measured, fitted and then placed.
         ///
-        /// The division never puts more views on a row than its grid holds, so the overflow
-        /// guard here has never fired. It is a guard rather than a trust, because a view
-        /// silently left off a sheet reads as finished.
+        /// Two faults on a real sheet made this more than a loop over spots. Two views laid
+        /// side by side overlapped, which stacking them fixed in SheetLayout, and a view
+        /// bigger than its cell was placed anyway and ran over its neighbour. So every view
+        /// is measured before anything is placed, Core's SheetFit says which of them belong
+        /// on this sheet, and the rest are carried onto another sheet of the same definition
+        /// rather than dropped or laid over one another.
+        ///
+        /// A view silently left off a sheet reads as finished, so every one that does not end
+        /// up placed is named in the report.
         /// </summary>
         private static void PlaceViews(
             Document document,
@@ -885,71 +896,135 @@ namespace RcrcGreen.Revit
             SiblingReader siblings)
         {
             SheetToMake wanted = item.Sheet;
-            IReadOnlyList<ViewType> placing = wanted.Views;
+            if (wanted.Views.Count == 0) return;
+
+            DrawingArea onto = area
+                ?? DrawingArea.InsideTheTitleBlock(size.WidthFeet, size.HeightFeet);
+
+            List<ViewToPlace> placing = Resolved(document, item, outcome, madeSoFar);
             if (placing.Count == 0) return;
 
-            IReadOnlyList<ViewportSpot> spots = SheetLayout.For(
-                area ?? DrawingArea.InsideTheTitleBlock(size.WidthFeet, size.HeightFeet),
-                wanted.ViewsPerSheet);
+            IReadOnlyList<FittedSheet> fitted = SheetFit.Of(
+                onto, wanted.ViewsPerSheet, placing.Select(one => one.Size));
+
+            var byName = new Dictionary<string, ViewToPlace>(StringComparer.Ordinal);
+            foreach (ViewToPlace one in placing) byName[one.Name] = one;
+
+            ViewSheet onSheet = sheet;
+            string numbered = item.SheetNumber;
+
+            for (int at = 0; at < fitted.Count; at++)
+            {
+                List<ViewToPlace> here = fitted[at].Views
+                    .Select(one => byName[one.ViewName])
+                    .ToList();
+
+                if (at > 0)
+                {
+                    // The sheet the user described is full. Another one of the same
+                    // definition carries the rest, numbered on from the one before it.
+                    ViewSheet carried = CarriedSheet(
+                        document, item, outcome, here, numbered, out numbered);
+
+                    if (carried == null)
+                    {
+                        // Numbering it would have been a guess, so nothing is created and the
+                        // views are named rather than put somewhere they overlap.
+                        outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                            item.SheetName, item.Name + " was made without "
+                            + string.Join(", ", here.Select(one => one.Name).ToArray())
+                            + ", because they do not fit on it and the sheet that would carry "
+                            + "them could not be numbered. Describe another sheet for them in "
+                            + "step 4."));
+                        continue;
+                    }
+
+                    onSheet = carried;
+                }
+
+                SaySheetSetUpFrom(item, outcome,
+                    numbered + ". " + SheetFit.InWords(placing.Count, here.Count)
+                    + (fitted[at].CarriedOver
+                        ? " " + SheetFit.CarriedOverInWords(item.SheetNumber)
+                        : string.Empty));
+
+                if (fitted[at].HoldsOneTooBig)
+                {
+                    ViewToPlace big = here[0];
+                    outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName,
+                        SheetFit.TooBigInWords(
+                            big.Name, big.Size.SizeInWords(), wanted.ViewsPerSheet)));
+                }
+
+                PlaceOnOneSheet(document, item, outcome, onSheet, size, onto, here, siblings);
+            }
+        }
+
+        /// <summary>
+        /// One sheet's worth: every view put at the spot Core worked out for it, then read
+        /// back off what Revit really made rather than off the spot that was asked for.
+        /// </summary>
+        private static void PlaceOnOneSheet(
+            Document document,
+            RunItem item,
+            RunOutcome outcome,
+            ViewSheet sheet,
+            SheetSize size,
+            DrawingArea area,
+            IReadOnlyList<ViewToPlace> placing,
+            SiblingReader siblings)
+        {
+            IReadOnlyList<ViewportSpot> spots = SheetLayout.For(area, item.Sheet.ViewsPerSheet);
 
             var landed = new List<OnTheSheet>();
 
             for (int at = 0; at < placing.Count; at++)
             {
-                ViewType type = placing[at];
-                string named = item.PlotId + "-(" + type.Code + ") " + type.ViewName;
+                ViewToPlace one = placing[at];
 
                 if (at >= spots.Count)
                 {
                     outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
                         item.SheetName, item.Name + " was made without "
-                        + string.Join(", ", placing.Skip(at).Select(one => one.ToString()).ToArray())
+                        + string.Join(", ", placing.Skip(at).Select(each => each.Name).ToArray())
                         + ", because the sheet lays out " + spots.Count
-                        + " and this row carries more. That is a bug in the division."));
+                        + " and this one carries more. That is a bug in the fit."));
                     break;
-                }
-
-                ElementId viewId = ViewNamed(document, named, madeSoFar);
-                if (viewId == ElementId.InvalidElementId)
-                {
-                    outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
-                        item.SheetName, item.Name + " was made without " + named
-                        + ", because that view is not in the model and was not marked to be "
-                        + "made."));
-                    continue;
                 }
 
                 var point = new XYZ(spots[at].CentreX, spots[at].CentreY, 0.0);
 
-                if (document.GetElement(viewId) is ViewSchedule)
+                if (document.GetElement(one.Id) is ViewSchedule)
                 {
                     landed.Add(new OnTheSheet
                     {
-                        Schedule = ScheduleSheetInstance.Create(document, sheet.Id, viewId, point),
-                        ViewName = named,
+                        Schedule = ScheduleSheetInstance.Create(document, sheet.Id, one.Id, point),
+                        ViewName = one.Name,
                         Wanted = spots[at]
                     });
                     continue;
                 }
 
-                if (!Viewport.CanAddViewToSheet(document, sheet.Id, viewId))
+                if (!Viewport.CanAddViewToSheet(document, sheet.Id, one.Id))
                 {
                     // Almost always because it is already on another sheet. Moving it would
                     // take it off a drawing somebody else made.
                     outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
-                        item.SheetName, item.Name + " was made without " + named
+                        item.SheetName, item.Name + " was made without " + one.Name
                         + ", because Revit will not put that view on this sheet. A view already "
                         + "placed on another sheet cannot be placed twice."));
                     continue;
                 }
 
-                Viewport placed = Viewport.Create(document, sheet.Id, viewId, point);
-                ShowItTheWayTheTeamDoes(document, item, outcome, siblings, type, viewId, placed, named);
+                Viewport placed = Viewport.Create(document, sheet.Id, one.Id, point);
+                ShowItTheWayTheTeamDoes(
+                    document, item, outcome, siblings, one.Type, one.Id, placed, one.Name);
 
                 landed.Add(new OnTheSheet
                 {
                     Viewport = placed,
-                    ViewName = named,
+                    ViewName = one.Name,
                     Wanted = spots[at]
                 });
             }
@@ -975,6 +1050,190 @@ namespace RcrcGreen.Revit
             {
                 NotePlacement(document, outcome, sheet, one, size);
             }
+        }
+
+        /// <summary>
+        /// Every view the row asks for that the model really holds, with its size on paper.
+        ///
+        /// A plan or a section carries an outline Revit gives for the asking, in paper feet,
+        /// which is what the fit needs. A schedule has none: how big it comes out is not known
+        /// until Revit has drawn it, which is the same reason its corner is corrected after
+        /// placement rather than before. Those go in unmeasured and are named as such.
+        /// </summary>
+        private static List<ViewToPlace> Resolved(
+            Document document,
+            RunItem item,
+            RunOutcome outcome,
+            Dictionary<string, ElementId> madeSoFar)
+        {
+            var found = new List<ViewToPlace>();
+
+            foreach (ViewType type in item.Sheet.Views)
+            {
+                string named = item.PlotId + "-(" + type.Code + ") " + type.ViewName;
+
+                ElementId viewId = ViewNamed(document, named, madeSoFar);
+                if (viewId == ElementId.InvalidElementId)
+                {
+                    outcome.NeedsAttention(RunRefusal.ForSheet(item.PlotId, item.SheetNumber,
+                        item.SheetName, item.Name + " was made without " + named
+                        + ", because that view is not in the model and was not marked to be "
+                        + "made."));
+                    continue;
+                }
+
+                found.Add(new ViewToPlace
+                {
+                    Id = viewId,
+                    Name = named,
+                    Type = type,
+                    Size = SizeOnPaper(document, viewId, named)
+                });
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// How big a view comes out on a sheet, in paper feet. View.Outline is Revit's own
+        /// answer and needs no viewport, so the fit can be worked out before anything is
+        /// placed. Anything it will not answer for reads as not measured rather than as a size
+        /// of zero, which would make every view look as though it fitted.
+        /// </summary>
+        private static ViewOnPaper SizeOnPaper(Document document, ElementId viewId, string named)
+        {
+            var view = document.GetElement(viewId) as View;
+            if (view == null || view is ViewSchedule) return ViewOnPaper.NotMeasured(named);
+
+            try
+            {
+                BoundingBoxUV outline = view.Outline;
+                if (outline == null) return ViewOnPaper.NotMeasured(named);
+
+                return new ViewOnPaper(
+                    named, outline.Max.U - outline.Min.U, outline.Max.V - outline.Min.V);
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            {
+                // A view Revit will not give an outline for. Nothing is invented in its place:
+                // it reads as not measured and the report says so.
+                return ViewOnPaper.NotMeasured(named);
+            }
+        }
+
+        /// <summary>
+        /// Another sheet of the same definition, for the views that did not fit on the one
+        /// before it. Same title block, same name, and the next number in the same sequence
+        /// the panel built the first one from.
+        ///
+        /// Null when it could not be numbered, which happens when the carried views do not
+        /// share one view code. Picking either code would be a guess, and letting Revit number
+        /// the sheet would put a number nobody chose into the model.
+        /// </summary>
+        private static ViewSheet CarriedSheet(
+            Document document,
+            RunItem item,
+            RunOutcome outcome,
+            IReadOnlyList<ViewToPlace> carrying,
+            string after,
+            out string numbered)
+        {
+            numbered = after;
+
+            string code = OneCodeAcross(carrying);
+            if (code.Length == 0) return null;
+
+            SheetNumberProposal next = new SheetNumberRun(
+                code, item.PlotId, NumbersInTheModel(document), 1).Next();
+
+            if (!next.Offered) return null;
+
+            FamilySymbol block = TitleBlock(document, item.Sheet);
+            if (block == null) return null;
+            if (!block.IsActive) block.Activate();
+
+            ViewSheet carried = ViewSheet.Create(document, block.Id);
+
+            try
+            {
+                carried.SheetNumber = next.Number;
+                carried.Name = item.SheetName;
+            }
+            catch (Autodesk.Revit.Exceptions.ArgumentException refused)
+            {
+                string kept = Deleted(document, carried.Id)
+                    ? " It was deleted again."
+                    : " IT IS STILL IN THE MODEL under the number Revit gave it, and has to be "
+                        + "sorted out by hand.";
+
+                outcome.Refused(RunRefusal.ForSheet(item.PlotId, next.Number, item.SheetName,
+                    "A second sheet for " + item.PlotId + " was not made. Revit said: "
+                    + refused.Message + kept));
+                return null;
+            }
+
+            Parameter plot = carried.LookupParameter(ModelScanner.PlotIdParameterName);
+            if (plot != null && !plot.IsReadOnly) plot.Set(item.PlotId);
+
+            numbered = next.Number;
+            outcome.Made(RunItem.ForSheet(new SheetToMake(
+                item.PlotId,
+                next.Number,
+                item.SheetName,
+                carrying.Select(one => one.Type),
+                item.Sheet.ViewsPerSheet,
+                item.Sheet.TitleBlockFamilyName,
+                item.Sheet.TitleBlockTypeName,
+                false,
+                true)));
+
+            return carried;
+        }
+
+        /// <summary>
+        /// The one view code every carried view shares, empty when they disagree. The same
+        /// rule PlannedSheet follows, asked here because the carried views are a slice of a
+        /// row rather than a planned sheet.
+        /// </summary>
+        private static string OneCodeAcross(IReadOnlyList<ViewToPlace> carrying)
+        {
+            if (carrying.Count == 0) return string.Empty;
+
+            string code = carrying[0].Type.Code;
+            return carrying.All(one => string.Equals(one.Type.Code, code, StringComparison.Ordinal))
+                ? code
+                : string.Empty;
+        }
+
+        /// <summary>
+        /// Every sheet number the document holds right now, read inside the transaction so the
+        /// sheets this run has already made are counted. A carried sheet numbered off a stale
+        /// list would collide with the run's own work, which is the fault the panel already
+        /// had once.
+        /// </summary>
+        private static IReadOnlyList<string> NumbersInTheModel(Document document)
+        {
+            return new FilteredElementCollector(document)
+                .OfClass(typeof(ViewSheet))
+                .Cast<ViewSheet>()
+                .Select(one => one.SheetNumber)
+                .Where(one => !string.IsNullOrEmpty(one))
+                .ToList();
+        }
+
+        /// <summary>
+        /// One view on its way onto a sheet: what it is, where to find it, and how big it
+        /// comes out.
+        /// </summary>
+        private sealed class ViewToPlace
+        {
+            public ElementId Id;
+
+            public string Name;
+
+            public ViewType Type;
+
+            public ViewOnPaper Size;
         }
 
         /// <summary>

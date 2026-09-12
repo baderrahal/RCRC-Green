@@ -181,7 +181,7 @@ namespace RcrcGreen.Core.Tests
             RunRefusal only = Assert.Single(plan.Refusals);
             Assert.Contains("still missing a number", only.Because);
             Assert.Contains(
-                "This sheet holds no views, so there is no view code to build its number",
+                "This sheet holds no views, so its code comes from its title block",
                 only.Because);
         }
 
