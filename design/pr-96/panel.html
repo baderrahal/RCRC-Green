@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The grid with four states, pull request 96</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  table.plain { border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  table.plain td, table.plain th { border: 1px solid #ccc; padding: 4px 10px; text-align: left; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 520px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .row { margin: 3px 0; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 1px 7px; margin-right: 4px; }
+  .dark .btn { border-color: #5e5e5e; }
+  .strip { padding: 6px 8px; border-bottom: 1px solid #c8c8c8; }
+  .dark .strip { border-bottom-color: #4a4a4a; }
+  .status { padding: 5px 8px; border-top: 1px solid #c8c8c8; }
+  .dark .status { border-top-color: #4a4a4a; }
+
+  .grid { border-collapse: collapse; margin: 4px 0; }
+  .grid th { font-weight: normal; font-size: 11px; padding: 2px 4px; text-align: center; }
+  .grid td { padding: 0; }
+  .cell { border: 1px solid #adadad; min-width: 58px; height: 34px; text-align: center;
+          padding: 1px 3px; }
+  .dark .cell { border-color: #5e5e5e; }
+  .mark { font-family: "Segoe UI Symbol", sans-serif; font-size: 14px; display: block; }
+  .num { font-size: 11px; display: block; }
+  .plot { text-align: left; padding-right: 8px; white-space: nowrap; }
+  .legend { font-size: 11px; margin-top: 6px; }
+  .legend span { margin-right: 14px; white-space: nowrap; }
+  .light .shade td { background: #f3f3f3; }
+  .dark .shade td { background: #333333; }
+</style>
+</head>
+<body>
+
+<h1>The grid with four states, pull request 96</h1>
+
+<div class="warning">
+  <p><strong>This is a mockup, not a screenshot.</strong> It is drawn by hand from
+  DrawingSheetPanel.cs, SheetGrid.cs and PanelSteps.cs so the layout and the wording can be
+  read before someone spends an install on it. It cannot show how Revit will really render
+  the panel, how wide the columns come out once a sheet number sits under each square, or
+  how the theme colours look on a real monitor.</p>
+  <p>Every word below comes from the code: the four states from <code>SheetCellState</code>,
+  the squares and their numbers from <code>SheetGridCell</code>, and the tooltip and legend
+  wording from <code>PanelSteps.CellInWords</code> and <code>LegendInWords</code>.</p>
+</div>
+
+<p class="caption">A cell had three states and no number. A view already drawn on a sheet and
+a view nobody has placed looked the same, so the grid could not say which sub plots are
+running on copy numbers. DM-11 below is the one sub plot on the real model with real
+numbers. DM-12 is on copies, DM-13 has its views on no sheet at all, and DM-14 has nothing
+yet, with two squares marked to be made.</p>
+
+<div class="pair">
+
+<div class="panel light">
+  <div class="strip">
+    <b>RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</b><br>
+    <span class="faint">3,383 views read at 14:02:11</span>
+    <span style="float:right"><span class="btn">Refresh</span> <span class="btn">Scan Model</span></span>
+  </div>
+
+  <div class="head"><span class="sign">&#9656;</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;DM, 4 of 4 sub plots ticked</div>
+  <div class="head"><span class="sign">&#9656;</span>2&nbsp;&nbsp;VIEW TYPES&nbsp;&nbsp;&nbsp;4 of 84 ticked</div>
+
+  <div class="head"><span class="sign">&#9662;</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;2 marked</div>
+  <div class="inside">
+    <div class="row">
+      <span class="btn">Mark every missing</span><span class="btn">Clear all marks</span>
+    </div>
+
+    <table class="grid">
+      <tr>
+        <th></th><th>010 Location</th><th>010 Overall</th><th>200</th><th>400</th>
+      </tr>
+      <tr>
+        <td class="plot">DM-11</td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QE</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QF</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">200Q</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">400Q</span></td>
+      </tr>
+      <tr class="shade">
+        <td class="plot">DM-12</td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QE Copy 001</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QF Copy 001</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td class="plot">DM-13</td>
+        <td class="cell"><span class="mark">&#9703;</span></td>
+        <td class="cell"><span class="mark">&#9703;</span></td>
+        <td class="cell"><span class="mark">&#9703;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+      </tr>
+      <tr class="shade">
+        <td class="plot">DM-14&nbsp;&nbsp;no scope box</td>
+        <td class="cell"><span class="mark">&#9679;</span></td>
+        <td class="cell"><span class="mark">&#9679;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+      </tr>
+    </table>
+
+    <div class="legend faint">
+      <span>&#9632; exists, and the number of its sheet</span>
+      <span>&#9703; exists, on no sheet</span>
+      <span>&#9633; missing, click to mark it</span>
+      <span>&#9679; marked to be made</span>
+    </div>
+
+    <div class="row faint">2 marked. Marking records intent and changes nothing until Run.</div>
+    <div class="row"><span class="btn">Next: 4  SHEETS</span></div>
+  </div>
+
+  <div class="head"><span class="sign">&#9656;</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;none added</div>
+  <div class="head"><span class="sign">&#9656;</span>5&nbsp;&nbsp;RUN</div>
+
+  <div class="status">Read 96,934 elements in 1.4 seconds.</div>
+</div>
+
+<div class="panel dark">
+  <div class="strip">
+    <b>RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</b><br>
+    <span class="faint">3,383 views read at 14:02:11</span>
+    <span style="float:right"><span class="btn">Refresh</span> <span class="btn">Scan Model</span></span>
+  </div>
+
+  <div class="head"><span class="sign">&#9656;</span>1&nbsp;&nbsp;PLOTS&nbsp;&nbsp;&nbsp;DM, 4 of 4 sub plots ticked</div>
+  <div class="head"><span class="sign">&#9656;</span>2&nbsp;&nbsp;VIEW TYPES&nbsp;&nbsp;&nbsp;4 of 84 ticked</div>
+
+  <div class="head"><span class="sign">&#9662;</span>3&nbsp;&nbsp;MARK&nbsp;&nbsp;&nbsp;2 marked</div>
+  <div class="inside">
+    <div class="row">
+      <span class="btn">Mark every missing</span><span class="btn">Clear all marks</span>
+    </div>
+
+    <table class="grid">
+      <tr>
+        <th></th><th>010 Location</th><th>010 Overall</th><th>200</th><th>400</th>
+      </tr>
+      <tr>
+        <td class="plot">DM-11</td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QE</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QF</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">200Q</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">400Q</span></td>
+      </tr>
+      <tr class="shade">
+        <td class="plot">DM-12</td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QE Copy 001</span></td>
+        <td class="cell"><span class="mark">&#9632;</span><span class="num faint">010QF Copy 001</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+      </tr>
+      <tr>
+        <td class="plot">DM-13</td>
+        <td class="cell"><span class="mark">&#9703;</span></td>
+        <td class="cell"><span class="mark">&#9703;</span></td>
+        <td class="cell"><span class="mark">&#9703;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+      </tr>
+      <tr class="shade">
+        <td class="plot">DM-14&nbsp;&nbsp;no scope box</td>
+        <td class="cell"><span class="mark">&#9679;</span></td>
+        <td class="cell"><span class="mark">&#9679;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+        <td class="cell"><span class="mark">&#9633;</span></td>
+      </tr>
+    </table>
+
+    <div class="legend faint">
+      <span>&#9632; exists, and the number of its sheet</span>
+      <span>&#9703; exists, on no sheet</span>
+      <span>&#9633; missing, click to mark it</span>
+      <span>&#9679; marked to be made</span>
+    </div>
+
+    <div class="row faint">2 marked. Marking records intent and changes nothing until Run.</div>
+    <div class="row"><span class="btn">Next: 4  SHEETS</span></div>
+  </div>
+
+  <div class="head"><span class="sign">&#9656;</span>4&nbsp;&nbsp;SHEETS&nbsp;&nbsp;&nbsp;none added</div>
+  <div class="head"><span class="sign">&#9656;</span>5&nbsp;&nbsp;RUN</div>
+
+  <div class="status">Read 96,934 elements in 1.4 seconds.</div>
+</div>
+
+</div>
+
+<h2>What each square says under the pointer</h2>
+<p class="caption">The tooltip and the legend are one list, in <code>PanelSteps</code>. These
+are the tooltip's own words.</p>
+
+<table class="plain">
+  <tr><th>square</th><th>state</th><th>tooltip</th></tr>
+  <tr><td>&#9632;</td><td>Exists</td><td>exists on sheet 010QE, click to open it</td></tr>
+  <tr><td>&#9703;</td><td>ExistsNoSheet</td><td>exists but is on no sheet, click to open it</td></tr>
+  <tr><td>&#9633;</td><td>Missing</td><td>missing, click to mark it</td></tr>
+  <tr><td>&#9679;</td><td>Marked</td><td>marked, click to unmark</td></tr>
+</table>
+
+<h2>Bulk marking was already there</h2>
+<p class="caption">The round asked for it as something never built. All four are wired and
+tested and this pull request rebuilds none of them: the sub plot name marks its row, the
+column header marks its column, and the two buttons above the grid are Mark every missing
+and Clear all marks. What changed is that the rules file now records where they are, so the
+next round checks before writing a second copy.</p>
+
+</body>
+</html>
