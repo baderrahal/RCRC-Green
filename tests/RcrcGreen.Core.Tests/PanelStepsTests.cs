@@ -15,16 +15,15 @@ namespace RcrcGreen.Core.Tests
         private static readonly ViewType General = new ViewType("200", "General Arrangement Layout");
 
         /// <summary>
-        /// A panel that has read a model, picked DM-11 to DM-28, and done nothing else. Each
-        /// test moves one thing off this.
+        /// A panel that has read a model, ticked the plot DM with its 17 sub plots, and
+        /// done nothing else. Each test moves one thing off this.
         /// </summary>
         private static PanelSteps After(
             bool readOnce = true,
             int plotsInModel = 160,
-            string first = "DM-11",
-            string last = "DM-28",
-            int plotsInRange = 17,
-            int plotsTicked = 17,
+            string[] tickedPlots = null,
+            int subPlotsInRange = 17,
+            int subPlotsTicked = 17,
             int typesTicked = 0,
             int typesInModel = 84,
             int marked = 0,
@@ -36,9 +35,9 @@ namespace RcrcGreen.Core.Tests
             RunPlan plan = null)
         {
             return PanelSteps.Of(
-                readOnce, plotsInModel, first, last, plotsInRange, plotsTicked,
-                typesTicked, typesInModel, marked, titleBlockTypes, sheetsDescribed,
-                sheetsAsked, sheetsIncomplete, rowsIncomplete, plan);
+                readOnce, plotsInModel, tickedPlots ?? new[] { "DM" }, subPlotsInRange,
+                subPlotsTicked, typesTicked, typesInModel, marked, titleBlockTypes,
+                sheetsDescribed, sheetsAsked, sheetsIncomplete, rowsIncomplete, plan);
         }
 
         [Fact]
@@ -62,10 +61,11 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheHeaderCarriesTheNumberTheTitleAndTheSummary()
         {
-            StepState plots = After().For(PanelStep.Plots);
+            StepState plots = After(tickedPlots: new[] { "DM", "FP" }, subPlotsInRange: 23,
+                subPlotsTicked: 21).For(PanelStep.Plots);
 
-            Assert.Equal("DM-11 to DM-28, 17 of 17 ticked", plots.Summary);
-            Assert.Equal("1  PLOTS   DM-11 to DM-28, 17 of 17 ticked", plots.Header);
+            Assert.Equal("DM, FP, 21 of 23 sub plots ticked", plots.Summary);
+            Assert.Equal("1  PLOTS   DM, FP, 21 of 23 sub plots ticked", plots.Header);
         }
 
         [Fact]
@@ -136,7 +136,8 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void NothingIsUsableBeforeTheModelIsRead()
         {
-            PanelSteps steps = After(readOnce: false, plotsInModel: 0, first: "", last: "", plotsInRange: 0, plotsTicked: 0);
+            PanelSteps steps = After(readOnce: false, plotsInModel: 0,
+                tickedPlots: new string[0], subPlotsInRange: 0, subPlotsTicked: 0);
 
             Assert.All(steps.All, step => Assert.False(step.Usable));
             Assert.Contains("Nothing has been read yet", steps.For(PanelStep.Plots).WhyNot);
@@ -145,7 +146,8 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void AModelWithNoPlotsSaysSoRatherThanOfferingAnEmptyRange()
         {
-            StepState plots = After(plotsInModel: 0, first: "", last: "", plotsInRange: 0, plotsTicked: 0)
+            StepState plots = After(plotsInModel: 0, tickedPlots: new string[0],
+                    subPlotsInRange: 0, subPlotsTicked: 0)
                 .For(PanelStep.Plots);
 
             Assert.False(plots.Usable);
@@ -160,7 +162,8 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void AModelWithNoPlotsNamesAllFourSourcesInOneSentence()
         {
-            StepState plots = After(plotsInModel: 0, first: "", last: "", plotsInRange: 0, plotsTicked: 0)
+            StepState plots = After(plotsInModel: 0, tickedPlots: new string[0],
+                    subPlotsInRange: 0, subPlotsTicked: 0)
                 .For(PanelStep.Plots);
 
             Assert.Equal(
@@ -178,11 +181,18 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheMessagesThePanelUsedToFormatItselfLiveHere()
         {
-            Assert.Equal("No plots in this model.", PanelSteps.PlotsLine(true, 0, 0, 0));
+            Assert.Equal("No plots in this model.", PanelSteps.PlotsLine(true, 0, 0, 0, 0));
             Assert.Equal(
-                "15 of 17 plots in range ticked, 160 in the model. Untick one to leave it out of "
-                + "the counts and out of anything that writes.",
-                PanelSteps.PlotsLine(false, 15, 17, 160));
+                "Nothing ticked yet. Tick a plot to list its sub plots, 160 in the model.",
+                PanelSteps.PlotsLine(false, 0, 0, 0, 160));
+            Assert.Equal(
+                "2 plots ticked, 21 of 23 sub plots ticked, 160 in the model. Untick a sub "
+                + "plot to leave it out of the counts and out of anything that writes.",
+                PanelSteps.PlotsLine(false, 21, 23, 2, 160));
+            Assert.Equal(
+                "1 plot ticked, 1 of 1 sub plot ticked, 160 in the model. Untick a sub "
+                + "plot to leave it out of the counts and out of anything that writes.",
+                PanelSteps.PlotsLine(false, 1, 1, 1, 160));
 
             Assert.Equal(
                 "42 views across 17 ticked plots. Only C is written.",
@@ -217,11 +227,11 @@ namespace RcrcGreen.Core.Tests
                 + "and no scope box gives one. Open the model you meant and press Refresh.",
                 PanelSteps.NothingToDraw(true, true, false));
             Assert.Equal(
-                "Pick a prefix in step 1. From and To fill themselves with the plots under it, "
-                + "and the grid follows.",
+                "Tick a plot in step 1. Its sub plots list themselves under it, and the "
+                + "grid follows.",
                 PanelSteps.NothingToDraw(true, false, false));
             Assert.Equal(
-                "No plots in that range. Widen From and To in step 1.",
+                "No sub plots in that range. Widen From and To in step 1.",
                 PanelSteps.NothingToDraw(true, false, true));
         }
 
@@ -232,7 +242,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void UntickingEveryPlotShutsTheStepsBelow()
         {
-            PanelSteps steps = After(plotsTicked: 0);
+            PanelSteps steps = After(subPlotsTicked: 0);
 
             Assert.True(steps.For(PanelStep.Plots).Usable);
             Assert.False(steps.For(PanelStep.ViewTypes).Usable);
@@ -382,7 +392,7 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheFirstUnfinishedStepIsWhereAReadLands()
         {
-            Assert.Equal(PanelStep.Plots, After(plotsTicked: 0).FirstUnfinished);
+            Assert.Equal(PanelStep.Plots, After(subPlotsTicked: 0).FirstUnfinished);
             Assert.Equal(PanelStep.ViewTypes, After().FirstUnfinished);
             Assert.Equal(PanelStep.Mark, After(typesTicked: 4).FirstUnfinished);
             Assert.Equal(PanelStep.Sheets, After(typesTicked: 4, marked: 2).FirstUnfinished);
@@ -405,18 +415,19 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// Before a range is picked the header still says how much there is to pick from,
-        /// because an empty summary next to 160 plots reads as an empty model.
+        /// Before a plot is ticked the header still says how much there is to pick from,
+        /// because an empty summary next to 160 sub plots reads as an empty model.
         /// </summary>
         [Fact]
-        public void WithNoRangePickedTheHeaderStillSaysWhatIsThere()
+        public void WithNoPlotTickedTheHeaderStillSaysWhatIsThere()
         {
-            StepState plots = After(first: "", last: "", plotsInRange: 0, plotsTicked: 0)
+            StepState plots = After(
+                    tickedPlots: new string[0], subPlotsInRange: 0, subPlotsTicked: 0)
                 .For(PanelStep.Plots);
 
             Assert.True(plots.Usable);
             Assert.False(plots.Done);
-            Assert.Equal("1  PLOTS   160 in the model, none picked", plots.Header);
+            Assert.Equal("1  PLOTS   160 in the model, none ticked", plots.Header);
         }
     }
 }

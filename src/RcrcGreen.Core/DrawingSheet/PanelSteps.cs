@@ -162,15 +162,26 @@ namespace RcrcGreen.Core
             + "a sheet in step 4 and give it views, a name and a number.";
 
         /// <summary>
-        /// The line under the range pickers in step 1.
+        /// The count at the foot of step 1's list: how many sub plots across how many
+        /// plots, and how many of them are ticked.
         /// </summary>
-        public static string PlotsLine(bool modelEmpty, int plotsTicked, int plotsInRange, int plotsInModel)
+        public static string PlotsLine(
+            bool modelEmpty, int subPlotsTicked, int subPlotsInRange, int plotsTicked,
+            int plotsInModel)
         {
             if (modelEmpty) return "No plots in this model.";
 
-            return plotsTicked + " of " + plotsInRange + " plots in range ticked, " + plotsInModel
-                + " in the model. Untick one to leave it out of the counts and out of anything "
-                + "that writes.";
+            if (plotsTicked == 0)
+            {
+                return "Nothing ticked yet. Tick a plot to list its sub plots, "
+                    + plotsInModel + " in the model.";
+            }
+
+            return plotsTicked + (plotsTicked == 1 ? " plot" : " plots") + " ticked, "
+                + subPlotsTicked + " of " + subPlotsInRange
+                + (subPlotsInRange == 1 ? " sub plot" : " sub plots") + " ticked, "
+                + plotsInModel + " in the model. Untick a sub plot to leave it out of the "
+                + "counts and out of anything that writes.";
         }
 
         /// <summary>
@@ -186,19 +197,19 @@ namespace RcrcGreen.Core
         /// <summary>
         /// Why the grid has no rows, in the words the user needs rather than a blank area.
         /// </summary>
-        public static string NothingToDraw(bool readOnce, bool modelEmpty, bool prefixPicked)
+        public static string NothingToDraw(bool readOnce, bool modelEmpty, bool plotTicked)
         {
             if (!readOnce) return "Reading the model.";
 
             if (modelEmpty) return NoPlotsInTheModel + " Open the model you meant and press Refresh.";
 
-            if (!prefixPicked)
+            if (!plotTicked)
             {
-                return "Pick a prefix in step 1. From and To fill themselves with the plots under "
-                    + "it, and the grid follows.";
+                return "Tick a plot in step 1. Its sub plots list themselves under it, and "
+                    + "the grid follows.";
             }
 
-            return "No plots in that range. Widen From and To in step 1.";
+            return "No sub plots in that range. Widen From and To in step 1.";
         }
 
         /// <summary>
@@ -210,11 +221,12 @@ namespace RcrcGreen.Core
         }
 
         /// <param name="readOnce">Whether the model has been read at all.</param>
-        /// <param name="plotsInModel">Every plot the model holds, which is what step 1 offers.</param>
-        /// <param name="first">The first plot of the range, empty when none is picked.</param>
-        /// <param name="last">The last plot of the range.</param>
-        /// <param name="plotsInRange">How many plots that range covers.</param>
-        /// <param name="plotsTicked">How many of those are still ticked.</param>
+        /// <param name="plotsInModel">Every sub plot the model holds, which is what step 1
+        /// offers grouped under its plots.</param>
+        /// <param name="tickedPlots">The plots ticked in step 1, the two letter prefixes,
+        /// in the order the list shows them.</param>
+        /// <param name="subPlotsInRange">How many sub plots the ticked plots' ranges cover.</param>
+        /// <param name="subPlotsTicked">How many of those are still ticked.</param>
         /// <param name="typesTicked">How many view types are ticked.</param>
         /// <param name="typesInModel">How many the model holds, plus any added by hand.</param>
         /// <param name="marked">How many cells are marked.</param>
@@ -230,10 +242,9 @@ namespace RcrcGreen.Core
         public static PanelSteps Of(
             bool readOnce,
             int plotsInModel,
-            string first,
-            string last,
-            int plotsInRange,
-            int plotsTicked,
+            IReadOnlyList<string> tickedPlots,
+            int subPlotsInRange,
+            int subPlotsTicked,
             int typesTicked,
             int typesInModel,
             int marked,
@@ -244,19 +255,18 @@ namespace RcrcGreen.Core
             int rowsIncomplete,
             RunPlan plan)
         {
-            first = first ?? string.Empty;
-            last = last ?? string.Empty;
-
-            bool haveARange = first.Length > 0 && last.Length > 0 && plotsInRange > 0;
+            tickedPlots = tickedPlots ?? new List<string>();
 
             // Step 1 has to be usable before anything under it can be. Reading a range off the
             // arguments alone let every step below open on a panel that had read no model at
             // all, because the range fields still held what the last one had.
-            bool plotsDone = readOnce && plotsInModel > 0 && haveARange && plotsTicked > 0;
+            bool plotsDone = readOnce && plotsInModel > 0 && tickedPlots.Count > 0
+                && subPlotsInRange > 0 && subPlotsTicked > 0;
 
             var steps = new List<StepState>
             {
-                Plots(readOnce, plotsInModel, first, last, plotsInRange, plotsTicked, plotsDone),
+                Plots(readOnce, plotsInModel, tickedPlots, subPlotsInRange, subPlotsTicked,
+                    plotsDone),
                 ViewTypes(plotsDone, typesTicked, typesInModel),
                 Mark(plotsDone, typesTicked, marked),
                 Sheets(plotsDone, titleBlockTypes, sheetsDescribed, sheetsAsked),
@@ -267,8 +277,8 @@ namespace RcrcGreen.Core
         }
 
         private static StepState Plots(
-            bool readOnce, int plotsInModel, string first, string last,
-            int plotsInRange, int plotsTicked, bool done)
+            bool readOnce, int plotsInModel, IReadOnlyList<string> tickedPlots,
+            int subPlotsInRange, int subPlotsTicked, bool done)
         {
             if (!readOnce)
             {
@@ -282,14 +292,15 @@ namespace RcrcGreen.Core
                     NoPlotsInTheModel, false);
             }
 
-            if (first.Length == 0 || last.Length == 0)
+            if (tickedPlots.Count == 0)
             {
                 return new StepState(PanelStep.Plots, "PLOTS",
-                    plotsInModel + " in the model, none picked", true, string.Empty, false);
+                    plotsInModel + " in the model, none ticked", true, string.Empty, false);
             }
 
             return new StepState(PanelStep.Plots, "PLOTS",
-                first + " to " + last + ", " + plotsTicked + " of " + plotsInRange + " ticked",
+                string.Join(", ", tickedPlots.ToArray()) + ", " + subPlotsTicked + " of "
+                + subPlotsInRange + " sub plots ticked",
                 true, string.Empty, done);
         }
 

@@ -1,6 +1,23 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Sixtieth pass, the sub plot number round, first of two pull requests. The
+Phase: 9, ship. Sixtieth pass, the sub plot number round, second pull request, fixes 2 and
+3. The first is merged as 2688f631 from pull request 89 with 1271 tests on the runner, 0
+failed and 0 skipped, matching local, and the squash message came back byte for byte. This
+commit makes step 1 a tick list of plots: PlotTickList in Core/DrawingSheet holds every two
+letter prefix as a tickable plot, several at once, a From and To per ticked plot, one line
+per in-range sub plot with its tick, identifier and number stem, and one run covers every
+ticked sub plot on every ticked plot. It composes Shared's PlotRange and PlotSelection
+rather than editing Shared. PanelSteps takes the ticked plots and sub plot counts, the
+summary reads DM, FP, 21 of 23 sub plots ticked, and the prefix, From and To fields with
+FillPrefixes, PutTheRangeBack, PrefixChosen, RangeChosen and PlotsInRange are gone from the
+panel. Fix 3 goes in the log: reports holds only README.md here, so the two scan reports are
+unreadable and OVERALL PLAN and FURNITURE SCHEDULES stay unverified, said rather than
+reasoned around. Suite reads 1281 locally, the 1271 plus 10 PlotTickList tests. Two breaks
+watched red, 7 of 10 and 1 of 1, both reversed byte for byte. The pull request is 90
+and the mockup of the new step 1 is at design/pr-90/panel.html, light and dark, marked
+in the file itself as a mockup and not a screenshot.
+
+Before that, the sixtieth pass's first pull request. The
 marker is deleted and a sheet number is built from the plot identifier itself: the view
 code, then the identifier with its dash dropped, then the sheet letter, so DM-42 reads
 010DM42A, 010DM42B and a bare 200DM42. StemOf on SheetNumberRun is the one rule turning
