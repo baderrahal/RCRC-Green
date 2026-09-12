@@ -554,6 +554,41 @@ sources answer one question. A title block the settings name and the model does 
 not an error, because the settings are shared across projects: it reads as unset with the
 reason.
 
+## A preset fills steps 2 and 4 off the strip
+
+The strip carries a second row under the model name: a picker of saved presets with a blank
+first entry, Save as and Manage. It is a row of its own rather than beside Refresh and Scan
+Model because a dockable pane on the right of Revit is narrow, the first row is already the
+model name and two buttons, and this panel has shipped columns running off the right edge once
+already.
+
+**Two files, the same shape as the title blocks.** The user's own at `%APPDATA%\RCRC
+Green\presets.txt`, then `install/presets.txt` beside the add-in. `PresetStore` holds the two
+paths and hands back the shipped list separately, because deleting the user's copy of a shipped
+preset puts the shipped one back and working that out needs both. No Revit API call reads or
+writes either, so the panel does it directly.
+
+Picking one ticks exactly what it names in step 2 and describes its sheets in step 4. **Every
+tick goes off first**, so what is on screen is the preset rather than the preset laid over
+whatever was ticked before. **Step 1 is never touched.** The blank entry means no preset and
+undoes nothing: the steps stay and only the line saying where they came from goes, because a
+picker that emptied somebody's sheets on the way past blank would be the most expensive click
+on the panel.
+
+A sheet is described with the model's own `TitleBlockType` object, found by `InTheModel`, which
+is now the one lookup on the panel for a named block. It was written three times, once for the
+settings, once for a described sheet and once for a preset, each with its own idea of how two
+names are compared.
+
+Save as asks for a name in a modal window owned by the Revit main window, says when the name is
+already in use and what saving over it does, and saves what steps 2 and 4 hold at that moment.
+Manage lists every preset with what it holds and where it came from, and offers Delete on the
+user's own only, because nothing here writes the shipped file and a Delete that looked like it
+worked and did not would be worse than none.
+
+Both steps carry the line `PresetFilling` gives, and an edit shows as an edit because the line
+is worked out by comparing rather than by a flag.
+
 ## A count on the panel opens into the thing it counted
 
 Six numbers tell somebody how much is wrong and nothing about what. Every scope box case except

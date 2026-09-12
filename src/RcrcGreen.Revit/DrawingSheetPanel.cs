@@ -70,6 +70,29 @@ namespace RcrcGreen.Revit
         private NewViewSetups _newViewSetups = NewViewSetups.Nothing;
         private IReadOnlyList<string> _newViewSetupsNotRead = new List<string>();
 
+        private Presets _presets = Presets.Nothing;
+        private IReadOnlyList<Preset> _presetsShipped = new List<Preset>();
+        private IReadOnlyList<string> _presetsNotRead = new List<string>();
+
+        /// <summary>
+        /// The preset steps 2 and 4 were filled from, as this model narrowed it. Whether they
+        /// still say what it says is worked out by comparing, never held as a flag, because a
+        /// flag is a second record of what the two steps already hold.
+        /// </summary>
+        private Preset _filledFrom;
+
+        /// <summary>
+        /// The picker is made once and kept, the way the search box is, because the strip is
+        /// built once in the constructor. What it holds is refilled whenever the presets are
+        /// read, and the handler is ignored while it is being refilled.
+        /// </summary>
+        private readonly ComboBox _presetPicker = new ComboBox
+        {
+            MinWidth = PanelMetrics.ColumnWidth
+        };
+
+        private bool _fillingThePicker;
+
         private readonly StackPanel _steps = new StackPanel();
         private readonly TextBlock _modelName = new TextBlock();
         private readonly TextBlock _readAt = new TextBlock();
@@ -158,6 +181,9 @@ namespace RcrcGreen.Revit
             ReadTheTitleBlockSettings();
             ReadTheSheetNames();
             ReadTheNewViewSetups();
+            ReadThePresets();
+
+            _presetPicker.SelectionChanged += (sender, e) => PickedAPreset();
 
             Content = Layout();
             PaintFromTheTheme();
@@ -266,8 +292,46 @@ namespace RcrcGreen.Revit
             named.Children.Add(_readAt);
             inside.Children.Add(named);
 
-            _strip.Child = inside;
+            // The presets sit on their own row under the model name rather than beside Refresh
+            // and Scan Model. A dockable pane on the right of Revit is narrow, the first row is
+            // already the model name and two buttons, and a picker and two more buttons beside
+            // them would run off the right edge, which this panel has already shipped once.
+            var whole = new StackPanel();
+            whole.Children.Add(inside);
+            whole.Children.Add(PresetRow());
+
+            _strip.Child = whole;
             return _strip;
+        }
+
+        /// <summary>
+        /// The preset row: what is saved, a way to save what is on screen, and a way to take
+        /// one away. It fills steps 2 and 4 and never touches step 1, because a preset holds no
+        /// plot and filling somebody's plots with last week's would be the one thing here that
+        /// could quietly make the wrong sheets.
+        /// </summary>
+        private UIElement PresetRow()
+        {
+            var row = new DockPanel
+            {
+                Margin = PanelMetrics.StripInside,
+                LastChildFill = true
+            };
+
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal };
+            buttons.Children.Add(Secondary("Save as", SaveAsAPreset,
+                "Saves what steps 2 and 4 hold now under a name. It saves no plot, no sub plot "
+                + "and no sheet number."));
+            buttons.Children.Add(Secondary("Manage", ManageThePresets,
+                "Shows every saved preset and takes one away."));
+            DockPanel.SetDock(buttons, Dock.Right);
+            row.Children.Add(buttons);
+
+            _presetPicker.ToolTip = "Fills steps 2 and 4 from a saved preset. Step 1 is left "
+                + "alone.";
+            row.Children.Add(Reparented(_presetPicker));
+
+            return row;
         }
 
         private UIElement Status()
@@ -656,6 +720,8 @@ namespace RcrcGreen.Revit
         private UIElement InsideViewTypes()
         {
             var block = new StackPanel();
+
+            SaidAboutThePreset(block);
 
             block.Children.Add(Labelled("Search", _search));
 
@@ -1075,6 +1141,8 @@ namespace RcrcGreen.Revit
         {
             var block = new StackPanel();
 
+            SaidAboutThePreset(block);
+
             if (_sheets.Count == 0)
             {
                 block.Children.Add(Faint("No sheet added yet. A sheet is described once here, "
@@ -1302,16 +1370,9 @@ namespace RcrcGreen.Revit
         /// </summary>
         private TitleBlockType TitleBlockNamed(TitleBlockPairing pairing)
         {
-            foreach (TitleBlockType one in _model.TitleBlockTypes)
-            {
-                if (string.Equals(one.FamilyName, pairing.FamilyName, StringComparison.Ordinal)
-                    && string.Equals(one.TypeName, pairing.TypeName, StringComparison.Ordinal))
-                {
-                    return one;
-                }
-            }
-
-            return null;
+            return pairing == null
+                ? null
+                : InTheModel(pairing.FamilyName, pairing.TypeName);
         }
 
         /// <summary>
@@ -1349,6 +1410,198 @@ namespace RcrcGreen.Revit
 
             _titleBlocks = stored.Settings;
             _settingsNotRead = stored.NotRead;
+        }
+
+        private void ReadThePresets()
+        {
+            StoredPresets stored = PresetStore.Read();
+
+            _presets = stored.Presets;
+            _presetsShipped = stored.Shipped;
+            _presetsNotRead = stored.NotRead;
+
+            FillThePresetPicker();
+        }
+
+        /// <summary>
+        /// Refills the picker from what the two files hold. The blank entry is first and is
+        /// what it sits on, because a panel that fills steps 2 and 4 by itself on the way up
+        /// would put a preset's answer under somebody who never asked for one.
+        /// </summary>
+        private void FillThePresetPicker()
+        {
+            _fillingThePicker = true;
+
+            _presetPicker.Items.Clear();
+            _presetPicker.Items.Add(string.Empty);
+            foreach (Preset one in _presets.All) _presetPicker.Items.Add(one.Name);
+
+            _presetPicker.SelectedItem = _filledFrom == null ? string.Empty : _filledFrom.Name;
+            if (_presetPicker.SelectedIndex < 0) _presetPicker.SelectedIndex = 0;
+
+            _fillingThePicker = false;
+        }
+
+        /// <summary>
+        /// What steps 2 and 4 hold right now, as a preset. One method, read by Save as, by the
+        /// line each step says about what filled it, and by nothing else, so what is saved and
+        /// what is compared can never be two different readings of one screen.
+        /// </summary>
+        private Preset PresetNow(string name)
+        {
+            IReadOnlyList<ViewType> ticked = _columns.Shown;
+
+            return new Preset(
+                name,
+                ticked,
+                _sheets.Select(one =>
+                {
+                    SheetDefinition built = one.Built(ticked);
+                    return new PresetSheet(
+                        built.TitleBlockFamilyName,
+                        built.TitleBlockTypeName,
+                        built.ViewsPerSheet,
+                        built.Views);
+                }));
+        }
+
+        /// <summary>
+        /// Fills steps 2 and 4 from the picked preset, and leaves step 1 alone.
+        ///
+        /// The blank entry means no preset. It does not undo one: the steps stay as they are
+        /// and only the line saying where they came from goes, because a picker that emptied
+        /// somebody's sheets on the way past blank would be the most expensive click here.
+        /// </summary>
+        private void PickedAPreset()
+        {
+            if (_fillingThePicker) return;
+
+            var wanted = _presetPicker.SelectedItem as string;
+            Preset preset = _presets.Named(wanted);
+
+            if (preset == null)
+            {
+                _filledFrom = null;
+                Redraw();
+                Say("No preset. Steps 2 and 4 are left as they are.");
+                return;
+            }
+
+            PresetFit fit = PresetFit.Of(preset, _model.ViewTypes, _model.TitleBlockTypes);
+
+            // Every tick goes off first, so what is on screen is the preset rather than the
+            // preset on top of whatever was ticked before it.
+            _columns = _columns.ShowingThese(_columns.All, false).ShowingThese(fit.Ticked, true);
+
+            _sheets.Clear();
+            foreach (PresetSheet sheet in fit.Sheets)
+            {
+                var described = new SheetBeingDescribed
+                {
+                    TitleBlock = InTheModel(sheet.TitleBlockFamilyName, sheet.TitleBlockTypeName),
+                    ViewsPerSheet = sheet.ViewsPerSheet
+                };
+
+                foreach (ViewType view in sheet.Views) described.Carry(view, true);
+                _sheets.Add(described);
+            }
+
+            // What was filled in, rather than what was asked for. A view type this model does
+            // not hold is not on screen, so a preset claiming it would be the panel saying one
+            // thing and showing another.
+            _filledFrom = PresetNow(preset.Name);
+
+            Redraw();
+            Say(fit.InWords());
+        }
+
+        /// <summary>
+        /// The model's own title block type, matched on the family and the type together, or
+        /// null when it holds none. A sheet is described with the model's own object rather
+        /// than with a pair of strings out of a file, and every question about whether this
+        /// model holds a named block comes through here.
+        ///
+        /// It was written three times over, once for the settings, once for a described sheet
+        /// and once for a preset, each with its own idea of how two names are compared. One
+        /// lookup now, because three records of one fact is how this repo gets its faults.
+        /// </summary>
+        private TitleBlockType InTheModel(string familyName, string typeName)
+        {
+            foreach (TitleBlockType one in _model.TitleBlockTypes)
+            {
+                if (string.CompareOrdinal(one.FamilyName, familyName) == 0
+                    && string.CompareOrdinal(one.TypeName, typeName) == 0)
+                {
+                    return one;
+                }
+            }
+
+            return null;
+        }
+
+        private void SaveAsAPreset()
+        {
+            Preset now = PresetNow(string.Empty);
+
+            if (now.Ticked.Count == 0 && now.Sheets.Count == 0)
+            {
+                Say("There is nothing to save yet. Tick a view type or describe a sheet first.");
+                return;
+            }
+
+            string name = PresetWindow.AskForAName(
+                _presets,
+                _filledFrom == null ? string.Empty : _filledFrom.Name,
+                now.InWords() + " No plot, no sub plot and no sheet number is saved.");
+
+            if (name.Length == 0) return;
+
+            Preset saved = PresetNow(name);
+            string why = PresetStore.Save(_presets.With(saved));
+
+            ReadThePresets();
+
+            if (why.Length > 0)
+            {
+                Say(why);
+                return;
+            }
+
+            _filledFrom = saved;
+            FillThePresetPicker();
+            Redraw();
+            Say("Saved as " + name + ". " + saved.InWords());
+        }
+
+        private void ManageThePresets()
+        {
+            string deleted = PresetWindow.Manage(_presets, _presetsShipped);
+            if (deleted.Length == 0) return;
+
+            string why = PresetStore.Save(_presets.Without(deleted, _presetsShipped));
+
+            ReadThePresets();
+
+            if (why.Length > 0)
+            {
+                Say(why);
+                return;
+            }
+
+            // The name can still be there, on the shipped preset the user's copy was hiding.
+            if (_filledFrom != null
+                && string.Equals(_filledFrom.Name, deleted, StringComparison.OrdinalIgnoreCase)
+                && !_presets.Holds(deleted))
+            {
+                _filledFrom = null;
+            }
+
+            FillThePresetPicker();
+            Redraw();
+            Say(_presets.Holds(deleted)
+                ? "Deleted " + deleted + ". The one that came with the tool is back under that "
+                    + "name."
+                : "Deleted " + deleted + ".");
         }
 
         private void ReadTheSheetNames()
@@ -1685,14 +1938,9 @@ namespace RcrcGreen.Revit
 
         private TitleBlockType ChosenTitleBlock(SheetBeingDescribed sheet)
         {
-            if (sheet.TitleBlock == null) return null;
-
-            foreach (TitleBlockType one in _model.TitleBlockTypes)
-            {
-                if (one.CompareTo(sheet.TitleBlock) == 0) return one;
-            }
-
-            return null;
+            return sheet == null || sheet.TitleBlock == null
+                ? null
+                : InTheModel(sheet.TitleBlock.FamilyName, sheet.TitleBlock.TypeName);
         }
 
         private void AddASheet()
@@ -2068,6 +2316,28 @@ namespace RcrcGreen.Revit
 
             button.Click += (sender, e) => clicked();
             return button;
+        }
+
+        /// <summary>
+        /// The line steps 2 and 4 both carry about the preset that filled them, and the lines
+        /// of a preset file neither could read.
+        ///
+        /// Both steps say it, because either one on its own would have somebody read a filled
+        /// in step as their own work. What it says is worked out in Core by comparing what the
+        /// steps hold now against the preset, so an edit shows as an edit without anything here
+        /// having to remember one happened.
+        /// </summary>
+        private void SaidAboutThePreset(Panel block)
+        {
+            foreach (string line in _presetsNotRead)
+            {
+                block.Children.Add(Faint("A preset line could not be read: " + line));
+            }
+
+            string said = PresetFilling.InWords(_filledFrom, PresetNow(
+                _filledFrom == null ? string.Empty : _filledFrom.Name));
+
+            if (said.Length > 0) block.Children.Add(Faint(said));
         }
 
         private TextBlock Faint(string text)
