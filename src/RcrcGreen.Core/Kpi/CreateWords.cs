@@ -357,7 +357,23 @@ namespace RcrcGreen.Core.Kpi
             return Count(run.Outcome.Landed.Count, "cell") + " written from "
                 + Count(run.Readings.Count, "plot") + ", "
                 + Count(run.Plan.Skipped.Count, "cell") + " not written. "
+                + RoundingNotes(run)
                 + "Workbook: " + run.OutputPath + ". Report: " + reportWhere;
+        }
+
+        /// <summary>
+        /// How many group totals went through on the rounding room, beside the written count,
+        /// because a note only the report file holds is a note nobody reads. The detail stays
+        /// in the report, where each note sits beside its group total row.
+        /// </summary>
+        private static string RoundingNotes(KpiCreateRun run)
+        {
+            int notes = run.Readings
+                .SelectMany(one => one.Subtotals)
+                .Count(one => one.RoundingNote.Length > 0);
+            if (notes == 0) return string.Empty;
+
+            return Count(notes, "rounding note") + (notes == 1 ? " is" : " are") + " in the report. ";
         }
 
         /// <summary>
