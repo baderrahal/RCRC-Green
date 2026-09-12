@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The scan button goes and a progress window appears, pull request 93</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .strip { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .strip { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .status { background: #e4e4e4; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #3a3a3a; border-top: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .strip { padding: 5px 8px; display: flex; align-items: flex-start; justify-content: space-between; }
+  .name { font-weight: bold; }
+  .body { padding: 8px; }
+  .status { padding: 5px 8px; }
+  .row { margin: 3px 0; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 2px 6px; margin: 2px 0; }
+  .light .btn { background: #e1e1e1; color: #1a1a1a; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+  .btn.was { text-decoration: line-through; opacity: 0.55; }
+  .win { width: 420px; border: 1px solid #777; box-shadow: 3px 3px 9px rgba(0,0,0,0.3); }
+  .win .bar { padding: 4px 8px; font-weight: bold; }
+  .light .bar { background: #d8d8d8; }
+  .dark  .bar { background: #454545; }
+</style>
+</head>
+<body>
+
+<div class="warning">
+  <p><strong>This is a mockup and not a screenshot.</strong> It was drawn by hand from the
+  code in this pull request. It cannot show how Revit will really render the pane or the
+  window: the fonts, the dockable pane's own chrome and where a modeless window actually
+  lands are Revit's, not this file's.</p>
+  <p><strong>Nothing here has been observed in Revit.</strong> Whether the window appears
+  where it should, whether it shuts on every path and whether the line moves while the run
+  goes are the three things only a real run can answer.</p>
+</div>
+
+<h1>The scan button goes and a progress window appears</h1>
+
+<h2>The strip, before and after</h2>
+
+<p class="caption">Before, the strip carried the model name over a read line that stayed empty
+until somebody pressed KPI Scan, with the button on the right. After, the button is gone and
+the read line is filled by the plot read, which happens as soon as the pane is shown.</p>
+
+<div class="pair">
+  <div>
+    <p class="caption">Before</p>
+    <div class="panel light">
+      <div class="strip">
+        <div>
+          <div class="name">RCRC_NG03_EZ_MAIN_RVT24_SHEETS_detached</div>
+          <div class="faint">Not scanned yet. Press KPI Scan.</div>
+        </div>
+        <div><span class="btn was">KPI Scan</span></div>
+      </div>
+      <div class="body"><div class="row faint">the rest of the pane</div></div>
+      <div class="status">Open a model. This pane reads its name as soon as it is shown.</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">After</p>
+    <div class="panel light">
+      <div class="strip">
+        <div>
+          <div class="name">RCRC_NG03_EZ_MAIN_RVT24_SHEETS_detached</div>
+          <div class="faint">Read at 13:48:08, 104031 elements in 1.4 seconds.</div>
+        </div>
+      </div>
+      <div class="body"><div class="row faint">the rest of the pane</div></div>
+      <div class="status">Not read yet.</div>
+    </div>
+  </div>
+</div>
+
+<h2>The same on Revit's dark theme</h2>
+
+<p class="caption">Both colours come from <code>PanelTheme</code>, because a colour written
+beside the thing it paints is how the first install came up black on black.</p>
+
+<div class="pair">
+  <div class="panel dark">
+    <div class="strip">
+      <div>
+        <div class="name">RCRC_NG03_EZ_MAIN_RVT24_SHEETS_detached</div>
+        <div class="faint">Read at 13:48:08, 104031 elements in 1.4 seconds.</div>
+      </div>
+    </div>
+    <div class="body"><div class="row faint">the rest of the pane</div></div>
+    <div class="status">Not read yet.</div>
+  </div>
+</div>
+
+<h2>The progress window while a press runs</h2>
+
+<p class="caption">Modeless and owned by the Revit main window, so it stays over Revit rather
+than over everything on the machine. It shows the same words the status line shows, out of
+<code>ProgressWords</code>. It is opened by the pane before the external event is raised and
+closed when the run's last answer comes back, never from inside <code>Execute</code>. There is
+no Cancel: cancelling mid read would leave a half read set of plots the reconciliation would
+count as read.</p>
+
+<div class="pair">
+  <div>
+    <p class="caption">A press that reads the model</p>
+    <div class="win light">
+      <div class="bar">RCRC Green KPI</div>
+      <div class="body">Sections 5 to 8 of 9, schedules, 400 of 951, 42%.</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">A press that answers from what is held</p>
+    <div class="win light">
+      <div class="bar">RCRC Green KPI</div>
+      <div class="body">Reusing the scan already held.</div>
+    </div>
+  </div>
+</div>
+
+<div class="pair" style="margin-top:24px">
+  <div>
+    <p class="caption">Reading a plot, and the dark theme</p>
+    <div class="win dark">
+      <div class="bar">RCRC Green KPI</div>
+      <div class="body">Reading DM-44, plot 3 of 18, 11%.</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">Writing the workbook</p>
+    <div class="win dark">
+      <div class="bar">RCRC Green KPI</div>
+      <div class="body">Checking the workbook's own formulas.</div>
+    </div>
+  </div>
+</div>
+
+<h2>What a press says, in order</h2>
+
+<p class="caption">Every line below is a real constant or a real format in
+<code>ProgressWords</code> and <code>KpiPaneWords</code>, with the numbers off the 1208 and
+1552 runs. A press that reuses both the scan and the readings shows the two reuse lines and
+then the writing steps, which is why a finish in seconds is never silent.</p>
+
+<ol>
+  <li>Creating.</li>
+  <li>Section 2 of 9, project information. <span class="faint">or Reusing the scan already held.</span></li>
+  <li>Sections 5 to 8 of 9, schedules, 400 of 951, 42%.</li>
+  <li>Writing the report.</li>
+  <li>1709 sheets, 1708 title blocks, 8 links with 3 loaded, 802 schedules, 418 filled regions read. 7 of 9 questions have something in the file.</li>
+  <li>Reading DM-44, plot 3 of 18, 11%. <span class="faint">or Reusing the readings already held.</span></li>
+  <li>Adding the plots up.</li>
+  <li>Copying the template.</li>
+  <li>Writing the cells.</li>
+  <li>Reading the written cells back.</li>
+  <li>Checking the workbook's own formulas.</li>
+  <li>Writing the report.</li>
+  <li>34 cells written from 18 plots, 0 cells not written. Workbook: ... Report: ...
+    <span class="faint">the end line, which is also what shuts the window</span></li>
+</ol>
+
+</body>
+</html>

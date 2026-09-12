@@ -20,6 +20,11 @@ this round's one deliberate refusal**: cancelling mid read leaves a half read se
 reconciliation would count as read, which is the state the rest of the tool would trust and
 should not, so an honest cancel is its own round.
 
+The round changes the pane, so it carries a mockup, `design/pr-93/kpi-pane.html`, hand drawn
+from the code: the strip before and after in both themes, the window on four of its real
+lines, and the order a press says them in. It says in the file that it is a mockup and not a
+screenshot.
+
 Three break watches went red on 3, 1 and 1 tests and were restored byte for byte. **Locally
 1289 tests at this branch, 0 failed and 0 skipped, 707 of them KPI, 7 added, against the 1282
 main carries** at the branch point `b5e2c90`. Build zero warnings. The pull request, the merge
