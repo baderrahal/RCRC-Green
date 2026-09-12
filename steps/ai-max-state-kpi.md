@@ -17,8 +17,12 @@ height cell is named as not written,
 usable diameter is still withheld, UNKNOWN included, whose DM-25 row 19 prints 0. Two break
 watches went red on 1 and 9 tests and were restored byte for byte. **Locally 1221 tests at
 this branch, 0 failed and 0 skipped, 672 of them KPI, none added net**, the same 1221 main
-carries. The pull request, the merge hash and the runner's count go in the record the merge
-adds here. **Nothing in this round has been observed in Revit.** One thing recorded for the
+carries. Pull request 78, merged into main as `a407284` through the API with the squash
+message on the call: **the runner executed 1224 tests against its merged head, 0 failed and 0
+skipped, and locally the same 1224 ran at `a407284`**, 672 of them KPI. The 3 above the
+branch's own 1221 are the Drawing Sheet round that landed in between, `b7d41dd`, whose files
+are the only ones that differ from this branch and none of them KPI. The merge commit carries
+no co-author line and no generated-by footer. **Nothing in this round has been observed in Revit.** One thing recorded for the
 round that closes finding 4, in the log: `PaneChoicesTests` pins the unfixed behaviour and
 must move with that fix.
 

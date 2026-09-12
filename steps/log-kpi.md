@@ -15,9 +15,14 @@ Nothing else was touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.
 `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in this round has been observed in
 Revit.** The branch came off a fresh pull of main at `9fd1a65`.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1221 tests at this branch, 0 failed and 0 skipped, 672 of them KPI, none added net**, the
-same 1221 main carries, one test replaced one for one.
+Pull request 78, merged into main as `a407284`. **The runner executed 1224 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1224 ran at `a407284`, 0 failed and 0
+skipped**, 672 of them KPI. **The branch itself carried 1221, none added net**, one test
+replaced one for one, against the 1221 main held at `9fd1a65`. The 3 above it are the Drawing
+Sheet round that landed in between, `b7d41dd`, whose files are the only ones that differ from
+this branch and none of them KPI, checked. The merge went through the API with the title and
+the message both passed on the call, and the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer.
 
 ### The height is not load bearing
 
