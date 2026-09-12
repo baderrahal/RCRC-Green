@@ -107,11 +107,12 @@ namespace RcrcGreen.Core
                 .OrderBy(number => number, NaturalOrder.Comparer)
                 .ToList();
 
-            FreeSheetNumbers = SheetNumbers.Free(SheetNumbersInUse);
+            SheetNumbersOnPlots = (sheetNumbersByPlot ?? Enumerable.Empty<SheetOnAPlot>())
+                .Where(one => one != null && one.PlotId.Length > 0 && one.SheetNumber.Length > 0)
+                .ToList();
 
             _numbersByPlot = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-            foreach (SheetOnAPlot one in (sheetNumbersByPlot ?? Enumerable.Empty<SheetOnAPlot>())
-                .Where(one => one != null && one.PlotId.Length > 0 && one.SheetNumber.Length > 0))
+            foreach (SheetOnAPlot one in SheetNumbersOnPlots)
             {
                 List<string> held;
                 if (!_numbersByPlot.TryGetValue(one.PlotId, out held))
@@ -277,8 +278,8 @@ namespace RcrcGreen.Core
 
         /// <summary>
         /// The sheet numbers already on one plot, read off PRX_Plot_ID on the sheets. They are
-        /// what the plot letter is worked out from, so a plot whose sheets carry no parameter
-        /// reads as having no numbers and gets no proposal.
+        /// what the sheet letters continue past, so a second run on a plot numbers after the
+        /// letters the plot already holds rather than colliding with them.
         /// </summary>
         public IReadOnlyList<string> NumbersOnPlot(string plotId)
         {
@@ -289,15 +290,10 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// Numbers no sheet in this model carries, which is what the dropdown offers.
-        ///
-        /// It used to offer the numbers already in use, so every entry in it was certain to be
-        /// refused. Three sheets were lost to that in one run. Worked out here rather than in
-        /// the panel, like every other list it shows, and worked out once per read: it was a
-        /// getter that stepped every number in the model on every call, and every row of every
-        /// step 4 table called it on every redraw.
+        /// Every sheet number with the plot its sheet carries, which is what the marker
+        /// ledger reads to work out which markers other plots' numbers already use.
         /// </summary>
-        public IReadOnlyList<string> FreeSheetNumbers { get; }
+        public IReadOnlyList<SheetOnAPlot> SheetNumbersOnPlots { get; }
 
         /// <summary>
         /// Every scope box name in the model, whether or not it is shaped like a plot.

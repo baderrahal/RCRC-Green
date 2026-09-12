@@ -329,9 +329,10 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The sheets divide now, the names come off the views and the numbers continue the
-        /// plot's pattern, and a sheet carries no scale of its own. The note has to say all of
-        /// that or it explains a tool that no longer exists.
+        /// The sheets divide now, the names come off the views and the numbers are built from
+        /// the marker, and a sheet carries no scale of its own. The note has to say all of
+        /// that or it explains a tool that no longer exists, which is what it did when it
+        /// still described the plot letter rule this round deleted.
         /// </summary>
         [Fact]
         public void TheClosingNoteSaysHowSheetsAreNamedNumberedAndScaled()
@@ -340,7 +341,10 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Contains("divide into as many", written);
             Assert.Contains("A sheet holding one view is named after it", written);
-            Assert.Contains("the view code, the plot's letter, then the first letter not in", written);
+            Assert.Contains("Its number is BUILT: the view code, the", written);
+            Assert.Contains("plot's marker from step 1", written);
+            Assert.Contains("never read off the model's own numbers", written);
+            Assert.DoesNotContain("the plot's letter, then the first letter not in", written);
             Assert.Contains("A SHEET HAS NO SCALE OF ITS OWN", written);
             Assert.Contains("each view's scale comes from its own view", written);
             Assert.DoesNotContain("made empty on purpose", written);

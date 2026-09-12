@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RcrcGreen.Core;
@@ -6,326 +7,164 @@ using Xunit;
 namespace RcrcGreen.Core.Tests
 {
     /// <summary>
+    /// Sheet numbers are built: the view code, the plot's marker, then a sheet letter when
+    /// the code holds several sheets.
+    ///
+    /// Every expected number below is written out by hand from the two measured models.
+    /// FP-39 on NG03, marker 001, reads 010001A to 010001D and 200001. DM-11 on NG05,
+    /// marker Q, reads 010QE to 010QH, 200Q, 400Q, 600QC and 600QD. The old rules that read
+    /// a plot letter off the plot's own numbers and stepped free numbers off the ones in use
+    /// are gone, because every other plot in NG05 carries only copy numbers and both rules
+    /// answered nothing there.
+    /// </summary>
+    public class SheetNumberRunTests
+    {
+        private static readonly string[] DmElevenNumbers =
+        {
+            "010QE", "010QF", "010QG", "010QH", "200Q", "400Q", "600QC", "600QD"
+        };
+
+        private static string[] Built(SheetNumberRun run, int howMany)
+        {
+            var numbers = new List<string>();
+            for (int at = 0; at < howMany; at++) numbers.Add(run.Next().Number);
+            return numbers.ToArray();
+        }
+
+        /// <summary>
+        /// FP-39 as the model holds it: four 010 sheets lettered from A, and the single 200
+        /// sheet bare, because a code holding one sheet carries no letter.
+        /// </summary>
+        [Fact]
+        public void AFreshPlotIsNumberedTheWayFpThirtyNineIs()
+        {
+            Assert.Equal(
+                new[] { "010001A", "010001B", "010001C", "010001D" },
+                Built(new SheetNumberRun("010", "001", new string[0], 4), 4));
+
+            Assert.Equal(
+                new[] { "200001" },
+                Built(new SheetNumberRun("200", "001", new string[0], 1), 1));
+        }
+
+        /// <summary>
+        /// Several sheets under an empty code are lettered from the first. Bare is only for a
+        /// code whose one sheet is its whole set.
+        /// </summary>
+        [Fact]
+        public void TwoNewSheetsUnderOneCodeAreBothLettered()
+        {
+            Assert.Equal(
+                new[] { "600RA", "600RB" },
+                Built(new SheetNumberRun("600", "R", new string[0], 2), 2));
+        }
+
+        /// <summary>
+        /// A second run continues after the letters the plot already holds. DM-11 holds 600QC
+        /// and 600QD, so two more 600 sheets read E and F rather than colliding with C.
+        /// </summary>
+        [Fact]
+        public void ASecondRunContinuesAfterThePlotsOwnLetters()
+        {
+            Assert.Equal(
+                new[] { "600QE", "600QF" },
+                Built(new SheetNumberRun("600", "Q", DmElevenNumbers, 2), 2));
+
+            Assert.Equal(
+                new[] { "010QI" },
+                Built(new SheetNumberRun("010", "Q", DmElevenNumbers, 1), 1));
+        }
+
+        /// <summary>
+        /// A bare number holds the first letter's place. DM-11's 200Q stays as it is, because
+        /// renaming the model's own sheet is not this tool's to do, and the next 200 sheet
+        /// reads B.
+        /// </summary>
+        [Fact]
+        public void ABareNumberOccupiesTheFirstLettersPlace()
+        {
+            Assert.Equal(
+                new[] { "200QB" },
+                Built(new SheetNumberRun("200", "Q", DmElevenNumbers, 1), 1));
+
+            Assert.Equal(
+                new[] { "200QD" },
+                Built(new SheetNumberRun("200", "Q", new[] { "200Q", "200QC" }, 1), 1));
+        }
+
+        /// <summary>
+        /// A number typed on the panel occupies its slot the same way a model number does, so
+        /// a typed 010001A pushes the first built one to B.
+        /// </summary>
+        [Fact]
+        public void ATypedNumberPushesTheBuiltOnesPastIt()
+        {
+            Assert.Equal(
+                new[] { "010001B", "010001C", "010001D" },
+                Built(new SheetNumberRun("010", "001", new[] { "010001A" }, 3), 3));
+        }
+
+        /// <summary>
+        /// A copy number occupies nothing. 010QE Copy 001 is what Revit writes when a sheet
+        /// is duplicated, and counting it would letter a fresh plot as if it already had
+        /// sheets.
+        /// </summary>
+        [Fact]
+        public void ACopyNumberOccupiesNoSlot()
+        {
+            Assert.Equal(
+                new[] { "010Q" },
+                Built(new SheetNumberRun(
+                    "010", "Q", new[] { "010QE Copy 001", "400Q Copy 009" }, 1), 1));
+        }
+
+        [Fact]
+        public void RunningOutOfLettersIsSaidRatherThanInvented()
+        {
+            SheetNumberProposal past = new SheetNumberRun(
+                "200", "Q", new[] { "200QZ" }, 1).Next();
+
+            Assert.False(past.Offered);
+            Assert.Equal(
+                "Every letter to Z after 200Q is used, so no number could be built. Type the "
+                + "number.",
+                past.WhyNot);
+        }
+
+        [Fact]
+        public void ARunNeedsItsCodeAndItsMarker()
+        {
+            Assert.Throws<ArgumentException>(
+                () => new SheetNumberRun(string.Empty, "Q", new string[0], 1));
+            Assert.Throws<ArgumentException>(
+                () => new SheetNumberRun("200", string.Empty, new string[0], 1));
+        }
+
+        /// <summary>
+        /// The reasons a row gets no built number, word for word. The no-marker one names the
+        /// plot, because it is also what the run refusal carries and the fix is in step 1.
+        /// </summary>
+        [Fact]
+        public void TheReasonsNameThePlotAndThePlace()
+        {
+            Assert.Equal(
+                "No marker is set for DM-16 in step 1, so no number could be built. Set it "
+                + "there or type the number.",
+                SheetNumberRun.NoMarkerWords("DM-16"));
+
+            Assert.Equal(
+                "This sheet's views carry different codes, so no single code can front its "
+                + "number. Type the number.",
+                SheetNumberRun.MixedCodesWords());
+        }
+    }
+
+    /// <summary>
     /// Sheet numbers that will work, and the ones that will not.
     ///
     /// Three sheets were refused in one run, every one with "a sheet numbered 010EA is already
     /// in this model". The refusal was right. The offer was wrong: the dropdown listed the
     /// numbers already in use, so every entry in it was certain to be rejected.
-    ///
-    /// Every expected number below is written out by hand from the real ones in that model.
-    /// </summary>
-    public class FreeSheetNumbersTests
-    {
-        [Fact]
-        public void ANumberOffTheEndIsSteppedOnByOne()
-        {
-            Assert.Equal(new[] { "L-212" }, SheetNumbers.Free(new[] { "L-211" }).ToArray());
-        }
-
-        /// <summary>
-        /// The two shapes this model really numbers with. 010EA has its digits at the front, so
-        /// the last run of digits is the only one there and stepping it gives 011EA.
-        /// </summary>
-        [Fact]
-        public void EveryShapeInTheModelSteppedOn()
-        {
-            var free = SheetNumbers.Free(new[] { "010EA", "L-211" });
-
-            Assert.Contains("011EA", free);
-            Assert.Contains("L-212", free);
-        }
-
-        /// <summary>
-        /// 010QE Copy 001 is what Revit writes when a sheet is duplicated, and this test used
-        /// to pin that stepping it offered 010QE Copy 002, a copy of a copy. A copy is never a
-        /// seed now. It stays taken, so nothing offered can collide with it.
-        /// </summary>
-        [Fact]
-        public void ACopyNumberIsNeverASeed()
-        {
-            var free = SheetNumbers.Free(new[] { "010EA", "010QE Copy 001", "400Q Copy 009" });
-
-            Assert.Equal(new[] { "011EA" }, free.ToArray());
-        }
-
-        /// <summary>
-        /// Padding is kept, so 010 gives 011 and not 11. A number that changed width would not
-        /// sort with the rest of the set and would read as a different scheme.
-        /// </summary>
-        [Fact]
-        public void TheWidthOfTheDigitsIsKept()
-        {
-            Assert.Equal(new[] { "L-002" }, SheetNumbers.Free(new[] { "L-001" }).ToArray());
-            Assert.Equal(new[] { "L-100" }, SheetNumbers.Free(new[] { "L-099" }).ToArray());
-        }
-
-        /// <summary>
-        /// The whole point. Every number offered is one no sheet in the model carries, so
-        /// picking off the list can never be refused for being a duplicate.
-        /// </summary>
-        [Fact]
-        public void NothingOfferedIsAlreadyInUse()
-        {
-            var inUse = new[] { "L-211", "L-212", "L-213", "010EA", "011EA" };
-
-            var free = SheetNumbers.Free(inUse);
-
-            Assert.NotEmpty(free);
-            Assert.All(free, one => Assert.DoesNotContain(one, inUse));
-        }
-
-        [Fact]
-        public void ARunOfTakenNumbersIsSteppedPast()
-        {
-            Assert.Equal(
-                new[] { "L-214" },
-                SheetNumbers.Free(new[] { "L-211", "L-212", "L-213" }).ToArray());
-        }
-
-        /// <summary>
-        /// A number with no digits at all cannot be stepped on, so it offers nothing rather than
-        /// having a digit invented on the end of it.
-        /// </summary>
-        [Fact]
-        public void ANumberWithNoDigitsOffersNothing()
-        {
-            Assert.Empty(SheetNumbers.Free(new[] { "COVER" }));
-            Assert.Empty(SheetNumbers.Free(new string[0]));
-            Assert.Empty(SheetNumbers.Free(null));
-        }
-
-        [Fact]
-        public void BlanksAreNotNumbers()
-        {
-            Assert.Empty(SheetNumbers.Free(new[] { "   ", string.Empty, null }));
-        }
-    }
-
-    /// <summary>
-    /// The letter that stands for the plot in its own sheet numbers.
-    ///
-    /// The numbers below are plot DM-11's real ones: 010QE, 010QF, 010QG, 010QH, 200Q, 400Q,
-    /// 600QC, 600QD. Every expected letter is written by hand off that list.
-    /// </summary>
-    public class PlotLetterTests
-    {
-        private static readonly string[] DmElevenNumbers =
-        {
-            "010QE", "010QF", "010QG", "010QH", "200Q", "400Q", "600QC", "600QD"
-        };
-
-        [Fact]
-        public void ThePlotLetterIsReadOffThePlotsOwnNumbers()
-        {
-            Assert.Equal("Q", SheetNumbers.PlotLetter(DmElevenNumbers));
-        }
-
-        /// <summary>
-        /// A number that does not start with digits carries no letter to read, so L-211 and a
-        /// bare word contribute nothing rather than a wrong answer.
-        /// </summary>
-        [Fact]
-        public void ANumberNotStartingWithDigitsContributesNoLetter()
-        {
-            Assert.Equal("Q", SheetNumbers.PlotLetter(new[] { "L-211", "200Q", "COVER" }));
-            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "L-211", "COVER" }));
-        }
-
-        /// <summary>
-        /// 010QE Copy 001 gives no letter. This test used to pin the opposite, that the Q was
-        /// read off it because it sits right after the leading digits. That was wrong: on the
-        /// first real model only DM-11 has numbers of its own, and every other plot's copies
-        /// are DM-11's numbers duplicated onto it, so the Q in one says which plot it was
-        /// copied from and nothing about the plot it sits on. Every plot but DM-11 was being
-        /// proposed Q. A copy is skipped before its letter is read, so a plot with one number
-        /// of its own beside a copy still gets its own letter rather than a disagreement.
-        /// </summary>
-        [Fact]
-        public void ACopyNumberGivesNoLetter()
-        {
-            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "010QE Copy 001" }));
-            Assert.Equal(
-                string.Empty,
-                SheetNumbers.PlotLetter(new[] { "010QE Copy 001", "400Q Copy 009" }));
-            Assert.Equal("R", SheetNumbers.PlotLetter(new[] { "010QE Copy 001", "200R" }));
-        }
-
-        /// <summary>
-        /// Disagreeing numbers give no letter at all. Picking a side would put a wrong number
-        /// into a drawing register.
-        /// </summary>
-        [Fact]
-        public void DisagreeingNumbersGiveNoLetter()
-        {
-            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "010QE", "200R" }));
-            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new string[0]));
-            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(null));
-        }
-
-        [Fact]
-        public void ALowerCaseLetterIsReadAsItsCapital()
-        {
-            Assert.Equal("Q", SheetNumbers.PlotLetter(new[] { "010q" }));
-        }
-
-        /// <summary>
-        /// The reason travels with the empty answer, because Propose reads this one rule and
-        /// used to hold a copy of it with the reasons inline.
-        /// </summary>
-        [Fact]
-        public void NoLetterComesWithTheReason()
-        {
-            string whyNot;
-
-            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new string[0], out whyNot));
-            Assert.Equal(
-                "This plot has no sheet numbers yet, so there is no plot letter to continue. "
-                + "Type the number.",
-                whyNot);
-
-            Assert.Equal(string.Empty, SheetNumbers.PlotLetter(new[] { "010QE", "200R" }, out whyNot));
-            Assert.Equal(
-                "This plot's own sheet numbers disagree about their plot letter, so none can "
-                + "be continued. Type the number.",
-                whyNot);
-
-            Assert.Equal("Q", SheetNumbers.PlotLetter(DmElevenNumbers, out whyNot));
-            Assert.Equal(string.Empty, whyNot);
-        }
-    }
-
-    /// <summary>
-    /// The number proposed for a new sheet: the view code, the plot's own letter, then the
-    /// first sheet letter not in use anywhere. Expected values written by hand from DM-11's
-    /// real numbers.
-    /// </summary>
-    public class SheetNumberProposalTests
-    {
-        private static readonly string[] DmElevenNumbers =
-        {
-            "010QE", "010QF", "010QG", "010QH", "200Q", "400Q", "600QC", "600QD"
-        };
-
-        /// <summary>
-        /// The sheet letter starts at A even though the plot already uses E to H, because A is
-        /// the first letter no sheet anywhere carries. The brief asks for the first free
-        /// letter, not the next after the highest.
-        /// </summary>
-        [Fact]
-        public void TheFirstFreeLetterFromAIsOffered()
-        {
-            SheetNumberProposal offered = SheetNumbers.Propose(
-                "010", DmElevenNumbers, DmElevenNumbers);
-
-            Assert.True(offered.Offered);
-            Assert.Equal("010QA", offered.Number);
-            Assert.Equal(string.Empty, offered.WhyNot);
-        }
-
-        [Fact]
-        public void ATakenLetterIsSteppedOver()
-        {
-            var inUse = new[] { "010QA", "010QB", "200Q" };
-
-            Assert.Equal("010QC", SheetNumbers.Propose("010", inUse, inUse).Number);
-        }
-
-        /// <summary>
-        /// Taken anywhere in the model counts, not only on this plot, because Revit keeps
-        /// sheet numbers unique across the whole document.
-        /// </summary>
-        [Fact]
-        public void ANumberTakenByAnotherPlotIsNotOffered()
-        {
-            SheetNumberProposal offered = SheetNumbers.Propose(
-                "010",
-                new[] { "010QA", "200Q" },
-                new[] { "200Q" });
-
-            Assert.Equal("010QB", offered.Number);
-        }
-
-        [Fact]
-        public void APlotWithNoNumbersGetsNoProposalAndSaysWhy()
-        {
-            SheetNumberProposal nothing = SheetNumbers.Propose(
-                "010", DmElevenNumbers, new string[0]);
-
-            Assert.False(nothing.Offered);
-            Assert.Equal(string.Empty, nothing.Number);
-            Assert.Equal(
-                "This plot has no sheet numbers yet, so there is no plot letter to continue. "
-                + "Type the number.",
-                nothing.WhyNot);
-        }
-
-        /// <summary>
-        /// Every plot but DM-11 on the first real model carries numbers like 010QE Copy 001
-        /// and nothing of its own. Each used to be proposed 010QA, DM-11's letter, which would
-        /// have filed its sheet under the wrong plot in the register. It gets the refusal a
-        /// plot with no numbers gets, in the same words.
-        /// </summary>
-        [Fact]
-        public void APlotCarryingOnlyCopiesIsTreatedAsHavingNoNumbers()
-        {
-            SheetNumberProposal nothing = SheetNumbers.Propose(
-                "010",
-                new[] { "010QE", "010QE Copy 001", "400Q Copy 009" },
-                new[] { "010QE Copy 001", "400Q Copy 009" });
-
-            Assert.False(nothing.Offered);
-            Assert.Equal(
-                "This plot has no sheet numbers yet, so there is no plot letter to continue. "
-                + "Type the number.",
-                nothing.WhyNot);
-        }
-
-        [Fact]
-        public void APlotWhoseNumbersDisagreeGetsNoProposal()
-        {
-            SheetNumberProposal nothing = SheetNumbers.Propose(
-                "010", DmElevenNumbers, new[] { "010QE", "200R" });
-
-            Assert.False(nothing.Offered);
-            Assert.Equal(
-                "This plot's own sheet numbers disagree about their plot letter, so none can "
-                + "be continued. Type the number.",
-                nothing.WhyNot);
-        }
-
-        [Fact]
-        public void NoCodeMeansNoProposal()
-        {
-            Assert.Equal(
-                "There is no view code to number from. Type the number.",
-                SheetNumbers.Propose(string.Empty, DmElevenNumbers, DmElevenNumbers).WhyNot);
-
-            Assert.Equal(
-                "There is no view code to number from. Type the number.",
-                SheetNumbers.Propose(null, DmElevenNumbers, DmElevenNumbers).WhyNot);
-        }
-
-        [Fact]
-        public void EveryLetterTakenIsSaidRatherThanInvented()
-        {
-            var everyLetter = new List<string>();
-            for (char letter = 'A'; letter <= 'Z'; letter++)
-            {
-                everyLetter.Add("010Q" + letter);
-            }
-
-            SheetNumberProposal nothing = SheetNumbers.Propose(
-                "010", everyLetter, new[] { "010QA" });
-
-            Assert.False(nothing.Offered);
-            Assert.Equal(
-                "Every number from 010QA to 010QZ is taken. Type the number.",
-                nothing.WhyNot);
-        }
-    }
-
-    /// <summary>
-    /// Which of the numbers the run asks for will be refused, before Run rather than after.
     /// </summary>
     public class SheetNumberFaultTests
     {
