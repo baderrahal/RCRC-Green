@@ -85,6 +85,33 @@ test moved for any other reason.
 is not KPI's file, and it uses the words as input to the caption escape rather than asserting
 any button exists.
 
+### The diff read adversarially, and what it found
+
+A breaker was set on the diff and died on a rate limit before reporting, so the checks were
+made here instead, at today's lines. Four came back clean and one is a real limit.
+
+- **Every path that ends a press reaches `Told`, so the window always shuts.** Run's four
+  typed catches, the `document == null` return, the `CannotCreate` return and Execute's own
+  `Stop(failed)` all invoke it, `Stop` inside a try of its own so even a throw on the way out
+  cannot skip it. That was the worst case worth ruling out: a modeless window left over Revit
+  with no way to shut it
+- **The scan runs after the refusal guard**, so a press refused for no template, no plot or no
+  output folder does not spend two minutes reading the model first
+- **The header cannot be wiped by the redraw that follows it.** `Found` sets `_scannedTitle`
+  off `_model.Title`, and `_model` is always set first, because `Named` is invoked before the
+  switch that reaches `ReadThePlots`. The next `Took` then compares equal and resets nothing
+- **Nothing still references the removed request.** The two `AskedForAScan` hits left in the
+  tree are the Drawing Sheet's own, in its own file, untouched
+
+**The one real limit, known and left: a second press of Create while the first is still
+running leaves the second run without a window.** `Shut` closes the first window before the
+second opens, so no window is orphaned over Revit, but the first run's end line then shuts the
+second run's window and the second run goes on unseen. A busy flag on the press would fix it
+and would introduce a worse failure: a flag that fails to clear leaves Create dead with no way
+back, and the pane has no way to ask whether a run is still going. The same reasoning as the
+cancel. It is written down rather than guarded, and the first run is what says whether anybody
+presses twice.
+
 ### What is open
 
 Whether the window appears where it should, whether it shuts on every path, and whether the

@@ -20,6 +20,13 @@ this round's one deliberate refusal**: cancelling mid read leaves a half read se
 reconciliation would count as read, which is the state the rest of the tool would trust and
 should not, so an honest cancel is its own round.
 
+A breaker on the diff died on a rate limit, so the checks were made here: every path that ends
+a press reaches `Told` so the window always shuts, the scan runs after the refusal guard, the
+header cannot be wiped by the redraw that follows it, and nothing still references the removed
+request. **One real limit is known and left**: a second press while the first run is going
+leaves the second run without a window, because a busy flag that failed to clear would leave
+Create dead with no way back.
+
 The round changes the pane, so it carries a mockup, `design/pr-93/kpi-pane.html`, hand drawn
 from the code: the strip before and after in both themes, the window on four of its real
 lines, and the order a press says them in. It says in the file that it is a mockup and not a
