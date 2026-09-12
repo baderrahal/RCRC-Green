@@ -94,6 +94,15 @@ missing, because a schedule that printed no body is still a schedule that was re
 how many printed one, said as a count of the schedules printed. The 16:06 run reads 0 and 0 of
 156.
 
+### The mockup
+
+The round changes the pane by one line, so it carries `design/pr-97/kpi-pane.html`, hand drawn
+from the code: the Create block before and after on the light theme, the partly loaded state on
+the dark theme where the warning colour is `#ff8080` rather than firebrick, and the report's own
+opening with the warning above RECONCILIATION. It says in the file that it is a mockup and not a
+screenshot, that Create stays live because this is a note, and that the six link names in it are
+invented for the drawing, since only the count and the NONE LOADED state were measured.
+
 ### Two watches, one per item, both red
 
 Rebuilt before each, because a `--no-build` run after a restore reads the old assembly and that

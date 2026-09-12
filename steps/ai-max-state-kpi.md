@@ -31,6 +31,10 @@ run. The words appear nowhere in the 2,292 line report of the only STREETS run t
 and they could not, because no link was loaded so no schedule printed a body. ST-05's 369, 2,
 68 and 439 read off a screen are the only measurement behind the whole rule.
 
+The round changes the pane by one line, so it carries a mockup, `design/pr-97/kpi-pane.html`,
+hand drawn from the code, saying in the file that it is a mockup and not a screenshot and that
+the link names in it are invented for the drawing.
+
 Two break watches went red on 3 and 4 tests, one per item, and were restored byte for byte. The
 first attempt at the second was a no-op that changed no behaviour and is recorded as one.
 **Locally 1332 tests at this branch, 0 failed and 0 skipped, 723 of them KPI, 16 added, against
