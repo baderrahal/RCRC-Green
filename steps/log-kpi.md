@@ -69,6 +69,13 @@ box, and the create block grew a row per ticked template before the press and a 
 after it. Nothing moved. The three typed boxes are one set for the whole run and the pane says
 so when more than one template is ticked.
 
+### The mockup
+
+`design/pr-102/kpi-pane.html`, hand drawn from the code: the workbook list as one pick and as
+tick boxes, the create block before the press with a ticked template that gets nothing, the same
+block after a press where one of three was refused, on the dark theme, and the report's own
+opening. It says in the file that it is a mockup and not a screenshot.
+
 ### One deletion
 
 `OutputName.Suggested` offered the template file's own name and nothing called it once each row

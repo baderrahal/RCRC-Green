@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Several templates in one press, pull request 102</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  pre { background: #fff; border: 1px solid #ccc; padding: 12px; max-width: 900px;
+        overflow-x: auto; font: 12px/1.45 Consolas, "Courier New", monospace; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .strip { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .strip { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .status { background: #e4e4e4; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #3a3a3a; border-top: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #ff8080; }
+  .light .head   { background: #ececec; }
+  .dark  .head   { background: #262626; }
+  .strip { padding: 5px 8px; }
+  .name { font-weight: bold; }
+  .body { padding: 8px; }
+  .head { padding: 3px 8px; font-weight: bold; margin: 6px 0 4px; }
+  .status { padding: 5px 8px; }
+  .row { margin: 3px 0; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 2px 6px; margin: 4px 0; }
+  .light .btn { background: #e1e1e1; color: #1a1a1a; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+  .box { display: inline-block; border: 1px solid #adadad; background: #fff; color: #1a1a1a;
+         padding: 1px 4px; min-width: 180px; }
+  .lbl { display: inline-block; width: 84px; }
+</style>
+</head>
+<body>
+
+<div class="warning">
+  <p><strong>This is a mockup and not a screenshot.</strong> It was drawn by hand from the
+  code in this pull request. It cannot show how Revit will really render the pane: the fonts,
+  the wrapping and the dockable pane's own chrome are Revit's, not this file's.</p>
+  <p><strong>Nothing here has been observed in Revit.</strong> Whether two workbooks really
+  come out of one press, and whether the two correct workbooks this round must not cost are
+  still correct, only a run can answer.</p>
+</div>
+
+<h1>Several templates in one press, one workbook each</h1>
+
+<p class="caption">Nothing moved. The workbook rows became tick boxes, the name row became one
+row per ticked template, and the create block grew a row per template before the press and a
+row per outcome after it.</p>
+
+<h2>The workbook list, before and after</h2>
+
+<div class="pair">
+  <div>
+    <p class="caption">Before, one pick</p>
+    <div class="panel light">
+      <div class="body">
+        <div class="head">TEMPLATES</div>
+        <div class="row faint">7 workbooks, 7 recognised</div>
+        <div class="row"><span class="btn" style="width:340px">GRP KPI Checklist MOSQUES.xlsx   MOSQUES</span></div>
+        <div class="row"><span class="btn" style="width:340px">GRP KPI Checklist SCHOOLS.xlsx   SCHOOLS</span></div>
+        <div class="row"><span class="btn" style="width:340px">GRP KPI Checklist STREETS.xlsx   STREETS</span></div>
+        <div class="row faint">the picked one is bold, and there is one of it</div>
+        <div class="row"><span class="lbl">Written as</span><span class="box">MOSQUES 20 plots</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">After, ticked</p>
+    <div class="panel light">
+      <div class="body">
+        <div class="head">TEMPLATES</div>
+        <div class="row faint">7 workbooks, 7 recognised</div>
+        <div class="row">&#9745; GRP KPI Checklist MOSQUES.xlsx   MOSQUES</div>
+        <div class="row">&#9745; GRP KPI Checklist SCHOOLS.xlsx   SCHOOLS</div>
+        <div class="row">&#9744; GRP KPI Checklist STREETS.xlsx   STREETS</div>
+        <div class="row faint">What MOSQUES would fill</div>
+        <div class="row"><span class="lbl">Written as</span><span class="box">MOSQUES 20 plots</span></div>
+        <div class="row faint">What SCHOOLS would fill</div>
+        <div class="row"><span class="lbl">Written as</span><span class="box">SCHOOLS 3 plots</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="caption">A workbook caught between the two park templates is ticked with no template
+until the user presses one of its two candidate buttons, which appear under its own row. It
+arms nothing meanwhile, which is what it did before.</p>
+
+<h2>The create block, before the press</h2>
+
+<div class="pair">
+  <div class="panel light">
+    <div class="body">
+      <div class="head">CREATE</div>
+      <div class="row faint">The date, the prepared by and the position are typed once and go
+      into every workbook this press writes.</div>
+      <div class="row faint">MOSQUES: 20 plots, DM-11, DM-12, DM-13, FM-05, ...</div>
+      <div class="row warn">SCHOOLS: no ticked plot belongs to SCHOOLS, so it will write
+      nothing. Tick a plot of it, or leave it and it stays listed writing nothing.</div>
+      <div class="row warn">&nbsp;&nbsp;&nbsp;ZZ-01: no component is on its sheets and its
+      prefix names no template this tool knows</div>
+      <div class="row"><span class="btn">Create</span></div>
+    </div>
+    <div class="status">Ready.</div>
+  </div>
+</div>
+
+<p class="caption">SCHOOLS is ticked and gets nothing, so it says so in its own row and stays
+listed. Bader's decision: the tool neither hides it nor unticks it. The plot under it went into
+no workbook and is named rather than quietly absent.</p>
+
+<h2>The same block after the press, on the dark theme</h2>
+
+<div class="pair">
+  <div class="panel dark">
+    <div class="body">
+      <div class="head">CREATE</div>
+      <div class="row faint">MOSQUES: written to C:\RCRC\out\MOSQUES 20 plots.xlsx</div>
+      <div class="row warn">STREETS: Nothing was written. The workbook could not be written.
+      Close it in Excel and press Create again.</div>
+      <div class="row warn">SCHOOLS: Nothing was written. no ticked plot belongs to SCHOOLS,
+      so it will write nothing.</div>
+      <div class="row"><span class="btn">Create</span></div>
+    </div>
+    <div class="status">1 workbook written of 3 templates ticked, 1 refused, 1 template with
+    no plot of its own. 20 plots went into a workbook. Report: ...</div>
+  </div>
+</div>
+
+<p class="caption"><strong>A refusal on one template does not stop the others.</strong> One
+workbook is on disk and the other two rows say why they are not. Never one line for the run
+that hides which of three failed. The status line counts the four rather than adding the cells
+up.</p>
+
+<h2>What the one report opens with</h2>
+
+<pre>RCRC Green KPI checklist
+Document: RCRC_NG03_EZ_MAIN_RVT24_SHEETS_detached
+Written: 2026-09-12 23:30
+Read only. Nothing in the model was changed and no template was touched.
+This press covered 3 templates, one workbook each, and every template's own
+sections are below under its name.
+
+THIS RUN, ACROSS EVERY TEMPLATE (0)  what was ticked and what came of it
+  templates ticked                  3
+  templates written                 1
+  templates refused                 1
+  templates with nothing to write   1
+  those four add up to the ticked count   YES
+  plots that went into a workbook   20
+  plots ticked and written nowhere  1
+
+WHICH PLOT WENT INTO WHICH WORKBOOK (21)
+  plot | template | route | why
+  DM-12 | MOSQUES | Component | DAILY MOSQUE placed it in MOSQUES, and the plot prefix agrees
+  ZZ-01 | NO WORKBOOK | Nothing | no component is on its sheets and its prefix names ...
+
+================================================================
+TEMPLATE: MOSQUES
+MOSQUES: written to C:\RCRC\out\MOSQUES 20 plots.xlsx
+================================================================
+  ... this template's own sections, whole and unchanged ...
+</pre>
+
+<p class="caption">Every template's own sections go through the writer that was already tested,
+so a Street Design note on MOSQUES and a rounding note on STREETS sit under their own template
+and can never read as one list.</p>
+
+</body>
+</html>

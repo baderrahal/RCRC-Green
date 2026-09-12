@@ -34,8 +34,10 @@ says so when more than one template is ticked.
 `OutputName.Suggested` is deleted with its test, unreachable once every row took its name from
 `CreateWords.SuggestedName`.
 
-The round changes the pane, so it carries a mockup, hand drawn from the code, saying in the file
-that it is a mockup and not a screenshot.
+The round changes the pane, so it carries `design/pr-102/kpi-pane.html`, hand drawn from the
+code: the workbook list before and after, the create block before and after the press on both
+themes, and the report's own opening. It says in the file that it is a mockup and not a
+screenshot.
 
 Three break watches went red on 2, 1 and 2 tests and were restored byte for byte, each checked
 with a diff against its backup. **One existing test was changed by hand**, the refusal that read
