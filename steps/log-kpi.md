@@ -13,9 +13,15 @@ renumbered, not reordered, not annotated. Nothing else was touched: not the Draw
 `Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
 this round has been observed in Revit.** The branch came off a fresh pull of main at `07f16ba`.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1246 tests at this branch, 0 failed and 0 skipped, 694 of them KPI, 22 added here**, against
-the 1224 main carries. The count moved from 1243 when the breaker round below added three.
+Pull request 81, merged into main as `8578f86`. **The runner executed 1261 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1261 ran at `8578f86`, 0 failed and 0
+skipped**, 694 of them KPI. **The branch itself carried 1246, 22 added here**, 1243 before the
+breaker round below added three, against the 1224 main held at the branch point `07f16ba`.
+The 15 above it are the Drawing Sheet fifty sixth pass that landed in between, `e4b5d9e` and
+`c7d91c4` with their record `eaed0e9`, whose files are the only ones that differ from this
+branch and none of them KPI, checked file by file. The merge went through the API with the
+title and the message both passed on the call, and the commit came back off main carrying
+neither a co-author credit line nor a generated-by footer.
 
 ### The group total check refuses on rounding no more
 

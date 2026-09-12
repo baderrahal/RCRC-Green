@@ -39,8 +39,10 @@ not read on a value nobody has seen, and `Repeats` prints nowhere, older than th
 
 Seven break watches went red on 3, 1, 2, 1, 1, 1 and 1 tests and were restored byte for
 byte. **Locally 1246 tests at this branch, 0 failed and 0 skipped, 694 of them KPI, 22
-added, against the 1224 main carries.** The pull request, the merge hash and the runner's
-count go in the record the merge adds here. **Nothing in this round has been observed in
+added, against the 1224 main carries.** Pull request 81, merged into main as `8578f86`, the
+runner executing 1261 tests against the merged head, 0 failed and 0 skipped, and locally the
+same 1261 ran at the merge, 694 of them KPI, the 15 above the branch's 1246 being the Drawing
+Sheet fifty sixth pass that landed in between and touches no KPI file. **Nothing in this round has been observed in
 Revit.** Four things wait on Bader: the first run that shows whether the status line
 repaints mid run, the rounding note's first sighting on a real report, whether the room
 wants a ceiling on a project rounding coarser than the metre, and whether the pane should
