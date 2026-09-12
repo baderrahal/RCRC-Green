@@ -12,7 +12,7 @@ a picker with a blank entry, Save as and Manage, on its own row because the firs
 pane width. Steps 2 and 4 say which preset filled them, worked out by comparing rather than by a
 flag. InTheModel is now the one title block lookup on the panel, where there were three. Suite
 reads 1369 locally, the 1320 on merged main plus 49. Two breaks watched red and reversed byte
-for byte.
+for byte. The pull request is 98 and the mockup is design/pr-98/panel.html.
 
 Phase: 9, ship. Sixty second pass, three features split into three pull requests, this is
 the first. The grid shows what exists: SheetCellState gains a fourth state for a view that
