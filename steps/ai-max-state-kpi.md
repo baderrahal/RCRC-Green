@@ -1,5 +1,42 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixtieth pass, round one of two Bader sent together, built and merged on its
+own so that a single merge cannot hide which half broke anything. **The audit files stay the one
+record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**The third blocker does not bite and its UNKNOWN is closed.** Bader measured the 1552
+workbook: Tree List - Existing holds 98 names on rows 4 to 101 with no empty row inside the
+list and its first gap at 102, Proposed 80 names on rows 4 to 83 with its first gap at 84. Row
+101 is above the first empty row, so `BelowTheList` never reaches it. **No behaviour changed for
+that item**, and what was an UNKNOWN in the log is a measurement with its file and its date.
+
+**The name rule is an alias, not a rule.** `SpeciesAliases` in Core is a table of one entry,
+UNKNOWN means Unknown Tree. No rule could do it: one name in 98 opens with UNKNOWN, and a
+shared opening, a prefix or a longest match also reaches Conocarpus, Ficus and Prosopis, where
+it would have to pick a species. Three guards, all tested. It applies only where it resolves to
+exactly one row on that sheet, two rows being a refusal naming every one. It never overrides a
+real match, the exact name being matched above the table. And the report names it, a how column
+on SPECIES MATCHED and a block of its own with the alias, the sheet, the row and the count, so
+a count resting on a decision of the team's never reads like one that matched word for word.
+`ClosestName` is untouched, still printed beside every remaining miss and still never matched
+on.
+
+`OnTheRow` is the one place a row becomes a match now, asked by the exact name and by the alias
+alike, so the total's reach is one rule rather than two that would drift.
+
+**Street Design counting as Proposed on STREETS now has a run**, the 01:30 STREETS workbook on
+NG05, ST-05 reading 369 existing, 2 proposed and 68 Street Design taken as proposed against a
+printed TOTAL of 439. The never exercised note comes out of the log.
+
+Two break watches went red on 2 and 1 tests, one per guard, and were restored byte for byte,
+the second checked with a diff against its backup. **One existing test was changed by hand**,
+the old UNKNOWN takes no row test, whose four Unknown Tree rows now meet guard a. **Locally
+1425 tests at this branch, 0 failed and 0 skipped, 732 of them KPI, 9 added, against the 1416
+main carries** at the branch point `96b6239`. Build zero warnings. PULL REQUEST AND MERGE
+NUMBERS GO HERE AFTER THE MERGE. **Nothing in this round has been observed in Revit**, and the
+check that matters, Total Trees moving 374 to 390 with the canopy still 11,168, waits on the
+next run.
+
 Phase: 9, ship. Fifty ninth pass, two items measured on two runs. **The audit files stay the
 one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
 

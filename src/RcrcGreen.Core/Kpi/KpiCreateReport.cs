@@ -545,6 +545,43 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
         }
 
+        /// <summary>
+        /// How a matched species reached its row. **A count that arrived through an alias must
+        /// never read the same as one that matched word for word**, because the first rests on
+        /// a decision of the team's and the second on the name the model printed.
+        /// </summary>
+        private static string How(SpeciesMatch match)
+        {
+            return match.ThroughAnAlias
+                ? "THROUGH THE ALIAS " + match.Alias.InWords
+                : "matched on its own name";
+        }
+
+        /// <summary>
+        /// Every count resting on an alias, in its own block with the row it reached, so
+        /// somebody reading the report can see which numbers rest on a decision rather than on
+        /// a name without reading every line of the section above.
+        /// </summary>
+        private static void TheAliases(StringBuilder report, IEnumerable<SpeciesMatch> matched)
+        {
+            List<SpeciesMatch> through = matched.Where(one => one.ThroughAnAlias).ToList();
+
+            Heading(report, "SPECIES MATCHED THROUGH AN ALIAS", through.Count,
+                "the name the model prints is not the name the list holds, and the team said the two are one thing");
+            Line(report, "  Revit name | the alias | sheet | row | merged");
+            foreach (SpeciesMatch match in through)
+            {
+                Line(report, "  " + Join(
+                    match.Species.BotanicalName,
+                    match.Alias.InWords,
+                    match.SheetName,
+                    KpiTemplates.QuantityColumn + match.Row.ToString(CultureInfo.InvariantCulture),
+                    match.Species.Quantity.ToString(CultureInfo.InvariantCulture)));
+            }
+
+            Line(report, string.Empty);
+        }
+
         private static void TheSpecies(StringBuilder report, KpiCreateRun run)
         {
             IReadOnlyList<SpeciesMatch> matches = run.Plan == null
@@ -557,7 +594,7 @@ namespace RcrcGreen.Core.Kpi
 
             Heading(report, "SPECIES MATCHED", matched.Count,
                 "the workbook row against the merged count, with the plots it came from");
-            Line(report, "  sheet | row | workbook name | Revit name | group | merged | from");
+            Line(report, "  sheet | row | workbook name | Revit name | group | merged | from | how");
             foreach (SpeciesMatch match in matched)
             {
                 Line(report, "  " + Join(
@@ -567,10 +604,13 @@ namespace RcrcGreen.Core.Kpi
                     match.Species.BotanicalName,
                     match.Species.GroupName,
                     match.Species.Quantity.ToString(CultureInfo.InvariantCulture),
-                    Working(match.Species)));
+                    Working(match.Species),
+                    How(match)));
             }
 
             Line(report, string.Empty);
+
+            TheAliases(report, matched);
 
             // Two numbers for one species, the client's and the model's. Named, and the client's
             // row left as it is, because which is right is a question for the team.

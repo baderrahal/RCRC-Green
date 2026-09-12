@@ -4,6 +4,98 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, sixtieth pass. The two answers, and UNKNOWN reaches row 101
+
+Two answers from Bader, both measured on the workbook the 1552 run wrote on the NG03 model,
+which is not in this repository. Neither could have been taken here. The other 36 audit findings
+stay open. The branch came off a fresh pull of main at `96b6239`, so the baseline is **1416
+tests, 723 of them KPI**, measured at that commit before anything was written. **Nothing in this
+round has been observed in Revit.**
+
+PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+
+### The third blocker does not bite, and that UNKNOWN is closed
+
+The fifty ninth pass said whether `BelowTheList` reaches row 101 was UNKNOWN here, because no
+workbook and no report is in this repository. Bader measured it:
+
+```
+Tree List - Existing   98 names, rows 4 to 101, no empty row inside the list, first gap 102
+Tree List - Proposed   80 names, rows 4 to 83,  no empty row inside the list, first gap 84
+```
+
+Row 101 is ABOVE the first empty row, so the rule never reaches it. **No behaviour changed for
+this item.** The rule is right and unchanged, and what was an UNKNOWN in this log is now a
+measurement with the file and the date it came from beside it.
+
+### The name rule is an alias, and the reasoning is the point
+
+**It is not a rule at all.** Exactly one of the 98 names opens with UNKNOWN, so any rule built
+on a shared opening, a prefix or a longest match would work on that one name and then have to
+pick between Conocarpus erectus and Conocarpus lancifolius, between Ficus benjamina, Ficus
+religiosa and Ficus pseudosycomorus, and between Prosopis juliflora and Prosopis glandulosa.
+A picked genus is a silent wrong number in a client file, which is worse than a tree that goes
+nowhere. And UNKNOWN is not a species: it is Revit's placeholder and Unknown Tree is the
+client's placeholder for the same thing, so the two meeting is a fact about this project and a
+fact about the project is data.
+
+`SpeciesAliases` in Core is the table, one entry, UNKNOWN means Unknown Tree. Three guards, all
+tested.
+
+**It applies only where it resolves to exactly one row on that sheet.** Two rows is a refusal
+naming every one of them. None is nothing at all, and a species then goes down the empty row
+route exactly as it did before, where the report already names it, so nothing is skipped and
+nothing is silent.
+
+**It never overrides a real match.** The exact name is matched above the table and the table is
+not consulted at all, and a name below the first empty row keeps its own refusal, because that
+is a row the workbook really carries.
+
+**The report says which count rests on it.** SPECIES MATCHED grew a how column, matched on its
+own name or THROUGH THE ALIAS UNKNOWN means Unknown Tree, and SPECIES MATCHED THROUGH AN ALIAS
+is a block of its own with the alias, the sheet, the row and the count.
+
+`ClosestName` is untouched and still prints beside every remaining miss. It is how the next
+alias gets found and it is still a print and never a match.
+
+**The check cannot be run here.** UNKNOWN Existing is 16 trees, Total Trees should move 374 to
+390 and the canopy should stay at 11,168, because row 101 holds a real zero for its diameter.
+Nothing in this repository can open that workbook, so those three numbers are for the next run.
+
+### One thing the round simplified
+
+The total's reach used to be checked in the matching loop and would have been checked a second
+time on the alias route. `OnTheRow` is the one place a row becomes a match now, asked by both,
+so there is one rule rather than two that agree on the day they are written.
+
+### Two watches, both red
+
+**Guard a.** `if (aliased.Count > 1)` changed to `if (aliased.Count > 99)`, so two rows would
+take the first. **2 red**: `SpeciesAliasTests.AnAliasThatReachesTwoRowsIsRefusedAndNamesBoth`
+and `SpeciesMatchingTests.AnAliasReachingFourRowsIsRefusedAndNamesEveryOneOfThem`. Restored.
+
+**Guard b.** The alias consulted before the exact match rather than after it. **1 red**:
+`SpeciesAliasTests.AnExactMatchWinsAndTheAliasIsNotConsulted`. Restored byte for byte and
+checked with a diff against the backup rather than by reading it.
+
+### The one existing test changed by hand
+
+`SpeciesMatchingTests.UnknownIsNeverMatchedToUnknownTreeAndTakesNoRowEither` pinned the old
+rule, that UNKNOWN could reach no row and was withheld for having no size. Its fixture holds
+four Unknown Tree rows, which is the 2026-09-09 measurement, so under the alias it is refused by
+guard a instead. It is renamed `AnAliasReachingFourRowsIsRefusedAndNamesEveryOneOfThem` and
+asserts the new refusal word for word. **The count still goes nowhere either way**, which is
+the part of it that did not change, and its docstring says why it was rewritten.
+
+### Still never exercised
+
+**Street Design counting as Proposed on STREETS now HAS a run.** The STREETS workbook on NG05 at
+01:30 read ST-05 as 369 existing, 2 proposed and 68 Street Design taken as proposed against the
+schedule's own TOTAL of 439, which is the exact arithmetic the rule was written to. That
+sentence has been in this log as never exercised since the rule landed and it comes out now.
+
+---
+
 ## 2026-09-12, fifty ninth pass. UNKNOWN is written, and a run with no link loaded says so
 
 Two items, measured on two runs. The other 36 audit findings stay open. The branch came off a
