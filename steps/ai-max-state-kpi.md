@@ -34,8 +34,10 @@ screenshot.
 
 Three break watches went red on 3, 1 and 1 tests and were restored byte for byte. **Locally
 1289 tests at this branch, 0 failed and 0 skipped, 707 of them KPI, 7 added, against the 1282
-main carries** at the branch point `b5e2c90`. Build zero warnings. The pull request, the merge
-hash and the runner's count go in the record the merge adds here. **Nothing in this round has
+main carries** at the branch point `b5e2c90`. Build zero warnings. Pull request 93, merged
+into main as `ffccfce`, the runner executing 1289 tests against the merged head, 0 failed and
+0 skipped, and locally the same 1289 ran at the merge, 707 of them KPI, the merged tree byte
+for byte the branch head. **Nothing in this round has
 been observed in Revit**, and the window appearing, shutting on every path and the line moving
 mid run are all waiting on the first run.
 

@@ -14,9 +14,13 @@ NOT in this one. The branch came off a fresh pull of main at `b5e2c90`, so the b
 calcMode auto, no cached value left, zero errors on recalculation, Total Green cover 13,516,
 Canopy 11,168, Total Trees 374, Planting 1,493, Lawn 855 off 70,343.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1289 tests at this branch, 0 failed and 0 skipped, 707 of them KPI, 7 added here**, against
-the 1282 main carries. Build zero warnings.
+Pull request 93, merged into main as `ffccfce`. **The runner executed 1289 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1289 ran at `ffccfce`, 0 failed and 0
+skipped, 707 of them KPI.** **The branch itself carried 1289, 7 added here**, against the 1282
+main held at the branch point `b5e2c90`, and the merged tree is byte for byte the branch head,
+nothing landed in between. Build zero warnings at the merge. The merge went through the API
+with the title and the message both passed on the call, and the commit came back off main
+carrying neither a co-author credit line nor a generated-by footer.
 
 ### The scan is a step inside Create
 
