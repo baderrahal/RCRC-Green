@@ -24,9 +24,12 @@ namespace RcrcGreen.Core
     /// The three crop settings a view carries, which travel together because Revit will not let
     /// the second two mean anything without the first.
     ///
-    /// Two of the three are copied off the sibling. Annotation Crop is not, any more. Copying it
-    /// was tried and did not fix anything, because PL-17-(010) Overall Plan has it off and the
-    /// new view inherited the fault faithfully. See <see cref="AnnotationCropChoice"/>.
+    /// Two of the three are copied off the sibling and which two depends on the kind. A plan
+    /// view copies Crop View and the region visibility, and Annotation Crop is the tool's own,
+    /// because PL-17-(010) Overall Plan has it off and copying it passed the fault straight on.
+    /// A section copies the region visibility and Annotation Crop, and Crop View is the tool's
+    /// own, because the model's sections have it off and a section with it off is not bounded
+    /// sideways. See <see cref="AnnotationCropChoice"/> and <see cref="SectionCropChoice"/>.
     /// </summary>
     public sealed class ViewCrop
     {
@@ -48,14 +51,26 @@ namespace RcrcGreen.Core
         public bool AnnotationCrop { get; }
 
         /// <summary>
-        /// The two settings a new view really does take from the sibling. Annotation Crop is
-        /// said separately, because it is the tool's own and printing it here as though it had
-        /// been read off a view is the kind of line that cost this repo two rounds.
+        /// The two settings a new PLAN view really does take from the sibling. Annotation Crop
+        /// is said separately, because it is the tool's own and printing it here as though it
+        /// had been read off a view is the kind of line that cost this repo two rounds.
         /// </summary>
         public string CopiedInWords()
         {
             return (CropActive ? "crop on" : "crop off")
                 + ", " + (CropRegionVisible ? "crop region shown" : "crop region hidden");
+        }
+
+        /// <summary>
+        /// The two settings a new SECTION really does take from the sibling. Crop View is the
+        /// one said separately there, because on a section it is the tool's own, and the line
+        /// that prints it as copied would say the new section has its sibling's crop off while
+        /// the tool had just turned it on.
+        /// </summary>
+        public string CopiedForASectionInWords()
+        {
+            return (CropRegionVisible ? "crop region shown" : "crop region hidden")
+                + ", " + (AnnotationCrop ? "annotation crop on" : "annotation crop off");
         }
 
         public override string ToString()
@@ -116,6 +131,65 @@ namespace RcrcGreen.Core
                 ? whose + " " + SiblingName + " has it on as well."
                 : whose + " " + SiblingName + " has it off, and a view with it off draws the "
                     + "section markers of neighbouring plots through itself.";
+        }
+    }
+
+    /// <summary>
+    /// Crop View on a new section. It is on, always, whatever the sibling has.
+    ///
+    /// The crop region is the one thing bounding what a section draws, and the tool computes it
+    /// from the plot's scope box and hands it to Revit when the section is created. Copying
+    /// Crop View off the sibling then switched off the thing enforcing the bound four calls
+    /// later, the tenth two-records-of-one-fact here: where a section reaches was decided once
+    /// by the plot's box and once by a flag copied off another view, and the copy won.
+    ///
+    /// The run of 2026-09-11 measured what that costs. DM-11-(400) came out with Crop View off
+    /// like its sibling, its viewport read 13250.5 by 198.3 mm on an 841 by 594 sheet, and the
+    /// model's own unbounded sections drew their markers inside DM-11's plans. The model's
+    /// sections have it off, so there is nothing to copy, which is the same shape as the
+    /// section depth and the annotation crop: the tool applies its own setting and the report
+    /// says whose it is.
+    /// </summary>
+    public sealed class SectionCropChoice
+    {
+        private SectionCropChoice(string siblingName, bool theSiblingHadItOn)
+        {
+            SiblingName = siblingName ?? string.Empty;
+            TheSiblingHadItOn = theSiblingHadItOn;
+        }
+
+        public static SectionCropChoice ForASection(SiblingView sibling)
+        {
+            return sibling == null
+                ? new SectionCropChoice(string.Empty, false)
+                : new SectionCropChoice(sibling.ViewName, sibling.Crop.CropActive);
+        }
+
+        /// <summary>
+        /// Always true. A property rather than a constant, the same way the annotation crop's
+        /// is, so the writer reads the decision from here rather than holding a second copy.
+        /// </summary>
+        public bool On
+        {
+            get { return true; }
+        }
+
+        public bool TheSiblingHadItOn { get; }
+
+        public string SiblingName { get; }
+
+        public string InWords()
+        {
+            string whose = "Crop View is on, which is the tool's setting on every section "
+                + "rather than anything read off a view.";
+
+            if (SiblingName.Length == 0) return whose;
+
+            return TheSiblingHadItOn
+                ? whose + " " + SiblingName + " has it on as well."
+                : whose + " " + SiblingName + " has it off, and a section with it off is not "
+                    + "bounded sideways, so it draws as far as the model reaches and its marker "
+                    + "crosses other plots' plans.";
         }
     }
 
@@ -199,13 +273,20 @@ namespace RcrcGreen.Core
         /// What the report says about where a new view was set up from. One line, naming the
         /// view and every setting taken off it, so a Properties panel is never needed to check
         /// it again.
+        ///
+        /// The crop clause names only what a view of this kind really copies. A section copies
+        /// the region visibility and the annotation crop and its Crop View is the tool's own,
+        /// so printing the sibling's crop flag there would say the new section has it off in
+        /// the same line that turned it on.
         /// </summary>
         public string InWords()
         {
             return "Set up from " + ViewName + ": family type " + Named(FamilyTypeName)
                 + ", view template " + Named(TemplateName)
                 + (Kind == SiblingKind.Plan ? ", level " + Named(LevelName) : string.Empty)
-                + ", " + Crop.CopiedInWords() + "."
+                + ", " + (Kind == SiblingKind.Section
+                    ? Crop.CopiedForASectionInWords()
+                    : Crop.CopiedInWords()) + "."
                 + (ViewportTypeName.Length == 0
                     ? " That view is on no sheet, so it lends no viewport type."
                     : " Viewport type " + ViewportTypeName + ", off that view's own placement.");

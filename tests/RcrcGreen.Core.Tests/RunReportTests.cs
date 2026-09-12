@@ -310,6 +310,12 @@ namespace RcrcGreen.Core.Tests
             Assert.Contains("ANNOTATION CROP IS NOT COPIED", written);
             Assert.Contains("Crop View and Crop Region", written);
 
+            // Crop View on a section went the same way a round later. The siblings have it
+            // off, and a section with it off is not bounded sideways, which is what put a
+            // thirteen metre viewport on an A1 sheet.
+            Assert.Contains("CROP VIEW IS NOT COPIED ON A SECTION", written);
+            Assert.Contains("switching it off was undoing the run's own work", written);
+
             // A schedule builds on the category number now, and a filter goes back as its kind.
             Assert.Contains("Revit's own number for the category", written);
             Assert.Contains("goes back as 1 or 0 and not as the word", written);

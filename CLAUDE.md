@@ -106,9 +106,12 @@ from ONE view of the same type the model holds, and the report names it. Three (
 one run took three different family types that way. **(400) Landscape Cross Section is a section
 rather than a plan view**, read off that view's kind rather than off the code.
 
-Two settings are the tool's own rather than the model's, because the model disagrees with
-itself. Cross sections look 1 METRE, where four real ones read 0.93, 0.93, 1.53 and 12.83, and
-ANNOTATION CROP IS ALWAYS ON for a plan view. The report says whose setting each is.
+Three settings are the tool's own rather than the model's, because the model disagrees with
+itself or has the fault built in. Cross sections look 1 METRE, where four real ones read
+0.93, 0.93, 1.53 and 12.83. ANNOTATION CROP IS ALWAYS ON for a plan view. CROP VIEW IS
+ALWAYS ON for a section the tool makes, because a section with it off is not bounded
+sideways and the model's own sections have it off, which is what drew other plots' markers
+through DM-11's plans. The report says whose setting each is.
 
 A new view is CREATED FRESH, never copied from another plot, and carries no annotation or
 detailing. A SHEET IS DESCRIBED rather than copied: the title block type, the views and 1, 2 or

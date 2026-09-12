@@ -205,8 +205,15 @@ way `SectionDepth` does. Crop View is still set first because Revit will not tur
 Crop on for a view whose crop is off, and Annotation Crop comes off
 `VIEWER_ANNOTATION_CROP_ACTIVE` because it is a parameter rather than a property.
 
-A SECTION still copies all three. No section has ever been created by this tool, so there is no
-evidence that a section inherits the same fault, and forcing it on there would be a guess.
+**A SECTION forces Crop View on and copies the other two.** The guess ran the other way for
+one round: a section copied all three, the sibling has the crop off, and the run of
+2026-09-11 showed what that costs. A section with the crop off is not bounded sideways, so
+DM-11-(400) drew as far as the model reaches, its viewport measured 13250.5 mm wide on an
+841 mm sheet, and the model's own unbounded sections drew their markers inside DM-11's
+plans. The crop region is the section box the writer computed from the plot's scope box
+moments earlier, so copying the flag off was switching off the run's own work, the tenth
+two-records-of-one-fact here. `SectionCropChoice` in Core decides it and says whose setting
+it is in the report, the same shape as `AnnotationCropChoice` and `SectionDepth`.
 
 `ApplySiblingCrop` runs after the template, so a template controlling any of the three refuses
 and is reported rather than quietly losing to it.

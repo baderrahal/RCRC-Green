@@ -1,6 +1,19 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Fifty third pass, off the first run in Revit since pull request 32. The run
+Phase: 9, ship. Fifty fourth pass, the two fixes the fifty third found and was told not to
+make. Crop View is the tool's own on a section now: `SectionCropChoice` says on always, the
+writer passes it where a plan view still passes the sibling's, and the region visibility and
+the annotation crop stay copied, so which one of the three is the tool's own swaps by kind
+and each kind's choice type is the one record. The section's report line names only what a
+section really copies and the choice's sentence carries Crop View with whose setting it is,
+so every created section's three settings are in the report the way a plan view's are. The
+closing note, revit-commands.md, core-rules.md and CLAUDE.md all stop saying a section
+copies all three, and CLAUDE.md counts three tool settings now. What this does not fix is
+written down: the model's own sections still have their crops off and still draw, and
+bounding those is the user's call. Suite reads 1224 locally, up three from the 1221 main
+carries at `9fd1a65`. Two breaks watched red. Not merged yet.
+
+Before that, the fifty third pass, off the first run in Revit since pull request 32. The run
 sheet was worked through on 2026-09-11, the run made 22 with 0 refused, and eight items came
 back. Two pull requests, both merged. Pull request 74, fixes 1 to 4, merged as `f72834e`
 with 1193 tests on the runner, 0 failed and 0 skipped: a schedule is placed by its top left

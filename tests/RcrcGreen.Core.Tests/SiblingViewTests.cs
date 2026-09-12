@@ -239,6 +239,92 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
+        /// Crop View on a section is the tool's own, whatever the sibling has and even with no
+        /// sibling at all, the same way annotation crop is on a plan view. The property is what
+        /// the writer reads, so this is the one record of the decision.
+        /// </summary>
+        [Fact]
+        public void ASectionsCropViewIsOnWhateverTheSiblingHas()
+        {
+            var off = new SiblingView(
+                "DM-20-(400) Landscape Cross Section", CrossSection, SiblingKind.Section,
+                "(400) Section", "TEMPLATE S", string.Empty, new ViewCrop(false, false, false));
+
+            var on = new SiblingView(
+                "DM-14-(400) Landscape Cross Section", CrossSection, SiblingKind.Section,
+                "(400) Section", "TEMPLATE S", string.Empty, new ViewCrop(true, true, true));
+
+            Assert.True(SectionCropChoice.ForASection(off).On);
+            Assert.True(SectionCropChoice.ForASection(on).On);
+            Assert.True(SectionCropChoice.ForASection(null).On);
+
+            Assert.False(SectionCropChoice.ForASection(off).TheSiblingHadItOn);
+            Assert.True(SectionCropChoice.ForASection(on).TheSiblingHadItOn);
+        }
+
+        /// <summary>
+        /// The words, in the same shape as the annotation crop line, written out by hand. The
+        /// sibling with it off is the real case: DM-20-(400) has the crop off, DM-11-(400)
+        /// copied that on the run of 2026-09-11, and its viewport measured 13250.5 mm wide on
+        /// an 841 mm sheet.
+        /// </summary>
+        [Fact]
+        public void TheSectionCropWordsSayWhoseSettingItIsAndWhatTheSiblingHas()
+        {
+            var off = new SiblingView(
+                "DM-20-(400) Landscape Cross Section", CrossSection, SiblingKind.Section,
+                "(400) Section", "TEMPLATE S", string.Empty, new ViewCrop(false, false, false));
+
+            Assert.Equal(
+                "Crop View is on, which is the tool's setting on every section rather than "
+                + "anything read off a view. DM-20-(400) Landscape Cross Section has it off, "
+                + "and a section with it off is not bounded sideways, so it draws as far as "
+                + "the model reaches and its marker crosses other plots' plans.",
+                SectionCropChoice.ForASection(off).InWords());
+
+            var on = new SiblingView(
+                "DM-14-(400) Landscape Cross Section", CrossSection, SiblingKind.Section,
+                "(400) Section", "TEMPLATE S", string.Empty, new ViewCrop(true, false, false));
+
+            Assert.Equal(
+                "Crop View is on, which is the tool's setting on every section rather than "
+                + "anything read off a view. DM-14-(400) Landscape Cross Section has it on "
+                + "as well.",
+                SectionCropChoice.ForASection(on).InWords());
+
+            Assert.Equal(
+                "Crop View is on, which is the tool's setting on every section rather than "
+                + "anything read off a view.",
+                SectionCropChoice.ForASection(null).InWords());
+        }
+
+        /// <summary>
+        /// A section's setup line names the two settings a section really copies, the region
+        /// visibility and the annotation crop, and never the sibling's crop flag, which would
+        /// say the new section has it off in the same report that turned it on.
+        /// </summary>
+        [Fact]
+        public void ASectionLineNamesOnlyWhatASectionReallyCopies()
+        {
+            SiblingView section =
+                Section("DM-20-(400) Landscape Cross Section", CrossSection, "TEMPLATE S");
+
+            Assert.Contains("crop region hidden, annotation crop on", section.InWords());
+            Assert.DoesNotContain("crop on, crop region hidden", section.InWords());
+
+            Assert.Equal(
+                "crop region hidden, annotation crop on",
+                AsTheTeamBuildsThem().CopiedForASectionInWords());
+            Assert.Equal(
+                "crop region shown, annotation crop off",
+                new ViewCrop(false, true, false).CopiedForASectionInWords());
+
+            // The plan line is untouched: crop and region copied, annotation said separately.
+            SiblingView plan = Plan("DM-18-(010) Overall Plan", Overall, "TYPE A", "TEMPLATE");
+            Assert.Contains("crop on, crop region hidden", plan.InWords());
+        }
+
+        /// <summary>
         /// The model draws one view type both ways. A plan asked of a section used to be
         /// refused as sitting on no level, and a section asked of a plan reached Revit and
         /// came back as a bad argument. Both refusals name the kind now, written out by hand.

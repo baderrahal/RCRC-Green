@@ -189,6 +189,13 @@ namespace RcrcGreen.Core
             Line(report, "none and its own section box is what bounds it. The plot's box is still what");
             Line(report, "says where to cut. Whether a view type needs a section rather than a plan is");
             Line(report, "read off the kind of the view the model already holds for it.");
+            Line(report, "CROP VIEW IS NOT COPIED ON A SECTION. It is on, on every section, and that is");
+            Line(report, "the tool's setting. Copying it was tried and the siblings have it off, so the");
+            Line(report, "new section drew as far as the model reaches, its viewport came out thirteen");
+            Line(report, "metres wide on an A1 sheet, and its marker crossed other plots' plans. The");
+            Line(report, "crop region it enforces is the section box this run computed from the plot's");
+            Line(report, "scope box, so switching it off was undoing the run's own work. The region");
+            Line(report, "visibility and the annotation crop are still the sibling's.");
             Line(report, "A schedule is captured from a plot that already has it and rebuilt for");
             Line(report, "the target plot, with only the filter naming the plot changed. It is built");
             Line(report, "on Revit's own number for the category rather than on the category name,");
