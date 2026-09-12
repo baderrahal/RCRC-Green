@@ -84,7 +84,7 @@ namespace RcrcGreen.Core
             {
                 return Kind == RunItemKind.Sheet
                     ? SheetNumber + " " + SheetName
-                    : PlotId + "-(" + Type.Code + ") " + Type.ViewName;
+                    : ViewNaming.Of(PlotId, Type);
             }
         }
     }
@@ -99,7 +99,7 @@ namespace RcrcGreen.Core
             PlotId = plotId ?? string.Empty;
             Type = type;
             Because = because ?? string.Empty;
-            Name = type == null ? PlotId : PlotId + "-(" + type.Code + ") " + type.ViewName;
+            Name = ViewNaming.Of(PlotId, type);
         }
 
         private RunRefusal(string plotId, string name, string because)

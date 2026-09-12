@@ -417,7 +417,7 @@ namespace RcrcGreen.Core
         /// </summary>
         public string NameFor(string plotId)
         {
-            return plotId + "-(" + Type.Code + ") " + Type.ViewName;
+            return ViewNaming.Of(plotId, Type);
         }
 
         /// <summary>

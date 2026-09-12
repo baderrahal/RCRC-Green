@@ -1,5 +1,22 @@
 # ai-max state, Drawing Sheet
 
+Phase: 9, ship. Sixty second pass, third of three pull requests. The run preview: step 5 draws a
+card per sheet before it is made, the title block outline at its real proportion with its strip,
+and a rectangle for every viewport at the place and size the run will put it. SheetPlacement is
+the ONE layout, calling SheetFit and SheetLayout and pairing them up, and both are now called
+from nowhere else. ModelWriter places from it, so the card and the sheet cannot disagree.
+RunPreview turns a plan into cards. What it cannot know it marks: a view the run has yet to make
+and every schedule are drawn dashed at nine tenths of the cell and named as not measured, and a
+title block no sheet uses yet has no size so its card draws nothing and says why.
+MeasuredTitleBlock carries the sheet its size was read off. ViewNaming.Of is now the one builder
+of DM-11-(010) Location Key Plan, where there were four, and it belongs in Shared beside the
+parser, which is a round of its own and the user's call. DrawingSheetReader.SizeOnPaper is the
+one outline read and the writer calls it. Clicking a card opens step 4 at the described sheet
+whose row carries that number. Suite reads 1400 locally, the 1369 on merged main plus 31. Two
+breaks watched red and reversed byte for byte. The pull request is 99 and the mockup is
+design/pr-99/panel.html. A card with no size says only that, rather than also saying no views
+and not all measured, which are the same one fact said three ways.
+
 Phase: 9, ship. Sixty second pass, second of three pull requests. Presets: a saved answer to
 steps 2 and 4, holding the ticked view types and the sheet definitions, and NO plot, NO sub plot
 and NO sheet number. Preset, Presets, PresetFile, PresetFit and PresetFilling are Core with 49

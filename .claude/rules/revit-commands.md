@@ -589,6 +589,36 @@ worked and did not would be worse than none.
 Both steps carry the line `PresetFilling` gives, and an edit shows as an edit because the line
 is worked out by comparing rather than by a flag.
 
+## Step 5 draws the sheets before it makes them
+
+A card per sheet, in the order the run creates them, each the title block outline at the
+proportion it comes out at, the title strip down its right, and a rectangle for every viewport
+at the place and the size the run will put it. The number, the name and the marks sit under it.
+
+**The panel decides one number, how many pixels a foot is.** Every position on it comes out of
+`SheetPlacement`, which is what `ModelWriter` places from. Nothing on this side works out a
+layout.
+
+A view already in the model is drawn at its real size, read off `View.Outline`, which needs no
+viewport. A view the run is about to make has no size and is drawn dashed at nine tenths of its
+cell, so a nominal rectangle cannot be mistaken for a measured one at a glance. So is every
+schedule, whose size is not known until Revit has drawn it.
+
+`DrawingSheetReader.SizeOnPaper` is the one outline read. The writer measures the same thing to
+work out its fit and now calls it rather than holding its own copy. The reader measures only a
+view that belongs to a plot and a view type, because those are the only ones a described sheet
+can carry. What that one extra property read per view costs on a model of this size has not
+been measured.
+
+The reader also measures each title block type off the first placed instance it finds, and
+records which sheet that was. Sheet Width and Sheet Height are INSTANCE parameters, so a type
+no sheet uses yet has no size, and its card says so rather than drawing an A1 because the name
+looks like one.
+
+Clicking a card opens step 4 and scrolls to the described sheet whose row carries that number,
+found by the number rather than by counting cards, because one described sheet makes a row per
+ticked plot and a row can make more than one sheet.
+
 ## A count on the panel opens into the thing it counted
 
 Six numbers tell somebody how much is wrong and nothing about what. Every scope box case except
