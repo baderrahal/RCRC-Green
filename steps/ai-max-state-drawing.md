@@ -12,7 +12,8 @@ neither of the other routes. BULK MARKING WAS ALREADY BUILT: the brief called it
 built, and all four are wired, WholeRow at panel line 959, WholeColumn at 1025, Mark every
 missing at 804 and Clear all marks beside it, with 19 tests. It is verified and recorded
 rather than written twice. Suite reads 1320 locally, the 1316 on main plus 4. Two breaks
-watched red and reversed byte for byte. The pull request is 96 and the runner reads 1320 too.
+watched red and reversed byte for byte. Pull request 96 is merged as `d77b90a` with 1320 on the runner, 0 failed and 0 skipped,
+and the squash message back byte for byte.
 The mockup is design/pr-96/panel.html. Presets and the run preview are this round's second
 and third pull requests.
 

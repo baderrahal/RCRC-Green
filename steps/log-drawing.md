@@ -4,6 +4,62 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, sixty second pass, first of three. The grid shows what exists
+
+Branch `claude/rcrc-green-setup-wf9ham`, pull request 96, merged as `d77b90a` with 1320
+tests on the runner, 0 failed and 0 skipped, and the squash message back byte for byte.
+Three features this round, split into three pull requests in the order the brief set, each
+merged before the next begins. This is the grid. Presets and the run preview follow.
+
+**One correction to the brief, made rather than worked around.** It asked for bulk marking
+as something specified rounds ago and never built. It is built, wired and tested, and
+nothing here writes a second copy of it. A sub plot name marks its row through
+`BulkMarking.WholeRow` at `DrawingSheetPanel.cs:959`, a column header marks its column
+through `WholeColumn` at `1025`, Mark every missing sits at `804`, Clear all marks beside
+it, and `BulkMarkingTests.cs` holds 19 tests over the rule they all share. What this pull
+request adds is four lines in `revit-commands.md` recording where they are, so the next
+round checks before building them again. Rebuilding them would have been the eleventh time
+this repo kept two records of one fact, and it would have been invisible: two sweeps that
+agree today and drift apart in a year.
+
+**The real work was the states.** A cell had three, and no number. A view already drawn on
+a sheet and a view nobody has placed looked identical, which on the first real model hides
+the ordinary case: 2,430 views sit on no sheet against 953 that are placed. So
+`SheetCellState` gains `ExistsNoSheet`, and every cell carries the number of the sheet its
+view sits on. That number is the point of the whole fix. It is what says at a glance that a
+sub plot is running on copy numbers, which is true of every sub plot but DM-11 on
+RCRC_NG05_NU_MAIN, and no count of placed views could ever say it.
+
+Three rules hold it together. `SheetGridCell.IsInTheModel` answers the one question both
+existing states share, whether the cell can be marked and whether a click opens something,
+so no call site compares against two states and gets one of them wrong later.
+`PlotViewPresence` carries the sheet number from the read rather than having it looked up
+beside the grid, because the cell that shows the number and the cell that decides the state
+are one cell. And `PanelSteps.CellInWords` and `LegendInWords` are the only wording for the
+four, because the legend and the tooltip were two lists written out beside the controls
+that drew them, which is how a square comes to mean one thing in the key and another under
+the pointer.
+
+**The read needed two collectors, not one.** A view is placed on a sheet by a `Viewport` if
+it is graphical and by a `ScheduleSheetInstance` if it is a schedule, which is why the
+writer creates them with two different calls. Reading only viewports would have shown every
+schedule on every sheet as sitting on none, and the grid would have been confidently wrong
+about six of the things under every plot.
+
+Suite reads 1320 locally, the 1316 on main plus 4, and 1320 on the runner, which is the
+same number because nothing landed on main while this was open. Two deliberate breaks
+watched red and reversed with the staged diff hash equal before and after: a view on no
+sheet reading as done again took 2 red, and the tooltip dropping its sheet number took 1.
+
+Not observed in Revit, all of it. Nothing in this pull request has been run. Specifically:
+the fourth mark on a real grid, a sheet number under a square and what it does to the
+column widths on a model whose numbers read 010QE Copy 001, `Viewport` and
+`ScheduleSheetInstance` answering for a real model's placements, and a click opening a view
+that sits on no sheet. The mockup at `design/pr-96/panel.html` is drawn by hand from the
+code and says so in its own first lines.
+
+---
+
 ## 2026-09-12, sixty first pass. Seven fixes from the first run of the new panel
 
 Branch `claude/rcrc-green-setup-wf9ham`, one pull request, 94, merged as `717e2f4`
