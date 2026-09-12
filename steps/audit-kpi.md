@@ -43,6 +43,13 @@ any of the nineteen.
    box is already holding the template's own name | A guard: compare the two full paths before
    the delete and refuse, plus a second one in `WorkbookPatcher.Patch`
 
+   FIXED, in the fortieth pass, pull request 52. `Patched` in the handler compares the two full
+   paths through `FilePaths.Compare` and refuses before the delete, `WorkbookPatcher.Patch`
+   carries the same guard before it opens anything, and both refuse on the one sentence in
+   `CreateWords.WouldOverwriteTheTemplate`.
+   `TemplateGuardTests.WritingOverTheTemplateIsRefusedAndTheTemplateIsUntouched` goes red without
+   it. Not observed in Revit.
+
 2. LOGIC | `src/RcrcGreen.Core/Kpi/ScheduleRows.cs:165` and `:179`, `ScheduleRows.cs:288`,
    `src/RcrcGreen.Core/Kpi/ScheduleGroups.cs:99` | **Three readers still fall back to a cell
    position when the heading row names no column.** `SoftscapeRows` takes the botanical name off
@@ -58,6 +65,12 @@ any of the nineteen.
    AREA column, and 39 lines later the same method falls back for the name. Whether any plot's heading row misses BOTANIC or COUNT is UNKNOWN without a scan of
    all 160, and only DM-11 to DM-13 have ever been read | A refusal in each of the three, and a
    line on the reading saying the schedule named no such column
+
+   FIXED, in the forty fifth pass, pull request 58. `SoftscapeRows.Read`, `ShrubsAndLawnRows.Read`
+   and `ScheduleGroups.Of` ask the heading row for every column and refuse naming the column and
+   printing the headings when one is not named, through `ScheduleColumns.NothingNamed`, and the
+   last whole number fallback is gone. `WrongNumberTests.ColumnRefusalTests` goes red without each
+   refusal. Not observed in Revit.
 
 ### WRONG
 
@@ -105,6 +118,13 @@ any of the nineteen.
    KPI reading those columns then reads one row and totals the other | A method: take the
    matchable range off the total as well, and report where the two disagree
 
+   FIXED, in the forty sixth pass, pull request 59. `TreeSheet` carries the sheet name and no
+   rows, and `SpeciesList` reads both facts off the file when Create is pressed, the names down
+   column D to the first gap and the rows the total reaches off its own SUM, with `BelowTheList`
+   and `OutsideTheTotal` naming where the two disagree.
+   `TreeListRowsTests.TheExistingListIsReadToRow101AndItsTotalReachesRow92` pins it. Not observed
+   in Revit.
+
 6. WIRING | `src/RcrcGreen.Revit/Kpi/KpiPlotReader.cs:268` with `:299` | `softscapeRead` is set
    true before the rows are looked at, and `Printed` turns a refused read into a
    `ScannedSchedule` with `RowsWereRead` false and records the refusal nowhere. `SoftscapeRows`
@@ -135,6 +155,12 @@ any of the nineteen.
    goes from "Creating." to blank, no file is written, and the reason is in the report the user
    has no reason to open. Silence after a press reads as success | Two lines: carry
    `Outcome.Refusal` into the status line
+
+   FIXED, in the fortieth pass, pull request 52. `Wrote` always routes a run that wrote nothing
+   through `WhyNothingWasWritten`, which speaks when the accounting passed and the patch was
+   refused, and falls to `NoReasonRecorded` rather than to an empty line.
+   `StatusLineTests.AnAccountingThatPassedAndAPatchThatDidNotSaysWhatToDo` goes red without it.
+   Not observed in Revit.
 
 ### COSTLY
 

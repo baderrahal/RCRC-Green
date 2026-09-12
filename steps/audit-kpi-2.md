@@ -97,6 +97,11 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     a digit after a non digit, or the grouping setting read once off the project units and
     named in the report
 
+    FIXED, in the forty fifth pass, pull request 58. `CellNumber.Read` refuses a cell holding a
+    digit after the number ends, naming the cell and the separator it will not guess, so 1,234 m2
+    is a refusal and never a 1. `CellNumberTests.AThousandsSeparatorIsRefusedAndTheCellIsNamed`
+    goes red without it. Not observed in Revit.
+
 31. LOGIC | `src/RcrcGreen.Revit/Kpi/KpiRequestHandler.cs:260-285` with
     `src/RcrcGreen.Core/Kpi/Reconciliation.cs:149-182` | **The area is read, totalled and
     refused on for every template, and STREETS has no area cell.** `Create` reads every plot's
@@ -113,6 +118,12 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     the first thing it will meet | A template on the reconciliation, or the region read skipped
     when the template's map holds no area cell
 
+    FIXED, in the forty fifth pass, pull request 58. The handler reads no region when the template
+    types its area by hand and `Reconciliation.Of` takes the template and skips every area refusal
+    on it, so STREETS reads no area and refuses on none.
+    `StreetsAreaTests.OnStreetsTwoPlotsReadingOneAreaDoNotRefuse` and its MOSQUES twin go red
+    without it. Not observed in Revit.
+
 32. REPORTS | `src/RcrcGreen.Core/Kpi/ScheduleRows.cs:168-171` with
     `src/RcrcGreen.Core/Kpi/KpiCreateReport.cs:136-170` | **The softscape schedule prints a
     TOTAL row and nothing reads it, so a species row the reader drops is invisible.**
@@ -125,6 +136,13 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     printed numbers and this is a printed number. A skip with nothing written down is the
     fault `CLAUDE.md` names by that sentence | The TOTAL read off the row whose first cell holds
     that text, held against the species sum in the report, and the two skips named
+
+    FIXED, in the forty fifth pass, pull request 58. The softscape TOTAL row is read off the row
+    whose first cell holds that word, the species rows are held against it in `Reconciliation` and
+    a mismatch refuses the write naming both numbers, and the two bare skips are named, one
+    refused and one counted as passed over.
+    `SoftscapeTotalTests.SpeciesRowsShortOfTheTotalRefuseTheWriteAndNameBothNumbers` goes red
+    without it. Not observed in Revit.
 
 ### COSTLY
 
@@ -189,6 +207,13 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     001", doubles every tree count in the workbook without a line anywhere. A second shrubs one
     is ignored past the first, in silence | A count per kind on the reading, refusing on more
     than one
+
+    FIXED, in the forty sixth pass, pull request 59. The reader finds every schedule of each kind
+    before reading any and hands `PlotReading` all the names, the reading refuses to hold numbers
+    beside two names of one kind, and `Reconciliation` refuses the write naming the plot, the kind
+    and every schedule.
+    `OneScheduleOfAKindTests.TwoSoftscapeSchedulesOnOnePlotRefuseTheWriteNamingBoth` goes red
+    without it. Not observed in Revit.
 
 37. LOGIC | `src/RcrcGreen.Revit/Kpi/KpiPlotReader.cs:367-374`, with `:81` and `:144` | **A
     plot's component and reference are read off one sheet, the first by sheet number, and

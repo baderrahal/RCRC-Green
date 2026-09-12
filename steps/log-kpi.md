@@ -4,6 +4,101 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty fourth pass. The diameter alone decides, and the audits are marked with what is really fixed
+
+Two things off the round message. The message opened saying no behaviour changes in the tool,
+and the first item is one, deliberately: a species with a diameter and no height was withheld
+and is now written. **Eight findings gained their FIXED mark, six of the nineteen Bader
+believed closed are not, and the audits now carry the whole record: 49 findings, 13 FIXED, 36
+open, read off the files.** No finding's text changed, none was renumbered, none reordered.
+Nothing else was touched: not the Drawing Sheet, not `Core/Shared`, not `CLAUDE.md`, not
+`PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in this round has been observed in
+Revit.** The branch came off a fresh pull of main at `9fd1a65`.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1221 tests at this branch, 0 failed and 0 skipped, 672 of them KPI, none added net**, the
+same 1221 main carries, one test replaced one for one.
+
+### The height is not load bearing
+
+Measured by Bader on the MOSQUES template, Tree List - Proposed row 21:
+
+```
+I21  15                          a plain value, nothing reads it
+J21  8                           read by L
+K21  10                          nothing reads it
+L21  =IF(ISBLANK(J21)," ",ROUND(PI()*(J21/2)^2,0))
+M21  =IF(ISBLANK(B21)," ",L21*B21)
+N21  60                          a typed value the tool never writes
+O21  =IF(ISBLANK(B21)," ",N21*B21)
+```
+
+Only the diameter feeds a formula, so requiring both measures withheld a row for a cell
+nothing reads. That came from the round message's wording, the fifty third pass recorded it as
+exactly that, and this is the answer. `SpeciesMatching.WrittenInto` asks the canopy diameter
+alone before it takes a row. A species with a diameter and no height is written, its name,
+count and diameter into their cells, and its height cell is named as not written through
+`Measured`, the same skip every other measure cell uses, so the report says it the way it says
+the rest. A species with no usable diameter is still withheld and still named with its count.
+UNKNOWN is unaffected either way: DM-25 row 19 prints 0 for its diameter, which is no size.
+`NotSized` quotes the diameter rows alone now, and every test pinning the both measure wording
+moved with it. The test that withheld a species missing one measure inverted, one for one:
+`ASpeciesWithADiameterAndNoHeightIsWrittenAndItsHeightCellIsNamed` proves the row is written,
+B5, D5 and J5, with I5 named and the height reason quoted.
+
+### The audits are the record, verified at today's lines
+
+Each of the nineteen findings Bader believed closed was checked against the code as it stands,
+by searching for the subject rather than trusting the audit's own line numbers, and against
+`steps/log-kpi.md` for the pass that closed it. Thirteen verified and are marked, the five
+that already were and eight marked now:
+
+- **1**, the template overwrite guard, and **8**, the empty status line: the fortieth pass,
+  pull request 52
+- **2**, the cell position fallbacks, **30**, the thousands separator, **31**, the area read
+  on STREETS, and **32**, the softscape TOTAL row: the forty fifth pass, pull request 58
+- **5**, the tree list row range, and **36**, two schedules of one kind: the forty sixth
+  pass, pull request 59
+
+**Six of the nineteen are not closed: 3, 4, 6, 12, 21 and 26.** Each was found byte for byte
+in the shape its finding describes, at today's lines: `Preselect` still returns past its own
+guard, `KpiNames.Component` is still the capitals no model holds, `Printed` still swallows an
+`ApplicationException` with nothing recorded, `Ask` still lets Scan, Plots and Create
+overwrite each other, the Written as box still goes stale after a tick, and
+`CreateWords.NoTemplate` still cannot reach the screen. They are the round the log has twice
+recorded as never landing on main, and they stay unmarked and open.
+
+**One thing the verification surfaced beyond the count.** `PaneChoicesTests` pins finding 4's
+unfixed behaviour as if it were the rule: `TheNameIsMatchedWholeAndWithItsCase` asserts the
+ordinal compare against the capitals constant and `AWantedNameTheModelDoesNotOfferFallsBackToTheFirst`
+asserts the silent fall through, on an offered list ordered so the fallback looks safe. When
+the round closing 4 lands, those tests have to move with it or they will hold the fault in
+place. Recorded here for that round, whichever session runs it.
+
+The bookkeeping rule that follows, and it is the repo's own: **the audit files are the one
+record of what is open.** The state file now carries the count read off them, 49 findings and
+13 FIXED so 36 open, and no running count anywhere else. Bader's fourteen was one off the
+verified thirteen, which is what a second record drifting looks like in the bookkeeping.
+
+### Break watches
+
+Two, each restored byte for byte and checked with cmp, the suite rerun green at 1221 after a
+rebuild, because the first rerun after the second restore tested the still patched binary and
+read 9 failed, which is the stale build rule in `CLAUDE.md` caught in the act.
+
+- the gate back to requiring both measures: **1 red**, the inverted test
+- the diameter gate removed: **9 red**, every withheld case across four files, UNKNOWN's among
+  them
+
+### Existing tests changed
+
+The both measure wording moved to the diameter wording in `SpeciesMatchingTests`,
+`CanopyColumnsTests`, `TreeListRowsTests` and `DiameterColumnTests`, and
+`ASpeciesMissingOneOfTheTwoMeasuresIsNotWrittenEither` became the inverted
+`ASpeciesWithADiameterAndNoHeightIsWrittenAndItsHeightCellIsNamed`. Nothing else moved.
+
+---
+
 ## 2026-09-11, fifty third pass. A species the model does not size gets no row at all
 
 One rule, measured on the 1836 run over 20 mosque plots. **The other audit findings stay open**,
