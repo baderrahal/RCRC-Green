@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The link warning above Create, pull request 97</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  pre { background: #fff; border: 1px solid #ccc; padding: 12px; max-width: 900px;
+        overflow-x: auto; font: 12px/1.45 Consolas, "Courier New", monospace; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .strip { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .strip { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .status { background: #e4e4e4; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #3a3a3a; border-top: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #ff8080; }
+  .light .head   { background: #ececec; }
+  .dark  .head   { background: #262626; }
+  .strip { padding: 5px 8px; }
+  .name { font-weight: bold; }
+  .body { padding: 8px; }
+  .head { padding: 3px 8px; font-weight: bold; margin: 0 0 4px; }
+  .status { padding: 5px 8px; }
+  .row { margin: 3px 0; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 2px 6px; margin: 4px 0; }
+  .light .btn { background: #e1e1e1; color: #1a1a1a; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+</style>
+</head>
+<body>
+
+<div class="warning">
+  <p><strong>This is a mockup and not a screenshot.</strong> It was drawn by hand from the
+  code in this pull request. It cannot show how Revit will really render the pane: the fonts,
+  the text wrapping and the dockable pane's own chrome are Revit's, not this file's.</p>
+  <p><strong>Nothing here has been observed in Revit.</strong> Whether the line appears above
+  Create on a real model with an unloaded link is the one thing only a run can answer.</p>
+</div>
+
+<h1>A run with no link loaded says so before the press</h1>
+
+<p class="caption">The only pane change in this pull request is one line, added to
+<code>TheCreateButton</code> after the refusal line and before everything else in the block.
+It comes off <code>KpiPlotFacts.Links</code>, which the plot read fills from the host
+document's own link instances, so it is on screen as soon as the pane has read the model and
+long before anybody presses anything.</p>
+
+<h2>Before and after, on the model the first STREETS run was made against</h2>
+
+<div class="pair">
+  <div>
+    <p class="caption">Before</p>
+    <div class="panel light">
+      <div class="strip">
+        <div class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+        <div class="faint">96,934 elements</div>
+      </div>
+      <div class="body">
+        <div class="head">CREATE</div>
+        <div class="row faint">the template, the folder and the plots above</div>
+        <div class="row"><span class="btn">Create</span></div>
+      </div>
+      <div class="status">Ready.</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">After</p>
+    <div class="panel light">
+      <div class="strip">
+        <div class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+        <div class="faint">96,934 elements</div>
+      </div>
+      <div class="body">
+        <div class="head">CREATE</div>
+        <div class="row faint">the template, the folder and the plots above</div>
+        <div class="row warn">NO LINK IS LOADED. 6 link instances and not one of them loaded,
+        so every schedule that lists linked elements lists nothing and every plot will
+        contribute nothing. Load the links and read the model again. Not loaded:
+        RCRC_NG05_NU_MAIN_RVT24_00, RCRC_NG05_NU_MAIN_RVT24_01,
+        RCRC_NG05_NU_MAIN_RVT24_02, RCRC_NG05_NU_MAIN_RVT24_03,
+        RCRC_NG05_NU_MAIN_RVT24_04, RCRC_NG05_NU_MAIN_RVT24_05.</div>
+        <div class="row"><span class="btn">Create</span></div>
+      </div>
+      <div class="status">Ready.</div>
+    </div>
+  </div>
+</div>
+
+<p class="caption"><strong>Create is still live.</strong> This is a note and never a refusal.
+A model with no link loaded is a legitimate thing to open and the team may be working on the
+host alone, so nothing is greyed out and nothing is blocked. The six names are invented for
+this drawing: only the count and the NONE LOADED state were measured, and the real names come
+off the model.</p>
+
+<h2>The same line on the dark theme</h2>
+
+<div class="pair">
+  <div class="panel dark">
+    <div class="strip">
+      <div class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+      <div class="faint">96,934 elements</div>
+    </div>
+    <div class="body">
+      <div class="head">CREATE</div>
+      <div class="row faint">the template, the folder and the plots above</div>
+      <div class="row warn">2 link instances of 6 not loaded, so a schedule that lists what
+      they hold lists nothing. Not loaded: RCRC_NG05_NU_MAIN_RVT24_03,
+      RCRC_NG05_NU_MAIN_RVT24_05.</div>
+      <div class="row"><span class="btn">Create</span></div>
+    </div>
+    <div class="status">Ready.</div>
+  </div>
+</div>
+
+<p class="caption">The partly loaded state, on the dark theme, where the warning colour is
+<code>#ff8080</code> rather than <code>#b22222</code>. Firebrick is unreadable on charcoal,
+which is why every colour in <code>PanelTheme</code> has a value per theme.</p>
+
+<h2>What the report says, at the top rather than at the end</h2>
+
+<p class="caption">The same words, printed by <code>TheLinks</code> between the clock and the
+first step, so they are above RECONCILIATION. A 2,292 line report whose every plot contributed
+nothing should open with the reason.</p>
+
+<pre>RCRC Green KPI checklist
+Document: RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached
+Written: 2026-09-11 16:06
+Read only. Nothing in the model was changed and the template was not touched.
+&lt;the clock line, whose seconds this drawing does not know&gt;
+
+NO LINK IS LOADED. 6 link instances and not one of them loaded, so every schedule
+that lists linked elements lists nothing and every plot will contribute nothing.
+Load the links and read the model again. Not loaded: ...
+
+Every schedule this run read is printed as the schedule prints it, at the end of this
+file under EVERY SCHEDULE THIS RUN READ, AS THE SCHEDULE PRINTS IT, so every number
+above it can be held against the drawing.
+
+RECONCILIATION
+  plots ticked            78
+  plots read              78
+  group rows found across the run   0
+  schedules that printed a body   0 of 156
+  plots that contributed nothing at all   78
+</pre>
+
+<p class="caption">The two counts under the reconciliation are the other half of it. Every
+count that block already carried read green over the 16:06 run, because a schedule that
+printed no body is still a schedule that was read. <code>GroupRowsFound</code> and
+<code>SchedulesWithABody</code> cannot.</p>
+
+</body>
+</html>

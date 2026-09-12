@@ -116,8 +116,14 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<PlotAndReason> contributedNothing,
             IReadOnlyList<IdenticalArea> identicalAreas,
             IReadOnlyList<string> refusals,
-            bool areaWanted)
+            bool areaWanted,
+            int groupRowsFound,
+            int schedulesWithABody,
+            int schedulesPrinted)
         {
+            GroupRowsFound = groupRowsFound;
+            SchedulesWithABody = schedulesWithABody;
+            SchedulesPrinted = schedulesPrinted;
             AreaWanted = areaWanted;
             Ticked = ticked;
             Read = read;
@@ -157,6 +163,19 @@ namespace RcrcGreen.Core.Kpi
         public IReadOnlyList<string> WithAGroupLeftOut { get; }
 
         public int SchedulesWithAGroupLeftOut { get; }
+
+        /// <summary>
+        /// **The counts a zero cannot fake.** The line above reads 0 both when the rule worked
+        /// and when nothing was found at all, and on the 16:06 STREETS run over 78 plots it
+        /// read green over a run where all 156 schedules printed one row, the header, and no
+        /// body. These two cannot: a run that found nothing reads 0 group rows and 0 schedules
+        /// with a body, and a run where nothing needed leaving out reads the real numbers.
+        /// </summary>
+        public int GroupRowsFound { get; }
+
+        public int SchedulesWithABody { get; }
+
+        public int SchedulesPrinted { get; }
 
         /// <summary>
         /// Empty when the template takes no area, because then no region was read and no plot
@@ -345,7 +364,10 @@ namespace RcrcGreen.Core.Kpi
                 Nothing(held, areaWanted),
                 identical,
                 refusals,
-                areaWanted);
+                areaWanted,
+                held.Sum(one => one.PrintedGroups.Count + one.Subtotals.Count),
+                held.Sum(one => one.PrintedSchedules.Count(printed => printed.BodyRowCount > 0)),
+                held.Sum(one => one.PrintedSchedules.Count));
         }
 
         private static IReadOnlyList<string> Named(

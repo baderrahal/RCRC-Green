@@ -4,6 +4,159 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty ninth pass. UNKNOWN is written, and a run with no link loaded says so
+
+Two items, measured on two runs. The other 36 audit findings stay open. The branch came off a
+fresh pull of main at `e3ba145`, so the baseline is **1316 tests, measured at that commit in a
+worktree of its own rather than remembered**. **Nothing in this round has been observed in
+Revit.**
+
+PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+
+### Item 1(b) was already correct, and saying so is the first thing this entry owes
+
+The round message named two reasons UNKNOWN was not written on the 1552 run, and asked for the
+second to be fixed: the empty row route withheld it for having no diameter, the right rule in
+the wrong place, and it must not apply to a row the workbook already holds. **At today's lines
+it already does not.** `SpeciesMatching.Against` asks `MeasureAnswer.Write` of the canopy
+diameter on the `WrittenInto` branch alone, `NotSized` is constructed nowhere else, and
+`KpiCreatePlan` writes a matched row's count into column B and touches none of the client's
+other cells. There was one reason UNKNOWN went unwritten, not two, and it is the name.
+
+That is worth more than the fix would have been, because the premise came from reading a report
+rather than the code and it would have been fixed by changing a rule that is already right. It
+is pinned now rather than left as an assertion in a log entry: `AMatchedRowWithNoDiameterIsStillWritten`
+puts UNKNOWN on a matched row with no height and no diameter, and asserts the count is written
+into column B and that the name, the height and the diameter columns of that row are not
+written at all.
+
+### The third blocker, which is in no round message
+
+Even a name matching word for word is refused when it sits past the list's first empty row.
+`SpeciesList` reads column D as far as the first gap and holds everything after it in
+`BelowTheList`, and `SpeciesMatching.Against` refuses a species whose only name is there rather
+than writing it in a second time above the gap. That rule is right and is not being changed.
+
+**Whether it bites for the real row 101 is UNKNOWN from this repository.** No workbook is in it,
+nothing under `reports/` is committed, and the round message gives row 101's cells but not where
+the list's first empty row is. The create report already prints the names below the first empty
+row with their rows under THE WORKBOOK'S OWN TREE LISTS, so the 1552 report answers it off the
+file. `ANameHeldBelowTheFirstEmptyRowIsRefusedEvenWhenItMatchesExactly` pins the refusal and its
+exact words, so whichever way the answer goes, the behaviour is written down rather than
+discovered again.
+
+### The name, which is Bader's to rule on
+
+**The match is not widened.** UNKNOWN against Unknown Tree still does not match, and no rule
+was invented for it. What the tool does instead is report what it missed:
+`SpeciesMatching.ClosestName` finds the workbook name sharing the longest opening with the
+Revit name, ties broken by the shorter name and then naturally, empty where nothing is shared
+at all. It rides on `SpeciesMatch.NearestInTheList` and prints as the second column of the
+unmatched species list. **It is printed and never matched on**, and a matched species carries
+none, so the column cannot start deciding anything by accident.
+
+**I cannot enumerate the 1552 run's unmatched species from this repository.** The report is not
+committed and never will be, and the workbook is not here either. So the answer to whether it
+is one name or a family of them comes off the next run, where every unmatched species prints
+with the nearest name in the list beside it. Three shapes are already known and they are not
+one problem: UNKNOWN against Unknown Tree is a different word, ACACIA / VACHELLIA FARNESIANA
+matches Acacia / Vachellia farnesiana today, and BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an
+apostrophe that nothing has yet been measured against.
+
+**The check on this half cannot be run here.** UNKNOWN Existing is 16 trees, Total Trees moves
+374 to 390 and the canopy stays 11,168 once the row is reachable. Reachable needs the name rule,
+which is Bader's, so that check is for the run after the rule lands.
+
+### Item 2, a run with no links loaded
+
+Measured on the first STREETS run, NG05 at 16:06, 78 plots: all 78 contributed nothing, all 156
+schedules printed one row and no body, group rows none on every one, and the scan says six link
+instances with NONE LOADED. Every number the tool printed was right. It never said the one thing
+that explains all 78.
+
+`LinksLoaded` is the new Core file and the whole rule, five states with one line each, a note and
+never a refusal. It reaches three places.
+
+**The report opens with it.** `TheLinks` sits between the clock and the first step in
+`KpiCreateReport`, so the warning is above RECONCILIATION. The test asserts the index of NO LINK
+IS LOADED is below the index of RECONCILIATION rather than asserting both appear, because two
+present strings say nothing about which a person reads first.
+
+**The pane says it before the press.** `KpiPlotFacts` carries a `LinksLoaded` built by
+`ReadThePlots` off the host document's own `RevitLinkInstance` collection, and `TheCreateButton`
+puts it above Create beside the refusal line. Twenty minutes are spent before the report exists,
+so a warning only the file holds is a warning that arrives too late to save the run.
+
+**And the reconciliation grew the two counts it could not fake.** Every count it already carried
+read green over that run: 78 ticked, 78 read, 156 schedules found, nothing refused, nothing
+missing, because a schedule that printed no body is still a schedule that was read.
+`GroupRowsFound` is how many group rows the run found across every plot and `SchedulesWithABody`
+how many printed one, said as a count of the schedules printed. The 16:06 run reads 0 and 0 of
+156.
+
+### The mockup
+
+The round changes the pane by one line, so it carries `design/pr-97/kpi-pane.html`, hand drawn
+from the code: the Create block before and after on the light theme, the partly loaded state on
+the dark theme where the warning colour is `#ff8080` rather than firebrick, and the report's own
+opening with the warning above RECONCILIATION. It says in the file that it is a mockup and not a
+screenshot, that Create stays live because this is a note, and that the six link names in it are
+invented for the drawing, since only the count and the NONE LOADED state were measured.
+
+### Two watches, one per item, both red
+
+Rebuilt before each, because a `--no-build` run after a restore reads the old assembly and that
+has cost this session twice.
+
+**Item 2.** `LinksLoaded.Of` had `if (loaded == 0)` changed to `if (false)`, so a model with
+six instances and none loaded fell through to the some-loaded-and-some-not line. **3 red**:
+`TheReportOpensWithTheReasonARunFoundNothing`, `NotOneLoadedIsSaidWithTheCountAndEveryName`,
+`OneInstanceReadsInTheSingular`. Restored byte for byte.
+
+**Item 1.** `KpiCreatePlan` took `if (!match.Species.Diameter.Write) continue;` immediately
+before the quantity write, which is the no-diameter rule reaching a matched row, the thing the
+round message believed was already happening. **4 red**:
+`UnknownRowTests.AMatchedRowWithNoDiameterIsStillWritten`,
+`KpiCreatePlanTests.AMatchedSpeciesBecomesAQuantityInColumnBOfItsOwnRow`,
+`KpiCreatePlanTests.AMatchedSpeciesWritesTheCountAloneAndLeavesTheNameAsTheWorkbookSpellsIt`,
+`KpiCreatePlanTests.AnAddedSpeciesWithNoListColumnsWritesItsNameAndItsCountAndNamesTheOtherTwo`.
+Restored byte for byte. **The first attempt at this one was a no-op**: the line went inside the
+`!match.Added` block after the quantity write, so nothing changed and nothing went red. A break
+that changes no behaviour proves nothing, and it read exactly like a break that the tests
+survived.
+
+A third, optional watch on the nearest-name guard did not go red either way it was broken,
+`opening == 0` to `opening < 0` and `shared = 0` to `shared = -1`, because the tie-break still
+rejects a name sharing nothing. That guard is not load bearing in that form and is recorded
+here rather than left as a silent pass.
+
+### The one existing test changed by hand
+
+`CanopyColumnsTests.TheReportSaysWhatWentIntoEachMeasureCell` asserts the unmatched species
+lines word for word, and those lines grew a column. Both its expectations took `(empty)` in the
+new nearest-name position, written out by hand: the fixture's list holds only Albizia lebbeck,
+which shares no opening letter with BAUHINIA PURPUREA or with UNKNOWN, so the nearest name for
+both is nothing. Nothing else in the suite was touched.
+
+### STILL NEVER EXERCISED
+
+**Street Design counting as Proposed on STREETS has tests and no run.** The words appear nowhere
+in the 2,292 line report of the 16:06 STREETS run, which is the only STREETS run there has been,
+and they could not: no link was loaded, so no schedule printed a body, so no group row of any
+name was found. `CountedGroups.Of` reading `KpiTemplate.GroupsCountedAsProposed`, the
+`GroupByDecision` pointing at Tree List - Proposed, `SheetFor` answering by decision second, and
+`KpiMerge.Species` keying on the sheet that takes the group are all covered by tests and none of
+it has ever met a real street schedule. ST-05's numbers, 369 existing and 2 plus 68 proposed
+against a printed TOTAL of 439, are still the only measurement behind the whole rule and they
+were read off a screen rather than off a run.
+
+### What this round did not touch
+
+The 36 open audit findings stay open. Nothing about the softscape or shrubs and lawn readers
+moved, nothing about the patcher moved, and the matching rule itself is exactly what it was.
+
+---
+
 ## 2026-09-12, fifty eighth pass. Create scans if it needs to, and the scan button is gone
 
 Item 1 of two, on its own as Bader asked, so that if the first real run breaks nobody has to

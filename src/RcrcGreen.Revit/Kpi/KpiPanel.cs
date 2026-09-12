@@ -797,6 +797,15 @@ namespace RcrcGreen.Revit.Kpi
 
             if (cannot.Length > 0) _templates.Children.Add(Faint(cannot));
 
+            // **A NOTE AND NEVER A REFUSAL.** The link state is known as soon as the model is
+            // read, and the first STREETS run spent 78 plots finding nothing because not one
+            // of six link instances was loaded. Said before the press rather than after it. A
+            // model with no link loaded is a legitimate thing to open, so Create stays live.
+            if (_facts != null && _facts.Links.Worth)
+            {
+                _templates.Children.Add(Warned(_facts.Links.Warning));
+            }
+
             if (_pickedAs != null && _pickedAs.AreaIsTypedByHand)
             {
                 _templates.Children.Add(Faint(CreateWords.AreaTypedByHand));
