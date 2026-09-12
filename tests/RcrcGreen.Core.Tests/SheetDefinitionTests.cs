@@ -487,7 +487,7 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Equal(
                 "The name was built from its view and the number was built from the view code "
-                + "and the plot's marker.",
+                + "and the plot identifier.",
                 generated.ProvenanceInWords());
 
             Assert.Equal(

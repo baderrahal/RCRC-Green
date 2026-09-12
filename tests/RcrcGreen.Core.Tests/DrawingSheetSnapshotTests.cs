@@ -49,8 +49,8 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The plot letter a proposed sheet number continues is read off these lists, so a
-        /// grouping that came back empty would silently kill every number proposal.
+        /// The sheet letters a built number continues are read off these lists, so a
+        /// grouping that came back empty would silently start every plot again at A.
         /// </summary>
         [Fact]
         public void TheNumbersAreGroupedByTheirOwnPlot()
@@ -106,9 +106,9 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The number and plot pairs are kept as they came, because the marker ledger reads
-        /// them to work out which markers other plots' numbers already use, and a pair short
-        /// of either half says nothing about markers.
+        /// The number and plot pairs are kept as they came, because they are what the
+        /// per-plot number lists group, and a pair short of either half says nothing about
+        /// a plot's numbers.
         /// </summary>
         [Fact]
         public void TheNumberAndPlotPairsAreKeptAndTheHalfEmptyOnesAreNot()

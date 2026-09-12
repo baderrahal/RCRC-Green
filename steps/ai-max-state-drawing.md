@@ -1,6 +1,21 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Fifty eighth pass, the three fix round, both pull requests merged. The
+Phase: 9, ship. Sixtieth pass, the sub plot number round, first of two pull requests. The
+marker is deleted and a sheet number is built from the plot identifier itself: the view
+code, then the identifier with its dash dropped, then the sheet letter, so DM-42 reads
+010DM42A, 010DM42B and a bare 200DM42. StemOf on SheetNumberRun is the one rule turning
+DM-42 into DM42 and the run refuses anything that is not a plot identifier, so the old
+markers cannot creep back through a caller. Old numbers, 010QE and 010001A, hold no slot
+under the new front, so old sheets are never renumbered and the two schemes sit side by
+side, the user's decision. MarkerChoices, PlotMarkers, PlotMarkerFile, MarkerLedger,
+PlotMarkerStore and PlotMarkerTests are deleted with the step 1 dropdowns, the ledger read
+and the captions, NoMarkerWords with them, and the reasons left on a row with no number are
+mixed codes and no views. Suite reads 1271 locally, the 1288 on main minus the 19 marker
+tests plus 2 new number tests. Two breaks watched red, 8 of 11 and 1 of 1, both reversed
+byte for byte. Fixes 2 and 3, the step 1 tick list of plots and the sheet name scan
+statement, are this round's second pull request.
+
+Before that, the fifty eighth pass, the three fix round, both pull requests merged. The
 first, fixes 1 and 2, is merged as `e42dd56` with 1278 on the runner, this branch's 1251
 plus 27 KPI tests pull request 85 landed while it was open: the sheet name table with its
 shipped nine and the stale read's three part fix, the cause in the log with file and line.

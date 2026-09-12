@@ -378,8 +378,8 @@ namespace RcrcGreen.Core
 
                 if (!row.CanBeMade)
                 {
-                    // The marker line rides along when the number is missing because no
-                    // marker is set, so the refusal names the plot to fix in step 1.
+                    // The reason line rides along when the number could not be built, mixed
+                    // codes or no views, so the refusal says why and not only that.
                     refusals.Add(RunRefusal.ForSheet(
                         row.PlotId,
                         row.SheetNumber,

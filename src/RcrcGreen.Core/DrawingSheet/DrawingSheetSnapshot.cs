@@ -308,8 +308,9 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// Every sheet number with the plot its sheet carries, which is what the marker
-        /// ledger reads to work out which markers other plots' numbers already use.
+        /// Every sheet number with the plot its sheet carries, the pairs NumbersOnPlot
+        /// groups. A pair short of either half says nothing about a plot's numbers, so
+        /// only the whole ones are kept.
         /// </summary>
         public IReadOnlyList<SheetOnAPlot> SheetNumbersOnPlots { get; }
 

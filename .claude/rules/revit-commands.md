@@ -313,12 +313,14 @@ its empty sheet for a viewless definition is superseded too, because no views ne
 **Every sheet that will be made is a row the user can read before Run.** Step 4 holds a table,
 one row per sheet per ticked plot: the views, read only, then a name box and a number box. A
 sheet holding one view gets its name proposed from the view, upper cased with the code removed.
-The number is BUILT for any sheet whose views share one code: the code, the plot's marker from
-step 1, then its sheet letter, worked out by `SheetNumberRun` in Core. Every built number shows
-in its box and can be typed over, the number box is a plain box now because the free numbers
-list it offered was stepped off numbers that are mostly copies, and a sheet mixing codes gets
-an empty box with the reason. The tool still invents nothing: a plot with no marker gets empty
-number boxes, the reason under each names the plot, and the run refusal carries the same words.
+The number is BUILT for any sheet whose views share one code: the code, then the plot
+identifier with its dash dropped, then its sheet letter, worked out by `SheetNumberRun` in
+Core, so DM-42's two 010 sheets read 010DM42A and 010DM42B and its one 200 sheet reads a bare
+200DM42. Every built number shows in its box and can be typed over, the number box is a plain
+box now because the free numbers list it offered was stepped off numbers that are mostly
+copies, and a sheet mixing codes or holding no views gets an empty box with the reason, which
+the run refusal carries too. Nothing is set per plot: the identifier is in the number, so no
+two plots can collide, and a number the model already holds is still refused by name.
 
 **The sheets come out in the team's order, which is also the letter order.** The list lives
 on `SheetOrder` in Core, nine names read off both models: TITLE SHEET, LIST OF DRAWINGS,
@@ -372,16 +374,6 @@ with no sibling and no complete answers is refused naming what is missing. On a 
 from answers, annotation crop is still the tool's own on a plan and Crop View on a
 section, and the crop settings a sibling used to supply are left as Revit created them,
 said in the report.
-
-**The marker is set in step 1 and remembered per model.** Beside each ticked plot sit two
-dropdowns, letters and numbers, and the user uses one or the other. `MarkerLedger` bars the
-markers other plots' numbers or other panel rows already use, a typed one is warned about
-rather than refused, and the line beside the plot says set now, remembered, or that there is
-no marker and no sheet without one. `PlotMarkerStore` keeps the file at
-`%APPDATA%\RCRC Green\plot-markers.txt`, beside the user's title block settings, keyed on the
-document title, and it re-reads the file at every save so another model's rows written since
-the panel loaded are kept. Nothing ships a marker: the file starts empty and every row in it
-was set by a person.
 
 `SheetBeingDescribed` in the Revit project is the mutable half the panel owns. Its views are an
 ordered list, because a HashSet loses the tick order the division depends on. What the user

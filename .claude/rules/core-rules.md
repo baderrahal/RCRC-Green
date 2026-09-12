@@ -116,36 +116,38 @@ Reading a schedule as PRINTED is a different job and Core does that too, in `Sch
 `ScheduleGroups`. **Never read a schedule value by cell position**, which is the rule in
 `CLAUDE.md`, stated there and nowhere else.
 
-## A sheet number is built from the marker, never proposed from the model
+## A sheet number is built from the plot identifier, never proposed from the model
 
-The convention, read off two models and confirmed by the team: the view code, then a plot
-MARKER the user sets once per plot in step 1, then A, B, C within one code in sheet order,
-and no letter when the code holds a single sheet. FP-39 on NG03, marker 001, reads 010001A
-to 010001D and 200001. DM-11 on NG05, marker Q, reads 010QE to 010QH and 200Q. The two
-models differ only in the marker, and the marker is never derived: on NG05 every plot but
-DM-11 carries only copy numbers, so anything read off the model is a guess on 159 of 160
-plots. The old `PlotLetter` and `Free` rules are deleted rather than left beside the new
-one, because two records of one fact is the shape this repo keeps paying for.
+The scheme is the user's, set after the marker scheme before it proved wrong twice over:
+the user had already said the numbering must be automatic, and a per-plot dropdown made
+step 1 long. The view code, then the plot identifier with its dash dropped, then A, B, C
+within one code in sheet order, and no letter when the code holds a single sheet. DM-42
+reads 010DM42A TITLE SHEET, 010DM42B LIST OF DRAWINGS, 200DM42 GENERAL ARRANGEMENT LAYOUT,
+400DM42 LANDSCAPE CROSS SECTION, 600DM42A HARDSCAPE SCHEDULES and 600DM42B SOFTSCAPE
+SCHEDULES. Nothing is set, nothing is reserved and nothing runs out, because the
+identifier is in the number and no two plots share one. Nothing is read off the model's
+own numbers either, which are copies on every plot but one of 160. `StemOf` on
+`SheetNumberRun` is the one rule turning DM-42 into DM42, and it answers empty for
+anything that is not a plot identifier, so the old scheme's markers cannot creep back in
+through a caller. The whole marker family, `MarkerChoices`, `PlotMarkers`,
+`PlotMarkerFile`, `MarkerLedger` and the store with its plot-markers.txt, is deleted
+rather than left beside this, because two records of one fact is the shape this repo
+keeps paying for.
 
-`SheetNumberRun` builds one code's numbers for one plot. Occupied slots come off the plot's
-own numbers plus everything typed on the panel, a bare number holds the first letter's
-place, and the next letter continues after the highest, so a second run continues rather
-than collides: 600QC and 600QD in the model give 600QE, and 200Q gives 200QB because
-renaming the model's own sheet is not this tool's to do. A sheet whose views carry more
-than one code gets `SheetNumberProposal.Nothing` with the reason, since picking either code
-would be a guess.
-
-`MarkerChoices` is the two dropdown lists, letters A to ZZZ and numbers 001 to 999.
-`PlotMarkers` is one model's markers with where each came from, set now, remembered or
-unset. `PlotMarkerFile` is the tab separated file that remembers them per model, three
-fields, model then plot then marker, keyed on the document title because that is the one
-name a detached model that has never been saved still carries. `MarkerLedger` reads which
-markers the model's own numbers already use, so no plot is offered another plot's. That
-read is ambiguous on purpose: 010QE cannot say whether its marker is Q or QE, so both are
-counted in use. The one exception is four or more digits with at most one trailing letter,
-the 001 kind, where the letter is the sheet letter and only the three digits before it
-count. Counting A off 010001A would bar most of the alphabet on a model numbered the NG03
-way.
+`SheetNumberRun` builds one code's numbers for one plot. Occupied slots come off the
+plot's own numbers plus everything typed on the panel, a bare number holds the first
+letter's place, and the next letter continues after the highest, so a second run continues
+rather than collides: 600DM42A and 600DM42B in the model give 600DM42C, and a bare 200DM42
+gives 200DM42B because renaming the model's own sheet is not this tool's to do. A number
+under the old marker scheme, 010QE or 010001A, does not start with the new front and holds
+no slot, so old sheets are never renumbered and the two schemes sit side by side on a real
+model, the user's decision rather than a fault. A DM-42 number starting with DM-4's front
+carries a digit where a sheet letter would sit, so it holds no slot on DM-4's run either.
+The exact collision is still caught: a built or typed number the model already carries is
+refused by `SheetNumbers.FaultIn` under the box and by the run's own read at Run. A sheet
+whose views carry more than one code gets `SheetNumberProposal.Nothing` with the reason,
+since picking either code would be a guess, and a sheet with no views gets its own words,
+because there is no code to front the number.
 
 ## A sheet is named from the saved table, and upper casing is only the fallback
 

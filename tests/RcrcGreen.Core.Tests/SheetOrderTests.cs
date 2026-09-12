@@ -162,24 +162,26 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The refusal for a row with no number carries the marker line when there is one,
-        /// so the plot to fix in step 1 is named at Run and not only under the box.
+        /// The refusal for a row with no number carries the reason line when there is one,
+        /// so why the number could not be built is said at Run and not only under the box.
+        /// The title sheet holds no views, its number is typed, and until it is the refusal
+        /// says exactly that.
         /// </summary>
         [Fact]
-        public void ARefusalNamesThePlotWhoseMarkerIsMissing()
+        public void ARefusalCarriesWhyTheNumberCouldNotBeBuilt()
         {
             RunPlan plan = RunFixture.WithSheets(
                 new[] { "DM-16" },
-                RunFixture.Batch(new[] { ListOfDrawings }, 1,
+                RunFixture.Batch(null, 1,
                     new SheetToMake(
-                        "DM-16", string.Empty, "LIST OF DRAWINGS", new[] { ListOfDrawings }, 1,
+                        "DM-16", string.Empty, "TITLE SHEET", null, 1,
                         RunFixture.TitleBlockFamily, RunFixture.TitleBlockType, false, false,
-                        SheetNumberRun.NoMarkerWords("DM-16"))));
+                        SheetNumberRun.NoViewsWords())));
 
             RunRefusal only = Assert.Single(plan.Refusals);
             Assert.Contains("still missing a number", only.Because);
             Assert.Contains(
-                "No marker is set for DM-16 in step 1, so no number could be built.",
+                "This sheet holds no views, so there is no view code to build its number",
                 only.Because);
         }
 

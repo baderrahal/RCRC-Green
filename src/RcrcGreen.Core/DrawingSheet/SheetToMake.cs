@@ -78,9 +78,9 @@ namespace RcrcGreen.Core
         public bool NumberWasGenerated { get; }
 
         /// <summary>
-        /// Why this row has no number when it has none, so the run refusal can name the plot
-        /// whose marker is not set rather than only saying a number is missing. Empty on a
-        /// row that has its number.
+        /// Why this row has no number when it has none, mixed codes or no views, so the run
+        /// refusal says what stopped the build rather than only that a number is missing.
+        /// Empty on a row that has its number.
         /// </summary>
         public string WhyTheNumberIsMissing { get; }
 
@@ -130,7 +130,7 @@ namespace RcrcGreen.Core
             return "The name was " + (NameWasGenerated ? "built from its view" : "typed")
                 + " and the number was "
                 + (NumberWasGenerated
-                    ? "built from the view code and the plot's marker"
+                    ? "built from the view code and the plot identifier"
                     : "typed") + ".";
         }
 
