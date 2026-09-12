@@ -4,6 +4,112 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, sixty second pass, third of three. The sheets, drawn before they are made
+
+Branch `claude/rcrc-green-setup-wf9ham`, pull request 99, merged as `105d750` with 1416
+tests on the runner, 0 failed and 0 skipped, and the squash message back byte for byte.
+
+Step 5 draws a card per sheet in the order the run creates them: the title block outline at
+the proportion it comes out at, the strip down its right, and a rectangle for every viewport
+at the place and the size the run will put it. Clicking one opens step 4 at the described
+sheet whose row carries that number.
+
+**The brief named the one thing this fix must not do, and that shaped all of it.** One plan,
+one set of positions, read twice. The layout did not exist before the run: the writer called
+`SheetFit.Of` in one method to divide the views and `SheetLayout.For` in another to place
+them, which was already two readings of one division inside one class, and a preview drawing
+its own would have been a third. So `SheetPlacement.Of` is now the only place a sheet is laid
+out and the only caller of either. The writer places from it and the card draws from it.
+`grep -rn "SheetLayout.For\|SheetFit.Of" src/` returns two lines, both inside
+`SheetPlacement.cs`.
+
+**What the preview cannot know it marks.** A view the run is about to create has no size until
+Revit draws it, and neither has a schedule, so both are laid out at their cell and drawn
+DASHED at nine tenths of it, because a nominal rectangle that looks measured is a drawing that
+lies. A view already in the model is drawn at its real size, off `View.Outline`, which needs
+no viewport. And a title block NO SHEET IN THIS MODEL USES YET has no size at all, because
+Sheet Width and Sheet Height are instance parameters: its card draws nothing and says why.
+That is the same null this repo once turned into 0.0 and made three empty sheets with.
+
+Two more things that were written twice are written once. `ViewNaming.Of` builds
+`DM-11-(010) Location Key Plan`, where the run plan built it twice, the schedule definition
+once and the writer once, and the writer's copy is what every created view is named by. Four
+records that happened to agree. `DrawingSheetReader.SizeOnPaper` is the one `View.Outline`
+read and the writer calls it. **`ViewNaming` belongs in Shared beside the parser that reads a
+name apart**, and it is not there because a change to Shared stops every other session. That
+is an open question for the user, in a round of its own.
+
+**The runner read 1416 where this branch read 1400, and that is not a disagreement.** Main
+moved while the pull request was open, `6275bf3` and `1bd0f58` from the KPI task, so the base
+the runner merges into had grown by 16. Measured rather than reasoned: main on its own reads
+1385 now where it read 1369 when this branch was cut, and 1385 plus this branch's 31 is 1416.
+The merged main reads 1416 locally too. Two deliberate breaks watched red and reversed with the file hash equal before and after: every
+view landing on the first spot took 4 red, and an unmeasured view coming back as measured
+took 2.
+
+Not observed in Revit, all of it. Specifically: a card at a real pane width and whether the
+cards wrap readably, `FamilySymbol.Id` deduplicating the title block types on a model with
+several, whether the writer still places correctly now its spots come off `SheetPlacement`,
+the click scrolling step 4 to the right sheet, the dashed rectangles against either theme,
+and **what one extra `View.Outline` read per view costs**. The whole read was measured at 1.4
+seconds for 96,934 elements before this round and has not been measured since. The mockup is
+`design/pr-99/panel.html` and it is drawn by hand from the code.
+
+---
+
+## 2026-09-12, sixty second pass, second of three. A preset saves steps 2 and 4
+
+Branch `claude/rcrc-green-setup-wf9ham`, pull request 98, merged as `e2aa4ad` with 1369
+tests on the runner, 0 failed and 0 skipped, and the squash message back byte for byte.
+
+Eleven title blocks and six sheets were described by hand on the DM-11 run and the same
+eleven and the same six would be described again on the next plot. A preset holds the ticked
+view types and the sheet definitions, each one a title block, a views per sheet and its views
+in the order they go on. **It holds no plot, no sub plot and no sheet number**, because those
+are what changes between one run and the next, and a preset carrying them would fill step 1
+with last week's plots and put a number on a sheet another plot already has.
+
+Core, with 49 tests, in five types. Three rules are the whole of it. **A record with nothing
+above it to belong to is not read**: the format is tab separated with the first field saying
+what the line is, and a `type` line before any `preset` line is kept as a line that could not
+be read rather than attached to the preset that comes next. **The part that fits is filled in
+and the part that does not is named**, because a preset is shared across projects the way the
+title block settings are, and refusing all of it over one missing schedule would make it
+useless on every model but the one it was saved from. **`PresetFilling` compares rather than
+remembering**: a tick, a sheet added, a sheet removed, a title block picked and a views per
+sheet changed can all move steps 2 and 4, and the flag for the sixth one is the one nobody
+sets.
+
+`install/presets.txt` ships the six sheets of the DM-11 run, its view types grouped by the
+title block `install/title-blocks.txt` pairs each with, so five definitions and six sheets at
+one view each. Two shipped files are two records that have to agree, so a test reads both and
+fails if a preset ever names a block its own pairing does not.
+
+The strip gains a second row under the model name, a picker with a blank first entry, Save as
+and Manage. **It is its own row rather than beside Refresh and Scan Model**, which is a
+deliberate departure from the brief: a pane on the right of Revit is narrow, the first row is
+already the model name and two buttons, and this panel has shipped controls running off the
+right edge once already. Picking a preset turns every tick off first and then fills, so what
+is on screen is the preset rather than the preset laid over what was ticked before, and the
+blank entry undoes nothing.
+
+`InTheModel` is now the one title block lookup on the panel. It was written three times, once
+for the settings, once for a described sheet and once here, each with its own idea of how two
+names are compared.
+
+Suite reads 1369 locally and 1369 on the runner, the 1320 on merged main plus 49. Two
+deliberate breaks watched red and reversed with the file hash equal before and after: a title
+block the model does not hold being filled in anyway took 5 red, and the filled from line
+always claiming the preset took 1.
+
+Not observed in Revit, all of it. Specifically: the second strip row at a real pane width, the
+picker holding a real model's presets, the Save as and Manage windows over Revit,
+`%APPDATA%\RCRC Green\presets.txt` being written and read back, `install.ps1` copying
+`presets.txt` beside the add-in, and what picking the shipped preset does to steps 2 and 4 on
+a real model. The mockup is `design/pr-98/panel.html`.
+
+---
+
 ## 2026-09-12, sixty second pass, first of three. The grid shows what exists
 
 Branch `claude/rcrc-green-setup-wf9ham`, pull request 96, merged as `d77b90a` with 1320
