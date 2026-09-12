@@ -4,6 +4,67 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, sixtieth pass. The sub plot number round
+
+Branch `claude/rcrc-green-setup-wf9ham`. Two pull requests, the split the brief named: fix
+1 first, fixes 2 and 3 second, and a mockup of the new step 1.
+
+Fix 1 is pull request 89, merged as `2688f631`, 1271 tests on the runner, 0 failed and 0
+skipped, matching local: the 1288 on main minus the 19 marker tests plus 2 number tests.
+The marker was wrong twice over, the numbering was meant to be automatic and a per plot
+control made step 1 long, so a sheet number is built from the plot identifier itself: the
+view code, then the identifier with its dash dropped, then the sheet letter, DM-42 reading
+010DM42A TITLE SHEET, 010DM42B LIST OF DRAWINGS, 200DM42 GENERAL ARRANGEMENT LAYOUT,
+400DM42 LANDSCAPE CROSS SECTION, 600DM42A HARDSCAPE SCHEDULES and 600DM42B SOFTSCAPE
+SCHEDULES. Nothing is set, nothing is reserved and nothing runs out, because the
+identifier is in the number and no two plots share one. StemOf on SheetNumberRun is the
+one rule turning DM-42 into DM42, empty for anything that is not a plot identifier, and
+the run refuses to start on one, so the old markers cannot creep back through a caller.
+Old numbers, 010QE and 010001A, do not start with the new front and hold no letter slot,
+so old sheets are never renumbered, NG03 and NG05 keep their numbers beside the new ones,
+which the user called their decision rather than a fault, and a number the model already
+holds is still refused by name, under the box and at Run. MarkerChoices, PlotMarkers,
+PlotMarkerFile, MarkerLedger, PlotMarkerStore and PlotMarkerTests are deleted with the
+step 1 dropdowns, the ledger read, the not-read lines and the captions, NoMarkerWords with
+them, and the reasons left on a row with no number are mixed codes and no views.
+
+Fix 2 is pull request 90, merged as `ff5d69d2` with 1281 tests on the runner. Step
+1 is a tick list of plots: every two letter prefix the model holds is a plot, several
+tickable at once, ticking one takes its whole span with every sub plot ticked, a ticked
+plot carries From and To over its own sub plots, one line per in-range sub plot shows its
+tick, its identifier and the number stem its sheets will take, a count at the foot says
+how many plots and how many of their sub plots are ticked, and one run covers every ticked
+sub plot on every ticked plot, in plot order however they were ticked. PlotTickList in
+Core/DrawingSheet holds all of it and composes Shared's PlotRange and PlotSelection rather
+than editing Shared, which stays untouched this round. The panel's prefix, From and To
+fields are gone with FillPrefixes, PutTheRangeBack, PrefixChosen, RangeChosen and
+PlotsInRange, and a refresh puts back the ticked plots, their ranges and the unticks the
+model still holds. The mockup is design/pr-90/panel.html, light and dark, marked in the
+file itself as a mockup and not a screenshot.
+
+Fix 3 could not run and is said plainly rather than reasoned around. The check was the
+two sheet names against the two scan reports, which are user held: reports/ holds only
+README.md in this container, nothing in reports/ is ever committed, and no scan report is
+readable here. Of the nine shipped sheet names, seven are confirmed by the two models
+through SheetOrder, whose list was read off both: LIST OF DRAWINGS, PROJECT LOCATION KEY
+PLAN, OVERALL KEYPLAN, GENERAL ARRANGEMENT LAYOUT, LANDSCAPE CROSS SECTION, HARDSCAPE
+SCHEDULES and SOFTSCAPE SCHEDULES. The two the order list does not hold, OVERALL PLAN and
+FURNITURE SCHEDULES, are left in sheet-names.txt exactly as they are and remain UNVERIFIED
+against any model or scan. Open question for the team, carried from the fifty eighth pass.
+
+Four deliberate breaks watched red across the two pull requests, 8 of 11 SheetNumberRun
+tests on a front built without the stem, 1 of 1 on the provenance words, 7 of 10
+PlotTickList tests on a tick that spans nothing, 1 of 1 on the step summary words, each
+applied and reversed by python with the git diff md5 equal before and after.
+
+Not observed in Revit, all of it: the built numbers on a real model, the two schemes side
+by side on a plot that holds old numbers, step 1 as drawn, the fresh From and To boxes
+filling without firing their handlers, the auto open on the first tick, the refresh
+putting the ticks back, and the run report's new closing note. The mockup is drawn by
+hand from the code and says so in its own first lines.
+
+---
+
 ## 2026-09-12, fifty ninth pass. The report for the three fix round
 
 Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 87 is
