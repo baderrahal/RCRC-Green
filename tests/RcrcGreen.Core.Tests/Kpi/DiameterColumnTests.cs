@@ -188,7 +188,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.Equal("UNKNOWN 16 under Existing", skipped.What);
                 Assert.StartsWith(
                     "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                    + "what the model prints, which is no height and no canopy diameter a workbook can compute with, "
+                    + "what the model prints, which is no canopy diameter a workbook can compute with, "
                     + "so no row was written: DM-25 row 19", skipped.Why, StringComparison.Ordinal);
 
                 // The whole point of the round: the workbook lands, because nothing was written

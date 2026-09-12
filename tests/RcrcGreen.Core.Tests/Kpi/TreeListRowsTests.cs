@@ -208,7 +208,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.Equal(16, unknown.Species.Quantity);
                 Assert.StartsWith(
                     "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                    + "what the model prints, which is no height and no canopy diameter a workbook can compute with",
+                    + "what the model prints, which is no canopy diameter a workbook can compute with",
                     unknown.Why, StringComparison.Ordinal);
 
                 // 17 + 27 + 19 + 3, the trees that reach the total.

@@ -1,5 +1,27 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty fourth pass. **The audit files are the one record of what is open: 49
+numbered findings, 13 carrying a FIXED mark, so 36 open, read off
+`steps/audit-kpi.md` and `steps/audit-kpi-2.md` and counted nowhere else.** Eight marks were
+added this pass after each was verified at today's lines, 1 and 8 to the fortieth pass, 2, 30,
+31 and 32 to the forty fifth, 5 and 36 to the forty sixth. Six of the nineteen believed closed
+are not and stay open: 3, 4, 6, 12, 21 and 26, the round that has never landed on main, each
+found byte for byte in its finding's shape. No finding's text changed, none renumbered, none
+reordered.
+
+**The diameter alone decides whether a species the list does not hold gets an empty row**,
+measured on the MOSQUES template row 21: L reads J, M reads L and the count, O reads N, which
+is typed, and nothing reads I or K. A species with a diameter and no height is written and its
+height cell is named as not written,
+`ASpeciesWithADiameterAndNoHeightIsWrittenAndItsHeightCellIsNamed`, and a species with no
+usable diameter is still withheld, UNKNOWN included, whose DM-25 row 19 prints 0. Two break
+watches went red on 1 and 9 tests and were restored byte for byte. **Locally 1221 tests at
+this branch, 0 failed and 0 skipped, 672 of them KPI, none added net**, the same 1221 main
+carries. The pull request, the merge hash and the runner's count go in the record the merge
+adds here. **Nothing in this round has been observed in Revit.** One thing recorded for the
+round that closes finding 4, in the log: `PaneChoicesTests` pins the unfixed behaviour and
+must move with that fix.
+
 Phase: 9, ship. Fifty third pass, one rule measured on the 1836 run over 20 mosque plots. **No
 audit finding is closed here**, because this is a fault off a run rather than an audit entry,
 and none was renumbered or annotated. The count in the round message, 32 open, does not
