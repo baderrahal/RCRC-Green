@@ -12,9 +12,13 @@ behaviour changes beyond them. Nothing else was touched: not the Drawing Sheet, 
 in this round has been observed in Revit.** The branch came off a fresh pull of main at
 `32cbdf1`.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1266 tests at this branch, 0 failed and 0 skipped, 699 of them KPI, 5 added here**, against
-the 1261 main carries.
+Pull request 85, merged into main as `52e4395`. **The runner executed 1266 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1266 ran at `52e4395`, 0 failed and 0
+skipped**, 699 of them KPI. **The branch itself carried 1266, 5 added here**, against the
+1261 main held at the branch point `32cbdf1`, and the merged tree is byte for byte the
+branch head, nothing landed in between. The merge went through the API with the title and
+the message both passed on the call, and the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer.
 
 ### No ceiling on the rounding room, a line instead
 

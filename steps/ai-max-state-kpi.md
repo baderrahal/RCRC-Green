@@ -15,8 +15,9 @@ file holds is a note nobody reads.
 
 Two break watches went red on 2 and 1 tests and were restored byte for byte. **Locally 1266
 tests at this branch, 0 failed and 0 skipped, 699 of them KPI, 5 added, against the 1261
-main carries.** The pull request, the merge hash and the runner's count go in the record the
-merge adds here. **Nothing in this round has been observed in Revit.** Two things wait on
+main carries.** Pull request 85, merged into main as `52e4395`, the runner executing 1266
+tests against the merged head, 0 failed and 0 skipped, and locally the same 1266 ran at the
+merge, 699 of them KPI, the merged tree byte for byte the branch head. **Nothing in this round has been observed in Revit.** Two things wait on
 Bader, both on the next 18 plot NG03 run: whether the status line visibly repaints mid run,
 and the rounding note's first sighting, now counted on the pane beside the written cells.
 
