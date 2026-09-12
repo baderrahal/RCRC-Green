@@ -4,6 +4,55 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty sixth pass. The coarse step is said before any number, and the pane counts the notes
+
+Two lines off Bader's answers to two of the fifty fifth pass's four open questions, and no
+behaviour changes beyond them. Nothing else was touched: not the Drawing Sheet, not
+`Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing
+in this round has been observed in Revit.** The branch came off a fresh pull of main at
+`32cbdf1`.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1266 tests at this branch, 0 failed and 0 skipped, 699 of them KPI, 5 added here**, against
+the 1261 main carries.
+
+### No ceiling on the rounding room, a line instead
+
+Both measured models round areas to 1, so a coarser step is hypothetical and a ceiling chosen
+today is a constant pretending to be a rule, the fault the fifty fifth pass's own breaker
+caught in that same round. Instead, a project whose step is coarser than the metre opens the
+create report with one line before anybody reads a number: THE PROJECT ROUNDS AREAS COARSER
+THAN THE METRE: its step is 2, so the group total check allows 1 square metre of room for
+every row summed. `KpiCreateRun` carries the `ProjectUnit` whose step gated the checks. The
+handler passes it on a fresh read and carries the held run's forward on a reused press,
+because the notes were earned against that unit and a step read again since could have
+changed. The metre, anything finer and an unread step print nothing, tested each way with the
+step of 2, the step of 10 and its 5 in the plural written out by hand.
+
+### The pane says the notes exist
+
+A note only the report file holds is a note nobody reads. `CreateWords.Wrote` counts the
+readings' rounding notes and puts one sentence beside the written count, 2 rounding notes are
+in the report, singular when one, nothing when none. The detail stays in the report, where
+each note sits beside its group total row. FM-21 and FM-22 off the 1208 run are the test's
+two notes.
+
+### Break watches
+
+Two, each restored byte for byte and checked with cmp, the suite rebuilt and rerun green at
+1266.
+
+- the coarse step line never printed: **2 red**, the step of 2 and the step of 10
+- the note count never spoken: **1 red**, the status line counting FM-21 and FM-22
+
+### Existing tests changed
+
+None. `CreateFixture.Run` gained an optional area unit it passes through, every existing call
+unchanged, and `KpiCreateRun` gained the unit as an optional trailing argument that defaults
+to the unread unit, so no caller moved.
+
+---
+
 ## 2026-09-12, fifty fifth pass. The room the rounding earns, and a status line that moves
 
 Two things off the 1208 run on RCRC_NG03_EZ, 104,031 elements and 18 plots, the first run on a

@@ -281,19 +281,22 @@ namespace RcrcGreen.Revit.Kpi
                 asked.HeldRun, document.Title, asked.Template, asked.TemplatePath,
                 asked.ComponentParameter, asked.ReferenceParameter, asked.Ticked);
 
+            ProjectUnit areaUnit;
             if (source.Reused)
             {
                 // The line says the readings were held, because a press that finishes in two
                 // seconds where the last took two minutes reads as something skipped until
                 // the screen says reuse. The report's Readings line is the record, this is
-                // the live half of it.
+                // the live half of it. The unit travels with the readings it gated, so the
+                // report prints the step that applied rather than one read again since.
                 Progressed?.Invoke(ProgressWords.ReusingTheReadings);
+                areaUnit = asked.HeldRun.AreaUnit;
                 readings.AddRange(HeldReadings.Applied(asked.HeldRun.Readings, asked.RegionChosenFor));
             }
             else
             {
                 // Read once per press: every plot's group total check allows the same room.
-                ProjectUnit areaUnit = KpiReader.AreaUnit(document);
+                areaUnit = KpiReader.AreaUnit(document);
                 int atPlot = 0;
                 foreach (string plotId in asked.Ticked)
                 {
@@ -352,7 +355,7 @@ namespace RcrcGreen.Revit.Kpi
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
                 merged, KpiMerge.Ungrouped(readings), outcome,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
-                existing, proposed, source, asked.TemplatesListed);
+                existing, proposed, source, asked.TemplatesListed, areaUnit);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;

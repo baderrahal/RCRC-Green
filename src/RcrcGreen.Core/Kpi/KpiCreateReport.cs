@@ -44,6 +44,7 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
             Line(report, "Read only. Nothing in the model was changed and the template was not touched.");
             TheClock(report, run);
+            TheCoarseStep(report, run);
             Line(report, "Every schedule this run read is printed as the schedule prints it, at the end of this");
             Line(report, "file under " + SchedulesHeading + ", so every number above it can be held against the drawing.");
             Line(report, string.Empty);
@@ -83,6 +84,24 @@ namespace RcrcGreen.Core.Kpi
                 + Seconds(run.Timing.RestSeconds) + ".");
             TheReadings(report, run);
             Line(report, "Every plot's own read is beside it under EVERY PLOT THAT WENT IN.");
+        }
+
+        /// <summary>
+        /// One line before anybody reads a number, only when the project rounds areas coarser
+        /// than the metre. Both measured models round to 1, so a coarser step is hypothetical
+        /// and the room has no ceiling yet: a ceiling chosen today would be a constant
+        /// pretending to be a rule. The first project that prints this line hands the team a
+        /// real figure to decide one against.
+        /// </summary>
+        private static void TheCoarseStep(StringBuilder report, KpiCreateRun run)
+        {
+            double step = run.AreaUnit.Accuracy;
+            if (double.IsNaN(step) || step <= 1.0) return;
+
+            double room = step / 2.0;
+            Line(report, "THE PROJECT ROUNDS AREAS COARSER THAN THE METRE: its step is " + KpiReport.Step(step)
+                + ", so the group total check allows " + Fine(room) + " square metre"
+                + (room == 1.0 ? string.Empty : "s") + " of room for every row summed.");
         }
 
         /// <summary>

@@ -1,5 +1,25 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty sixth pass, Bader's answers to two of the fifty fifth pass's four open
+questions, no behaviour changes beyond the two lines. **The audit files stay the one record:
+49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**No ceiling on the rounding room, a line instead.** Both measured models round areas to 1,
+so a coarser step is hypothetical and a ceiling chosen today is a constant pretending to be
+a rule. A project whose step is coarser than the metre opens the create report with one line
+before anybody reads a number, the step and the room per row in square metres. The unit that
+gated the checks travels on `KpiCreateRun`, a reused press carrying the held run's forward.
+**The pane counts the run's rounding notes beside the written cells**, one sentence saying
+they are in the report, singular when one, nothing when none, because a note only the report
+file holds is a note nobody reads.
+
+Two break watches went red on 2 and 1 tests and were restored byte for byte. **Locally 1266
+tests at this branch, 0 failed and 0 skipped, 699 of them KPI, 5 added, against the 1261
+main carries.** The pull request, the merge hash and the runner's count go in the record the
+merge adds here. **Nothing in this round has been observed in Revit.** Two things wait on
+Bader, both on the next 18 plot NG03 run: whether the status line visibly repaints mid run,
+and the rounding note's first sighting, now counted on the pane beside the written cells.
+
 Phase: 9, ship. Fifty fifth pass, two things off the 1208 run on RCRC_NG03_EZ, the first run
 on a second model, where the reading reuse held, a 123 second scan and a 2.5 second create.
 **The audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes

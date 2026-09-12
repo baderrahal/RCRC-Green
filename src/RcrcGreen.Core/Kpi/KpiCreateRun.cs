@@ -38,7 +38,8 @@ namespace RcrcGreen.Core.Kpi
             SpeciesList existingList = null,
             SpeciesList proposedList = null,
             ReadingsSource readingsSource = null,
-            TemplateListing templatesListed = null)
+            TemplateListing templatesListed = null,
+            ProjectUnit areaUnit = null)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");
 
@@ -46,6 +47,7 @@ namespace RcrcGreen.Core.Kpi
             ProposedList = proposedList;
             ReadingsSource = readingsSource ?? ReadingsSource.ReadOnThisPress;
             TemplatesListed = templatesListed ?? TemplateListing.Nothing;
+            AreaUnit = areaUnit ?? ProjectUnit.Unknown;
 
             DocumentTitle = documentTitle ?? string.Empty;
             Template = template;
@@ -140,6 +142,14 @@ namespace RcrcGreen.Core.Kpi
         /// pane recorded none.
         /// </summary>
         public TemplateListing TemplatesListed { get; }
+
+        /// <summary>
+        /// The area unit whose rounding step gated every group total check in these readings.
+        /// It travels on the run so the report's coarse step line prints the step that really
+        /// applied, and a reused press carries the held run's forward rather than reading the
+        /// document again, because the notes were earned against that one.
+        /// </summary>
+        public ProjectUnit AreaUnit { get; }
 
         public bool Wrote
         {

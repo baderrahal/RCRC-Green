@@ -983,7 +983,16 @@ still refuses. Areas get half the unit's rounding step for each row summed, two 
 to the metre may be off by up to one, and the step is read off the project units through
 `KpiReader.AreaUnit`, the same read the scan prints as Area unit, rounded to, never a
 constant, so a project rounding to 0.01 gets a tighter room and one rounding to 10 a looser
-one. **Within the room is a line in the report, not a refusal**, the `RoundingNote` on the
+one. **The room has no ceiling yet, on purpose.** Both measured models round to 1, a coarser
+step is hypothetical, and a ceiling chosen today is a constant pretending to be a rule. In
+its place, a project whose step is coarser than the metre says so at the top of the create
+report, the step and the room per row in square metres, one line before anybody reads a
+number, so the first project that earns one hands the team a real figure to decide a ceiling
+against. The unit that gated the checks travels on `KpiCreateRun`, and a reused press carries
+the held run's forward, because the notes were earned against that one. **The pane counts the
+run's rounding notes beside the written cells**, one sentence saying they are in the report,
+because a note only the report file holds is a note nobody reads. The detail stays in the
+report. **Within the room is a line in the report, not a refusal**, the `RoundingNote` on the
 `GroupSubtotal`, printed beside the group total row with the rows, the total and by how much,
 so a real fault growing slowly stays visible. Outside the room still refuses, naming the room
 it is outside of. A step that was not read allows nothing and says so, because a check that

@@ -672,6 +672,127 @@ namespace RcrcGreen.Core.Tests.Kpi
                 report);
         }
 
+        /// <summary>
+        /// A project rounding areas coarser than the metre is hypothetical, both measured
+        /// models round to 1, and the room it earns has no ceiling yet, so the report says so
+        /// at the top before anybody reads a number. The first project that prints this line
+        /// hands the team a real figure to decide a ceiling against.
+        /// </summary>
+        [Fact]
+        public void AStepCoarserThanTheMetreIsSaidBeforeAnyNumber()
+        {
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(areaUnit: new ProjectUnit("Square meters", "id", 2.0)),
+                new System.DateTime(2026, 9, 12, 14, 0, 0));
+
+            Assert.Contains(
+                "THE PROJECT ROUNDS AREAS COARSER THAN THE METRE: its step is 2, "
+                + "so the group total check allows 1 square metre of room for every row summed.",
+                report);
+            Assert.True(
+                report.IndexOf("COARSER THAN THE METRE", System.StringComparison.Ordinal)
+                    < report.IndexOf("RECONCILIATION", System.StringComparison.Ordinal),
+                "the coarse step line must come before the first number");
+        }
+
+        /// <summary>
+        /// The room is half the step per row, so a step of 10 earns 5, said in the plural.
+        /// </summary>
+        [Fact]
+        public void AStepOfTenSaysItsFiveInThePlural()
+        {
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(areaUnit: new ProjectUnit("Square meters", "id", 10.0)),
+                new System.DateTime(2026, 9, 12, 14, 0, 0));
+
+            Assert.Contains(
+                "THE PROJECT ROUNDS AREAS COARSER THAN THE METRE: its step is 10, "
+                + "so the group total check allows 5 square metres of room for every row summed.",
+                report);
+        }
+
+        /// <summary>
+        /// The metre, anything finer and an unread step print no coarse line, because the
+        /// line is a warning about room this project does not earn.
+        /// </summary>
+        [Fact]
+        public void TheMetreAndFinerAndAnUnreadStepPrintNoCoarseLine()
+        {
+            var at = new System.DateTime(2026, 9, 12, 14, 0, 0);
+
+            Assert.DoesNotContain("COARSER THAN THE METRE",
+                KpiCreateReport.Write(CreateFixture.Run(areaUnit: RoundedToTheMetre), at));
+            Assert.DoesNotContain("COARSER THAN THE METRE",
+                KpiCreateReport.Write(CreateFixture.Run(areaUnit: new ProjectUnit("Square meters", "id", 0.01)), at));
+            Assert.DoesNotContain("COARSER THAN THE METRE",
+                KpiCreateReport.Write(CreateFixture.Run(), at));
+        }
+
+        /// <summary>
+        /// A note only the report file holds is a note nobody reads, so the status line counts
+        /// them beside the written cells. FM-21 and FM-22 off the 1208 run each earn one.
+        /// </summary>
+        [Fact]
+        public void TheStatusLineSaysHowManyRoundingNotesTheRunMade()
+        {
+            GroupSubtotal fm21 = OnlyRounded(
+                "FM-21", KpiMerge.ShrubsHeading, RoundedToTheMetre,
+                Structure("Existing"), Species("Acacia", 2.0, 0), Subtotal(2.0, 0),
+                Structure("Proposed"), Species("Bougainvillea", 51.0, 11), Subtotal(51.0, 11),
+                Subtotal(52.0, 11));
+            GroupSubtotal fm22 = OnlyRounded(
+                "FM-22", KpiMerge.ShrubsHeading, RoundedToTheMetre,
+                Structure("Existing"), Species("Acacia", 2.0, 0), Subtotal(2.0, 0),
+                Structure("Proposed"), Species("Bougainvillea", 80.0, 46), Subtotal(80.0, 46),
+                Subtotal(83.0, 46));
+
+            KpiCreateRun both = CreateFixture.Run(
+                readings: new[]
+                {
+                    CreateFixture.Plot("FM-21", subtotals: new[] { fm21 }),
+                    CreateFixture.Plot("FM-22", subtotals: new[] { fm22 })
+                },
+                outcome: PatchOutcome.Done(2, 1, null,
+                    new[] { new LandedCell("KPI CHECKLIST - R1", "E5", "2026-09-12") }, null));
+
+            Assert.Contains(
+                "not written. 2 rounding notes are in the report. Workbook:",
+                CreateWords.Wrote(both, @"C:\reports\r.txt"));
+
+            KpiCreateRun one = CreateFixture.Run(
+                readings: new[] { CreateFixture.Plot("FM-21", subtotals: new[] { fm21 }) },
+                outcome: PatchOutcome.Done(2, 1, null,
+                    new[] { new LandedCell("KPI CHECKLIST - R1", "E5", "2026-09-12") }, null));
+
+            Assert.Contains(
+                "not written. 1 rounding note is in the report. Workbook:",
+                CreateWords.Wrote(one, @"C:\reports\r.txt"));
+        }
+
+        /// <summary>
+        /// A run whose group totals all added exactly says nothing about notes, because a
+        /// line counting nought is noise beside the count that matters.
+        /// </summary>
+        [Fact]
+        public void NoNotesPutNoNoteLineBesideTheWrittenCount()
+        {
+            GroupSubtotal exact = OnlyRounded(
+                "DM-16", KpiMerge.ShrubsHeading, RoundedToTheMetre,
+                Structure("Existing"), Species("Acacia", 30.0, 39), Subtotal(30.0, 39),
+                Structure("Proposed"), Species("Bougainvillea", 54.0, 69), Subtotal(54.0, 69),
+                Subtotal(84.0, 108));
+
+            string line = CreateWords.Wrote(
+                CreateFixture.Run(
+                    readings: new[] { CreateFixture.Plot("DM-16", subtotals: new[] { exact }) },
+                    outcome: PatchOutcome.Done(2, 1, null,
+                        new[] { new LandedCell("KPI CHECKLIST - R1", "E5", "2026-09-12") }, null)),
+                @"C:\reports\r.txt");
+
+            Assert.Contains("cell written from", line);
+            Assert.DoesNotContain("rounding note", line);
+        }
+
     }
 
     /// <summary>
