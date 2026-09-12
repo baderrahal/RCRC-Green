@@ -16,8 +16,10 @@ so TitleBlockSettings.CodeFor reads it back off the block. Fix 6, the cut is 18.
 centred, the tool's own setting, said in the report. Fix 7, two views stack rather than
 sitting side by side, and SheetFit measures every view before it is placed and carries what
 does not fit onto another sheet, numbered on by SheetNumberRun inside the transaction. Suite
-reads 1308 locally, the 1281 on main plus 27. Three breaks watched red and reversed byte for
-byte.
+reads 1308 locally, the 1281 the branch started from plus 27, and 1316 on the runner because
+KPI landed pull requests 92 and 93 while this one was open, which is the 1289 main now reads
+plus the same 27. Three breaks watched red and reversed byte for byte. The mockup is
+design/pr-94/panel.html.
 
 Before that, the sixtieth pass closed. Both pull requests merged: 89 as 2688f631 with
 1271 tests on the runner and 90 as ff5d69d2 with 1281, 0 failed and 0 skipped both
