@@ -47,7 +47,7 @@ it.
 Four rules hold it together.
 
 **A shut step carries its own summary**, so the whole state reads without opening anything.
-`1  PLOTS   DM-11 to DM-28, 17 of 17 ticked`.
+`1  PLOTS   DM, FP, 21 of 23 sub plots ticked`.
 
 **A step that cannot be used yet is greyed out with one line saying why.** A disabled control
 with no reason next to it tells nobody anything.
@@ -56,9 +56,10 @@ with no reason next to it tells nobody anything.
 formatted next to the control that shows it. That is the same shape as the grid cell, the
 column count and the run report, and it has been the bug three times.
 
-**Nothing drags the user out of a step they are working in.** Picking a range opens step 2 by
-itself, once per read, because that is the one act that unlocks everything below. Everything
-else is a Next button at the foot of the open step or a click on any header.
+**Nothing drags the user out of a step they are working in.** Ticking the first plot opens
+step 2 by itself, once per read, because that is the act that opens everything below, and a
+second plot ticked later never jumps again. Everything else is a Next button at the foot of
+the open step or a click on any header.
 
 The scope box counts live inside step 5 rather than in a section of their own, because they act
 on the same ticked plots the run does.

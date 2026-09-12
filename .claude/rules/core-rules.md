@@ -47,12 +47,20 @@ than resolved silently, because it is a model problem somebody has to fix.
 
 The rule behind it: the grid must never show a view as existing when it is not in the model.
 
-## The grid shows a range of plots, and a tick drops any of them
+## Step 1 is a tick list of plots, and the grid shows every ticked sub plot
 
-160 plots down one side is not readable. `PlotRange` narrows to a prefix and a run of numbers
-inside it. `PlotSelection` puts a tick on every plot in that range, all on to begin with, so
-the plots in the middle nobody is working on can come out. Changing the range builds a new
-selection, which is what resets the ticks.
+160 sub plots down one side is not readable, and one prefix at a time could not say DM and
+FP together, which a real run wants. `PlotTickList` in Core/DrawingSheet is step 1 whole:
+every two letter prefix the model holds is a plot, several tickable at once, a ticked one
+carries a From and To over its sub plots and a tick per sub plot in that range, and one
+line per sub plot shows the identifier and the stem its sheet numbers take. One run covers
+every ticked sub plot on every ticked plot, in plot order however they were ticked.
+
+It composes the Shared pieces rather than restating them: `PlotRange` narrows and orders,
+and each ticked plot carries its own `PlotSelection`, so the old rules still hold. Ticking
+a plot takes its whole span with everything ticked, changing its range rebuilds its
+selection with everything in the new range ticked, unticking a plot forgets its range and
+its ticks, and nothing outside the model can be ticked at all.
 
 ## One state, drawn again, never two
 

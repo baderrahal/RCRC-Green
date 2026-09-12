@@ -47,9 +47,6 @@ namespace RcrcGreen.Revit
         private readonly ExternalEvent _asking;
         private readonly DrawingSheetRequestHandler _handler;
 
-        private readonly ComboBox _prefix = new ComboBox();
-        private readonly ComboBox _from = new ComboBox();
-        private readonly ComboBox _to = new ComboBox();
         private readonly TextBox _search = new TextBox();
         private readonly ComboBox _newCode = new ComboBox { Width = PanelMetrics.LabelWidth };
         private readonly TextBox _newName = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
@@ -88,7 +85,11 @@ namespace RcrcGreen.Revit
         private PanelTheme _theme = PanelTheme.Current();
         private DrawingSheetSnapshot _model = DrawingSheetSnapshot.Nothing;
         private GridColumns _columns = GridColumns.Over(null);
-        private PlotSelection _picked = PlotSelection.Nothing;
+
+        // Step 1 whole: which plots are ticked, each one's From and To, and the tick on
+        // every sub plot. The controls are rebuilt from it on every change, so it is the
+        // one record, the same rule GridColumns follows.
+        private PlotTickList _plots = PlotTickList.Nothing;
         private readonly HashSet<PlotViewKey> _marked = new HashSet<PlotViewKey>();
 
         /// <summary>
@@ -141,9 +142,6 @@ namespace RcrcGreen.Revit
             };
             _asking = ExternalEvent.Create(_handler);
 
-            _prefix.SelectionChanged += (sender, e) => PrefixChosen();
-            _from.SelectionChanged += (sender, e) => RangeChosen();
-            _to.SelectionChanged += (sender, e) => RangeChosen();
             _search.TextChanged += (sender, e) => Redraw();
 
             ReadTheTitleBlockSettings();
@@ -295,10 +293,9 @@ namespace RcrcGreen.Revit
             return PanelSteps.Of(
                 _readOnce,
                 _model.PlotIds.Count,
-                _from.SelectedItem as string,
-                _to.SelectedItem as string,
-                _picked.InRangeCount,
-                _picked.TickedCount,
+                _plots.TickedPlots,
+                _plots.InRangeCount,
+                _plots.TickedCount,
                 _columns.ShownCount,
                 _columns.All.Count,
                 GridNow().MarkedCount,
@@ -448,42 +445,119 @@ namespace RcrcGreen.Revit
         {
             var block = new StackPanel();
 
-            block.Children.Add(Labelled("Prefix", _prefix));
-            block.Children.Add(Labelled("From", _from));
-            block.Children.Add(Labelled("To", _to));
+            block.Children.Add(Faint("Tick a plot to work on it. Several can be ticked at "
+                + "once, and one Run covers every ticked sub plot on every ticked plot."));
 
-            block.Children.Add(Faint(PanelSteps.PlotsLine(
-                _model.Empty, _picked.TickedCount, _picked.InRangeCount, _model.PlotIds.Count)));
-
-            var ticks = new StackPanel();
-            foreach (string plotId in _picked.InRange)
+            var list = new StackPanel();
+            foreach (string prefix in _plots.Prefixes)
             {
-                string which = plotId;
-
-                // The suffix marks the plots no view carries, which are the ones with
-                // everything missing and the ones the old view-only list silently dropped.
-                // The words come from the record so the panel formats no rule of its own.
-                PlotRecord record = _model.RecordOf(which);
-                string suffix = record == null ? string.Empty : record.NoViewsInWords();
-
-                var tick = new CheckBox
-                {
-                    Content = Label(suffix.Length == 0 ? which : which + "   " + suffix),
-                    IsChecked = _picked.IsTicked(which),
-                    Margin = PanelMetrics.Row,
-                    ToolTip = record == null
-                        ? which
-                        : which + ", found through " + record.SourcesInWords() + "."
-                };
-
-                tick.Checked += (sender, e) => PlotTicked(which, true);
-                tick.Unchecked += (sender, e) => PlotTicked(which, false);
-                ticks.Children.Add(tick);
+                list.Children.Add(PlotBlock(prefix));
             }
 
-            block.Children.Add(Scrolling(ticks, PanelMetrics.ListHeight, "plots"));
+            block.Children.Add(Scrolling(list, PanelMetrics.ListHeight, "plots"));
+
+            block.Children.Add(Faint(PanelSteps.PlotsLine(
+                _model.Empty, _plots.TickedCount, _plots.InRangeCount,
+                _plots.TickedPlotCount, _model.PlotIds.Count)));
             block.Children.Add(NextButton(PanelStep.Plots));
             return block;
+        }
+
+        /// <summary>
+        /// One plot in step 1's list: its tick, and when it is ticked, the From and To
+        /// over its sub plots and one line per sub plot in that range. Everything here is
+        /// rebuilt from the tick list on every change, so no control holds the only copy
+        /// of anything.
+        /// </summary>
+        private UIElement PlotBlock(string prefix)
+        {
+            string which = prefix;
+            var block = new StackPanel();
+
+            IReadOnlyList<string> under = _plots.UnderPlot(which);
+
+            var tick = new CheckBox
+            {
+                Content = Label(which),
+                IsChecked = _plots.IsPlotTicked(which),
+                Margin = PanelMetrics.Row,
+                FontWeight = FontWeights.Bold,
+                ToolTip = which + ", " + under.Count
+                    + (under.Count == 1 ? " sub plot" : " sub plots") + " in the model."
+            };
+            tick.Checked += (sender, e) => PlotPrefixTicked(which, true);
+            tick.Unchecked += (sender, e) => PlotPrefixTicked(which, false);
+            block.Children.Add(tick);
+
+            if (!_plots.IsPlotTicked(which)) return block;
+
+            var inside = new StackPanel { Margin = PanelMetrics.CellPad };
+
+            // Built fresh on every redraw, with the handlers wired only after the
+            // selection is set, so filling them fires nothing. Their state lives on the
+            // tick list, not on the boxes.
+            var from = new ComboBox();
+            var to = new ComboBox();
+            foreach (string subPlot in under)
+            {
+                from.Items.Add(subPlot);
+                to.Items.Add(subPlot);
+            }
+            from.SelectedItem = _plots.FromOf(which);
+            to.SelectedItem = _plots.ToOf(which);
+
+            SelectionChangedEventHandler ranged = (sender, e) => RangePicked(
+                which, from.SelectedItem as string, to.SelectedItem as string);
+            from.SelectionChanged += ranged;
+            to.SelectionChanged += ranged;
+
+            inside.Children.Add(Labelled("From", from));
+            inside.Children.Add(Labelled("To", to));
+
+            foreach (string subPlot in _plots.InRangeOf(which))
+            {
+                inside.Children.Add(SubPlotRow(subPlot));
+            }
+
+            block.Children.Add(inside);
+            return block;
+        }
+
+        /// <summary>
+        /// One sub plot's line: its tick, its identifier, and the stem its sheet numbers
+        /// take, DM-42 showing DM42, so what the built numbers will hold is read here
+        /// rather than met in step 4.
+        /// </summary>
+        private UIElement SubPlotRow(string plotId)
+        {
+            string which = plotId;
+
+            // The suffix marks the sub plots no view carries, which are the ones with
+            // everything missing and the ones the old view-only list silently dropped.
+            // The words come from the record so the panel formats no rule of its own.
+            PlotRecord record = _model.RecordOf(which);
+            string suffix = record == null ? string.Empty : record.NoViewsInWords();
+
+            var tick = new CheckBox
+            {
+                Content = Label(which),
+                IsChecked = _plots.IsTicked(which),
+                Margin = PanelMetrics.Row,
+                ToolTip = record == null
+                    ? which
+                    : which + ", found through " + record.SourcesInWords() + "."
+            };
+            tick.Checked += (sender, e) => PlotTicked(which, true);
+            tick.Unchecked += (sender, e) => PlotTicked(which, false);
+
+            TextBlock stem = Faint(SheetNumberRun.StemOf(which)
+                + (suffix.Length == 0 ? string.Empty : "   " + suffix));
+            stem.VerticalAlignment = VerticalAlignment.Center;
+
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            row.Children.Add(tick);
+            row.Children.Add(stem);
+            return row;
         }
 
         private UIElement InsideViewTypes()
@@ -601,7 +675,7 @@ namespace RcrcGreen.Revit
         private SheetGrid GridNow()
         {
             return SheetGrid.Build(
-                _picked.InRange, _columns.Shown, _model.Present, _model.PlotsWithAScopeBox, _marked);
+                _plots.InRange, _columns.Shown, _model.Present, _model.PlotsWithAScopeBox, _marked);
         }
 
         private UIElement InsideMark()
@@ -640,7 +714,7 @@ namespace RcrcGreen.Revit
 
             row.Children.Add(Secondary(
                 "Mark every missing",
-                () => MarkThese(BulkMarking.EveryMissing(grid, _picked.Ticked)),
+                () => MarkThese(BulkMarking.EveryMissing(grid, _plots.Ticked)),
                 "Marks every empty square on every ticked plot. A plot name marks its row and a "
                 + "column header marks its column."));
 
@@ -759,7 +833,7 @@ namespace RcrcGreen.Revit
             for (int row = 0; row < grid.Rows.Count; row++)
             {
                 SheetGridRow line = grid.Rows[row];
-                bool ticked = _picked.IsTicked(line.PlotId);
+                bool ticked = _plots.IsTicked(line.PlotId);
 
                 frozen.RowDefinitions.Add(new RowDefinition { Height = new GridLength(PanelMetrics.RowHeight) });
                 scrolling.RowDefinitions.Add(new RowDefinition { Height = new GridLength(PanelMetrics.RowHeight) });
@@ -787,7 +861,7 @@ namespace RcrcGreen.Revit
                 if (!line.HasScopeBox) label.Foreground = _theme.Warning;
 
                 Put(frozen, Flat(label, line.PlotId + ", click to mark every missing view on it",
-                    () => MarkThese(BulkMarking.WholeRow(grid, _picked.Ticked, line.PlotId))),
+                    () => MarkThese(BulkMarking.WholeRow(grid, _plots.Ticked, line.PlotId))),
                     row + 1, 1);
 
                 for (int column = 0; column < line.Cells.Count; column++)
@@ -853,7 +927,7 @@ namespace RcrcGreen.Revit
             });
 
             return Flat(stack, label.Full + ", click to mark it on every ticked plot",
-                () => MarkThese(BulkMarking.WholeColumn(grid, _picked.Ticked, type)));
+                () => MarkThese(BulkMarking.WholeColumn(grid, _plots.Ticked, type)));
         }
 
         /// <summary>
@@ -1776,16 +1850,16 @@ namespace RcrcGreen.Revit
                 Margin = PanelMetrics.Row
             });
 
-            if (!_readOnce || _picked.TickedCount == 0)
+            if (!_readOnce || _plots.TickedCount == 0)
             {
                 block.Children.Add(Faint("Tick at least one plot to see what Assign would do."));
                 return block;
             }
 
             ScopeBoxCounts counts = ScopeBoxCounts.For(
-                _model.ViewStates, _model.ScopeBoxNames, _picked.Ticked);
+                _model.ViewStates, _model.ScopeBoxNames, _plots.Ticked);
 
-            block.Children.Add(Faint(PanelSteps.ScopeBoxLine(counts.Considered, _picked.TickedCount)));
+            block.Children.Add(Faint(PanelSteps.ScopeBoxLine(counts.Considered, _plots.TickedCount)));
 
             AddCase(block, counts, ScopeBoxCase.NameDoesNotParse, "A, name does not parse");
 
@@ -2065,7 +2139,7 @@ namespace RcrcGreen.Revit
 
             return RunPlan.Of(
                 GridNow().Marked,
-                _picked.Ticked,
+                _plots.Ticked,
                 _model.PlotsWithAScopeBox,
                 _model.ScheduleTypes,
                 sectionTypes,
@@ -2084,7 +2158,7 @@ namespace RcrcGreen.Revit
             var inTheModel = new HashSet<ViewType>(_model.ViewTypes);
 
             return GridNow().Marked
-                .Where(one => one != null && _picked.IsTicked(one.PlotId))
+                .Where(one => one != null && _plots.IsTicked(one.PlotId))
                 .Select(one => one.ViewType)
                 .Distinct()
                 .Where(one => !inTheModel.Contains(one))
@@ -2099,7 +2173,7 @@ namespace RcrcGreen.Revit
         private IReadOnlyList<IReadOnlyList<SheetRowShown>> DescribedRows()
         {
             IReadOnlyList<ViewType> ticked = _columns.Shown;
-            IReadOnlyList<string> plots = _picked.Ticked;
+            IReadOnlyList<string> plots = _plots.Ticked;
 
             IReadOnlyList<Dictionary<string, SheetNumberProposal>> numbers =
                 NumbersBuilt(ticked, plots);
@@ -2261,7 +2335,7 @@ namespace RcrcGreen.Revit
 
         private void AskToRun()
         {
-            IReadOnlyList<string> ticked = _picked.Ticked;
+            IReadOnlyList<string> ticked = _plots.Ticked;
             if (ticked.Count == 0)
             {
                 Say(PanelSteps.NoPlotsTicked("run"));
@@ -2281,7 +2355,7 @@ namespace RcrcGreen.Revit
 
         private void AskToAssign()
         {
-            IReadOnlyList<string> ticked = _picked.Ticked;
+            IReadOnlyList<string> ticked = _plots.Ticked;
             if (ticked.Count == 0)
             {
                 Say(PanelSteps.NoPlotsTicked("assign"));
@@ -2296,23 +2370,29 @@ namespace RcrcGreen.Revit
         /// The handler calls this from the Revit thread, so the hop to the panel's own thread
         /// happens here rather than being forgotten at each call site.
         ///
-        /// The prefix, the first plot and the last plot are put back afterwards when the model
-        /// still holds them. A refresh that emptied all three left the user unable to see what
-        /// had changed, which is most of why an early version looked broken. The plots the user
-        /// unticked are put back the same way, because putting the range back rebuilds the
-        /// selection with every plot ticked and a refresh used to undo five unticks in silence.
-        /// The marks are cleared, since the model they were made against has been read again,
-        /// and what comes back is the clause the refresh message carries about that.
+        /// The ticked plots, each one's From and To, and the sub plots the user unticked are
+        /// put back afterwards when the model still holds them. A refresh that emptied the
+        /// lot left the user unable to see what had changed, which is most of why an early
+        /// version looked broken, and re-ticking a plot rebuilds its selection with every
+        /// sub plot ticked, which is what used to undo five unticks in silence. The marks
+        /// are cleared, since the model they were made against has been read again, and what
+        /// comes back is the clause the refresh message carries about that.
         /// </summary>
         private string Took(DrawingSheetSnapshot snapshot)
         {
             return Dispatcher.Invoke(() =>
             {
-                string prefixWas = _prefix.SelectedItem as string;
-                string fromWas = _from.SelectedItem as string;
-                string toWas = _to.SelectedItem as string;
-                List<string> untickedWere = _picked.InRange
-                    .Where(plotId => !_picked.IsTicked(plotId))
+                List<string> plotsWere = _plots.TickedPlots.ToList();
+                var fromWere = new Dictionary<string, string>(StringComparer.Ordinal);
+                var toWere = new Dictionary<string, string>(StringComparer.Ordinal);
+                foreach (string prefix in plotsWere)
+                {
+                    fromWere[prefix] = _plots.FromOf(prefix);
+                    toWere[prefix] = _plots.ToOf(prefix);
+                }
+
+                List<string> untickedWere = _plots.InRange
+                    .Where(plotId => !_plots.IsTicked(plotId))
                     .ToList();
 
                 _model = snapshot ?? DrawingSheetSnapshot.Nothing;
@@ -2322,12 +2402,23 @@ namespace RcrcGreen.Revit
                 _leftPlotsAlready = false;
                 _columns = _columns.OverTheseTypes(_model.ViewTypes);
 
-                FillPrefixes();
-                PutTheRangeBack(prefixWas, fromWas, toWas);
+                _plots = PlotTickList.Over(_model.PlotIds);
+                foreach (string prefix in plotsWere)
+                {
+                    // Ticking a plot the model no longer holds is a no-op, and a range end
+                    // that has gone leaves the plot on its whole span rather than half a
+                    // remembered range.
+                    _plots = _plots.TickingPlot(prefix, true);
 
-                // Ticking is a no-op for a plot no longer in the range, so a plot that has gone
-                // from the model is simply not put back.
-                foreach (string plotId in untickedWere) _picked = _picked.Ticking(plotId, false);
+                    IReadOnlyList<string> under = _plots.UnderPlot(prefix);
+                    if (under.Contains(fromWere[prefix]) && under.Contains(toWere[prefix]))
+                    {
+                        _plots = _plots.Ranging(prefix, fromWere[prefix], toWere[prefix]);
+                    }
+                }
+
+                // The same rule per sub plot: one that has gone is simply not put back.
+                foreach (string plotId in untickedWere) _plots = _plots.Ticking(plotId, false);
 
                 _stepOpen = StepsNow().FirstUnfinished;
                 Redraw();
@@ -2339,42 +2430,6 @@ namespace RcrcGreen.Revit
         private void Say(string what)
         {
             Dispatcher.Invoke(() => _said.Text = what ?? string.Empty);
-        }
-
-        private void FillPrefixes()
-        {
-            _filling = true;
-
-            _prefix.Items.Clear();
-            foreach (string prefix in PlotRange.PrefixesIn(_model.PlotIds))
-            {
-                _prefix.Items.Add(prefix);
-            }
-
-            _from.Items.Clear();
-            _to.Items.Clear();
-
-            _filling = false;
-        }
-
-        /// <summary>
-        /// Puts back what the user had picked before the refresh, when the model still holds
-        /// it. A plot that has gone is not put back, and then the range is simply unset.
-        /// </summary>
-        private void PutTheRangeBack(string prefixWas, string fromWas, string toWas)
-        {
-            if (prefixWas != null && _prefix.Items.Contains(prefixWas))
-            {
-                // Triggers PrefixChosen, which refills From and To and picks both ends.
-                _prefix.SelectedItem = prefixWas;
-
-                _filling = true;
-                if (fromWas != null && _from.Items.Contains(fromWas)) _from.SelectedItem = fromWas;
-                if (toWas != null && _to.Items.Contains(toWas)) _to.SelectedItem = toWas;
-                _filling = false;
-            }
-
-            RangeChosen();
         }
 
         private void ColumnShown(ViewType which, bool shown)
@@ -2432,50 +2487,19 @@ namespace RcrcGreen.Revit
                 + "marked new until the model holds one.");
         }
 
-        private void PrefixChosen()
-        {
-            if (_filling) return;
-
-            string prefix = _prefix.SelectedItem as string;
-            IReadOnlyList<string> under = PlotRange.WithPrefix(_model.PlotIds, prefix);
-
-            _filling = true;
-
-            _from.Items.Clear();
-            _to.Items.Clear();
-            foreach (string plotId in under)
-            {
-                _from.Items.Add(plotId);
-                _to.Items.Add(plotId);
-            }
-
-            if (under.Count > 0)
-            {
-                // Both ends default to the whole prefix, so one click on a prefix already
-                // shows something rather than an empty grid waiting on two more clicks.
-                _from.SelectedIndex = 0;
-                _to.SelectedIndex = under.Count - 1;
-            }
-
-            _filling = false;
-
-            RangeChosen();
-        }
-
         /// <summary>
-        /// The range changing resets every tick to on, which is the rule. Somebody who has just
-        /// moved to a different block of plots is not still excluding two from the last one.
+        /// One tick takes the plot's whole span with every sub plot ticked, so a plot is
+        /// one click's worth of work, and ticking the first one is the act that opens
+        /// everything below, so it opens the next step too. Once per read, so ticking a
+        /// second plot later does not throw the user out of the step they are in.
         /// </summary>
-        private void RangeChosen()
+        private void PlotPrefixTicked(string prefix, bool ticked)
         {
             if (_filling) return;
 
-            _picked = PlotSelection.AllOf(PlotsInRange());
+            _plots = _plots.TickingPlot(prefix, ticked);
 
-            // Picking a range is the one act that unlocks everything below, so it opens the
-            // next step. Once per read, so coming back to change the range later does not
-            // throw the user out of it again.
-            if (!_leftPlotsAlready && _picked.InRangeCount > 0 && _stepOpen == PanelStep.Plots)
+            if (!_leftPlotsAlready && _plots.InRangeCount > 0 && _stepOpen == PanelStep.Plots)
             {
                 _leftPlotsAlready = true;
                 MoveOnFrom(PanelStep.Plots);
@@ -2484,20 +2508,24 @@ namespace RcrcGreen.Revit
             Redraw();
         }
 
-        private IReadOnlyList<string> PlotsInRange()
+        /// <summary>
+        /// A changed range rebuilds that plot's ticks all on, which is the rule the old
+        /// range had: somebody who has just moved to a different block of sub plots is not
+        /// still excluding two from the last one. Other plots are left alone.
+        /// </summary>
+        private void RangePicked(string prefix, string from, string to)
         {
-            return PlotRange.Between(
-                _model.PlotIds,
-                _prefix.SelectedItem as string,
-                _from.SelectedItem as string,
-                _to.SelectedItem as string);
+            if (_filling) return;
+
+            _plots = _plots.Ranging(prefix, from, to);
+            Redraw();
         }
 
         private void PlotTicked(string plotId, bool ticked)
         {
             if (_filling) return;
 
-            _picked = _picked.Ticking(plotId, ticked);
+            _plots = _plots.Ticking(plotId, ticked);
             Redraw();
         }
 
@@ -2523,7 +2551,7 @@ namespace RcrcGreen.Revit
         /// </summary>
         private string NothingToDraw()
         {
-            return PanelSteps.NothingToDraw(_readOnce, _model.Empty, _prefix.SelectedItem != null);
+            return PanelSteps.NothingToDraw(_readOnce, _model.Empty, _plots.TickedPlotCount > 0);
         }
 
         private Button CellButton(string plotId, SheetGridCell cell, bool ticked)
