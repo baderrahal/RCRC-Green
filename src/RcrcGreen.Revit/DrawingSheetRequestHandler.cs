@@ -411,12 +411,29 @@ namespace RcrcGreen.Revit
 
             ScheduleCapture.CapturedSchedules definitions = ScheduleCapture.Read(document);
 
+            // The saved answers for view types with no example anywhere, read fresh off
+            // their file the way the numbers are read fresh off the model. A marked type
+            // the model does not hold routes as a section when its saved family type is a
+            // section kind, through the same Core method the panel's preview asks, so the
+            // plan on screen and the plan that writes cannot route a type two ways.
+            NewViewSetups setups = NewViewSetupStore.Read().Setups;
+
+            List<ViewType> newTypes = (marked ?? new List<PlotViewKey>())
+                .Where(one => one != null)
+                .Select(one => one.ViewType)
+                .Distinct()
+                .Where(one => !now.ViewTypes.Contains(one))
+                .ToList();
+
+            IEnumerable<ViewType> sectionTypes = now.SectionTypes
+                .Concat(setups.SectionTypesAmong(newTypes, now.ViewFamilyTypes));
+
             RunPlan plan = RunPlan.Of(
                 marked,
                 plotsTicked,
                 now.PlotsWithAScopeBox,
                 now.ScheduleTypes,
-                now.SectionTypes,
+                sectionTypes,
                 definitions.Usable.Keys,
                 sheetsWanted,
                 now.Present.Select(one => one.Where),
@@ -439,7 +456,7 @@ namespace RcrcGreen.Revit
                 using (var making = new Transaction(document, "Create drawing sheet views"))
                 {
                     making.Start();
-                    ModelWriter.Make(document, plan, outcome, definitions.Usable, boxIdByName);
+                    ModelWriter.Make(document, plan, outcome, definitions.Usable, boxIdByName, setups);
                     making.Commit();
                 }
 

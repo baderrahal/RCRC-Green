@@ -357,6 +357,22 @@ pre-run model, which is what had three runs in a row re-asking for the first run
 And the handler subscribes to DocumentOpened and DocumentClosed on its first request, so a
 model opened or closed under the open pane triggers a read with nothing pressed.
 
+**A view type with no example is answered once in step 5, or refused by name.** The Add
+row lets the user invent a column, and creation copies its setup from a view that does not
+exist, so the run refused every one. Step 5 lists each marked type no view in the model
+carries, with three dropdowns read off the model: view family type, view template, level.
+The family type's kind decides plan or section, a section takes no level, and only the
+kinds a view can be created under are offered, the four plan kinds and Section, which is
+what ViewPlan.Create and ViewSection.CreateSection accept. Answers save to
+`%APPDATA%\RCRC Green\new-view-setups.txt` through `NewViewSetupStore`, nothing shipped,
+because the names are a model's own. The handler reads the file fresh at Run, routes the
+type as a section through the same Core method the preview asks, and the writer resolves
+each saved name against the model, refusing with the name when one is not there. A type
+with no sibling and no complete answers is refused naming what is missing. On a view built
+from answers, annotation crop is still the tool's own on a plan and Crop View on a
+section, and the crop settings a sibling used to supply are left as Revit created them,
+said in the report.
+
 **The marker is set in step 1 and remembered per model.** Beside each ticked plot sit two
 dropdowns, letters and numbers, and the user uses one or the other. `MarkerLedger` bars the
 markers other plots' numbers or other panel rows already use, a typed one is warned about

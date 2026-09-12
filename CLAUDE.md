@@ -108,7 +108,10 @@ own kind, a calculated field cannot be added at all, and field names are copied 
 **A view family type is not named after the view type, and one view type is not built one way.**
 DM-11-(010) Location Key Plan uses `(010) Key Location Plan`, words swapped, so nothing anywhere
 is matched on a name. A new view takes its family type, level, template and two crop settings
-from ONE view of the same type the model holds, and the report names it. Three (010) views in
+from ONE view of the same type the model holds, and the report names it. A type with NO view
+anywhere is created from three answers the user picks once in step 5, family type, template
+and level, each from what the model holds, remembered per type and refused until all three
+are answered. A section takes no level. Three (010) views in
 one run took three different family types that way. **(400) Landscape Cross Section is a section
 rather than a plan view**, read off that view's kind rather than off the code.
 

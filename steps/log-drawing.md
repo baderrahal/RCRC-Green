@@ -4,6 +4,109 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty eighth pass. The name table, the stale read's cause, and the view type with no example
+
+Branch `claude/rcrc-green-setup-wf9ham`, a three fix brief in two pull requests. The brief
+arrived cut off mid sentence in fix 3, at the words a marked type with no sibling, and its
+closing rules were missing with it. The assumed completion: such a type with no complete
+answers is refused naming the three, which is the only reading consistent with nothing is
+invented and nothing is defaulted, and the standing finish applies. Pull request 86, fixes 1
+and 2, merged into main as `e42dd56`. **The runner executed 1278 tests against it, 0 failed
+and 0 skipped**, this branch's 1251 plus 27 KPI tests pull request 85 landed on main while
+it was open. The second pull request's merge sha and runner count go in the next entry,
+because this one is written before it exists.
+
+### Fix 2 first, the cause, with file and line, all read at main `eaed0e9` before any edit
+
+Candidate a is DISPROVED. DrawingSheetPanel.cs line 177, Shown, runs on every
+IsVisibleChanged and calls AskedForARefresh, so the pane does read when it becomes visible,
+and has since the round that fixed the second document.
+
+Candidate b is REAL but is not the whole incident. No DocumentOpened, DocumentChanged or
+DocumentClosed handler existed anywhere under src/RcrcGreen.Revit, measured by grep, so a
+model opened or changed under an open pane was never re-read.
+
+The nearest cause of the measured incident is the run itself. DrawingSheetRequestHandler.cs
+line 384 read the model fresh for the plan, and that fresh read went no further: RunPlan.cs
+line 313, AddSheets, checked no sheet number against anything, so the only number check
+lived on the panel against its last snapshot, and the collisions arrived as Revit refusals
+inside the transaction. And nothing handed the fresh snapshot back to the panel, whose
+closing words at line 449 were literally Press Refresh to see them, a copy of a fact the
+pane can ask for. So the panel's own run was a document change it never learned about, every
+proposal after a run was built on the pre run model, and three runs in a row asked for the
+numbers the first had created.
+
+What it does now when the model changes while the pane is open: a document opening or
+closing triggers a read of its own, through DocumentOpened and DocumentClosed subscribed on
+the handler's first request. A run that wrote hands a fresh read back through the same route
+Refresh uses, and its words say the panel has read the model again. And whatever still slips
+through is refused on the plan, because RunPlan checks every row's number against the
+numbers read as the run is worked out, so the panel can be a day old and the model still
+cannot be asked for a taken number.
+
+### Fix 1, the sheet name table
+
+Four of DM-11's eight sheet names disprove the upper casing rule, and the same wrong words
+made those sheets sort as unlisted, one cause with two symptoms. SheetNameSettings holds
+view type against sheet name, the user's sheet-names.txt first and the shipped one second,
+resolved once on PlannedSheet.ProposedName so the rows, the letter order and the run read
+one record and match SheetOrder's words. A type neither file holds falls back to the old
+derivation, said as derived under the box, and typing a name over a single view row saves
+the pairing on focus loss. THE TWO SCAN REPORTS ARE NOT IN THIS CONTAINER, nothing under
+reports/ is ever committed, so the verification the brief asked for did not run here.
+Checked instead against the committed records: seven of the nine names are the order list's
+own confirmed words, LIST OF DRAWINGS, GENERAL ARRANGEMENT LAYOUT and LANDSCAPE CROSS
+SECTION also stand in SheetNaming's doc as read off real sheets, and OVERALL PLAN and
+FURNITURE SCHEDULES rest on the brief alone. The shipped file test pins those two by name so
+the gap stays visible. Holding the nine against the two scans is still open and is the
+user's to close.
+
+### Fix 3, a view type with no example can be created
+
+The Add row promised a column the run always refused, because creation copies its setup from
+a view that does not exist. Step 5 lists each marked type no view in the model carries, with
+three dropdowns read off the model: view family type, view template, level. Only the kinds a
+view can be created under are offered, the four plan kinds and Section, which is what
+ViewPlan.Create and ViewSection.CreateSection accept. The family type's kind decides plan or
+section, a section takes no level, and the routing is one Core method, SectionTypesAmong,
+asked by the panel's preview and the run's handler alike. Answers save to new-view-
+setups.txt beside the other settings, nothing shipped because the names are a model's own,
+and the writer resolves each saved name against the model at Run, refusing with the name
+when this model does not hold it. A type with no sibling and no complete answers is refused
+naming what is missing, which is the assumed completion of the cut sentence. On a view built
+from answers, annotation crop is still the tool's own on a plan and Crop View on a section,
+and the crop settings a sibling used to supply are left as Revit created them, said in the
+report line for that view.
+
+### The breaks
+
+Four across the round, two per pull request, each reversed with the diff hash identical. The
+shipped sheet names beating the user's own, 1 of 1251 red. The run guard reading nothing
+instead of the fresh numbers, 1 of 1251 red. A section asked for a level it cannot take, 2
+of 1288 red. Every answered type routing as a section, 1 of 1288 red.
+
+### What ran here
+
+dotnet test on every change, 1251 after fixes 1 and 2 and 1288 after fix 3, 0 failed and 0
+skipped each time. dotnet build of the whole solution in Release, 0 errors, the only
+warnings the KPI task's pre existing analyzer notes. The grep for Autodesk under Core,
+clean. The writing scan over every changed file, clean. The runner executed 1278 against
+pull request 86.
+
+### Not observed
+
+Nothing in this round has been through Revit. Unexecuted there: the DocumentOpened and
+DocumentClosed events firing and the read they trigger, the post run read back on a real
+model, the run refusing a taken number before the transaction rather than inside it, the
+saved sheet name reaching a real sheet, the derived line on screen, the three dropdowns and
+their save file, a view created from answers, plan or section, and whether Revit accepts the
+answered family type, template and level combinations a user will actually pick. The scan
+verification of the nine shipped names is open as said above.
+
+---
+
+---
+
 ## 2026-09-12, fifty seventh pass. The report for the sheet numbering round
 
 Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 83 is

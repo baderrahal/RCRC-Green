@@ -1,24 +1,19 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Fifty eighth pass, the sheet name table and the stale read, fixes 1 and 2 of
-a three fix brief that arrived cut off mid sentence in fix 3. The assumed completion, a
-marked type with no sibling and no complete answers is refused naming the three, goes with
-fix 3's own pull request. The sheet name comes from SheetNameSettings now, the user's sheet-
-names.txt then the shipped one, resolved once on PlannedSheet.ProposedName so the rows, the
-letters and the order read one record, the derivation is only the fallback and says derived,
-and typing a name over a single view row saves the pairing on focus loss. The stale read's
-cause is three findings, in the log with lines when fix 3 lands: Shown reads on every show,
-so candidate a is disproved. Nothing anywhere re-read when a document opened or changed
-under the pane. And the run read fresh for its plan but never checked sheet numbers against
-that read and never handed the snapshot back, its words were Press Refresh to see them,
-which is the pane holding a copy of a fact it can ask for. Now RunPlan refuses a row whose
-number the model holds at Run, a run that wrote hands back a fresh read through the Refresh
-route, and the handler subscribes to DocumentOpened and DocumentClosed on its first request.
-The two scan reports are not in this container, nothing under reports/ is committed, so the
-nine shipped names are checked against the order list and the committed records instead, and
-OVERALL PLAN and FURNITURE SCHEDULES rest on the brief alone. Suite reads 1251 locally, up
-twelve from the 1239 main carries at `eaed0e9`. Two breaks watched red, 1 of 1251 each. Not
-merged yet.
+Phase: 9, ship. Fifty eighth pass, the three fix round, second pull request. The first,
+fixes 1 and 2, is merged as `e42dd56` with 1278 on the runner, this branch's 1251 plus 27
+KPI tests pull request 85 landed while it was open: the sheet name table with its shipped
+nine and the stale read's three part fix, the cause in the log with file and line. This
+commit is fix 3: a marked view type no view in the model carries is answered once in step 5,
+family type, template and level, each from what the model holds, only the four plan kinds
+and Section offered, the kind routing through SectionTypesAmong which panel and handler both
+ask, answers remembered in new-view-setups.txt, the writer resolving each name against the
+model at Run and refusing with the name when one is not there, and a type with no complete
+answers refused naming what is missing, which is the assumed completion of the brief's cut
+sentence. Annotation crop stays the tool's own on a plan and Crop View on a section, the
+sibling only crop settings left as Revit made them and said so. Suite reads 1288 locally, up
+ten from the 1278 the first pull request left on main. Two more breaks watched red, 2 and 1
+of 1288. Not merged yet.
 
 Before that, the fifty sixth pass, the sheet numbering round, two pull requests, both
 merged. The first, fixes 1 and 2, is merged as `e4b5d9e` with 1230 tests on the runner, 0

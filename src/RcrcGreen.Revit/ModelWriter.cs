@@ -29,8 +29,11 @@ namespace RcrcGreen.Revit
             RunPlan plan,
             RunOutcome outcome,
             Dictionary<ViewType, CapturedSchedule> definitions,
-            Dictionary<string, ElementId> boxIdByName)
+            Dictionary<string, ElementId> boxIdByName,
+            NewViewSetups setups = null)
         {
+            if (setups == null) setups = NewViewSetups.Nothing;
+
             var madeSoFar = new Dictionary<string, ElementId>(StringComparer.Ordinal);
 
             // Read once, before anything is created, so no view this run makes can become the
@@ -41,7 +44,7 @@ namespace RcrcGreen.Revit
             // have created. The plan puts sheets last already and this does not rely on it.
             foreach (RunItem item in plan.Items.Where(one => one.Kind != RunItemKind.Sheet))
             {
-                MakeOne(document, item, outcome, definitions, boxIdByName, madeSoFar, siblings);
+                MakeOne(document, item, outcome, definitions, boxIdByName, madeSoFar, siblings, setups);
             }
 
             foreach (RunItem item in plan.Items.Where(one => one.Kind == RunItemKind.Sheet))
@@ -75,7 +78,8 @@ namespace RcrcGreen.Revit
             Dictionary<ViewType, CapturedSchedule> definitions,
             Dictionary<string, ElementId> boxIdByName,
             Dictionary<string, ElementId> madeSoFar,
-            SiblingReader siblings)
+            SiblingReader siblings,
+            NewViewSetups setups)
         {
             try
             {
@@ -85,10 +89,10 @@ namespace RcrcGreen.Revit
                         MakeSchedule(document, item, outcome, definitions, madeSoFar);
                         break;
                     case RunItemKind.Section:
-                        MakeSection(document, item, outcome, boxIdByName, madeSoFar, siblings);
+                        MakeSection(document, item, outcome, boxIdByName, madeSoFar, siblings, setups);
                         break;
                     default:
-                        MakePlanView(document, item, outcome, boxIdByName, madeSoFar, siblings);
+                        MakePlanView(document, item, outcome, boxIdByName, madeSoFar, siblings, setups);
                         break;
                 }
             }
@@ -126,12 +130,13 @@ namespace RcrcGreen.Revit
             RunOutcome outcome,
             Dictionary<string, ElementId> boxIdByName,
             Dictionary<string, ElementId> madeSoFar,
-            SiblingReader siblings)
+            SiblingReader siblings,
+            NewViewSetups setups)
         {
             Sibling sibling = siblings.For(item.Type, SiblingKind.Plan);
             if (sibling == null)
             {
-                outcome.Refused(NoSibling(item));
+                MakePlanViewFromAnswers(document, item, outcome, boxIdByName, madeSoFar, setups);
                 return;
             }
 
@@ -203,23 +208,275 @@ namespace RcrcGreen.Revit
             SetPlotId(made, item, outcome);
             SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " " + annotation.InWords());
 
+            AssignScopeBox(made, item, outcome, boxIdByName);
+        }
+
+        /// <summary>
+        /// A plan view gets the scope box. A section does not, because a real one in this
+        /// model has none and its own section box is what bounds it. The return of Set is
+        /// checked because Revit can answer false without throwing, and the scope box
+        /// assignment command already treats that false as a refusal worth naming.
+        /// </summary>
+        private static void AssignScopeBox(
+            View made,
+            RunItem item,
+            RunOutcome outcome,
+            Dictionary<string, ElementId> boxIdByName)
+        {
             ElementId boxId;
-            if (boxIdByName.TryGetValue(item.PlotId, out boxId))
+            if (!boxIdByName.TryGetValue(item.PlotId, out boxId)) return;
+
+            Parameter holder = made.get_Parameter(ScopeBoxScanner.ScopeBoxParameter);
+            if (holder == null || holder.IsReadOnly || !holder.Set(boxId))
             {
-                // A plan view gets the scope box. A section does not, because a real one in this
-                // model has none and its own section box is what bounds it. The return of Set
-                // is checked because Revit can answer false without throwing, and the scope
-                // box assignment command already treats that false as a refusal worth naming.
-                Parameter holder = made.get_Parameter(ScopeBoxScanner.ScopeBoxParameter);
-                if (holder == null || holder.IsReadOnly || !holder.Set(boxId))
+                outcome.NeedsAttention(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created, but the scope box could not be set. The view template it "
+                    + "inherited may be controlling it. Set it by hand."));
+            }
+        }
+
+        /// <summary>
+        /// A plan view for a type no view in the model carries, built from the three answers
+        /// saved in step 5 rather than from a sibling, because there is none to copy. Nothing
+        /// is invented: short of an answer, the item is refused naming what to set.
+        /// </summary>
+        private static void MakePlanViewFromAnswers(
+            Document document,
+            RunItem item,
+            RunOutcome outcome,
+            Dictionary<string, ElementId> boxIdByName,
+            Dictionary<string, ElementId> madeSoFar,
+            NewViewSetups setups)
+        {
+            AnsweredSetup answered = ResolveAnswers(document, item, outcome, setups, false);
+            if (answered == null) return;
+
+            ViewPlan made = ViewPlan.Create(document, answered.FamilyTypeId, answered.LevelId);
+            if (!Renamed(document, made, item, outcome, item.Name)) return;
+            outcome.Made(item);
+            madeSoFar[item.Name] = made.Id;
+
+            Finishing(
+                outcome,
+                said => new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created, but setting it up did not finish. " + said + " Its view template, "
+                    + "crop, " + ModelScanner.PlotIdParameterName + " or scope box may not be "
+                    + "set. Check it by hand."),
+                () => FinishPlanViewFromAnswers(made, answered, item, outcome, boxIdByName));
+        }
+
+        private static void FinishPlanViewFromAnswers(
+            ViewPlan made,
+            AnsweredSetup answered,
+            RunItem item,
+            RunOutcome outcome,
+            Dictionary<string, ElementId> boxIdByName)
+        {
+            made.ViewTemplateId = answered.TemplateId;
+
+            AnnotationCropChoice annotation = AnnotationCropChoice.ForAPlanView(null);
+            SetAnnotationCropAlone(made, item, outcome, annotation.On);
+
+            SetPlotId(made, item, outcome);
+            SaySetUpFrom(item, outcome, FromAnswersInWords(answered, item, true)
+                + " " + annotation.InWords()
+                + " The other crop settings are as Revit created them, because there is no "
+                + "sibling to copy them from.");
+
+            AssignScopeBox(made, item, outcome, boxIdByName);
+        }
+
+        /// <summary>
+        /// A section built from the answers. Crop View is still the tool's own and on, the
+        /// crop region is the section box computed from the plot's scope box, and the
+        /// annotation crop is left as Revit created it, because a sibling is the only place
+        /// it was ever copied from and there is none.
+        /// </summary>
+        private static void FinishSectionFromAnswers(
+            ViewSection made, AnsweredSetup answered, RunItem item, RunOutcome outcome)
+        {
+            made.ViewTemplateId = answered.TemplateId;
+
+            SectionCropChoice crop = SectionCropChoice.ForASection(null);
+            try
+            {
+                made.CropBoxActive = crop.On;
+            }
+            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            {
+                outcome.NeedsAttention(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created, but Crop View could not be turned on, so the section is not "
+                    + "bounded sideways. The view template may be controlling it. Set it by "
+                    + "hand."));
+            }
+
+            SetPlotId(made, item, outcome);
+            SaySetUpFrom(item, outcome, FromAnswersInWords(answered, item, false)
+                + " " + crop.InWords() + " Looks "
+                + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture)
+                + " metre, which is the tool's setting rather than anything read off a view. "
+                + "The annotation crop is as Revit created it, because there is no sibling to "
+                + "copy it from.");
+        }
+
+        /// <summary>
+        /// The sentence naming where an answered view's setup came from, so the report reads
+        /// the saved answers the way it reads a sibling's facts.
+        /// </summary>
+        private static string FromAnswersInWords(AnsweredSetup answered, RunItem item, bool forPlan)
+        {
+            return item.Name + " is set up from the answers saved in step 5, because no view "
+                + "of its type exists anywhere in this model: view family type "
+                + answered.Answers.FamilyTypeName + ", view template "
+                + answered.Answers.TemplateName
+                + (forPlan
+                    ? ", level " + answered.Answers.LevelName + "."
+                    : ". A section takes no level.");
+        }
+
+        /// <summary>
+        /// The annotation crop half of ApplySiblingCrop, for a view with no sibling to take
+        /// the other settings from. The Set return is still checked, because Revit can answer
+        /// false without throwing.
+        /// </summary>
+        private static void SetAnnotationCropAlone(
+            View made, RunItem item, RunOutcome outcome, bool on)
+        {
+            Parameter annotation =
+                made.get_Parameter(BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE);
+
+            if (annotation == null || annotation.IsReadOnly || !annotation.Set(on ? 1 : 0))
+            {
+                outcome.NeedsAttention(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "Created, but Annotation Crop could not be set. The view template it "
+                    + "inherited may be controlling it. Set it by hand. A view with it off "
+                    + "draws the section markers of neighbouring plots through itself."));
+            }
+        }
+
+        /// <summary>
+        /// What one answered view resolves to in this model. The names are saved in a file
+        /// shared across models, so every one is looked up here and a name this model does
+        /// not hold refuses with the name rather than guessing.
+        /// </summary>
+        private sealed class AnsweredSetup
+        {
+            public AnsweredSetup(NewViewAnswers answers, ElementId familyTypeId, ElementId templateId, ElementId levelId)
+            {
+                Answers = answers;
+                FamilyTypeId = familyTypeId;
+                TemplateId = templateId;
+                LevelId = levelId;
+            }
+
+            public NewViewAnswers Answers { get; }
+
+            public ElementId FamilyTypeId { get; }
+
+            public ElementId TemplateId { get; }
+
+            public ElementId LevelId { get; }
+        }
+
+        private static AnsweredSetup ResolveAnswers(
+            Document document,
+            RunItem item,
+            RunOutcome outcome,
+            NewViewSetups setups,
+            bool asSection)
+        {
+            string missing = setups.Missing(item.Type, asSection);
+            if (missing.Length > 0)
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "No view of this type exists anywhere in this model to copy the setup "
+                    + "from, and the answers in step 5 are short of " + missing + ". Answer "
+                    + "them there, or make one such view by hand on any plot and this will "
+                    + "follow it."));
+                return null;
+            }
+
+            NewViewAnswers answers = setups.For(item.Type);
+
+            ViewFamilyType familyType = new FilteredElementCollector(document)
+                .OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>()
+                .FirstOrDefault(one => string.Equals(
+                    one.Name, answers.FamilyTypeName, StringComparison.Ordinal));
+
+            if (familyType == null)
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "The saved view family type " + answers.FamilyTypeName + " is not in this "
+                    + "model. The answers are shared across models, so pick one this model "
+                    + "holds in step 5."));
+                return null;
+            }
+
+            bool isSection = familyType.ViewFamily == ViewFamily.Section;
+            if (isSection != asSection)
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "The saved view family type " + answers.FamilyTypeName + " is a "
+                    + familyType.ViewFamily + ", but this item was planned as a "
+                    + (asSection ? "section" : "plan view")
+                    + ". Press Refresh and run again."));
+                return null;
+            }
+
+            View template = new FilteredElementCollector(document)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .FirstOrDefault(one => one.IsTemplate && string.Equals(
+                    one.Name, answers.TemplateName, StringComparison.Ordinal));
+
+            if (template == null)
+            {
+                outcome.Refused(new RunRefusal(
+                    item.PlotId,
+                    item.Type,
+                    "The saved view template " + answers.TemplateName + " is not in this "
+                    + "model. Pick one this model holds in step 5."));
+                return null;
+            }
+
+            ElementId levelId = ElementId.InvalidElementId;
+            if (!asSection)
+            {
+                Level level = new FilteredElementCollector(document)
+                    .OfClass(typeof(Level))
+                    .Cast<Level>()
+                    .FirstOrDefault(one => string.Equals(
+                        one.Name, answers.LevelName, StringComparison.Ordinal));
+
+                if (level == null)
                 {
-                    outcome.NeedsAttention(new RunRefusal(
+                    outcome.Refused(new RunRefusal(
                         item.PlotId,
                         item.Type,
-                        "Created, but the scope box could not be set. The view template it "
-                        + "inherited may be controlling it. Set it by hand."));
+                        "The saved level " + answers.LevelName + " is not in this model. Pick "
+                        + "one this model holds in step 5."));
+                    return null;
                 }
+
+                levelId = level.Id;
             }
+
+            return new AnsweredSetup(answers, familyType.Id, template.Id, levelId);
         }
 
         /// <summary>
@@ -266,19 +523,23 @@ namespace RcrcGreen.Revit
             RunOutcome outcome,
             Dictionary<string, ElementId> boxIdByName,
             Dictionary<string, ElementId> madeSoFar,
-            SiblingReader siblings)
+            SiblingReader siblings,
+            NewViewSetups setups)
         {
             Sibling sibling = siblings.For(item.Type, SiblingKind.Section);
+            AnsweredSetup answered = null;
+
             if (sibling == null)
             {
-                outcome.Refused(NoSibling(item));
-                return;
+                // No view of this type anywhere. The saved answers from step 5 stand in for
+                // the sibling, or the item is refused naming what is still unanswered.
+                answered = ResolveAnswers(document, item, outcome, setups, true);
+                if (answered == null) return;
             }
-
-            // A plan's family type used to reach ViewSection.CreateSection here and come back
-            // as Revit refused an argument, which names the wrong cause.
-            if (sibling.Facts.Kind != SiblingKind.Section)
+            else if (sibling.Facts.Kind != SiblingKind.Section)
             {
+                // A plan's family type used to reach ViewSection.CreateSection here and come
+                // back as Revit refused an argument, which names the wrong cause.
                 outcome.Refused(new RunRefusal(
                     item.PlotId, item.Type, sibling.Facts.WrongKindInWords(SiblingKind.Section)));
                 return;
@@ -334,7 +595,9 @@ namespace RcrcGreen.Revit
             }
 
             ViewSection made = ViewSection.CreateSection(
-                document, sibling.View.GetTypeId(), SectionBoxFor(plot, across));
+                document,
+                sibling != null ? sibling.View.GetTypeId() : answered.FamilyTypeId,
+                SectionBoxFor(plot, across));
 
             if (!Renamed(document, made, item, outcome, item.Name)) return;
             outcome.Made(item);
@@ -348,7 +611,11 @@ namespace RcrcGreen.Revit
                     "Created, but setting it up did not finish. " + said + " Its view template, "
                     + "crop or " + ModelScanner.PlotIdParameterName + " may not be set. Check "
                     + "it by hand."),
-                () => FinishSection(made, sibling, item, outcome));
+                () =>
+                {
+                    if (sibling != null) FinishSection(made, sibling, item, outcome);
+                    else FinishSectionFromAnswers(made, answered, item, outcome);
+                });
         }
 
         /// <summary>
@@ -981,16 +1248,6 @@ namespace RcrcGreen.Revit
         private static void SaySetUpFrom(RunItem item, RunOutcome outcome, string what)
         {
             outcome.NoteSetup(new RunRefusal(item.PlotId, item.Type, what));
-        }
-
-        private static RunRefusal NoSibling(RunItem item)
-        {
-            return new RunRefusal(
-                item.PlotId,
-                item.Type,
-                "No plot in this model has a " + item.Type + " to copy the setup from, so the "
-                + "view family type, the level and the view template are all unknown. Make one "
-                + "by hand on any plot and this will follow it.");
         }
 
         /// <summary>
