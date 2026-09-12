@@ -67,13 +67,6 @@ namespace RcrcGreen.Revit
         private NewViewSetups _newViewSetups = NewViewSetups.Nothing;
         private IReadOnlyList<string> _newViewSetupsNotRead = new List<string>();
 
-        // The markers of the model on screen. Loaded when the document title changes rather
-        // than on every read, so a marker set this session keeps saying set now instead of
-        // coming back off its own file as remembered.
-        private PlotMarkers _markers = PlotMarkers.Nothing;
-        private IReadOnlyList<string> _markersNotRead = new List<string>();
-        private string _markersModel;
-
         private readonly StackPanel _steps = new StackPanel();
         private readonly TextBlock _modelName = new TextBlock();
         private readonly TextBlock _readAt = new TextBlock();
@@ -462,16 +455,6 @@ namespace RcrcGreen.Revit
             block.Children.Add(Faint(PanelSteps.PlotsLine(
                 _model.Empty, _picked.TickedCount, _picked.InRangeCount, _model.PlotIds.Count)));
 
-            foreach (string line in _markersNotRead)
-            {
-                block.Children.Add(Faint("A plot marker could not be read: " + line));
-            }
-
-            // Read once for the whole list: which markers the model's own sheet numbers
-            // already use, so no plot is offered another plot's marker.
-            MarkerLedger ledger = MarkerLedger.Of(
-                _model.SheetNumbersOnPlots, _model.SheetNumbersInUse);
-
             var ticks = new StackPanel();
             foreach (string plotId in _picked.InRange)
             {
@@ -496,134 +479,11 @@ namespace RcrcGreen.Revit
                 tick.Checked += (sender, e) => PlotTicked(which, true);
                 tick.Unchecked += (sender, e) => PlotTicked(which, false);
                 ticks.Children.Add(tick);
-
-                if (_picked.IsTicked(which))
-                {
-                    ticks.Children.Add(MarkerRow(which, ledger));
-                }
             }
 
             block.Children.Add(Scrolling(ticks, PanelMetrics.ListHeight, "plots"));
-            block.Children.Add(Faint("A ticked plot's marker is the middle of its sheet "
-                + "numbers, picked here once and remembered per model in " + PlotMarkerStore.FileName
-                + " beside your title block settings. The model is its document title."));
             block.Children.Add(NextButton(PanelStep.Plots));
             return block;
-        }
-
-        /// <summary>
-        /// The two dropdowns under a ticked plot, letters and numbers, with where the marker
-        /// came from beside them. The user uses one or the other, and a marker another plot's
-        /// numbers already use is not offered here, though a typed one is warned about rather
-        /// than refused.
-        /// </summary>
-        private UIElement MarkerRow(string plotId, MarkerLedger ledger)
-        {
-            string marker = _markers.MarkerOf(plotId);
-            IReadOnlyCollection<string> barred = ledger.BarredFor(plotId, _markers);
-
-            ComboBox letters = MarkerBox(
-                plotId,
-                MarkerChoices.Letters.Where(one => !barred.Contains(one)).ToList(),
-                marker.Length > 0 && marker.All(char.IsLetter) ? marker : string.Empty,
-                "Letters, the way NG05 marks DM-11 with Q.");
-
-            ComboBox numbers = MarkerBox(
-                plotId,
-                MarkerChoices.Numbers.Where(one => !barred.Contains(one)).ToList(),
-                marker.Length > 0 && marker.All(char.IsDigit) ? marker : string.Empty,
-                "Three digits, the way NG03 marks FP-39 with 001.");
-
-            var row = new StackPanel { Orientation = Orientation.Horizontal };
-            row.Children.Add(new TextBlock
-            {
-                Text = "Marker",
-                Margin = PanelMetrics.Row,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = _theme.Foreground
-            });
-            row.Children.Add(letters);
-            row.Children.Add(numbers);
-
-            var said = new StackPanel { Margin = PanelMetrics.CellPad };
-            said.Children.Add(row);
-            said.Children.Add(Faint(_markers.WordsFor(plotId)));
-
-            string warning = ledger.Warning(plotId, _markers);
-            if (warning.Length > 0)
-            {
-                said.Children.Add(new TextBlock
-                {
-                    Text = warning,
-                    Foreground = _theme.Warning,
-                    TextWrapping = TextWrapping.Wrap
-                });
-            }
-
-            return said;
-        }
-
-        private ComboBox MarkerBox(
-            string plotId, IReadOnlyList<string> offered, string showing, string why)
-        {
-            var box = new ComboBox
-            {
-                IsEditable = true,
-                Width = PanelMetrics.LabelWidth,
-                Margin = PanelMetrics.Row,
-                Text = showing,
-                ToolTip = why,
-                // The letters list runs A to ZZZ, 18,278 entries, which a plain list panel
-                // lays out in full on the first open. Virtualizing keeps the open instant.
-                ItemsPanel = new ItemsPanelTemplate(
-                    new FrameworkElementFactory(typeof(VirtualizingStackPanel)))
-            };
-            box.ItemsSource = offered;
-
-            box.SelectionChanged += (sender, e) =>
-            {
-                if (_filling) return;
-                string picked = box.SelectedItem as string;
-                if (picked != null) MarkerPicked(plotId, picked);
-            };
-
-            box.LostKeyboardFocus += (sender, e) =>
-            {
-                if (_filling) return;
-                MarkerPicked(plotId, box.Text ?? string.Empty);
-            };
-
-            return box;
-        }
-
-        /// <summary>
-        /// One plot's marker changed. Saved at once, because a marker that looks set and is
-        /// not would cost somebody a run's worth of sheets, and redrawn at once, because
-        /// every built number in step 4 reads through it.
-        /// </summary>
-        private void MarkerPicked(string plotId, string marker)
-        {
-            string wanted = (marker ?? string.Empty).Trim();
-            if (string.Equals(_markers.MarkerOf(plotId), wanted, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            _markers = _markers.With(plotId, wanted);
-
-            string refused = PlotMarkerStore.Save(_model.DocumentTitle, _markers);
-            if (refused.Length > 0) Say(refused);
-
-            Redraw();
-        }
-
-        private void ReadThePlotMarkers()
-        {
-            StoredMarkers stored = PlotMarkerStore.Read(_model.DocumentTitle);
-
-            _markers = stored.Markers;
-            _markersNotRead = stored.NotRead;
-            _markersModel = _model.DocumentTitle;
         }
 
         private UIElement InsideViewTypes()
@@ -1090,7 +950,8 @@ namespace RcrcGreen.Revit
         /// The dropdown list every row's name box offers, read off the snapshot once per
         /// redraw. The number box offers no list any more: the free numbers it used to offer
         /// were stepped off the model's own, and on the measured model most of those are copy
-        /// numbers, so the number is built from the marker instead and typed over when wrong.
+        /// numbers, so the number is built from the view code and the plot identifier instead
+        /// and typed over when wrong.
         /// </summary>
         private sealed class SheetOffers
         {
@@ -1513,8 +1374,8 @@ namespace RcrcGreen.Revit
         {
             // A plain box rather than a dropdown. The list it used to offer was the model's
             // own numbers stepped on, and on the measured model most of those are copies, so
-            // the number is built from the view code and the plot's marker instead. It shows
-            // here and can be typed over.
+            // the number is built from the view code and the plot identifier instead. It
+            // shows here and can be typed over.
             var box = new TextBox
             {
                 Margin = PanelMetrics.Row,
@@ -2258,7 +2119,7 @@ namespace RcrcGreen.Revit
         /// per view code however many definitions add sheets to it.
         ///
         /// Occupied slots are the plot's own numbers from the model plus everything typed for
-        /// it on this panel, so a typed 010001A pushes the first built 010 number to B. The
+        /// it on this panel, so a typed 010DM42A pushes the first built 010 number to B. The
         /// letters follow the team's order within each code, by the sheet's name, and fall
         /// back to the described order for names the list does not hold.
         /// </summary>
@@ -2275,8 +2136,6 @@ namespace RcrcGreen.Revit
 
             foreach (string plotId in plots)
             {
-                string marker = _markers.MarkerOf(plotId);
-
                 var occupied = new List<string>(_model.NumbersOnPlot(plotId));
                 for (int at = 0; at < _sheets.Count; at++)
                 {
@@ -2325,13 +2184,6 @@ namespace RcrcGreen.Revit
                             continue;
                         }
 
-                        if (marker.Length == 0)
-                        {
-                            built[at][key] = SheetNumberProposal.Nothing(
-                                SheetNumberRun.NoMarkerWords(plotId));
-                            continue;
-                        }
-
                         List<KeyValuePair<int, int>> group;
                         if (!wanting.TryGetValue(code, out group))
                         {
@@ -2356,7 +2208,7 @@ namespace RcrcGreen.Revit
                         .ThenBy(row => row.Value)
                         .ToList();
 
-                    var run = new SheetNumberRun(code, marker, occupied, group.Count);
+                    var run = new SheetNumberRun(code, plotId, occupied, group.Count);
 
                     foreach (KeyValuePair<int, int> row in group)
                     {
@@ -2469,12 +2321,6 @@ namespace RcrcGreen.Revit
                 _marked.Clear();
                 _leftPlotsAlready = false;
                 _columns = _columns.OverTheseTypes(_model.ViewTypes);
-
-                if (!string.Equals(
-                    _markersModel, _model.DocumentTitle, StringComparison.Ordinal))
-                {
-                    ReadThePlotMarkers();
-                }
 
                 FillPrefixes();
                 PutTheRangeBack(prefixWas, fromWas, toWas);

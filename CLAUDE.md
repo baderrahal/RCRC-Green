@@ -88,10 +88,16 @@ These come from the team and from real models. They are not guesses.
   from the view name upper cased: OVERALL KEYPLAN, PROJECT LOCATION KEY PLAN, and HARDSCAPE
   and SOFTSCAPE SCHEDULES, plural where the view names are not. Upper casing the view name
   is only the fallback for a type no file names, and it is said as derived when it runs.
-  Its number is the view code, then a plot MARKER the user sets once per plot, then a sheet
-  letter within one code, absent when the code holds a single sheet: 010001A and 200001 on
-  NG03, 010QF and 200Q on NG05. The marker is letters or three digits and is NEVER derived
-  from the model, whose numbers are copies on every plot but one
+  Its number is BUILT by the tool, the user's scheme: the view code, then the plot identifier
+  with its dash dropped, then a sheet letter within one code, absent when the code holds a
+  single sheet, so DM-42 reads 010DM42A, 010DM42B, 200DM42. Nothing is set per plot, nothing
+  is reserved and nothing runs out, because the identifier is in the number and no two plots
+  share one. NOTHING is derived from the model's own numbers, which are copies on every plot
+  but one. The two measured models are numbered an older way, 010001A and 200001 on NG03,
+  010QF and 200Q on NG05, and those sheets keep their numbers beside the new ones, which is
+  the user's decision rather than a fault. The per-plot marker the tool asked for in step 1
+  was wrong twice over, numbering the user had said is automatic and a long step 1, and its
+  whole family is deleted
 - **There are two plot parameters, not one.** `PRX_Plot_ID` sits on views and on sheets and the
   Sheet List filters on it. `PRX_Ref Plot ID`, with spaces rather than underscores, sits on
   model elements and every quantity schedule filters on that one. A schedule built against the

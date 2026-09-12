@@ -93,11 +93,11 @@ namespace RcrcGreen.Core
     /// <summary>
     /// The sheet numbers that will be refused and the words for them.
     ///
-    /// Building a number is <see cref="SheetNumberRun"/>: the view code, the plot's marker
-    /// from step 1, then a sheet letter when the code holds several sheets. The rules that
-    /// read a plot letter off the model's own numbers and stepped free numbers off the ones
-    /// in use are gone, because on the measured model only DM-11 has real numbers and every
-    /// other plot carries copies, so both rules answered nothing on 159 of 160 plots.
+    /// Building a number is <see cref="SheetNumberRun"/>: the view code, the plot identifier
+    /// with its dash dropped, then a sheet letter when the code holds several sheets. The
+    /// rules that read a plot letter off the model's own numbers and stepped free numbers off
+    /// the ones in use are gone, because on the measured model only DM-11 has real numbers and
+    /// every other plot carries copies, so both rules answered nothing on 159 of 160 plots.
     /// </summary>
     public static class SheetNumbers
     {

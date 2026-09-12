@@ -7,21 +7,21 @@ using Xunit;
 namespace RcrcGreen.Core.Tests
 {
     /// <summary>
-    /// Sheet numbers are built: the view code, the plot's marker, then a sheet letter when
-    /// the code holds several sheets.
+    /// Sheet numbers are built: the view code, then the plot identifier with its dash
+    /// dropped, then a sheet letter when the code holds several sheets.
     ///
-    /// Every expected number below is written out by hand from the two measured models.
-    /// FP-39 on NG03, marker 001, reads 010001A to 010001D and 200001. DM-11 on NG05,
-    /// marker Q, reads 010QE to 010QH, 200Q, 400Q, 600QC and 600QD. The old rules that read
-    /// a plot letter off the plot's own numbers and stepped free numbers off the ones in use
-    /// are gone, because every other plot in NG05 carries only copy numbers and both rules
-    /// answered nothing there.
+    /// Every expected number below is written out by hand from the user's worked example.
+    /// DM-42 reads 010DM42A TITLE SHEET, 010DM42B LIST OF DRAWINGS, 200DM42 GENERAL
+    /// ARRANGEMENT LAYOUT, 400DM42 LANDSCAPE CROSS SECTION, 600DM42A HARDSCAPE SCHEDULES
+    /// and 600DM42B SOFTSCAPE SCHEDULES. The per-plot marker this replaced is deleted
+    /// rather than left beside it: the identifier is in the number, so nothing is set in
+    /// step 1, nothing is reserved and no two plots can collide.
     /// </summary>
     public class SheetNumberRunTests
     {
-        private static readonly string[] DmElevenNumbers =
+        private static readonly string[] DmFortyTwoNumbers =
         {
-            "010QE", "010QF", "010QG", "010QH", "200Q", "400Q", "600QC", "600QD"
+            "010DM42A", "010DM42B", "200DM42", "400DM42", "600DM42A", "600DM42B"
         };
 
         private static string[] Built(SheetNumberRun run, int howMany)
@@ -32,130 +32,187 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// FP-39 as the model holds it: four 010 sheets lettered from A, and the single 200
-        /// sheet bare, because a code holding one sheet carries no letter.
+        /// The worked example: two 010 sheets lettered from A, the single 200 sheet bare
+        /// because a code holding one sheet carries no letter, and the two 600 schedules
+        /// lettered again.
         /// </summary>
         [Fact]
-        public void AFreshPlotIsNumberedTheWayFpThirtyNineIs()
+        public void AFreshPlotIsNumberedTheWayTheWorkedExampleReads()
         {
             Assert.Equal(
-                new[] { "010001A", "010001B", "010001C", "010001D" },
-                Built(new SheetNumberRun("010", "001", new string[0], 4), 4));
+                new[] { "010DM42A", "010DM42B" },
+                Built(new SheetNumberRun("010", "DM-42", new string[0], 2), 2));
 
             Assert.Equal(
-                new[] { "200001" },
-                Built(new SheetNumberRun("200", "001", new string[0], 1), 1));
+                new[] { "200DM42" },
+                Built(new SheetNumberRun("200", "DM-42", new string[0], 1), 1));
+
+            Assert.Equal(
+                new[] { "600DM42A", "600DM42B" },
+                Built(new SheetNumberRun("600", "DM-42", new string[0], 2), 2));
         }
 
         /// <summary>
-        /// Several sheets under an empty code are lettered from the first. Bare is only for a
-        /// code whose one sheet is its whole set.
-        /// </summary>
-        [Fact]
-        public void TwoNewSheetsUnderOneCodeAreBothLettered()
-        {
-            Assert.Equal(
-                new[] { "600RA", "600RB" },
-                Built(new SheetNumberRun("600", "R", new string[0], 2), 2));
-        }
-
-        /// <summary>
-        /// A second run continues after the letters the plot already holds. DM-11 holds 600QC
-        /// and 600QD, so two more 600 sheets read E and F rather than colliding with C.
+        /// A second run continues after the letters the plot already holds. DM-42 holding
+        /// 600DM42A and 600DM42B gets C and D for two more 600 sheets rather than a
+        /// collision on A.
         /// </summary>
         [Fact]
         public void ASecondRunContinuesAfterThePlotsOwnLetters()
         {
             Assert.Equal(
-                new[] { "600QE", "600QF" },
-                Built(new SheetNumberRun("600", "Q", DmElevenNumbers, 2), 2));
+                new[] { "600DM42C", "600DM42D" },
+                Built(new SheetNumberRun("600", "DM-42", DmFortyTwoNumbers, 2), 2));
 
             Assert.Equal(
-                new[] { "010QI" },
-                Built(new SheetNumberRun("010", "Q", DmElevenNumbers, 1), 1));
+                new[] { "010DM42C" },
+                Built(new SheetNumberRun("010", "DM-42", DmFortyTwoNumbers, 1), 1));
         }
 
         /// <summary>
-        /// A bare number holds the first letter's place. DM-11's 200Q stays as it is, because
-        /// renaming the model's own sheet is not this tool's to do, and the next 200 sheet
-        /// reads B.
+        /// A bare number holds the first letter's place. The model's own 200DM42 stays as
+        /// it is, because renaming a sheet the model holds is not this tool's to do, and
+        /// the next 200 sheet reads B.
         /// </summary>
         [Fact]
         public void ABareNumberOccupiesTheFirstLettersPlace()
         {
             Assert.Equal(
-                new[] { "200QB" },
-                Built(new SheetNumberRun("200", "Q", DmElevenNumbers, 1), 1));
+                new[] { "200DM42B" },
+                Built(new SheetNumberRun("200", "DM-42", DmFortyTwoNumbers, 1), 1));
 
             Assert.Equal(
-                new[] { "200QD" },
-                Built(new SheetNumberRun("200", "Q", new[] { "200Q", "200QC" }, 1), 1));
+                new[] { "400DM42D" },
+                Built(new SheetNumberRun(
+                    "400", "DM-42", new[] { "400DM42", "400DM42C" }, 1), 1));
         }
 
         /// <summary>
-        /// A number typed on the panel occupies its slot the same way a model number does, so
-        /// a typed 010001A pushes the first built one to B.
+        /// A number typed on the panel occupies its slot the same way a model number does,
+        /// so a typed 010DM42A pushes the first built one to B.
         /// </summary>
         [Fact]
         public void ATypedNumberPushesTheBuiltOnesPastIt()
         {
             Assert.Equal(
-                new[] { "010001B", "010001C", "010001D" },
-                Built(new SheetNumberRun("010", "001", new[] { "010001A" }, 3), 3));
+                new[] { "010DM42B", "010DM42C" },
+                Built(new SheetNumberRun("010", "DM-42", new[] { "010DM42A" }, 2), 2));
         }
 
         /// <summary>
-        /// A copy number occupies nothing. 010QE Copy 001 is what Revit writes when a sheet
-        /// is duplicated, and counting it would letter a fresh plot as if it already had
-        /// sheets.
+        /// The two measured models are numbered the old marker way, 010QE on NG05 and
+        /// 010001A on NG03. Neither starts with the new front, so neither holds a slot:
+        /// old sheets are never renumbered, the built numbers letter from A beside them,
+        /// and the two schemes side by side on one plot is the user's decision rather
+        /// than a fault. An exact collision is still refused, by SheetNumbers.FaultIn
+        /// below and again at Run.
+        /// </summary>
+        [Fact]
+        public void OldSchemeNumbersHoldNoSlotAndAreNeverRenumbered()
+        {
+            Assert.Equal(
+                new[] { "010DM11A", "010DM11B" },
+                Built(new SheetNumberRun(
+                    "010", "DM-11",
+                    new[] { "010QE", "010QF", "010QG", "010QH", "200Q" }, 2), 2));
+
+            Assert.Equal(
+                new[] { "010FP39" },
+                Built(new SheetNumberRun(
+                    "010", "FP-39",
+                    new[] { "010001A", "010001B", "010001C", "010001D" }, 1), 1));
+        }
+
+        /// <summary>
+        /// A copy number occupies nothing. 010DM42A Copy 001 is what Revit writes when a
+        /// sheet is duplicated, and counting it would letter a fresh plot as if it already
+        /// had sheets.
         /// </summary>
         [Fact]
         public void ACopyNumberOccupiesNoSlot()
         {
             Assert.Equal(
-                new[] { "010Q" },
+                new[] { "010DM42" },
                 Built(new SheetNumberRun(
-                    "010", "Q", new[] { "010QE Copy 001", "400Q Copy 009" }, 1), 1));
+                    "010", "DM-42", new[] { "010DM42A Copy 001" }, 1), 1));
+        }
+
+        /// <summary>
+        /// DM-4 and DM-42 share every character up to DM-4's end, so DM-42's numbers start
+        /// with DM-4's front. The tail there is DM-42's extra digit, not a sheet letter,
+        /// and it holds no slot on DM-4's run.
+        /// </summary>
+        [Fact]
+        public void ALongerPlotsNumberHoldsNoSlotOnAShorterPlotsRun()
+        {
+            Assert.Equal(
+                new[] { "010DM4" },
+                Built(new SheetNumberRun(
+                    "010", "DM-4", new[] { "010DM42", "010DM42A" }, 1), 1));
         }
 
         [Fact]
         public void RunningOutOfLettersIsSaidRatherThanInvented()
         {
             SheetNumberProposal past = new SheetNumberRun(
-                "200", "Q", new[] { "200QZ" }, 1).Next();
+                "200", "DM-42", new[] { "200DM42Z" }, 1).Next();
 
             Assert.False(past.Offered);
             Assert.Equal(
-                "Every letter to Z after 200Q is used, so no number could be built. Type the "
-                + "number.",
+                "Every letter to Z after 200DM42 is used, so no number could be built. Type "
+                + "the number.",
                 past.WhyNot);
         }
 
+        /// <summary>
+        /// The stem rule, on its own because step 1 shows it beside every plot. It answers
+        /// empty for anything that is not a plot identifier, the trim matching what
+        /// PlotId.TryRead accepts, so nothing builds a number on a name the model never
+        /// gave.
+        /// </summary>
         [Fact]
-        public void ARunNeedsItsCodeAndItsMarker()
+        public void TheStemIsTheIdentifierWithItsDashDropped()
         {
-            Assert.Throws<ArgumentException>(
-                () => new SheetNumberRun(string.Empty, "Q", new string[0], 1));
-            Assert.Throws<ArgumentException>(
-                () => new SheetNumberRun("200", string.Empty, new string[0], 1));
+            Assert.Equal("DM42", SheetNumberRun.StemOf("DM-42"));
+            Assert.Equal("NS6", SheetNumberRun.StemOf(" NS-6 "));
+            Assert.Equal(string.Empty, SheetNumberRun.StemOf("dm-42"));
+            Assert.Equal(string.Empty, SheetNumberRun.StemOf("Q"));
+            Assert.Equal(string.Empty, SheetNumberRun.StemOf(string.Empty));
+            Assert.Equal(string.Empty, SheetNumberRun.StemOf(null));
         }
 
         /// <summary>
-        /// The reasons a row gets no built number, word for word. The no-marker one names the
-        /// plot, because it is also what the run refusal carries and the fix is in step 1.
+        /// The old scheme's marker, Q, is not a plot identifier and cannot start a run any
+        /// more. Refusing it here is what stops a second numbering scheme creeping back in
+        /// through a caller.
         /// </summary>
         [Fact]
-        public void TheReasonsNameThePlotAndThePlace()
+        public void ARunNeedsItsCodeAndItsPlot()
         {
-            Assert.Equal(
-                "No marker is set for DM-16 in step 1, so no number could be built. Set it "
-                + "there or type the number.",
-                SheetNumberRun.NoMarkerWords("DM-16"));
+            Assert.Throws<ArgumentException>(
+                () => new SheetNumberRun(string.Empty, "DM-42", new string[0], 1));
+            Assert.Throws<ArgumentException>(
+                () => new SheetNumberRun("200", string.Empty, new string[0], 1));
+            Assert.Throws<ArgumentException>(
+                () => new SheetNumberRun("200", "Q", new string[0], 1));
+        }
 
+        /// <summary>
+        /// The reasons a row gets no built number, word for word. Both go under the box
+        /// and into the run refusal.
+        /// </summary>
+        [Fact]
+        public void TheReasonsSayWhatStopsTheNumber()
+        {
             Assert.Equal(
                 "This sheet's views carry different codes, so no single code can front its "
                 + "number. Type the number.",
                 SheetNumberRun.MixedCodesWords());
+
+            Assert.Equal(
+                "This sheet holds no views, so there is no view code to build its number "
+                + "from. Type the number.",
+                SheetNumberRun.NoViewsWords());
         }
     }
 
