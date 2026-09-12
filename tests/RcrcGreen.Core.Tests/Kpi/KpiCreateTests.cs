@@ -761,7 +761,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             // A document answered with no plots: the model holds none.
             Assert.Equal(
-                new[] { "No plot in this model. Press KPI Scan first, or open a model that holds one." },
+                new[] { "No plot in this model. Open a model that holds one." },
                 CreateWords.PlotsBlock(true, PlotsInTheModel.Of(null, null)));
 
             // A document answered with plots: the count, off PlotSources.

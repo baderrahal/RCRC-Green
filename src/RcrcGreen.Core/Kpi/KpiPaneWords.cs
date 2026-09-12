@@ -15,17 +15,21 @@ namespace RcrcGreen.Core.Kpi
 
         public const string Waiting = "Open a model. This pane reads its name as soon as it is shown.";
 
-        public const string NoModel = "No open document. Open a model and press KPI Scan.";
+        public const string NoModel = "No open document. Open a model.";
 
-        public const string NotScanned = "Not scanned yet. Press KPI Scan.";
+        /// <summary>
+        /// Before any read has answered for this model. It names no button, because there
+        /// is none: Create reads the model itself when it needs to.
+        /// </summary>
+        public const string NotScanned = "Not read yet.";
 
         public const string Scanning =
-            "Scanning the whole model. It reads every sheet, link and schedule, so it takes "
+            "Reading the whole model. It reads every sheet, link and schedule, so it takes "
             + "longer than the Drawing Sheet read.";
 
         public const string ReadOnly =
-            "KPI Scan reads and writes a text file. It creates nothing in the model and "
-            + "touches no workbook.";
+            "Create reads the model and writes a workbook and two text files. It creates "
+            + "nothing in the model and never writes to a template.";
 
         public static string ModelNamed(string documentTitle)
         {

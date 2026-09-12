@@ -73,9 +73,9 @@ namespace RcrcGreen.Revit
                     ? "Open the KPI pane."
                     : ShowKpiCommand.NotAvailableTip,
                 ShowKpiCommand.PaneRegistered
-                    ? "KPI Scan reads the open model and writes a text file answering where each "
-                      + "value the GRP KPI Checklist asks for lives. It creates nothing in the "
-                      + "model and touches no workbook."
+                    ? "Create fills the GRP KPI Checklist from the open model, reading the model "
+                      + "itself when it needs to, and writes a text file saying where every value "
+                      + "came from. It creates nothing in the model and never writes to a template."
                     : ShowKpiCommand.NotAvailable);
 
             return Result.Succeeded;

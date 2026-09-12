@@ -7,9 +7,9 @@ namespace RcrcGreen.Revit.Kpi
 {
     /// <summary>
     /// Opens the KPI pane and brings it to the front. The button is called KPI Checklist
-    /// after the workbook it will one day fill, and the scan inside the pane is KPI Scan,
-    /// never Scan Model, because that name is already a button inside the Drawing Sheet pane
-    /// and two buttons with one name doing different things is a trap.
+    /// after the workbook it fills. It is the one KPI button: the pane's own scan button is
+    /// gone, because Create reads the model when it needs to and a scan somebody has to know
+    /// to press first is the tool's business and not theirs.
     /// </summary>
     [Transaction(TransactionMode.ReadOnly)]
     [Regeneration(RegenerationOption.Manual)]

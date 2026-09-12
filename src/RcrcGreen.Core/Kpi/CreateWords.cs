@@ -66,6 +66,14 @@ namespace RcrcGreen.Core.Kpi
         public const string Create = "Create";
 
         /// <summary>
+        /// The line the moment Create is pressed, before the run has decided anything. It
+        /// claims no read, because whether the model is read or the scan and the readings
+        /// already held answer this press is the run's to say a moment later, and a press
+        /// that reuses both would have been opened with a sentence about reading.
+        /// </summary>
+        public const string Creating = "Creating.";
+
+        /// <summary>
         /// Over the grouping buttons. It says the prefix is what gathers them, because a button
         /// reading MOSQUES beside a plot list nobody can see the rule behind is a button whose
         /// answer has to be taken on trust.
@@ -99,7 +107,7 @@ namespace RcrcGreen.Core.Kpi
         }
 
         public const string NoPlots =
-            "No plot in this model. Press KPI Scan first, or open a model that holds one.";
+            "No plot in this model. Open a model that holds one.";
 
         public const string NoModel = "No model is open.";
 
