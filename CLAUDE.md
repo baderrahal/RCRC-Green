@@ -118,7 +118,9 @@ through DM-11's plans. The report says whose setting each is.
 
 A new view is CREATED FRESH, never copied from another plot, and carries no annotation or
 detailing. A SHEET IS DESCRIBED rather than copied: the title block type, the views and 1, 2 or
-4 per sheet are shared, and the views DIVIDE into as many sheets as they need, none left off. A
+4 per sheet are shared, and the views DIVIDE into as many sheets as they need, none left off,
+and the sheets come out in the team's order, the code first and the nine name order list
+within it. A TITLE SHEET is an empty sheet on the COVER PAGE block, described with no views. A
 sheet's size is read off the title block PLACED ON IT, because Sheet Width and Sheet Height only
 exist on the instance. A SHEET HAS NO SCALE OF ITS OWN: its Scale reads out its views' templates.
 

@@ -76,8 +76,11 @@ namespace RcrcGreen.Core
         /// </summary>
         public string WhyNothingIsProposed()
         {
-            return NamedFromItsView
-                ? string.Empty
+            if (NamedFromItsView) return string.Empty;
+
+            return Views.Count == 0
+                ? "Holds no views, the way a title sheet does, so the name is typed rather "
+                    + "than proposed."
                 : "Holds " + Views.Count + " views, so the name is typed rather than proposed.";
         }
 
@@ -107,12 +110,51 @@ namespace RcrcGreen.Core
             int each = SheetLayout.IsACount(perSheet) ? perSheet : 1;
 
             var planned = new List<PlannedSheet>();
+
+            // A definition with no views plans ONE empty sheet rather than none. The title
+            // sheet is a real sheet on both measured models, 0 views on 010001A and on
+            // 010QE, and the writer places nothing without complaint. No views meant no
+            // rows before, so the one sheet the team starts a set with could not be
+            // described at all. A half filled definition still makes nothing, because its
+            // row is refused until its typed name and number arrive.
+            if (wanted.Count == 0)
+            {
+                planned.Add(new PlannedSheet(wanted));
+                return planned;
+            }
+
             for (int start = 0; start < wanted.Count; start += each)
             {
                 planned.Add(new PlannedSheet(wanted.Skip(start).Take(each)));
             }
 
-            return planned;
+            // The team's order: the code first, then the order list within a code, then the
+            // ticked order for anything not on the list. It is also the letter order, which
+            // is why it is applied here, before the numbers are built, rather than at Run.
+            return planned
+                .Select((sheet, at) => new PlannedInOrder(sheet, at))
+                .OrderBy(one => SheetOrder.CodeToOrderBy(one.Sheet.Views), NaturalOrder.Comparer)
+                .ThenBy(one => SheetOrder.Position(one.Sheet.ProposedName))
+                .ThenBy(one => one.At)
+                .Select(one => one.Sheet)
+                .ToList();
+        }
+
+        /// <summary>
+        /// One planned sheet with where it arrived, so the order can fall back to the ticked
+        /// order for names the list does not hold.
+        /// </summary>
+        private sealed class PlannedInOrder
+        {
+            public PlannedInOrder(PlannedSheet sheet, int at)
+            {
+                Sheet = sheet;
+                At = at;
+            }
+
+            public PlannedSheet Sheet { get; }
+
+            public int At { get; }
         }
     }
 }

@@ -312,18 +312,19 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// The shipped file itself, read off the repo. It is the only record of the eleven the
-        /// team picked by hand on 2026-09-11, so a change that breaks it fails here rather than
-        /// on somebody's install.
+        /// The shipped file itself, read off the repo. It is the only record of the eleven
+        /// the team picked by hand on 2026-09-11 and the title sheet's cover page read off
+        /// both models, so a change that breaks it fails here rather than on somebody's
+        /// install.
         /// </summary>
         [Fact]
-        public void TheShippedDefaultsHoldTheElevenTheTeamPicked()
+        public void TheShippedDefaultsHoldTheTwelveTheTeamUses()
         {
             TitleBlockFileContents read = TitleBlockSettingsFile.Read(
                 File.ReadAllText(ShippedFile()));
 
             Assert.Empty(read.NotRead);
-            Assert.Equal(11, read.Pairings.Count);
+            Assert.Equal(12, read.Pairings.Count);
 
             Assert.All(read.Pairings,
                 one => Assert.Equal("AR-PRX-Title_Block_A1", one.FamilyName));
@@ -332,8 +333,8 @@ namespace RcrcGreen.Core.Tests
             // LOD /  HARDSCAPE SCHEDULES comes before LOD / SCHEDULES. Written out the other
             // way round first and this test said so.
             Assert.Equal(
-                new[] { "GA-SCHEMATIC", "KEYPLAN", "LOD", TwoSpaces, "LOD / SCHEDULES",
-                    "SECTION / ENLARGEMENTS" },
+                new[] { "COVER PAGE", "GA-SCHEMATIC", "KEYPLAN", "LOD", TwoSpaces,
+                    "LOD / SCHEDULES", "SECTION / ENLARGEMENTS" },
                 read.Pairings.Select(one => one.TypeName)
                     .Distinct(StringComparer.Ordinal)
                     .OrderBy(one => one, StringComparer.Ordinal)
@@ -341,7 +342,12 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Equal(2, read.Pairings.Count(one => one.TypeName == TwoSpaces));
             Assert.Equal(3, read.Pairings.Count(one => one.TypeName == "LOD / SCHEDULES"));
-            Assert.Equal(4, read.Pairings.Count(one => one.Type.Code == "010"));
+            Assert.Equal(5, read.Pairings.Count(one => one.Type.Code == "010"));
+
+            TitleBlockPairing cover = Assert.Single(
+                read.Pairings, one => one.TypeName == "COVER PAGE");
+            Assert.Equal("TITLE SHEET", cover.Type.ViewName);
+            Assert.Equal("010", cover.Type.Code);
         }
 
         /// <summary>

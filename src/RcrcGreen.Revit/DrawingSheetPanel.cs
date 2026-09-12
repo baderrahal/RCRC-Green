@@ -2024,9 +2024,8 @@ namespace RcrcGreen.Revit
         ///
         /// Occupied slots are the plot's own numbers from the model plus everything typed for
         /// it on this panel, so a typed 010001A pushes the first built 010 number to B. The
-        /// letters are given in the order the sheets were described. Whether they should
-        /// follow the team's sheet order instead is the sheet order fix, which is the next
-        /// round of this brief rather than this one.
+        /// letters follow the team's order within each code, by the sheet's name, and fall
+        /// back to the described order for names the list does not hold.
         /// </summary>
         private IReadOnlyList<Dictionary<string, SheetNumberProposal>> NumbersBuilt(
             IReadOnlyList<ViewType> ticked, IReadOnlyList<string> plots)
@@ -2085,7 +2084,9 @@ namespace RcrcGreen.Revit
                         if (code.Length == 0)
                         {
                             built[at][key] = SheetNumberProposal.Nothing(
-                                SheetNumberRun.MixedCodesWords());
+                                sheet.Views.Count == 0
+                                    ? SheetNumberRun.NoViewsWords()
+                                    : SheetNumberRun.MixedCodesWords());
                             continue;
                         }
 
@@ -2110,7 +2111,16 @@ namespace RcrcGreen.Revit
 
                 foreach (string code in codesInOrder)
                 {
-                    List<KeyValuePair<int, int>> group = wanting[code];
+                    // The letters follow the team's order, which goes by the sheet's name,
+                    // so 010001A is the first name on the list whatever was described first.
+                    // The described order only breaks ties the list does not.
+                    List<KeyValuePair<int, int>> group = wanting[code]
+                        .OrderBy(row => SheetOrder.Position(
+                            NameShownFor(plotId, planned[row.Key][row.Value], _sheets[row.Key])))
+                        .ThenBy(row => row.Key)
+                        .ThenBy(row => row.Value)
+                        .ToList();
+
                     var run = new SheetNumberRun(code, marker, occupied, group.Count);
 
                     foreach (KeyValuePair<int, int> row in group)
@@ -2122,6 +2132,19 @@ namespace RcrcGreen.Revit
             }
 
             return built;
+        }
+
+        /// <summary>
+        /// The name a row shows right now, typed or proposed, which is what the team's order
+        /// goes by when the letters are handed out.
+        /// </summary>
+        private static string NameShownFor(
+            string plotId, PlannedSheet sheet, SheetBeingDescribed described)
+        {
+            string typed;
+            return described.TypedName(plotId, sheet.Signature, out typed)
+                ? typed
+                : sheet.ProposedName;
         }
 
         private IReadOnlyList<SheetBatch> SheetsWanted()

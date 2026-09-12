@@ -316,6 +316,9 @@ namespace RcrcGreen.Core
             List<RunItem> items,
             List<RunRefusal> refusals)
         {
+            var arrivals = new List<SheetArrival>();
+            int batchAt = 0;
+
             foreach (SheetBatch batch in (sheetsWanted ?? Enumerable.Empty<SheetBatch>())
                 .Where(one => one != null))
             {
@@ -327,33 +330,78 @@ namespace RcrcGreen.Core
                         batch.Definition.TitleBlock,
                         "No sheet of this kind was made on any plot, because it is missing "
                         + batch.Definition.WhatIsMissing + ". The tool invents neither."));
+                    batchAt++;
                     continue;
                 }
 
+                int rowAt = 0;
                 foreach (SheetToMake row in batch.Rows)
                 {
-                    if (!stillTicked.Contains(row.PlotId)) continue;
-
-                    if (!row.CanBeMade)
+                    if (stillTicked.Contains(row.PlotId))
                     {
-                        // The marker line rides along when the number is missing because no
-                        // marker is set, so the refusal names the plot to fix in step 1.
-                        refusals.Add(RunRefusal.ForSheet(
-                            row.PlotId,
-                            row.SheetNumber,
-                            row.SheetName.Length == 0 ? row.ViewsInWords() : row.SheetName,
-                            "No sheet was made for " + row.PlotId + " holding "
-                            + row.ViewsInWords() + ", because it is still missing "
-                            + row.WhatIsMissing + ". The tool invents neither."
-                            + (row.WhyTheNumberIsMissing.Length == 0
-                                ? string.Empty
-                                : " " + row.WhyTheNumberIsMissing)));
-                        continue;
+                        arrivals.Add(new SheetArrival(row, batchAt, rowAt));
                     }
 
-                    items.Add(RunItem.ForSheet(row));
+                    rowAt++;
                 }
+
+                batchAt++;
             }
+
+            // The team's order, which is also the order the sheets are created in: the plot,
+            // the code, the order list within a code, then how the sheets were described for
+            // anything the list does not hold. Left in described order, the set came out in
+            // whatever order the user ticked, which on a real plot put the schedules ahead
+            // of the title sheet.
+            foreach (SheetArrival one in arrivals
+                .OrderBy(one => one.Row.PlotId, NaturalOrder.Comparer)
+                .ThenBy(one => SheetOrder.CodeRank(SheetOrder.CodeToOrderBy(one.Row.Views)))
+                .ThenBy(one => SheetOrder.CodeToOrderBy(one.Row.Views), NaturalOrder.Comparer)
+                .ThenBy(one => SheetOrder.Position(one.Row.SheetName))
+                .ThenBy(one => one.BatchAt)
+                .ThenBy(one => one.RowAt))
+            {
+                SheetToMake row = one.Row;
+
+                if (!row.CanBeMade)
+                {
+                    // The marker line rides along when the number is missing because no
+                    // marker is set, so the refusal names the plot to fix in step 1.
+                    refusals.Add(RunRefusal.ForSheet(
+                        row.PlotId,
+                        row.SheetNumber,
+                        row.SheetName.Length == 0 ? row.ViewsInWords() : row.SheetName,
+                        "No sheet was made for " + row.PlotId + " holding "
+                        + row.ViewsInWords() + ", because it is still missing "
+                        + row.WhatIsMissing + ". The tool invents neither."
+                        + (row.WhyTheNumberIsMissing.Length == 0
+                            ? string.Empty
+                            : " " + row.WhyTheNumberIsMissing)));
+                    continue;
+                }
+
+                items.Add(RunItem.ForSheet(row));
+            }
+        }
+
+        /// <summary>
+        /// One sheet row with where it arrived, so the order can fall back to how the sheets
+        /// were described when the list holds no answer.
+        /// </summary>
+        private sealed class SheetArrival
+        {
+            public SheetArrival(SheetToMake row, int batchAt, int rowAt)
+            {
+                Row = row;
+                BatchAt = batchAt;
+                RowAt = rowAt;
+            }
+
+            public SheetToMake Row { get; }
+
+            public int BatchAt { get; }
+
+            public int RowAt { get; }
         }
 
         /// <summary>

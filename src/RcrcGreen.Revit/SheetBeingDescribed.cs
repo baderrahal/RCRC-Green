@@ -95,6 +95,15 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
+        /// What the user typed into one row's name box, so the panel can order the letter
+        /// sequence by the team's list, which goes by the sheet's name.
+        /// </summary>
+        public bool TypedName(string plotId, string signature, out string name)
+        {
+            return Typed(_namesTyped, plotId, signature, out name);
+        }
+
+        /// <summary>
         /// One row per sheet this definition will make, per ticked plot, each carrying its
         /// name and number, built or typed, or the reason nothing could be built.
         ///

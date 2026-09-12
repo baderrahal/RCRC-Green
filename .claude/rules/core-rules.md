@@ -147,6 +147,14 @@ the 001 kind, where the letter is the sheet letter and only the three digits bef
 count. Counting A off 010001A would bar most of the alphabet on a model numbered the NG03
 way.
 
+`SheetOrder` holds the team's sheet order, nine names, and it is also the letter order:
+010001A is TITLE SHEET and 010001B is LIST OF DRAWINGS because of the list. Order by the
+code first, then the list within a code, then the ticked order for anything the list does
+not hold. A sheet with no views has no code and sorts ahead of the coded ones, because the
+one such sheet the team makes is the title sheet and it opens both measured sets. The
+position forgives case and edge spaces and nothing else, so OVERALL KEY PLAN with the space
+reads as unlisted rather than being silently matched to OVERALL KEYPLAN.
+
 `FaultIn` and `Problems` answer the same question twice over: the line under one box, and the
 count in the run summary. One place decides, so the panel can never say a number is fine while
 the summary counts it.
