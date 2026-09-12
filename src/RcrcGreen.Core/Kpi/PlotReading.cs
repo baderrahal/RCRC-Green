@@ -538,7 +538,8 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<PhaseSubtotal> phases = null,
             bool groupTotalPrinted = false,
             double groupTotalSquareMetres = 0.0,
-            int groupTotalItemCount = 0)
+            int groupTotalItemCount = 0,
+            string roundingNote = null)
         {
             if (heading == null) throw new ArgumentNullException("heading");
             if (repeats < 0) throw new ArgumentOutOfRangeException("repeats");
@@ -556,7 +557,18 @@ namespace RcrcGreen.Core.Kpi
             GroupTotalPrinted = groupTotalPrinted;
             GroupTotalSquareMetres = groupTotalPrinted ? groupTotalSquareMetres : 0.0;
             GroupTotalItemCount = groupTotalPrinted ? groupTotalItemCount : 0;
+            RoundingNote = roundingNote ?? string.Empty;
         }
+
+        /// <summary>
+        /// The rows above the group total add to within the project's own rounding of it, with
+        /// every count exact: said in full, or empty. FM-21 prints Existing 2 over 0, Proposed
+        /// 51 over 11 and a group total of 52 over 11, and 2 plus 51 is 53, because every
+        /// printed area is already rounded and a sum of rounded numbers need not equal a
+        /// rounded sum. It is a line in the report rather than a refusal, so a real fault
+        /// growing slowly stays visible while correct data goes through.
+        /// </summary>
+        public string RoundingNote { get; }
 
         /// <summary>
         /// The printed row of the group total, counting the heading row as 1, or of the one row

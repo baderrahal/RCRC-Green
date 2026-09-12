@@ -27,7 +27,8 @@ namespace RcrcGreen.Core.Kpi
             string sourcePath,
             string outputPath,
             IReadOnlyList<CellWrite> writes,
-            IEnumerable<WorkbookCell> computesFrom = null)
+            IEnumerable<WorkbookCell> computesFrom = null,
+            Action<string> step = null)
         {
             if (sourcePath == null) throw new ArgumentNullException("sourcePath");
             if (outputPath == null) throw new ArgumentNullException("outputPath");
@@ -74,6 +75,7 @@ namespace RcrcGreen.Core.Kpi
                     }
                 }
 
+                step?.Invoke(ProgressWords.CopyingTheTemplate);
                 File.Copy(sourcePath, outputPath, true);
 
                 var changed = new List<string>();
@@ -83,6 +85,7 @@ namespace RcrcGreen.Core.Kpi
                 using (FileStream updating = new FileStream(outputPath, FileMode.Open, FileAccess.ReadWrite))
                 using (var zip = new ZipArchive(updating, ZipArchiveMode.Update))
                 {
+                    step?.Invoke(ProgressWords.WritingTheCells);
                     foreach (IGrouping<string, CellWrite> perSheet in writes.GroupBy(write => write.SheetName, StringComparer.Ordinal))
                     {
                         string partPath = sheetParts[perSheet.Key];
@@ -112,6 +115,7 @@ namespace RcrcGreen.Core.Kpi
                 int partsInOutput;
                 CacheCheck cache;
                 FormulaCheck formulas;
+                step?.Invoke(ProgressWords.ReadingThemBack);
                 var landed = new List<LandedCell>();
                 using (FileStream reading = File.OpenRead(outputPath))
                 using (var zip = new ZipArchive(reading, ZipArchiveMode.Read))
@@ -133,6 +137,7 @@ namespace RcrcGreen.Core.Kpi
                     // What the output's formulas will make of the cells that landed. A written
                     // row whose neighbouring formula returns a space, and a formula that
                     // multiplies that space, is #VALUE! whatever Excel recalculates.
+                    step?.Invoke(ProgressWords.CheckingTheFormulas);
                     formulas = WorkbookFormulas.Check(
                         zip, workbookPart, sheetParts,
                         writes.Select(write => new WorkbookCell(write.SheetName, write.Cell.ToString())),

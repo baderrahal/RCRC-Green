@@ -267,7 +267,26 @@ namespace RcrcGreen.Core.Kpi
                     {
                         Line(report, "        group total row " + subtotal.RowNumber + " prints " + Number(subtotal.GroupTotalSquareMetres)
                             + " over " + subtotal.GroupTotalItemCount + ", "
-                            + (subtotal.Agrees ? "and the phase rows taken and left out add to it" : "AND THE PHASE ROWS DO NOT ADD TO IT"));
+                            + (subtotal.RoundingNote.Length > 0
+                                ? "and " + subtotal.RoundingNote
+                                : subtotal.Agrees ? "and the phase rows taken and left out add to it" : "AND THE PHASE ROWS DO NOT ADD TO IT"));
+                    }
+                    else if (subtotal.RoundingNote.Length > 0)
+                    {
+                        // A one phase group carries the same note against its own last row.
+                        Line(report, "        " + subtotal.RoundingNote);
+                    }
+
+                    // The species rows against the group's own value, recorded rather than
+                    // enforced, the forty seventh pass's decision. The docstring said printed
+                    // and nothing printed it, so a drift here was invisible until this line.
+                    if (!double.IsNaN(subtotal.SpeciesSum)
+                        && Math.Abs(subtotal.SpeciesSum - (subtotal.GroupTotalPrinted ? subtotal.GroupTotalSquareMetres : subtotal.SquareMetres)) > 0.005)
+                    {
+                        Line(report, "        its species rows add to " + Number(subtotal.SpeciesSum) + " in area against the "
+                            + Number(subtotal.GroupTotalPrinted ? subtotal.GroupTotalSquareMetres : subtotal.SquareMetres)
+                            + (subtotal.GroupTotalPrinted ? " its group total row prints" : " it holds")
+                            + ", recorded rather than enforced, because every printed area is already rounded");
                     }
                 }
 

@@ -102,7 +102,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             SoftscapeReading trees = SoftscapeRows.Read(Softscape(plot), counted, plot);
             Assert.True(trees.WasRead, string.Join(" ", trees.Refusals));
             ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(
-                Ground(plot), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted);
+                Ground(plot), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted, ProjectUnit.Unknown);
             Assert.True(ground.WasRead, string.Join(" ", ground.Refusals));
 
             return CreateFixture.Plot(
@@ -312,7 +312,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AStreetsShrubsAndLawnPhaseCountsAndItsAreaAdds()
         {
             ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(
-                Ground("ST-05"), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, Streets);
+                Ground("ST-05"), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, Streets, ProjectUnit.Unknown);
 
             GroupSubtotal grass = Assert.Single(ground.Subtotals);
             Assert.Equal(165.0, grass.SquareMetres);

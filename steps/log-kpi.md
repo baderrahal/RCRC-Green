@@ -4,6 +4,104 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty fifth pass. The room the rounding earns, and a status line that moves
+
+Two things off the 1208 run on RCRC_NG03_EZ, 104,031 elements and 18 plots, the first run on a
+second model. The reading reuse held on its first real run, a 123 second scan and a 2.5 second
+create, which is finding 34 doing its job. **The other 36 audit findings stay open**, not
+renumbered, not reordered, not annotated. Nothing else was touched: not the Drawing Sheet, not
+`Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
+this round has been observed in Revit.** The branch came off a fresh pull of main at `07f16ba`.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1243 tests at this branch, 0 failed and 0 skipped, 691 of them KPI, 19 added here**, against
+the 1224 main carries.
+
+### The group total check refuses on rounding no more
+
+It refused FM-21, Existing 2 over 0, Proposed 51 over 11, group total 52 over 11, where 2 plus
+51 is 53, and FM-22, 2 over 0, 80 over 46, 83 over 46, where 2 plus 80 is 82. The counts match
+exactly, 11 and 11, 46 and 46, the areas are off by one in opposite directions, and the model's
+own scan prints Area unit, rounded to 1, so every printed area is already rounded and a sum of
+rounded numbers need not equal a rounded sum. The forty seventh pass said exactly that about
+the species sum and chose to record rather than enforce, the group total check was enforced
+exactly anyway, and it fired on correct data.
+
+The rule now, in `ShrubsAndLawnRows.Disagreeing`: **counts are integers and get no room at
+all**, a count that disagrees still refuses whatever the rounding. **Areas get half the unit's
+rounding step for each row summed**, so two rows rounded to the metre may be off by up to one.
+The step is read off the project units by `KpiReader.AreaUnit` once per press, the same read
+the scan prints, threaded through `KpiPlotReader.Read` into `ShrubsAndLawnRows.Read` as a
+required argument so no caller can lose it in silence, and never a constant. Within the room
+is the `RoundingNote` on the `GroupSubtotal`, printed beside the group total row in the
+report with the rows, the total and by how much, so a real fault growing slowly stays
+visible. Outside the room still refuses naming the room, and a step that was not read allows
+nothing and says so, because a check that cannot see its subject must not quietly widen.
+Both measured plots are tests, byte for byte: both go through, both are noted, and the same
+numbers with a count one high still refuse.
+
+### Every place printed numbers are added against a printed total, named
+
+- **The shrubs and lawn phase rows against the group total row**: the one that fired, fixed
+  above
+- **The softscape species rows, taken and left out, against the printed TOTAL row**: integer
+  counts, exact, right as it is
+- **Each softscape group's species rows against its own subtotal row**: integer counts, exact,
+  right as it is
+- **`Totalled.Adds`**: the tool's own sum against the tool's own total, both computed from the
+  one list, so it is a guard for a future caller rather than a live check. Left alone
+  deliberately, and its `Tolerance` constant is shared with the height and diameter difference
+  detector in the plan, so widening it would have silently swallowed real disagreements there
+- **The NOT WRITTEN line**: integer sums against no printed total, nothing to tolerate
+- **The species rows against the shrubs and lawn group's value**: recorded rather than
+  enforced by the forty seventh pass, and the review of every summed check found the record
+  was MISSING. `GroupSubtotal.SpeciesSum` was computed, its docstring said printed, and
+  nothing printed it anywhere, so a drift there was invisible. It prints now beside the group
+  when the two differ, recorded rather than enforced, unchanged as a decision
+
+### A status line that moves
+
+One line per piece of work done, never a timer, never an estimate. `ProgressWords` in Core
+holds the words and the counting with tests, the handler raises them as the work begins, and
+the pane's `Moved` shows them. The scan announces each section off the report's own numbered
+headings, Section 2 of 9, project information, then 3, then 4, and the schedules loop counts
+every schedule, Sections 5 to 8 of 9, schedules, 400 of 951, 42%, a span because one reader
+covers those four sections in one pass and pretending them apart would be a lie. Create names
+the plot, Reading DM-44, plot 3 of 18, 11%, with the percentage of plots finished so it never
+goes backwards, then the steps name themselves: adding the plots up, copying the template,
+writing the cells, reading the written cells back, checking the workbook's own formulas,
+writing the report. The patcher raises its four steps itself through a callback, so the words
+come from the work. A percentage appears only where the total is known and is floored, 950 of
+951 is 99 and 951 of 951 is 100, and the end line still comes through `Told` on every finish,
+refusal and throw, so the last thing on screen is never a count that stopped moving.
+
+**Whether the line visibly moves mid run is UNKNOWN until somebody runs it.** The pane can
+share Revit's own thread, where a text set from inside the external event sits unpainted until
+the run returns. `Moved` queues one empty job at background priority after each line, which
+lets the paint through when the threads are one and costs nothing when they are not. No test
+can reach it and no mockup can show it, the same class as the black on black panel, so the
+first run on a real pane is the check.
+
+### Break watches
+
+Four, each restored byte for byte and checked with cmp, the suite rebuilt and rerun green at
+1243.
+
+- the rounding room dropped: **3 red**, FM-21, FM-22 and the report line printing the note
+- a count given the areas room: **1 red**, the count one high that must still refuse
+- the percentage rounded up: **2 red**, the schedule count and the plot line
+- the copy step never raised: **1 red**, the patcher's four steps in order
+
+### Existing tests changed
+
+None moved of their own accord. `ShrubsAndLawnRows.Read` takes the project's area unit as a
+required argument now, so fifteen call sites across seven test files pass `ProjectUnit.Unknown`
+by name, which is the read today's fixtures had. The three old disagreement tests still refuse,
+their fixtures reading no step, and their sentences gained the clause saying the step was not
+read, which their Contains assertions do not pin.
+
+---
+
 ## 2026-09-12, fifty fourth pass. The diameter alone decides, and the audits are marked with what is really fixed
 
 Two things off the round message. The message opened saying no behaviour changes in the tool,

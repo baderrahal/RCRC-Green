@@ -136,7 +136,8 @@ namespace RcrcGreen.Revit.Kpi
                 Scanned = Scanned,
                 FoundPlots = Found,
                 Created = Made,
-                Told = Say
+                Told = Say,
+                Progressed = Moved
             };
             _asking = ExternalEvent.Create(_handler);
 
@@ -312,6 +313,21 @@ namespace RcrcGreen.Revit.Kpi
         private void Say(string what)
         {
             Dispatcher.Invoke(() => _said.Text = what ?? string.Empty);
+        }
+
+        /// <summary>
+        /// A progress line raised from inside a run on the Revit thread. Setting the text is
+        /// not enough on its own: a dockable pane can share Revit's thread, and a line set mid
+        /// run then sits unpainted until the run returns, which reads exactly like today's one
+        /// unmoving line. Waiting on one empty job at background priority lets everything
+        /// queued above it run, the paint included. Whether the line visibly moves on a real
+        /// pane is a fact about Revit's hosting that only a run can show, and the log records
+        /// it as open.
+        /// </summary>
+        private void Moved(string what)
+        {
+            Dispatcher.Invoke(() => _said.Text = what ?? string.Empty);
+            Dispatcher.Invoke(new Action(() => { }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
         /// <summary>

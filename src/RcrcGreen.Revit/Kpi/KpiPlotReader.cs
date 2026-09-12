@@ -236,11 +236,13 @@ namespace RcrcGreen.Revit.Kpi
             CountedGroups counted,
             string chosenRegionTypeName,
             IReadOnlyList<RegionArea> regions,
+            ProjectUnit areaUnit,
             double regionSeconds)
         {
             if (document == null) throw new ArgumentNullException("document");
             if (plotId == null) throw new ArgumentNullException("plotId");
             if (counted == null) throw new ArgumentNullException("counted");
+            if (areaUnit == null) throw new ArgumentNullException("areaUnit");
 
             // The regions were read before this was called, so their cost is handed in and added
             // rather than left out of the plot's own number.
@@ -338,7 +340,7 @@ namespace RcrcGreen.Revit.Kpi
                     ScannedSchedule rows = Printed(schedule);
                     printed.Add(rows);
                     ShrubsAndLawnReading read = ShrubsAndLawnRows.Read(
-                        rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted);
+                        rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted, areaUnit);
                     subtotals.AddRange(read.Subtotals);
                     refusals.AddRange(read.Refusals.Select(why => schedule.Name + ": " + why));
                 }

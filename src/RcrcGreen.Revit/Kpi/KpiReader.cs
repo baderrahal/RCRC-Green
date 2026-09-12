@@ -19,12 +19,17 @@ namespace RcrcGreen.Revit.Kpi
     /// </summary>
     internal static class KpiReader
     {
-        public static KpiScan Read(Document document)
+        public static KpiScan Read(Document document, Action<string> progressed)
         {
             if (document == null) throw new ArgumentNullException("document");
 
             var skipped = new List<string>();
             Stopwatch clock = Stopwatch.StartNew();
+
+            // Each line below is raised as the work it names begins, never off a timer. The
+            // words come off the report's own section headings, so the numbers on screen are
+            // the report's numbers.
+            progressed?.Invoke(ProgressWords.Section(KpiReport.ProjectInformation));
 
             // Each fallback says it was never filled, so a section whose read threw prints
             // NOT READ and never NOT FOUND. An empty list read as a model holding nothing.
@@ -33,19 +38,22 @@ namespace RcrcGreen.Revit.Kpi
                 () => ProjectInformation(document),
                 why => null);
 
+            progressed?.Invoke(ProgressWords.Section(KpiReport.TitleBlocksAndSheets));
             TitleBlockFacts titleBlocks = Guarded(
                 skipped, KpiReport.TitleBlocksAndSheets,
                 () => KpiSheetReader.Read(document),
                 TitleBlockFacts.NotRead);
 
+            progressed?.Invoke(ProgressWords.Section(KpiReport.LinkedModels));
             LinkFacts links = Guarded(
                 skipped, KpiReport.LinkedModels,
                 () => KpiLinkReader.Read(document, skipped),
                 LinkFacts.NotRead);
 
+            progressed?.Invoke(ProgressWords.SectionSpan(KpiReport.Schedules, KpiReport.AreasAndUnits));
             ScheduleFacts schedules = Guarded(
                 skipped, KpiReport.Schedules + " to " + KpiReport.AreasAndUnits,
-                () => KpiScheduleReader.Read(document, skipped),
+                () => KpiScheduleReader.Read(document, skipped, progressed),
                 ScheduleFacts.NotRead);
 
             clock.Stop();
@@ -94,6 +102,19 @@ namespace RcrcGreen.Revit.Kpi
                 seconds,
                 Unit(units, SpecTypeId.Area, "area", skipped),
                 Unit(units, SpecTypeId.Length, "length", skipped));
+        }
+
+        /// <summary>
+        /// The project's area unit for the create path, the same read the scan makes, so the
+        /// rounding room the group total check allows comes off the one setting the report
+        /// prints as Area unit, rounded to. Unknown when it cannot be read, and the check then
+        /// allows nothing and says the step was not read where that decided anything.
+        /// </summary>
+        public static ProjectUnit AreaUnit(Document document)
+        {
+            if (document == null) throw new ArgumentNullException("document");
+
+            return Unit(document.GetUnits(), SpecTypeId.Area, "area", new List<string>());
         }
 
         /// <summary>

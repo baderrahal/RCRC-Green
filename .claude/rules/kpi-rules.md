@@ -969,10 +969,37 @@ rule's numbers never reached a client**, and the second rule's did reach a workb
 and 1536 runs.
 
 The check stands and is pointed at every phase: **the last row must equal the rows above it
-added together**, the phases left out included, in area and in item count, with the same
-relative room `Totalled.Adds` allows. When it does, the phases taken are added and written. When
-it does not, that is a real disagreement, it travels on the `GroupSubtotal` and it refuses the
-write. A group printing one row has nothing above it to compare against and is taken.
+added together, in item count exactly and in area to within the project's own rounding.**
+Measured on the 1208 run over RCRC_NG03_EZ: FM-21 prints Existing 2 over 0, Proposed 51 over 11
+and a group total of 52 over 11, and FM-22 prints 2 over 0, 80 over 46 and 83 over 46. The
+counts match exactly, the areas are off by one in opposite directions, and both are correct,
+because the project rounds areas to the metre, every printed area is already rounded, and a
+sum of rounded numbers need not equal a rounded sum. The forty seventh pass said exactly that
+about the species sum and chose to record rather than enforce, the check was enforced exactly
+anyway, and it fired on correct data.
+
+So counts are integers and get no room at all: a count that disagrees is a real fault and
+still refuses. Areas get half the unit's rounding step for each row summed, two rows rounded
+to the metre may be off by up to one, and the step is read off the project units through
+`KpiReader.AreaUnit`, the same read the scan prints as Area unit, rounded to, never a
+constant, so a project rounding to 0.01 gets a tighter room and one rounding to 10 a looser
+one. **Within the room is a line in the report, not a refusal**, the `RoundingNote` on the
+`GroupSubtotal`, printed beside the group total row with the rows, the total and by how much,
+so a real fault growing slowly stays visible. Outside the room still refuses, naming the room
+it is outside of. A step that was not read allows nothing and says so, because a check that
+cannot see its subject must not quietly widen. A group printing one row has nothing above it
+to compare against and is taken.
+
+**Every other place printed numbers are added against a printed total was checked in the same
+round and named.** The softscape species rows against the printed TOTAL and each group's rows
+against its own subtotal are integer counts, exact, and right as they are. `Totalled.Adds`
+compares the tool's own sum against the tool's own total, both computed from one list, so it
+is a guard for a future caller rather than a live check, and its constant is shared with the
+height and diameter difference detector, so it was left alone deliberately. The NOT WRITTEN
+line sums integers against no printed total. And the species sum against the group's value,
+recorded rather than enforced by the forty seventh pass, was computed and recorded NOWHERE,
+its docstring said printed and nothing printed it, so it prints now beside the group when the
+two differ.
 
 **The species rows add up to the group**, 36 plus 34 is 70, so the two are held against each
 other. They are not enforced, because every one of those numbers is already rounded to the metre
@@ -1216,6 +1243,32 @@ name, and nothing in the code picks an answer to either.
 The 1521 run raised a third, which template each value of PRX_Component means. **The 1548 run
 settled it.** Eleven values came off the report's own component block and the team turned them
 into the table above. It is not repeated here.
+
+## The status line moves while a run does
+
+A scan took 123 seconds on RCRC_NG03_EZ, 104,031 elements, behind one line that did not move,
+which is what a hung tool looks like, and a run over 78 street plots is minutes of the same.
+`ProgressWords` in Core holds the lines and the counting, with tests, and the pane shows them:
+the scan announces each section as its read begins, off the report's own numbered headings, so
+Section 4 of 9, linked models, and the schedules loop counts, Sections 5 to 8 of 9, schedules,
+400 of 951, 42%, said as a span because one reader covers those four sections in one pass.
+Create names the plot being read, Reading DM-44, plot 3 of 18, 11%, then the writing steps name
+themselves, adding up, copying the template, writing the cells, reading them back, checking the
+formulas, writing the report, raised by the patcher itself through a callback so the words come
+from the work rather than a narration beside it.
+
+**Driven by what is done, never a timer and never an estimate.** A percentage appears only
+where the total is known, is floored, and is driven by a count that only grows, so it cannot go
+backwards, and where the total is not known the count stands alone. The run's own end line
+still comes through `Told` after every finish, refusal or throw, so the last thing on screen is
+never a count that stopped moving. Everything still goes through the external event on the
+Revit thread and the pane's `Moved` only sets text.
+
+**Whether the line visibly moves mid run is UNKNOWN until somebody runs it.** A dockable pane
+can share Revit's own thread, and a text set from inside `Execute` then sits unpainted until
+the run returns. `Moved` queues one empty job at background priority after each line, which
+lets the paint through when the threads are one and costs nothing when they are not, and the
+log records the question as open.
 
 ## Do not name a KPI control Scan Model
 

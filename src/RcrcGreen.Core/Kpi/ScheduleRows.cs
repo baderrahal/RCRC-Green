@@ -421,10 +421,11 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public static class ShrubsAndLawnRows
     {
-        public static ShrubsAndLawnReading Read(ScannedSchedule schedule, IEnumerable<string> headings, CountedGroups counted)
+        public static ShrubsAndLawnReading Read(ScannedSchedule schedule, IEnumerable<string> headings, CountedGroups counted, ProjectUnit areaUnit)
         {
             if (schedule == null) throw new ArgumentNullException("schedule");
             if (counted == null) throw new ArgumentNullException("counted");
+            if (areaUnit == null) throw new ArgumentNullException("areaUnit");
 
             var wanted = (headings ?? Enumerable.Empty<string>())
                 .Where(one => !string.IsNullOrWhiteSpace(one))
@@ -475,7 +476,7 @@ namespace RcrcGreen.Core.Kpi
                         continue;
                     }
 
-                    Close(found, heading, subtotals, species, counted);
+                    Close(found, heading, subtotals, species, counted, areaUnit);
                     heading = text;
                     subtotals = new List<SubtotalRow>();
                     species = new List<double>();
@@ -530,7 +531,7 @@ namespace RcrcGreen.Core.Kpi
 
             if (refusals.Count > 0) return ShrubsAndLawnReading.Refused(refusals);
 
-            Close(found, heading, subtotals, species, counted);
+            Close(found, heading, subtotals, species, counted, areaUnit);
             return ShrubsAndLawnReading.Of(found);
         }
 
@@ -565,7 +566,7 @@ namespace RcrcGreen.Core.Kpi
         /// others are left out and named, and the group total row is the check on both.
         /// </summary>
         private static void Close(
-            List<GroupSubtotal> found, string heading, List<SubtotalRow> subtotals, List<double> species, CountedGroups counted)
+            List<GroupSubtotal> found, string heading, List<SubtotalRow> subtotals, List<double> species, CountedGroups counted, ProjectUnit areaUnit)
         {
             if (heading == null || subtotals.Count == 0) return;
 
@@ -577,11 +578,13 @@ namespace RcrcGreen.Core.Kpi
             // it, which is all such a group can offer.
             if (phased.Count == 0)
             {
+                string plainNote;
+                string plainRefusal = Disagreeing(subtotals, areaUnit, out plainNote);
                 SubtotalRow last = unphased[unphased.Count - 1];
                 found.Add(new GroupSubtotal(
-                    heading, last.SquareMetres, last.ItemCount, subtotals.Count, sum, Disagreeing(subtotals),
+                    heading, last.SquareMetres, last.ItemCount, subtotals.Count, sum, plainRefusal,
                     last.RowNumber, subtotals.Select(one => one.RowNumber), null,
-                    subtotals.Count > 1, last.SquareMetres, last.ItemCount));
+                    subtotals.Count > 1, last.SquareMetres, last.ItemCount, plainNote));
                 return;
             }
 
@@ -592,29 +595,43 @@ namespace RcrcGreen.Core.Kpi
             List<PhaseSubtotal> taken = phases.Where(one => one.Counted).ToList();
             SubtotalRow groupTotal = unphased.Count == 0 ? null : unphased[unphased.Count - 1];
 
+            string note = string.Empty;
+            string refusal = groupTotal == null
+                ? string.Empty
+                : Disagreeing(phased.Concat(new[] { groupTotal }).ToList(), areaUnit, out note);
+
             found.Add(new GroupSubtotal(
                 heading,
                 taken.Sum(one => one.SquareMetres),
                 taken.Sum(one => one.ItemCount),
                 subtotals.Count,
                 sum,
-                groupTotal == null ? string.Empty : Disagreeing(phased.Concat(new[] { groupTotal }).ToList()),
+                refusal,
                 groupTotal == null ? 0 : groupTotal.RowNumber,
                 subtotals.Select(one => one.RowNumber),
                 phases,
                 groupTotal != null,
                 groupTotal == null ? 0.0 : groupTotal.SquareMetres,
-                groupTotal == null ? 0 : groupTotal.ItemCount));
+                groupTotal == null ? 0 : groupTotal.ItemCount,
+                note));
         }
 
         /// <summary>
-        /// The last row must equal the rows above it added together, in area AND in item count.
-        /// Four groups out of four on the 0928 run do. A one phase group prints two equal rows,
-        /// which passes the same check because the one row above equals the one below, and a
-        /// group printing a single row has nothing above it to check against.
+        /// The last row must equal the rows above it added together, in item count exactly and
+        /// in area to within the project's own rounding. Four groups out of four on the 0928
+        /// run add exactly. FM-21 and FM-22 on the 1208 run do not: counts exact, areas off by
+        /// one in opposite directions, because the project rounds areas to the metre, every
+        /// printed area is already rounded, and a sum of rounded numbers need not equal a
+        /// rounded sum. So counts are integers and get no room at all, and areas get half the
+        /// unit's rounding step for each row summed, read off the project units and never a
+        /// constant. Within that room is a note rather than a refusal, so a real fault growing
+        /// slowly is still visible. Outside it still refuses, and a step that was not read
+        /// allows nothing and says so, because a check that cannot see its subject must not
+        /// quietly widen.
         /// </summary>
-        private static string Disagreeing(List<SubtotalRow> subtotals)
+        private static string Disagreeing(List<SubtotalRow> subtotals, ProjectUnit areaUnit, out string roundingNote)
         {
+            roundingNote = string.Empty;
             if (subtotals.Count < 2) return string.Empty;
 
             SubtotalRow last = subtotals[subtotals.Count - 1];
@@ -629,10 +646,37 @@ namespace RcrcGreen.Core.Kpi
 
             if (Adds(last.SquareMetres, area) && last.ItemCount == items) return string.Empty;
 
+            int summed = subtotals.Count - 1;
+            string rowWord = summed == 1 ? " row" : " rows";
+            double step = areaUnit.Accuracy;
+            bool stepRead = !double.IsNaN(step) && step > 0.0;
+            double allowed = stepRead ? summed * step / 2.0 : 0.0;
+
+            if (last.ItemCount == items)
+            {
+                double off = Math.Abs(last.SquareMetres - area);
+                if (stepRead && off <= allowed + Totalled.Tolerance * Math.Max(1.0, Math.Abs(last.SquareMetres)))
+                {
+                    roundingNote = "the " + summed + rowWord + " above it add to " + Said(area)
+                        + " over " + items + " against its printed " + Said(last.SquareMetres)
+                        + " over " + last.ItemCount + ", off by " + Said(off)
+                        + " in area with every count exact, within the " + Said(allowed)
+                        + " that " + summed + rowWord + " rounded to " + KpiReport.Step(step)
+                        + (summed == 1 ? " allows" : " allow") + ", so it is noted rather than refused";
+                    return string.Empty;
+                }
+            }
+
+            string room = last.ItemCount != items
+                ? string.Empty
+                : stepRead
+                    ? ", which is more than the " + Said(allowed) + " that " + summed + rowWord
+                        + " rounded to " + KpiReport.Step(step) + (summed == 1 ? " allows" : " allow")
+                    : ", and the project's area rounding step was not read, so no rounding room was allowed";
+
             return "its group total reads " + Said(last.SquareMetres) + " over " + last.ItemCount
-                + " and the " + (subtotals.Count - 1)
-                + (subtotals.Count == 2 ? " row" : " rows") + " above it add to "
-                + Said(area) + " over " + items + ". Every row: " + string.Join(", ", subtotals
+                + " and the " + summed + rowWord + " above it add to "
+                + Said(area) + " over " + items + room + ". Every row: " + string.Join(", ", subtotals
                     .Select(one => (one.Phase == null ? string.Empty : one.Phase + " ")
                         + Said(one.SquareMetres) + " over " + one.ItemCount).ToArray());
         }
