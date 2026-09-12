@@ -1,20 +1,22 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Fifty sixth pass, the sheet numbering round, two pull requests. The first,
-fixes 1 and 2, is merged as `e4b5d9e` with 1230 tests on the runner, 0 failed and 0 skipped:
-the marker is set in step 1 and remembered per model in plot-markers.txt, MarkerLedger bars
-other plots' markers with 010001A giving 001 and never A, SheetNumberRun builds every number
-with a bare one holding the first letter's place, and PlotLetter, LettersIn, Free and
-Propose are deleted with their tests. The second, fixes 3 and 4, is this commit: SheetOrder
-holds the team's nine names, the order is code first then the list then ticked order, it is
-also the letter order and the run's creation order, a definition with no views plans one
-empty sheet per ticked plot, the title sheet's shape, refused until its typed name and
-number arrive and sorted ahead of the coded sheets, and the shipped defaults gain 010 TITLE
-SHEET on COVER PAGE. Two edges left exact: OVERALL KEY PLAN is not OVERALL KEYPLAN and a
-singular schedule view name is not the plural sheet name, both for the team. Nothing reads a
-pairing for a no view sheet yet, in the log as an open question. Suite reads 1239 locally,
-up nine from the 1230 the first pull request put on main. Two more breaks watched red, 1 and
-2 of 1239. Not merged yet.
+Phase: 9, ship. Fifty sixth pass, the sheet numbering round, two pull requests, both merged.
+The first, fixes 1 and 2, is merged as `e4b5d9e` with 1230 tests on the runner, 0 failed and
+0 skipped: the marker is set in step 1 and remembered per model in plot-markers.txt,
+MarkerLedger bars other plots' markers with 010001A giving 001 and never A, SheetNumberRun
+builds every number with a bare one holding the first letter's place, and PlotLetter,
+LettersIn, Free and Propose are deleted with their tests. The second, fixes 3 and 4, is this
+commit: SheetOrder holds the team's nine names, the order is code first then the list then
+ticked order, it is also the letter order and the run's creation order, a definition with no
+views plans one empty sheet per ticked plot, the title sheet's shape, refused until its
+typed name and number arrive and sorted ahead of the coded sheets, and the shipped defaults
+gain 010 TITLE SHEET on COVER PAGE. Two edges left exact: OVERALL KEY PLAN is not OVERALL
+KEYPLAN and a singular schedule view name is not the plural sheet name, both for the team.
+Nothing reads a pairing for a no view sheet yet, in the log as an open question. Suite reads
+1239 locally, up nine from the 1230 the first pull request put on main, and merged as
+`c7d91c4` with 1239 tests on the runner, 0 failed and 0 skipped. The merged main reads 1239
+locally. Two more breaks watched red, 1 and 2 of 1239. Both squash messages came back byte
+for byte.
 
 Before that, the fifty fourth pass, merged, the two fixes the fifty third found and was told
 not to make. Crop View is the tool's own on a section now: `SectionCropChoice` says on
