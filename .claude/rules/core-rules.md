@@ -293,6 +293,16 @@ nobody reads it as something found in the model.
 `ViewCrop.CopiedInWords` prints the two that really were copied. Printing all three in the
 setup line would read as though the annotation crop had come off a view.
 
+**A section swaps which one is the tool's own.** `SectionCropChoice.ForASection` says Crop
+View is on, always, because the crop region is the one thing bounding what a section draws
+and it is the very box the writer computes from the plot's scope box. Copying the flag off
+the sibling switched that bound off four calls after it was computed, and the run of
+2026-09-11 measured the cost: a 13250.5 mm viewport on an 841 mm sheet and other plots'
+plans showing the model's unbounded section markers. The region visibility and the
+annotation crop are still the sibling's on a section, `ViewCrop.CopiedForASectionInWords`
+prints those two, and the setup line picks its crop clause by the sibling's kind so it never
+prints a flag as copied that the tool has just overridden.
+
 ## Which title block a view type's sheets are made on
 
 `TitleBlockSettings` merges two files, the user's own first and the shipped defaults second,

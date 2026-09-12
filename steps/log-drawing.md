@@ -4,6 +4,84 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty fourth pass. A section the tool makes keeps the bound the tool computed
+
+Branch `claude/rcrc-green-setup-wf9ham`, one commit, off main at `9fd1a65` with 1221 tests.
+The merge sha and the runner count go in the next entry, because this one is written before
+the pull request exists. Two fixes, the ones the fifty third pass found and was told not to
+make.
+
+### Fix 1, Crop View is the tool's own on a section
+
+The cause was found last round and the code path is unchanged since: `MakeSection` computes
+the section box from the plot's scope box and hands it to `CreateSection`, which makes it
+the new section's crop region, and `FinishSection` then copied Crop View off the sibling,
+which has it off. The bound was computed and the thing enforcing it switched off four calls
+later, the tenth two-records-of-one-fact here. What that cost was measured on the run of
+2026-09-11: DM-11-(400)'s viewport read 13250.5 by 198.3 mm on an 841 by 594 sheet, and the
+model's own unbounded sections drew their markers inside DM-11's plans.
+
+`SectionCropChoice.ForASection` says on, always, whatever the sibling has, the same shape as
+`AnnotationCropChoice` and `SectionDepth`: the tool applies its own setting and the report
+says whose it is, in the same words the annotation crop line uses. `ApplySiblingCrop` takes
+the crop flag from its caller now, a plan view still passes the sibling's, and a section
+passes the choice's. The region visibility and the annotation crop are still copied on a
+section, so which one of the three is the tool's own is what swaps between the kinds, and
+each kind's choice type is the one record of it.
+
+**What this does not fix.** The model's own sections, DM-20-(400) and NS-32-(400) among
+them, still have their crops off and will still draw across other plots' plans, and the
+referencing sheet fault on those two still stands with them. This round bounds only what the
+tool makes. Whether the tool should offer to bound the model's own sections too is the
+user's call and is not made here.
+
+### Fix 2, the report says what a section's crop is
+
+A section's setup line used to print the sibling's crop flag as copied, which after fix 1
+would have said the new section has its crop off in the same report that turned it on. The
+line names only what a section really copies now, the region visibility and the annotation
+crop through `ViewCrop.CopiedForASectionInWords`, picked by the sibling's kind, and the
+choice's own sentence carries Crop View with whose setting it is and what the sibling has.
+So every section line carries all three settings the created section holds, split the same
+way the plan view lines split theirs: the copied ones in the facts, the tool's own said
+separately. The closing note gained the CROP VIEW IS NOT COPIED ON A SECTION lines beside
+the annotation crop ones, and the closing note test pins them.
+
+### The records that said a section copies all three
+
+revit-commands.md's sibling section, core-rules.md's copied-settings section and CLAUDE.md's
+tool-settings sentence all said the old rule, and CLAUDE.md counted two settings as the
+tool's own where there are three now. All three follow the code.
+
+### The breaks
+
+Two, each a reversed edit with the diff hash the same before the first and after the last:
+
+- `SectionCropChoice.On` reading the sibling's flag again: Failed 1 of 1224, the test that
+  says on whatever the sibling has
+- the section's setup line printing the plan clause: Failed 1 of 1224, the test that says a
+  section line names only what a section copies
+
+### What ran here
+
+The whole solution built in Release with 0 errors, and the suite read 1224 after the last
+file was written, 0 failed and 0 skipped, up three from the 1221 main carries. The banned
+word scan, the em dash scan and the semicolon scan over the added lines found nothing, and
+Core names no Revit type.
+
+### Not observed
+
+Nothing in this round has been through Revit. Unexecuted there: `CropBoxActive = true` on a
+section Revit has just created from a section box, and whether the crop region it enforces
+is exactly the box that was handed in. Whether a view template on a section controls Crop
+View and turns the set into the needs-attention refusal. The 13 metre viewport shrinking to
+the plot's short side on the next run, which is the one number that would show the fix
+worked. And whether the markers of a section the tool bounded stop appearing in other plots'
+plans, which is the fifty third pass's open question about DM-11's crop region and is only
+answerable with the model open.
+
+---
+
 ## 2026-09-11, fifty third pass. The crop is the sections' own, and two placement faults off the first real run
 
 Off the run of 2026-09-11 at 17:52: 22 created, 0 refused, the first time the tool has been

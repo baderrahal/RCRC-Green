@@ -198,7 +198,7 @@ namespace RcrcGreen.Revit
             // answer and it did not work: PL-17-(010) Overall Plan has it off, so the new view
             // inherited the fault and every neighbouring plot's section marker drew through it.
             AnnotationCropChoice annotation = AnnotationCropChoice.ForAPlanView(sibling.Facts);
-            ApplySiblingCrop(made, sibling, item, outcome, annotation.On);
+            ApplySiblingCrop(made, sibling, item, outcome, sibling.Facts.Crop.CropActive, annotation.On);
 
             SetPlotId(made, item, outcome);
             SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " " + annotation.InWords());
@@ -359,12 +359,17 @@ namespace RcrcGreen.Revit
         {
             ApplySiblingTemplate(made, sibling, item, outcome);
 
-            // A section still copies all three. No section has ever been created by this tool,
-            // so there is no evidence that a section inherits the same fault a plan view did.
-            ApplySiblingCrop(made, sibling, item, outcome, sibling.Facts.Crop.AnnotationCrop);
+            // Crop View is the tool's own on a section and the other two are copied. The
+            // first run copied all three, the sibling has the crop off, and a section with it
+            // off is not bounded sideways: DM-11-(400) drew as far as the model reaches and
+            // the model's own sections' markers crossed DM-11's plans. The crop region the
+            // bound enforces is the section box this writer computed from the plot's scope box
+            // moments earlier, so switching it off was undoing this run's own work.
+            SectionCropChoice crop = SectionCropChoice.ForASection(sibling.Facts);
+            ApplySiblingCrop(made, sibling, item, outcome, crop.On, sibling.Facts.Crop.AnnotationCrop);
 
             SetPlotId(made, item, outcome);
-            SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " Looks "
+            SaySetUpFrom(item, outcome, sibling.Facts.InWords() + " " + crop.InWords() + " Looks "
                 + SectionDepth.Metres.ToString("0.#", CultureInfo.InvariantCulture)
                 + " metre, which is the tool's setting rather than anything read off a view.");
 
@@ -1012,26 +1017,32 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Crop View, Crop Region Visible and Annotation Crop, all off the same sibling.
+        /// Crop View, Crop Region Visible and Annotation Crop, with the region visibility off
+        /// the sibling and the other two decided by the caller.
         ///
         /// Every view the first full run created had Annotation Crop off while the views the
         /// team built have it on, so the section markers of neighbouring plots drew straight
-        /// through the new views and none of them was usable as a drawing.
+        /// through the new views and none of them was usable as a drawing. A plan view copies
+        /// Crop View and forces the annotation crop on. A section forces Crop View on and
+        /// copies the annotation crop, because a section with the crop off is not bounded
+        /// sideways and its viewport measured 13250.5 mm wide on an 841 mm sheet. Which of the
+        /// three is the tool's own is a Core decision either way, AnnotationCropChoice for one
+        /// and SectionCropChoice for the other.
         ///
         /// Crop View is set first because Revit will not turn Annotation Crop on for a view
-        /// whose crop is off. It is copied rather than forced on, like everything else here.
-        /// This runs after the template, so anything the template controls refuses and is
-        /// reported rather than silently losing to it.
+        /// whose crop is off. This runs after the template, so anything the template controls
+        /// refuses and is reported rather than silently losing to it.
         /// </summary>
         private static void ApplySiblingCrop(
-            View made, Sibling sibling, RunItem item, RunOutcome outcome, bool annotationCrop)
+            View made, Sibling sibling, RunItem item, RunOutcome outcome,
+            bool cropActive, bool annotationCrop)
         {
             ViewCrop wanted = sibling.Facts.Crop;
             var refused = new List<string>();
 
             try
             {
-                made.CropBoxActive = wanted.CropActive;
+                made.CropBoxActive = cropActive;
                 made.CropBoxVisible = wanted.CropRegionVisible;
             }
             catch (Autodesk.Revit.Exceptions.ApplicationException)
