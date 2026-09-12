@@ -37,11 +37,13 @@ namespace RcrcGreen.Core.Kpi
             bool added = false,
             bool notReachedByTheTotal = false,
             SpeciesList list = null,
-            SpeciesListRow listRow = null)
+            SpeciesListRow listRow = null,
+            SpeciesAlias alias = null)
         {
             if (species == null) throw new ArgumentNullException("species");
             if (row < 0) throw new ArgumentOutOfRangeException("row");
 
+            Alias = alias;
             Species = species;
             SheetName = sheetName ?? string.Empty;
             Row = row;
@@ -71,6 +73,23 @@ namespace RcrcGreen.Core.Kpi
         /// whether the fault was one name or a family of them could not be read off a run.
         /// </summary>
         public string NearestInTheList { get; }
+
+        /// <summary>
+        /// The alias this row was reached through, or nothing where the name matched on its
+        /// own. It is set on the refusal too, where the alias resolved to more than one row,
+        /// so the report can name which alias could not be used.
+        /// </summary>
+        public SpeciesAlias Alias { get; }
+
+        /// <summary>
+        /// **This count rests on a decision of the team's rather than on a name.** The report
+        /// says so beside every one of them, because a count that arrived through an alias must
+        /// never read the same as one that matched word for word.
+        /// </summary>
+        public bool ThroughAnAlias
+        {
+            get { return Alias != null && Placed; }
+        }
 
         public const string ListNotRead = "the sheet's list was not read here";
 
@@ -239,6 +258,22 @@ namespace RcrcGreen.Core.Kpi
                 + list.FirstGapRow + ", so it was neither matched nor written in a second time";
         }
 
+        /// <summary>
+        /// The alias resolved to more than one row on the sheet, so nothing can say which one
+        /// the count belongs on. **A workbook whose list held Unknown Tree twice must not be
+        /// guessed at**, and an alias is a decision of the team's rather than a name the model
+        /// printed, so it is the one that has to give way.
+        /// </summary>
+        public static string AliasOnMoreThanOneRow(SpeciesAlias alias, IEnumerable<SpeciesListRow> rows)
+        {
+            string[] at = (rows ?? Enumerable.Empty<SpeciesListRow>())
+                .Select(one => one.Row.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .ToArray();
+
+            return alias.InWords + ", and the workbook holds that name on rows " + string.Join(", ", at)
+                + ", so nothing can say which one the count belongs on and it was not written";
+        }
+
         public static IReadOnlyList<SpeciesMatch> Against(
             IEnumerable<MergedSpecies> merged,
             KpiTemplate template,
@@ -288,6 +323,13 @@ namespace RcrcGreen.Core.Kpi
                         continue;
                     }
 
+                    SpeciesMatch aliased = ThroughAnAlias(species, sheet.SheetName, list);
+                    if (aliased != null)
+                    {
+                        found.Add(aliased);
+                        continue;
+                    }
+
                     found.Add(WrittenInto(species, sheet.SheetName, list, free));
                     continue;
                 }
@@ -299,27 +341,72 @@ namespace RcrcGreen.Core.Kpi
                     continue;
                 }
 
-                // The row is the list's, and the total has to reach it before a count goes there.
-                SpeciesListRow row = holding[0];
-                if (!list.TotalFound)
-                {
-                    found.Add(new SpeciesMatch(species, sheet.SheetName, row.Row, row.BotanicalName,
-                        NoTotalToReach(list), false, true, list, row));
-                    continue;
-                }
-
-                if (!list.Reaches(row.Row))
-                {
-                    found.Add(new SpeciesMatch(species, sheet.SheetName, row.Row, row.BotanicalName,
-                        OutsideTheTotal(row.Row, list), false, true, list, row));
-                    continue;
-                }
-
-                found.Add(new SpeciesMatch(
-                    species, sheet.SheetName, row.Row, row.BotanicalName, string.Empty, false, false, list, row));
+                // Matched on its own name, so no alias was consulted and none is carried.
+                found.Add(OnTheRow(species, sheet.SheetName, holding[0], list, null));
             }
 
             return found;
+        }
+
+        /// <summary>
+        /// A row the list names, with the total asked before a count goes on it. One rule for
+        /// the name that matched itself and the name an alias reached, because two would be two
+        /// records of one thing and this repository has paid for that eight times.
+        /// </summary>
+        private static SpeciesMatch OnTheRow(
+            MergedSpecies species,
+            string sheetName,
+            SpeciesListRow row,
+            SpeciesList list,
+            SpeciesAlias alias)
+        {
+            if (!list.TotalFound)
+            {
+                return new SpeciesMatch(species, sheetName, row.Row, row.BotanicalName,
+                    NoTotalToReach(list), false, true, list, row, alias);
+            }
+
+            if (!list.Reaches(row.Row))
+            {
+                return new SpeciesMatch(species, sheetName, row.Row, row.BotanicalName,
+                    OutsideTheTotal(row.Row, list), false, true, list, row, alias);
+            }
+
+            return new SpeciesMatch(species, sheetName, row.Row, row.BotanicalName,
+                string.Empty, false, false, list, row, alias);
+        }
+
+        /// <summary>
+        /// The alias route, reached ONLY when nothing in the list and nothing below it is named
+        /// like this species. **An alias never overrides a real match**: a name the list holds
+        /// word for word is matched above this and the table is not consulted at all, and a name
+        /// held below the first empty row keeps its own refusal, which is a row the workbook
+        /// really carries.
+        ///
+        /// **It applies only when it resolves to exactly one row on that sheet.** Two rows is a
+        /// refusal naming both. None is nothing at all: the MOSQUES Proposed list holds no
+        /// Unknown Tree, and a species there goes down the empty row route exactly as it did
+        /// before, where the report already names it, so nothing is skipped and nothing is
+        /// silent.
+        /// </summary>
+        private static SpeciesMatch ThroughAnAlias(MergedSpecies species, string sheetName, SpeciesList list)
+        {
+            SpeciesAlias alias = SpeciesAliases.For(species.BotanicalName);
+            if (alias == null) return null;
+
+            List<SpeciesListRow> aliased = list.Rows
+                .Where(one => Same(one.BotanicalName, alias.WorkbookName))
+                .ToList();
+
+            if (aliased.Count > 1)
+            {
+                return new SpeciesMatch(species, sheetName, 0, aliased[0].BotanicalName,
+                    AliasOnMoreThanOneRow(alias, aliased), false, false, list, null, alias);
+            }
+
+            if (aliased.Count == 0) return null;
+
+            return OnTheRow(species, sheetName, aliased[0], list, alias);
         }
 
         /// <summary>

@@ -286,8 +286,10 @@ the template. Nothing in this repo carries a copy of the plant palette. Matching
 botanical name compared without case and with surrounding whitespace off, and nothing else.
 
 Three measured cases are why nothing is stripped, split or normalised past that. The model
-prints a species called UNKNOWN and the workbook holds four rows all named Unknown Tree, so
-nothing can match those on name. ACACIA / VACHELLIA FARNESIANA carries a slash.
+prints a species called UNKNOWN, and the 2026-09-09 check found four rows all named Unknown
+Tree, so nothing could match those on name. The 1552 workbook holds ONE, at row 101, and the
+alias below is how it is reached. Four rows is what that alias refuses on.
+ACACIA / VACHELLIA FARNESIANA carries a slash.
 BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an apostrophe, and the shrub rows are prefixed
 SHRUBS: and GRASS: where the workbook's list is not.
 
@@ -335,24 +337,74 @@ empty. Writing B101 gives that row a canopy of nought and breaks nothing. **This
 true at today's lines and is pinned by a test now**, because it was named as one of the two
 reasons UNKNOWN went unwritten on the 1552 run and it was not one of them.
 
-**A NAME PAST THE LIST'S FIRST EMPTY ROW IS REFUSED EVEN WHEN IT MATCHES WORD FOR WORD.** That
-is the third thing between UNKNOWN and row 101 and it is not in the round message. `SpeciesList`
-reads the names down column D as far as the first empty row and holds anything past that gap in
-`BelowTheList`, and `SpeciesMatching.Against` refuses a species whose only name sits there
-rather than writing it in a second time above the gap. Whether the MOSQUES Existing list's
-Unknown Tree at row 101 is above or below its first gap is UNKNOWN from this repository: no
-workbook is in it and no report is committed. The create report already prints the names below
-the first empty row with their rows under THE WORKBOOK'S OWN TREE LISTS, so the 1552 report
-answers it off the file.
+**A NAME PAST THE LIST'S FIRST EMPTY ROW IS REFUSED EVEN WHEN IT MATCHES WORD FOR WORD.**
+`SpeciesList` reads the names down column D as far as the first empty row and holds anything
+past that gap in `BelowTheList`, and `SpeciesMatching.Against` refuses a species whose only name
+sits there rather than writing it in a second time above the gap.
+
+**IT DOES NOT BITE FOR ROW 101 AND IT WAS NOT WHAT STOPPED UNKNOWN.** Measured by Bader on the
+workbook the 1552 run wrote on the NG03 model, which is not in this repository: Tree List -
+Existing holds 98 names on rows 4 to 101 with NO EMPTY ROW INSIDE THE LIST and its first empty
+row is 102, and Tree List - Proposed holds 80 names on rows 4 to 83 with no gap and its first
+empty row is 84. Row 101 sits ABOVE the first empty row, so `BelowTheList` never reaches it.
+The rule is right, it is unchanged, and the round before this one raised it as UNKNOWN from this
+repository, which it no longer is.
 
 **THE MATCH IS NOT WIDENED AND THE REPORT NAMES WHAT IT MISSED.** Matching is still the
-botanical name without case and with edge whitespace off and nothing else, so UNKNOWN and
-Unknown Tree still do not match. `SpeciesMatching.ClosestName` finds the workbook name sharing
-the longest opening with the Revit name, ties broken by the shorter name and then naturally,
-and empty where nothing is shared. It is carried on `SpeciesMatch.NearestInTheList`, printed as
-the second column of the unmatched species list in the create report, and **it is printed and
-never matched on**. It exists so the next run answers whether the misses are one name or a
-family of them before anybody writes a rule, and what rule to write is Bader's to give.
+botanical name without case and with edge whitespace off and nothing else. `SpeciesMatching.ClosestName`
+finds the workbook name sharing the longest opening with the Revit name, ties broken by the
+shorter name and then naturally, and empty where nothing is shared. It is carried on
+`SpeciesMatch.NearestInTheList`, printed as the second column of the unmatched species list in
+the create report, and **it is printed and never matched on**. It is how the next alias gets
+found, and nothing in the tool may ever place a species by nearest name.
+
+## UNKNOWN reaches Unknown Tree through an alias, which is a table and not a rule
+
+**Bader's answer, and the whole of it is why no rule could do this job.** Measured on that same
+1552 workbook: exactly one of the 98 names in Tree List - Existing opens with UNKNOWN, which is
+Unknown Tree at row 101, and the Proposed list holds none. A rule reaching Unknown Tree from
+UNKNOWN by a shared opening, a prefix or a longest match would work on that one name and then
+reach into these, where it has to pick one:
+
+```
+Conocarpus erectus    and  Conocarpus lancifolius
+Ficus benjamina       and  Ficus religiosa       and  Ficus pseudosycomorus
+Prosopis juliflora    and  Prosopis glandulosa
+```
+
+**A picked genus is a silent wrong number in a client file, which is worse than a tree that
+goes nowhere.** And UNKNOWN is not a species at all. It is Revit's placeholder for a tree nobody
+has identified and Unknown Tree is the client's placeholder for the same thing. Two placeholders
+meeting is a fact about this project, and a fact about the project is data. `SpeciesAliases` in
+Core is that table, one entry today, UNKNOWN means Unknown Tree, and a second goes in only when
+the team says so, the same rule the Street Design list follows.
+
+**Three guards, all tested.**
+
+**An alias applies only where it resolves to exactly one row on that sheet.** Two rows is a
+refusal naming every one of them, because a workbook whose list held Unknown Tree twice must not
+be guessed at and an alias is the tool's decision rather than a name the model printed, so it is
+the one that gives way. None is nothing at all: the Proposed list holds no Unknown Tree, so an
+UNKNOWN there goes down the empty row route exactly as it did before the table existed, where
+the report already names it, and nothing is skipped or silent.
+
+**An alias never overrides a real match.** A name the list holds word for word is matched above
+the table and the table is not consulted at all, and a name held below the first empty row keeps
+its own refusal, because that is a row the workbook really carries. `ThroughAnAlias` is reached
+only where nothing in the list and nothing below it is named like the species.
+
+**The report says an alias was used, which one and which row it reached.** SPECIES MATCHED grew
+a how column reading matched on its own name or THROUGH THE ALIAS UNKNOWN means Unknown Tree,
+and SPECIES MATCHED THROUGH AN ALIAS is a block of its own with the alias, the sheet, the row
+and the count. **A count that arrived through an alias must never read the same as one that
+matched word for word**, because the first rests on a decision of the team's.
+
+`OnTheRow` is the one place a row becomes a match, asked by the exact name and by the alias
+alike, so the total's reach is checked once and cannot drift into two rules.
+
+**The check, for the run after this one.** UNKNOWN Existing is 16 trees on the 1552 run. Once
+the alias reaches row 101, Total Trees moves from 374 to 390 and the canopy stays at 11,168,
+because row 101 holds a real zero for its diameter and contributes none.
 
 **The report says how many trees went nowhere and out of what.** One line under the species the
 list does not hold: NOT WRITTEN, THE WHOLE RUN: 1 tree of 528, over every species this run

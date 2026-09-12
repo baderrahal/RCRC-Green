@@ -45,16 +45,18 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// The model prints a species called UNKNOWN. The workbook holds four rows all named
-        /// Unknown Tree. Nothing can match those on name, so it matches none of them and is
-        /// reported with its count for a person to place.
+        /// The model prints a species called UNKNOWN and this workbook holds FOUR rows all
+        /// named Unknown Tree, which is what the 2026-09-09 check measured on the first real
+        /// MOSQUES file. **The alias reaches none of them**, because it applies only where it
+        /// resolves to exactly one row, and four rows is a refusal naming every one of them.
         ///
-        /// **It is also the one species measured to carry no size**, a dash for its height and
-        /// 0 for its canopy diameter, so it takes no empty row either and the reason names the
-        /// measures rather than the name. Both halves are what the model prints.
+        /// This test asserted the old rule, that UNKNOWN could reach no row at all and was
+        /// withheld for having no size. It was changed by hand when the alias landed, because
+        /// the behaviour it pins is deliberately different now: the refusal is about the four
+        /// rows rather than about the missing diameter, and the count still goes nowhere.
         /// </summary>
         [Fact]
-        public void UnknownIsNeverMatchedToUnknownTreeAndTakesNoRowEither()
+        public void AnAliasReachingFourRowsIsRefusedAndNamesEveryOneOfThem()
         {
             SpeciesMatch match = Assert.Single(Matching(
                 new[] { CreateFixture.Species("UNKNOWN", CreateFixture.Existing, 2, 19, "-", "0") },
@@ -65,12 +67,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(match.Matched);
             Assert.False(match.Added);
             Assert.False(match.Placed);
+            Assert.False(match.ThroughAnAlias);
             Assert.Equal(0, match.Row);
             Assert.Equal(2, match.Species.Quantity);
             Assert.Equal(
-                "the workbook's list does not hold this name, and a row written into an empty one carries only "
-                + "what the model prints, which is no canopy diameter a workbook can compute with, "
-                + "so no row was written: DM-12 row 19 prints 0, which is no size",
+                "UNKNOWN means Unknown Tree, and the workbook holds that name on rows 4, 5, 6, 7, "
+                + "so nothing can say which one the count belongs on and it was not written",
                 match.Why);
         }
 
