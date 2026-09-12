@@ -4,6 +4,94 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty seventh pass. The plots block that said open a model, and the ten warnings
+
+Two things off the 13:48 run on RCRC_NG03_EZ. The branch came off a fresh pull of main at
+`aa0f546`, the fifty eighth pass, so the baseline is **1288 tests, 699 of them KPI**, not the
+1266 Bader's message names: the Drawing Sheet rounds `#82`, `#83`, `#84` and `#88` landed
+since the fifty sixth pass and none of them is KPI. **Nothing in this round has been observed
+in Revit.** The first of the two changes the pane's ask flow, which no Core test can reach, so
+it is recorded here for the first run on a real pane. Committed in two, the warnings first as
+a checkpoint, then this.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1289 tests at this branch, 0 failed and 0 skipped, 700 of them KPI, 1 added here**, against
+the 1288 main carries. Ten warnings cleared, build zero warnings.
+
+### The plots block said open a model while a model was open
+
+At 13:48 the header named RCRC_NG03_EZ and the footer carried its scan counts, and the plots
+block read Open a model with no list, while the same model had listed 18 plots at 12:08 on the
+build before. A workflow of three investigators and a judge told the two candidates Bader
+named apart from the real cause, and neither candidate was it.
+
+- **Not the repaint pump moving from background to render.** Its premise is false: git shows
+  the pump was born at render in the fifty fifth pass and never ran at background, so nothing
+  moved. `_facts` has one writer, reached by the priority-less `Dispatcher.Invoke` overload
+  that runs inline or marshals at Send, above any pump priority, so no pump can gate it. And
+  the build before the pump listed the plots with no pump of any priority at all. Told apart
+  by git history and by the single writer.
+- **Not the progress line's redraws firing between the ask and the answer.** Those pumps run
+  only inside a scan or a create `Execute`, and every `Execute` empties the one request slot at
+  its start, so a pending `Plots` cannot be in the slot while a pump runs. Told apart by when
+  the pump can run against when the `Plots` request lives.
+
+The real cause is older than both and the round's diff never touched it. `Ask(Plots)` lived at
+one site, `Shown`, fired only by a visibility rise. Installing the fifty fifth and fifty sixth
+passes forced a Revit restart, a pane restored visible at startup was shown before any document
+existed, that one ask was consumed against No open document, and nothing ever asked again: every
+later answer runs `Took`, whose redraw asks only `WhichModel`, which reads the plots nowhere. So
+a scan filled the header while `_facts` stayed null and the block drew its waiting text, whose
+words were Open a model. A KPI Scan pressed before the plot read returned loses the ask the same
+way, displacing the pending `Plots` in the one slot. Which of the three happened at 13:48 is a
+visibility and timing fact only the user's memory or a run can settle, and it is UNKNOWN, the
+restart being the most economical.
+
+**The fix is two halves.** The message, in Core with the test: `CreateWords.PlotsBlock` reads
+four ways, one line each, no document says open one, a document not yet answered says it is
+reading the plots, a document answered with no plots says the model holds none, and a document
+answered with plots hands to `PlotSources`. Open a model is right only where no model is open,
+and the not answered state is told from it by whether a document is open, read off the live
+document, never a held copy. The recovery, in the pane and untestable in Core: `Ask(Plots)`
+moved out of `Shown` into `Took`, the one place that knows which model answered, guarded by the
+title the last ask was for and reset on close, so the plots are read once per model and a model
+opened under the pane or one whose first ask was lost is read the moment any request answers
+with it. `Shown` asks only for the model now. This also killed a latent double read: `Shown`
+and `Took` both asking would have read the plots twice on every show.
+
+### The ten xUnit warnings, cleared
+
+All ten were the same mistake in two shapes, asserting on a filtered collection rather than the
+condition, so the message named the filtered length rather than what it found.
+
+- **Four xUnit2029**, `Assert.Empty(x.Where(p))` to `Assert.DoesNotContain(x, p)`: KpiCreateTests
+  681 (no Folder property on OpenModel), CanopyColumnsTests 283 (no skip on the proposed sheet)
+  and 308 (no write on it), WorkbookFormulasTests 137 (no formula at risk is an error)
+- **Six xUnit2031**, `Assert.Single(x.Where(p))` to `Assert.Single(x, p)`, the filtering overload
+  returning the one element typed: CanopyColumnsTests 310 and 348, DiameterColumnTests 186,
+  TreeListRowsTests 258, 480 and 481
+
+The assertion changed and never the subject. None changed what it checks: the `DoesNotContain`
+overload takes the same predicate, and the `Single` filtering overload returns the same typed
+element the chain did, which every call site still assigns and reads. Committed first as a
+checkpoint, `54ab011`, so the tree was not left dirty while the workflow ran.
+
+### Break watches
+
+Two, each restored byte for byte and checked with cmp, the suite rebuilt and rerun green at 1289.
+
+- the block says open a model whether or not one is open, the regression itself: **1 red**, the
+  document open and not answered case
+- the block says reading even with no document: **1 red**, the no document case, so both halves
+  of the distinction are shown load bearing
+
+### Existing tests changed
+
+None. The warnings pass rewrote ten assertions and added none. The plots pass added one Core
+test, `ThePlotsBlockReadsFourWaysOneLineEach`, and moved no other.
+
+---
+
 ## 2026-09-12, fifty sixth pass. The coarse step is said before any number, and the pane counts the notes
 
 Two lines off Bader's answers to two of the fifty fifth pass's four open questions, and no

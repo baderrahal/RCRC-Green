@@ -678,8 +678,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(model.Is(OpenModel.Of("NG05")));
             Assert.False(model.Is(OpenModel.Of("NG06")));
             Assert.False(model.Is(null));
-            Assert.Empty(typeof(OpenModel).GetProperties()
-                .Where(one => one.Name.IndexOf("Folder", StringComparison.OrdinalIgnoreCase) >= 0));
+            Assert.DoesNotContain(typeof(OpenModel).GetProperties(),
+                one => one.Name.IndexOf("Folder", StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         /// <summary>
@@ -735,6 +735,39 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(3, split.Count);
             Assert.Contains("On a sheet and on no schedule, 1: DM-12", split[1]);
             Assert.Contains("On a schedule and on no sheet, 1: NS-06", split[2]);
+        }
+
+        /// <summary>
+        /// The plots block reads four ways, each its own line, so open a model never stands
+        /// beside a model's own name again. It sent the team to Revit for an hour: a scan
+        /// filled the header while this block said open a model, because it said so on any
+        /// answer not yet back rather than only on no document. The two are told apart by
+        /// whether a document is open, which the pane reads off the live document, and by
+        /// whether the plots have come back, a null standing for not answered rather than
+        /// answered with none.
+        /// </summary>
+        [Fact]
+        public void ThePlotsBlockReadsFourWaysOneLineEach()
+        {
+            // No document: the one place open a model is right.
+            Assert.Equal(
+                new[] { "No model open. This pane reads a model's plots as soon as one is open." },
+                CreateWords.PlotsBlock(false, null));
+
+            // A document open, the plots not back yet: waiting, NOT open a model.
+            Assert.Equal(
+                new[] { "Reading the plots from the model. On a large model this takes a moment." },
+                CreateWords.PlotsBlock(true, null));
+
+            // A document answered with no plots: the model holds none.
+            Assert.Equal(
+                new[] { "No plot in this model. Press KPI Scan first, or open a model that holds one." },
+                CreateWords.PlotsBlock(true, PlotsInTheModel.Of(null, null)));
+
+            // A document answered with plots: the count, off PlotSources.
+            Assert.Equal(
+                new[] { "The sheets and the schedules name the same 2 plots." },
+                CreateWords.PlotsBlock(true, PlotsInTheModel.Of(new[] { "DM-11", "DM-12" }, new[] { "DM-11", "DM-12" })));
         }
 
         [Fact]

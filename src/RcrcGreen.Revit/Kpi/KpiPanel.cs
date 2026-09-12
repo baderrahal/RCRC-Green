@@ -68,6 +68,15 @@ namespace RcrcGreen.Revit.Kpi
         // given a folder, and a second scan did not shift it.
         private OpenModel _model = OpenModel.Nothing;
 
+        // The title the plots were last asked for, so Took asks exactly once per model rather
+        // than blind on every show. Null until the first ask and reset when the model closes,
+        // so a model reopened is read again. This is the whole recovery from the one lost ask:
+        // Ask(Plots) lived only in Shown, fired only by a visibility rise, so a pane shown with
+        // no document open, or a scan pressed before the plot read returned, consumed the one
+        // ask and nothing asked again, which left the plots block on open a model while a scan
+        // filled the header.
+        private string _plotsAskedFor;
+
         // The one picked workbook, and the template settled for it. For most files the two
         // arrive together. A file caught between the two park templates has a pick and no
         // template until the user chooses, and nothing is guessed meanwhile.
@@ -175,10 +184,15 @@ namespace RcrcGreen.Revit.Kpi
 
             PaintFromTheTheme();
 
-            // The plot read carries the model state back with it, like every other answer, and
-            // the redraw below asks for the model on its own. Asking for both here lost one of
-            // them to the handler's one slot, which is how the plot list came back empty.
-            Ask(KpiRequest.Plots);
+            // Ask only for the model. Took asks for the plots once it knows which model is
+            // open, so the plots are asked for in one place off the answered title rather than
+            // blind here. Asking Plots here as well lost one of the two to the handler's one
+            // slot, and worse, it could not be told apart from Took's ask, so the model was
+            // read for its plots twice on every show. A pane restored visible at startup with
+            // no document open consumed this blind Plots ask against no document and nothing
+            // ever asked again, which is how a scan later filled the header while the plots
+            // block sat on open a model. Took now re-asks whenever it sees a model it has not
+            // read plots for.
             RedrawTemplates();
         }
 
@@ -286,6 +300,10 @@ namespace RcrcGreen.Revit.Kpi
                 _model = answered;
                 _modelName.Text = KpiPaneWords.ModelNamed(_model.Title);
 
+                // A closed model forgets which plots were asked for, so the same model reopened
+                // is read again rather than left showing the last one's list.
+                if (!_model.IsOpen) _plotsAskedFor = null;
+
                 if (!string.Equals(_model.Title, _scannedTitle, StringComparison.Ordinal))
                 {
                     _scannedTitle = null;
@@ -296,6 +314,18 @@ namespace RcrcGreen.Revit.Kpi
                 // Only when the answer moved. Drawing asks for this again, so redrawing on
                 // every answer would spin the external event for as long as the pane is open.
                 if (moved) RedrawTemplates();
+
+                // The one place the plots are asked for, off the answered title rather than
+                // blind at show time. Once per model: the guard is the title the last ask was
+                // for, so a redraw asking WhichModel again does not re-read the plots, and a
+                // model opened under the pane, or one whose first ask was lost, is read the
+                // moment any request answers with it. Asked after the redraw so it wins the
+                // handler's one slot over the WhichModel that redraw raised.
+                if (_model.IsOpen && !string.Equals(_model.Title, _plotsAskedFor, StringComparison.Ordinal))
+                {
+                    _plotsAskedFor = _model.Title;
+                    Ask(KpiRequest.Plots);
+                }
             });
         }
 
@@ -553,18 +583,17 @@ namespace RcrcGreen.Revit.Kpi
         {
             _templates.Children.Add(Head(CreateWords.Heading));
 
-            if (_facts == null)
-            {
-                _templates.Children.Add(Faint(KpiPaneWords.Waiting));
-                return;
-            }
-
-            foreach (string line in CreateWords.PlotSources(_facts.Plots))
+            // Open a model is only right when no model is open. The block used to say it on
+            // any facts == null, so a scan that filled the header left this reading open a
+            // model beside the model's own name, and the team went to Revit for an hour. The
+            // four states each read differently, told apart by the live document and whether
+            // the plots have come back, never by a held copy.
+            foreach (string line in CreateWords.PlotsBlock(_model.IsOpen, _facts == null ? null : _facts.Plots))
             {
                 _templates.Children.Add(Faint(line));
             }
 
-            if (_facts.Plots.All.Count == 0) return;
+            if (_facts == null || _facts.Plots.All.Count == 0) return;
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
             var all = new Button { Content = PaneLabel.Escaped(CreateWords.SelectAll), Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };

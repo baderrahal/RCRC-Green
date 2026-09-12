@@ -255,7 +255,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.Equal(new[] { "B84", "B86", "B87", "B89" }, onTheSheet.Select(one => one.Cell.ToString()));
                 Assert.Equal(new[] { "17", "27", "19", "3" }, onTheSheet.Select(one => one.Stored));
 
-                NotWritten prosopis = Assert.Single(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet));
+                NotWritten prosopis = Assert.Single(plan.Skipped, one => one.SheetName == KpiTemplates.ExistingTreesSheet);
                 Assert.Equal("B99", prosopis.Cell);
                 Assert.Equal("PROSOPIS JULIFLORA 3 under Existing", prosopis.What);
                 Assert.Contains("row 99", prosopis.Why);
@@ -477,8 +477,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null);
 
-            Assert.Single(plan.Writes.Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet));
-            Assert.Equal("B5", Assert.Single(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet)).Cell);
+            Assert.Single(plan.Writes, one => one.SheetName == KpiTemplates.ExistingTreesSheet);
+            Assert.Equal("B5", Assert.Single(plan.Skipped, one => one.SheetName == KpiTemplates.ExistingTreesSheet).Cell);
         }
 
         private static MergedSpecies Existing(string name, int count)

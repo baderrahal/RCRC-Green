@@ -183,7 +183,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.Equal("15", onTheSheet.Single(one => one.Cell.ToString() == "J5").Stored);
                 Assert.DoesNotContain(onTheSheet, one => one.Cell.ToString().StartsWith("K", StringComparison.Ordinal));
 
-                NotWritten skipped = Assert.Single(plan.Skipped.Where(one => one.SheetName == Existing));
+                NotWritten skipped = Assert.Single(plan.Skipped, one => one.SheetName == Existing);
                 Assert.Equal(string.Empty, skipped.Cell);
                 Assert.Equal("UNKNOWN 16 under Existing", skipped.What);
                 Assert.StartsWith(

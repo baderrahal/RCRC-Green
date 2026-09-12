@@ -638,8 +638,37 @@ ticked. Whether a model is open and whether it has a folder are decided on the R
 against the live document when the button is pressed, and the refusal comes back from there.
 
 `Ask` holds one slot and `WhichModel` never takes it from anything, because the pane asks for it
-on every draw. It used to displace `Plots`, which the pane asks for in the same breath when it
-is shown, so the plot list never arrived at all.
+on every draw.
+
+**The plots are asked for in one place, `Took`, off the answered title.** `Ask(Plots)` lived
+only in `Shown`, fired only by a visibility rise, and that one ask was lost three ways, all
+before any pump this round added existed and none of them the two candidates the 13:48 screen
+was first read as. It was NOT the repaint pump moving from background to render: git shows the
+pump was born at render in the round that added it and never ran at background, `_facts` has
+one writer reached by the priority-less `Dispatcher.Invoke` that no pump priority can gate,
+and the build before the pump listed the plots with no pump at all. It was NOT the progress
+line's redraws firing between the ask and the answer: those pumps run only inside a scan or a
+create `Execute`, after the one request slot is already emptied, so their window cannot hold a
+pending `Plots`. The two were told apart from the real cause by git history and by when each
+pump can run, not by picking between them. The real cause is older than both: a pane restored
+visible at startup with no document open consumed the one `Shown` ask against no document and
+answered No open document, and nothing asked again when a model opened later, so a scan filled
+the header while the plots block sat on open a model. A KPI Scan pressed before the plot read
+returned displaced the pending `Plots` in the one slot the same way. So `Shown` asks only for
+the model now, and `Took` asks for the plots once per model, guarded by the title the last ask
+was for, reset when the model closes. A model opened under the pane, or one whose first ask was
+lost, is read the moment any request answers with it, and the ask fires exactly once rather
+than the twice a blind `Shown` ask and `Took` together would have cost.
+
+**The plots block reads four ways, one line each, in `CreateWords.PlotsBlock`.** Open a model
+is right only when no model is open. A scan that filled the header used to leave this block
+reading open a model beside the model's own name, which sent the team to Revit for an hour. No
+document says open one, a document whose plots have not come back says it is reading them, a
+document answered with no plots says the model holds none, and a document answered with plots
+hands off to `PlotSources` for the count. The not answered state is told from the no document
+one by whether a document is open, read off the live document the pane already holds no copy
+of, and from the answered empty state by a null plots standing for not answered rather than
+answered with none.
 
 **The one copy the pane holds is the templates folder's recognitions, and it says so.** Every
 redraw opened and peeked every .xlsx in the templates folder on the interface thread, and every

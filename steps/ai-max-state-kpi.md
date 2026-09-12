@@ -1,5 +1,36 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty seventh pass, two things off the 13:48 run on RCRC_NG03_EZ. **The audit
+files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**The plots block said open a model while a model was open.** A workflow told Bader's two
+candidates apart from the real cause and neither was it: the repaint pump was born at render
+and never ran at background, and the progress pumps run only inside an Execute after the one
+request slot is emptied. The real cause is older than both: `Ask(Plots)` lived only in `Shown`,
+that one ask was lost when a pane restored visible at startup consumed it against no document,
+or a scan displaced it in the one slot, and nothing asked again, so a scan filled the header
+while the block drew its waiting text, whose words were open a model. Fixed in two halves:
+`CreateWords.PlotsBlock` reads four ways with a Core test, no document says open one, a
+document not yet answered says it is reading, a document answered empty says the model holds
+none, a document answered with plots hands to `PlotSources`; and `Ask(Plots)` moved from
+`Shown` to `Took`, the one place that knows which model answered, guarded by title and reset on
+close, so the plots are read once per model and a model opened under the pane is read the moment
+any request answers with it. The recovery is untestable in Core and waits on a run.
+
+**The ten xUnit warnings are cleared**, four xUnit2029 rewritten from `Assert.Empty(x.Where(p))`
+to `Assert.DoesNotContain(x, p)` and six xUnit2031 from `Assert.Single(x.Where(p))` to
+`Assert.Single(x, p)`, the assertion changed and never the subject, none changed what it checks.
+Build zero warnings.
+
+Two break watches went red on 1 and 1 tests and were restored byte for byte. **Locally 1289
+tests at this branch, 0 failed and 0 skipped, 700 of them KPI, 1 added, against the 1288 main
+carries**, not the 1266 Bader's message names, which the Drawing Sheet rounds `#82`, `#83`,
+`#84` and `#88` moved past since the fifty sixth pass. Committed in two, the warnings as
+checkpoint `54ab011` then the plots fix. The pull request, the merge hash and the runner's
+count go in the record the merge adds here. **Nothing in this round has been observed in
+Revit**, and whether the recovered pane shows the plots on the next 13:48 style run is the one
+thing waiting on Bader.
+
 Phase: 9, ship. Fifty sixth pass, Bader's answers to two of the fifty fifth pass's four open
 questions, no behaviour changes beyond the two lines. **The audit files stay the one record:
 49 findings, 13 FIXED, 36 open, and this round closes none.**

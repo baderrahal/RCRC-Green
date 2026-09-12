@@ -134,7 +134,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             FormulaCheck check = outcome.Formulas;
             Assert.False(check.RefusesTheWrite);
-            Assert.Empty(check.AtRisk.Where(one => one.IsAnError));
+            Assert.DoesNotContain(check.AtRisk, one => one.IsAnError);
 
             // Rows 8 and 9 of both sheets, and rows 4 to 6 where no count was written: their
             // L and M return a space and stay a space.

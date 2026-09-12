@@ -173,6 +173,39 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// Waiting on the plots, with a model open. NOT open a model, because a model is open
+        /// and the header names it. Read as soon as one press reaches the read, so it is a
+        /// moment on a large model rather than a state that stays.
+        /// </summary>
+        public const string ReadingThePlots =
+            "Reading the plots from the model. On a large model this takes a moment.";
+
+        /// <summary>
+        /// No document at all, the one place open a model is the right thing to say. The pane
+        /// reads a model's plots as soon as one is open, so it says so.
+        /// </summary>
+        public const string NoModelToReadPlotsFrom =
+            "No model open. This pane reads a model's plots as soon as one is open.";
+
+        /// <summary>
+        /// The lead lines of the plots block, one line per state, because open a model on a
+        /// model that is open sent the team to Revit for an hour. FOUR states, each its own
+        /// line: no document says open one, a document whose plots have not come back yet says
+        /// it is reading them, a document answered with no plots says the model holds none, and
+        /// a document answered with plots hands off to <see cref="PlotSources"/> for the count.
+        /// The not answered state is told apart from the no document one by whether a document
+        /// is open, which the pane knows off the live document it reads every draw, never a
+        /// held copy. A null plots means the answer has not come back, which is not the same as
+        /// an answer of no plots.
+        /// </summary>
+        public static IReadOnlyList<string> PlotsBlock(bool documentOpen, PlotsInTheModel plots)
+        {
+            if (plots != null) return PlotSources(plots);
+
+            return new List<string> { documentOpen ? ReadingThePlots : NoModelToReadPlotsFrom };
+        }
+
+        /// <summary>
         /// What the two lists of plots disagree about, said on screen rather than resolved.
         /// PRX_Plot_ID on the sheets and the PRX_Ref Plot ID filter on the schedules are two
         /// records of one fact and this is where they are held apart.
