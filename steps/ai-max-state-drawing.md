@@ -13,8 +13,9 @@ FillPrefixes, PutTheRangeBack, PrefixChosen, RangeChosen and PlotsInRange are go
 panel. Fix 3 goes in the log: reports holds only README.md here, so the two scan reports are
 unreadable and OVERALL PLAN and FURNITURE SCHEDULES stay unverified, said rather than
 reasoned around. Suite reads 1281 locally, the 1271 plus 10 PlotTickList tests. Two breaks
-watched red, 7 of 10 and 1 of 1, both reversed byte for byte. The mockup lands at
-design/pr-90 once the pull request number is real.
+watched red, 7 of 10 and 1 of 1, both reversed byte for byte. The pull request is 90
+and the mockup of the new step 1 is at design/pr-90/panel.html, light and dark, marked
+in the file itself as a mockup and not a screenshot.
 
 Before that, the sixtieth pass's first pull request. The
 marker is deleted and a sheet number is built from the plot identifier itself: the view
