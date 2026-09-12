@@ -280,7 +280,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             List<CellWrite> onTheSheet = plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet).ToList();
             Assert.Equal(new[] { "B5", "D5", "I5", "J5" }, onTheSheet.Select(one => one.Cell.ToString()));
             Assert.Equal(new[] { "19", "BAUHINIA PURPUREA", "6", "5" }, onTheSheet.Select(one => one.Stored));
-            Assert.Empty(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet));
+            Assert.DoesNotContain(plan.Skipped, one => one.SheetName == KpiTemplates.ProposedTreesSheet);
         }
 
         /// <summary>
@@ -305,9 +305,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             // No name, no count, no measure. A row written with a name and a count alone is
             // what put seven error formulas into the 1836 workbook and deleted it.
-            Assert.Empty(plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet));
+            Assert.DoesNotContain(plan.Writes, one => one.SheetName == KpiTemplates.ProposedTreesSheet);
 
-            NotWritten skipped = Assert.Single(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet));
+            NotWritten skipped = Assert.Single(plan.Skipped, one => one.SheetName == KpiTemplates.ProposedTreesSheet);
             Assert.Equal(string.Empty, skipped.Cell);
             Assert.Equal("UNKNOWN 16 under Proposed", skipped.What);
             Assert.Equal(
@@ -345,7 +345,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(new[] { "B5", "D5", "J5" }, written.Select(one => one.Cell.ToString()));
             Assert.Equal("5", written.Single(one => one.Cell.ToString() == "J5").Stored);
 
-            NotWritten height = Assert.Single(plan.Skipped.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet));
+            NotWritten height = Assert.Single(plan.Skipped, one => one.SheetName == KpiTemplates.ProposedTreesSheet);
             Assert.Equal("I5", height.Cell);
             Assert.Equal("CONOCARPUS height", height.What);
             Assert.Equal(

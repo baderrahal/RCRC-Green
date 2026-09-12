@@ -1,5 +1,17 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty seventh pass IN FLIGHT, two things off the 13:48 run on RCRC_NG03_EZ.
+This commit is a checkpoint carrying the second thing only: **the ten xUnit warnings are
+cleared**, four xUnit2029 rewritten from `Assert.Empty(x.Where(p))` to
+`Assert.DoesNotContain(x, p)` and six xUnit2031 from `Assert.Single(x.Where(p))` to
+`Assert.Single(x, p)`, the assertion changed and never the subject, none changed what it
+checks. Build zero warnings, suite unchanged. **The first thing, the plots block reading
+Open a model while a model is open, is NOT in this commit and lands next**: a workflow is
+telling the two named candidates apart before the fix. The branch came off a fresh pull of
+main at `aa0f546`, the fifty eighth pass, so the baseline is **1288 tests, 699 of them KPI**,
+not the 1266 Bader's message names, which the Drawing Sheet rounds `#82`, `#83`, `#84` and
+`#88` moved past since.
+
 Phase: 9, ship. Fifty sixth pass, Bader's answers to two of the fifty fifth pass's four open
 questions, no behaviour changes beyond the two lines. **The audit files stay the one record:
 49 findings, 13 FIXED, 36 open, and this round closes none.**

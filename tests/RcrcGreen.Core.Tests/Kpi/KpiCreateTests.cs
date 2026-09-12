@@ -678,8 +678,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(model.Is(OpenModel.Of("NG05")));
             Assert.False(model.Is(OpenModel.Of("NG06")));
             Assert.False(model.Is(null));
-            Assert.Empty(typeof(OpenModel).GetProperties()
-                .Where(one => one.Name.IndexOf("Folder", StringComparison.OrdinalIgnoreCase) >= 0));
+            Assert.DoesNotContain(typeof(OpenModel).GetProperties(),
+                one => one.Name.IndexOf("Folder", StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         /// <summary>

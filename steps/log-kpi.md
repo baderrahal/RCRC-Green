@@ -4,6 +4,40 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty seventh pass IN FLIGHT. The ten warnings, and the plots block that says open a model
+
+Two things off the 13:48 run on RCRC_NG03_EZ. This entry is a checkpoint carrying the second
+only, so the tree is not left dirty while a workflow tells the first's two candidates apart.
+The branch came off a fresh pull of main at `aa0f546`, the fifty eighth pass, so the baseline
+is **1288 tests, 699 of them KPI**, not the 1266 Bader's message names: the Drawing Sheet
+rounds `#82`, `#83`, `#84` and `#88` landed since the fifty sixth pass and none of them is KPI.
+
+### The ten xUnit warnings, cleared
+
+All ten were the same mistake in two shapes, asserting on a filtered collection rather than
+the condition, so the message names the filtered length rather than what it found.
+
+- **Four xUnit2029**, `Assert.Empty(x.Where(p))` to `Assert.DoesNotContain(x, p)`:
+  KpiCreateTests 681 (no Folder property on OpenModel), CanopyColumnsTests 283 (no skip on the
+  proposed sheet) and 308 (no write on it), WorkbookFormulasTests 137 (no formula at risk is
+  an error)
+- **Six xUnit2031**, `Assert.Single(x.Where(p))` to `Assert.Single(x, p)`, the filtering
+  overload returning the one element typed: CanopyColumnsTests 310 and 348, DiameterColumnTests
+  186, TreeListRowsTests 258, 480 and 481
+
+The assertion changed and never the subject. None changed what it checks: the
+`DoesNotContain` overload takes the same predicate, and the `Single` filtering overload
+returns the same typed element the `.Where().Single` chain did, which every call site still
+assigns and reads. Build zero warnings, suite unchanged at 1288.
+
+### The plots block, NOT in this checkpoint
+
+A workflow is telling apart the two candidates Bader named for why the block reads Open a
+model while a model is open. It lands next, with the fix, the four way message decision and
+its test, and the log entry says which candidate it was and how the two were told apart.
+
+---
+
 ## 2026-09-12, fifty sixth pass. The coarse step is said before any number, and the pane counts the notes
 
 Two lines off Bader's answers to two of the fifty fifth pass's four open questions, and no
