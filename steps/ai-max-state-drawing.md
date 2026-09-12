@@ -1,6 +1,16 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Sixtieth pass, the sub plot number round, second pull request, fixes 2 and
+Phase: 9, ship. Sixtieth pass closed. Both pull requests merged: 89 as 2688f631 with
+1271 tests on the runner and 90 as ff5d69d2 with 1281, 0 failed and 0 skipped both
+times, both squash messages back byte for byte, and the merged main reads 1281 locally.
+The sheet number is the view code, the plot identifier with its dash dropped, then the
+sheet letter, the marker family is deleted, step 1 is a tick list of plots through
+PlotTickList, the mockup is design/pr-90/panel.html, and the fix 3 statement, seven of
+the nine sheet names model confirmed and OVERALL PLAN and FURNITURE SCHEDULES
+unverified with no scan readable here, is in the sixtieth pass log entry this commit
+carries.
+
+Before that, the sixtieth pass's second pull request, fixes 2 and
 3. The first is merged as 2688f631 from pull request 89 with 1271 tests on the runner, 0
 failed and 0 skipped, matching local, and the squash message came back byte for byte. This
 commit makes step 1 a tick list of plots: PlotTickList in Core/DrawingSheet holds every two
