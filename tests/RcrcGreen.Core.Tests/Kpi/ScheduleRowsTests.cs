@@ -136,7 +136,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static IReadOnlyList<GroupSubtotal> SubtotalsOfDm11()
         {
             return ShrubsAndLawnRows.Read(
-                TheRealDm11(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals;
+                TheRealDm11(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown).Subtotals;
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "37 m\u00b2", "46" });
 
             GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
-                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals);
+                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown).Subtotals);
 
             Assert.False(only.Agrees);
             Assert.Contains("its group total reads 37 over 46", only.Disagreement);
@@ -365,7 +365,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "35 m\u00b2", "46" });
 
             GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
-                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals);
+                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown).Subtotals);
 
             Assert.Equal(35.0, only.SquareMetres);
             Assert.Equal(2, only.Repeats);
@@ -383,7 +383,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "0 m\u00b2", "0" });
 
             GroupSubtotal only = Assert.Single(ShrubsAndLawnRows.Read(
-                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted).Subtotals);
+                schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown).Subtotals);
 
             Assert.Equal(0.0, only.SquareMetres);
             Assert.Equal(0, only.ItemCount);

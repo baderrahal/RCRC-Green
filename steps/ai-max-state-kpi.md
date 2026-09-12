@@ -1,5 +1,51 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty fifth pass, two things off the 1208 run on RCRC_NG03_EZ, the first run
+on a second model, where the reading reuse held, a 123 second scan and a 2.5 second create.
+**The audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes
+none.**
+
+**The group total check tolerates the unit's rounding on areas and never on counts.** FM-21
+and FM-22 refused with counts exact and areas off by one in opposite directions, which is
+rounding. Counts still refuse exactly. Areas get half the rounding step per row summed, read
+off the project units by `KpiReader.AreaUnit` and never a constant, within the room is a
+`RoundingNote` printed beside the group total row, outside still refuses naming the room, and
+an unread step allows nothing and says so. Both measured plots are tests and go through noted.
+Every place printed numbers are added against a printed total is named in the log, the ones
+already right included, and the species sum record the forty seventh pass chose, which was
+computed and printed nowhere, prints now.
+
+**The status line moves while a run does**, driven by what is done, never a timer. The scan
+announces each section off the report's own headings and counts the schedules, Sections 5 to 8
+of 9, schedules, 400 of 951, 42%. Create names the plot, Reading DM-44, plot 3 of 18, 11%,
+then the steps name themselves through the patcher's own callback. Percentages only where the
+total is known, floored, off counts that only grow. `ProgressWords` in Core holds the words
+and the counting with tests, and the end line still comes through `Told` on finish, refusal
+and throw. **Whether a line set mid run visibly repaints on a real pane is UNKNOWN until
+somebody runs it**, the pane can share Revit's thread, and `Moved` pumps one render priority
+job after each line so the paint can get through when it does while every queued click stays
+queued until the run returns.
+
+**A breaker read the committed diff before the pull request went ready and five of its ten
+findings changed code**: a phased group printing no total row is said in the report to have
+gone unchecked, the note's numbers print six places so a fine step cannot read off by 0
+within the 0, the species record's 0.005 constant gate became the shared drift epsilon with
+six place numbers, a reused press says Reusing the readings already held on the live line,
+and the pump moved from background to render priority because background would have
+dispatched queued clicks inside `Execute`, the two ownerless folder dialogs included. Found
+and left with reasons in the log: the room has no ceiling on a coarse unit, the rounding
+note is in the report file and not on the pane, a zero or negative accuracy would print as
+not read on a value nobody has seen, and `Repeats` prints nowhere, older than this round.
+
+Seven break watches went red on 3, 1, 2, 1, 1, 1 and 1 tests and were restored byte for
+byte. **Locally 1246 tests at this branch, 0 failed and 0 skipped, 694 of them KPI, 22
+added, against the 1224 main carries.** The pull request, the merge hash and the runner's
+count go in the record the merge adds here. **Nothing in this round has been observed in
+Revit.** Four things wait on Bader: the first run that shows whether the status line
+repaints mid run, the rounding note's first sighting on a real report, whether the room
+wants a ceiling on a project rounding coarser than the metre, and whether the pane should
+say beside the written count that notes exist in the report.
+
 Phase: 9, ship. Fifty fourth pass. **The audit files are the one record of what is open: 49
 numbered findings, 13 carrying a FIXED mark, so 36 open, read off
 `steps/audit-kpi.md` and `steps/audit-kpi-2.md` and counted nowhere else.** Eight marks were

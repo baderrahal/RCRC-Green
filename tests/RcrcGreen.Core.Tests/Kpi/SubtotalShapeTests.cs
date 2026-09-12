@@ -53,7 +53,25 @@ namespace RcrcGreen.Core.Tests.Kpi
             return Assert.Single(ShrubsAndLawnRows.Read(
                 CreateFixture.ShrubsAndLawn(plot, all.ToArray()),
                 new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading },
-                CreateFixture.Counted).Subtotals);
+                CreateFixture.Counted, ProjectUnit.Unknown).Subtotals);
+        }
+
+        /// <summary>
+        /// The project that measured FM-21 and FM-22 rounds areas to the metre, which its own
+        /// scan prints as rounded to 1.
+        /// </summary>
+        private static readonly ProjectUnit RoundedToTheMetre =
+            new ProjectUnit("Square meters", "autodesk.unit.unit:squareMeters-1.0.1", 1.0);
+
+        private static GroupSubtotal OnlyRounded(string plot, string heading, ProjectUnit unit, params string[][] rows)
+        {
+            var all = new List<string[]> { Headings, Structure(heading) };
+            all.AddRange(rows);
+
+            return Assert.Single(ShrubsAndLawnRows.Read(
+                CreateFixture.ShrubsAndLawn(plot, all.ToArray()),
+                new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading },
+                CreateFixture.Counted, unit).Subtotals);
         }
 
         /// <summary>
@@ -331,6 +349,329 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(group.Agrees);
             Assert.Equal(1, group.Repeats);
         }
+        /// <summary>
+        /// **FM-21 off the 1208 run on RCRC_NG03_EZ, measured, and the refusal that was wrong.**
+        /// Existing 2 over 0, Proposed 51 over 11, group total 52 over 11. The counts match
+        /// exactly and 2 plus 51 is 53 against a printed 52, because the project rounds areas
+        /// to the metre and a sum of rounded numbers need not equal a rounded sum. Two rows
+        /// rounded to 1 may be off by up to 1, so this goes through and is noted.
+        /// </summary>
+        [Fact]
+        public void Fm21OffByOneWithinTheMetreIsNotedRatherThanRefused()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                RoundedToTheMetre,
+                Structure("Existing"),
+                Species("Acacia", 2.0, 0),
+                Subtotal(2.0, 0),
+                Structure("Proposed"),
+                Species("Bougainvillea", 51.0, 11),
+                Subtotal(51.0, 11),
+                Subtotal(52.0, 11));
+
+            Assert.True(group.Agrees);
+            Assert.Equal(string.Empty, group.Disagreement);
+            Assert.Equal(
+                "the 2 rows above it add to 53 over 11 against its printed 52 over 11, "
+                + "off by 1 in area with every count exact, within the 1 that 2 rows rounded to 1 allow, "
+                + "so it is noted rather than refused",
+                group.RoundingNote);
+            Assert.Equal(53.0, group.SquareMetres);
+            Assert.Equal(11, group.ItemCount);
+        }
+
+        /// <summary>
+        /// **FM-22 off the same run**, one high where FM-21 is one low. Existing 2 over 0,
+        /// Proposed 80 over 46, group total 83 over 46, and 2 plus 80 is 82.
+        /// </summary>
+        [Fact]
+        public void Fm22OffByOneTheOtherWayIsNotedToo()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-22",
+                KpiMerge.ShrubsHeading,
+                RoundedToTheMetre,
+                Structure("Existing"),
+                Species("Acacia", 2.0, 0),
+                Subtotal(2.0, 0),
+                Structure("Proposed"),
+                Species("Bougainvillea", 80.0, 46),
+                Subtotal(80.0, 46),
+                Subtotal(83.0, 46));
+
+            Assert.True(group.Agrees);
+            Assert.Equal(
+                "the 2 rows above it add to 82 over 46 against its printed 83 over 46, "
+                + "off by 1 in area with every count exact, within the 1 that 2 rows rounded to 1 allow, "
+                + "so it is noted rather than refused",
+                group.RoundingNote);
+        }
+
+        /// <summary>
+        /// The room is the unit's, never a constant: rounding to 0.01 gets a tighter allowance,
+        /// so the same off by one refuses there, naming the room it is outside of.
+        /// </summary>
+        [Fact]
+        public void AProjectRoundingToACentimetreAllowsNoMetre()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                new ProjectUnit("Square meters", "id", 0.01),
+                Structure("Existing"),
+                Species("Acacia", 2.0, 0),
+                Subtotal(2.0, 0),
+                Structure("Proposed"),
+                Species("Bougainvillea", 51.0, 11),
+                Subtotal(51.0, 11),
+                Subtotal(52.0, 11));
+
+            Assert.False(group.Agrees);
+            Assert.Equal(string.Empty, group.RoundingNote);
+            Assert.Contains("add to 53 over 11, which is more than the 0.01 that 2 rows rounded to 0.01 allow", group.Disagreement);
+        }
+
+        /// <summary>
+        /// A count is an integer and gets no room at all. The same areas with the group total
+        /// count one high still refuse, whatever the rounding step.
+        /// </summary>
+        [Fact]
+        public void ACountOffByOneStillRefusesWhateverTheRounding()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                RoundedToTheMetre,
+                Structure("Existing"),
+                Species("Acacia", 2.0, 0),
+                Subtotal(2.0, 0),
+                Structure("Proposed"),
+                Species("Bougainvillea", 51.0, 11),
+                Subtotal(51.0, 11),
+                Subtotal(53.0, 12));
+
+            Assert.False(group.Agrees);
+            Assert.Equal(string.Empty, group.RoundingNote);
+            Assert.Contains("its group total reads 53 over 12 and the 2 rows above it add to 53 over 11", group.Disagreement);
+            Assert.DoesNotContain("rounded to", group.Disagreement);
+        }
+
+        /// <summary>
+        /// Outside the room still refuses: 84 against 90 is off by 6 where 2 rows rounded to
+        /// the metre allow 1, and the refusal names the room so a person sees why the note was
+        /// not enough.
+        /// </summary>
+        [Fact]
+        public void OffBySixIsOutsideTheMetresRoomAndStillRefuses()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "DM-16",
+                KpiMerge.ShrubsHeading,
+                RoundedToTheMetre,
+                Structure("Existing"),
+                Species("Acacia", 30.0, 39),
+                Subtotal(30.0, 39),
+                Structure("Proposed"),
+                Species("Bougainvillea", 54.0, 69),
+                Subtotal(54.0, 69),
+                Subtotal(90.0, 108));
+
+            Assert.False(group.Agrees);
+            Assert.Equal(string.Empty, group.RoundingNote);
+            Assert.Contains("add to 84 over 108, which is more than the 1 that 2 rows rounded to 1 allow", group.Disagreement);
+        }
+
+        /// <summary>
+        /// A step nobody read allows nothing, because a check that cannot see its subject must
+        /// not quietly widen. The refusal says so, so the FM-21 shape on a project whose unit
+        /// was not read is traced in one line.
+        /// </summary>
+        [Fact]
+        public void AStepThatWasNotReadAllowsNothingAndSaysSo()
+        {
+            GroupSubtotal group = Only(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                Structure("Existing"),
+                Species("Acacia", 2.0, 0),
+                Subtotal(2.0, 0),
+                Structure("Proposed"),
+                Species("Bougainvillea", 51.0, 11),
+                Subtotal(51.0, 11),
+                Subtotal(52.0, 11));
+
+            Assert.False(group.Agrees);
+            Assert.Equal(string.Empty, group.RoundingNote);
+            Assert.Contains(
+                "add to 53 over 11, and the project's area rounding step was not read, so no rounding room was allowed",
+                group.Disagreement);
+        }
+
+        /// <summary>
+        /// One row rounded to the metre allows half, said in the singular, so a one phase
+        /// group off by one refuses while the two phase groups above go through.
+        /// </summary>
+        [Fact]
+        public void AOnePhaseGroupOffByOneIsOutsideItsHalfMetre()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                RoundedToTheMetre,
+                Structure("Proposed"),
+                Species("Bougainvillea", 51.0, 11),
+                Subtotal(51.0, 11),
+                Subtotal(52.0, 11));
+
+            Assert.False(group.Agrees);
+            Assert.Contains("add to 51 over 11, which is more than the 0.5 that 1 row rounded to 1 allows", group.Disagreement);
+        }
+
+        /// <summary>
+        /// The note is a line in the report, beside the group total row it is about, so a real
+        /// fault growing slowly is visible while correct data goes through. The row numbers
+        /// count the heading row as 1.
+        /// </summary>
+        [Fact]
+        public void TheReportPrintsTheNoteBesideTheGroupTotalRow()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                RoundedToTheMetre,
+                Structure("Existing"),
+                Species("Acacia", 2.0, 0),
+                Subtotal(2.0, 0),
+                Structure("Proposed"),
+                Species("Bougainvillea", 51.0, 11),
+                Subtotal(51.0, 11),
+                Subtotal(52.0, 11));
+
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(new[] { CreateFixture.Plot("FM-21", subtotals: new[] { group }) }),
+                new System.DateTime(2026, 9, 12, 12, 8, 0));
+
+            Assert.Contains(
+                "        group total row 9 prints 52 over 11, and the 2 rows above it add to 53 over 11 "
+                + "against its printed 52 over 11, off by 1 in area with every count exact, "
+                + "within the 1 that 2 rows rounded to 1 allow, so it is noted rather than refused",
+                report);
+        }
+
+        /// <summary>
+        /// The species rows against the group's own value, recorded rather than enforced, the
+        /// forty seventh pass's decision. The docstring said printed and nothing printed it,
+        /// which the review of every summed check found, so the record finally exists: 96 plus
+        /// 69 is 165 against a group total row printing 170.
+        /// </summary>
+        [Fact]
+        public void TheSpeciesRowsRecordFinallyPrintsWhenTheyDisagree()
+        {
+            GroupSubtotal group = Only(
+                "FM-05",
+                KpiMerge.LawnHeading,
+                Structure("Proposed"),
+                Species("Pennisetum", 96.0, 117),
+                Subtotal(96.0, 117),
+                Structure("Street Design"),
+                Species("Cynodon", 69.0, 84),
+                Subtotal(69.0, 84),
+                Subtotal(170.0, 201));
+
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(new[] { CreateFixture.Plot("FM-05", subtotals: new[] { group }) }),
+                new System.DateTime(2026, 9, 12, 12, 8, 0));
+
+            Assert.Contains(
+                "        its species rows add to 165 in area against the 170 its group total row prints, "
+                + "recorded rather than enforced, because every printed area is already rounded",
+                report);
+        }
+
+        /// <summary>
+        /// A phased group that prints no total row gives the check nothing to hold the phase
+        /// rows against. It is still taken, but taken silently it reads exactly like a group
+        /// whose total was checked and agreed, so the report says the check never ran.
+        /// </summary>
+        [Fact]
+        public void APhasedGroupWithNoTotalRowIsSaidToGoUnchecked()
+        {
+            GroupSubtotal group = Only(
+                "DM-11",
+                KpiMerge.LawnHeading,
+                Structure("Proposed"),
+                Species("Pennisetum", 35.0, 46),
+                Subtotal(35.0, 46));
+
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(new[] { CreateFixture.Plot("DM-11", subtotals: new[] { group }) }),
+                new System.DateTime(2026, 9, 12, 12, 8, 0));
+
+            Assert.True(group.Agrees);
+            Assert.Contains(
+                "        the group printed no total row after its phase rows, "
+                + "so nothing checked what they add to",
+                report);
+        }
+
+        /// <summary>
+        /// The note's numbers print at the scale of the step they are held against. On a
+        /// project rounding to 0.001 the old two place format said off by 0 within the 0 it
+        /// allows, a sentence at war with itself over a comparison the code got right.
+        /// </summary>
+        [Fact]
+        public void ANoteOnAFineStepPrintsItsNumbersRatherThanNought()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                new ProjectUnit("Square meters", "id", 0.001),
+                Structure("Existing"),
+                new[] { "Acacia.jpg", "Acacia", "10.001 m²", "3" },
+                new[] { string.Empty, string.Empty, "10.001 m²", "3" },
+                Structure("Proposed"),
+                new[] { "Bougainvillea.jpg", "Bougainvillea", "20.003 m²", "4" },
+                new[] { string.Empty, string.Empty, "20.003 m²", "4" },
+                new[] { string.Empty, string.Empty, "30.003 m²", "7" });
+
+            Assert.True(group.Agrees);
+            Assert.Equal(
+                "the 2 rows above it add to 30.004 over 7 against its printed 30.003 over 7, "
+                + "off by 0.001 in area with every count exact, within the 0.001 that 2 rows rounded to 0.001 allow, "
+                + "so it is noted rather than refused",
+                group.RoundingNote);
+        }
+
+        /// <summary>
+        /// The species record speaks on any real difference, with numbers fine enough to show
+        /// it. The 0.005 that used to gate this line was a constant pretending to be a
+        /// rounding room, and under it 169.996 against 170 was silently swallowed.
+        /// </summary>
+        [Fact]
+        public void ASpeciesSumOffByLessThanACellIsStillRecorded()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-05",
+                KpiMerge.LawnHeading,
+                RoundedToTheMetre,
+                Structure("Proposed"),
+                new[] { "Pennisetum.jpg", "Pennisetum", "96.246 m²", "117" },
+                new[] { "Cynodon.jpg", "Cynodon", "73.75 m²", "84" },
+                new[] { string.Empty, string.Empty, "169.996 m²", "201" },
+                new[] { string.Empty, string.Empty, "170 m²", "201" });
+
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(new[] { CreateFixture.Plot("FM-05", subtotals: new[] { group }) }),
+                new System.DateTime(2026, 9, 12, 12, 8, 0));
+
+            Assert.Contains(
+                "        its species rows add to 169.996 in area against the 170 its group total row prints, "
+                + "recorded rather than enforced, because every printed area is already rounded",
+                report);
+        }
+
     }
 
     /// <summary>

@@ -4,6 +4,163 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty fifth pass. The room the rounding earns, and a status line that moves
+
+Two things off the 1208 run on RCRC_NG03_EZ, 104,031 elements and 18 plots, the first run on a
+second model. The reading reuse held on its first real run, a 123 second scan and a 2.5 second
+create, which is finding 34 doing its job. **The other 36 audit findings stay open**, not
+renumbered, not reordered, not annotated. Nothing else was touched: not the Drawing Sheet, not
+`Core/Shared`, not `CLAUDE.md`, not `PanelTheme`, `PanelMetrics` or `ReportFile`. **Nothing in
+this round has been observed in Revit.** The branch came off a fresh pull of main at `07f16ba`.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1246 tests at this branch, 0 failed and 0 skipped, 694 of them KPI, 22 added here**, against
+the 1224 main carries. The count moved from 1243 when the breaker round below added three.
+
+### The group total check refuses on rounding no more
+
+It refused FM-21, Existing 2 over 0, Proposed 51 over 11, group total 52 over 11, where 2 plus
+51 is 53, and FM-22, 2 over 0, 80 over 46, 83 over 46, where 2 plus 80 is 82. The counts match
+exactly, 11 and 11, 46 and 46, the areas are off by one in opposite directions, and the model's
+own scan prints Area unit, rounded to 1, so every printed area is already rounded and a sum of
+rounded numbers need not equal a rounded sum. The forty seventh pass said exactly that about
+the species sum and chose to record rather than enforce, the group total check was enforced
+exactly anyway, and it fired on correct data.
+
+The rule now, in `ShrubsAndLawnRows.Disagreeing`: **counts are integers and get no room at
+all**, a count that disagrees still refuses whatever the rounding. **Areas get half the unit's
+rounding step for each row summed**, so two rows rounded to the metre may be off by up to one.
+The step is read off the project units by `KpiReader.AreaUnit` once per press, the same read
+the scan prints, threaded through `KpiPlotReader.Read` into `ShrubsAndLawnRows.Read` as a
+required argument so no caller can lose it in silence, and never a constant. Within the room
+is the `RoundingNote` on the `GroupSubtotal`, printed beside the group total row in the
+report with the rows, the total and by how much, so a real fault growing slowly stays
+visible. Outside the room still refuses naming the room, and a step that was not read allows
+nothing and says so, because a check that cannot see its subject must not quietly widen.
+Both measured plots are tests, byte for byte: both go through, both are noted, and the same
+numbers with a count one high still refuse.
+
+### Every place printed numbers are added against a printed total, named
+
+- **The shrubs and lawn phase rows against the group total row**: the one that fired, fixed
+  above
+- **The softscape species rows, taken and left out, against the printed TOTAL row**: integer
+  counts, exact, right as it is
+- **Each softscape group's species rows against its own subtotal row**: integer counts, exact,
+  right as it is
+- **`Totalled.Adds`**: the tool's own sum against the tool's own total, both computed from the
+  one list, so it is a guard for a future caller rather than a live check. Left alone
+  deliberately, and its `Tolerance` constant is shared with the height and diameter difference
+  detector in the plan, so widening it would have silently swallowed real disagreements there
+- **The NOT WRITTEN line**: integer sums against no printed total, nothing to tolerate
+- **The species rows against the shrubs and lawn group's value**: recorded rather than
+  enforced by the forty seventh pass, and the review of every summed check found the record
+  was MISSING. `GroupSubtotal.SpeciesSum` was computed, its docstring said printed, and
+  nothing printed it anywhere, so a drift there was invisible. It prints now beside the group
+  on any real difference, recorded rather than enforced, unchanged as a decision. Its first
+  shape gated the line on 0.005, a constant pretending to be a rounding room, which the
+  breaker caught and the round below cured: the gate is the shared drift epsilon alone and
+  the line's two numbers print to six places, so 169.996 against 170 is recorded rather than
+  swallowed or printed as 170 against 170
+
+### A status line that moves
+
+One line per piece of work done, never a timer, never an estimate. `ProgressWords` in Core
+holds the words and the counting with tests, the handler raises them as the work begins, and
+the pane's `Moved` shows them. The scan announces each section off the report's own numbered
+headings, Section 2 of 9, project information, then 3, then 4, and the schedules loop counts
+every schedule, Sections 5 to 8 of 9, schedules, 400 of 951, 42%, a span because one reader
+covers those four sections in one pass and pretending them apart would be a lie. Create names
+the plot, Reading DM-44, plot 3 of 18, 11%, with the percentage of plots finished so it never
+goes backwards, then the steps name themselves: adding the plots up, copying the template,
+writing the cells, reading the written cells back, checking the workbook's own formulas,
+writing the report. The patcher raises its four steps itself through a callback, so the words
+come from the work. A percentage appears only where the total is known and is floored, 950 of
+951 is 99 and 951 of 951 is 100, and the end line still comes through `Told` on every finish,
+refusal and throw, so the last thing on screen is never a count that stopped moving.
+
+**Whether the line visibly moves mid run is UNKNOWN until somebody runs it.** The pane can
+share Revit's own thread, where a text set from inside the external event sits unpainted until
+the run returns. `Moved` queues one empty job at render priority after each line, which lets
+the paint through when the threads are one and costs nothing when they are not. No test can
+reach it and no mockup can show it, the same class as the black on black panel, so the first
+run on a real pane is the check. The job began at background priority and the breaker round
+below moved it to render, because waiting on a job pumps everything queued at or above its
+priority and input sits between the two: at background every queued click would have been
+dispatched inside `Execute`, and two of the pane's buttons open a folder dialog owned by no
+window, behind which Revit's own ribbon stays live mid write. At render the paint goes
+through and every click stays queued until the run returns. The paint sits at render
+priority, so what background let through for it, render lets through the same.
+
+### The breaker read the committed diff and five of its ten findings changed code
+
+Run after the round's first commit, before the pull request went ready. Fixed:
+
+- **A phased group printing no total row was taken as silently as one whose total was checked
+  and agreed.** Real shape: a phase heading, its species, one subtotal and no group total row.
+  The check has no subject there, which is not the schedule's failure, but nothing anywhere
+  said the check never ran, the exact skip the softscape TOTAL already says. The report says
+  it now, the group printed no total row after its phase rows, so nothing checked what they
+  add to, beside the group, with a test
+- **The note's two place numbers could contradict the decision.** On a project rounding to
+  0.001, off by 0.0012 within a room of 0.0015 printed as off by 0 within the 0 that rows
+  rounded to 0.001 allow, right decision, unreadable sentence. `Said` prints six places now,
+  chosen because two swallowed a fine step and twelve printed the last bits of a double on
+  summed thousands as digits nobody printed. FM-21 and FM-22 read byte for byte as before
+- **The species record was gated on 0.005**, a constant pretending to be a rounding room in
+  the same commit that cured the check of one. Gated on the shared drift epsilon now and
+  printed to six places, so any real difference is recorded and none prints as equal
+- **A reused press said nothing about reuse on the live line.** A 2.5 second finish where the
+  last press read for two minutes looks like something skipped until the screen says reuse.
+  The reused branch raises Reusing the readings already held, the report's Readings line
+  unchanged as the record
+- **The background priority pump would have dispatched queued clicks inside `Execute`.**
+  Waiting on a job pumps everything at or above its priority, input sits above background,
+  and the pane's buttons stay live through a run, two of them opening a folder dialog owned
+  by no window. A click queued during a scan would have run its handler mid read, and the
+  dialog would have left Revit's ribbon live mid write. The pump runs at render priority now,
+  above input, so the paint goes through and every click stays queued until the run returns.
+  No test reaches it, net48, recorded here instead
+
+Found and left, each with its reason:
+
+- **The room has no ceiling.** A project rounding areas to 10 hands the check a room of five
+  per row summed, and a real fault inside it is a note rather than a refusal. That is what
+  half the unit's step for each row summed means on a coarse unit, the rule is measured and
+  Bader's, and a ceiling would be a rule nobody gave. Open question in the state file
+- **The note lives in the report file and the pane shows the ordinary success line.** A run
+  carrying notes looks identical on screen to one carrying none. The round message said a
+  line in the report, which is what exists. Whether the pane should count notes beside the
+  written cells is an open question in the state file
+- **An accuracy read as zero or negative would print as not read.** Nothing in Revit's read
+  is known to produce one, `FormatOptions.Accuracy` on the measured models is positive, so
+  the branch is dormant and the message imprecise only on a value nobody has seen. Left
+- **`GroupSubtotal.Repeats` is computed and printed nowhere**, a shape older than this round.
+  Left for a round of its own rather than widened into this one
+
+### Break watches
+
+Seven, each restored byte for byte and checked with cmp, the suite rebuilt and rerun green,
+the first four at 1243 before the breaker round, the last three at 1246 after it.
+
+- the rounding room dropped: **3 red**, FM-21, FM-22 and the report line printing the note
+- a count given the areas room: **1 red**, the count one high that must still refuse
+- the percentage rounded up: **2 red**, the schedule count and the plot line
+- the copy step never raised: **1 red**, the patcher's four steps in order
+- `Said` back to two places: **1 red**, the fine step note printing its numbers
+- the unchecked group line dropped: **1 red**, the phased group with no total row
+- the species record gated on 0.005 again: **1 red**, 169.996 against 170 swallowed
+
+### Existing tests changed
+
+None moved of their own accord. `ShrubsAndLawnRows.Read` takes the project's area unit as a
+required argument now, so fifteen call sites across seven test files pass `ProjectUnit.Unknown`
+by name, which is the read today's fixtures had. The three old disagreement tests still refuse,
+their fixtures reading no step, and their sentences gained the clause saying the step was not
+read, which their Contains assertions do not pin.
+
+---
+
 ## 2026-09-12, fifty fourth pass. The diameter alone decides, and the audits are marked with what is really fixed
 
 Two things off the round message. The message opened saying no behaviour changes in the tool,

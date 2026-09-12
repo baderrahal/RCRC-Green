@@ -106,7 +106,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             SoftscapeReading read = SoftscapeRows.Read(trees, CreateFixture.Counted, "FM-05");
             Assert.True(read.WasRead, string.Join(" ", read.Refusals));
             ShrubsAndLawnReading groundRead = ShrubsAndLawnRows.Read(
-                shrubs, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, CreateFixture.Counted);
+                shrubs, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
             Assert.True(groundRead.WasRead, string.Join(" ", groundRead.Refusals));
 
             return CreateFixture.Plot(
@@ -398,7 +398,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void Fm05GrassIsNinetySixAndShrubsThreeSixtyOneWithTheGroupTotalsChecked()
         {
             ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(
-                Fm05Ground(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, CreateFixture.Counted);
+                Fm05Ground(), new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
 
             Assert.True(reading.WasRead, string.Join(" ", reading.Refusals));
             Assert.Equal(2, reading.Subtotals.Count);

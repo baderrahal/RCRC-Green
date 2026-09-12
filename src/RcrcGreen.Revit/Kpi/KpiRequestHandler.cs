@@ -63,6 +63,14 @@ namespace RcrcGreen.Revit.Kpi
         public Action<string> Told { get; set; }
 
         /// <summary>
+        /// A line the pane shows while a scan or a create runs, raised as the work it names
+        /// begins. The words and the counting are Core's, in ProgressWords, and the run's own
+        /// end line always follows through Told, so the last thing on screen is never a count
+        /// that stopped moving.
+        /// </summary>
+        public Action<string> Progressed { get; set; }
+
+        /// <summary>
         /// What the next Create is to do. Set by the pane immediately before it asks, and read
         /// once on the Revit thread.
         /// </summary>
@@ -186,8 +194,9 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private void Scan(Document document)
         {
-            KpiScan scan = KpiReader.Read(document);
+            KpiScan scan = KpiReader.Read(document, Progressed);
 
+            Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(
                 KpiFile.NameFor(scan.Document.Title, writtenAt),
@@ -274,15 +283,27 @@ namespace RcrcGreen.Revit.Kpi
 
             if (source.Reused)
             {
+                // The line says the readings were held, because a press that finishes in two
+                // seconds where the last took two minutes reads as something skipped until
+                // the screen says reuse. The report's Readings line is the record, this is
+                // the live half of it.
+                Progressed?.Invoke(ProgressWords.ReusingTheReadings);
                 readings.AddRange(HeldReadings.Applied(asked.HeldRun.Readings, asked.RegionChosenFor));
             }
             else
             {
+                // Read once per press: every plot's group total check allows the same room.
+                ProjectUnit areaUnit = KpiReader.AreaUnit(document);
+                int atPlot = 0;
                 foreach (string plotId in asked.Ticked)
                 {
-                    readings.Add(GuardedRead(document, asked, plotId, counted, areaWanted));
+                    atPlot++;
+                    Progressed?.Invoke(ProgressWords.ReadingPlot(plotId, atPlot, asked.Ticked.Count));
+                    readings.Add(GuardedRead(document, asked, plotId, counted, areaWanted, areaUnit));
                 }
             }
+
+            Progressed?.Invoke(ProgressWords.AddingUp);
 
             double readSeconds = source.Reused ? 0.0 : reading.Elapsed.TotalSeconds;
 
@@ -316,7 +337,7 @@ namespace RcrcGreen.Revit.Kpi
                     asked.Date, asked.PreparedBy, asked.Position);
 
                 outputPath = Path.Combine(outputFolder, OutputName.Final(asked.OutputName));
-                outcome = Patched(asked.TemplatePath, outputPath, plan.Writes, plan.ComputesFrom);
+                outcome = Patched(asked.TemplatePath, outputPath, plan.Writes, plan.ComputesFrom, Progressed);
             }
             else
             {
@@ -333,6 +354,7 @@ namespace RcrcGreen.Revit.Kpi
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
                 existing, proposed, source, asked.TemplatesListed);
 
+            Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(
                 KpiFile.NameFor(document.Title + "_checklist", writtenAt),
@@ -351,7 +373,7 @@ namespace RcrcGreen.Revit.Kpi
         /// the report is written either way. Twenty minutes that end with a report naming the
         /// bad plot are worth something, and twenty minutes that end with one sentence are not.
         /// </summary>
-        private static PlotReading GuardedRead(Document document, KpiCreateAsk asked, string plotId, CountedGroups counted, bool areaWanted)
+        private static PlotReading GuardedRead(Document document, KpiCreateAsk asked, string plotId, CountedGroups counted, bool areaWanted, ProjectUnit areaUnit)
         {
             var perPlot = Stopwatch.StartNew();
             try
@@ -376,7 +398,7 @@ namespace RcrcGreen.Revit.Kpi
 
                 return KpiPlotReader.Read(
                     document, plotId, asked.ComponentParameter, asked.ReferenceParameter,
-                    counted, chosen, regions, perPlot.Elapsed.TotalSeconds);
+                    counted, chosen, regions, areaUnit, perPlot.Elapsed.TotalSeconds);
             }
             catch (Exception failed)
             {
@@ -397,7 +419,8 @@ namespace RcrcGreen.Revit.Kpi
         /// is one refactor from being bypassed.
         /// </summary>
         private static PatchOutcome Patched(
-            string templatePath, string outputPath, IReadOnlyList<CellWrite> writes, IReadOnlyList<WorkbookCell> computesFrom)
+            string templatePath, string outputPath, IReadOnlyList<CellWrite> writes, IReadOnlyList<WorkbookCell> computesFrom,
+            Action<string> step)
         {
             SamePath answer = FilePaths.Compare(templatePath, outputPath);
             if (answer != SamePath.Different)
@@ -409,7 +432,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 if (File.Exists(outputPath)) File.Delete(outputPath);
 
-                return WorkbookPatcher.Patch(templatePath, outputPath, writes, computesFrom);
+                return WorkbookPatcher.Patch(templatePath, outputPath, writes, computesFrom, step);
             }
             catch (UnauthorizedAccessException denied)
             {

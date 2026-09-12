@@ -267,7 +267,39 @@ namespace RcrcGreen.Core.Kpi
                     {
                         Line(report, "        group total row " + subtotal.RowNumber + " prints " + Number(subtotal.GroupTotalSquareMetres)
                             + " over " + subtotal.GroupTotalItemCount + ", "
-                            + (subtotal.Agrees ? "and the phase rows taken and left out add to it" : "AND THE PHASE ROWS DO NOT ADD TO IT"));
+                            + (subtotal.RoundingNote.Length > 0
+                                ? "and " + subtotal.RoundingNote
+                                : subtotal.Agrees ? "and the phase rows taken and left out add to it" : "AND THE PHASE ROWS DO NOT ADD TO IT"));
+                    }
+                    else if (subtotal.RoundingNote.Length > 0)
+                    {
+                        // A one phase group carries the same note against its own last row.
+                        Line(report, "        " + subtotal.RoundingNote);
+                    }
+                    else if (subtotal.Phases.Count > 0)
+                    {
+                        // A phased group that prints no total row gives the check nothing to
+                        // hold the phase rows against. Taken silently it reads exactly like a
+                        // group whose total was checked and agreed, so the skip is said.
+                        Line(report, "        the group printed no total row after its phase rows, "
+                            + "so nothing checked what they add to");
+                    }
+
+                    // The species rows against the group's own value, recorded rather than
+                    // enforced, the forty seventh pass's decision. The docstring said printed
+                    // and nothing printed it, so a drift here was invisible until this line.
+                    // A record needs no room, only a guard against the last bits of a double,
+                    // so any real difference is said. The 0.005 that used to sit here was a
+                    // constant pretending to be a rounding room, which is the very shape the
+                    // group total check was just cured of.
+                    double against = subtotal.GroupTotalPrinted ? subtotal.GroupTotalSquareMetres : subtotal.SquareMetres;
+                    if (!double.IsNaN(subtotal.SpeciesSum)
+                        && Math.Abs(subtotal.SpeciesSum - against) > Totalled.Tolerance * Math.Max(1.0, Math.Abs(against)))
+                    {
+                        Line(report, "        its species rows add to " + Fine(subtotal.SpeciesSum) + " in area against the "
+                            + Fine(against)
+                            + (subtotal.GroupTotalPrinted ? " its group total row prints" : " it holds")
+                            + ", recorded rather than enforced, because every printed area is already rounded");
                     }
                 }
 
@@ -943,6 +975,16 @@ namespace RcrcGreen.Core.Kpi
         private static string Number(double value)
         {
             return value.ToString("0.##", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
+        /// Six places for the species record, whose whole job is a difference two places can
+        /// swallow. 169.996 against 170 printed through Number reads as 170 against 170,
+        /// recorded, a sentence at war with itself.
+        /// </summary>
+        private static string Fine(double value)
+        {
+            return value.ToString("0.######", CultureInfo.InvariantCulture);
         }
 
         private static string Count(int howMany, string thing)

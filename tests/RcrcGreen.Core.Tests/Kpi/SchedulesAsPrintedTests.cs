@@ -54,7 +54,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static PlotReading Fm05()
         {
             SoftscapeReading trees = SoftscapeRows.Read(Softscape(), CreateFixture.Counted, "FM-05");
-            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
+            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
 
             return CreateFixture.Plot("FM-05",
                 species: trees.Species.ToArray(),
@@ -139,7 +139,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheSubtotalRowsTravelOnTheGroupValue()
         {
-            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
+            ShrubsAndLawnReading ground = ShrubsAndLawnRows.Read(ShrubsAndLawn(), new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
 
             GroupSubtotal grass = Assert.Single(ground.Subtotals);
             Assert.Equal(96.0, grass.SquareMetres);

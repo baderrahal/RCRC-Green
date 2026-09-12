@@ -42,7 +42,7 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         public const int ElementsMeasured = 10;
 
-        public static ScheduleFacts Read(Document document, List<string> skipped)
+        public static ScheduleFacts Read(Document document, List<string> skipped, Action<string> progressed = null)
         {
             if (document == null) throw new ArgumentNullException("document");
             if (skipped == null) throw new ArgumentNullException("skipped");
@@ -73,8 +73,16 @@ namespace RcrcGreen.Revit.Kpi
             var elements = new List<ScheduleElements>();
             var areas = new List<MeasuredArea>();
 
+            int done = 0;
             foreach (ViewSchedule schedule in schedules)
             {
+                // One line per schedule read, because this loop is the part of the scan that
+                // grows with the model, 951 on the first real one, and the count is what says
+                // the tool is moving rather than hung.
+                done++;
+                progressed?.Invoke(ProgressWords.SectionSpan(
+                    KpiReport.Schedules, KpiReport.AreasAndUnits, done, schedules.Count));
+
                 bool inFull = readInFull.Contains(schedule.Id);
                 ScannedSchedule read = Scanned(document, schedule, onSheets.Contains(schedule.Id), inFull, skipped);
                 scanned.Add(read);

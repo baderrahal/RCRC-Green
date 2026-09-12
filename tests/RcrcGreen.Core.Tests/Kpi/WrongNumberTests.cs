@@ -90,7 +90,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "20 m²", "30" },
                 new[] { "", "35 m²", "46" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
 
             Assert.False(reading.WasRead);
             Assert.Empty(reading.Subtotals);
@@ -112,7 +112,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "GRASS", "", "" },
                 new[] { "", "", "46" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
 
             Assert.False(reading.WasRead);
             Assert.Equal(
@@ -129,7 +129,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "GRASS", "", "" },
                 new[] { "", "", "35 m²" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted);
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.LawnHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
 
             Assert.False(reading.WasRead);
             Assert.Equal(
@@ -380,7 +380,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "", "", "1,300 m²", "1,600" },
                 new[] { "", "", "2,500 m²", "3,100" });
 
-            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.ShrubsHeading }, CreateFixture.Counted);
+            ShrubsAndLawnReading reading = ShrubsAndLawnRows.Read(schedule, new[] { KpiMerge.ShrubsHeading }, CreateFixture.Counted, ProjectUnit.Unknown);
 
             Assert.False(reading.WasRead);
             Assert.Empty(reading.Subtotals);
