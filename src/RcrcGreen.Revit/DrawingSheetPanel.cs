@@ -64,6 +64,9 @@ namespace RcrcGreen.Revit
         private SheetNameSettings _sheetNames = SheetNameSettings.Nothing;
         private IReadOnlyList<string> _sheetNamesNotRead = new List<string>();
 
+        private NewViewSetups _newViewSetups = NewViewSetups.Nothing;
+        private IReadOnlyList<string> _newViewSetupsNotRead = new List<string>();
+
         // The markers of the model on screen. Loaded when the document title changes rather
         // than on every read, so a marker set this session keeps saying set now instead of
         // coming back off its own file as remembered.
@@ -152,6 +155,7 @@ namespace RcrcGreen.Revit
 
             ReadTheTitleBlockSettings();
             ReadTheSheetNames();
+            ReadTheNewViewSetups();
 
             Content = Layout();
             PaintFromTheTheme();
@@ -1325,6 +1329,14 @@ namespace RcrcGreen.Revit
             _sheetNamesNotRead = stored.NotRead;
         }
 
+        private void ReadTheNewViewSetups()
+        {
+            StoredNewViewSetups stored = NewViewSetupStore.Read();
+
+            _newViewSetups = stored.Setups;
+            _newViewSetupsNotRead = stored.NotRead;
+        }
+
         /// <summary>
         /// A typed sheet name becomes the pairing for that view type, saved at once, so a
         /// name corrected on one plot's row is every plot's answer from then on. Only a
@@ -1702,6 +1714,8 @@ namespace RcrcGreen.Revit
             _runLine = new TextBlock { Text = RunLine(), TextWrapping = TextWrapping.Wrap };
             block.Children.Add(_runLine);
 
+            block.Children.Add(NewViewAnswersBlock());
+
             block.Children.Add(ScopeBoxes());
 
             var run = new Button
@@ -1719,6 +1733,142 @@ namespace RcrcGreen.Revit
             block.Children.Add(run);
 
             return block;
+        }
+
+        /// <summary>
+        /// The three answers for every marked view type no view in the model carries. The
+        /// Add row used to promise a column the run always refused, because creation copies
+        /// its setup from a view that does not exist and there was none. The three are asked
+        /// here, once per type, each from a dropdown of what the model holds, and remembered
+        /// beside the other settings so a type answered once is answered for good.
+        /// </summary>
+        private UIElement NewViewAnswersBlock()
+        {
+            var block = new StackPanel();
+
+            foreach (string line in _newViewSetupsNotRead)
+            {
+                block.Children.Add(Faint("A new view answer could not be read: " + line));
+            }
+
+            IReadOnlyList<ViewType> newTypes = NewTypesMarked();
+            if (newTypes.Count == 0) return block;
+
+            block.Children.Add(new TextBlock
+            {
+                Text = "New view types. No view of these exists anywhere in this model, so "
+                    + "there is nothing to copy a setup from. Answer the three for each, "
+                    + "from what the model holds, and they are remembered.",
+                TextWrapping = TextWrapping.Wrap,
+                Margin = PanelMetrics.Row
+            });
+
+            foreach (ViewType type in newTypes)
+            {
+                block.Children.Add(OneNewViewAnswer(type));
+            }
+
+            return block;
+        }
+
+        private UIElement OneNewViewAnswer(ViewType type)
+        {
+            NewViewAnswers held = _newViewSetups.For(type);
+
+            IReadOnlyList<string> familyNames = NewViewFamilies
+                .Offerable(_model.ViewFamilyTypes)
+                .Select(one => one.Name)
+                .ToList();
+
+            string familyName = held == null ? string.Empty : held.FamilyTypeName;
+            bool isSection = NewViewFamilies.IsASection(
+                NewViewFamilies.KindOf(familyName, _model.ViewFamilyTypes));
+
+            ComboBox family = AnswerBox(familyNames, familyName,
+                "The view family type. Its kind decides whether the view is created as a "
+                + "plan or cut as a section.");
+            ComboBox template = AnswerBox(
+                _model.ViewTemplateNames,
+                held == null ? string.Empty : held.TemplateName,
+                "The view template.");
+            ComboBox level = AnswerBox(
+                _model.LevelNames,
+                held == null ? string.Empty : held.LevelName,
+                "The level a plan view sits on. A section takes none.");
+            level.IsEnabled = !isSection;
+
+            // Wired after the current answers are put in, so putting them in cannot save
+            // them again and redraw in a loop.
+            Action commit = () => RememberTheNewViewSetup(
+                type,
+                family.SelectedItem as string,
+                template.SelectedItem as string,
+                level.SelectedItem as string);
+
+            family.SelectionChanged += (sender, e) => commit();
+            template.SelectionChanged += (sender, e) => commit();
+            level.SelectionChanged += (sender, e) => commit();
+
+            var said = new StackPanel { Margin = PanelMetrics.Row };
+            said.Children.Add(new TextBlock
+            {
+                Text = type.ToString(),
+                FontWeight = FontWeights.Bold,
+                TextWrapping = TextWrapping.Wrap
+            });
+            said.Children.Add(Labelled("Family type", family));
+            said.Children.Add(Labelled("Template", template));
+            said.Children.Add(Labelled("Level", level));
+
+            string missing = _newViewSetups.Missing(type, isSection);
+            said.Children.Add(Faint(_newViewSetups.WordsFor(type)
+                + (missing.Length == 0
+                    ? " The run can create it."
+                    : " Still needs " + missing + ", and the run refuses it until then.")));
+
+            if (isSection)
+            {
+                said.Children.Add(Faint("The picked family type is a section kind, so the "
+                    + "view is cut across the plot's scope box and the level is not used."));
+            }
+
+            return said;
+        }
+
+        private ComboBox AnswerBox(IEnumerable<string> offered, string current, string why)
+        {
+            var box = new ComboBox
+            {
+                Margin = PanelMetrics.Row,
+                MinWidth = PanelMetrics.ColumnWidth,
+                ToolTip = why,
+                ItemsSource = (offered ?? Enumerable.Empty<string>()).ToList()
+            };
+
+            // Before any handler exists, so a remembered answer cannot re-save itself.
+            if (!string.IsNullOrEmpty(current)) box.SelectedItem = current;
+
+            return box;
+        }
+
+        /// <summary>
+        /// One answer changed. Saved at once and redrawn at once, because the level box
+        /// greys when the family kind is a section and the run line counts change with the
+        /// answers.
+        /// </summary>
+        private void RememberTheNewViewSetup(
+            ViewType type, string familyType, string template, string level)
+        {
+            _newViewSetups = _newViewSetups.With(
+                type,
+                familyType ?? string.Empty,
+                template ?? string.Empty,
+                level ?? string.Empty);
+
+            string refused = NewViewSetupStore.Save(_newViewSetups);
+            if (refused.Length > 0) Say(refused);
+
+            Redraw();
         }
 
         private string RunLine()
@@ -2046,16 +2196,39 @@ namespace RcrcGreen.Revit
         /// </summary>
         private RunPlan PlanNow()
         {
+            // A marked type the model does not hold routes as a section when its saved
+            // family type is a section kind, through the same Core method the run's own
+            // handler asks, so this preview and the write cannot route a type two ways.
+            IEnumerable<ViewType> sectionTypes = _model.SectionTypes
+                .Concat(_newViewSetups.SectionTypesAmong(NewTypesMarked(), _model.ViewFamilyTypes));
+
             return RunPlan.Of(
                 GridNow().Marked,
                 _picked.Ticked,
                 _model.PlotsWithAScopeBox,
                 _model.ScheduleTypes,
-                _model.SectionTypes,
+                sectionTypes,
                 _model.CapturableScheduleTypes,
                 SheetsWanted(),
                 _model.Present.Select(one => one.Where),
                 _model.UncapturableSchedules);
+        }
+
+        /// <summary>
+        /// The marked view types no view in the model carries, which are the ones step 5
+        /// asks the three answers for.
+        /// </summary>
+        private IReadOnlyList<ViewType> NewTypesMarked()
+        {
+            var inTheModel = new HashSet<ViewType>(_model.ViewTypes);
+
+            return GridNow().Marked
+                .Where(one => one != null && _picked.IsTicked(one.PlotId))
+                .Select(one => one.ViewType)
+                .Distinct()
+                .Where(one => !inTheModel.Contains(one))
+                .OrderBy(one => one)
+                .ToList();
         }
 
         /// <summary>

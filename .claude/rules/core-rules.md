@@ -166,6 +166,14 @@ Revit for numbers a previous run had created, because the only check lived on th
 its read was older than its own write, and every refusal arrived from Revit inside the
 transaction instead of on the plan.
 
+`NewViewSetups` holds the three answers for a view type no view in the model carries: the
+view family type, the view template and the level, each picked from what the model holds,
+never invented and never defaulted. `Missing` names what is still unanswered, the level
+only for a plan kind because a section is cut from a box, and `SectionTypesAmong` is the
+one routing rule both the panel's preview and the run's handler ask, so a type cannot be
+planned as a plan and written as a section. `NewViewFamilies` narrows the dropdown to the
+kinds a view can be created under at all, the four plan kinds and Section.
+
 `SheetOrder` holds the team's sheet order, nine names, and it is also the letter order:
 010001A is TITLE SHEET and 010001B is LIST OF DRAWINGS because of the list. Order by the
 code first, then the list within a code, then the ticked order for anything the list does

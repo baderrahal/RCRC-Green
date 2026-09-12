@@ -171,6 +171,36 @@ namespace RcrcGreen.Revit
             // same rule for which schedules can be made rather than a rule of its own.
             ScheduleCapture.CapturedSchedules captured = ScheduleCapture.Read(document);
 
+            // The three dropdowns a view type with no example is answered through. The
+            // templates come off their own pass because the view loop above skips them on
+            // purpose, and the family type carries its kind so the panel can say which picks
+            // create a section and take no level.
+            var familyTypes = new List<ScannedViewFamilyType>();
+            foreach (ViewFamilyType familyType in new FilteredElementCollector(document)
+                .OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>())
+            {
+                familyTypes.Add(new ScannedViewFamilyType(
+                    familyType.Name ?? string.Empty, familyType.ViewFamily.ToString()));
+            }
+
+            var templateNames = new List<string>();
+            foreach (View template in new FilteredElementCollector(document)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .Where(view => view.IsTemplate))
+            {
+                templateNames.Add(template.Name);
+            }
+
+            var levelNames = new List<string>();
+            foreach (Level level in new FilteredElementCollector(document)
+                .OfClass(typeof(Level))
+                .Cast<Level>())
+            {
+                levelNames.Add(level.Name);
+            }
+
             return new DrawingSheetSnapshot(
                 document.Title,
                 DateTime.Now,
@@ -198,7 +228,10 @@ namespace RcrcGreen.Revit
                 // The registry classified these and the reader used to drop them. A scope box
                 // named dm-41 made its plot vanish with the reason worked out and thrown away.
                 registry.Ignored.Where(one => one.Reason == IgnoredReason.WrongCase),
-                captured.NotParsed);
+                captured.NotParsed,
+                familyTypes,
+                templateNames,
+                levelNames);
         }
 
         private static string ValueOf(Parameter parameter)

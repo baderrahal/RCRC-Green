@@ -45,7 +45,10 @@ namespace RcrcGreen.Core
             int viewsWithAParameterThatIsNotAPlot = 0,
             IEnumerable<string> parameterValuesThatAreNotPlots = null,
             IEnumerable<IgnoredName> wrongCaseNames = null,
-            IEnumerable<IgnoredName> schedulesNotCaptured = null)
+            IEnumerable<IgnoredName> schedulesNotCaptured = null,
+            IEnumerable<ScannedViewFamilyType> viewFamilyTypes = null,
+            IEnumerable<string> viewTemplateNames = null,
+            IEnumerable<string> levelNames = null)
         {
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
 
@@ -105,6 +108,21 @@ namespace RcrcGreen.Core
             SheetNumbersInUse = Clean(sheetNumbersInUse)
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(number => number, NaturalOrder.Comparer)
+                .ToList();
+
+            ViewFamilyTypes = (viewFamilyTypes ?? Enumerable.Empty<ScannedViewFamilyType>())
+                .Where(one => one != null && one.Name.Length > 0)
+                .OrderBy(one => one.Name, NaturalOrder.Comparer)
+                .ToList();
+
+            ViewTemplateNames = Clean(viewTemplateNames)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(name => name, NaturalOrder.Comparer)
+                .ToList();
+
+            LevelNames = Clean(levelNames)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(name => name, NaturalOrder.Comparer)
                 .ToList();
 
             SheetNumbersOnPlots = (sheetNumbersByPlot ?? Enumerable.Empty<SheetOnAPlot>())
@@ -294,6 +312,18 @@ namespace RcrcGreen.Core
         /// ledger reads to work out which markers other plots' numbers already use.
         /// </summary>
         public IReadOnlyList<SheetOnAPlot> SheetNumbersOnPlots { get; }
+
+        /// <summary>
+        /// Every view family type in the model with its kind, every view template's name and
+        /// every level's name. They fill the three dropdowns a marked view type with no
+        /// example anywhere is answered through, read from the model because nothing is
+        /// invented and nothing is defaulted.
+        /// </summary>
+        public IReadOnlyList<ScannedViewFamilyType> ViewFamilyTypes { get; }
+
+        public IReadOnlyList<string> ViewTemplateNames { get; }
+
+        public IReadOnlyList<string> LevelNames { get; }
 
         /// <summary>
         /// Every scope box name in the model, whether or not it is shaped like a plot.

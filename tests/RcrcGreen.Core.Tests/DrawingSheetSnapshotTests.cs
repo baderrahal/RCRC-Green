@@ -127,6 +127,33 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
+        /// The three dropdowns a new view type is answered through come off the snapshot,
+        /// cleaned and ordered, so the panel offers only what the model holds.
+        /// </summary>
+        [Fact]
+        public void TheFamiliesTemplatesAndLevelsAreCleanedAndOrdered()
+        {
+            var snapshot = new DrawingSheetSnapshot(
+                "T", default(System.DateTime),
+                null, null, null, null, null, null, null, null, null, null,
+                0, 0, 0, 0, 0,
+                viewFamilyTypes: new[]
+                {
+                    new ScannedViewFamilyType("Building Section", "Section"),
+                    null,
+                    new ScannedViewFamilyType("(300) Coordination", "FloorPlan")
+                },
+                viewTemplateNames: new[] { "B Template", null, "A Template", "A Template" },
+                levelNames: new[] { "Level 10", "Level 2", null });
+
+            Assert.Equal(
+                new[] { "(300) Coordination", "Building Section" },
+                snapshot.ViewFamilyTypes.Select(one => one.Name).ToArray());
+            Assert.Equal(new[] { "A Template", "B Template" }, snapshot.ViewTemplateNames);
+            Assert.Equal(new[] { "Level 2", "Level 10" }, snapshot.LevelNames);
+        }
+
+        /// <summary>
         /// The plot records carry the sources the panel shows, and the id list can never lose
         /// a plot the records hold, whichever of the two the reader filled first.
         /// </summary>
