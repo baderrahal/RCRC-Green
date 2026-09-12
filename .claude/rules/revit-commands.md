@@ -320,6 +320,28 @@ list it offered was stepped off numbers that are mostly copies, and a sheet mixi
 an empty box with the reason. The tool still invents nothing: a plot with no marker gets empty
 number boxes, the reason under each names the plot, and the run refusal carries the same words.
 
+**The sheets come out in the team's order, which is also the letter order.** The list lives
+on `SheetOrder` in Core, nine names read off both models: TITLE SHEET, LIST OF DRAWINGS,
+PROJECT LOCATION KEY PLAN, OVERALL KEYPLAN, GENERAL ARRANGEMENT LAYOUT, COORDINATION LAYOUT,
+LANDSCAPE CROSS SECTION, HARDSCAPE SCHEDULES, SOFTSCAPE SCHEDULES. Sheets order by the code
+first, then the list within a code, then the ticked order for names the list does not hold,
+and the position forgives case and edge spaces only: OVERALL KEY PLAN with the space is not
+the list's OVERALL KEYPLAN, and whether they are one name is the team's question. The
+division sorts its planned sheets, the panel hands letters out in list order within each
+code, and the run creates in the same order, so 010001A is TITLE SHEET because the list says
+so and not because of when anything was ticked.
+
+**A title sheet is an empty sheet and can be described.** A definition with a title block
+and no views plans one empty sheet per ticked plot, the shape 010001A and 010QE both have,
+0 views on the Cover Page block. Its name and number are typed, the row is refused until
+both arrive, so a half filled definition still makes nothing, and a sheet with no views has
+no code, so it sorts ahead of the coded ones, which is where both models put the title
+sheet. The writer places nothing on it without complaint, which was already true: the
+division planning zero sheets for zero views was the only thing keeping it unreachable.
+The shipped defaults carry the pairing, 010 TITLE SHEET on COVER PAGE, and nothing reads a
+pairing for a sheet with no views yet: whether the typed name should look one up is the
+team's question, in the log.
+
 **The marker is set in step 1 and remembered per model.** Beside each ticked plot sit two
 dropdowns, letters and numbers, and the user uses one or the other. `MarkerLedger` bars the
 markers other plots' numbers or other panel rows already use, a typed one is warned about

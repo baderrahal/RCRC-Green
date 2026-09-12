@@ -102,6 +102,17 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
+        /// Why a row gets no built number when its sheet holds no views at all. The title
+        /// sheet is the one such sheet the team makes, and typing its number first is what
+        /// lets the built 010 numbers letter themselves after it.
+        /// </summary>
+        public static string NoViewsWords()
+        {
+            return "This sheet holds no views, so there is no view code to build its number "
+                + "from. Type the number.";
+        }
+
+        /// <summary>
         /// The slots the given numbers take under this code and marker: the bare number holds
         /// the first letter's place and a single trailing letter holds its own. Anything else
         /// under the prefix, such as a copy number, holds nothing.

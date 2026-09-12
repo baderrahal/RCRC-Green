@@ -4,7 +4,10 @@
 # copies this file beside the add-in. A pairing changed in the panel goes into the user's
 # own file instead and wins over this one, so an install never overwrites somebody's choice.
 # The type names are exactly what the model holds, the two spaces in LOD /  HARDSCAPE
-# SCHEDULES included, so nothing here may be tidied up.
+# SCHEDULES included, so nothing here may be tidied up. The TITLE SHEET line is the
+# twelfth, read off both models rather than a run: a title sheet is an empty sheet on the
+# Cover Page block, 0 views on 010001A and on 010QE.
+010	TITLE SHEET	AR-PRX-Title_Block_A1	COVER PAGE
 010	LIST OF DRAWINGS	AR-PRX-Title_Block_A1	LOD
 010	Location Key Plan	AR-PRX-Title_Block_A1	KEYPLAN
 010	Overall Key Plan	AR-PRX-Title_Block_A1	KEYPLAN

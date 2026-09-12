@@ -214,20 +214,32 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// No views means no sheets. It used to make an empty sheet on purpose, and the team's
-        /// answer to the divided sheets superseded that: a definition describes what its views
-        /// need, and no views need nothing.
+        /// No views plans ONE empty sheet, which is the title sheet's shape: 010001A and
+        /// 010QE both read 0 views on the measured models. No views planned no rows for two
+        /// rounds, so the one sheet the team starts a set with could not be described at
+        /// all. The row is refused until its typed name and number arrive, so a definition
+        /// somebody has only half filled in still makes nothing.
         /// </summary>
         [Fact]
-        public void ADefinitionWithNoViewsMakesNoSheets()
+        public void ADefinitionWithNoViewsPlansOneEmptySheet()
         {
             SheetDefinition sheet = Sheet();
 
             Assert.True(sheet.CanBeUsed);
-            Assert.Empty(sheet.Planned);
+
+            PlannedSheet empty = Assert.Single(sheet.Planned);
+            Assert.Empty(empty.Views);
+            Assert.False(empty.NamedFromItsView);
+            Assert.Equal(string.Empty, empty.ProposedName);
+            Assert.Equal(string.Empty, empty.SingleCode);
             Assert.Equal(
-                "On AR-PRX-Title_Block_A1 GA-DETAILED DESIGN, with no views ticked, so it "
-                + "makes no sheets.",
+                "Holds no views, the way a title sheet does, so the name is typed rather "
+                + "than proposed.",
+                empty.WhyNothingIsProposed());
+
+            Assert.Equal(
+                "On AR-PRX-Title_Block_A1 GA-DETAILED DESIGN, no views, 1 empty sheet per "
+                + "ticked plot, the way a title sheet is. Type its name and its number.",
                 sheet.InWords());
         }
     }
@@ -337,7 +349,9 @@ namespace RcrcGreen.Core.Tests
 
         /// <summary>
         /// The whole point of the division. Flattening the sheets back gives every ticked view
-        /// exactly once, in ticked order, whatever the count per sheet.
+        /// exactly once, whatever the count per sheet. The six here are ticked in the team's
+        /// own order, so the sorted sheets read back in the ticked order too. Ticks out of
+        /// that order are reordered, which SheetOrderTests holds.
         /// </summary>
         [Fact]
         public void NoViewIsEverLeftOffAndTheOrderIsTheTickedOrder()
@@ -349,11 +363,19 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(ticked, Grouped(4, Six).SelectMany(one => one).ToArray());
         }
 
+        /// <summary>
+        /// No views plans one empty sheet, the title sheet's shape, rather than none. The
+        /// row it makes is refused until its typed name and number arrive, so nothing is
+        /// made by accident.
+        /// </summary>
         [Fact]
-        public void NoViewsMakeNoSheets()
+        public void NoViewsPlanOneEmptySheet()
         {
-            Assert.Empty(SheetDivision.Of(null, 1));
-            Assert.Empty(SheetDivision.Of(new ViewType[0], 2));
+            PlannedSheet ofNull = Assert.Single(SheetDivision.Of(null, 1));
+            Assert.Empty(ofNull.Views);
+
+            PlannedSheet ofNone = Assert.Single(SheetDivision.Of(new ViewType[0], 2));
+            Assert.Empty(ofNone.Views);
         }
 
         [Fact]

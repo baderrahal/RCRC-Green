@@ -4,6 +4,101 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty sixth pass. The sheet number is built from the user's marker, in the team's order
+
+Branch `claude/rcrc-green-setup-wf9ham`, the four fix sheet numbering round, split into two
+pull requests as the brief allows: fixes 1 and 2 first, 3 and 4 second. Pull request 82,
+fixes 1 and 2, merged into main as `e4b5d9e`. **The runner executed 1230 tests against it, 0
+failed and 0 skipped**, the same count the local run gave, up six from the 1224 main carried
+at `07f16ba`, 22 tests deleted with the old rules and 28 added. The squash message came back
+off main byte for byte. The second pull request's merge sha and runner count go in the next
+entry, because this one is written before it exists.
+
+### Fix 1, the marker is the user's and is remembered
+
+A sheet number is the view code, a plot marker, then a sheet letter within one code, absent
+when the code holds a single sheet. FP-39 on NG03 reads 010001A to 010001D and 200001, DM-11
+on NG05 reads 010QE to 010QH and 200Q, and the two models differ only in the marker. The old
+rule read the plot letter off the plot's own numbers, and every NG05 plot but DM-11 carries
+only copy numbers, so it answered nothing on 159 of 160 plots. The marker is set in step 1
+now, two dropdowns beside each ticked plot, letters A to ZZZ or numbers 001 to 999, and
+PlotMarkerStore remembers it per model in plot-markers.txt beside the user's title block
+settings, keyed on the document title, the one name a detached never saved model still
+carries. MarkerLedger bars the markers other plots' numbers or other panel rows already use.
+Reading a marker back out of a number is ambiguous, 010QE cannot say whether its marker is Q
+or QE, so both are counted in use, except that four or more digits with at most one trailing
+letter is the 001 kind, where only the three digits before the letters count: 010001A gives
+001 and never A, because A would bar most of the alphabet on a model numbered the NG03 way.
+The line beside each plot says set now, remembered, or that there is no marker and no sheet
+without one. PlotLetter, LettersIn, Free and Propose are deleted with their tests, the
+number box is a plain box, and the report's closing note stops describing the deleted rule.
+
+### Fix 2, the number is built
+
+SheetNumberRun builds one code's numbers for one plot: bare when the code holds one sheet in
+total, lettered from A otherwise. Occupied slots come off the plot's own numbers plus
+everything typed on the panel, a bare number holds the first letter's place, and the next
+letter continues after the highest, so 600QC and 600QD give 600QE and 200Q gives 200QB, a
+second run continuing rather than colliding. The panel works the numbers out across all
+described sheets at once, one sequence per plot and code, because worked out per definition
+a plot would get two sheets both lettered A. Multi view sheets sharing one code are numbered
+too, a sheet mixing codes says why its box is empty, and a plot with no marker gets no sheet
+with the refusal naming the plot and step 1.
+
+### Fix 3, the team's order
+
+SheetOrder holds the nine names, and the order is the code first, then the list within a
+code, then the ticked order for names the list does not hold. It is also the letter order,
+so 010001A is TITLE SHEET because the list says so. The division sorts its planned sheets,
+the panel hands letters out in list order within each code, and the run creates in the same
+order. Two edges are left exact rather than smoothed: OVERALL KEY PLAN with the space is not
+the list's OVERALL KEYPLAN and reads as unlisted, and a single schedule view proposes its
+singular name, HARDSCAPE SCHEDULE, which is not the list's plural sheet name. Whether either
+pair is one name is the team's question.
+
+### Fix 4, the title sheet is reachable, and what was found first
+
+Checked before fixing, as the brief asked. The writer already places an empty sheet without
+complaint, PlaceViews returns before touching anything when a row holds no views. What made
+a no view sheet unreachable was the division: SheetDivision.Of planned zero sheets for zero
+views, so no row ever existed, and the old test pinned that as the rule with the words no
+views need nothing. That was the earlier team answer to the copied empty sheet, and the
+brief supersedes it: a definition with a title block and no views now plans one empty sheet
+per ticked plot, its name and number typed, refused until both arrive, sorted ahead of the
+coded sheets because the title sheet opens both measured sets. The shipped defaults gain the
+twelfth pairing, 010 TITLE SHEET on AR-PRX-Title_Block_A1 COVER PAGE. Open question for the
+team: nothing reads a title block pairing for a sheet that has no views, so the pairing sits
+unused until somebody says whether the typed name should look one up. The COVER PAGE family
+and type are read off the brief's words and not observed in a model here.
+
+### The breaks
+
+Four across the round, two per pull request, each reversed with the diff hash identical
+before and after. A bare number no longer occupying a slot, 1 of 1230 red. The digit marker
+preference removed so 010001A also gave A, 1 of 1230 red. Unlisted names claiming the title
+sheet's place, 1 of 1239 red. No views planning no sheets again, 2 of 1239 red.
+
+### What ran here
+
+dotnet test on every change, 1230 after fixes 1 and 2 and 1239 after fixes 3 and 4, 0 failed
+and 0 skipped each time. dotnet build of the whole solution in Release, 0 warnings and 0
+errors. The grep for Autodesk under Core, clean. The writing scan over every changed file,
+clean. The runner executed 1230 against pull request 82.
+
+### Not observed
+
+Nothing in this round has been through Revit. Unexecuted there: the two marker dropdowns and
+the 18,278 entry letters list behind a virtualizing panel, the marker file written and read
+back on a real machine, the built numbers against a real model's own sheets, the warnings on
+a real collision, the order of created sheets in a real run, an empty title sheet created on
+the COVER PAGE block, and whether that block exists under that name in any model. The letter
+continuation past 600QD and the typed 010001A pushing built numbers to B are tested but not
+watched in a model.
+
+---
+
+---
+
 ## 2026-09-12, fifty fifth pass. The report for the section crop round
 
 Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 79 is

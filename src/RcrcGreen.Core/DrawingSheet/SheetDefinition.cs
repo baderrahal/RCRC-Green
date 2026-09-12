@@ -92,7 +92,8 @@ namespace RcrcGreen.Core
 
             if (Views.Count == 0)
             {
-                return "On " + TitleBlock + ", with no views ticked, so it makes no sheets.";
+                return "On " + TitleBlock + ", no views, 1 empty sheet per ticked plot, the "
+                    + "way a title sheet is. Type its name and its number.";
             }
 
             int sheets = Planned.Count;
