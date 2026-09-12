@@ -23,13 +23,5 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.Equal("untitled.xlsx", OutputName.Final(typed));
         }
-
-        [Fact]
-        public void TheSuggestionIsTheTemplatesOwnFileName()
-        {
-            Assert.Equal(
-                "GRP KPI Checklist - EXISTING PARKS.xlsx",
-                OutputName.Suggested("GRP KPI Checklist - EXISTING PARKS.xlsx"));
-        }
     }
 }

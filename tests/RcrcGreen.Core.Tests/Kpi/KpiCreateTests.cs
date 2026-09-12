@@ -628,12 +628,17 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true));
         }
 
+        /// <summary>
+        /// The words read TICKED rather than picked since the workbook rows became tickable,
+        /// several at once. Changed by hand with the behaviour, because the refusal is about
+        /// what is on the screen and nothing on the screen is picked any more.
+        /// </summary>
         [Fact]
         public void OneRefusalListsEverythingMissingRatherThanOnePerThing()
         {
             Assert.Equal(
                 "Cannot create. No model is open. " + TemplateWords.NoOutputFolder
-                    + " No template picked. No plot ticked.",
+                    + " No template ticked. No plot ticked.",
                 CreateWords.CannotCreate(NoDocument, string.Empty, false, false));
 
             Assert.Equal("Cannot create. No plot ticked.",

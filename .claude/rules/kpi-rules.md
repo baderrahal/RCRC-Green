@@ -169,6 +169,81 @@ found and `SchedulesWithABody` how many of the schedules printed one, said as a 
 schedules printed. The 16:06 run reads 0 group rows and 0 of 156 with a body, and no wording
 makes that look like a run that worked.
 
+## Several templates in one press, one workbook each
+
+The plot list already reached every plot and the grouping buttons already ticked a template's
+worth at a time. What the tool could not do was press MOSQUES and SCHOOLS and get two
+workbooks.
+
+**NOTHING ABOUT THE PER TEMPLATE LOGIC CHANGED.** Each workbook is filled exactly as one is
+filled today, by its own map, its own tree lists read off its own file, its own Street Design
+rule, its own group rules, its own canopy check, its own read back, its own cache fix and its
+own alias list. `KpiCreateRun` is still one template's run and `KpiCreateReport.Write` still
+prints one template's sections. A template is a template whether one or six are ticked.
+
+**The workbook rows are tickable, several at once.** A ticked row carries the template it
+recognised as and its own output name box, because ONE BOX CANNOT NAME SIX FILES. A file caught
+between the two park templates is ticked with no template until the user says which, and it
+arms nothing meanwhile. Where exactly one is ticked the box behaves as it always did.
+
+**Each workbook gets only the plots whose own template is that one.** `PlotsPerTemplate` is
+that decision and it is the rule this file already carried for preselecting, read per plot:
+PRX_Component decides, the plot prefix is the cross check, and where they disagree NEITHER of
+them does. Three plots go into no workbook and each is NAMED rather than quietly absent. A
+component the table does not hold places nothing, because the route that decides gave an answer
+nobody knows and the cross check does not get to answer in its place. A plot with no component
+at all is placed by its prefix, which is the only thing that can place EP-05, EP-11, EP-12 and
+EP-13. And a plot whose two routes disagree is placed by neither.
+
+**A PLOT COUNTED INTO TWO WORKBOOKS REFUSES THE WHOLE PRESS.** Every plot resolves to at most
+one template, so it cannot happen by construction, and `TemplateSplit` checks the split as it
+really came out anyway, naming the plot and both templates. 20 mosque plots and 78 street plots
+read once and split two ways is exactly where a plot lands in both or in neither with every
+total still looking plausible. A construction that cannot go wrong is not a check, and the check
+is what survives the next change to the split.
+
+**A ticked template no ticked plot belongs to writes nothing and says so BEFORE the press**, in
+its own row, with the reason. Bader's decision: it stays tickable and stays listed, and the tool
+neither hides it nor unticks it for them.
+
+**The reading is read once and there is no second cache.** A plot belongs to one template, so
+it is read once with that template's own counted groups and its own area rule, and never again
+for a template it does not belong to. `HeldReadings.Decide` is asked once per template, with
+that template's own share of the plots and the run IT produced last press, so a choice made
+after a refusal still costs no read. A held run for one template never answers for another,
+and the line saying which happened is per template.
+
+**The progress count runs across the whole press.** Counted per template it would restart at 1
+on the second workbook, and a count that goes backwards is the one thing the progress rule
+forbids. The total is every plot every ticked template will read, worked out before the first
+one is, and a template answering from held readings still advances it.
+
+**The three the team types are ONE SET for the whole run.** Bader's decision. The date, the
+prepared by and the position go into every workbook this press writes, and the pane says so
+when more than one template is ticked.
+
+**A refusal on one template does not stop the others.** Bader's decision. The rest are written
+and the refused one is named with why. After the press each row says what happened to it,
+written with its path or not written with its reason, because one line for the run would hide
+which of six failed.
+
+**ONE REPORT FOR THE RUN, not one per workbook.** `KpiCreateReport.WriteAll` opens with the run
+accounting, then the split plot by plot with the route each took, then every ticked template's
+own report whole under a heading naming it, through the section writer that was already tested.
+A Street Design note on MOSQUES and a rounding note on STREETS sit under their own template and
+can never read as one list.
+
+**The run accounting sits above each template's own reconciliation**: templates ticked, written,
+refused and with nothing to write, and THOSE FOUR MUST ADD UP TO THE NUMBER TICKED. They are
+counted off one list and checked against its own length, so a template that fell out of every
+branch is a refusal in those words rather than a row nobody printed. Each template's own
+reconciliation is unchanged and adds up within itself, over its own share of the plots.
+
+**`OutputName.Suggested` is deleted.** It offered the template file's own name and nothing
+called it once every row took its name from `CreateWords.SuggestedName` with that template's own
+plots. A method nothing reaches is the shape this repo deletes rather than leaves beside the
+thing that replaced it.
+
 ## Only the groups a tree list sheet is named for count
 
 **Bader has decided that Street Design is somebody else's scope and does not belong on this

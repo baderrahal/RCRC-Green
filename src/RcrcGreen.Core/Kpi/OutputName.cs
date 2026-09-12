@@ -14,15 +14,6 @@ namespace RcrcGreen.Core.Kpi
         public const string Extension = ".xlsx";
 
         /// <summary>
-        /// This round the suggestion is the template's file name. Next round it gains the
-        /// component name read from the model.
-        /// </summary>
-        public static string Suggested(string templateFileName)
-        {
-            return Final(templateFileName);
-        }
-
-        /// <summary>
         /// What the file is really called: cleaned, and with .xlsx put back if the user left
         /// it off or the cleaning took the typed name apart.
         /// </summary>

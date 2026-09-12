@@ -88,6 +88,29 @@ namespace RcrcGreen.Revit.Kpi
     }
 
     /// <summary>
+    /// One ticked workbook row: the template it is, the file it came from and the name its
+    /// output takes. **One box cannot name six files**, so every ticked template carries its
+    /// own name and the pane offers a row per template rather than one box.
+    /// </summary>
+    internal sealed class TemplatePick
+    {
+        public TemplatePick(KpiTemplate template, string templatePath, string outputName)
+        {
+            if (template == null) throw new ArgumentNullException("template");
+
+            Template = template;
+            TemplatePath = templatePath ?? string.Empty;
+            OutputName = outputName ?? string.Empty;
+        }
+
+        public KpiTemplate Template { get; }
+
+        public string TemplatePath { get; }
+
+        public string OutputName { get; }
+    }
+
+    /// <summary>
     /// Everything one press of Create carries into the external event. Built by the pane out
     /// of what the user chose, so nothing on the Revit side has to reach back into a control.
     ///
@@ -95,13 +118,17 @@ namespace RcrcGreen.Revit.Kpi
     /// open is refused by the reconciliation rather than guessed, the user picks, and Create is
     /// pressed again with the choice on here.
     /// </summary>
+    /// <summary>
+    /// **SEVERAL TEMPLATES IN ONE PRESS.** The ticked plots are read once and split by the
+    /// template each of them belongs to, so a plot is read for its own workbook and for no
+    /// other. The three the team types are ONE SET for the whole run, Bader's decision, and
+    /// they go into every workbook this press writes.
+    /// </summary>
     internal sealed class KpiCreateAsk
     {
         public KpiCreateAsk(
             IEnumerable<string> ticked,
-            KpiTemplate template,
-            string templatePath,
-            string outputName,
+            IEnumerable<TemplatePick> templates,
             string componentParameter,
             string referenceParameter,
             string locationParameter,
@@ -110,13 +137,15 @@ namespace RcrcGreen.Revit.Kpi
             string date,
             string preparedBy,
             string position,
-            KpiCreateRun heldRun = null,
-            TemplateListing templatesListed = null)
+            IEnumerable<KpiCreateRun> heldRuns = null,
+            TemplateListing templatesListed = null,
+            IDictionary<string, string> componentPerPlot = null)
         {
             Ticked = (ticked ?? Enumerable.Empty<string>()).Where(one => one != null).ToList();
-            Template = template;
-            TemplatePath = templatePath ?? string.Empty;
-            OutputName = outputName ?? string.Empty;
+            Templates = (templates ?? Enumerable.Empty<TemplatePick>()).Where(one => one != null).ToList();
+            HeldRuns = (heldRuns ?? Enumerable.Empty<KpiCreateRun>()).Where(one => one != null).ToList();
+            ComponentPerPlot = new Dictionary<string, string>(
+                componentPerPlot ?? new Dictionary<string, string>(), StringComparer.Ordinal);
             ComponentParameter = componentParameter ?? string.Empty;
             ReferenceParameter = referenceParameter ?? string.Empty;
             LocationParameter = locationParameter ?? string.Empty;
@@ -126,16 +155,42 @@ namespace RcrcGreen.Revit.Kpi
             Date = date ?? string.Empty;
             PreparedBy = preparedBy ?? string.Empty;
             Position = position ?? string.Empty;
-            HeldRun = heldRun;
             TemplatesListed = templatesListed ?? TemplateListing.Nothing;
         }
 
         /// <summary>
-        /// The run the pane holds from the press before, the same object and not a copy, so a
-        /// choice made after a refusal can be applied to its readings. Null when the pane holds
-        /// none, and Core decides whether it can be trusted.
+        /// The runs the pane holds from the press before, the same objects and not copies, so a
+        /// choice made after a refusal can be applied to their readings. One per template that
+        /// ran, and Core decides per template whether each can be trusted. **This is the one
+        /// reuse mechanism and there is no second cache beside it.**
         /// </summary>
-        public KpiCreateRun HeldRun { get; }
+        public IReadOnlyList<KpiCreateRun> HeldRuns { get; }
+
+        /// <summary>
+        /// The run held for one template, or nothing. A press that ticks a template it did not
+        /// tick before finds none and reads that template's plots, which is what should happen.
+        /// </summary>
+        public KpiCreateRun HeldRunFor(KpiTemplate template)
+        {
+            return HeldRuns.FirstOrDefault(one => ReferenceEquals(one.Template, template));
+        }
+
+        /// <summary>
+        /// What each plot's sheets hold for the component, carried from the plot read so the
+        /// split can be worked out on the Revit thread without reading the sheets again.
+        /// </summary>
+        public IDictionary<string, string> ComponentPerPlot { get; }
+
+        public string ComponentOn(string plotId)
+        {
+            string held;
+            return ComponentPerPlot.TryGetValue(plotId ?? string.Empty, out held) ? held : string.Empty;
+        }
+
+        /// <summary>
+        /// Every ticked workbook row, in the order the templates are listed.
+        /// </summary>
+        public IReadOnlyList<TemplatePick> Templates { get; }
 
         /// <summary>
         /// The templates folder as the pane holds it, so the report can say how many times a
@@ -159,12 +214,6 @@ namespace RcrcGreen.Revit.Kpi
         public string Position { get; }
 
         public IReadOnlyList<string> Ticked { get; }
-
-        public KpiTemplate Template { get; }
-
-        public string TemplatePath { get; }
-
-        public string OutputName { get; }
 
         public string ComponentParameter { get; }
 

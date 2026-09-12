@@ -47,10 +47,29 @@ namespace RcrcGreen.Revit.Kpi
 
         private readonly StackPanel _templates = new StackPanel();
 
-        // Outlives every redraw of the template block, because it carries what somebody is
-        // halfway through typing. It goes through Reparented on each rebuild, the same rule
-        // the Drawing Sheet panel follows for its combo boxes.
-        private readonly TextBox _outputName = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
+        // **ONE BOX CANNOT NAME SIX FILES.** Every ticked workbook row carries its own name
+        // box, held on its tick so it outlives every redraw of the template block with what
+        // somebody is halfway through typing still in it. Each goes through Reparented on the
+        // rebuild, the same rule the Drawing Sheet panel follows for its combo boxes.
+        private sealed class WorkbookTick
+        {
+            public WorkbookTick(RecognisedWorkbook workbook, KpiTemplate settledAs)
+            {
+                Workbook = workbook;
+                SettledAs = settledAs;
+                Name = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
+            }
+
+            public RecognisedWorkbook Workbook { get; }
+
+            /// <summary>
+            /// The template this file is. Null while a file caught between the two park
+            /// templates waits for the user to say which, and nothing is guessed meanwhile.
+            /// </summary>
+            public KpiTemplate SettledAs { get; set; }
+
+            public TextBox Name { get; }
+        }
 
         private PanelTheme _theme = PanelTheme.Current();
 
@@ -82,11 +101,12 @@ namespace RcrcGreen.Revit.Kpi
         // from inside Execute. Null whenever no press is running.
         private KpiProgressWindow _running;
 
-        // The one picked workbook, and the template settled for it. For most files the two
-        // arrive together. A file caught between the two park templates has a pick and no
-        // template until the user chooses, and nothing is guessed meanwhile.
-        private RecognisedWorkbook _picked;
-        private KpiTemplate _pickedAs;
+        // **THE WORKBOOK ROWS ARE TICKABLE, SEVERAL AT ONCE.** One tick per row the user wants
+        // a workbook from, each with the template it settled as and its own output name. For
+        // most files the file and the template arrive together. A file caught between the two
+        // park templates is ticked with no template until the user says which, and nothing is
+        // guessed meanwhile.
+        private readonly List<WorkbookTick> _picks = new List<WorkbookTick>();
 
         // Why the template list stands as it does: what preselected one, or what stopped
         // anything preselecting. Empty only when there is nothing to say yet. A value the table
@@ -118,10 +138,11 @@ namespace RcrcGreen.Revit.Kpi
         private readonly Dictionary<string, string> _chosenRegions =
             new Dictionary<string, string>(StringComparer.Ordinal);
 
-        // What the last press of Create really did, so the pane can offer the region choices
-        // a refusal asked for without reading anything itself, and so the next press can
-        // apply a choice to the readings it holds rather than reading the model again.
-        private KpiCreateRun _lastRun;
+        // What the last press of Create really did, ACROSS EVERY TEMPLATE, so the pane can
+        // offer the region choices a refusal asked for without reading anything itself, and so
+        // the next press can apply a choice to the readings it holds rather than reading the
+        // model again. One set, holding one run per template that ran.
+        private KpiCreateRunSet _lastSet;
 
         // The templates folder's workbooks as recognised, held once per folder. Every redraw
         // used to open and peek every .xlsx in the folder, seven zips for each of 155 ticks.
@@ -149,7 +170,7 @@ namespace RcrcGreen.Revit.Kpi
                 Named = Took,
                 Scanned = Scanned,
                 FoundPlots = Found,
-                Created = Made,
+                CreatedAcross = Made,
                 Told = Say,
                 Progressed = Moved
             };
@@ -452,74 +473,81 @@ namespace RcrcGreen.Revit.Kpi
             foreach (RecognisedWorkbook workbook in recognised)
             {
                 RecognisedWorkbook which = workbook;
-                bool pickable = which.IsMatched || which.NeedsAPick;
-                var row = new Button
+                bool tickable = which.IsMatched || which.NeedsAPick;
+                var box = new CheckBox
                 {
                     Content = PaneLabel.Escaped(which.FileName + "   " + which.InWords),
-                    HorizontalContentAlignment = HorizontalAlignment.Left,
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    Padding = PanelMetrics.CellPad,
                     Margin = PanelMetrics.Row,
-                    IsEnabled = pickable,
-                    FontWeight = _picked != null && _picked.FileName == which.FileName
-                        ? FontWeights.Bold
-                        : FontWeights.Normal,
-                    ToolTip = pickable ? "Pick this workbook." : which.Reason
+                    IsEnabled = tickable,
+                    IsChecked = TickFor(which) != null,
+                    ToolTip = tickable ? "Tick this workbook. Several can be ticked at once." : which.Reason
                 };
-                row.Click += (sender, e) => Picked(which);
-                _templates.Children.Add(row);
-            }
+                box.Click += (sender, e) => ToggledWorkbook(which);
+                _templates.Children.Add(box);
 
-            if (_picked == null) return;
+                WorkbookTick tick = TickFor(which);
+                if (tick == null || tick.SettledAs != null) continue;
 
-            if (_pickedAs == null)
-            {
-                _templates.Children.Add(Faint(TemplateWords.PickBetween(_picked)));
+                // Ticked and still waiting on which of the two park templates it is. Nothing
+                // is guessed, and the row under it is where the answer goes.
+                _templates.Children.Add(Faint("   " + TemplateWords.PickBetween(which)));
                 var either = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
-                foreach (KpiTemplate candidate in _picked.Candidates)
+                foreach (KpiTemplate candidate in which.Candidates)
                 {
                     KpiTemplate chosen = candidate;
+                    WorkbookTick waiting = tick;
                     var choice = new Button
                     {
                         Content = PaneLabel.Escaped(chosen.Name),
                         Padding = PanelMetrics.CellPad,
                         Margin = PanelMetrics.Gap
                     };
-                    choice.Click += (sender, e) => { _pickedAs = chosen; RedrawTemplates(); };
+                    choice.Click += (sender, e) =>
+                    {
+                        waiting.SettledAs = chosen;
+                        Named(waiting);
+                        RedrawTemplates();
+                    };
                     either.Children.Add(choice);
                 }
                 _templates.Children.Add(either);
-                return;
             }
 
-            _templates.Children.Add(new TextBlock
-            {
-                Text = "What " + _pickedAs.Name + " would fill",
-                FontWeight = FontWeights.Bold,
-                Margin = PanelMetrics.Row
-            });
+            if (Settled().Count == 0) return;
 
-            foreach (string line in TemplateWords.WouldFill(_pickedAs, Chosen()))
+            // **ONE ROW PER TICKED TEMPLATE, each with its own name, each editable on its own.**
+            // Where exactly one is ticked the box behaves exactly as it did before.
+            foreach (WorkbookTick tick in Settled())
             {
                 _templates.Children.Add(new TextBlock
                 {
-                    Text = line,
-                    TextWrapping = TextWrapping.Wrap,
+                    Text = "What " + tick.SettledAs.Name + " would fill",
+                    FontWeight = FontWeights.Bold,
                     Margin = PanelMetrics.Row
                 });
-            }
 
-            var named = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
-            var caption = new TextBlock
-            {
-                Text = "Written as",
-                Width = PanelMetrics.WideLabelWidth,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            DockPanel.SetDock(caption, Dock.Left);
-            named.Children.Add(caption);
-            named.Children.Add(Reparented(_outputName));
-            _templates.Children.Add(named);
+                foreach (string line in TemplateWords.WouldFill(tick.SettledAs, Chosen()))
+                {
+                    _templates.Children.Add(new TextBlock
+                    {
+                        Text = line,
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = PanelMetrics.Row
+                    });
+                }
+
+                var named = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+                var caption = new TextBlock
+                {
+                    Text = "Written as",
+                    Width = PanelMetrics.WideLabelWidth,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                DockPanel.SetDock(caption, Dock.Left);
+                named.Children.Add(caption);
+                named.Children.Add(Reparented(tick.Name));
+                _templates.Children.Add(named);
+            }
 
             TheOutputFolder();
 
@@ -793,9 +821,39 @@ namespace RcrcGreen.Revit.Kpi
             // What really decides the refusal is the handler's own read at the moment the button
             // is pressed: this line is what the pane can say before then.
             string cannot = CreateWords.CannotCreate(
-                _model, OutputFolder.Read(), _pickedAs != null, _ticks.Count > 0);
+                _model, OutputFolder.Read(), Settled().Count > 0, _ticks.Count > 0);
 
             if (cannot.Length > 0) _templates.Children.Add(Faint(cannot));
+
+            // **ONE ROW PER TICKED TEMPLATE, BEFORE THE PRESS.** Which plots each workbook will
+            // get, and for one no ticked plot belongs to, why it will write nothing. Bader's
+            // decision: it stays tickable and stays listed.
+            TemplateSplit split = TheSplit();
+            foreach (TemplateShare share in split.Shares)
+            {
+                _templates.Children.Add(share.WillWrite
+                    ? Faint(CreateWords.TemplateRow(share))
+                    : Warned(CreateWords.TemplateRow(share)));
+            }
+
+            foreach (PlotTemplate left in split.Unplaced)
+            {
+                _templates.Children.Add(Warned("   " + left.PlotId + ": " + left.Why));
+            }
+
+            foreach (string refusal in split.Refusals) _templates.Children.Add(Warned(refusal));
+
+            // After the press, each row says what happened to it. Never one line for the run
+            // that hides which of six failed.
+            if (_lastSet != null)
+            {
+                foreach (TemplateOutcome outcome in _lastSet.Outcomes)
+                {
+                    _templates.Children.Add(outcome.Written
+                        ? Faint(CreateWords.TemplateOutcomeRow(outcome))
+                        : Warned(CreateWords.TemplateOutcomeRow(outcome)));
+                }
+            }
 
             // **A NOTE AND NEVER A REFUSAL.** The link state is known as soon as the model is
             // read, and the first STREETS run spent 78 plots finding nothing because not one
@@ -806,23 +864,23 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(Warned(_facts.Links.Warning));
             }
 
-            if (_pickedAs != null && _pickedAs.AreaIsTypedByHand)
+            foreach (WorkbookTick tick in Settled().Where(one => one.SettledAs.AreaIsTypedByHand))
             {
-                _templates.Children.Add(Faint(CreateWords.AreaTypedByHand));
+                _templates.Children.Add(Faint(tick.SettledAs.Name + ": " + CreateWords.AreaTypedByHand));
             }
 
-            if (_lastRun != null && !_lastRun.Reconciliation.AddsUp)
+            foreach (KpiCreateRun run in Held().Where(one => !one.Reconciliation.AddsUp))
             {
-                foreach (string refusal in _lastRun.Reconciliation.Refusals)
+                foreach (string refusal in run.Reconciliation.Refusals)
                 {
-                    _templates.Children.Add(Warned(refusal));
+                    _templates.Children.Add(Warned(run.Template.Name + ": " + refusal));
                 }
 
-                TheRegionChoices();
+                TheRegionChoices(run);
 
-                if (_lastRun.Reconciliation.IdenticalAreas.Count > 0 && !_confirmedIdentical)
+                if (run.Reconciliation.IdenticalAreas.Count > 0 && !_confirmedIdentical)
                 {
-                    foreach (string line in CreateWords.ConfirmIdentical(_lastRun.Reconciliation.IdenticalAreas))
+                    foreach (string line in CreateWords.ConfirmIdentical(run.Reconciliation.IdenticalAreas))
                     {
                         _templates.Children.Add(Warned(line));
                     }
@@ -843,10 +901,10 @@ namespace RcrcGreen.Revit.Kpi
             // refusal: the workbook was written with those rows left out, and this says where
             // the model needs correcting, beside the button the user pressed. The report
             // carries the full detail, and a person acts on plots and schedules, not species.
-            if (_lastRun != null && _lastRun.Template != null)
+            foreach (KpiCreateRun run in Held().Where(one => one.Template != null))
             {
-                string leftOut = CreateWords.GroupsLeftOut(_lastRun.Readings, _lastRun.Template);
-                if (leftOut.Length > 0) _templates.Children.Add(Warned(leftOut));
+                string leftOut = CreateWords.GroupsLeftOut(run.Readings, run.Template);
+                if (leftOut.Length > 0) _templates.Children.Add(Warned(run.Template.Name + ": " + leftOut));
             }
 
             // Greyed out on what the PANE owns and on nothing else. Whether a model is open
@@ -859,7 +917,7 @@ namespace RcrcGreen.Revit.Kpi
                 Padding = PanelMetrics.CellPad,
                 Margin = PanelMetrics.Row,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                IsEnabled = _pickedAs != null && _ticks.Count > 0
+                IsEnabled = Settled().Count > 0 && _ticks.Count > 0
             };
             create.Click += (sender, e) => AskedToCreate();
             _templates.Children.Add(create);
@@ -869,9 +927,9 @@ namespace RcrcGreen.Revit.Kpi
         /// One row of buttons per plot whose regions left the answer open. Which of a plot's
         /// two regions carries the area varies by plot, so the tool asks rather than picking.
         /// </summary>
-        private void TheRegionChoices()
+        private void TheRegionChoices(KpiCreateRun run)
         {
-            foreach (PlotReading reading in _lastRun.Readings)
+            foreach (PlotReading reading in run.Readings)
             {
                 if (reading.ChosenRegion != null || reading.RegionsHoldingAnArea.Count < 2) continue;
 
@@ -913,7 +971,7 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private void Changed()
         {
-            _lastRun = null;
+            _lastSet = null;
             _confirmedIdentical = false;
             _chosenRegions.Clear();
             Preselect();
@@ -929,7 +987,7 @@ namespace RcrcGreen.Revit.Kpi
         private void Preselect()
         {
             _whyThisTemplate = string.Empty;
-            if (_facts == null || _ticks.Count == 0 || _picked != null) return;
+            if (_facts == null || _ticks.Count == 0 || _picks.Count > 0) return;
 
             AgreedValue component = new AgreedValue(_ticks.Ticked
                 .Select(plotId => new PlotText(plotId, _facts.ComponentOn(plotId))));
@@ -941,21 +999,100 @@ namespace RcrcGreen.Revit.Kpi
             // three plots like it, and which route placed them has to be on the screen.
             _whyThisTemplate = choice.Why;
 
-            if (choice.NeedsAPick)
+            if (choice.NeedsAPick) return;
+
+            // The preselection TICKS a row rather than settling a template beside the list, so
+            // what Create reads and what the screen shows are one record. A folder holding no
+            // file of that template ticks nothing and says so through the line above.
+            RecognisedWorkbook offered = _templatesListed.Workbooks.FirstOrDefault(
+                one => ReferenceEquals(one.Template, choice.Preselected));
+            if (offered == null)
             {
-                // Nothing is picked by hand here, because this method returns above when
-                // something is, so whatever _pickedAs holds came from an earlier preselection on
-                // plots that are no longer the ticked ones. Leaving it would arm Create with a
-                // template beside a line saying none was preselected.
-                _pickedAs = null;
+                _whyThisTemplate = choice.Why
+                    + " The templates folder holds no file this tool recognises as "
+                    + choice.Preselected.Name + ", so nothing was ticked.";
                 return;
             }
 
-            _pickedAs = choice.Preselected;
-            if (_outputName.Text.Length == 0)
+            _picks.Add(new WorkbookTick(offered, choice.Preselected));
+            Named(_picks[_picks.Count - 1]);
+        }
+
+        /// <summary>
+        /// The name a ticked row offers, filled once and never over what somebody typed. The
+        /// suggestion rule is the one a single template run already used, asked per row with
+        /// that template's own share of the ticked plots.
+        /// </summary>
+        private void Named(WorkbookTick tick)
+        {
+            if (tick.SettledAs == null || tick.Name.Text.Length > 0) return;
+
+            TemplateShare share = TheSplit().Shares.FirstOrDefault(
+                one => ReferenceEquals(one.Template, tick.SettledAs));
+            IReadOnlyList<string> mine = share == null ? new List<string>() : share.Plots;
+
+            var component = new AgreedValue(mine
+                .Select(plotId => new PlotText(plotId, _facts == null ? string.Empty : _facts.ComponentOn(plotId))));
+
+            tick.Name.Text = CreateWords.SuggestedName(
+                tick.SettledAs, component.Agrees ? component.Value : string.Empty, mine);
+        }
+
+        /// <summary>
+        /// Which ticked plot belongs to which ticked template, worked out in Core off the
+        /// component the plot read already carries. The pane applies it and decides none of it.
+        /// </summary>
+        private TemplateSplit TheSplit()
+        {
+            return PlotsPerTemplate.Split(
+                _ticks.Ticked,
+                plotId => _facts == null ? string.Empty : _facts.ComponentOn(plotId),
+                Settled().Select(one => one.SettledAs));
+        }
+
+        /// <summary>
+        /// The ticked rows whose template is settled. A row still waiting on which of the two
+        /// park templates it is has no template and arms nothing.
+        /// </summary>
+        private IReadOnlyList<WorkbookTick> Settled()
+        {
+            return _picks.Where(one => one.SettledAs != null).ToList();
+        }
+
+        /// <summary>
+        /// The runs the last press produced, one per template that ran, or none.
+        /// </summary>
+        private IReadOnlyList<KpiCreateRun> Held()
+        {
+            return _lastSet == null ? new List<KpiCreateRun>() : _lastSet.Runs;
+        }
+
+        private WorkbookTick TickFor(RecognisedWorkbook workbook)
+        {
+            return _picks.FirstOrDefault(one =>
+                string.Equals(one.Workbook.FileName, workbook.FileName, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// Ticking a workbook row adds it with the template it recognised as, or with none where
+        /// the file is caught between the two park templates. Unticking forgets its name with it,
+        /// because a name typed for a workbook nobody is writing is not a name to keep.
+        /// </summary>
+        private void ToggledWorkbook(RecognisedWorkbook workbook)
+        {
+            WorkbookTick already = TickFor(workbook);
+            if (already != null) _picks.Remove(already);
+            else
             {
-                _outputName.Text = CreateWords.SuggestedName(_pickedAs, component.Value, _ticks.Ticked);
+                _picks.Add(new WorkbookTick(workbook, workbook.Template));
+                Named(_picks[_picks.Count - 1]);
             }
+
+            // The line describes what the preselection did or did not do, so a tick by hand is
+            // what makes it untrue whichever way it read. A line left standing beside the state
+            // that contradicts it is the shape this repo has met seven times.
+            _whyThisTemplate = string.Empty;
+            RedrawTemplates();
         }
 
         /// <summary>
@@ -973,15 +1110,23 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private void AskedToCreate()
         {
-            if (_pickedAs == null) return;
+            if (Settled().Count == 0) return;
 
             RememberedNames.Remember(_preparedBy.Text, _position.Text);
 
+            string folder = TemplateFolder.Read();
+            var components = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (string plotId in _ticks.Ticked)
+            {
+                components[plotId] = _facts == null ? string.Empty : _facts.ComponentOn(plotId);
+            }
+
             _handler.Asked = new KpiCreateAsk(
                 _ticks.Ticked,
-                _pickedAs,
-                _picked == null ? string.Empty : Path.Combine(TemplateFolder.Read(), _picked.FileName),
-                _outputName.Text,
+                Settled().Select(one => new TemplatePick(
+                    one.SettledAs,
+                    Path.Combine(folder, one.Workbook.FileName),
+                    one.Name.Text)),
                 _componentParameter,
                 _referenceParameter,
                 _locationParameter,
@@ -990,8 +1135,9 @@ namespace RcrcGreen.Revit.Kpi
                 _date.Text,
                 _preparedBy.Text,
                 _position.Text,
-                _lastRun,
-                _templatesListed);
+                Held(),
+                _templatesListed,
+                components);
 
             Say(CreateWords.Creating);
 
@@ -1038,11 +1184,11 @@ namespace RcrcGreen.Revit.Kpi
             });
         }
 
-        private void Made(KpiCreateRun run, string reportWhere)
+        private void Made(KpiCreateRunSet set, string reportWhere)
         {
             Dispatcher.Invoke(() =>
             {
-                _lastRun = run;
+                _lastSet = set;
 
                 // Create is the one thing in this tool that writes a workbook, and it can write
                 // into the templates folder. Any press that reached the patcher with an output
@@ -1051,10 +1197,13 @@ namespace RcrcGreen.Revit.Kpi
                 // fails after it leaves the copy behind under a name the listing may hold. An
                 // output path anywhere else leaves the listing and its counts standing, because
                 // nothing in that folder moved.
-                if (run.Outcome != null && run.OutputPath.Length > 0
-                    && _templatesListed.IsFor(Path.GetDirectoryName(run.OutputPath)))
+                foreach (KpiCreateRun run in set.Runs)
                 {
+                    if (run.Outcome == null || run.OutputPath.Length == 0) continue;
+                    if (!_templatesListed.IsFor(Path.GetDirectoryName(run.OutputPath))) continue;
+
                     _templatesListed = TemplateListing.Nothing;
+                    break;
                 }
                 RedrawTemplates();
             });
@@ -1133,19 +1282,6 @@ namespace RcrcGreen.Revit.Kpi
             return row;
         }
 
-        private void Picked(RecognisedWorkbook workbook)
-        {
-            _picked = workbook;
-            _pickedAs = workbook.Template;
-
-            // The line describes what the preselection did or did not do, so a hand pick is what
-            // makes it untrue whichever way it read. A line left standing beside the state that
-            // contradicts it is the shape this repo has met seven times.
-            _whyThisTemplate = string.Empty;
-            _outputName.Text = OutputName.Suggested(workbook.FileName);
-            RedrawTemplates();
-        }
-
         /// <summary>
         /// The output folder, picked the same way the template folder is. Nothing is thrown
         /// away by this: the template pick and the ticks are about the model and the folder is
@@ -1192,8 +1328,7 @@ namespace RcrcGreen.Revit.Kpi
                         + " beside the installed add-in refused the write.");
                 }
 
-                _picked = null;
-                _pickedAs = null;
+                _picks.Clear();
                 _whyThisTemplate = string.Empty;
                 _templatesListed = TemplateListing.Nothing;
                 RedrawTemplates();
