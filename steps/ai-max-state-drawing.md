@@ -1,5 +1,19 @@
 # ai-max state, Drawing Sheet
 
+Phase: 9, ship. Sixty second pass, second of three pull requests. Presets: a saved answer to
+steps 2 and 4, holding the ticked view types and the sheet definitions, and NO plot, NO sub plot
+and NO sheet number. Preset, Presets, PresetFile, PresetFit and PresetFilling are Core with 49
+tests. Two files merged the way the title blocks are, the user's own over the shipped
+install/presets.txt, which ships the six sheets of the DM-11 run grouped by the title block each
+view type is paired with, five definitions and six sheets. A view type or a title block this
+model does not hold is named and left out rather than failing, and a test reads both shipped
+files so a preset can never name a block its own pairing does not. The strip gains a second row,
+a picker with a blank entry, Save as and Manage, on its own row because the first is full at
+pane width. Steps 2 and 4 say which preset filled them, worked out by comparing rather than by a
+flag. InTheModel is now the one title block lookup on the panel, where there were three. Suite
+reads 1369 locally, the 1320 on merged main plus 49. Two breaks watched red and reversed byte
+for byte. The pull request is 98 and the mockup is design/pr-98/panel.html.
+
 Phase: 9, ship. Sixty second pass, three features split into three pull requests, this is
 the first. The grid shows what exists: SheetCellState gains a fourth state for a view that
 is in the model and on no sheet, which is the ordinary case at 2,430 against 953 placed, and
@@ -12,7 +26,8 @@ neither of the other routes. BULK MARKING WAS ALREADY BUILT: the brief called it
 built, and all four are wired, WholeRow at panel line 959, WholeColumn at 1025, Mark every
 missing at 804 and Clear all marks beside it, with 19 tests. It is verified and recorded
 rather than written twice. Suite reads 1320 locally, the 1316 on main plus 4. Two breaks
-watched red and reversed byte for byte. The pull request is 96 and the runner reads 1320 too.
+watched red and reversed byte for byte. Pull request 96 is merged as `d77b90a` with 1320 on the runner, 0 failed and 0 skipped,
+and the squash message back byte for byte.
 The mockup is design/pr-96/panel.html. Presets and the run preview are this round's second
 and third pull requests.
 

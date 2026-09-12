@@ -16,6 +16,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\sheet-names.txt
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\presets.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
 
@@ -118,6 +119,15 @@ $sheetNames = Join-Path $PSScriptRoot 'sheet-names.txt'
 if (Test-Path -LiteralPath $sheetNames) {
     Copy-Item -LiteralPath $sheetNames -Destination $assemblyFolder -Force
     $copied.Add((Join-Path $assemblyFolder 'sheet-names.txt'))
+}
+
+# The saved answers to steps 2 and 4, the six sheets of the DM-11 run. Same two-file rule
+# again: the panel reads this after the user's own file, so a preset somebody saves in the
+# panel is never overwritten by an install.
+$presets = Join-Path $PSScriptRoot 'presets.txt'
+if (Test-Path -LiteralPath $presets) {
+    Copy-Item -LiteralPath $presets -Destination $assemblyFolder -Force
+    $copied.Add((Join-Path $assemblyFolder 'presets.txt'))
 }
 
 $templatesPointer = Join-Path $assemblyFolder 'templates-folder.txt'

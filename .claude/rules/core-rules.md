@@ -439,6 +439,38 @@ fields is kept with its number rather than dropped, because a settings file one 
 reads exactly like one that never had the line. The code and the view name are separate
 fields, so the `(010) Overall Plan` format lives on `ViewType` and nowhere else.
 
+## A preset is steps 2 and 4, and never step 1
+
+`Preset` holds a name, the view types ticked in step 2, and the sheet definitions described in
+step 4, each one a title block, a views per sheet and its views in the order they go on. **It
+holds no plot, no sub plot and no sheet number.** Those are what changes between one run and
+the next, and a preset carrying them would fill step 1 with last week's plots and put a number
+on a sheet another plot already has.
+
+`Presets` merges two files the same way the title block settings do, the user's own over the
+shipped one of that name, and only what the user saved is written back. `PresetFile` is the
+format: tab separated, the first field saying what the line is, `preset`, `type`, `sheet` and
+`on`. Every line belongs to the `preset` line above it and every `on` line to the `sheet` line
+above it, so a record with nothing above it to belong to is kept as a line that could not be
+read rather than attached to the wrong preset.
+
+`PresetFit` is what one model can honour. **The part that fits is filled in and the part that
+does not is named.** A view type or a title block this model does not hold is ordinary, because
+a preset is shared across projects, so refusing the whole preset over one missing schedule
+would make it useless on every model but the one it was saved from. A view the model lacks
+comes off the sheets it was on and is named once, under the types, rather than twice.
+
+`PresetFilling` says which preset filled the two steps, and whether they still say what it
+says. **It compares rather than remembering.** A tick, a sheet added, a sheet removed, a title
+block picked and a views per sheet changed can all move them, and the flag for the sixth one is
+the one nobody sets. `Preset.SameAnswer` is that comparison, and the name and the file a preset
+came from are no part of it.
+
+The shipped `install/presets.txt` is the six sheets of the DM-11 run, its view types grouped by
+the title block `install/title-blocks.txt` pairs each with. Five definitions, six sheets, one
+view on each. Two shipped files are two records that have to agree, so a test reads both and
+fails if a preset ever names a block its own pairing does not.
+
 ## Which family type a view type is really built with
 
 `FamilyTypesInUse.Of` counts, per view type, every view family type in use and how many views

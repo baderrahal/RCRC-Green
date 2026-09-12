@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Presets on the strip, pull request 98</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  table.plain { border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  table.plain td, table.plain th { border: 1px solid #ccc; padding: 4px 10px; text-align: left; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .strip  { background: #e4e4e4; }
+  .dark  .strip  { background: #3a3a3a; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .row { margin: 3px 0; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 1px 7px; margin-left: 4px;
+         white-space: nowrap; }
+  .dark .btn { border-color: #5e5e5e; }
+  .strip { padding: 6px 8px; border-bottom: 1px solid #c8c8c8; }
+  .dark .strip { border-bottom-color: #4a4a4a; }
+  .striprow { display: flex; align-items: center; justify-content: space-between; }
+  .striprow + .striprow { margin-top: 6px; }
+  .pick { border: 1px solid #adadad; background: #fff; padding: 1px 6px; min-width: 150px;
+          display: inline-block; }
+  .dark .pick { border-color: #5e5e5e; background: #262626; }
+  .status { padding: 5px 8px; border-top: 1px solid #c8c8c8; }
+  .dark .status { border-top-color: #4a4a4a; }
+  .win { width: 420px; border: 1px solid #999; margin-top: 8px;
+         font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .win .bar { background: #d8d8d8; padding: 4px 8px; font-weight: bold;
+              border-bottom: 1px solid #c8c8c8; }
+  .dark .win .bar { background: #3a3a3a; border-bottom-color: #4a4a4a; }
+  .win .body { padding: 8px; }
+  .right { text-align: right; }
+  .tick { font-family: "Segoe UI Symbol", sans-serif; }
+</style>
+</head>
+<body>
+
+<h1>Presets on the strip, pull request 98</h1>
+
+<div class="warning">
+<p><strong>Nothing here has been through Revit.</strong> This is what the code draws read off
+the code, not a screenshot. The row heights, the picker width and the two windows are all
+unobserved.</p>
+<p>Specifically unobserved: the second strip row at a real pane width, the picker with a real
+model's presets in it, the Save as and Manage windows over Revit, and what a preset does to
+steps 2 and 4 on a real model.</p>
+</div>
+
+<h2>The strip gains a second row</h2>
+
+<p class="caption">The first row is the model name and two buttons, which is what it was. The
+preset row sits under it rather than beside them, because a dockable pane on the right of
+Revit is narrow and a picker and two more buttons on that row would run off the right edge.
+The blank entry is what it sits on, so nothing fills itself in on the way up.</p>
+
+<div class="pair">
+
+<div class="panel light">
+  <div class="strip">
+    <div class="striprow">
+      <div><b>RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</b>
+        <div class="faint">2,114 views read at 14:22:07</div></div>
+      <div><span class="btn">Refresh</span><span class="btn">Scan Model</span></div>
+    </div>
+    <div class="striprow">
+      <span class="pick">A starting point, from DM-11 &nbsp;&#9662;</span>
+      <div><span class="btn">Save as</span><span class="btn">Manage</span></div>
+    </div>
+  </div>
+  <div class="head"><span class="sign">2</span>VIEW TYPES</div>
+  <div class="inside">
+    <div class="row faint">Filled from A starting point, from DM-11.</div>
+    <div class="row">Search <span class="pick">&nbsp;</span></div>
+    <div class="row"><span class="btn">All</span><span class="btn">None</span></div>
+    <div class="row"><span class="tick">&#9745;</span> (010) LIST OF DRAWINGS</div>
+    <div class="row"><span class="tick">&#9745;</span> (010) Location Key Plan</div>
+    <div class="row"><span class="tick">&#9745;</span> (010) Overall Key Plan</div>
+    <div class="row"><span class="tick">&#9745;</span> (200) General Arrangement Layout</div>
+    <div class="row"><span class="tick">&#9745;</span> (400) Landscape Cross Section</div>
+    <div class="row"><span class="tick">&#9745;</span> (600) HARDSCAPE SCHEDULE</div>
+    <div class="row faint"><span class="tick">&#9744;</span> (600) SOFTSCAPE SCHEDULE</div>
+  </div>
+  <div class="status">Filled from A starting point, from DM-11: 6 view types and 5 sheet
+    definitions.</div>
+</div>
+
+<div class="panel dark">
+  <div class="strip">
+    <div class="striprow">
+      <div><b>RCRC_NG03_NU_MAIN_RVT24</b>
+        <div class="faint">1,204 views read at 14:31:55</div></div>
+      <div><span class="btn">Refresh</span><span class="btn">Scan Model</span></div>
+    </div>
+    <div class="striprow">
+      <span class="pick">A starting point, from DM-11 &nbsp;&#9662;</span>
+      <div><span class="btn">Save as</span><span class="btn">Manage</span></div>
+    </div>
+  </div>
+  <div class="head"><span class="sign">4</span>SHEETS</div>
+  <div class="inside">
+    <div class="row faint">Filled from A starting point, from DM-11, changed since. Save as
+      keeps the change under a name.</div>
+    <div class="row">Sheet 1 &nbsp; AR-PRX-Title_Block_A1 LOD &nbsp; 1 view per sheet</div>
+    <div class="row">Sheet 2 &nbsp; AR-PRX-Title_Block_A1 KEYPLAN &nbsp; 1 view per sheet</div>
+    <div class="row">Sheet 3 &nbsp; AR-PRX-Title_Block_A1 GA-SCHEMATIC &nbsp; 1 view per
+      sheet</div>
+    <div class="row"><span class="btn">Add a sheet</span></div>
+  </div>
+  <div class="status">Filled from A starting point, from DM-11: 5 view types and 3 sheet
+    definitions. This model holds no view called (400) Landscape Cross Section and no title
+    blocks called AR-PRX-Title_Block_A1 SECTION / ENLARGEMENTS, AR-PRX-Title_Block_A1 LOD /
+    HARDSCAPE SCHEDULES, so 2 sheet definitions are left out.</div>
+</div>
+
+</div>
+
+<h2>What a preset holds, and what it does not</h2>
+
+<table class="plain">
+<tr><th>held</th><th>not held</th></tr>
+<tr><td>the view types ticked in step 2</td><td>every plot and sub plot in step 1</td></tr>
+<tr><td>each sheet definition's title block</td><td>every sheet number</td></tr>
+<tr><td>each definition's views per sheet</td><td>every sheet name typed over a proposal</td></tr>
+<tr><td>each definition's views, in the order they go on</td><td>anything the model holds</td></tr>
+</table>
+
+<h2>Save as</h2>
+
+<p class="caption">It says what is being saved before the name is typed, and it says what
+saving over a name already in use does. Save is dead until a name is typed.</p>
+
+<div class="light">
+<div class="win">
+  <div class="bar">Save as a preset</div>
+  <div class="body">
+    <div class="row">6 view types, 5 sheet definitions, 6 sheets per ticked plot. No plot, no
+      sub plot and no sheet number is saved.</div>
+    <div class="row">Name</div>
+    <div class="row"><span class="pick" style="width:96%">A starting point, from DM-11</span></div>
+    <div class="row faint">A preset called A starting point, from DM-11 is already saved, from
+      the shipped defaults. Saving replaces it with this one.</div>
+    <div class="row right"><span class="btn">Save</span><span class="btn">Cancel</span></div>
+  </div>
+</div>
+</div>
+
+<h2>Manage</h2>
+
+<p class="caption">A shipped preset has no Delete, because nothing here writes the shipped
+file. Deleting the user's copy of one puts the shipped one back under that name, and the
+window says so before it happens.</p>
+
+<div class="light">
+<div class="win">
+  <div class="bar">Manage presets</div>
+  <div class="body">
+    <div class="row"><b>A starting point, from DM-11</b>
+      <div class="faint">6 view types, 5 sheet definitions, 6 sheets per ticked plot. From the
+        shipped defaults.</div></div>
+    <div class="row" style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><b>Mosque plots, no schedules</b>
+        <div class="faint">4 view types, 3 sheet definitions, 4 sheets per ticked plot. From
+          your own presets.</div></div>
+      <span class="btn">Delete</span></div>
+    <div class="row right"><span class="btn">Close</span></div>
+  </div>
+</div>
+</div>
+
+<h2>The shipped preset</h2>
+
+<p class="caption">The six view types of the DM-11 run, grouped by the title block
+<code>install/title-blocks.txt</code> pairs each with. Five definitions, six sheets, one view
+on each. A test reads both shipped files and fails if they ever disagree.</p>
+
+<table class="plain">
+<tr><th>title block type</th><th>views</th><th>sheets</th></tr>
+<tr><td>LOD</td><td>(010) LIST OF DRAWINGS</td><td>1</td></tr>
+<tr><td>KEYPLAN</td><td>(010) Location Key Plan, (010) Overall Key Plan</td><td>2</td></tr>
+<tr><td>GA-SCHEMATIC</td><td>(200) General Arrangement Layout</td><td>1</td></tr>
+<tr><td>SECTION / ENLARGEMENTS</td><td>(400) Landscape Cross Section</td><td>1</td></tr>
+<tr><td>LOD /&nbsp;&nbsp;HARDSCAPE SCHEDULES</td><td>(600) HARDSCAPE SCHEDULE</td><td>1</td></tr>
+</table>
+
+</body>
+</html>

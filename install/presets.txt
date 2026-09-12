@@ -1,0 +1,28 @@
+# RCRC Green, saved answers to steps 2 and 4 of the Drawing Sheet panel.
+# Tab separated. preset opens one, type is a ticked view type, sheet opens a sheet
+# definition and the on lines under it are its views, in the order they go on.
+# A preset holds no plot, no sub plot and no sheet number.
+# The one below is the six sheets of the DM-11 run, grouped by the title block that
+# title-blocks.txt pairs each view type with. Five definitions, six sheets, one view on
+# each. install.ps1 copies this file beside the add-in. A preset saved in the panel goes
+# into the user's own file instead and wins over this one, so an install never overwrites
+# somebody's own. The type names are exactly what the model holds, the two spaces in
+# LOD /  HARDSCAPE SCHEDULES included, so nothing here may be tidied up.
+preset	A starting point, from DM-11
+type	010	LIST OF DRAWINGS
+type	010	Location Key Plan
+type	010	Overall Key Plan
+type	200	General Arrangement Layout
+type	400	Landscape Cross Section
+type	600	HARDSCAPE SCHEDULE
+sheet	AR-PRX-Title_Block_A1	LOD	1
+on	010	LIST OF DRAWINGS
+sheet	AR-PRX-Title_Block_A1	KEYPLAN	1
+on	010	Location Key Plan
+on	010	Overall Key Plan
+sheet	AR-PRX-Title_Block_A1	GA-SCHEMATIC	1
+on	200	General Arrangement Layout
+sheet	AR-PRX-Title_Block_A1	SECTION / ENLARGEMENTS	1
+on	400	Landscape Cross Section
+sheet	AR-PRX-Title_Block_A1	LOD /  HARDSCAPE SCHEDULES	1
+on	600	HARDSCAPE SCHEDULE
