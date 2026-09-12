@@ -1,6 +1,22 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Sixty first pass closed. Pull request 94 is merged as `717e2f4` with 1316
+Phase: 9, ship. Sixty second pass, three features split into three pull requests, this is
+the first. The grid shows what exists: SheetCellState gains a fourth state for a view that
+is in the model and on no sheet, which is the ordinary case at 2,430 against 953 placed, and
+every cell carries the number of the sheet its view sits on, which is what says a sub plot
+is running on copy numbers. PlotViewPresence carries that number from the read,
+SheetGridCell.IsInTheModel answers what both existing states share, and the cell and legend
+words move into PanelSteps so the key and the tooltip are one list. The reader learns the
+placements from Viewports and ScheduleSheetInstances, because a schedule is placed by
+neither of the other routes. BULK MARKING WAS ALREADY BUILT: the brief called it never
+built, and all four are wired, WholeRow at panel line 959, WholeColumn at 1025, Mark every
+missing at 804 and Clear all marks beside it, with 19 tests. It is verified and recorded
+rather than written twice. Suite reads 1320 locally, the 1316 on main plus 4. Two breaks
+watched red and reversed byte for byte. The pull request is 96 and the runner reads 1320 too.
+The mockup is design/pr-96/panel.html. Presets and the run preview are this round's second
+and third pull requests.
+
+Before that, the sixty first pass closed. Pull request 94 is merged as `717e2f4` with 1316
 tests on the runner, 0 failed and 0 skipped, the squash message back byte for byte, and the
 merged main reads 1316 locally. Seven fixes off the first Revit run of the new panel: no
 jump on a plot tick, the labelled sub plot stem, a free 01 to 99 range with the list still

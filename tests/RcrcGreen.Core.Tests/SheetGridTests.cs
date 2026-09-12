@@ -75,7 +75,7 @@ namespace RcrcGreen.Core.Tests
             SheetGrid grid = SheetGrid.Build(
                 new[] { "DM-11" },
                 new[] { KeyPlan(), Layout() },
-                new[] { new PlotViewPresence("DM-11", KeyPlan(), 4211) },
+                new[] { new PlotViewPresence("DM-11", KeyPlan(), 4211, "010QE") },
                 null,
                 null);
 
@@ -84,9 +84,74 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Equal(SheetCellState.Exists, filled.State);
             Assert.Equal(4211, filled.ViewId);
+            Assert.Equal("010QE", filled.SheetNumber);
+            Assert.True(filled.IsInTheModel);
 
             Assert.Equal(SheetCellState.Missing, empty.State);
             Assert.Equal(0, empty.ViewId);
+            Assert.Equal(string.Empty, empty.SheetNumber);
+            Assert.False(empty.IsInTheModel);
+        }
+
+        /// <summary>
+        /// The fourth state. A view that is in the model and on no sheet is not the same job
+        /// as a view that is missing, and it is the ordinary case: the first real model holds
+        /// 2,430 views on no sheet against 953 that are placed.
+        /// </summary>
+        [Fact]
+        public void AViewOnNoSheetReadsAsItsOwnStateRatherThanAsDone()
+        {
+            SheetGrid grid = SheetGrid.Build(
+                new[] { "DM-11" },
+                new[] { KeyPlan(), Layout(), CrossSection() },
+                new[]
+                {
+                    new PlotViewPresence("DM-11", KeyPlan(), 4211, "010QE"),
+                    new PlotViewPresence("DM-11", Layout(), 4212, string.Empty),
+                    new PlotViewPresence("DM-11", CrossSection(), 4213, "   ")
+                },
+                null,
+                null);
+
+            Assert.Equal(SheetCellState.Exists, CellFor(grid, "DM-11", KeyPlan()).State);
+
+            SheetGridCell loose = CellFor(grid, "DM-11", Layout());
+            Assert.Equal(SheetCellState.ExistsNoSheet, loose.State);
+            Assert.Equal(4212, loose.ViewId);
+            Assert.Equal(string.Empty, loose.SheetNumber);
+
+            // A number of nothing but spaces is no number. It reads as on no sheet rather
+            // than as a sheet whose number is blank.
+            Assert.Equal(
+                SheetCellState.ExistsNoSheet, CellFor(grid, "DM-11", CrossSection()).State);
+        }
+
+        /// <summary>
+        /// Both existing states open their view and neither can be marked, which is one
+        /// question with one answer rather than two states compared at every call site.
+        /// </summary>
+        [Fact]
+        public void BothExistingStatesCountAsBeingInTheModel()
+        {
+            SheetGrid grid = SheetGrid.Build(
+                new[] { "DM-11" },
+                new[] { KeyPlan(), Layout() },
+                new[]
+                {
+                    new PlotViewPresence("DM-11", KeyPlan(), 4211, "010QE"),
+                    new PlotViewPresence("DM-11", Layout(), 4212, null)
+                },
+                null,
+                // A mark on a cell that holds a view is ignored, whichever existing state
+                // that cell is in.
+                new[]
+                {
+                    new PlotViewKey("DM-11", KeyPlan()),
+                    new PlotViewKey("DM-11", Layout())
+                });
+
+            Assert.All(grid.Rows.Single().Cells, cell => Assert.True(cell.IsInTheModel));
+            Assert.Empty(grid.Marked);
         }
 
         [Fact]
@@ -138,7 +203,7 @@ namespace RcrcGreen.Core.Tests
             SheetGrid grid = SheetGrid.Build(
                 new[] { "DM-11" },
                 new[] { KeyPlan() },
-                new[] { new PlotViewPresence("DM-11", KeyPlan(), 4211) },
+                new[] { new PlotViewPresence("DM-11", KeyPlan(), 4211, "010QE") },
                 null,
                 new[] { new PlotViewKey("DM-11", KeyPlan()) });
 
@@ -197,8 +262,8 @@ namespace RcrcGreen.Core.Tests
                 new[] { KeyPlan() },
                 new[]
                 {
-                    new PlotViewPresence("DM-11", KeyPlan(), 4211),
-                    new PlotViewPresence("DM-11", KeyPlan(), 9000)
+                    new PlotViewPresence("DM-11", KeyPlan(), 4211, "010QE"),
+                    new PlotViewPresence("DM-11", KeyPlan(), 9000, "010QF")
                 },
                 null,
                 null);
@@ -207,6 +272,10 @@ namespace RcrcGreen.Core.Tests
 
             Assert.Equal(SheetCellState.Exists, only.State);
             Assert.Equal(4211, only.ViewId);
+
+            // The first found wins whole. Taking the id from one duplicate and the number
+            // from the other would be two records of one cell.
+            Assert.Equal("010QE", only.SheetNumber);
         }
 
         [Fact]

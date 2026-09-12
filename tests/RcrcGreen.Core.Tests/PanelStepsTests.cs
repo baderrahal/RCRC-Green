@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using RcrcGreen.Core;
 using Xunit;
@@ -218,6 +219,70 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(
                 "3 marked. Marking records intent and changes nothing until Run.",
                 PanelSteps.MarkedLine(3));
+        }
+
+        /// <summary>
+        /// What one grid square means. The four states are one list in one place, because
+        /// the legend and the tooltip were two lists written out beside the controls that
+        /// drew them, which is how a square comes to mean one thing in the key and another
+        /// under the pointer.
+        /// </summary>
+        [Fact]
+        public void EachCellStateSaysWhatItIsAndWhatAClickDoes()
+        {
+            Assert.Equal(
+                "exists on sheet 010DM42A, click to open it",
+                PanelSteps.CellInWords(SheetCellState.Exists, "010DM42A"));
+
+            // On a sheet whose number the model never gave, the state is still exists and
+            // the words simply leave the number out rather than printing an empty one.
+            Assert.Equal(
+                "exists, click to open it",
+                PanelSteps.CellInWords(SheetCellState.Exists, "   "));
+
+            Assert.Equal(
+                "exists but is on no sheet, click to open it",
+                PanelSteps.CellInWords(SheetCellState.ExistsNoSheet, null));
+
+            Assert.Equal(
+                "missing, click to mark it",
+                PanelSteps.CellInWords(SheetCellState.Missing, null));
+
+            Assert.Equal(
+                "marked, click to unmark",
+                PanelSteps.CellInWords(SheetCellState.Marked, null));
+        }
+
+        /// <summary>
+        /// The legend runs in the order a cell moves through the states and holds every one
+        /// of them, so a square can never appear on the grid with no line in the key.
+        /// </summary>
+        [Fact]
+        public void TheLegendHoldsEveryStateInOrder()
+        {
+            Assert.Equal(
+                new[]
+                {
+                    SheetCellState.Exists,
+                    SheetCellState.ExistsNoSheet,
+                    SheetCellState.Missing,
+                    SheetCellState.Marked
+                },
+                PanelSteps.LegendOrder.ToArray());
+
+            Assert.Equal(
+                Enum.GetValues(typeof(SheetCellState)).Length,
+                PanelSteps.LegendOrder.Count);
+
+            Assert.Equal(
+                "exists, and the number of its sheet",
+                PanelSteps.LegendInWords(SheetCellState.Exists));
+            Assert.Equal(
+                "exists, on no sheet", PanelSteps.LegendInWords(SheetCellState.ExistsNoSheet));
+            Assert.Equal(
+                "missing, click to mark it", PanelSteps.LegendInWords(SheetCellState.Missing));
+            Assert.Equal(
+                "marked to be made", PanelSteps.LegendInWords(SheetCellState.Marked));
         }
 
         /// <summary>

@@ -72,6 +72,25 @@ two digit ends. `Matching` is what the search box narrows to and what All and No
 so the sweep and the single tick mean the same thing, the rule `BulkMarking` already
 follows.
 
+## A grid cell has four states and carries its sheet number
+
+`SheetCellState` is exists, exists on no sheet, missing and marked. The middle one is not a
+detail: the first real model holds 2,430 views on no sheet against 953 that are placed, so a
+view nobody has put on a sheet is the ordinary case and a grid that drew it as done was
+hiding most of the work. `SheetGridCell.IsInTheModel` answers the question both existing
+states share, whether the cell can be marked and whether clicking it opens something, so no
+call site compares against two states and gets one of them wrong later.
+
+The cell also carries the NUMBER of the sheet its view sits on. That is what says at a glance
+that a sub plot is running on copy numbers, which every sub plot but DM-11 does on the first
+real model, and a count of placed views could never say it. It rides on
+`PlotViewPresence` from the read rather than being looked up beside the grid, because the
+cell that shows the number and the cell that decides the state are one cell.
+
+`PanelSteps.CellInWords` and `LegendInWords` are the only wording for those four states. The
+legend and the tooltip were two lists written out next to the controls that drew them, which
+is how a square comes to mean one thing in the key and another under the pointer.
+
 ## One state, drawn again, never two
 
 `GridColumns` is the only record of which view types are ticked. The panel draws the whole

@@ -48,6 +48,12 @@ namespace RcrcGreen.Revit
             int disagree = 0;
             var valuesThatAreNotPlots = new List<string>();
 
+            // Read before the views, because each view's own row carries the number of the
+            // sheet it sits on. A view on no sheet is the ordinary case on the first real
+            // model, 2,430 of them against 953 placed, so the grid says which is which
+            // rather than showing both as done.
+            Dictionary<long, string> sheetNumberByView = PlacedViews(document);
+
             foreach (View view in new FilteredElementCollector(document)
                 .OfClass(typeof(View))
                 .Cast<View>()
@@ -58,7 +64,15 @@ namespace RcrcGreen.Revit
                 viewsRead++;
 
                 string onTheView = ValueOf(view.LookupParameter(ModelScanner.PlotIdParameterName));
-                ViewOnAPlot read = ViewReading.Read(onTheView, view.Name, view.Id.Value);
+
+                string onThisSheet;
+                if (!sheetNumberByView.TryGetValue(view.Id.Value, out onThisSheet))
+                {
+                    onThisSheet = string.Empty;
+                }
+
+                ViewOnAPlot read = ViewReading.Read(
+                    onTheView, view.Name, view.Id.Value, onThisSheet);
 
                 // Both raw readings go to the registry as well, which owns the union that
                 // makes the plot list. The per-view decision below still answers which plot
@@ -232,6 +246,55 @@ namespace RcrcGreen.Revit
                 familyTypes,
                 templateNames,
                 levelNames);
+        }
+
+        /// <summary>
+        /// The number of the sheet each placed view sits on, by view id.
+        ///
+        /// Two element kinds place a view and they are not interchangeable. A Viewport holds
+        /// a graphical view, and a ScheduleSheetInstance holds a schedule, which is why the
+        /// writer creates them with two different calls. Reading only viewports would show
+        /// every schedule on every sheet as on no sheet at all.
+        ///
+        /// A view can sit on one sheet only, so the first answer found is the answer, and the
+        /// dictionary is guarded rather than trusted because a model that broke that rule
+        /// would throw here rather than be reported.
+        /// </summary>
+        private static Dictionary<long, string> PlacedViews(Document document)
+        {
+            var numbers = new Dictionary<long, string>();
+
+            foreach (Viewport port in new FilteredElementCollector(document)
+                .OfClass(typeof(Viewport))
+                .Cast<Viewport>())
+            {
+                Add(document, numbers, port.SheetId, port.ViewId);
+            }
+
+            foreach (ScheduleSheetInstance placed in new FilteredElementCollector(document)
+                .OfClass(typeof(ScheduleSheetInstance))
+                .Cast<ScheduleSheetInstance>())
+            {
+                Add(document, numbers, placed.OwnerViewId, placed.ScheduleId);
+            }
+
+            return numbers;
+        }
+
+        private static void Add(
+            Document document,
+            Dictionary<long, string> numbers,
+            ElementId sheetId,
+            ElementId viewId)
+        {
+            if (sheetId == ElementId.InvalidElementId) return;
+            if (viewId == ElementId.InvalidElementId) return;
+            if (numbers.ContainsKey(viewId.Value)) return;
+
+            var sheet = document.GetElement(sheetId) as ViewSheet;
+            if (sheet == null) return;
+
+            numbers.Add(viewId.Value, sheet.SheetNumber ?? string.Empty);
         }
 
         private static string ValueOf(Parameter parameter)

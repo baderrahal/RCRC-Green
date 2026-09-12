@@ -17,7 +17,11 @@ namespace RcrcGreen.Core
         /// grid must never show a view as existing when it is not there, so the cell now comes
         /// from the name and the disagreement is counted instead.
         /// </summary>
-        public static ViewOnAPlot Read(string plotIdParameter, string viewName, long viewId)
+        /// <param name="sheetNumber">The sheet this view is placed on, empty when it is on
+        /// none. It rides along with the reading rather than being looked up later, because
+        /// the cell that shows it and the cell that decides the state are one cell.</param>
+        public static ViewOnAPlot Read(
+            string plotIdParameter, string viewName, long viewId, string sheetNumber = null)
         {
             ViewPlotReading reading = ViewPlotReader.Read(plotIdParameter, viewName);
 
@@ -28,7 +32,7 @@ namespace RcrcGreen.Core
                     reading.PlotId, reading.Source, null, false, reading.RawParameterValue);
             }
 
-            var fills = new PlotViewPresence(parsed.PlotId, parsed.Type, viewId);
+            var fills = new PlotViewPresence(parsed.PlotId, parsed.Type, viewId, sheetNumber);
 
             bool disagree = reading.Source == PlotSourceOnView.Parameter
                 && !string.Equals(reading.PlotId, parsed.PlotId, StringComparison.Ordinal);
