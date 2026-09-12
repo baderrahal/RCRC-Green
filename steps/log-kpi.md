@@ -14,8 +14,8 @@ renumbered, not reordered, not annotated. Nothing else was touched: not the Draw
 this round has been observed in Revit.** The branch came off a fresh pull of main at `07f16ba`.
 
 Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1243 tests at this branch, 0 failed and 0 skipped, 691 of them KPI, 19 added here**, against
-the 1224 main carries.
+**1246 tests at this branch, 0 failed and 0 skipped, 694 of them KPI, 22 added here**, against
+the 1224 main carries. The count moved from 1243 when the breaker round below added three.
 
 ### The group total check refuses on rounding no more
 
@@ -57,7 +57,11 @@ numbers with a count one high still refuse.
   enforced by the forty seventh pass, and the review of every summed check found the record
   was MISSING. `GroupSubtotal.SpeciesSum` was computed, its docstring said printed, and
   nothing printed it anywhere, so a drift there was invisible. It prints now beside the group
-  when the two differ, recorded rather than enforced, unchanged as a decision
+  on any real difference, recorded rather than enforced, unchanged as a decision. Its first
+  shape gated the line on 0.005, a constant pretending to be a rounding room, which the
+  breaker caught and the round below cured: the gate is the shared drift epsilon alone and
+  the line's two numbers print to six places, so 169.996 against 170 is recorded rather than
+  swallowed or printed as 170 against 170
 
 ### A status line that moves
 
@@ -77,20 +81,75 @@ refusal and throw, so the last thing on screen is never a count that stopped mov
 
 **Whether the line visibly moves mid run is UNKNOWN until somebody runs it.** The pane can
 share Revit's own thread, where a text set from inside the external event sits unpainted until
-the run returns. `Moved` queues one empty job at background priority after each line, which
-lets the paint through when the threads are one and costs nothing when they are not. No test
-can reach it and no mockup can show it, the same class as the black on black panel, so the
-first run on a real pane is the check.
+the run returns. `Moved` queues one empty job at render priority after each line, which lets
+the paint through when the threads are one and costs nothing when they are not. No test can
+reach it and no mockup can show it, the same class as the black on black panel, so the first
+run on a real pane is the check. The job began at background priority and the breaker round
+below moved it to render, because waiting on a job pumps everything queued at or above its
+priority and input sits between the two: at background every queued click would have been
+dispatched inside `Execute`, and two of the pane's buttons open a folder dialog owned by no
+window, behind which Revit's own ribbon stays live mid write. At render the paint goes
+through and every click stays queued until the run returns. The paint sits at render
+priority, so what background let through for it, render lets through the same.
+
+### The breaker read the committed diff and five of its ten findings changed code
+
+Run after the round's first commit, before the pull request went ready. Fixed:
+
+- **A phased group printing no total row was taken as silently as one whose total was checked
+  and agreed.** Real shape: a phase heading, its species, one subtotal and no group total row.
+  The check has no subject there, which is not the schedule's failure, but nothing anywhere
+  said the check never ran, the exact skip the softscape TOTAL already says. The report says
+  it now, the group printed no total row after its phase rows, so nothing checked what they
+  add to, beside the group, with a test
+- **The note's two place numbers could contradict the decision.** On a project rounding to
+  0.001, off by 0.0012 within a room of 0.0015 printed as off by 0 within the 0 that rows
+  rounded to 0.001 allow, right decision, unreadable sentence. `Said` prints six places now,
+  chosen because two swallowed a fine step and twelve printed the last bits of a double on
+  summed thousands as digits nobody printed. FM-21 and FM-22 read byte for byte as before
+- **The species record was gated on 0.005**, a constant pretending to be a rounding room in
+  the same commit that cured the check of one. Gated on the shared drift epsilon now and
+  printed to six places, so any real difference is recorded and none prints as equal
+- **A reused press said nothing about reuse on the live line.** A 2.5 second finish where the
+  last press read for two minutes looks like something skipped until the screen says reuse.
+  The reused branch raises Reusing the readings already held, the report's Readings line
+  unchanged as the record
+- **The background priority pump would have dispatched queued clicks inside `Execute`.**
+  Waiting on a job pumps everything at or above its priority, input sits above background,
+  and the pane's buttons stay live through a run, two of them opening a folder dialog owned
+  by no window. A click queued during a scan would have run its handler mid read, and the
+  dialog would have left Revit's ribbon live mid write. The pump runs at render priority now,
+  above input, so the paint goes through and every click stays queued until the run returns.
+  No test reaches it, net48, recorded here instead
+
+Found and left, each with its reason:
+
+- **The room has no ceiling.** A project rounding areas to 10 hands the check a room of five
+  per row summed, and a real fault inside it is a note rather than a refusal. That is what
+  half the unit's step for each row summed means on a coarse unit, the rule is measured and
+  Bader's, and a ceiling would be a rule nobody gave. Open question in the state file
+- **The note lives in the report file and the pane shows the ordinary success line.** A run
+  carrying notes looks identical on screen to one carrying none. The round message said a
+  line in the report, which is what exists. Whether the pane should count notes beside the
+  written cells is an open question in the state file
+- **An accuracy read as zero or negative would print as not read.** Nothing in Revit's read
+  is known to produce one, `FormatOptions.Accuracy` on the measured models is positive, so
+  the branch is dormant and the message imprecise only on a value nobody has seen. Left
+- **`GroupSubtotal.Repeats` is computed and printed nowhere**, a shape older than this round.
+  Left for a round of its own rather than widened into this one
 
 ### Break watches
 
-Four, each restored byte for byte and checked with cmp, the suite rebuilt and rerun green at
-1243.
+Seven, each restored byte for byte and checked with cmp, the suite rebuilt and rerun green,
+the first four at 1243 before the breaker round, the last three at 1246 after it.
 
 - the rounding room dropped: **3 red**, FM-21, FM-22 and the report line printing the note
 - a count given the areas room: **1 red**, the count one high that must still refuse
 - the percentage rounded up: **2 red**, the schedule count and the plot line
 - the copy step never raised: **1 red**, the patcher's four steps in order
+- `Said` back to two places: **1 red**, the fine step note printing its numbers
+- the unchecked group line dropped: **1 red**, the phased group with no total row
+- the species record gated on 0.005 again: **1 red**, 169.996 against 170 swallowed
 
 ### Existing tests changed
 

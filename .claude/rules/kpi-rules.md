@@ -988,7 +988,12 @@ one. **Within the room is a line in the report, not a refusal**, the `RoundingNo
 so a real fault growing slowly stays visible. Outside the room still refuses, naming the room
 it is outside of. A step that was not read allows nothing and says so, because a check that
 cannot see its subject must not quietly widen. A group printing one row has nothing above it
-to compare against and is taken.
+to compare against and is taken. A phased group that prints no total row is taken too, with a
+line in the report saying nothing checked what its phase rows add to, because taken silently
+it reads exactly like a group whose total was checked and agreed. The note's and the
+refusal's numbers print to six places, because two places printed a project rounding to 0.001
+as off by 0 within the 0 it allows, a sentence at war with itself over a comparison the code
+got right.
 
 **Every other place printed numbers are added against a printed total was checked in the same
 round and named.** The softscape species rows against the printed TOTAL and each group's rows
@@ -998,8 +1003,10 @@ is a guard for a future caller rather than a live check, and its constant is sha
 height and diameter difference detector, so it was left alone deliberately. The NOT WRITTEN
 line sums integers against no printed total. And the species sum against the group's value,
 recorded rather than enforced by the forty seventh pass, was computed and recorded NOWHERE,
-its docstring said printed and nothing printed it, so it prints now beside the group when the
-two differ.
+its docstring said printed and nothing printed it, so it prints now beside the group on any
+real difference, gated by the shared drift epsilon alone and printed to six places. The 0.005
+that first gated it was a constant pretending to be a rounding room, the very shape this round
+cured the check of, and it swallowed 169.996 against 170 whole.
 
 **The species rows add up to the group**, 36 plus 34 is 70, so the two are held against each
 other. They are not enforced, because every one of those numbers is already rounded to the metre
@@ -1255,20 +1262,28 @@ Section 4 of 9, linked models, and the schedules loop counts, Sections 5 to 8 of
 Create names the plot being read, Reading DM-44, plot 3 of 18, 11%, then the writing steps name
 themselves, adding up, copying the template, writing the cells, reading them back, checking the
 formulas, writing the report, raised by the patcher itself through a callback so the words come
-from the work rather than a narration beside it.
+from the work rather than a narration beside it. A press that answers from the held readings
+says so, Reusing the readings already held, because a two second finish after a two minute
+read looks like something skipped until the screen says reuse. The report's Readings line is
+the record and this is the live half of it.
 
 **Driven by what is done, never a timer and never an estimate.** A percentage appears only
 where the total is known, is floored, and is driven by a count that only grows, so it cannot go
 backwards, and where the total is not known the count stands alone. The run's own end line
 still comes through `Told` after every finish, refusal or throw, so the last thing on screen is
 never a count that stopped moving. Everything still goes through the external event on the
-Revit thread and the pane's `Moved` only sets text.
+Revit thread and the pane's `Moved` only sets text and lets the paint through.
 
 **Whether the line visibly moves mid run is UNKNOWN until somebody runs it.** A dockable pane
 can share Revit's own thread, and a text set from inside `Execute` then sits unpainted until
-the run returns. `Moved` queues one empty job at background priority after each line, which
-lets the paint through when the threads are one and costs nothing when they are not, and the
-log records the question as open.
+the run returns. `Moved` queues one empty job at render priority after each line, which lets
+the paint through when the threads are one and costs nothing when they are not, and the log
+records the question as open. **Render and never background**: waiting on a job pumps
+everything queued at or above its priority, and input sits above background and below render.
+Pumping at background would dispatch every queued click inside `Execute`, mid read or mid
+write, and two of the pane's buttons open a folder dialog owned by no window, behind which
+Revit's own ribbon stays live. At render priority the paint goes through and every queued
+click stays queued until the run returns.
 
 ## Do not name a KPI control Scan Model
 

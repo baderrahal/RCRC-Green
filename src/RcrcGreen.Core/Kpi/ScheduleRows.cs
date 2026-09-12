@@ -690,9 +690,15 @@ namespace RcrcGreen.Core.Kpi
             return Math.Abs(total - parts) <= Totalled.Tolerance * Math.Max(1.0, Math.Abs(total));
         }
 
+        /// <summary>
+        /// Six places, because the note's numbers must show at the scale of the step they are
+        /// held against. Two places printed a project rounding to 0.001 as off by 0 within the
+        /// 0 it allows, a sentence at war with itself, and twelve showed the last bits of a
+        /// double on summed thousands as digits nobody printed.
+        /// </summary>
         private static string Said(double value)
         {
-            return value.ToString("0.##", CultureInfo.InvariantCulture);
+            return value.ToString("0.######", CultureInfo.InvariantCulture);
         }
     }
 }

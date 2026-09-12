@@ -130,6 +130,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheWritingStepsNameThemselves()
         {
+            Assert.Equal("Reusing the readings already held.", ProgressWords.ReusingTheReadings);
             Assert.Equal("Adding the plots up.", ProgressWords.AddingUp);
             Assert.Equal("Copying the template.", ProgressWords.CopyingTheTemplate);
             Assert.Equal("Writing the cells.", ProgressWords.WritingTheCells);

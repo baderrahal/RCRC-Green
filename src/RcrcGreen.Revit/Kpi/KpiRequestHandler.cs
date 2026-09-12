@@ -283,6 +283,11 @@ namespace RcrcGreen.Revit.Kpi
 
             if (source.Reused)
             {
+                // The line says the readings were held, because a press that finishes in two
+                // seconds where the last took two minutes reads as something skipped until
+                // the screen says reuse. The report's Readings line is the record, this is
+                // the live half of it.
+                Progressed?.Invoke(ProgressWords.ReusingTheReadings);
                 readings.AddRange(HeldReadings.Applied(asked.HeldRun.Readings, asked.RegionChosenFor));
             }
             else

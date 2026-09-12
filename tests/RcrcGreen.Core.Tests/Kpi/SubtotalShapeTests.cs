@@ -590,6 +590,88 @@ namespace RcrcGreen.Core.Tests.Kpi
                 report);
         }
 
+        /// <summary>
+        /// A phased group that prints no total row gives the check nothing to hold the phase
+        /// rows against. It is still taken, but taken silently it reads exactly like a group
+        /// whose total was checked and agreed, so the report says the check never ran.
+        /// </summary>
+        [Fact]
+        public void APhasedGroupWithNoTotalRowIsSaidToGoUnchecked()
+        {
+            GroupSubtotal group = Only(
+                "DM-11",
+                KpiMerge.LawnHeading,
+                Structure("Proposed"),
+                Species("Pennisetum", 35.0, 46),
+                Subtotal(35.0, 46));
+
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(new[] { CreateFixture.Plot("DM-11", subtotals: new[] { group }) }),
+                new System.DateTime(2026, 9, 12, 12, 8, 0));
+
+            Assert.True(group.Agrees);
+            Assert.Contains(
+                "        the group printed no total row after its phase rows, "
+                + "so nothing checked what they add to",
+                report);
+        }
+
+        /// <summary>
+        /// The note's numbers print at the scale of the step they are held against. On a
+        /// project rounding to 0.001 the old two place format said off by 0 within the 0 it
+        /// allows, a sentence at war with itself over a comparison the code got right.
+        /// </summary>
+        [Fact]
+        public void ANoteOnAFineStepPrintsItsNumbersRatherThanNought()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-21",
+                KpiMerge.ShrubsHeading,
+                new ProjectUnit("Square meters", "id", 0.001),
+                Structure("Existing"),
+                new[] { "Acacia.jpg", "Acacia", "10.001 m²", "3" },
+                new[] { string.Empty, string.Empty, "10.001 m²", "3" },
+                Structure("Proposed"),
+                new[] { "Bougainvillea.jpg", "Bougainvillea", "20.003 m²", "4" },
+                new[] { string.Empty, string.Empty, "20.003 m²", "4" },
+                new[] { string.Empty, string.Empty, "30.003 m²", "7" });
+
+            Assert.True(group.Agrees);
+            Assert.Equal(
+                "the 2 rows above it add to 30.004 over 7 against its printed 30.003 over 7, "
+                + "off by 0.001 in area with every count exact, within the 0.001 that 2 rows rounded to 0.001 allow, "
+                + "so it is noted rather than refused",
+                group.RoundingNote);
+        }
+
+        /// <summary>
+        /// The species record speaks on any real difference, with numbers fine enough to show
+        /// it. The 0.005 that used to gate this line was a constant pretending to be a
+        /// rounding room, and under it 169.996 against 170 was silently swallowed.
+        /// </summary>
+        [Fact]
+        public void ASpeciesSumOffByLessThanACellIsStillRecorded()
+        {
+            GroupSubtotal group = OnlyRounded(
+                "FM-05",
+                KpiMerge.LawnHeading,
+                RoundedToTheMetre,
+                Structure("Proposed"),
+                new[] { "Pennisetum.jpg", "Pennisetum", "96.246 m²", "117" },
+                new[] { "Cynodon.jpg", "Cynodon", "73.75 m²", "84" },
+                new[] { string.Empty, string.Empty, "169.996 m²", "201" },
+                new[] { string.Empty, string.Empty, "170 m²", "201" });
+
+            string report = KpiCreateReport.Write(
+                CreateFixture.Run(new[] { CreateFixture.Plot("FM-05", subtotals: new[] { group }) }),
+                new System.DateTime(2026, 9, 12, 12, 8, 0));
+
+            Assert.Contains(
+                "        its species rows add to 169.996 in area against the 170 its group total row prints, "
+                + "recorded rather than enforced, because every printed area is already rounded",
+                report);
+        }
+
     }
 
     /// <summary>

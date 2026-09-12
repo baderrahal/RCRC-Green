@@ -22,15 +22,29 @@ then the steps name themselves through the patcher's own callback. Percentages o
 total is known, floored, off counts that only grow. `ProgressWords` in Core holds the words
 and the counting with tests, and the end line still comes through `Told` on finish, refusal
 and throw. **Whether a line set mid run visibly repaints on a real pane is UNKNOWN until
-somebody runs it**, the pane can share Revit's thread, and `Moved` pumps one background job
-after each line so the paint can get through when it does.
+somebody runs it**, the pane can share Revit's thread, and `Moved` pumps one render priority
+job after each line so the paint can get through when it does while every queued click stays
+queued until the run returns.
 
-Four break watches went red on 3, 1, 2 and 1 tests and were restored byte for byte. **Locally
-1243 tests at this branch, 0 failed and 0 skipped, 691 of them KPI, 19 added, against the 1224
-main carries.** The pull request, the merge hash and the runner's count go in the record the
-merge adds here. **Nothing in this round has been observed in Revit.** Two things wait on
-Bader: the first run that shows whether the status line repaints mid run, and the rounding
-note's first sighting on a real report.
+**A breaker read the committed diff before the pull request went ready and five of its ten
+findings changed code**: a phased group printing no total row is said in the report to have
+gone unchecked, the note's numbers print six places so a fine step cannot read off by 0
+within the 0, the species record's 0.005 constant gate became the shared drift epsilon with
+six place numbers, a reused press says Reusing the readings already held on the live line,
+and the pump moved from background to render priority because background would have
+dispatched queued clicks inside `Execute`, the two ownerless folder dialogs included. Found
+and left with reasons in the log: the room has no ceiling on a coarse unit, the rounding
+note is in the report file and not on the pane, a zero or negative accuracy would print as
+not read on a value nobody has seen, and `Repeats` prints nowhere, older than this round.
+
+Seven break watches went red on 3, 1, 2, 1, 1, 1 and 1 tests and were restored byte for
+byte. **Locally 1246 tests at this branch, 0 failed and 0 skipped, 694 of them KPI, 22
+added, against the 1224 main carries.** The pull request, the merge hash and the runner's
+count go in the record the merge adds here. **Nothing in this round has been observed in
+Revit.** Four things wait on Bader: the first run that shows whether the status line
+repaints mid run, the rounding note's first sighting on a real report, whether the room
+wants a ceiling on a project rounding coarser than the metre, and whether the pane should
+say beside the written count that notes exist in the report.
 
 Phase: 9, ship. Fifty fourth pass. **The audit files are the one record of what is open: 49
 numbered findings, 13 carrying a FIXED mark, so 36 open, read off

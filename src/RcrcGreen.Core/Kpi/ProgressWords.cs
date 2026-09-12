@@ -36,6 +36,8 @@ namespace RcrcGreen.Core.Kpi
 
         public const string CheckingTheFormulas = "Checking the workbook's own formulas.";
 
+        public const string ReusingTheReadings = "Reusing the readings already held.";
+
         public const string AddingUp = "Adding the plots up.";
 
         public const string WritingTheReport = "Writing the report.";
