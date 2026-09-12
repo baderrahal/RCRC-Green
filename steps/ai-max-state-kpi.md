@@ -1,5 +1,51 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty first pass, round two of the two Bader sent together, off a fresh pull of
+main carrying round one. **The audit files stay the one record: 49 findings, 13 FIXED, 36 open,
+not renumbered and not reordered, and this round closes none.**
+
+**Several templates in one press, one workbook each.** The workbook rows are tickable, several
+at once, each ticked row carrying the template it is and its own output name, because one box
+cannot name six files. **NOTHING ABOUT THE PER TEMPLATE LOGIC CHANGED**: `KpiCreateRun` is still
+one template's run and `KpiCreateReport.Write` still prints one template's sections, both
+untouched, and what is new sits above them.
+
+**`PlotsPerTemplate` is the split**, the rule this repository already had for preselecting asked
+per plot: the component decides, the prefix cross checks, and where they disagree neither does.
+A component the table does not hold places NOTHING rather than letting the cross check answer in
+its place. A plot with no component is placed by its prefix, which is what EP-05 and its three
+need. Every plot that goes into no workbook is named.
+
+**A plot in two workbooks refuses the whole press**, checked over the split as it really came
+out rather than trusted to the rule that built it, with two tests because a construction that
+cannot go wrong is not a check.
+
+**Read once and no second cache.** A plot belongs to one template so it is read once, and
+`HeldReadings.Decide` is asked per template with that template's own share and its own held run.
+The progress count runs across the whole press, since counting per template would restart it at
+1 on the second workbook and the rule says the count only grows.
+
+**One report for the run**, the accounting first, then the split, then each template's own
+sections under its name. The four run counts, ticked, written, refused and nothing to write,
+must add up to the number ticked. A refusal on one template does not stop the others and each
+row says what happened to it. The three typed fields are one set for the whole run and the pane
+says so when more than one template is ticked.
+
+`OutputName.Suggested` is deleted with its test, unreachable once every row took its name from
+`CreateWords.SuggestedName`.
+
+The round changes the pane, so it carries a mockup, hand drawn from the code, saying in the file
+that it is a mockup and not a screenshot.
+
+Three break watches went red on 2, 1 and 2 tests and were restored byte for byte, each checked
+with a diff against its backup. **One existing test was changed by hand**, the refusal that read
+No template picked and now reads No template ticked. **Locally 1443 tests at this branch, 0
+failed and 0 skipped, 750 of them KPI, 27 added, against the 1416 main carries** at the branch
+point `96b6239`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS GO HERE AFTER THE MERGE.
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and the two correct workbooks, MOSQUES on
+NG03 at 15:52 and STREETS on NG05 at 01:30, are what a press over two templates has to be held
+against.
+
 Phase: 9, ship. Sixtieth pass, round one of two Bader sent together, built and merged on its
 own so that a single merge cannot hide which half broke anything. **The audit files stay the one
 record: 49 findings, 13 FIXED, 36 open, and this round closes none.**

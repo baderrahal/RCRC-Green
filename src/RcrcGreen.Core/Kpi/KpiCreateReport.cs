@@ -33,6 +33,129 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const int ShownRows = 200;
 
+        /// <summary>
+        /// **ONE REPORT FOR THE RUN, not one per workbook.** The run's own accounting first,
+        /// then the split plot by plot, then each template's report whole, under a heading
+        /// naming it.
+        ///
+        /// Each template's half goes through <see cref="Write(KpiCreateRun, DateTime)"/>, the
+        /// section writer that already had every layout tested, so a Street Design note on
+        /// MOSQUES and a rounding note on STREETS sit under their own template and can never
+        /// read as one list. Nothing about the per template sections changed.
+        /// </summary>
+        public static string WriteAll(KpiCreateRunSet set, DateTime writtenAt)
+        {
+            if (set == null) throw new ArgumentNullException("set");
+
+            var report = new StringBuilder();
+
+            Line(report, "RCRC Green KPI checklist");
+            Line(report, "Document: " + Shown(set.DocumentTitle));
+            Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
+            Line(report, "Read only. Nothing in the model was changed and no template was touched.");
+            Line(report, "This press covered " + set.TemplatesTicked
+                + (set.TemplatesTicked == 1 ? " template" : " templates")
+                + ", one workbook each, and every template's own sections are below under its name.");
+            Line(report, string.Empty);
+
+            TheRunAccounting(report, set);
+            TheSplit(report, set);
+
+            foreach (TemplateOutcome outcome in set.Outcomes)
+            {
+                TemplateOutcome held = outcome;
+                KpiCreateRun run = set.Runs.FirstOrDefault(
+                    one => ReferenceEquals(one.Template, held.Template));
+
+                Line(report, string.Empty);
+                Line(report, "================================================================");
+                Line(report, "TEMPLATE: " + held.Template.Name);
+                Line(report, CreateWords.TemplateOutcomeRow(held));
+                Line(report, "================================================================");
+                Line(report, string.Empty);
+
+                if (run == null)
+                {
+                    Line(report, "  No plot of this run belongs to it, so nothing was read for it and");
+                    Line(report, "  nothing was written. It stays ticked and stays listed.");
+                    Line(report, string.Empty);
+                    continue;
+                }
+
+                report.Append(Write(run, writtenAt));
+            }
+
+            return report.ToString();
+        }
+
+        /// <summary>
+        /// Templates ticked, written, refused and with nothing to write. **The four must add up
+        /// to the number ticked**, and a run where they do not says so in those words, because
+        /// a template that fell out of every branch would otherwise be a row nobody printed.
+        /// </summary>
+        private static void TheRunAccounting(StringBuilder report, KpiCreateRunSet set)
+        {
+            Heading(report, "THIS RUN, ACROSS EVERY TEMPLATE", set.Refusals.Count,
+                "what was ticked and what came of it");
+
+            Line(report, "  templates ticked                  " + set.TemplatesTicked);
+            Line(report, "  templates written                 " + set.TemplatesWritten);
+            Line(report, "  templates refused                 " + set.TemplatesRefused);
+            Line(report, "  templates with nothing to write   " + set.TemplatesWithNothingToWrite);
+            Line(report, "  those four add up to the ticked count   "
+                + (set.CountsAddUp ? "YES" : "NO, WHICH IS A BUG IN THIS TOOL"));
+            Line(report, "  plots that went into a workbook   " + set.PlotsWritten.Count);
+            Line(report, "  plots ticked and written nowhere  " + set.Split.Unplaced.Count);
+
+            foreach (string refusal in set.Refusals) Line(report, "  REFUSED: " + refusal);
+
+            Line(report, string.Empty);
+
+            Line(report, "  template | plots | outcome");
+            foreach (TemplateOutcome outcome in set.Outcomes)
+            {
+                Line(report, "  " + Join(
+                    outcome.Template.Name,
+                    outcome.Plots.Count.ToString(CultureInfo.InvariantCulture),
+                    CreateWords.TemplateOutcomeRow(outcome)));
+            }
+
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// Which plots went to which template and by which route, and every ticked plot that
+        /// went nowhere with why. **A plot whose template is not ticked is not read and is named
+        /// here**, so a plot list that goes in longer than it comes out is visible at the top of
+        /// the file rather than worked out from the per template sections.
+        /// </summary>
+        private static void TheSplit(StringBuilder report, KpiCreateRunSet set)
+        {
+            Heading(report, "WHICH PLOT WENT INTO WHICH WORKBOOK", set.Split.Answers.Count,
+                "PRX_Component decides, the plot prefix is a cross check, and where they disagree neither does");
+
+            Line(report, "  plot | template | route | why");
+            foreach (PlotTemplate answer in set.Split.Answers)
+            {
+                Line(report, "  " + Join(
+                    answer.PlotId,
+                    answer.Template == null ? "NO WORKBOOK" : answer.Template.Name,
+                    answer.Route.ToString(),
+                    answer.Why));
+            }
+
+            Line(report, string.Empty);
+
+            Heading(report, "PLOTS TICKED THAT WENT INTO NO WORKBOOK", set.Split.Unplaced.Count,
+                "named with the reason, never dropped in silence");
+            foreach (PlotTemplate answer in set.Split.Unplaced)
+            {
+                Line(report, "  " + Join(answer.PlotId, answer.Why));
+            }
+
+            Line(report, string.Empty);
+        }
+
         public static string Write(KpiCreateRun run, DateTime writtenAt)
         {
             if (run == null) throw new ArgumentNullException("run");

@@ -4,6 +4,108 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, sixty first pass. Several templates in one press, one workbook each
+
+Round two of the two Bader sent together, off a fresh pull of main at `96b6239`, which carries
+round one. The baseline is **1416 tests, 723 of them KPI**, measured at that commit before
+anything was written. The other 36 audit findings stay open, not renumbered and not reordered.
+**Nothing in this round has been observed in Revit.**
+
+PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+
+### What must not change, and what holds it
+
+Two correct workbooks exist, MOSQUES on NG03 at 15:52 and STREETS on NG05 at 01:30, and this
+round must not cost them. **Nothing about the per template logic changed.** `KpiCreateRun` is
+still one template's run and `KpiCreateReport.Write` still prints one template's sections, both
+untouched. What is new sits above them: a split, a set of runs, and a report that prints each
+template's own sections through the writer that was already tested.
+
+### The split
+
+`PlotsPerTemplate` is the decision and it is the rule this repository already carried for
+preselecting, asked per plot. PRX_Component decides, the prefix is the cross check, and where
+they disagree neither does. Three plots go into no workbook and each is named:
+
+```
+component in the table          placed by the component, prefix agreeing or not named
+component not in the table      placed NOWHERE, with the value and what the prefix says
+no component at all             placed by the PREFIX, which is what EP-05 and its three are
+the two routes disagree         placed by NEITHER, both named
+```
+
+The middle one is the one worth arguing about. The prefix could have answered in the
+component's place, and it does not, because the route that decides gave an answer nobody knows
+and a plot going into a client workbook on a cross check alone is a guess. It is named instead.
+
+### The double count
+
+**A plot in two workbooks refuses the whole press.** Every plot resolves to at most one template,
+so it cannot happen by construction, and `TemplateSplit` asks the split as it really came out
+anyway, naming the plot and both templates. Two tests, one over the guard with shares built by
+hand and one over the rule underneath it, because a construction that cannot go wrong is not a
+check and the check is what survives the next change.
+
+### Read once, and no second cache
+
+A plot belongs to one template, so it is read once with that template's own counted groups and
+its own area rule. `HeldReadings.Decide` is asked once per template with that template's own
+share of the plots and the run IT produced last press, so the mechanism that turned a 123 second
+read into a 2.5 second second press is the same one and there is nothing beside it. A held run
+for one template never answers for another, and a test says so in the words the refusal uses.
+
+### One thing the round had to fix in the progress line
+
+Counting the plots per template would have restarted the count at 1 on the second workbook, and
+the progress rule in this repository says the count only grows and cannot go backwards. The
+total is every plot every ticked template will read, worked out before the first one is, and a
+template answering from held readings advances it by its own share so the total is still
+reached.
+
+### The pane
+
+The workbook rows are CheckBoxes rather than a pick, each ticked row carries its own output name
+box, and the create block grew a row per ticked template before the press and a row per outcome
+after it. Nothing moved. The three typed boxes are one set for the whole run and the pane says
+so when more than one template is ticked.
+
+### One deletion
+
+`OutputName.Suggested` offered the template file's own name and nothing called it once each row
+took its name from `CreateWords.SuggestedName` with its own plots. Deleted with its test rather
+than left beside the thing that replaced it.
+
+### Three watches, all red
+
+**The double count check.** `if (holding.Count <= 1) continue;` widened to `<= 99`, so a plot in
+two shares passes. **2 red**: `PlotsPerTemplateTests.APlotInTwoWorkbooksRefusesTheWholeRunAndNamesBoth`
+and `RunAcrossTemplatesTests.ADoubleCountedPlotTakesOverTheStatusLine`.
+
+**The unplaced naming.** The filter that finds plots belonging to no ticked template replaced
+with one that finds none, so such a plot disappears. **1 red**:
+`PlotsPerTemplateTests.APlotWhoseTemplateIsNotTickedIsNamedAndNotRead`.
+
+**The refused count.** `WasRefused` made to answer false, so a refused template reads as one
+with nothing to write. **2 red**: `RunAcrossTemplatesTests.TheFourCountsAddUpToTheNumberTicked`
+and `TheStatusLineCountsTheTemplatesAndNamesTheReport`.
+
+All three restored byte for byte, each checked with a diff against its backup rather than by
+reading it.
+
+### The one existing test changed by hand
+
+`KpiCreateTests.OneRefusalListsEverythingMissingRatherThanOnePerThing` pinned the words No
+template picked. The rows are ticked now, several at once, so the refusal reads No template
+ticked. Changed with the behaviour and the docstring says why.
+
+### What waits on a run
+
+Everything. **Nothing here has been observed in Revit.** The two correct workbooks are the thing
+this round must not have cost, and only a press over MOSQUES and SCHOOLS together can say
+whether it did.
+
+---
+
 ## 2026-09-12, sixtieth pass. The two answers, and UNKNOWN reaches row 101
 
 Two answers from Bader, both measured on the workbook the 1552 run wrote on the NG03 model,

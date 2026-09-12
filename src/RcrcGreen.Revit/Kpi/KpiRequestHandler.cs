@@ -69,7 +69,7 @@ namespace RcrcGreen.Revit.Kpi
         /// What one press of Create really did. The run carries its own outcome, so the pane
         /// counts nothing of its own.
         /// </summary>
-        public Action<KpiCreateRun, string> Created { get; set; }
+        public Action<KpiCreateRunSet, string> CreatedAcross { get; set; }
 
         public Action<string> Told { get; set; }
 
@@ -306,7 +306,7 @@ namespace RcrcGreen.Revit.Kpi
             string cannot = CreateWords.CannotCreate(
                 OpenModel.Of(document.Title),
                 outputFolder,
-                asked != null && asked.Template != null,
+                asked != null && asked.Templates.Count > 0,
                 asked != null && asked.Ticked.Count > 0);
 
             if (cannot.Length > 0)
@@ -330,57 +330,139 @@ namespace RcrcGreen.Revit.Kpi
             if (scanned.Held) Progressed?.Invoke(ProgressWords.ReusingTheScan);
             else Scan(document);
 
+            // **EACH WORKBOOK GETS ONLY THE PLOTS WHOSE OWN TEMPLATE IS THAT ONE.** PRX_Component
+            // decides, the plot prefix is the cross check, and a plot neither can place goes into
+            // no workbook and is named. A plot has one template and one only, which is why a plot
+            // read for MOSQUES is never read again for STREETS: the split is what makes the read
+            // once, and no cache sits beside it.
+            TemplateSplit split = PlotsPerTemplate.Split(
+                asked.Ticked, asked.ComponentOn, asked.Templates.Select(one => one.Template));
+
+            var runs = new List<KpiCreateRun>();
+            var outcomes = new List<TemplateOutcome>();
+            double readSeconds = 0.0;
+
+            // **THE COUNT ONLY GROWS, ACROSS THE WHOLE PRESS.** Counted per template it would
+            // restart at 1 on the second workbook, and a progress line that goes backwards is
+            // the one thing the rule about it forbids. The total is every plot every ticked
+            // template will read, worked out before the first one is.
+            int plotsToRead = split.Writing.Sum(one => one.Plots.Count);
+            int plotsRead = 0;
+
+            foreach (TemplatePick pick in asked.Templates)
+            {
+                TemplateShare share = split.Shares.FirstOrDefault(
+                    one => ReferenceEquals(one.Template, pick.Template));
+
+                // **A TICKED TEMPLATE THAT NO TICKED PLOT BELONGS TO WRITES NOTHING AND SAYS SO.**
+                // It is not a refusal and not a failure. It stays ticked and stays listed.
+                if (share == null || !share.WillWrite)
+                {
+                    outcomes.Add(TemplateOutcome.NothingToWrite(
+                        pick.Template,
+                        share == null
+                            ? PlotsPerTemplate.NoPlotBelongs(pick.Template)
+                            : share.WhyNothing));
+                    continue;
+                }
+
+                // **A double count refuses the whole press before anything is copied**, because a
+                // workbook written from a plot counted twice is the worst thing this tool can
+                // produce and the totals still look plausible.
+                if (!split.AddsUp)
+                {
+                    outcomes.Add(TemplateOutcome.Refused(pick.Template, share.Plots,
+                        string.Join(" ", split.Refusals.ToArray())));
+                    continue;
+                }
+
+                OneTemplate(document, asked, pick, share, outputFolder, runs, outcomes,
+                    ref readSeconds, ref plotsRead, plotsToRead);
+            }
+
+            var set = new KpiCreateRunSet(
+                document.Title, split, runs, outcomes,
+                RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds));
+
+            Progressed?.Invoke(ProgressWords.WritingTheReport);
+            DateTime writtenAt = DateTime.Now;
+
+            // **ONE REPORT FOR THE RUN, not one per workbook.**
+            IReadOnlyList<string> written = ReportFile.Write(
+                KpiFile.NameFor(document.Title + "_checklist", writtenAt),
+                KpiCreateReport.WriteAll(set, writtenAt));
+
+            CreatedAcross?.Invoke(set, ReportPlaces.Written(written));
+            Told?.Invoke(CreateWords.WroteAcross(set, ReportPlaces.Written(written)));
+        }
+
+        /// <summary>
+        /// One ticked template's whole run, exactly as one press used to be. **NOTHING ABOUT THE
+        /// PER TEMPLATE LOGIC CHANGES**: its own map, its own tree lists read off its own file,
+        /// its own Street Design rule, its own group rules, its own canopy check, its own read
+        /// back, its own cache fix and its own alias list.
+        ///
+        /// **A refusal on one template does not stop the others.** Everything that can end one
+        /// workbook ends this method and leaves an outcome behind, and the loop above carries on
+        /// to the next.
+        /// </summary>
+        private void OneTemplate(
+            Document document,
+            KpiCreateAsk asked,
+            TemplatePick pick,
+            TemplateShare share,
+            string outputFolder,
+            List<KpiCreateRun> runs,
+            List<TemplateOutcome> outcomes,
+            ref double readSeconds,
+            ref int plotsRead,
+            int plotsToRead)
+        {
             var reading = Stopwatch.StartNew();
 
             // The groups that count are the ones a tree list sheet of the template is named for.
             // The document's phases used to decide it, and a third group the phases did not name,
             // Street Design, went unseen for four runs.
-            CountedGroups counted = CountedGroups.Of(asked.Template);
+            CountedGroups counted = CountedGroups.Of(pick.Template);
             var readings = new List<PlotReading>();
 
             // **A TEMPLATE THAT TAKES NO AREA HAS ITS REGIONS LEFT UNREAD.** STREETS types the
             // road width and the total length by hand and the sheet works the area out, so its
-            // map holds no area cell. Reading the regions anyway meant the first 78 plot run
-            // would refuse on MM-03 and MM-04, which read one raw area, over a number the
-            // workbook has no cell for, and read all 78 again after the confirm.
-            bool areaWanted = !asked.Template.AreaIsTypedByHand;
+            // map holds no area cell.
+            bool areaWanted = !pick.Template.AreaIsTypedByHand;
 
-            // **A CHOICE MADE AFTER A REFUSAL IS APPLIED TO WHAT WAS ALREADY READ.** Every region
-            // choice and the identical areas confirm used to read every ticked plot from the
-            // start, about eight minutes on 78 plots. The run the pane holds is the record, Core
-            // says whether it can answer this press, and the model is read only when it cannot.
+            // **A CHOICE MADE AFTER A REFUSAL IS APPLIED TO WHAT WAS ALREADY READ.** The run this
+            // template produced last press is the record, Core says whether it can answer this
+            // one, and the model is read only when it cannot. One mechanism, asked once per
+            // template with that template's own share of the plots.
             ReadingsSource source = HeldReadings.Decide(
-                asked.HeldRun, document.Title, asked.Template, asked.TemplatePath,
-                asked.ComponentParameter, asked.ReferenceParameter, asked.Ticked);
+                asked.HeldRunFor(pick.Template), document.Title, pick.Template, pick.TemplatePath,
+                asked.ComponentParameter, asked.ReferenceParameter, share.Plots);
 
             ProjectUnit areaUnit;
             if (source.Reused)
             {
-                // The line says the readings were held, because a press that finishes in two
-                // seconds where the last took two minutes reads as something skipped until
-                // the screen says reuse. The report's Readings line is the record, this is
-                // the live half of it. The unit travels with the readings it gated, so the
-                // report prints the step that applied rather than one read again since.
                 Progressed?.Invoke(ProgressWords.ReusingTheReadings);
-                areaUnit = asked.HeldRun.AreaUnit;
-                readings.AddRange(HeldReadings.Applied(asked.HeldRun.Readings, asked.RegionChosenFor));
+                plotsRead += share.Plots.Count;
+                areaUnit = asked.HeldRunFor(pick.Template).AreaUnit;
+                readings.AddRange(HeldReadings.Applied(
+                    asked.HeldRunFor(pick.Template).Readings, asked.RegionChosenFor));
             }
             else
             {
                 // Read once per press: every plot's group total check allows the same room.
                 areaUnit = KpiReader.AreaUnit(document);
-                int atPlot = 0;
-                foreach (string plotId in asked.Ticked)
+                foreach (string plotId in share.Plots)
                 {
-                    atPlot++;
-                    Progressed?.Invoke(ProgressWords.ReadingPlot(plotId, atPlot, asked.Ticked.Count));
+                    plotsRead++;
+                    Progressed?.Invoke(ProgressWords.ReadingPlot(plotId, plotsRead, plotsToRead));
                     readings.Add(GuardedRead(document, asked, plotId, counted, areaWanted, areaUnit));
                 }
             }
 
             Progressed?.Invoke(ProgressWords.AddingUp);
 
-            double readSeconds = source.Reused ? 0.0 : reading.Elapsed.TotalSeconds;
+            if (!source.Reused) readSeconds += reading.Elapsed.TotalSeconds;
 
             Totalled area = KpiMerge.Area(readings);
             Totalled shrubs = KpiMerge.Shrubs(readings);
@@ -389,13 +471,13 @@ namespace RcrcGreen.Revit.Kpi
             AgreedValue reference = KpiMerge.Reference(readings);
 
             Reconciliation reconciliation = Reconciliation.Of(
-                asked.Ticked, readings, new[] { area, shrubs, lawn }, asked.IdenticalAreasConfirmed,
-                asked.Template);
+                share.Plots, readings, new[] { area, shrubs, lawn }, asked.IdenticalAreasConfirmed,
+                pick.Template);
 
             string location = KpiPlotReader.Location(document, asked.LocationParameter);
             IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings, counted);
 
-            KpiCreatePlan plan = null;
+            KpiCreatePlan plan;
             PatchOutcome outcome = null;
             string outputPath = string.Empty;
             SpeciesList existing = null;
@@ -403,41 +485,38 @@ namespace RcrcGreen.Revit.Kpi
 
             if (reconciliation.AddsUp)
             {
-                existing = SpeciesList.In(asked.TemplatePath, asked.Template.ExistingTrees);
-                proposed = SpeciesList.In(asked.TemplatePath, asked.Template.ProposedTrees);
+                existing = SpeciesList.In(pick.TemplatePath, pick.Template.ExistingTrees);
+                proposed = SpeciesList.In(pick.TemplatePath, pick.Template.ProposedTrees);
 
                 plan = KpiCreatePlan.Of(
-                    asked.Template, component, reference, location, area, shrubs, lawn,
-                    SpeciesMatching.Against(merged, asked.Template, existing, proposed),
+                    pick.Template, component, reference, location, area, shrubs, lawn,
+                    SpeciesMatching.Against(merged, pick.Template, existing, proposed),
                     asked.Date, asked.PreparedBy, asked.Position);
 
-                outputPath = Path.Combine(outputFolder, OutputName.Final(asked.OutputName));
-                outcome = Patched(asked.TemplatePath, outputPath, plan.Writes, plan.ComputesFrom, Progressed);
+                outputPath = Path.Combine(outputFolder, OutputName.Final(pick.OutputName));
+                outcome = Patched(pick.TemplatePath, outputPath, plan.Writes, plan.ComputesFrom, Progressed);
             }
             else
             {
                 plan = KpiCreatePlan.Of(
-                    asked.Template, component, reference, location, area, shrubs, lawn, null,
+                    pick.Template, component, reference, location, area, shrubs, lawn, null,
                     asked.Date, asked.PreparedBy, asked.Position);
             }
 
             var run = new KpiCreateRun(
-                document.Title, asked.Template, asked.TemplatePath, outputPath,
+                document.Title, pick.Template, pick.TemplatePath, outputPath,
                 asked.ComponentParameter, asked.ReferenceParameter, location,
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
                 merged, KpiMerge.Ungrouped(readings), outcome,
-                RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
+                RunTiming.Of(reading.Elapsed.TotalSeconds, source.Reused ? 0.0 : reading.Elapsed.TotalSeconds),
                 existing, proposed, source, asked.TemplatesListed, areaUnit, _scannedLinks);
 
-            Progressed?.Invoke(ProgressWords.WritingTheReport);
-            DateTime writtenAt = DateTime.Now;
-            IReadOnlyList<string> written = ReportFile.Write(
-                KpiFile.NameFor(document.Title + "_checklist", writtenAt),
-                KpiCreateReport.Write(run, writtenAt));
-
-            Created?.Invoke(run, ReportPlaces.Written(written));
-            Told?.Invoke(CreateWords.Wrote(run, ReportPlaces.Written(written)));
+            runs.Add(run);
+            outcomes.Add(run.Wrote
+                ? TemplateOutcome.Wrote(pick.Template, share.Plots, run.OutputPath)
+                : TemplateOutcome.Refused(pick.Template, share.Plots, CreateWords.WhyThisOneWroteNothing(run)));
         }
+
 
         /// <summary>
         /// One plot's read under a guard of its own. A throw on plot 60 of 78 used to fall to

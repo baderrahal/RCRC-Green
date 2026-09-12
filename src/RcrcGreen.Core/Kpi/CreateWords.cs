@@ -121,9 +121,93 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const string NoOutputFolder = TemplateWords.NoOutputFolder;
 
-        public const string NoTemplate = "No template picked.";
+        public const string NoTemplate = "No template ticked.";
 
         public const string NoPlotTicked = "No plot ticked.";
+
+        /// <summary>
+        /// **Bader's decision: the date, the prepared by and the position are typed once and
+        /// the same three values go into every workbook.** Said on the pane when more than one
+        /// template is ticked, because three boxes above six named rows read as three boxes for
+        /// whichever row is nearest them.
+        /// </summary>
+        public const string OneSetOfFields =
+            "The date, the prepared by and the position are typed once and go into every workbook "
+            + "this press writes.";
+
+        /// <summary>
+        /// One ticked template's row before the press: which plots it will get, or why it will
+        /// write nothing. **A ticked template no ticked plot belongs to stays ticked and stays
+        /// listed**, saying this rather than being hidden or unticked for the user.
+        /// </summary>
+        public static string TemplateRow(TemplateShare share)
+        {
+            if (share == null) throw new ArgumentNullException("share");
+
+            if (!share.WillWrite) return share.Template.Name + ": " + share.WhyNothing;
+
+            return share.Template.Name + ": " + Count(share.Plots.Count, "plot") + ", "
+                + string.Join(", ", share.Plots.ToArray());
+        }
+
+        /// <summary>
+        /// The same row after the press: written with its path, or not written with its reason.
+        /// Never one line for the run that hides which of six failed.
+        /// </summary>
+        public static string TemplateOutcomeRow(TemplateOutcome outcome)
+        {
+            if (outcome == null) throw new ArgumentNullException("outcome");
+
+            if (outcome.Written) return outcome.Template.Name + ": written to " + outcome.OutputPath;
+
+            return outcome.Template.Name + ": " + NothingWritten + " "
+                + (outcome.Why.Length == 0 ? NoReasonRecorded : outcome.Why);
+        }
+
+        /// <summary>
+        /// Why one template of several wrote nothing, for its own row. The same answer the
+        /// status line gives for a single template run, without the report line, because the
+        /// report is named once for the whole press rather than once per row.
+        /// </summary>
+        public static string WhyThisOneWroteNothing(KpiCreateRun run)
+        {
+            if (run == null) throw new ArgumentNullException("run");
+
+            return WhyNothingWasWritten(run, string.Empty);
+        }
+
+        /// <summary>
+        /// The status line after a press that covered several templates. It counts the four
+        /// the run's accounting counts rather than adding the cells up, because which of six
+        /// wrote is the thing a person needs off one line, and the rows under it carry each
+        /// one's own answer.
+        /// </summary>
+        public static string WroteAcross(KpiCreateRunSet set, string reportWhere)
+        {
+            if (set == null) throw new ArgumentNullException("set");
+
+            var said = new List<string>
+            {
+                Count(set.TemplatesWritten, "workbook") + " written of "
+                    + Count(set.TemplatesTicked, "template") + " ticked"
+            };
+
+            if (set.TemplatesRefused > 0) said.Add(Count(set.TemplatesRefused, "refused"));
+            if (set.TemplatesWithNothingToWrite > 0)
+            {
+                said.Add(Count(set.TemplatesWithNothingToWrite, "template") + " with no plot of its own");
+            }
+
+            string line = string.Join(", ", said.ToArray()) + ". "
+                + Count(set.PlotsWritten.Count, "plot") + " went into a workbook.";
+
+            if (!set.Split.AddsUp)
+            {
+                line = NothingWritten + " " + string.Join(" ", set.Refusals.ToArray());
+            }
+
+            return string.IsNullOrWhiteSpace(reportWhere) ? line : line + " Report: " + reportWhere;
+        }
 
         public const string AreaTypedByHand =
             "This template takes no area. The road width and the total length are typed by hand.";
