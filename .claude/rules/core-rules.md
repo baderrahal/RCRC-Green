@@ -471,6 +471,38 @@ the title block `install/title-blocks.txt` pairs each with. Five definitions, si
 view on each. Two shipped files are two records that have to agree, so a test reads both and
 fails if a preset ever names a block its own pairing does not.
 
+## One set of positions, read by the run and by the preview
+
+`SheetPlacement.Of` is the only place a sheet is laid out. It calls `SheetFit.Of` for the
+division and `SheetLayout.For` for the centres and pairs them up, and both of those are now
+called from nowhere else. The run places from it and the preview draws from it, so a card and
+the sheet it draws cannot disagree.
+
+The writer used to call the two itself, `SheetFit` in one method and `SheetLayout` in another,
+which is two readings of one division inside one class. A preview that laid a sheet out its own
+way would have been a third, and the three would have agreed the day they were written and
+drifted the first time any one of them changed. **A drawing of a sheet that is not the sheet is
+worse than no drawing.**
+
+`RunPreview.Of` turns a plan into a card per sheet, in the order the run makes them. **What it
+cannot know it marks rather than guesses.** A view the run is about to create has no size until
+Revit draws it, and neither has a schedule, so both are laid out at their cell, drawn at
+`NominalShareOfTheCell` and named as not measured. A title block no sheet in this model uses
+has no size at all, because Sheet Width and Sheet Height are instance parameters, so its card
+draws nothing and says why.
+
+`MeasuredTitleBlock` carries the sheet its size was read off, so a size that came from nowhere
+cannot read like a size that was measured. `TitleBlockSizes` keeps the first measurement of
+each type, the way the run takes the first block found on a sheet. `PaperSizes` holds only what
+was really measured and answers for everything else with `ViewOnPaper.NotMeasured` under the
+name asked for.
+
+`ViewNaming.Of` is the one builder of `DM-11-(010) Location Key Plan`. It was written out by
+hand in four places, twice in the run plan, once in the schedule definition and once in the
+writer, which is what names every created view. It belongs in Shared beside the parser that
+reads a name apart, and it is not there because a change to Shared stops every other session
+and is the user's call.
+
 ## Which family type a view type is really built with
 
 `FamilyTypesInUse.Of` counts, per view type, every view family type in use and how many views

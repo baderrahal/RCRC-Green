@@ -904,7 +904,10 @@ namespace RcrcGreen.Revit
             List<ViewToPlace> placing = Resolved(document, item, outcome, madeSoFar);
             if (placing.Count == 0) return;
 
-            IReadOnlyList<FittedSheet> fitted = SheetFit.Of(
+            // The fit and the spots together, from Core, once. The preview in step 5 reads
+            // the same object, so a card and the run it draws cannot lay a sheet out two
+            // different ways.
+            IReadOnlyList<PlacedSheet> fitted = SheetPlacement.Of(
                 onto, wanted.ViewsPerSheet, placing.Select(one => one.Size));
 
             var byName = new Dictionary<string, ViewToPlace>(StringComparer.Ordinal);
@@ -916,7 +919,7 @@ namespace RcrcGreen.Revit
             for (int at = 0; at < fitted.Count; at++)
             {
                 List<ViewToPlace> here = fitted[at].Views
-                    .Select(one => byName[one.ViewName])
+                    .Select(one => byName[one.View.ViewName])
                     .ToList();
 
                 if (at > 0)
@@ -957,7 +960,8 @@ namespace RcrcGreen.Revit
                             big.Name, big.Size.SizeInWords(), wanted.ViewsPerSheet)));
                 }
 
-                PlaceOnOneSheet(document, item, outcome, onSheet, size, onto, here, siblings);
+                PlaceOnOneSheet(
+                    document, item, outcome, onSheet, size, fitted[at], here, siblings);
             }
         }
 
@@ -971,11 +975,16 @@ namespace RcrcGreen.Revit
             RunOutcome outcome,
             ViewSheet sheet,
             SheetSize size,
-            DrawingArea area,
+            PlacedSheet laidOut,
             IReadOnlyList<ViewToPlace> placing,
             SiblingReader siblings)
         {
-            IReadOnlyList<ViewportSpot> spots = SheetLayout.For(area, item.Sheet.ViewsPerSheet);
+            // Read off the placement rather than worked out again here. This called
+            // SheetLayout itself, beside a fit that had called it too, which is two readings
+            // of one division.
+            IReadOnlyList<ViewportSpot> spots = laidOut.Views
+                .Select(one => one.Spot)
+                .ToList();
 
             var landed = new List<OnTheSheet>();
 
@@ -1070,7 +1079,7 @@ namespace RcrcGreen.Revit
 
             foreach (ViewType type in item.Sheet.Views)
             {
-                string named = item.PlotId + "-(" + type.Code + ") " + type.ViewName;
+                string named = ViewNaming.Of(item.PlotId, type);
 
                 ElementId viewId = ViewNamed(document, named, madeSoFar);
                 if (viewId == ElementId.InvalidElementId)
@@ -1102,23 +1111,7 @@ namespace RcrcGreen.Revit
         /// </summary>
         private static ViewOnPaper SizeOnPaper(Document document, ElementId viewId, string named)
         {
-            var view = document.GetElement(viewId) as View;
-            if (view == null || view is ViewSchedule) return ViewOnPaper.NotMeasured(named);
-
-            try
-            {
-                BoundingBoxUV outline = view.Outline;
-                if (outline == null) return ViewOnPaper.NotMeasured(named);
-
-                return new ViewOnPaper(
-                    named, outline.Max.U - outline.Min.U, outline.Max.V - outline.Min.V);
-            }
-            catch (Autodesk.Revit.Exceptions.ApplicationException)
-            {
-                // A view Revit will not give an outline for. Nothing is invented in its place:
-                // it reads as not measured and the report says so.
-                return ViewOnPaper.NotMeasured(named);
-            }
+            return DrawingSheetReader.SizeOnPaper(document.GetElement(viewId) as View, named);
         }
 
         /// <summary>

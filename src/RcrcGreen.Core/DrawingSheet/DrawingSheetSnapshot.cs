@@ -48,9 +48,14 @@ namespace RcrcGreen.Core
             IEnumerable<IgnoredName> schedulesNotCaptured = null,
             IEnumerable<ScannedViewFamilyType> viewFamilyTypes = null,
             IEnumerable<string> viewTemplateNames = null,
-            IEnumerable<string> levelNames = null)
+            IEnumerable<string> levelNames = null,
+            IEnumerable<MeasuredTitleBlock> titleBlockSizes = null,
+            IEnumerable<ViewOnPaper> viewSizesOnPaper = null)
         {
             if (documentTitle == null) throw new ArgumentNullException("documentTitle");
+
+            TitleBlockSizes = TitleBlockSizes.Of(titleBlockSizes);
+            ViewSizesOnPaper = PaperSizes.Of(viewSizesOnPaper);
 
             DocumentTitle = documentTitle;
             ReadAt = readAt;
@@ -282,6 +287,23 @@ namespace RcrcGreen.Core
         /// and the list is read from the model rather than written down.
         /// </summary>
         public IReadOnlyList<TitleBlockType> TitleBlockTypes { get; }
+
+        /// <summary>
+        /// How big each title block type comes out, measured off a sheet this model already
+        /// holds. Sheet Width and Sheet Height are instance parameters, so a type on its own
+        /// has none, and a type no sheet uses yet comes back with no size rather than a guess.
+        ///
+        /// This is what the run preview draws its outlines at. It is here rather than worked
+        /// out when the preview is drawn because it is a fact about the model and the panel
+        /// asks the model for it on every read.
+        /// </summary>
+        public TitleBlockSizes TitleBlockSizes { get; }
+
+        /// <summary>
+        /// How big the views this model already holds come out on paper, by their full name.
+        /// A view the run has yet to make is not in here and is drawn as not measured.
+        /// </summary>
+        public PaperSizes ViewSizesOnPaper { get; }
 
         /// <summary>
         /// The names and numbers already in use, offered as lists the user can pick from or type
