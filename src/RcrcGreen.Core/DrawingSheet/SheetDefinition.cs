@@ -16,17 +16,21 @@ namespace RcrcGreen.Core
     /// </summary>
     public sealed class SheetDefinition
     {
+        private readonly SheetNameSettings _names;
+
         public SheetDefinition(
             string titleBlockFamilyName,
             string titleBlockTypeName,
             IEnumerable<ViewType> views,
-            int viewsPerSheet)
+            int viewsPerSheet,
+            SheetNameSettings names = null)
         {
             if (titleBlockFamilyName == null) throw new ArgumentNullException("titleBlockFamilyName");
             if (titleBlockTypeName == null) throw new ArgumentNullException("titleBlockTypeName");
 
             TitleBlockFamilyName = titleBlockFamilyName;
             TitleBlockTypeName = titleBlockTypeName;
+            _names = names;
 
             // Kept in the order they were ticked, because that is the order they go onto
             // sheets, and deduplicated by hand so that order cannot silently change.
@@ -79,7 +83,7 @@ namespace RcrcGreen.Core
         /// </summary>
         public IReadOnlyList<PlannedSheet> Planned
         {
-            get { return SheetDivision.Of(Views, ViewsPerSheet); }
+            get { return SheetDivision.Of(Views, ViewsPerSheet, _names); }
         }
 
         /// <summary>

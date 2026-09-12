@@ -74,7 +74,8 @@ namespace RcrcGreen.Revit
         /// asking for a view the run no longer offers. The tick is remembered rather than
         /// dropped, so re-ticking the type in step 2 puts it back on the sheet.
         /// </summary>
-        public SheetDefinition Built(IReadOnlyList<ViewType> stillTicked)
+        public SheetDefinition Built(
+            IReadOnlyList<ViewType> stillTicked, SheetNameSettings names = null)
         {
             var offered = new HashSet<ViewType>(stillTicked ?? new List<ViewType>());
 
@@ -82,7 +83,8 @@ namespace RcrcGreen.Revit
                 TitleBlock == null ? string.Empty : TitleBlock.FamilyName,
                 TitleBlock == null ? string.Empty : TitleBlock.TypeName,
                 _views.Where(offered.Contains),
-                ViewsPerSheet);
+                ViewsPerSheet,
+                names);
         }
 
         /// <summary>
@@ -115,11 +117,12 @@ namespace RcrcGreen.Revit
         public IReadOnlyList<SheetRowShown> RowsFor(
             IReadOnlyList<ViewType> stillTicked,
             IEnumerable<string> plots,
-            IReadOnlyDictionary<string, SheetNumberProposal> numbersBuilt)
+            IReadOnlyDictionary<string, SheetNumberProposal> numbersBuilt,
+            SheetNameSettings names)
         {
             if (numbersBuilt == null) throw new ArgumentNullException("numbersBuilt");
 
-            SheetDefinition definition = Built(stillTicked);
+            SheetDefinition definition = Built(stillTicked, names);
             IReadOnlyList<PlannedSheet> planned = definition.Planned;
 
             var rows = new List<SheetRowShown>();

@@ -339,6 +339,86 @@ namespace RcrcGreen.Core.Tests
     }
 
     /// <summary>
+    /// The number check at Run, against the numbers read off the model as the run is worked
+    /// out. Three runs in a row asked Revit for numbers a previous run had created, because
+    /// the only check lived on the panel and read its last snapshot, and every refusal
+    /// arrived from Revit inside the transaction instead of on the plan.
+    /// </summary>
+    public class RunTimeNumberGuardTests
+    {
+        private static readonly ViewType KeyPlan = new ViewType("010", "Location Key Plan");
+
+        [Fact]
+        public void ANumberTheModelHoldsIsRefusedBeforeAnythingOpens()
+        {
+            RunPlan plan = RunPlan.Of(
+                null,
+                new[] { "DM-11" },
+                null,
+                null,
+                null,
+                null,
+                new[]
+                {
+                    RunFixture.Batch(new[] { KeyPlan }, 1,
+                        RunFixture.Row("DM-11", "010QE", "PROJECT LOCATION KEY PLAN", new[] { KeyPlan }))
+                },
+                sheetNumbersInUse: new[] { "010QE" });
+
+            Assert.Empty(plan.Items);
+            RunRefusal only = Assert.Single(plan.Refusals);
+            Assert.Contains("a sheet in this model already has that number", only.Because);
+            Assert.Contains("read off the model as the run was worked out", only.Because);
+        }
+
+        [Fact]
+        public void TwoRowsAskingForOneNumberAreBothRefusedAtRun()
+        {
+            RunPlan plan = RunPlan.Of(
+                null,
+                new[] { "DM-11", "DM-12" },
+                null,
+                null,
+                null,
+                null,
+                new[]
+                {
+                    RunFixture.Batch(new[] { KeyPlan }, 1,
+                        RunFixture.Row("DM-11", "010QA", "PROJECT LOCATION KEY PLAN", new[] { KeyPlan }),
+                        RunFixture.Row("DM-12", "010QA", "PROJECT LOCATION KEY PLAN", new[] { KeyPlan }))
+                },
+                sheetNumbersInUse: new string[0]);
+
+            Assert.Empty(plan.Items);
+            Assert.Equal(2, plan.Refusals.Count);
+            Assert.All(plan.Refusals, one =>
+                Assert.Contains("another sheet in this run asks for the same number", one.Because));
+        }
+
+        [Fact]
+        public void AFreeNumberStillBecomesAnItem()
+        {
+            RunPlan plan = RunPlan.Of(
+                null,
+                new[] { "DM-11" },
+                null,
+                null,
+                null,
+                null,
+                new[]
+                {
+                    RunFixture.Batch(new[] { KeyPlan }, 1,
+                        RunFixture.Row("DM-11", "010QI", "PROJECT LOCATION KEY PLAN", new[] { KeyPlan }))
+                },
+                sheetNumbersInUse: new[] { "010QE", "010QF" });
+
+            Assert.Empty(plan.Refusals);
+            RunItem only = Assert.Single(plan.Items);
+            Assert.Equal("010QI PROJECT LOCATION KEY PLAN", only.Name);
+        }
+    }
+
+    /// <summary>
     /// Annotation crop on a new plan view.
     ///
     /// Copying it from the sibling was last round's answer and it did not work. The report said

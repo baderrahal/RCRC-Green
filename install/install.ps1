@@ -15,6 +15,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\sheet-names.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
 
@@ -108,6 +109,15 @@ $titleBlocks = Join-Path $PSScriptRoot 'title-blocks.txt'
 if (Test-Path -LiteralPath $titleBlocks) {
     Copy-Item -LiteralPath $titleBlocks -Destination $assemblyFolder -Force
     $copied.Add((Join-Path $assemblyFolder 'title-blocks.txt'))
+}
+
+# Which sheet name goes with which view type, the real names read off the two measured
+# models. Same two-file rule as the title blocks: the panel reads this after the user's own
+# file, so a name typed over in the panel is never overwritten by an install.
+$sheetNames = Join-Path $PSScriptRoot 'sheet-names.txt'
+if (Test-Path -LiteralPath $sheetNames) {
+    Copy-Item -LiteralPath $sheetNames -Destination $assemblyFolder -Force
+    $copied.Add((Join-Path $assemblyFolder 'sheet-names.txt'))
 }
 
 $templatesPointer = Join-Path $assemblyFolder 'templates-folder.txt'

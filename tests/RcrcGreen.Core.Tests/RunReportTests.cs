@@ -340,7 +340,9 @@ namespace RcrcGreen.Core.Tests
             string written = Report();
 
             Assert.Contains("divide into as many", written);
-            Assert.Contains("A sheet holding one view is named after it", written);
+            Assert.Contains("A sheet holding one view is NAMED FROM THE SHEET NAME TABLE", written);
+            Assert.Contains("falls back to the view", written);
+            Assert.DoesNotContain("A sheet holding one view is named after it", written);
             Assert.Contains("Its number is BUILT: the view code, the", written);
             Assert.Contains("plot's marker from step 1", written);
             Assert.Contains("never read off the model's own numbers", written);

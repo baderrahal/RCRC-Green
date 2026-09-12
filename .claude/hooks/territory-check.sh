@@ -59,6 +59,7 @@ DRAWING_SHEET_AT_REVIT_ROOT = {
     "src/RcrcGreen.Revit/ModelScanner.cs",
     "src/RcrcGreen.Revit/ModelWriter.cs",
     "src/RcrcGreen.Revit/PlotMarkerStore.cs",
+    "src/RcrcGreen.Revit/SheetNameStore.cs",
     "src/RcrcGreen.Revit/ScheduleCapture.cs",
     "src/RcrcGreen.Revit/ScopeBoxScanner.cs",
     "src/RcrcGreen.Revit/SectionDefaults.cs",

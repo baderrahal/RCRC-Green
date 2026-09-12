@@ -198,6 +198,10 @@ namespace RcrcGreen.Core
         /// <param name="schedulesThatCannotBeCaptured">Schedule types that exist and cannot be
         /// captured, each with the reason its refusal prints. Without this every one was
         /// answered with no plot has that schedule, which is false for all of them.</param>
+        /// <param name="sheetNumbersInUse">The sheet numbers the model holds at the moment
+        /// the run is worked out, read fresh rather than taken from the panel. Three runs in
+        /// a row asked Revit for numbers a previous run had already created, because the
+        /// only number check lived on the panel and read its last snapshot.</param>
         public static RunPlan Of(
             IEnumerable<PlotViewKey> marked,
             IEnumerable<string> ticked,
@@ -207,7 +211,8 @@ namespace RcrcGreen.Core
             IEnumerable<ViewType> capturableScheduleTypes,
             IEnumerable<SheetBatch> sheetsWanted,
             IEnumerable<PlotViewKey> alreadyInTheModel = null,
-            IEnumerable<UncapturableSchedule> schedulesThatCannotBeCaptured = null)
+            IEnumerable<UncapturableSchedule> schedulesThatCannotBeCaptured = null,
+            IEnumerable<string> sheetNumbersInUse = null)
         {
             var stillTicked = new HashSet<string>(
                 (ticked ?? Enumerable.Empty<string>()).Where(plotId => plotId != null),
@@ -297,7 +302,7 @@ namespace RcrcGreen.Core
                     sections.Contains(key.ViewType) ? RunItemKind.Section : RunItemKind.PlanView));
             }
 
-            AddSheets(sheetsWanted, stillTicked, items, refusals);
+            AddSheets(sheetsWanted, stillTicked, sheetNumbersInUse, items, refusals);
 
             return new RunPlan(items, refusals);
         }
@@ -313,6 +318,7 @@ namespace RcrcGreen.Core
         private static void AddSheets(
             IEnumerable<SheetBatch> sheetsWanted,
             HashSet<string> stillTicked,
+            IEnumerable<string> sheetNumbersInUse,
             List<RunItem> items,
             List<RunRefusal> refusals)
         {
@@ -353,6 +359,13 @@ namespace RcrcGreen.Core
             // anything the list does not hold. Left in described order, the set came out in
             // whatever order the user ticked, which on a real plot put the schedules ahead
             // of the title sheet.
+            // Every number this run asks for, so two rows wanting one number are both
+            // caught here the way the panel catches them, whatever the panel showed.
+            List<string> askedThisRun = arrivals
+                .Where(one => one.Row.HasNumber)
+                .Select(one => one.Row.SheetNumber)
+                .ToList();
+
             foreach (SheetArrival one in arrivals
                 .OrderBy(one => one.Row.PlotId, NaturalOrder.Comparer)
                 .ThenBy(one => SheetOrder.CodeRank(SheetOrder.CodeToOrderBy(one.Row.Views)))
@@ -377,6 +390,24 @@ namespace RcrcGreen.Core
                         + (row.WhyTheNumberIsMissing.Length == 0
                             ? string.Empty
                             : " " + row.WhyTheNumberIsMissing)));
+                    continue;
+                }
+
+                // Checked against the numbers read at Run, not against the panel's last
+                // snapshot. A run that trusted the panel asked Revit for numbers its own
+                // previous run had created, three runs in a row, and every refusal arrived
+                // from Revit after the transaction was open instead of on this list.
+                SheetNumberFault fault = SheetNumbers.FaultIn(
+                    row.SheetNumber, sheetNumbersInUse, askedThisRun);
+                if (fault != SheetNumberFault.None)
+                {
+                    refusals.Add(RunRefusal.ForSheet(
+                        row.PlotId,
+                        row.SheetNumber,
+                        row.SheetName,
+                        "No sheet was made for " + row.PlotId + ", because "
+                        + SheetNumbers.FaultInWords(fault)
+                        + ", read off the model as the run was worked out. Renumber the row."));
                     continue;
                 }
 
