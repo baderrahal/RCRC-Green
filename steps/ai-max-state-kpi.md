@@ -39,7 +39,12 @@ Two break watches went red on 3 and 4 tests, one per item, and were restored byt
 first attempt at the second was a no-op that changed no behaviour and is recorded as one.
 **Locally 1332 tests at this branch, 0 failed and 0 skipped, 723 of them KPI, 16 added, against
 the 1316 main carries** at the branch point `e3ba145`, measured there in a worktree rather than
-remembered. Build zero warnings. PULL REQUEST AND MERGE NUMBERS GO HERE AFTER THE MERGE.
+remembered. Build zero warnings. Pull request 97, merged into main as `6275bf3`, the runner executing
+1385 tests against the merged head, 0 failed and 0 skipped, and locally the same 1385 ran at
+the merge, 723 of them KPI. **The merged tree is not byte for byte the branch head**: two
+Drawing Sheet rounds, `d77b90a` and `e2aa4ad`, landed while this one waited on a GitHub rate
+limit and are the whole of the jump from 1332 to 1385, none of them KPI. The KPI half did
+land byte for byte and its count is 723 on both.
 **Nothing in this round has been observed in Revit.**
 
 Phase: 9, ship. Fifty eighth pass, item 1 of the two Bader asked for, on its own so the first

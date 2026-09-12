@@ -11,7 +11,19 @@ fresh pull of main at `e3ba145`, so the baseline is **1316 tests, measured at th
 worktree of its own rather than remembered**. **Nothing in this round has been observed in
 Revit.**
 
-PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+Pull request 97, merged into main as `6275bf3`. **The runner executed 1385 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1385 ran at `6275bf3`, 0 failed and 0
+skipped, 723 of them KPI.** **The branch itself carried 1332, 16 added here**, against the 1316
+main held at the branch point `e3ba145`, measured there in a worktree of its own. Build zero
+warnings at the merge. The merge went through the API with the title and the message both
+passed on the call, and the commit came back off main carrying neither a co-author credit line
+nor a generated-by footer.
+
+**The merged tree is NOT byte for byte the branch head.** Two Drawing Sheet rounds landed while
+this one waited on a GitHub rate limit, `d77b90a` and `e2aa4ad`, pull requests 96 and 98, and
+that is the whole of the jump from 1332 to 1385, 53 tests, none of them KPI. **The KPI half did
+land byte for byte**: a diff of this task's files between the branch head `621f969` and the merge
+is empty, and the KPI count is 723 on both.
 
 ### Item 1(b) was already correct, and saying so is the first thing this entry owes
 
