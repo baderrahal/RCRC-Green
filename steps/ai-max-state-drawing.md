@@ -13,7 +13,8 @@ of DM-11-(010) Location Key Plan, where there were four, and it belongs in Share
 parser, which is a round of its own and the user's call. DrawingSheetReader.SizeOnPaper is the
 one outline read and the writer calls it. Clicking a card opens step 4 at the described sheet
 whose row carries that number. Suite reads 1400 locally, the 1369 on merged main plus 31. Two
-breaks watched red and reversed byte for byte.
+breaks watched red and reversed byte for byte. The pull request is 99 and the mockup is
+design/pr-99/panel.html.
 
 Phase: 9, ship. Sixty second pass, second of three pull requests. Presets: a saved answer to
 steps 2 and 4, holding the ticked view types and the sheet definitions, and NO plot, NO sub plot
