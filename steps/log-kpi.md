@@ -14,9 +14,15 @@ in Revit.** The first of the two changes the pane's ask flow, which no Core test
 it is recorded here for the first run on a real pane. Committed in two, the warnings first as
 a checkpoint, then this.
 
-Pull request and merge hash: in the record entry the merge adds above this line. Locally
-**1289 tests at this branch, 0 failed and 0 skipped, 700 of them KPI, 1 added here**, against
-the 1288 main carries. Ten warnings cleared, build zero warnings.
+Pull request 92, merged into main as `c8bd1b8`. **The runner executed 1282 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1282 ran at `c8bd1b8`, 0 failed and 0
+skipped, 700 of them KPI.** **The branch itself carried 1289, 1 added here**, against the 1288
+main held at the branch point `aa0f546`. The drop from 1289 to 1282 is the Drawing Sheet
+sixtieth pass `a7cd601` that landed in between, which deleted its marker family and net
+removed seven tests, none of them KPI, so the KPI count is 700 on the branch and at the merge
+alike, checked. The merge went through the API with the title and the message both passed on
+the call, and the commit came back off main carrying neither a co-author credit line nor a
+generated-by footer. Ten warnings cleared, build zero warnings.
 
 ### The plots block said open a model while a model was open
 

@@ -24,12 +24,13 @@ Build zero warnings.
 
 Two break watches went red on 1 and 1 tests and were restored byte for byte. **Locally 1289
 tests at this branch, 0 failed and 0 skipped, 700 of them KPI, 1 added, against the 1288 main
-carries**, not the 1266 Bader's message names, which the Drawing Sheet rounds `#82`, `#83`,
-`#84` and `#88` moved past since the fifty sixth pass. Committed in two, the warnings as
-checkpoint `54ab011` then the plots fix. The pull request, the merge hash and the runner's
-count go in the record the merge adds here. **Nothing in this round has been observed in
-Revit**, and whether the recovered pane shows the plots on the next 13:48 style run is the one
-thing waiting on Bader.
+carries** at the branch point. Committed in two, the warnings as checkpoint `54ab011` then the
+plots fix. Pull request 92, merged into main as `c8bd1b8`, the runner executing 1282 tests
+against the merged head, 0 failed and 0 skipped, and locally the same 1282 ran at the merge,
+700 of them KPI. The drop from 1289 to 1282 is the Drawing Sheet sixtieth pass `a7cd601` that
+landed in between and net removed seven tests, none of them KPI. **Nothing in this round has
+been observed in Revit**, and whether the recovered pane shows the plots on the next 13:48
+style run is the one thing waiting on Bader.
 
 Phase: 9, ship. Fifty sixth pass, Bader's answers to two of the fifty fifth pass's four open
 questions, no behaviour changes beyond the two lines. **The audit files stay the one record:
