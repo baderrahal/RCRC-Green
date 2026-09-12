@@ -4,6 +4,20 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty ninth pass. The report for the three fix round
+
+Branch `claude/rcrc-green-setup-wf9ham`, restarted from main because pull request 87 is
+merged. The entry below carried the first pull request's merge and was written before the
+second existed, so it could not carry that one. It carries it now.
+
+Pull request 87 merged as `c54c682` and the gate executed 1288 tests against it, 0 failed
+and 0 skipped, the same count the local run gave after the last file was written and ten
+above the 1278 pull request 86 left on main. The merged main reads 1288 locally as well.
+Both of the round's squash messages came back off main byte for byte. Nothing else changed.
+No code is touched, and nothing in this round has been through Revit.
+
+---
+
 ## 2026-09-12, fifty eighth pass. The name table, the stale read's cause, and the view type with no example
 
 Branch `claude/rcrc-green-setup-wf9ham`, a three fix brief in two pull requests. The brief
