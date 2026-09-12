@@ -103,7 +103,9 @@ These come from the team and from real models. They are not guesses.
   model elements and every quantity schedule filters on that one. A schedule built against the
   wrong one comes back empty
 - On a view, PRX_Plot_ID is the first place to look for the plot and the name is the fallback
-- Cross sections are cut across the middle of the plot's scope box, the SHORT way
+- Cross sections are cut across the middle of the plot's scope box, the SHORT way, 18.2374
+  metres long. The cut used to run the box's whole width, 36.4747 metres on NS-32, and the
+  viewport it made was far wider than the drawing area, so the team halved it
 - View names repeat word for word across plots, and nothing plot specific appears in one
 
 Six of the things under a plot are schedules, filtered on PRX_Ref Plot ID. Category alone does
@@ -121,20 +123,25 @@ are answered. A section takes no level. Three (010) views in
 one run took three different family types that way. **(400) Landscape Cross Section is a section
 rather than a plan view**, read off that view's kind rather than off the code.
 
-Three settings are the tool's own rather than the model's, because the model disagrees with
+Four settings are the tool's own rather than the model's, because the model disagrees with
 itself or has the fault built in. Cross sections look 1 METRE, where four real ones read
-0.93, 0.93, 1.53 and 12.83. ANNOTATION CROP IS ALWAYS ON for a plan view. CROP VIEW IS
-ALWAYS ON for a section the tool makes, because a section with it off is not bounded
-sideways and the model's own sections have it off, which is what drew other plots' markers
-through DM-11's plans. The report says whose setting each is.
+0.93, 0.93, 1.53 and 12.83, and their CUT IS 18.2374 METRES. ANNOTATION CROP IS ALWAYS ON
+for a plan view. CROP VIEW IS ALWAYS ON for a section the tool makes, because a section
+with it off is not bounded sideways and the model's own sections have it off, which is what
+drew other plots' markers through DM-11's plans. The report says whose setting each is.
 
 A new view is CREATED FRESH, never copied from another plot, and carries no annotation or
 detailing. A SHEET IS DESCRIBED rather than copied: the title block type, the views and 1, 2 or
 4 per sheet are shared, and the views DIVIDE into as many sheets as they need, none left off,
 and the sheets come out in the team's order, the code first and the nine name order list
-within it. A TITLE SHEET is an empty sheet on the COVER PAGE block, described with no views. A
-sheet's size is read off the title block PLACED ON IT, because Sheet Width and Sheet Height only
-exist on the instance. A SHEET HAS NO SCALE OF ITS OWN: its Scale reads out its views' templates.
+within it. TWO VIEWS SIT ONE ABOVE THE OTHER and four make a two by two grid, because side by
+side overlapped: every view on a landscape sheet is wider than half its drawing area. EVERY
+VIEW IS MEASURED BEFORE IT IS PLACED and what does not fit is carried onto another sheet of
+the same definition, never dropped and never laid over its neighbour. A TITLE SHEET is an
+empty sheet on the COVER PAGE block, described with no views, and IT TAKES ITS CODE OFF THAT
+BLOCK because it carries no view type. A sheet's size is read off the title block PLACED ON
+IT, because Sheet Width and Sheet Height only exist on the instance. A SHEET HAS NO SCALE OF
+ITS OWN: its Scale reads out its views' templates.
 
 Measured on the first real model, RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached:
 

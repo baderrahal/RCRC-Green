@@ -1,20 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace RcrcGreen.Core
 {
     /// <summary>
     /// Step 1's list: every two letter prefix in the model is a plot the user ticks,
-    /// several at once, with a From and To over each ticked plot's sub plots and a tick
-    /// per sub plot inside that range. One run covers every ticked sub plot across every
-    /// ticked plot, which the single prefix and range this replaced could not say.
+    /// several at once, with a From and To over the sub plot numbers and a tick per sub
+    /// plot inside that range. One run covers every ticked sub plot across every ticked
+    /// plot, which the single prefix and range this replaced could not say.
     ///
-    /// It composes the Shared pieces rather than restating their rules. PlotRange narrows
-    /// and orders, and each ticked plot carries its own PlotSelection, so a sub plot tick
-    /// behaves exactly as the old flat list's did: changing a plot's range rebuilds its
-    /// selection with everything ticked, and nothing outside the model can be ticked at
-    /// all, because inventing a plot is the one thing this tool never does.
+    /// **The range is free and the list is not.** From and To offer 01 to 99 whatever the
+    /// open model holds, because the team works across models and a range that stopped at
+    /// the current model's highest sub plot could not be set up before that model existed.
+    /// The list under them still shows only the sub plots this model really holds inside
+    /// the range, so nothing here invents a plot: a free range picker is not a plot, it is
+    /// two numbers. The count line says how many of the range exist here.
+    ///
+    /// It composes the Shared pieces rather than restating their rules. PlotRange orders
+    /// and narrows to a prefix, and each ticked plot carries its own PlotSelection, so a
+    /// sub plot tick behaves exactly as the old flat list's did: changing a plot's range
+    /// rebuilds its selection with everything ticked, and nothing outside the model can be
+    /// ticked at all.
     /// </summary>
     public sealed class PlotTickList
     {
@@ -33,6 +41,37 @@ namespace RcrcGreen.Core
         }
 
         public static readonly PlotTickList Nothing = Over(null);
+
+        /// <summary>
+        /// The lowest and highest number a range end can take. Two digits, because every
+        /// sub plot on both measured models is two digits and the user asked for these.
+        /// </summary>
+        public const int LowestNumber = 1;
+
+        public const int HighestNumber = 99;
+
+        /// <summary>
+        /// What the From and To lists offer, 01 to 99, the same on every model. The digits
+        /// alone, because the plot is picked above them and repeating its letters on every
+        /// row of a 99 line list says nothing.
+        /// </summary>
+        public static readonly IReadOnlyList<string> RangeEnds = BuildRangeEnds();
+
+        private static IReadOnlyList<string> BuildRangeEnds()
+        {
+            var ends = new List<string>(HighestNumber);
+            for (int number = LowestNumber; number <= HighestNumber; number++)
+            {
+                ends.Add(AsEnd(number));
+            }
+
+            return ends;
+        }
+
+        public static string AsEnd(int number)
+        {
+            return number.ToString("00", CultureInfo.InvariantCulture);
+        }
 
         /// <summary>
         /// The model's plots with nothing ticked yet. A fresh read starts here, the same
@@ -73,8 +112,8 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// Every sub plot under one plot, in natural order, whether or not it is in the
-        /// range. These fill the From and To lists.
+        /// Every sub plot under one plot the model holds, in natural order, whether or not
+        /// it is in the range. This is the model's list, not the range's.
         /// </summary>
         public IReadOnlyList<string> UnderPlot(string prefix)
         {
@@ -82,10 +121,11 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// Ticking a plot on takes its whole span with every sub plot ticked, so one tick
-        /// is one click's worth of work. Ticking it off forgets its range and its sub plot
-        /// ticks, the same way changing the old range rebuilt the selection. A prefix the
-        /// model does not hold is ignored rather than added.
+        /// Ticking a plot on takes the whole 01 to 99 range with every sub plot the model
+        /// holds inside it ticked, so one tick is one click's worth of work. Ticking it off
+        /// forgets its range and its sub plot ticks, the same way changing the old range
+        /// rebuilt the selection. A prefix the model does not hold is ignored rather than
+        /// added, because a plot is never invented here.
         /// </summary>
         public PlotTickList TickingPlot(string prefix, bool ticked)
         {
@@ -104,12 +144,9 @@ namespace RcrcGreen.Core
 
             if (now.ContainsKey(prefix)) return this;
 
-            IReadOnlyList<string> under = UnderPlot(prefix);
-            string from = under.Count > 0 ? under[0] : string.Empty;
-            string to = under.Count > 0 ? under[under.Count - 1] : string.Empty;
-
-            now[prefix] = new TickedPlot(
-                from, to, PlotSelection.AllOf(PlotRange.Between(_plotIds, prefix, from, to)));
+            string from = AsEnd(LowestNumber);
+            string to = AsEnd(HighestNumber);
+            now[prefix] = new TickedPlot(from, to, Selection(prefix, from, to));
 
             return new PlotTickList(_plotIds, now);
         }
@@ -124,6 +161,24 @@ namespace RcrcGreen.Core
             return prefix != null && _ticked.TryGetValue(prefix, out held)
                 ? held.Picked.InRange
                 : new List<string>();
+        }
+
+        /// <summary>
+        /// The in-range sub plots of one plot whose identifier holds the search text, which
+        /// is what the search box narrows to and what All and None act on. Case and edge
+        /// spaces are forgiven, because somebody typing 2 to find DM-02 should not have to
+        /// know how the model pads its numbers.
+        /// </summary>
+        public IReadOnlyList<string> Matching(string prefix, string search)
+        {
+            string wanted = (search ?? string.Empty).Trim();
+            IReadOnlyList<string> inRange = InRangeOf(prefix);
+
+            if (wanted.Length == 0) return inRange;
+
+            return inRange
+                .Where(plotId => plotId.IndexOf(wanted, StringComparison.OrdinalIgnoreCase) >= 0)
+                .ToList();
         }
 
         /// <summary>
@@ -146,8 +201,8 @@ namespace RcrcGreen.Core
         /// <summary>
         /// Changing a plot's range rebuilds its selection with every sub plot in the new
         /// range ticked, the rule the old range had, and leaves every other plot alone.
-        /// The ends are kept as given even when they come back empty, reversed or gone
-        /// from the model, so what is shown is what was picked rather than a correction.
+        /// The ends are kept as given even when they come back empty, reversed or hold no
+        /// sub plot at all, so what is shown is what was picked rather than a correction.
         /// </summary>
         public PlotTickList Ranging(string prefix, string from, string to)
         {
@@ -157,9 +212,31 @@ namespace RcrcGreen.Core
             now[prefix] = new TickedPlot(
                 from ?? string.Empty,
                 to ?? string.Empty,
-                PlotSelection.AllOf(PlotRange.Between(_plotIds, prefix, from, to)));
+                Selection(prefix, from, to));
 
             return new PlotTickList(_plotIds, now);
+        }
+
+        /// <summary>
+        /// How many numbers the ticked plots' ranges cover altogether, which is what the
+        /// count line holds the model's own total against. A reversed or unreadable pair
+        /// covers nothing.
+        /// </summary>
+        public int NumbersInRange
+        {
+            get
+            {
+                int covered = 0;
+                foreach (string prefix in TickedPlots)
+                {
+                    TickedPlot held = _ticked[prefix];
+                    int first = NumberIn(held.From);
+                    int last = NumberIn(held.To);
+                    if (first > 0 && last >= first) covered += (last - first) + 1;
+                }
+
+                return covered;
+            }
         }
 
         /// <summary>
@@ -229,6 +306,64 @@ namespace RcrcGreen.Core
             now[prefix] = new TickedPlot(held.From, held.To, held.Picked.Ticking(plotId, ticked));
 
             return new PlotTickList(_plotIds, now);
+        }
+
+        /// <summary>
+        /// What All and None do: one tick each over the sub plots the search is showing,
+        /// as one change rather than a redraw per line.
+        /// </summary>
+        public PlotTickList TickingThese(IEnumerable<string> plotIds, bool ticked)
+        {
+            PlotTickList list = this;
+            foreach (string plotId in plotIds ?? Enumerable.Empty<string>())
+            {
+                list = list.Ticking(plotId, ticked);
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// The sub plots this model holds under one prefix whose number falls inside the
+        /// range, all ticked. The range ends are two numbers rather than two sub plots now,
+        /// so the model decides what exists and the user decides what is wanted.
+        /// </summary>
+        private PlotSelection Selection(string prefix, string from, string to)
+        {
+            int first = NumberIn(from);
+            int last = NumberIn(to);
+            if (first <= 0 || last < first) return PlotSelection.AllOf(null);
+
+            return PlotSelection.AllOf(UnderPlot(prefix)
+                .Where(plotId =>
+                {
+                    int number = NumberOf(plotId);
+                    return number >= first && number <= last;
+                })
+                .ToList());
+        }
+
+        private static int NumberIn(string end)
+        {
+            int number;
+            return int.TryParse(
+                (end ?? string.Empty).Trim(),
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out number)
+                ? number
+                : 0;
+        }
+
+        /// <summary>
+        /// The digits of a plot identifier, DM-02 giving 2. PlotId in Shared holds the
+        /// shape and offers the prefix but not this half, and Shared is another round's
+        /// change, so the read is here and guarded by PlotId's own check.
+        /// </summary>
+        private static int NumberOf(string plotId)
+        {
+            if (!PlotId.IsPlotId(plotId)) return 0;
+            return NumberIn(plotId.Substring(plotId.IndexOf('-') + 1));
         }
 
         private sealed class TickedPlot

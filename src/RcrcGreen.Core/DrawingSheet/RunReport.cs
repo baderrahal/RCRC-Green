@@ -185,6 +185,16 @@ namespace RcrcGreen.Core
             Line(report, "off any view. It used to come from the sibling section. Four real ones in");
             Line(report, "this model read 0.93, 0.93, 1.53 and 12.83 metres, so there was no rule to");
             Line(report, "copy and the depth turned on which sibling happened to be picked.");
+            Line(report, "THE CUT IS "
+                + SectionCutLength.Metres.ToString("0.####", CultureInfo.InvariantCulture)
+                + " METRES LONG, centred on that box. That is the");
+            Line(report, "tool's own setting too, and not a number read off any view or off the box.");
+            Line(report, "It used to run the whole width of the box, which is "
+                + SectionCutLength.WholeBoxOnNsThirtyTwoMetres.ToString(
+                    "0.####", CultureInfo.InvariantCulture)
+                + " metres on");
+            Line(report, "NS-32, and the viewport that produced on a real sheet was still far wider");
+            Line(report, "than the drawing area it had to sit in. The team halved it.");
             Line(report, "A section is left with no scope box, because a real one in this model has");
             Line(report, "none and its own section box is what bounds it. The plot's box is still what");
             Line(report, "says where to cut. Whether a view type needs a section rather than a plan is");
@@ -247,6 +257,17 @@ namespace RcrcGreen.Core
             Line(report, "lines above say so against each sheet, because a placed title block reports");
             Line(report, "its Sheet Width and its Sheet Height and nothing about where its strip");
             Line(report, "begins. Dividing the whole sheet is what ran wide views across the strip.");
+            Line(report, "TWO VIEWS SIT ONE ABOVE THE OTHER, not side by side, and four make a two");
+            Line(report, "by two grid. Side by side overlapped on a real sheet, because every view on");
+            Line(report, "it was wider than half the drawing area, which a landscape drawing on a");
+            Line(report, "landscape sheet always will be.");
+            Line(report, "EVERY VIEW IS MEASURED BEFORE IT IS PLACED and the ones that do not fit are");
+            Line(report, "carried onto another sheet of the same definition rather than dropped or");
+            Line(report, "laid over one another. The sheet lines above say how many views each sheet");
+            Line(report, "was asked for and how many fitted on it, and name every sheet made because");
+            Line(report, "the one before it was full. A schedule cannot be measured first, because");
+            Line(report, "how big it comes out is not known until Revit has drawn it, so it is");
+            Line(report, "treated as fitting and said to be unmeasured rather than guessed at.");
             Line(report, "A SCHEDULE IS PLACED BY ITS TOP LEFT CORNER and a viewport by its centre.");
             Line(report, "Both are handed a centre, so a schedule is measured after it is placed and");
             Line(report, "moved until its centre is the one it was asked for. Before that it landed");

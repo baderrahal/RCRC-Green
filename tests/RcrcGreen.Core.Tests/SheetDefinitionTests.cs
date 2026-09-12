@@ -38,19 +38,21 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// Two side by side. Each has a quarter of the width either side of it, so the margin at
-        /// the edge is the same as half the gap down the middle.
+        /// Two ONE ABOVE THE OTHER, the first on top, each with a quarter of the height
+        /// above and below it. Side by side is what overlapped on a real sheet: every view
+        /// on it was wider than half the drawing area, and a landscape drawing on a
+        /// landscape sheet always will be.
         /// </summary>
         [Fact]
-        public void TwoSitSideBySideAtTheSameHeight()
+        public void TwoSitOneAboveTheOtherAtTheSameWidth()
         {
             var spots = SheetLayout.For(Whole, 2).ToArray();
 
             Assert.Equal(2, spots.Length);
-            Assert.Equal(200.0, spots[0].CentreX);
-            Assert.Equal(600.0, spots[1].CentreX);
-            Assert.Equal(300.0, spots[0].CentreY);
-            Assert.Equal(300.0, spots[1].CentreY);
+            Assert.Equal(400.0, spots[0].CentreX);
+            Assert.Equal(400.0, spots[1].CentreX);
+            Assert.Equal(450.0, spots[0].CentreY);
+            Assert.Equal(150.0, spots[1].CentreY);
         }
 
         [Fact]

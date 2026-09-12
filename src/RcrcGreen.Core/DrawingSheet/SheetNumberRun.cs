@@ -114,14 +114,20 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// Why a row gets no built number when its sheet holds no views at all. The title
-        /// sheet is the one such sheet the team makes, and typing its number first is what
-        /// lets the built 010 numbers letter themselves after it.
+        /// Why a row gets no built number when its sheet holds no views AND its title block
+        /// answers no code.
+        ///
+        /// A sheet with no views used to get this whatever it was described on, which is
+        /// what put a red line under every COVER PAGE sheet. Such a sheet has no view type,
+        /// so its code comes off the title block through TitleBlockSettings.CodeFor, and
+        /// only a block neither settings file names, or one paired with two codes, is left
+        /// with nothing to build from.
         /// </summary>
         public static string NoViewsWords()
         {
-            return "This sheet holds no views, so there is no view code to build its number "
-                + "from. Type the number.";
+            return "This sheet holds no views, so its code comes from its title block, and "
+                + "the settings pair that block with no single view code. Pick the title "
+                + "block or type the number.";
         }
 
         /// <summary>

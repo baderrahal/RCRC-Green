@@ -210,8 +210,9 @@ namespace RcrcGreen.Core.Tests
                 SheetNumberRun.MixedCodesWords());
 
             Assert.Equal(
-                "This sheet holds no views, so there is no view code to build its number "
-                + "from. Type the number.",
+                "This sheet holds no views, so its code comes from its title block, and the "
+                + "settings pair that block with no single view code. Pick the title block "
+                + "or type the number.",
                 SheetNumberRun.NoViewsWords());
         }
     }

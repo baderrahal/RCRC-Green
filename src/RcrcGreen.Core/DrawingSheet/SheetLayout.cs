@@ -30,9 +30,16 @@ namespace RcrcGreen.Core
     /// <summary>
     /// Where the views sit on a sheet, given the area they may sit in and how many go on it.
     ///
-    /// One is centred. Two sit side by side. Four make a two by two grid. Every spot is the
-    /// centre of one cell of an even division of that area, so the margins round the outside
-    /// and the gap down the middle are the same measurement.
+    /// One is centred. TWO SIT ONE ABOVE THE OTHER. Four make a two by two grid. Every spot
+    /// is the centre of one cell of an even division of that area, so the margins round the
+    /// outside and the gap between are the same measurement.
+    ///
+    /// Two used to sit side by side, and on a real sheet the two views overlapped, because
+    /// each was wider than half the drawing area. A landscape sheet is wider than it is
+    /// tall and the drawings on it are wider than they are tall as well, so halving the
+    /// width is the cut that runs out first. Halving the height is the one that fits.
+    /// Four keeps the two by two grid, because halving both is the only way to make four
+    /// cells at all.
     ///
     /// The sheet used to be copied from one the user had already laid out, which meant reading
     /// a position off an existing viewport. It is worked out here now, so a plot can be given a
@@ -58,7 +65,8 @@ namespace RcrcGreen.Core
 
         /// <summary>
         /// The centres, in reading order: left to right, then top to bottom. A caller placing
-        /// views in the order the user ticked them gets them in that order on the sheet.
+        /// views in the order the user ticked them gets them in that order on the sheet, so
+        /// the first of two is the top one.
         ///
         /// Every spot is measured from the sheet origin rather than from the corner of the area,
         /// because that is what Revit wants and what the report prints.
@@ -75,8 +83,8 @@ namespace RcrcGreen.Core
                     "howMany", howMany, "A sheet holds 1, 2 or 4 views.");
             }
 
-            int across = howMany == 1 ? 1 : 2;
-            int down = howMany == 4 ? 2 : 1;
+            int across = howMany == 4 ? 2 : 1;
+            int down = howMany == 1 ? 1 : 2;
 
             var spots = new List<ViewportSpot>(howMany);
 

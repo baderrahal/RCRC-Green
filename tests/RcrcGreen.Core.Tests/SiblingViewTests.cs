@@ -396,6 +396,39 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
+        /// The team's second number, from the run where the section came out right and the
+        /// viewport was still wider than the sheet. The cut ran the whole width of the
+        /// scope box, 36.4747 metres on NS-32, and they halved it. Both numbers are written
+        /// out here by hand.
+        /// </summary>
+        [Fact]
+        public void TheCutIsHalfTheBoxThatWasMeasuredOnNsThirtyTwo()
+        {
+            Assert.Equal(36.4747, SectionCutLength.WholeBoxOnNsThirtyTwoMetres);
+            Assert.Equal(18.2374, SectionCutLength.Metres);
+            Assert.Equal(
+                SectionCutLength.WholeBoxOnNsThirtyTwoMetres / 2.0,
+                SectionCutLength.Metres,
+                4);
+        }
+
+        /// <summary>
+        /// The words say whose setting it is, the same way the depth's do, so nobody reads
+        /// the number as something found in the model.
+        /// </summary>
+        [Fact]
+        public void TheCutLengthSaysWhoseSettingItIs()
+        {
+            Assert.Equal(
+                "The cut is 18.2374 metres long, centred on the plot's scope box and cut "
+                + "the short way. That is the tool's own setting and not a number read off "
+                + "any view or off the box. It used to run the whole width of the box, "
+                + "which is 36.4747 metres on NS-32, and the viewport that produced was "
+                + "wider than the drawing area it had to sit in.",
+                SectionCutLength.InWords());
+        }
+
+        /// <summary>
         /// One foot is 0.3048 metres by definition, so every number here is exact rather than
         /// measured, and each is written out by hand.
         /// </summary>

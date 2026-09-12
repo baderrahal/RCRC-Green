@@ -1,6 +1,27 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Sixtieth pass closed. Both pull requests merged: 89 as 2688f631 with
+Phase: 9, ship. Sixty first pass, the seven fix round after the panel was run in Revit, one
+pull request. The new number scheme works on real sheets, 600DM11A, 400DM11 and 200DM11, and
+Crop View came on for the first time on a created section. Fix 1, ticking a plot no longer
+folds step 1, and MoveOnFrom goes with the flag because Next was its only other caller. Fix
+2, the sub plot line read DM-02DM02 and the stem is labelled and spaced through
+PanelSteps.SubPlotSaid. Fix 3, From and To offer 01 to 99 on every model, digits only, and
+the list under them still holds only what this model carries in range, with the count line
+saying how many of the range exist here. Fix 4, a search box per plot with All and None over
+what it shows, the sub plot lines in their own bounded scroller and the plot lines never in
+one. Fix 5, the cause was PlannedSheet.SingleCode returning empty for a no-view sheet at
+SheetDivision.cs:66, turned into NoViewsWords by the panel at DrawingSheetPanel.cs:2250 and
+painted red by SayRowFault at 1581, and the code was in install/title-blocks.txt all along,
+so TitleBlockSettings.CodeFor reads it back off the block. Fix 6, the cut is 18.2374 metres,
+centred, the tool's own setting, said in the report. Fix 7, two views stack rather than
+sitting side by side, and SheetFit measures every view before it is placed and carries what
+does not fit onto another sheet, numbered on by SheetNumberRun inside the transaction. Suite
+reads 1308 locally, the 1281 the branch started from plus 27, and 1316 on the runner because
+KPI landed pull requests 92 and 93 while this one was open, which is the 1289 main now reads
+plus the same 27. Three breaks watched red and reversed byte for byte. The mockup is
+design/pr-94/panel.html.
+
+Before that, the sixtieth pass closed. Both pull requests merged: 89 as 2688f631 with
 1271 tests on the runner and 90 as ff5d69d2 with 1281, 0 failed and 0 skipped both
 times, both squash messages back byte for byte, and the merged main reads 1281 locally.
 The sheet number is the view code, the plot identifier with its dash dropped, then the

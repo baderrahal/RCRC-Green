@@ -56,10 +56,21 @@ with no reason next to it tells nobody anything.
 formatted next to the control that shows it. That is the same shape as the grid cell, the
 column count and the run report, and it has been the bug three times.
 
-**Nothing drags the user out of a step they are working in.** Ticking the first plot opens
-step 2 by itself, once per read, because that is the act that opens everything below, and a
-second plot ticked later never jumps again. Everything else is a Next button at the foot of
-the open step or a click on any header.
+**Nothing drags the user out of a step they are working in.** NOTHING opens another step
+by itself. Ticking a plot used to fold step 1 and open step 2 while the user was still
+choosing sub plots. The Next button at the foot of the open step and a click on any header
+are the only two ways a step opens.
+
+**Step 1 is a tick list of plots, and the sub plots are worked in rather than scrolled
+past.** Every two letter prefix the model holds is a plot line, always visible and never
+inside a scroller. A ticked one opens From and To over the digits 01 to 99, the same on
+every model because the team works across them, a search box with All and None over what it
+shows, and its own bounded list of sub plot lines that scrolls inside itself so the steps
+below stay reachable. Each line is the tick, the identifier and what its sheet numbers will
+be built from, labelled: it read `DM-02DM02` for one round, the two run together with
+nothing between them. The search box is made once and kept, and typing in it refills the
+lines under it rather than redrawing the step, because rebuilding the tree under the cursor
+takes the keyboard out of the box.
 
 The scope box counts live inside step 5 rather than in a section of their own, because they act
 on the same ticked plots the run does.
@@ -319,9 +330,17 @@ identifier with its dash dropped, then its sheet letter, worked out by `SheetNum
 Core, so DM-42's two 010 sheets read 010DM42A and 010DM42B and its one 200 sheet reads a bare
 200DM42. Every built number shows in its box and can be typed over, the number box is a plain
 box now because the free numbers list it offered was stepped off numbers that are mostly
-copies, and a sheet mixing codes or holding no views gets an empty box with the reason, which
-the run refusal carries too. Nothing is set per plot: the identifier is in the number, so no
-two plots can collide, and a number the model already holds is still refused by name.
+copies, and a sheet mixing codes gets an empty box with the reason, which the run refusal
+carries too. Nothing is set per plot: the identifier is in the number, so no two plots can
+collide, and a number the model already holds is still refused by name.
+
+**A SHEET WITH NO VIEWS TAKES ITS CODE OFF ITS TITLE BLOCK.** It carries no view type, so
+nothing could front its number and every COVER PAGE sheet came up with a red line under the
+box saying so. Both models number their title sheets, 010001A on NG03 and 010QE on NG05, and
+the shipped `title-blocks.txt` has paired 010 TITLE SHEET with COVER PAGE all along.
+`TitleBlockSettings.CodeFor` hands back the one code every pairing on a block agrees on, so
+a no-view sheet numbers itself like any other row, and only a block neither settings file
+names, or one paired with two codes, is left with nothing to build from.
 
 **The sheets come out in the team's order, which is also the letter order.** The list lives
 on `SheetOrder` in Core, nine names read off both models: TITLE SHEET, LIST OF DRAWINGS,

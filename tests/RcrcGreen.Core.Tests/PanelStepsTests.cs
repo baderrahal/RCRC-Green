@@ -181,18 +181,20 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheMessagesThePanelUsedToFormatItselfLiveHere()
         {
-            Assert.Equal("No plots in this model.", PanelSteps.PlotsLine(true, 0, 0, 0, 0));
+            Assert.Equal("No plots in this model.", PanelSteps.PlotsLine(true, 0, 0, 0, 0, 0));
             Assert.Equal(
                 "Nothing ticked yet. Tick a plot to list its sub plots, 160 in the model.",
-                PanelSteps.PlotsLine(false, 0, 0, 0, 160));
+                PanelSteps.PlotsLine(false, 0, 0, 0, 0, 160));
             Assert.Equal(
-                "2 plots ticked, 21 of 23 sub plots ticked, 160 in the model. Untick a sub "
-                + "plot to leave it out of the counts and out of anything that writes.",
-                PanelSteps.PlotsLine(false, 21, 23, 2, 160));
+                "2 plots ticked, 21 of 23 sub plots ticked. The ranges cover 198 numbers and "
+                + "this model holds 23 of them, out of 160. Untick a sub plot to leave it out "
+                + "of the counts and out of anything that writes.",
+                PanelSteps.PlotsLine(false, 21, 23, 2, 198, 160));
             Assert.Equal(
-                "1 plot ticked, 1 of 1 sub plot ticked, 160 in the model. Untick a sub "
-                + "plot to leave it out of the counts and out of anything that writes.",
-                PanelSteps.PlotsLine(false, 1, 1, 1, 160));
+                "1 plot ticked, 1 of 1 sub plot ticked. The range covers 1 number and this "
+                + "model holds 1 of them, out of 160. Untick a sub plot to leave it out of "
+                + "the counts and out of anything that writes.",
+                PanelSteps.PlotsLine(false, 1, 1, 1, 1, 160));
 
             Assert.Equal(
                 "42 views across 17 ticked plots. Only C is written.",
@@ -216,6 +218,27 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(
                 "3 marked. Marking records intent and changes nothing until Run.",
                 PanelSteps.MarkedLine(3));
+        }
+
+        /// <summary>
+        /// One sub plot's line used to read DM-02DM02, the identifier and the stem with
+        /// nothing between them, so the stem looked like the name printed twice. It says
+        /// what it is now, and the no views words still ride along behind it.
+        /// </summary>
+        [Fact]
+        public void TheSubPlotLineLabelsTheStemRatherThanRepeatingTheName()
+        {
+            Assert.Equal("sheet numbers DM02", PanelSteps.SubPlotSaid("DM02", string.Empty));
+
+            Assert.Equal(
+                "sheet numbers DM43, box and elements, no views",
+                PanelSteps.SubPlotSaid("DM43", "box and elements, no views"));
+
+            Assert.Equal(
+                "box and elements, no views",
+                PanelSteps.SubPlotSaid(string.Empty, "box and elements, no views"));
+
+            Assert.Equal(string.Empty, PanelSteps.SubPlotSaid(null, null));
         }
 
         [Fact]

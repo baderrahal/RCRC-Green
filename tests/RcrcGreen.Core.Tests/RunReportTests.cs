@@ -324,6 +324,11 @@ namespace RcrcGreen.Core.Tests
             // The depth is the tool's own setting now. Four real sections disagreed with each
             // other, so there was never a rule in the model to copy.
             Assert.Contains("looks 1 metre. That is the tool's own setting", written);
+            Assert.Contains("THE CUT IS 18.2374 METRES LONG, centred on that box", written);
+            Assert.Contains("TWO VIEWS SIT ONE ABOVE THE OTHER, not side by side", written);
+            Assert.Contains("EVERY VIEW IS MEASURED BEFORE IT IS PLACED", written);
+            Assert.Contains("how many views each sheet", written);
+            Assert.Contains("36.4747 metres on", written);
             Assert.Contains("read 0.93, 0.93, 1.53 and 12.83 metres", written);
             Assert.DoesNotContain("the far clip offset of the sibling section", written);
         }

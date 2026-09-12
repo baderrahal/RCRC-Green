@@ -123,6 +123,37 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
+        /// The one view code every pairing on a title block shares, empty when they disagree
+        /// or when neither file names that block.
+        ///
+        /// This is the way round a sheet with NO VIEWS has to ask. Such a sheet carries no
+        /// view type, so nothing could front its number and the panel refused it, which is
+        /// what put a red line under the number box of every COVER PAGE sheet somebody
+        /// added. The code was in the settings the whole time: the shipped file pairs
+        /// 010 TITLE SHEET with COVER PAGE, and COVER PAGE is paired with nothing else.
+        ///
+        /// Disagreement gets no answer rather than a vote. KEYPLAN carries three pairings
+        /// and every one of them is 010, so it answers 010. A block carrying a 200 and a
+        /// 600 pairing answers nothing, because picking either would be a guess, the same
+        /// rule a sheet whose views mix codes already follows.
+        /// </summary>
+        public string CodeFor(string familyName, string typeName)
+        {
+            string family = (familyName ?? string.Empty).Trim();
+            string type = (typeName ?? string.Empty).Trim();
+            if (family.Length == 0 || type.Length == 0) return string.Empty;
+
+            var codes = _byType.Values
+                .Where(one => string.Equals(one.FamilyName, family, StringComparison.Ordinal)
+                    && string.Equals(one.TypeName, type, StringComparison.Ordinal))
+                .Select(one => one.Type.Code)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            return codes.Count == 1 ? codes[0] : string.Empty;
+        }
+
+        /// <summary>
         /// Every pairing, in view type order, which is the order the panel and any report over
         /// them read in.
         /// </summary>

@@ -18,5 +18,12 @@ namespace RcrcGreen.Revit
         /// the name of this constant for the same reason.
         /// </summary>
         public const double SectionDepthFeet = SectionDepth.Metres / Lengths.MetresPerFoot;
+
+        /// <summary>
+        /// The same rule for how long the cut is. Core holds the metres because the report
+        /// prints them, and the one conversion is here.
+        /// </summary>
+        public const double SectionCutLengthFeet =
+            SectionCutLength.Metres / Lengths.MetresPerFoot;
     }
 }

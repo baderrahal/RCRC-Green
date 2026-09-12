@@ -62,12 +62,18 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// The axis and the depth have no default here on purpose. The caller decides both,
-        /// because the choice belongs to whoever is looking at the plot, and because a depth
-        /// carries a unit that Core knows nothing about.
+        /// The axis, the depth and the cut length have no default here on purpose. The
+        /// caller decides all three, because the choice belongs to whoever is looking at
+        /// the plot, and because a length carries a unit that Core knows nothing about.
+        ///
+        /// The line is CENTRED on the box and is the length it is given. It used to run
+        /// from one edge of the box to the other, which on NS-32 is 36.4747 metres and
+        /// produced a viewport wider than the sheet it had to sit on.
         /// </summary>
         /// <param name="depth">How far the view looks, in the same unit as the box numbers.</param>
-        public static SectionPlacement Across(PlotBox box, SectionAxis axis, double depth)
+        /// <param name="cutLength">How long the cut is, in the same unit as the box numbers.</param>
+        public static SectionPlacement Across(
+            PlotBox box, SectionAxis axis, double depth, double cutLength)
         {
             if (box == null) throw new ArgumentNullException("box");
             if (axis != SectionAxis.ShortSide && axis != SectionAxis.LongSide)
@@ -77,6 +83,11 @@ namespace RcrcGreen.Core
             if (double.IsNaN(depth) || double.IsInfinity(depth))
             {
                 throw new ArgumentException("The depth is not a real number.", "depth");
+            }
+            if (double.IsNaN(cutLength) || double.IsInfinity(cutLength) || cutLength <= 0.0)
+            {
+                throw new ArgumentException(
+                    "The cut length is not a real length.", "cutLength");
             }
             if (box.WidthX <= 0.0 || box.WidthY <= 0.0)
             {
@@ -90,20 +101,22 @@ namespace RcrcGreen.Core
             bool yIsShorter = box.WidthY <= box.WidthX;
             bool alongY = axis == SectionAxis.ShortSide ? yIsShorter : !yIsShorter;
 
+            double half = cutLength / 2.0;
+
             if (alongY)
             {
                 return new SectionPlacement(
                     box.PlotName,
-                    new Point3D(box.CentreX, box.MinY, box.CentreZ),
-                    new Point3D(box.CentreX, box.MaxY, box.CentreZ),
+                    new Point3D(box.CentreX, box.CentreY - half, box.CentreZ),
+                    new Point3D(box.CentreX, box.CentreY + half, box.CentreZ),
                     new Vector3D(1.0, 0.0, 0.0),
                     depth);
             }
 
             return new SectionPlacement(
                 box.PlotName,
-                new Point3D(box.MinX, box.CentreY, box.CentreZ),
-                new Point3D(box.MaxX, box.CentreY, box.CentreZ),
+                new Point3D(box.CentreX - half, box.CentreY, box.CentreZ),
+                new Point3D(box.CentreX + half, box.CentreY, box.CentreZ),
                 new Vector3D(0.0, -1.0, 0.0),
                 depth);
         }
