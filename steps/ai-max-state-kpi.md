@@ -43,7 +43,9 @@ Three break watches went red on 2, 1 and 2 tests and were restored byte for byte
 with a diff against its backup. **One existing test was changed by hand**, the refusal that read
 No template picked and now reads No template ticked. **Locally 1443 tests at this branch, 0
 failed and 0 skipped, 750 of them KPI, 27 added, against the 1416 main carries** at the branch
-point `96b6239`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS GO HERE AFTER THE MERGE.
+point `96b6239`. Build zero warnings. Pull request 102, merged into main as `131b1dd`, the
+runner executing 1443 tests against the merged head, 0 failed and 0 skipped, and locally the
+same 1443 ran at the merge, 750 of them KPI, the merged tree byte for byte the branch head.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and the two correct workbooks, MOSQUES on
 NG03 at 15:52 and STREETS on NG05 at 01:30, are what a press over two templates has to be held
 against.
