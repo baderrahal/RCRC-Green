@@ -1323,7 +1323,49 @@ write, and two of the pane's buttons open a folder dialog owned by no window, be
 Revit's own ribbon stays live. At render priority the paint goes through and every queued
 click stays queued until the run returns.
 
-## Do not name a KPI control Scan Model
+## The scan is a step inside Create, and there is no scan button
 
-Scan Model is a button inside the Drawing Sheet pane. Two buttons with one name doing
-different things is a trap for the production team. The KPI one is KPI Scan.
+**Pressing Create used to want a scan the user had to know to do first**, which is the tool's
+business and not theirs. `ScanNeeded.Decide` in Core is the rule: the model is read when no
+scan is held or what is held is of another model, and a scan already held answers a second
+press on the same model. It is the same shape `HeldReadings.Decide` uses for the per plot
+readings, because two shapes for one kind of question would be two rules. The press says
+which of the two it did, Reusing the scan already held or the section lines of a real read,
+for the same reason the readings say it: a press that finishes in seconds where the last read
+for two minutes looks like a press that skipped the work.
+
+The KPI Scan button is gone from the pane and the ribbon tooltip no longer names it. The
+strip carries the model's name and its element count and nothing to press. **The header's
+numbers come back with the plot read** rather than off the scan, so the name has a count
+under it as soon as the pane is shown, which is what the scan line used to do only after
+somebody pressed a button. Nothing about the scan report changed: it is still written, still
+named, and still the thing the team reads. Its headline goes through `Progressed` rather than
+`Told`, because `Told` is the run's end line and saying the headline there would end the press
+on screen, and shut the progress window, with the workbook still being filled.
+
+The old rule this replaces said a KPI control must never be called Scan Model, because that
+name is a button inside the Drawing Sheet pane and two buttons with one name doing different
+things is a trap. That still holds for any control this pane grows. It simply has no scan
+control to name.
+
+## The progress window is modeless, owned, and opened outside Execute
+
+A 123 second read behind a docked pane is a tool that looks dead, and the status line cannot
+be seen at all when the pane is behind something else. `KpiProgressWindow` shows what the
+status line shows, the same words out of `ProgressWords`, because two wordings for one run is
+two records of one fact.
+
+**Owned by the Revit main window**, through its handle, so it stays over Revit and goes away
+with it. A window owned by nobody sits over every application on the machine with Revit's own
+ribbon live behind it, which is the hazard the fifty fifth pass's breaker caught in the
+repaint pump. **Modeless**, so it never blocks the thread the run is on. **Opened by the pane
+before the external event is raised and closed when the run's last answer comes back, never
+from inside `Execute`**, so nothing about the window runs inside the handler's own call frame.
+`Told` is what closes it, being the run's end line whatever ended it, a finish, a refusal or a
+throw.
+
+**There is no Cancel, and that is deliberate rather than unfinished.** Cancelling mid read
+would leave a half read set of plots that the reconciliation would count as plots read, which
+is the one state the rest of the tool would trust and should not. A cancel that lies is worse
+than no cancel, and an honest one is a cancellation threaded through every reader with a
+discard of everything read, which is its own round.

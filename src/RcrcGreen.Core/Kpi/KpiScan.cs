@@ -5,7 +5,8 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// Everything one KPI Scan read out of a document, as plain values. The Revit side fills
+    /// Everything one scan of the model read out of a document, as plain values. The scan is
+    /// a step inside Create rather than a button. The Revit side fills
     /// this in and hands it here, and nothing in it knows what a Document is.
     ///
     /// Every part is optional at the constructor so a read that failed in one section still

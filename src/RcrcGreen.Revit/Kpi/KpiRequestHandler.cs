@@ -14,7 +14,6 @@ namespace RcrcGreen.Revit.Kpi
     {
         Nothing,
         WhichModel,
-        Scan,
         Plots,
         Create
     }
@@ -24,17 +23,24 @@ namespace RcrcGreen.Revit.Kpi
     /// external event, so nothing the KPI pane asks for goes through the Drawing Sheet's and
     /// a failure in one can never cost the other.
     ///
-    /// Two requests. WhichModel reads the document title and nothing else, so the pane can
-    /// name the model the moment it is shown. Scan reads the whole document into a
-    /// <see cref="KpiScan"/> and writes the report. Neither opens a transaction, because
-    /// neither writes to the model, and adding one would be the first step toward a tool that
-    /// changes a model while claiming to read it.
+    /// Three requests. WhichModel reads the document title and nothing else, so the pane can
+    /// name the model the moment it is shown. Plots reads the plots, the dropdown names and
+    /// the element count the header shows. Create fills the workbook, and the scan of the
+    /// whole model is a step inside it rather than a request of its own, because pressing
+    /// Create used to want a scan the user had to know to do first. None of them opens a
+    /// transaction, because none writes to the model, and adding one would be the first step
+    /// toward a tool that changes a model while claiming to read it.
     /// </summary>
     internal sealed class KpiRequestHandler : IExternalEventHandler
     {
         private readonly object _asking = new object();
 
         private KpiRequest _wanted = KpiRequest.Nothing;
+
+        // The model the scan held was read from, empty until one has run. Create reads the
+        // model when this does not name the document it is filling for, which is what makes
+        // the scan a step inside Create rather than a button somebody has to know to press.
+        private string _scannedTitle = string.Empty;
 
         /// <summary>
         /// Called back on the Revit thread with the document title, empty when no document is
@@ -154,9 +160,6 @@ namespace RcrcGreen.Revit.Kpi
                     case KpiRequest.WhichModel:
                         // Said above. This request exists to ask for that and nothing else.
                         break;
-                    case KpiRequest.Scan:
-                        Scan(document);
-                        break;
                     case KpiRequest.Plots:
                         ReadThePlots(document);
                         break;
@@ -202,8 +205,16 @@ namespace RcrcGreen.Revit.Kpi
                 KpiFile.NameFor(scan.Document.Title, writtenAt),
                 KpiReport.Write(scan, writtenAt));
 
+            // What was read, so a second Create on the same model does not read it again.
+            _scannedTitle = scan.Document.Title ?? string.Empty;
+
             Scanned?.Invoke(scan, writtenAt);
-            Told?.Invoke(KpiPaneWords.Headline(scan, ReportPlaces.Written(written)));
+
+            // Through Progressed rather than Told. This runs INSIDE Create now, and Told is
+            // the run's end line: saying the scan headline there would end the press on
+            // screen while the workbook was still being filled, and would shut the progress
+            // window with the work still running.
+            Progressed?.Invoke(KpiPaneWords.Headline(scan, ReportPlaces.Written(written)));
         }
 
         /// <summary>
@@ -213,15 +224,31 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private void ReadThePlots(Document document)
         {
+            var clock = Stopwatch.StartNew();
+
             IReadOnlyList<string> componentNames = KpiPlotReader.ComponentNames(document);
             PlotsInTheModel plots = KpiPlotReader.Plots(document);
+            IReadOnlyList<string> locationNames = KpiPlotReader.LocationNames(document);
+            IDictionary<string, string> perPlot = KpiPlotReader.ValuePerPlot(
+                document, componentNames.Count == 0 ? string.Empty : componentNames[0]);
+            IDictionary<string, IReadOnlyList<PlotParameterValue>> references =
+                KpiPlotReader.ReferenceValuesPerPlot(document);
+
+            // The header's element count comes back with the plots, so the model's name has a
+            // number under it as soon as the pane is shown. It used to come off the scan alone,
+            // which meant the header sat empty until somebody pressed a button, and the button
+            // is gone. Counted the same way the scan counts it, instances and not types.
+            int instances = new FilteredElementCollector(document).WhereElementIsNotElementType().GetElementCount();
+            clock.Stop();
 
             FoundPlots?.Invoke(new KpiPlotFacts(
                 plots,
                 componentNames,
-                KpiPlotReader.LocationNames(document),
-                KpiPlotReader.ValuePerPlot(document, componentNames.Count == 0 ? string.Empty : componentNames[0]),
-                KpiPlotReader.ReferenceValuesPerPlot(document)));
+                locationNames,
+                perPlot,
+                references,
+                instances,
+                clock.Elapsed.TotalSeconds));
         }
 
         /// <summary>
@@ -258,6 +285,17 @@ namespace RcrcGreen.Revit.Kpi
             // whole press, the read apart from it, and each plot's own share, so the next run
             // says which part is slow rather than leaving it to be reasoned about.
             var whole = Stopwatch.StartNew();
+
+            // **THE SCAN IS A STEP INSIDE CREATE.** Pressing Create used to want a scan the
+            // user had to know to do first, which is the tool's business and not theirs. The
+            // model is read when there is nothing held or what is held is of another model,
+            // and the scan already held answers a second press on the same model, the same
+            // rule the per plot readings follow. Core decides it and says which happened, so
+            // the screen is never silent about a press that skipped two minutes of work.
+            ScanSource scanned = ScanNeeded.Decide(_scannedTitle, document.Title);
+            if (scanned.Held) Progressed?.Invoke(ProgressWords.ReusingTheScan);
+            else Scan(document);
+
             var reading = Stopwatch.StartNew();
 
             // The groups that count are the ones a tree list sheet of the template is named for.

@@ -16,6 +16,12 @@ namespace RcrcGreen.Revit
     {
         public const double Body = 12.0;
 
+        /// <summary>
+        /// How wide the KPI progress window is. Wide enough for the longest line it shows,
+        /// Sections 5 to 8 of 9, schedules, 400 of 951, 42%, without it wrapping to two.
+        /// </summary>
+        public const double ProgressWindowWidth = 420.0;
+
         public const double StepNumber = 15.0;
 
         public const double StepTitle = 12.0;

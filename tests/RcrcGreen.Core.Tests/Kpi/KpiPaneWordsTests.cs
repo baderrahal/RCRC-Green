@@ -109,10 +109,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheFixedLinesSayTheToolReadsAndWritesAFileOnly()
         {
             Assert.Equal("No model open", KpiPaneWords.NoModelName);
-            Assert.Equal("Not scanned yet. Press KPI Scan.", KpiPaneWords.NotScanned);
+
+            // No line names a button any more. The scan is a step inside Create, so a line
+            // telling somebody to press KPI Scan would name a control the pane does not hold.
+            Assert.Equal("Not read yet.", KpiPaneWords.NotScanned);
             Assert.Equal(
-                "KPI Scan reads and writes a text file. It creates nothing in the model and touches no workbook.",
+                "Create reads the model and writes a workbook and two text files. It creates "
+                + "nothing in the model and never writes to a template.",
                 KpiPaneWords.ReadOnly);
+            Assert.Equal("No open document. Open a model.", KpiPaneWords.NoModel);
+            Assert.DoesNotContain("KPI Scan", KpiPaneWords.NotScanned + KpiPaneWords.ReadOnly + KpiPaneWords.NoModel);
         }
     }
 }

@@ -4,6 +4,97 @@ Newest entry first.
 
 ---
 
+## 2026-09-12, fifty eighth pass. Create scans if it needs to, and the scan button is gone
+
+Item 1 of two, on its own as Bader asked, so that if the first real run breaks nobody has to
+work out which half did it. Item 2, several templates in one run, is a round of its own and is
+NOT in this one. The branch came off a fresh pull of main at `b5e2c90`, so the baseline is
+**1282 tests, 700 of them KPI**. **Nothing in this round has been observed in Revit**, and the
+1552 run's correct workbook is what it must not cost: 36 parts, calcChain removed, calcId 0,
+calcMode auto, no cached value left, zero errors on recalculation, Total Green cover 13,516,
+Canopy 11,168, Total Trees 374, Planting 1,493, Lawn 855 off 70,343.
+
+Pull request and merge hash: in the record entry the merge adds above this line. Locally
+**1289 tests at this branch, 0 failed and 0 skipped, 707 of them KPI, 7 added here**, against
+the 1282 main carries. Build zero warnings.
+
+### The scan is a step inside Create
+
+`ScanNeeded.Decide` in Core is the whole rule and it is the same shape `HeldReadings.Decide`
+already uses for the per plot readings, because two shapes for one kind of question would be
+two rules to keep in step. The model is read when no scan is held or what is held is of
+another model, and a scan already held answers a second press on the same model. The handler
+holds the title its scan was read from and Create calls `Scan` itself before it reads a plot.
+Nothing about the reading reuse moved: `HeldReadings` decides that separately and the 2.5
+second finish after a 123 second read is that working, untouched.
+
+The press says which of the two it did, `Reusing the scan already held` or the real read's own
+section lines, for the same reason the readings say it. **The scan's headline moved from
+`Told` to `Progressed`**, which matters: `Told` is the run's end line and it is what shuts the
+progress window, so the headline said there would have ended the press on screen, and closed
+the window, with the workbook still being filled.
+
+### The button, and where the header's numbers come from now
+
+`KPI Scan` is off the pane's strip and `AskedForAScan` is deleted, the `Scan` request is off
+the enum and out of the switch, and the ribbon tooltip no longer describes a button that is
+not there. Four code comments naming it are corrected and two test files pinned its old
+wording, both updated by hand.
+
+**The header's element count now comes back with the plot read** rather than off the scan.
+`KpiPlotFacts` carries the count and the seconds, `ReadThePlots` counts instances the same way
+the scan counts them, and `Found` fills the line. So the model's name has a number under it as
+soon as the pane is shown, which is what the scan line used to do only after a press. That
+read is once per model already, guarded by the title the plots were last asked for, so the
+count costs one collector pass per model rather than one per redraw.
+
+### The progress window
+
+`KpiProgressWindow`, modeless, owned by the Revit main window through its handle, showing the
+same `ProgressWords` lines the status line shows. **Opened by the pane before the external
+event is raised and closed when the run's last answer comes back, never from inside
+`Execute`**, which is the hazard the fifty fifth pass's breaker caught when the repaint pump
+was pumping at a priority that let queued clicks run inside the handler's call frame. `Told`
+closes it, being the end line whatever ended the run, a finish, a refusal or a throw.
+
+**There is no Cancel, deliberately, and this is the round's one refusal to build something.**
+Bader asked for one if it is cheap. It is not: cancelling mid read leaves a half read set of
+plots that the reconciliation would count as plots read, which is exactly the half read state
+the rest of the tool would trust. An honest cancel is a cancellation threaded through every
+reader plus a discard of everything read, which is its own round. A cancel that lies is worse
+than no cancel.
+
+### Break watches
+
+Three, each restored byte for byte and checked with cmp, the suite rebuilt and rerun green at
+1289.
+
+- a held scan of another model taken for this one: **3 red**, the other model case, the exact
+  title comparison and the no document case
+- nothing held taken as a scan of this model: **1 red**, the first press on a fresh pane
+- the pane words naming the vanished button again: **1 red**, the fixed lines test
+
+### Existing tests changed
+
+Two, both by hand. `KpiPaneWordsTests` pinned `Not scanned yet. Press KPI Scan.` and the
+`ReadOnly` line naming the button, and gained a line holding that none of the three fixed
+lines names it. `KpiCreateTests` pinned the `NoPlots` line telling somebody to press it. No
+test moved for any other reason.
+
+`PaneLabelTests` at the tests root also holds the string KPI Scan, and it is LEFT ALONE: it
+is not KPI's file, and it uses the words as input to the caption escape rather than asserting
+any button exists.
+
+### What is open
+
+Whether the window appears where it should, whether it shuts on every path, and whether the
+status line moves mid run are all things only a run on a real pane can show. The scan report's
+own location now shows in the progress line while the run goes rather than sitting on the
+status line at the end, because the end line belongs to Create. Whether the team wants it to
+persist somewhere after the press is a question for Bader.
+
+---
+
 ## 2026-09-12, fifty seventh pass. The plots block that said open a model, and the ten warnings
 
 Two things off the 13:48 run on RCRC_NG03_EZ. The branch came off a fresh pull of main at

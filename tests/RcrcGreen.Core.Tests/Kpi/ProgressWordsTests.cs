@@ -131,12 +131,36 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheWritingStepsNameThemselves()
         {
             Assert.Equal("Reusing the readings already held.", ProgressWords.ReusingTheReadings);
+            Assert.Equal("Reusing the scan already held.", ProgressWords.ReusingTheScan);
             Assert.Equal("Adding the plots up.", ProgressWords.AddingUp);
             Assert.Equal("Copying the template.", ProgressWords.CopyingTheTemplate);
             Assert.Equal("Writing the cells.", ProgressWords.WritingTheCells);
             Assert.Equal("Reading the written cells back.", ProgressWords.ReadingThemBack);
             Assert.Equal("Checking the workbook's own formulas.", ProgressWords.CheckingTheFormulas);
             Assert.Equal("Writing the report.", ProgressWords.WritingTheReport);
+        }
+
+        /// <summary>
+        /// The press says which of the two it did, both for the scan and for the readings.
+        /// A press that reuses both finishes in seconds where the first read for two minutes,
+        /// and silence after it is what a skipped step looks like.
+        /// </summary>
+        [Fact]
+        public void BothReusesNameThemselvesAndAreDifferentLines()
+        {
+            Assert.Equal("Reusing the scan already held.", ProgressWords.ReusingTheScan);
+            Assert.Equal("Reusing the readings already held.", ProgressWords.ReusingTheReadings);
+            Assert.NotEqual(ProgressWords.ReusingTheScan, ProgressWords.ReusingTheReadings);
+        }
+
+        /// <summary>
+        /// The window carries the tool's name, so a modeless window over Revit says whose it
+        /// is rather than sitting there unattributed.
+        /// </summary>
+        [Fact]
+        public void TheProgressWindowIsNamedForTheTool()
+        {
+            Assert.Equal("RCRC Green KPI", ProgressWords.WindowTitle);
         }
 
         /// <summary>

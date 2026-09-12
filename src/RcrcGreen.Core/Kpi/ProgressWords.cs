@@ -38,6 +38,20 @@ namespace RcrcGreen.Core.Kpi
 
         public const string ReusingTheReadings = "Reusing the readings already held.";
 
+        /// <summary>
+        /// The scan already held answers this press, so the model was not read again. Said
+        /// for the same reason the readings say it: a press that skips two minutes of work
+        /// looks like a press that skipped the work.
+        /// </summary>
+        public const string ReusingTheScan = "Reusing the scan already held.";
+
+        /// <summary>
+        /// What the progress window is called while a press runs. The window shows the same
+        /// lines the status line does, because two wordings for one run is two records of
+        /// one fact.
+        /// </summary>
+        public const string WindowTitle = "RCRC Green KPI";
+
         public const string AddingUp = "Adding the plots up.";
 
         public const string WritingTheReport = "Writing the report.";

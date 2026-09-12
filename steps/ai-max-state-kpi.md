@@ -1,5 +1,32 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Fifty eighth pass, item 1 of the two Bader asked for, on its own so the first
+real run can say which half broke anything. **Item 2, several templates in one run, is NOT in
+this round.** The audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this
+round closes none.
+
+**Create scans if it needs to and the scan button is gone.** `ScanNeeded.Decide` in Core reads
+the model when no scan is held or what is held is of another model, and uses the scan already
+held otherwise, the same shape `HeldReadings.Decide` uses for the readings. The press says
+which it did. KPI Scan is off the pane and out of the request enum, and the ribbon tooltip no
+longer names it. The header's element count comes back with the plot read now, so the model's
+name has a number under it as soon as the pane is shown. The scan report is unchanged, still
+written and still named, and its headline moved to `Progressed` because `Told` is the end line
+that shuts the progress window.
+
+**The progress window is modeless, owned by the Revit main window, and opened outside
+`Execute`**, closed by the run's end line whatever ended it. **There is no Cancel, and that is
+this round's one deliberate refusal**: cancelling mid read leaves a half read set of plots the
+reconciliation would count as read, which is the state the rest of the tool would trust and
+should not, so an honest cancel is its own round.
+
+Three break watches went red on 3, 1 and 1 tests and were restored byte for byte. **Locally
+1289 tests at this branch, 0 failed and 0 skipped, 707 of them KPI, 7 added, against the 1282
+main carries** at the branch point `b5e2c90`. Build zero warnings. The pull request, the merge
+hash and the runner's count go in the record the merge adds here. **Nothing in this round has
+been observed in Revit**, and the window appearing, shutting on every path and the line moving
+mid run are all waiting on the first run.
+
 Phase: 9, ship. Fifty seventh pass, two things off the 13:48 run on RCRC_NG03_EZ. **The audit
 files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
 

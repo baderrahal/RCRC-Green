@@ -16,8 +16,12 @@ namespace RcrcGreen.Revit.Kpi
             IReadOnlyList<string> componentNames,
             IReadOnlyList<string> locationNames,
             IDictionary<string, string> componentPerPlot = null,
-            IDictionary<string, IReadOnlyList<PlotParameterValue>> referenceValuesPerPlot = null)
+            IDictionary<string, IReadOnlyList<PlotParameterValue>> referenceValuesPerPlot = null,
+            int elementInstances = 0,
+            double readSeconds = 0.0)
         {
+            ElementInstances = elementInstances;
+            ReadSeconds = readSeconds;
             Plots = plots ?? PlotsInTheModel.Of(null, null);
             ComponentNames = componentNames ?? new List<string>();
             LocationNames = locationNames ?? new List<string>();
@@ -27,6 +31,16 @@ namespace RcrcGreen.Revit.Kpi
                 referenceValuesPerPlot ?? new Dictionary<string, IReadOnlyList<PlotParameterValue>>(),
                 StringComparer.Ordinal);
         }
+
+        /// <summary>
+        /// How many elements the model holds and how long this read took. The header used to
+        /// get these off the scan, which meant the model's name sat over an empty line until
+        /// somebody pressed a button. The plot read already walks the document, so it answers
+        /// for the header too and the header fills as soon as the pane is shown.
+        /// </summary>
+        public int ElementInstances { get; }
+
+        public double ReadSeconds { get; }
 
         /// <summary>
         /// What each plot's first sheet holds for the component, read with the first name the

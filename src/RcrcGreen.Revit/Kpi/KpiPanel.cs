@@ -18,9 +18,9 @@ using PaneLabel = RcrcGreen.Core.PaneLabel;
 namespace RcrcGreen.Revit.Kpi
 {
     /// <summary>
-    /// The KPI pane. The scan block at the top is the first round's and stays as it was: the
-    /// model name with when it was last read, one button reading KPI Scan, and one status
-    /// line. Below it sits the template block: the templates folder, every workbook in it
+    /// The KPI pane. The strip at the top carries the model name with when it was last read
+    /// and nothing to press, because Create reads the model when it needs to and a scan is a
+    /// step inside it. Under it sits one status line. Below that the template block: the templates folder, every workbook in it
     /// with what it was recognised as, one pick at a time, exactly what the pick would fill,
     /// and the name the output would be written under. Nothing here fills anything, and
     /// there is no fill button, because a control that does nothing is a lie about what the
@@ -76,6 +76,11 @@ namespace RcrcGreen.Revit.Kpi
         // ask and nothing asked again, which left the plots block on open a model while a scan
         // filled the header.
         private string _plotsAskedFor;
+
+        // The window a press of Create shows while it runs. Opened on this thread before the
+        // external event is raised and closed when the run's last answer comes back, never
+        // from inside Execute. Null whenever no press is running.
+        private KpiProgressWindow _running;
 
         // The one picked workbook, and the template settled for it. For most files the two
         // arrive together. A file caught between the two park templates has a pick and no
@@ -245,17 +250,9 @@ namespace RcrcGreen.Revit.Kpi
         {
             var inside = new DockPanel { Margin = PanelMetrics.StripInside, LastChildFill = true };
 
-            var scan = new Button
-            {
-                Content = PaneLabel.Escaped("KPI Scan"),
-                Margin = PanelMetrics.Gap,
-                Padding = PanelMetrics.CellPad,
-                ToolTip = KpiPaneWords.ReadOnly
-            };
-            scan.Click += (sender, e) => AskedForAScan();
-            DockPanel.SetDock(scan, Dock.Right);
-            inside.Children.Add(scan);
-
+            // **NO SCAN BUTTON.** Create reads the model when it needs to, so a scan is a step
+            // inside it rather than something the user has to know to do first. The strip
+            // carries what the document is and nothing to press.
             var named = new StackPanel();
             _modelName.FontWeight = FontWeights.Bold;
             _modelName.TextTrimming = TextTrimming.CharacterEllipsis;
@@ -278,12 +275,6 @@ namespace RcrcGreen.Revit.Kpi
         {
             _handler.Ask(wanted);
             _asking.Raise();
-        }
-
-        private void AskedForAScan()
-        {
-            Say(KpiPaneWords.Scanning);
-            Ask(KpiRequest.Scan);
         }
 
         /// <summary>
@@ -342,7 +333,27 @@ namespace RcrcGreen.Revit.Kpi
 
         private void Say(string what)
         {
-            Dispatcher.Invoke(() => _said.Text = what ?? string.Empty);
+            Dispatcher.Invoke(() =>
+            {
+                _said.Text = what ?? string.Empty;
+
+                // Told is the run's end line whatever ended it, a finish, a refusal or a
+                // throw, so the window goes with it and can never be left over a run that is
+                // no longer running. The scan's own headline goes through Progressed for
+                // exactly this reason: said here it would shut the window mid press.
+                Shut();
+            });
+        }
+
+        /// <summary>
+        /// Closes the progress window if one is open and forgets it. Safe to call when none
+        /// is, which is every press that never opened one.
+        /// </summary>
+        private void Shut()
+        {
+            KpiProgressWindow running = _running;
+            _running = null;
+            if (running != null) running.Done();
         }
 
         /// <summary>
@@ -360,7 +371,11 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private void Moved(string what)
         {
-            Dispatcher.Invoke(() => _said.Text = what ?? string.Empty);
+            Dispatcher.Invoke(() =>
+            {
+                _said.Text = what ?? string.Empty;
+                if (_running != null) _running.Moved(what);
+            });
             Dispatcher.Invoke(new Action(() => { }), System.Windows.Threading.DispatcherPriority.Render);
         }
 
@@ -969,7 +984,14 @@ namespace RcrcGreen.Revit.Kpi
                 _lastRun,
                 _templatesListed);
 
-            Say("Creating.");
+            Say(CreateWords.Creating);
+
+            // **OPENED HERE AND NOT INSIDE EXECUTE.** This is a click handler on the pane's
+            // own thread, so the window is up before the external event is raised and the
+            // handler never opens a window from inside its own call frame.
+            Shut();
+            _running = KpiProgressWindow.Opened(CreateWords.Creating);
+
             Ask(KpiRequest.Create);
         }
 
@@ -979,6 +1001,13 @@ namespace RcrcGreen.Revit.Kpi
             {
                 _facts = facts;
                 _ticks = new PlotTicks(facts.Plots, _ticks.Ticked);
+
+                // The header's numbers come back with the plots, so the model's name has an
+                // element count under it as soon as the pane is shown. They used to come off
+                // the scan alone, which left the line empty until somebody pressed a button
+                // that no longer exists.
+                _scannedTitle = _model.Title;
+                _readAt.Text = KpiPaneWords.ReadAt(DateTime.Now, facts.ElementInstances, facts.ReadSeconds);
 
                 if (_componentParameter.Length == 0)
                 {
