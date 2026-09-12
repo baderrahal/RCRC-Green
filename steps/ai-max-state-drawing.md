@@ -14,7 +14,8 @@ parser, which is a round of its own and the user's call. DrawingSheetReader.Size
 one outline read and the writer calls it. Clicking a card opens step 4 at the described sheet
 whose row carries that number. Suite reads 1400 locally, the 1369 on merged main plus 31. Two
 breaks watched red and reversed byte for byte. The pull request is 99 and the mockup is
-design/pr-99/panel.html.
+design/pr-99/panel.html. A card with no size says only that, rather than also saying no views
+and not all measured, which are the same one fact said three ways.
 
 Phase: 9, ship. Sixty second pass, second of three pull requests. Presets: a saved answer to
 steps 2 and 4, holding the ticked view types and the sheet definitions, and NO plot, NO sub plot

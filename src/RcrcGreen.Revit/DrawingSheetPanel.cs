@@ -2110,9 +2110,21 @@ namespace RcrcGreen.Revit
             };
 
             var said = new List<string>();
-            if (card.CarriesWhatDidNotFit) said.Add("carries what did not fit");
-            if (card.HasNoViews) said.Add("no views");
-            if (card.AnythingNotMeasured) said.Add("not all measured");
+
+            if (!card.CanBeDrawn)
+            {
+                // A card with no size knows nothing else about itself. Saying no views and
+                // not all measured here reads as two findings about the sheet, and both are
+                // only the one fact that its title block has never been measured.
+                said.Add("size not known");
+            }
+            else
+            {
+                if (card.CarriesWhatDidNotFit) said.Add("carries what did not fit");
+                if (card.HasNoViews) said.Add("no views");
+                if (card.AnythingNotMeasured) said.Add("not all measured");
+            }
+
             marks.Text = string.Join(", ", said.ToArray());
 
             if (marks.Text.Length > 0) inside.Children.Add(marks);
