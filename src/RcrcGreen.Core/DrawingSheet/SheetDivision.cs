@@ -9,11 +9,15 @@ namespace RcrcGreen.Core
     /// </summary>
     public sealed class PlannedSheet
     {
-        public PlannedSheet(IEnumerable<ViewType> views)
+        private readonly SheetNameSettings _names;
+
+        public PlannedSheet(IEnumerable<ViewType> views, SheetNameSettings names = null)
         {
             Views = (views ?? Enumerable.Empty<ViewType>())
                 .Where(one => one != null)
                 .ToList();
+
+            _names = names ?? SheetNameSettings.Nothing;
         }
 
         /// <summary>
@@ -30,9 +34,24 @@ namespace RcrcGreen.Core
             get { return Views.Count == 1; }
         }
 
+        /// <summary>
+        /// The saved sheet name for the one view's type, or the old derivation when neither
+        /// file holds one. Resolved here, on the one record the rows, the letter order and
+        /// the division's own sort all read, so the table cannot fix the name in one place
+        /// and leave the derivation running in another.
+        /// </summary>
         public string ProposedName
         {
-            get { return NamedFromItsView ? SheetNaming.FromView(Views[0]) : string.Empty; }
+            get { return NamedFromItsView ? _names.NameFor(Views[0]) : string.Empty; }
+        }
+
+        /// <summary>
+        /// Where the proposed name came from, for the line under the box. Empty on a sheet
+        /// whose name is typed anyway.
+        /// </summary>
+        public string NamedInWords()
+        {
+            return NamedFromItsView ? _names.NamedInWords(Views[0]) : string.Empty;
         }
 
         /// <summary>
@@ -101,7 +120,8 @@ namespace RcrcGreen.Core
     /// </summary>
     public static class SheetDivision
     {
-        public static IReadOnlyList<PlannedSheet> Of(IEnumerable<ViewType> views, int perSheet)
+        public static IReadOnlyList<PlannedSheet> Of(
+            IEnumerable<ViewType> views, int perSheet, SheetNameSettings names = null)
         {
             List<ViewType> wanted = (views ?? Enumerable.Empty<ViewType>())
                 .Where(one => one != null)
@@ -119,13 +139,13 @@ namespace RcrcGreen.Core
             // row is refused until its typed name and number arrive.
             if (wanted.Count == 0)
             {
-                planned.Add(new PlannedSheet(wanted));
+                planned.Add(new PlannedSheet(wanted, names));
                 return planned;
             }
 
             for (int start = 0; start < wanted.Count; start += each)
             {
-                planned.Add(new PlannedSheet(wanted.Skip(start).Take(each)));
+                planned.Add(new PlannedSheet(wanted.Skip(start).Take(each), names));
             }
 
             // The team's order: the code first, then the order list within a code, then the

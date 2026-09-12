@@ -61,6 +61,9 @@ namespace RcrcGreen.Revit
         private TitleBlockSettings _titleBlocks = TitleBlockSettings.Nothing;
         private IReadOnlyList<string> _settingsNotRead = new List<string>();
 
+        private SheetNameSettings _sheetNames = SheetNameSettings.Nothing;
+        private IReadOnlyList<string> _sheetNamesNotRead = new List<string>();
+
         // The markers of the model on screen. Loaded when the document title changes rather
         // than on every read, so a marker set this session keeps saying set now instead of
         // coming back off its own file as remembered.
@@ -133,7 +136,12 @@ namespace RcrcGreen.Revit
             _handler = new DrawingSheetRequestHandler
             {
                 Read = Took,
-                Told = Say
+                Told = Say,
+
+                // A document opened or closed under the pane triggers a read, so the panel
+                // never needs anybody to remember Refresh to stop proposing numbers the
+                // model already holds.
+                DocumentTurned = AskedForARefresh
             };
             _asking = ExternalEvent.Create(_handler);
 
@@ -143,6 +151,7 @@ namespace RcrcGreen.Revit
             _search.TextChanged += (sender, e) => Redraw();
 
             ReadTheTitleBlockSettings();
+            ReadTheSheetNames();
 
             Content = Layout();
             PaintFromTheTheme();
@@ -1048,6 +1057,11 @@ namespace RcrcGreen.Revit
                 block.Children.Add(Faint("A title block setting could not be read: " + line));
             }
 
+            foreach (string line in _sheetNamesNotRead)
+            {
+                block.Children.Add(Faint("A sheet name setting could not be read: " + line));
+            }
+
             IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
 
             // Read once here and shared by every box below. Each name box used to copy its
@@ -1303,6 +1317,40 @@ namespace RcrcGreen.Revit
             _settingsNotRead = stored.NotRead;
         }
 
+        private void ReadTheSheetNames()
+        {
+            StoredSheetNames stored = SheetNameStore.Read();
+
+            _sheetNames = stored.Settings;
+            _sheetNamesNotRead = stored.NotRead;
+        }
+
+        /// <summary>
+        /// A typed sheet name becomes the pairing for that view type, saved at once, so a
+        /// name corrected on one plot's row is every plot's answer from then on. Only a
+        /// sheet named from its one view saves: a typed name on a multi view sheet belongs
+        /// to that sheet alone.
+        /// </summary>
+        private void RememberTheSheetName(PlannedSheet planned, string typed)
+        {
+            if (planned == null || !planned.NamedFromItsView) return;
+
+            string wanted = (typed ?? string.Empty).Trim();
+            if (wanted.Length == 0) return;
+
+            ViewType type = planned.Views[0];
+            if (_sheetNames.For(type) != null
+                && string.Equals(_sheetNames.NameFor(type), wanted, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _sheetNames = _sheetNames.With(type, wanted);
+
+            string refused = SheetNameStore.Save(_sheetNames);
+            if (refused.Length > 0) Say(refused);
+        }
+
         /// <summary>
         /// The line over a definition's table: how many sheets this one press makes across the
         /// ticked plots, and how many rows are still short of a name or a number.
@@ -1423,11 +1471,25 @@ namespace RcrcGreen.Revit
                 RefreshHeaders();
             };
 
+            box.LostKeyboardFocus += (sender, e) =>
+            {
+                if (_filling) return;
+                RememberTheSheetName(shown.Planned, box.Text);
+            };
+
             int whichSheet = at;
             int whichRow = row;
             _numberWarnings.Add(fresh => RefillBox(box, whichSheet, whichRow, fresh));
 
-            return box;
+            // Where the proposed name came from: the team's table or the old derivation.
+            // Empty on a sheet whose name is typed anyway, where WhyNothingIsProposed talks.
+            string named = shown.Planned.NamedInWords();
+            if (named.Length == 0) return box;
+
+            var stacked = new StackPanel();
+            stacked.Children.Add(box);
+            stacked.Children.Add(Faint(named));
+            return stacked;
         }
 
         private UIElement NumberBox(
@@ -2011,7 +2073,7 @@ namespace RcrcGreen.Revit
             var rows = new List<IReadOnlyList<SheetRowShown>>();
             for (int at = 0; at < _sheets.Count; at++)
             {
-                rows.Add(_sheets[at].RowsFor(ticked, plots, numbers[at]));
+                rows.Add(_sheets[at].RowsFor(ticked, plots, numbers[at], _sheetNames));
             }
 
             return rows;
@@ -2035,7 +2097,7 @@ namespace RcrcGreen.Revit
             foreach (SheetBeingDescribed sheet in _sheets)
             {
                 built.Add(new Dictionary<string, SheetNumberProposal>(StringComparer.Ordinal));
-                planned.Add(sheet.Built(ticked).Planned);
+                planned.Add(sheet.Built(ticked, _sheetNames).Planned);
             }
 
             foreach (string plotId in plots)

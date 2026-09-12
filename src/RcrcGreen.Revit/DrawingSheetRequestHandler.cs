@@ -49,6 +49,16 @@ namespace RcrcGreen.Revit
 
         public Action<string> Told { get; set; }
 
+        /// <summary>
+        /// Called when a document opens or closes under the open pane, so the panel can read
+        /// again without anybody remembering to press Refresh. Three runs in a row asked for
+        /// numbers the model already held because the panel's read was a day older than the
+        /// model and nothing here said so.
+        /// </summary>
+        public Action DocumentTurned { get; set; }
+
+        private bool _watchingDocuments;
+
         public void Ask(DrawingSheetRequest wanted)
         {
             lock (_asking)
@@ -108,12 +118,28 @@ namespace RcrcGreen.Revit
         {
             try
             {
+                WatchDocuments(application);
                 Run(application);
             }
             catch (Exception failed)
             {
                 Stop(failed);
             }
+        }
+
+        /// <summary>
+        /// Subscribed on the first request rather than at startup, because this is the first
+        /// moment the application is in hand inside an API context. The pane cannot know from
+        /// the outside that the document changed under it, and these two events are how it
+        /// finds out without the user pressing anything.
+        /// </summary>
+        private void WatchDocuments(UIApplication application)
+        {
+            if (_watchingDocuments) return;
+            _watchingDocuments = true;
+
+            application.Application.DocumentOpened += (sender, opened) => DocumentTurned?.Invoke();
+            application.Application.DocumentClosed += (sender, closed) => DocumentTurned?.Invoke();
         }
 
         private void Run(UIApplication application)
@@ -144,7 +170,7 @@ namespace RcrcGreen.Revit
                 // The document can be closed while the panel is still on screen. That is
                 // ordinary, so it is said rather than thrown, and the panel empties itself.
                 Read?.Invoke(DrawingSheetSnapshot.Nothing);
-                Told?.Invoke("No open document. Open a model and press Refresh.");
+                Told?.Invoke("No open document. The panel reads again as soon as one opens.");
                 return;
             }
 
@@ -394,7 +420,8 @@ namespace RcrcGreen.Revit
                 definitions.Usable.Keys,
                 sheetsWanted,
                 now.Present.Select(one => one.Where),
-                definitions.Refused);
+                definitions.Refused,
+                now.SheetNumbersInUse);
 
             bool applied = false;
             RunOutcome outcome = RunOutcome.NothingWasWritten();
@@ -432,6 +459,13 @@ namespace RcrcGreen.Revit
                 return;
             }
 
+            // The panel is handed a fresh read of what the run just wrote, so its next
+            // proposal is built on the model as it now is. It used to keep the pre-run
+            // snapshot and say press Refresh, which is a copy of a fact the pane can ask
+            // for, and three runs in a row asked for the numbers the first had created.
+            DrawingSheetSnapshot after = DrawingSheetReader.Read(document);
+            string marksCleared = Read == null ? string.Empty : Read(after) ?? string.Empty;
+
             // Counted off what the run did, never off what it planned. The two disagreeing is
             // what put four views under both created and not created in the first real report.
             string said = outcome.CreatedCount + " created, " + outcome.NotCreatedCount
@@ -446,7 +480,8 @@ namespace RcrcGreen.Revit
                     + " IN THE MODEL AND MUST BE DELETED BY HAND. " + said;
             }
 
-            Told?.Invoke(said + " Press Refresh to see them. " + where);
+            string andCleared = marksCleared.Length == 0 ? string.Empty : " " + marksCleared;
+            Told?.Invoke(said + " The panel has read the model again." + andCleared + " " + where);
         }
 
         private static bool Confirmed(RunPlan plan, IReadOnlyList<SheetBatch> sheetsWanted)

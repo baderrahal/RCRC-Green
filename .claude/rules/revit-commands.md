@@ -342,6 +342,21 @@ The shipped defaults carry the pairing, 010 TITLE SHEET on COVER PAGE, and nothi
 pairing for a sheet with no views yet: whether the typed name should look one up is the
 team's question, in the log.
 
+**The sheet name comes from the saved table and a typed one is remembered.** `SheetNameStore`
+reads the user's `%APPDATA%\RCRC Green\sheet-names.txt` first and the shipped file beside the
+add-in second. A single view row's proposed name resolves through the table, the line under
+the box says remembered or derived, and typing a name over it saves the pairing on focus
+loss, so a name corrected on one plot's row is every plot's answer from then on.
+
+**The panel never trusts its own age.** Three things keep it honest about a model that
+changed under it. The run checks every sheet number against a read taken as the run is
+worked out, so a stale panel cannot ask Revit for a taken number, it is refused on the plan
+with the reason. A run that wrote hands a fresh snapshot back through the same route Refresh
+uses, so the panel's next proposal is built on what the run just made rather than on the
+pre-run model, which is what had three runs in a row re-asking for the first run's numbers.
+And the handler subscribes to DocumentOpened and DocumentClosed on its first request, so a
+model opened or closed under the open pane triggers a read with nothing pressed.
+
 **The marker is set in step 1 and remembered per model.** Beside each ticked plot sit two
 dropdowns, letters and numbers, and the user uses one or the other. `MarkerLedger` bars the
 markers other plots' numbers or other panel rows already use, a typed one is warned about

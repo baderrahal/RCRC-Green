@@ -1,0 +1,17 @@
+# RCRC Green, which sheet name goes with which view type.
+# One pairing per line, tab separated: view code, view name, sheet name.
+# The nine are the real sheet names on the two measured models, where four of DM-11's
+# eight sheets disprove the old rule that a sheet is the view name upper cased: OVERALL
+# KEYPLAN, PROJECT LOCATION KEY PLAN, HARDSCAPE SCHEDULES and SOFTSCAPE SCHEDULES all
+# differ from their view names. install.ps1 copies this file beside the add-in. A name
+# typed over in the panel goes into the user's own file instead and wins over this one,
+# so an install never overwrites somebody's correction.
+010	LIST OF DRAWINGS	LIST OF DRAWINGS
+010	Location Key Plan	PROJECT LOCATION KEY PLAN
+010	Overall Key Plan	OVERALL KEYPLAN
+010	Overall Plan	OVERALL PLAN
+200	General Arrangement Layout	GENERAL ARRANGEMENT LAYOUT
+400	Landscape Cross Section	LANDSCAPE CROSS SECTION
+600	HARDSCAPE SCHEDULE	HARDSCAPE SCHEDULES
+600	SOFTSCAPE SCHEDULE	SOFTSCAPE SCHEDULES
+600	FURNITURE SCHEDULE	FURNITURE SCHEDULES

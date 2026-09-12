@@ -1,22 +1,42 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Fifty sixth pass, the sheet numbering round, two pull requests, both merged.
-The first, fixes 1 and 2, is merged as `e4b5d9e` with 1230 tests on the runner, 0 failed and
-0 skipped: the marker is set in step 1 and remembered per model in plot-markers.txt,
-MarkerLedger bars other plots' markers with 010001A giving 001 and never A, SheetNumberRun
-builds every number with a bare one holding the first letter's place, and PlotLetter,
-LettersIn, Free and Propose are deleted with their tests. The second, fixes 3 and 4, is this
-commit: SheetOrder holds the team's nine names, the order is code first then the list then
-ticked order, it is also the letter order and the run's creation order, a definition with no
-views plans one empty sheet per ticked plot, the title sheet's shape, refused until its
-typed name and number arrive and sorted ahead of the coded sheets, and the shipped defaults
-gain 010 TITLE SHEET on COVER PAGE. Two edges left exact: OVERALL KEY PLAN is not OVERALL
-KEYPLAN and a singular schedule view name is not the plural sheet name, both for the team.
-Nothing reads a pairing for a no view sheet yet, in the log as an open question. Suite reads
-1239 locally, up nine from the 1230 the first pull request put on main, and merged as
-`c7d91c4` with 1239 tests on the runner, 0 failed and 0 skipped. The merged main reads 1239
-locally. Two more breaks watched red, 1 and 2 of 1239. Both squash messages came back byte
-for byte.
+Phase: 9, ship. Fifty eighth pass, the sheet name table and the stale read, fixes 1 and 2 of
+a three fix brief that arrived cut off mid sentence in fix 3. The assumed completion, a
+marked type with no sibling and no complete answers is refused naming the three, goes with
+fix 3's own pull request. The sheet name comes from SheetNameSettings now, the user's sheet-
+names.txt then the shipped one, resolved once on PlannedSheet.ProposedName so the rows, the
+letters and the order read one record, the derivation is only the fallback and says derived,
+and typing a name over a single view row saves the pairing on focus loss. The stale read's
+cause is three findings, in the log with lines when fix 3 lands: Shown reads on every show,
+so candidate a is disproved. Nothing anywhere re-read when a document opened or changed
+under the pane. And the run read fresh for its plan but never checked sheet numbers against
+that read and never handed the snapshot back, its words were Press Refresh to see them,
+which is the pane holding a copy of a fact it can ask for. Now RunPlan refuses a row whose
+number the model holds at Run, a run that wrote hands back a fresh read through the Refresh
+route, and the handler subscribes to DocumentOpened and DocumentClosed on its first request.
+The two scan reports are not in this container, nothing under reports/ is committed, so the
+nine shipped names are checked against the order list and the committed records instead, and
+OVERALL PLAN and FURNITURE SCHEDULES rest on the brief alone. Suite reads 1251 locally, up
+twelve from the 1239 main carries at `eaed0e9`. Two breaks watched red, 1 of 1251 each. Not
+merged yet.
+
+Before that, the fifty sixth pass, the sheet numbering round, two pull requests, both
+merged. The first, fixes 1 and 2, is merged as `e4b5d9e` with 1230 tests on the runner, 0
+failed and 0 skipped: the marker is set in step 1 and remembered per model in plot-
+markers.txt, MarkerLedger bars other plots' markers with 010001A giving 001 and never A,
+SheetNumberRun builds every number with a bare one holding the first letter's place, and
+PlotLetter, LettersIn, Free and Propose are deleted with their tests. The second, fixes 3
+and 4, is this commit: SheetOrder holds the team's nine names, the order is code first then
+the list then ticked order, it is also the letter order and the run's creation order, a
+definition with no views plans one empty sheet per ticked plot, the title sheet's shape,
+refused until its typed name and number arrive and sorted ahead of the coded sheets, and the
+shipped defaults gain 010 TITLE SHEET on COVER PAGE. Two edges left exact: OVERALL KEY PLAN
+is not OVERALL KEYPLAN and a singular schedule view name is not the plural sheet name, both
+for the team. Nothing reads a pairing for a no view sheet yet, in the log as an open
+question. Suite reads 1239 locally, up nine from the 1230 the first pull request put on
+main, and merged as `c7d91c4` with 1239 tests on the runner, 0 failed and 0 skipped. The
+merged main reads 1239 locally. Two more breaks watched red, 1 and 2 of 1239. Both squash
+messages came back byte for byte.
 
 Before that, the fifty fourth pass, merged, the two fixes the fifty third found and was told
 not to make. Crop View is the tool's own on a section now: `SectionCropChoice` says on

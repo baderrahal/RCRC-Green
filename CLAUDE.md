@@ -83,8 +83,11 @@ These come from the team and from real models. They are not guesses.
 - Views are named `<PlotID>-(<code>) <View name>`. PlotID is two uppercase letters, a dash,
   then digits, as in DM-41, and lowercase is invalid. The code is digits in round brackets and
   the view name is free text after the bracket and one space. A plot is also a scope box
-  named with the PlotID. A SHEET IS NOT NAMED THAT WAY: its name is the view name upper cased
-  with no plot and no code, LIST OF DRAWINGS and SOFTSCAPE SCHEDULES on the first real model.
+  named with the PlotID. A SHEET IS NOT NAMED THAT WAY: its name is the team's own word for
+  it, held in a saved table per view type, because four of DM-11's eight sheet names differ
+  from the view name upper cased: OVERALL KEYPLAN, PROJECT LOCATION KEY PLAN, and HARDSCAPE
+  and SOFTSCAPE SCHEDULES, plural where the view names are not. Upper casing the view name
+  is only the fallback for a type no file names, and it is said as derived when it runs.
   Its number is the view code, then a plot MARKER the user sets once per plot, then a sheet
   letter within one code, absent when the code holds a single sheet: 010001A and 200001 on
   NG03, 010QF and 200Q on NG05. The marker is letters or three digits and is NEVER derived
@@ -266,7 +269,12 @@ real folder and Create stayed grey saying No model is open, and a second scan di
 because nothing re-read the folder. The rule now: **A PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
 FOR.** What a button refuses on is read off the live document at the moment it is pressed, and
 what the pane shows about the model is asked for again every time it draws. Greying a button out
-on a fact the pane does not own is what turned one stale string into a dead end.
+on a fact the pane does not own is what turned one stale string into a dead end. The Drawing
+Sheet panel then did the same with the whole model: its own run wrote sheets its snapshot never
+learned about, and three runs in a row asked Revit for numbers the first had created, because
+the run's only words were Press Refresh. A run hands back a fresh read now, the run checks its
+numbers against the model rather than the panel, and a document opening under the pane triggers
+a read of its own.
 
 **A description of the tool is not the tool.** The pane said it reads PRX_COMPONENT and
 PRX_Plot_UID2 off the title block. That was the workbook's own note copied onto the screen: the

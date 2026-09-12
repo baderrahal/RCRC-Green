@@ -147,6 +147,25 @@ the 001 kind, where the letter is the sheet letter and only the three digits bef
 count. Counting A off 010001A would bar most of the alphabet on a model numbered the NG03
 way.
 
+## A sheet is named from the saved table, and upper casing is only the fallback
+
+`SheetNameSettings` holds which sheet name goes with which view type, the user's own file
+first and the shipped `sheet-names.txt` second, the same two file rule as the title blocks.
+The old rule, the view name upper cased with the code removed, came from three examples
+that happened to match and four of DM-11's eight sheets disprove it: OVERALL KEYPLAN,
+PROJECT LOCATION KEY PLAN, HARDSCAPE SCHEDULES and SOFTSCAPE SCHEDULES all differ from
+their view names. `NameFor` resolves once, on `PlannedSheet.ProposedName`, so the rows, the
+letter order and the run read one record, and a name typed over a proposal saves the
+pairing. A type neither file holds falls back to `SheetNaming.FromView` and the panel says
+derived beside it. This is also what made unlisted names ordinary: with the table, a
+sheet's name and `SheetOrder`'s words are the same words.
+
+At Run, `RunPlan` checks every row's number against the sheet numbers read off the model
+as the run is worked out, not against the panel's last snapshot. Three runs in a row asked
+Revit for numbers a previous run had created, because the only check lived on the panel and
+its read was older than its own write, and every refusal arrived from Revit inside the
+transaction instead of on the plan.
+
 `SheetOrder` holds the team's sheet order, nine names, and it is also the letter order:
 010001A is TITLE SHEET and 010001B is LIST OF DRAWINGS because of the list. Order by the
 code first, then the list within a code, then the ticked order for anything the list does

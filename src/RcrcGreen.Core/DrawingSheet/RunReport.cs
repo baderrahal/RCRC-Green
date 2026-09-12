@@ -215,8 +215,12 @@ namespace RcrcGreen.Core
             Line(report, "A sheet is described rather than copied. The title block type, the views");
             Line(report, "and how many go per sheet are shared, and the views divide into as many");
             Line(report, "sheets as they need, in the order they were ticked, so no view is ever");
-            Line(report, "left off. A sheet holding one view is named after it, the bracketed code");
-            Line(report, "removed and the rest upper cased. Its number is BUILT: the view code, the");
+            Line(report, "left off. A sheet holding one view is NAMED FROM THE SHEET NAME TABLE, the");
+            Line(report, "user's own file first and the shipped one second, because four of DM-11's");
+            Line(report, "eight sheet names differ from their view names and upper casing wrote the");
+            Line(report, "wrong four. Only a view type neither file holds falls back to the view");
+            Line(report, "name upper cased, and the panel says derived beside it when it does.");
+            Line(report, "Its number is BUILT: the view code, the");
             Line(report, "plot's marker from step 1, then a sheet letter when the code holds");
             Line(report, "several sheets, counting the ones the plot already has so a second run");
             Line(report, "continues rather than collides. The marker is set by the user once per");
