@@ -1,19 +1,21 @@
 # ai-max state, Drawing Sheet
 
-Phase: 9, ship. Fifty eighth pass, the three fix round, second pull request. The first,
-fixes 1 and 2, is merged as `e42dd56` with 1278 on the runner, this branch's 1251 plus 27
-KPI tests pull request 85 landed while it was open: the sheet name table with its shipped
-nine and the stale read's three part fix, the cause in the log with file and line. This
-commit is fix 3: a marked view type no view in the model carries is answered once in step 5,
-family type, template and level, each from what the model holds, only the four plan kinds
-and Section offered, the kind routing through SectionTypesAmong which panel and handler both
-ask, answers remembered in new-view-setups.txt, the writer resolving each name against the
-model at Run and refusing with the name when one is not there, and a type with no complete
-answers refused naming what is missing, which is the assumed completion of the brief's cut
-sentence. Annotation crop stays the tool's own on a plan and Crop View on a section, the
-sibling only crop settings left as Revit made them and said so. Suite reads 1288 locally, up
-ten from the 1278 the first pull request left on main. Two more breaks watched red, 2 and 1
-of 1288. Not merged yet.
+Phase: 9, ship. Fifty eighth pass, the three fix round, both pull requests merged. The
+first, fixes 1 and 2, is merged as `e42dd56` with 1278 on the runner, this branch's 1251
+plus 27 KPI tests pull request 85 landed while it was open: the sheet name table with its
+shipped nine and the stale read's three part fix, the cause in the log with file and line.
+This commit is fix 3: a marked view type no view in the model carries is answered once in
+step 5, family type, template and level, each from what the model holds, only the four plan
+kinds and Section offered, the kind routing through SectionTypesAmong which panel and
+handler both ask, answers remembered in new-view-setups.txt, the writer resolving each name
+against the model at Run and refusing with the name when one is not there, and a type with
+no complete answers refused naming what is missing, which is the assumed completion of the
+brief's cut sentence. Annotation crop stays the tool's own on a plan and Crop View on a
+section, the sibling only crop settings left as Revit made them and said so. Suite reads
+1288 locally, up ten from the 1278 the first pull request left on main, and merged as
+`c54c682` from pull request 87 with 1288 tests on the runner, 0 failed and 0 skipped. The
+merged main reads 1288 locally. Two more breaks watched red, 2 and 1 of 1288. Both squash
+messages came back byte for byte.
 
 Before that, the fifty sixth pass, the sheet numbering round, two pull requests, both
 merged. The first, fixes 1 and 2, is merged as `e4b5d9e` with 1230 tests on the runner, 0
