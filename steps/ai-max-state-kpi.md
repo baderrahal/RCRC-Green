@@ -32,8 +32,10 @@ Two break watches went red on 2 and 1 tests, one per guard, and were restored by
 the second checked with a diff against its backup. **One existing test was changed by hand**,
 the old UNKNOWN takes no row test, whose four Unknown Tree rows now meet guard a. **Locally
 1425 tests at this branch, 0 failed and 0 skipped, 732 of them KPI, 9 added, against the 1416
-main carries** at the branch point `96b6239`. Build zero warnings. PULL REQUEST AND MERGE
-NUMBERS GO HERE AFTER THE MERGE. **Nothing in this round has been observed in Revit**, and the
+main carries** at the branch point `96b6239`. Build zero warnings. Pull request 101, merged
+into main as `3a3312f`, the runner executing 1425 tests against the merged head, 0 failed and
+0 skipped, and locally the same 1425 ran at the merge, 732 of them KPI, the merged tree byte
+for byte the branch head. **Nothing in this round has been observed in Revit**, and the
 check that matters, Total Trees moving 374 to 390 with the canopy still 11,168, waits on the
 next run.
 
