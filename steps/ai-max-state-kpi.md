@@ -34,7 +34,9 @@ members and one of mine was rewritten rather than deleted, the contrast in
 `ItTicksByTheSplitsRuleSoNoTickedPlotCanLandInNoWorkbook`, which now names the two answers for
 DM-12 side by side instead of comparing two lists. **Locally 1451 tests at this branch, 0 failed
 and 0 skipped, 758 of them KPI, 5 fewer than the 1456 main carries** at the branch point
-`6e1b309`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS ARE WRITTEN HERE AFTER THE MERGE.
+`6e1b309`. Build zero warnings. Pull request 104, merged into main as `e2e14a3`, the runner
+executing 1451 tests against the pull request head, 0 failed and 0 skipped, and locally the same
+1451 ran at the merge, 758 of them KPI, the merged tree byte for byte the branch head.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and nothing in it changes what the tool
 does at run time.
 
