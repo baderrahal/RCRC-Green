@@ -166,6 +166,16 @@ namespace RcrcGreen.Revit
         /// </summary>
         private int _bringSheetIntoView = -1;
 
+        /// <summary>
+        /// Which definition is open in step 4 and which list inside it. One at a time on
+        /// purpose: seven definitions drawn open is seven title block dropdowns, seven twelve
+        /// line checklists and 245 plot rows in one pane.
+        ///
+        /// The transitions are Core, with tests, because taking a definition out shifts every
+        /// index past it.
+        /// </summary>
+        private StepFourOpen _step4 = StepFourOpen.Nothing;
+
         private bool _filling;
         private bool _readOnce;
         private ScopeBoxCase? _caseOpen;
@@ -1231,12 +1241,22 @@ namespace RcrcGreen.Revit
         {
             var block = new StackPanel { Margin = PanelMetrics.StepInside };
 
+            bool open = _step4.IsSheetOpen(at);
+
             var heading = new DockPanel { LastChildFill = true };
             Button remove = Secondary("Remove", () => RemoveASheet(sheet),
                 "Takes this sheet out. It asks first when a name or a number has been typed on "
                 + "any of its rows.");
             DockPanel.SetDock(remove, Dock.Right);
             heading.Children.Add(remove);
+
+            Button openIt = Secondary(open ? "Close" : "Open", () => OpenTheSheet(at, !open),
+                open
+                    ? "Shuts this sheet back to its two lines."
+                    : "Opens this sheet to change it. One is open at a time.");
+            DockPanel.SetDock(openIt, Dock.Right);
+            heading.Children.Add(openIt);
+
             heading.Children.Add(new TextBlock
             {
                 Text = "Sheet " + (at + 1),
@@ -1244,6 +1264,29 @@ namespace RcrcGreen.Revit
                 VerticalAlignment = VerticalAlignment.Center
             });
             block.Children.Add(heading);
+
+            SheetDefinition shut = sheet.Built(_columns.Shown, _sheetNames);
+            IReadOnlyList<SheetRowShown> myRows =
+                at < rows.Count ? rows[at] : new List<SheetRowShown>();
+
+            if (!open)
+            {
+                block.Children.Add(Faint(SheetDefinitionLines.What(shut)));
+                block.Children.Add(Faint(SheetDefinitionLines.Makes(
+                    shut.Planned.Count,
+                    _plots.TickedCount,
+                    myRows.Count(one => !one.Row.HasName),
+                    myRows.Count(one => !one.Row.HasNumber))));
+
+                return new Border
+                {
+                    Background = _theme.StepHeader,
+                    BorderBrush = _theme.Line,
+                    BorderThickness = PanelMetrics.Hairline,
+                    Margin = PanelMetrics.Row,
+                    Child = block
+                };
+            }
 
             var type = new ComboBox { Margin = PanelMetrics.Row };
             foreach (TitleBlockType one in _model.TitleBlockTypes) type.Items.Add(one);
@@ -1294,11 +1337,31 @@ namespace RcrcGreen.Revit
             }
             block.Children.Add(perSheet);
 
-            block.Children.Add(Faint("Tick the views that go on it, from the types ticked in "
-                + "step 2. They go onto sheets in the order they are ticked here."));
+            IReadOnlyList<ViewType> offered = _columns.Shown;
+            bool viewsOpen = _step4.AreViewsOpen(at);
+
+            var viewsHeading = new DockPanel { LastChildFill = true, Margin = PanelMetrics.Row };
+            Button openViews = Secondary(
+                viewsOpen ? "Done" : "Change",
+                () => OpenTheSheetViews(at, !viewsOpen),
+                viewsOpen
+                    ? "Shuts the list back to the line naming what is ticked."
+                    : "Opens the list to change which views go on this sheet.");
+            DockPanel.SetDock(openViews, Dock.Right);
+            viewsHeading.Children.Add(openViews);
+            viewsHeading.Children.Add(new TextBlock
+            {
+                Text = "Views on it",
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            block.Children.Add(viewsHeading);
+
+            // The same twelve lines in every definition, and only the ticks differ, so a shut
+            // one says what is ticked rather than drawing the list again.
+            block.Children.Add(Faint(
+                SheetDefinitionLines.Ticked(shut.Views, offered.Count)));
 
             var views = new StackPanel();
-            IReadOnlyList<ViewType> offered = _columns.Shown;
             if (offered.Count == 0)
             {
                 views.Children.Add(Faint("No view type is ticked in step 2, so this definition "
@@ -1321,19 +1384,27 @@ namespace RcrcGreen.Revit
             }
             _filling = false;
 
-            block.Children.Add(Scrolling(views, PanelMetrics.ListHeight, "sheet " + at + " views"));
+            if (viewsOpen)
+            {
+                block.Children.Add(Faint("They go onto sheets in the order they are ticked."));
+                block.Children.Add(
+                    Scrolling(views, PanelMetrics.ListHeight, "sheet " + at + " views"));
+            }
 
             SheetDefinition described = sheet.Built(_columns.Shown);
             block.Children.Add(Faint(described.InWords()));
 
-            // Why some rows start with empty boxes, said once per shape of sheet rather than
-            // repeated down every plot's row.
+            // One name box per shape of sheet, not per plot. A sheet of more than one view has
+            // no view to name it after, and the same words were being asked for once per
+            // ticked sub plot: 35 boxes wanting HARDSCAPE SCHEDULES.
             foreach (PlannedSheet planned in described.Planned)
             {
                 if (planned.NamedFromItsView) continue;
 
                 block.Children.Add(Faint(
                     planned.ViewsInWords() + ": " + planned.WhyNothingIsProposed()));
+
+                block.Children.Add(DefinitionNameBox(sheet, planned, offers));
             }
 
             var batchLine = new TextBlock
@@ -1347,8 +1418,32 @@ namespace RcrcGreen.Revit
             _numberWarnings.Add(fresh => SayBatchLine(batchLine, whichSheet, fresh));
             SayBatchLine(batchLine, whichSheet, rows);
 
-            block.Children.Add(Scrolling(
-                SheetTable(sheet, at, rows, offers), PanelMetrics.ListHeight, "sheet " + at + " table"));
+            bool rowsOpen = _step4.AreRowsOpen(at);
+
+            var rowsHeading = new DockPanel { LastChildFill = true, Margin = PanelMetrics.Row };
+            Button openRows = Secondary(
+                rowsOpen ? "Hide" : "Show",
+                () => OpenTheSheetRows(at, !rowsOpen),
+                rowsOpen
+                    ? "Hides the per plot rows again."
+                    : "Opens a row per ticked sub plot, to override the name on one of them "
+                        + "or to type a number by hand.");
+            DockPanel.SetDock(openRows, Dock.Right);
+            rowsHeading.Children.Add(openRows);
+            rowsHeading.Children.Add(new TextBlock
+            {
+                Text = SheetDefinitionLines.RowsBehind(myRows.Count),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            block.Children.Add(rowsHeading);
+
+            if (rowsOpen)
+            {
+                block.Children.Add(Scrolling(
+                    SheetTable(sheet, at, rows, offers),
+                    PanelMetrics.ListHeight,
+                    "sheet " + at + " table"));
+            }
 
             return new Border
             {
@@ -1517,6 +1612,8 @@ namespace RcrcGreen.Revit
             _columns = _columns.ShowingThese(_columns.All, false).ShowingThese(fit.Ticked, true);
 
             _sheets.Clear();
+            _step4 = StepFourOpen.Nothing;
+
             foreach (PresetSheet sheet in fit.Sheets)
             {
                 var described = new SheetBeingDescribed
@@ -1966,6 +2063,89 @@ namespace RcrcGreen.Revit
                 : InTheModel(sheet.TitleBlock.FamilyName, sheet.TitleBlock.TypeName);
         }
 
+        /// <summary>
+        /// Opens one definition and shuts whatever was open. The rows and the view list under
+        /// it start shut again, because opening a definition to change its title block should
+        /// not also unroll 35 rows.
+        /// </summary>
+        private void OpenTheSheet(int at, bool open)
+        {
+            _step4 = _step4.Opening(at, open);
+            Redraw();
+        }
+
+        private void OpenTheSheetViews(int at, bool open)
+        {
+            _step4 = _step4.OpeningViews(at, open);
+            Redraw();
+        }
+
+        private void OpenTheSheetRows(int at, bool open)
+        {
+            _step4 = _step4.OpeningRows(at, open);
+            Redraw();
+        }
+
+        /// <summary>
+        /// The one name box for every sheet this definition makes with those views, on every
+        /// ticked plot. A per plot row can still override it.
+        /// </summary>
+        private UIElement DefinitionNameBox(
+            SheetBeingDescribed sheet, PlannedSheet planned, SheetOffers offers)
+        {
+            string signature = planned.Signature;
+            string held = sheet.NameOnTheDefinition(signature) ?? string.Empty;
+
+            var box = new ComboBox
+            {
+                IsEditable = true,
+                Margin = PanelMetrics.Row,
+                Text = held,
+                ItemsSource = offers.NamesInUse
+            };
+
+            box.Loaded += (sender, e) =>
+            {
+                _filling = true;
+                box.Text = held;
+                _filling = false;
+            };
+
+            box.AddHandler(
+                System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
+                new TextChangedEventHandler((sender, e) =>
+                {
+                    if (_filling) return;
+                    sheet.TypeNameOnTheDefinition(signature, box.Text ?? string.Empty);
+                    RefreshHeaders();
+                }));
+
+            box.SelectionChanged += (sender, e) =>
+            {
+                if (_filling) return;
+                sheet.TypeNameOnTheDefinition(signature,
+                    (box.SelectedItem as string) ?? box.Text ?? string.Empty);
+                RefreshHeaders();
+            };
+
+            var said = new TextBlock
+            {
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = _theme.Faint,
+                Margin = PanelMetrics.Row
+            };
+
+            _numberWarnings.Add(fresh => said.Text = SheetNameChoice.OnEveryPlotInWords(
+                sheet.NameOnTheDefinition(signature) ?? string.Empty, _plots.TickedCount));
+
+            said.Text = SheetNameChoice.OnEveryPlotInWords(held, _plots.TickedCount);
+
+            var lines = new StackPanel();
+            lines.Children.Add(Labelled("Name", box));
+            lines.Children.Add(said);
+            return lines;
+        }
+
         private void AddASheet()
         {
             var sheet = new SheetBeingDescribed();
@@ -1975,6 +2155,8 @@ namespace RcrcGreen.Revit
             if (_model.TitleBlockTypes.Count == 1) sheet.TitleBlock = _model.TitleBlockTypes[0];
 
             _sheets.Add(sheet);
+
+            _step4 = _step4.AfterAdding(_sheets.Count - 1);
             Redraw();
         }
 
@@ -2005,6 +2187,8 @@ namespace RcrcGreen.Revit
             }
 
             _sheets.Remove(sheet);
+            _step4 = _step4.AfterRemoving(at);
+
             Redraw();
         }
 
@@ -2921,16 +3105,15 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// The name a row shows right now, typed or proposed, which is what the team's order
-        /// goes by when the letters are handed out.
+        /// The name a row shows right now, which is what the team's order goes by when the
+        /// letters are handed out. It asks the description rather than working the four
+        /// places out again, because this held its own copy of that rule and a name shown in
+        /// the box and ordered by here would have drifted the moment either changed.
         /// </summary>
         private static string NameShownFor(
             string plotId, PlannedSheet sheet, SheetBeingDescribed described)
         {
-            string typed;
-            return described.TypedName(plotId, sheet.Signature, out typed)
-                ? typed
-                : sheet.ProposedName;
+            return described.NameFor(plotId, sheet).Name;
         }
 
         private IReadOnlyList<SheetBatch> SheetsWanted()

@@ -31,6 +31,13 @@ namespace RcrcGreen.Revit
         private readonly Dictionary<string, Dictionary<string, string>> _namesTyped =
             new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
 
+        // The name typed once for the whole definition, keyed by the planned sheet's views
+        // alone. A sheet of more than one view is named the same on every plot, which the
+        // model settles: 600001A, 600002A and 600005A are all HARDSCAPE SCHEDULES. Asking
+        // per plot is what made a run over 35 sub plots want the same words 35 times.
+        private readonly Dictionary<string, string> _namesOnTheDefinition =
+            new Dictionary<string, string>(StringComparer.Ordinal);
+
         private readonly Dictionary<string, Dictionary<string, string>> _numbersTyped =
             new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
 
@@ -60,6 +67,48 @@ namespace RcrcGreen.Revit
         public void TypeName(string plotId, string signature, string name)
         {
             Remember(_namesTyped, plotId, signature, name);
+        }
+
+        /// <summary>
+        /// The name for every sheet this definition makes with those views, on every ticked
+        /// plot. One box rather than one per plot.
+        /// </summary>
+        public void TypeNameOnTheDefinition(string signature, string name)
+        {
+            if (signature == null) return;
+
+            _namesOnTheDefinition[signature] = name ?? string.Empty;
+        }
+
+        /// <summary>
+        /// What the definition's box holds, or null when it was never touched. Null and empty
+        /// are different answers: empty is somebody clearing it.
+        /// </summary>
+        public string NameOnTheDefinition(string signature)
+        {
+            string held;
+            return signature != null && _namesOnTheDefinition.TryGetValue(signature, out held)
+                ? held
+                : null;
+        }
+
+        /// <summary>
+        /// The name one sheet comes out with and where it came from. **The one resolver.**
+        /// The row and the panel's letter ordering both read it, because they read two copies
+        /// of the same rule before and a name shown in one place and ordered by in another is
+        /// two records of one fact.
+        /// </summary>
+        public SheetNameChoice NameFor(string plotId, PlannedSheet planned)
+        {
+            if (planned == null) return SheetNameChoice.Of(null, null, null);
+
+            string onThisPlot;
+            bool typedHere = Typed(_namesTyped, plotId, planned.Signature, out onThisPlot);
+
+            return SheetNameChoice.Of(
+                typedHere ? onThisPlot : null,
+                NameOnTheDefinition(planned.Signature),
+                planned);
         }
 
         public void TypeNumber(string plotId, string signature, string number)
@@ -94,15 +143,6 @@ namespace RcrcGreen.Revit
         public bool TypedNumber(string plotId, string signature, out string number)
         {
             return Typed(_numbersTyped, plotId, signature, out number);
-        }
-
-        /// <summary>
-        /// What the user typed into one row's name box, so the panel can order the letter
-        /// sequence by the team's list, which goes by the sheet's name.
-        /// </summary>
-        public bool TypedName(string plotId, string signature, out string name)
-        {
-            return Typed(_namesTyped, plotId, signature, out name);
         }
 
         /// <summary>
@@ -160,9 +200,7 @@ namespace RcrcGreen.Revit
             IReadOnlyDictionary<string, SheetNumberProposal> numbersBuilt,
             string key)
         {
-            string typedName;
-            bool nameTyped = Typed(_namesTyped, plotId, sheet.Signature, out typedName);
-            string name = nameTyped ? typedName : sheet.ProposedName;
+            SheetNameChoice named = NameFor(plotId, sheet);
 
             string typedNumber;
             bool numberTyped = Typed(_numbersTyped, plotId, sheet.Signature, out typedNumber);
@@ -192,12 +230,12 @@ namespace RcrcGreen.Revit
                 new SheetToMake(
                     plotId,
                     number,
-                    name,
+                    named.Name,
                     sheet.Views,
                     definition.ViewsPerSheet,
                     definition.TitleBlockFamilyName,
                     definition.TitleBlockTypeName,
-                    !nameTyped && sheet.NamedFromItsView,
+                    !named.WasTyped && sheet.NamedFromItsView,
                     numberGenerated,
                     whyNoNumber),
                 whyNoNumber);

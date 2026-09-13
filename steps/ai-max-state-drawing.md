@@ -1,5 +1,16 @@
 # ai-max state, Drawing Sheet
 
+Phase: 9, ship. Sixty third pass, first of two pull requests, fixes 1 to 4 of eight. The panel
+does not scale: a run on 35 sub plots with 7 sheet definitions drew 245 plot rows, 247 preview
+cards and the 12 item view checklist inside all 7. Fix 1, the typed sheet name moves off the row
+and onto the definition, one box used on every plot, with the per plot row kept as an override.
+SheetNameChoice is the one resolver and both the row and the panel's letter ordering read it,
+where the panel held a second copy. Fix 2, a definition shut is two lines, SheetDefinitionLines,
+and the view checklist inside it shuts to a line naming what is ticked. StepFourOpen holds which
+definition and which list is open, in Core with tests, because removing a definition shifts
+every index past it. Suite reads 1486 locally, the 1456 on main plus 30. Fixes 3 and 4 next,
+then fixes 5 to 8 in a second pull request.
+
 Phase: 9, ship. Sixty second pass, third of three pull requests. The run preview: step 5 draws a
 card per sheet before it is made, the title block outline at its real proportion with its strip,
 and a rectangle for every viewport at the place and size the run will put it. SheetPlacement is
