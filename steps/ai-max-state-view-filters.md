@@ -14,4 +14,6 @@ the host swaps, and every line that differs beyond those is named in
 the DLL. The scan and the run read one set of rules, Core's, so the grid cannot part from
 the press. No cancel exists because the KPI progress window this reuses has none, by that
 task's recorded decision, and the probe stands ready. Nothing in this pass has been
-observed in Revit. The round guide for Bader is `steps/2026-09-13-view-filters.md`.
+observed in Revit. The round guide for Bader is `steps/2026-09-13-view-filters.md`. The
+round ships as pull request #108, and the pane's mockup, hand drawn from the code, is
+`design/pr-108/view-filters-pane.html`.
