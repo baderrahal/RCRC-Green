@@ -69,12 +69,17 @@ def banned_words():
 
 
 def scope(action):
+    """The answer, and the reason when there is not one.
+
+    The reason comes off standard error rather than out of the answer, so a message that
+    merely talks about a failure cannot be mistaken for one.
+    """
     done = subprocess.run(
         ["python3", SCOPE_FILE, action, os.environ.get("RCRC_COMMIT_COMMAND", "")],
         capture_output=True)
     if done.returncode != 0:
-        return None
-    return done.stdout.decode("utf-8", "replace")
+        return None, done.stderr.decode("utf-8", "replace").strip()
+    return done.stdout.decode("utf-8", "replace"), ""
 
 
 def staged_text(path):
@@ -133,18 +138,18 @@ def check(label, text):
                 findings.append(where + " uses the word " + word + ".")
 
 
-message = scope("message")
+# A check that cannot see its own subject refuses. Every way the message can be out of
+# reach, a file that will not open and a heredoc on standard input that the hook runs too
+# early to see, arrives here as a non-zero exit carrying its own reason.
+message, why = scope("message")
 if message is None:
-    print("Refused. " + SCOPE_FILE + " could not read the commit message.")
-    sys.exit(1)
-if "RCRC_UNREADABLE_MESSAGE_FILE" in message:
-    print("Refused. The commit message file named on the command line could not be read.")
+    print("Refused. " + (why or (SCOPE_FILE + " could not read the commit message.")))
     sys.exit(1)
 check("the commit message", message)
 
-listed = scope("paths")
+listed, why = scope("paths")
 if listed is None:
-    print("Refused. " + SCOPE_FILE + " could not work out what this commit carries.")
+    print("Refused. " + (why or (SCOPE_FILE + " could not work out what this commit carries.")))
     sys.exit(1)
 
 fields = listed.split("\0")

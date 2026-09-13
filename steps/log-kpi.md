@@ -4,6 +4,167 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, sixty sixth pass. The commit hooks could be bypassed in silence
+
+**A shared change, so it runs alone.** Nothing else is in this round: no KPI code, no rules
+file, no test project. The branch came off a fresh pull of main at `f7fca6d`. **1640 dotnet
+tests, 820 of them KPI, unchanged, because nothing under `src` or `tests` moved.**
+
+### What was open
+
+`commit-scope.py` read the commit message out of the command, and for a `-F` path it opened the
+file, except that a path of `-` was skipped with a bare continue. The message then came back as
+zero bytes, which breaks no writing rule, so `writing-check.sh` passed it. Found by walking into
+it on 14 September: the sixty fifth pass made its first commit with `-F -` and a heredoc, carried
+a co-author credit line, and was taken without a word.
+
+**One correction to what that round's log said.** It said all three commit hooks scanned an empty
+string. That is wrong and is corrected here rather than left standing. **Only
+`writing-check.sh` asks for the message.** `require-file-on-commit.sh` asks for `paths` and
+`territory-check.sh` for `all-paths`, and neither reads the message at all, so the hole blinded
+one hook rather than three. Checked by grep over the three scripts.
+
+### The fix, in two halves
+
+**`commit-scope.py` reports the standard input case rather than skipping it**, and
+**`writing-check.sh` refuses on it and says what to do.** Not the wording the unreadable-file
+case already used: a file that cannot be opened and a message that was never in a file are
+different problems, and only one of them has a remedy a person can act on. The refusal reads
+that the message is on standard input, where a hook that runs before the command cannot read
+it, and to write the message to a file and name that file with the message flag and its path.
+
+### The first fix was wrong, and its own commit is what said so
+
+The reason was reported by printing a MARKER WORD into the message, which is what the older
+unreadable-file case had always done, and the hook searched the message for that word. **The
+commit carrying that fix was refused by its own message**, because the message described the
+hole and named the marker. Every word of it was accurate and none of it was a failure.
+
+**A signal that travels in the data is not a signal.** A message that has the problem and a
+message that merely talks about it are the same string to a substring search, and the older
+marker had the same fault for as long as it has existed. Refusing is the safe direction, so
+nothing was ever let through by it, but a check that refuses correct work is a check people
+route around.
+
+So the reasons come back BESIDE the text rather than inside it. `commit_message` hands back the
+text and a list of what could not be read, `main` exits non-zero with the reasons on standard
+error, and `writing-check.sh` reads them off standard error and prints them. **Both markers are
+deleted**, the older one included, and with them the whole class. `scope` in the hook returns
+the answer and the reason together for the same reason.
+
+A case pins it: a message that talks about a message on standard input and about a message file
+that could not be read, while being neither, passes. That case fails against the marker version,
+which is how it was chosen.
+
+### The second instance, in the same file
+
+`read_commit_call` catches the unbalanced quote case and its own comment says to say nothing was
+found and let the caller fail closed. **No caller ever read the flag.** `main` went straight on
+and answered off the index, so a command that cannot run as written was answered with a guess at
+what it would have committed, to all three hooks. Measured before the change: a command holding
+an unbalanced quote came back `index` with exit 0.
+
+The fix is that the script itself exits non-zero, because **all three hooks already refuse on
+that** and had done all along. Nothing in any hook changed for it. A `readable` flag carries it,
+separate from `found`, because a line holding no commit at all is ordinary and must still pass.
+
+### Tested three ways, and the last two refuse
+
+`.claude/hooks/hook-tests.sh` is new. It drives the real hooks with the JSON payload Claude Code
+sends and checks the exit code, 0 for a pass and 2 for a refusal. **15 cases, all green.**
+
+```
+a message file it can read passes            exit 0
+a credit line is refused                     exit 2
+an em dash is refused                        exit 2
+a banned word is refused                     exit 2
+a message file it cannot read is refused     exit 2
+a message on standard input is refused       exit 2
+an inline message it can read passes         exit 0
+a message ABOUT a failure passes             exit 0
+```
+
+The three the round asks for are the first, the fifth and the sixth. Beyond them it checks the
+case above, that the scope script refuses a command it cannot read, that all three hooks refuse
+that same command, and that the ordinary shapes are still read rather than refused: the message
+flag, a message file with pathspecs, and the all form. **Every forbidden string in that file is
+built from pieces**, because the file is scanned by the hook it tests and a literal one would
+refuse the commit carrying it. The hook itself already did this and the comment saying why is
+what pointed the way.
+
+**It runs nothing in the gate**, which runs only the dotnet tests, so it is run by hand. Wiring
+it in is a question for Bader rather than something done here.
+
+### Three break watches, all restored byte for byte
+
+1. The dash case put back to a bare continue. **1 red**, a message on standard input is refused.
+2. The `readable` flag never set. **4 red**: the scope script directly, and all three hooks.
+3. `main` ignoring what `commit_message` could not read. **2 red**, standard input and the
+   unreadable file, which is what shows one exit path now carries both.
+
+**The second break found a gap in my own test before it found anything else.** Run against the
+first version of the fix it reddened 2 of 3, because `require-file-on-commit.sh` refused for its
+own reason: the index was empty, so no state file was in the commit either way. A case that
+passes incidentally proves nothing, so a direct case on the scope script went in ahead of the
+three hook cases. Same shape as last round, where a break watch went green and exposed a missing
+case rather than working code.
+
+### The other hooks, checked for the same shape
+
+The shape is a guard that cannot see its subject and passes rather than refusing. Every exit
+path of the other three was read, and two of them probed.
+
+**`require-file-on-commit.sh`: nothing found.** Its four refusal paths all fail closed. A missing
+scope script refuses, a repo with no state file at all refuses, a non-zero from the scope script
+refuses, and anything that falls through refuses. The pipe into `tr` would have masked the scope
+script's exit code, and does not, because the script sets `pipefail`. Checked by driving it.
+
+**`territory-check.sh`: nothing found in its own logic.** A missing scope script refuses, a
+non-zero refuses, and a fault inside its own embedded python refuses, which was probed by making
+that python throw and watching it come back exit 2 with the traceback. What it cannot see it is
+already documented as not seeing, in `territory.md`: a folder not in the TASKS list reads as
+common, a new Drawing Sheet file at the Revit root has to be added to a list by hand, and Drawing
+Sheet's flat test files read as common. Those are known limits rather than new findings.
+
+**`writing-check.sh`: one thing left as it is, deliberately.** A file whose content holds a NUL
+byte is skipped with a bare continue. That is the same silence the `-` case had, but a binary
+file has no text lines to check and refusing every commit carrying an image would be wrong. It is
+named here so the next reader knows it was looked at rather than missed.
+
+**`block-paths.sh`: one real hole, NOT fixed this round.** It is wired to Write, Edit AND
+NotebookEdit, and it reads `file_path` only. **NotebookEdit's argument is `notebook_path`**, so
+the hook reads an empty string, hits `if [ -z "$TARGET" ]; then exit 0` and passes. Measured:
+a payload writing to `/etc/evil.ipynb` came back exit 0, where the same path under `file_path`
+came back exit 2. This repository holds no `.ipynb` file, checked, so it is open rather than
+being exploited. **It is left alone because this round is the hook fix and nothing else.** The
+change is one line, reading both keys, and it is Bader's call.
+
+### Still open, for Bader
+
+- **`block-paths.sh` does not see a NotebookEdit path.** Above, with the measurement.
+- **Should `hook-tests.sh` run in the gate?** It is a test nobody runs automatically, which is
+  its own kind of silence. The gate is `dotnet test` only today.
+- **`territory.md` is behind the hook again.** The hook names six tasks and the file numbers
+  five: ViewFilters is missing from the list. The file's own header says it fell behind once
+  already and to check the two against each other, which is how this was found. Not corrected
+  here, because nothing else is in this round.
+- **A message the hook still cannot see.** `--amend --no-edit` and `-C <ref>` reuse a message
+  from an existing commit, and the scope script returns empty for both, so they pass unchecked.
+  That is the same shape again, but refusing every amend would block a normal flow, so it is a
+  decision rather than a bug to fix quietly.
+- **Non-permeable hardscape** is still blank on every workbook, unchanged from last round.
+
+### For the Drawing Sheet session
+
+**This landed in `CLAUDE.md`**, under the things that have gone wrong, because that is the file
+both sessions read every round and neither owns. Two entries: the standard input hole with the
+remedy, and the flag that was set and never read. The Hooks section names `hook-tests.sh` and
+says it is run by hand. **Write a commit message to a file and name that file with `-F <path>`.**
+A heredoc on standard input is refused now, so a round that uses one will be told rather than
+passed.
+
+---
+
 ## 2026-09-13, sixty fifth pass. Four things off the first per plot run
 
 The tree is right and both files recalculate with zero errors. The street reference file works:

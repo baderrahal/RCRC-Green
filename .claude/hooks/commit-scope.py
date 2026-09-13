@@ -71,6 +71,9 @@ class CommitCall(object):
         self.all_flag = False
         self.pathspecs = []
         self.found = False
+        # False only when the command could not be read as a shell line at all. It is not
+        # the same as found, which is False for an ordinary line carrying no commit.
+        self.readable = True
 
 
 def find_commit_arguments(tokens):
@@ -113,8 +116,11 @@ def read_commit_call(command):
         lexer.whitespace_split = True
         tokens = list(lexer)
     except ValueError:
-        # An unbalanced quote means the command will not run as written. Say nothing was
-        # found rather than guessing, and let the caller fail closed.
+        # An unbalanced quote means the command will not run as written, and the tokens
+        # cannot be trusted. This used to return a call that had simply found nothing,
+        # which every caller read as an ordinary commit and answered off the index. main
+        # fails the whole call now, and all three hooks already refuse on that.
+        call.readable = False
         return call
 
     every = find_commit_arguments(tokens)
@@ -231,18 +237,36 @@ def committed_paths(call, diff_filter="ACMR"):
 
 
 def commit_message(call):
+    """The message text, and every part of it that could not be read.
+
+    The reasons come back BESIDE the text rather than inside it. They used to be marker
+    words printed into the message for the caller to search for, which cannot tell a
+    message that could not be read from one that merely mentions the marker: the commit
+    that introduced the second marker was refused by its own message for saying its name.
+    A signal that travels in the data is not a signal.
+    """
     parts = list(call.messages)
+    problems = []
     for path in call.message_files:
         if path == "-":
+            # The message is on standard input, which a PreToolUse hook cannot reach: the
+            # hook runs before the command does, so the heredoc that would feed it has not
+            # been written yet. This was a bare continue, and on 14 September a commit made
+            # that way carried a co-author credit line straight past the writing check.
+            problems.append(
+                "The commit message is on standard input, where a hook that runs before"
+                " the command cannot read it. Write the message to a file, then name that"
+                " file with -F and its path.")
             continue
         try:
             with open(path, encoding="utf-8", errors="replace") as handle:
                 parts.append(handle.read())
         except IOError:
-            # A message file that cannot be read is reported as such rather than skipped,
-            # because skipping it would pass a message nothing looked at.
-            parts.append("RCRC_UNREADABLE_MESSAGE_FILE " + path)
-    return "\n\n".join(parts)
+            # A message file that cannot be read is reported rather than skipped, because
+            # skipping it would pass a message nothing looked at.
+            problems.append(
+                "The commit message file " + path + " could not be read.")
+    return "\n\n".join(parts), problems
 
 
 def main():
@@ -253,8 +277,22 @@ def main():
     action = sys.argv[1]
     call = read_commit_call(sys.argv[2])
 
+    if not call.readable:
+        # Every caller refuses on a non-zero exit, so this is the one place that has to
+        # say so. Answering with the index instead would be a guess at what a command that
+        # cannot run was going to commit.
+        sys.stderr.write(
+            "The command could not be read as a shell line, so what it commits is unknown.\n")
+        return 2
+
     if action == "message":
-        sys.stdout.write(commit_message(call))
+        text, problems = commit_message(call)
+        if problems:
+            # Non-zero, with the reason on standard error, because every caller already
+            # refuses on a non-zero exit and the reason is what the person needs to read.
+            sys.stderr.write("\n".join(problems) + "\n")
+            return 3
+        sys.stdout.write(text)
         return 0
 
     if action == "paths":
