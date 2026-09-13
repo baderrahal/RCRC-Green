@@ -82,6 +82,13 @@ runs wrote: `GRP_KPI_Checklist_DD_MOSQUES.xlsx` suggests
 can still be the only record of a shape. That goes in the rules beside the restored method
 rather than only here.
 
+### The mockup
+
+`design/pr-103/kpi-pane.html`, hand drawn from the code: the table of every read path with its
+verdict, the header's three states side by side, the plots block before and after the one press
+with the grouping buttons struck through, and a ticked MOSQUES with DM-14 taken off by hand
+reading 19 rather than 20. It says in the file that it is a mockup and not a screenshot.
+
 ### Three watches, one per item, all red
 
 **Item 1.** `KpiHeader.Lines` made to print the count line for a model nothing has read. **1

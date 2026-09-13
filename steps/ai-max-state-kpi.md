@@ -34,7 +34,10 @@ the ticks rather than adding, and they could tick a template's plots with its wo
 Both are deliberate now. Seven members are left reachable only from tests and **not deleted**,
 because of the lesson directly above. Whether they go is Bader's call.
 
-The round changes the pane, so it carries a mockup, hand drawn from the code.
+The round changes the pane, so it carries `design/pr-103/kpi-pane.html`, hand drawn from
+the code: the table of every read path, the header's three states side by side, the plots
+block before and after the one press with the grouping buttons struck through, and a
+ticked template with a plot taken off by hand reading 19 rather than 20.
 
 Three break watches went red on 1, 2 and 1 tests, one per item, and were restored byte for byte,
 each checked with a diff against its backup. **Two existing lines were changed by hand**, the
