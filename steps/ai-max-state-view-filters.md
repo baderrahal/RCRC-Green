@@ -15,5 +15,8 @@ the DLL. The scan and the run read one set of rules, Core's, so the grid cannot 
 the press. No cancel exists because the KPI progress window this reuses has none, by that
 task's recorded decision, and the probe stands ready. Nothing in this pass has been
 observed in Revit. The round guide for Bader is `steps/2026-09-13-view-filters.md`. The
-round ships as pull request #108, and the pane's mockup, hand drawn from the code, is
-`design/pr-108/view-filters-pane.html`.
+round shipped as pull request #108, squash merged at `3bcebd5` with the message back byte
+for byte, and the pane's mockup, hand drawn from the code, is
+`design/pr-108/view-filters-pane.html`. The runner read 1569 on the merge, this round's 75
+on top of a main the sixty third Drawing Sheet pass had moved to 1494 underneath it, and
+merged main reads 1569 locally, 0 failed and 0 skipped.

@@ -28,7 +28,7 @@ git pull origin main
 dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
 ```
 
-   Every test passes or you stop here and say so. Main carries 1531.
+   Every test passes or you stop here and say so. Main carries 1569.
 
 6. Build the solution:
 
