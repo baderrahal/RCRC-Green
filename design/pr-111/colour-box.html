@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The colour box, hand drawn from the code</title>
+<style>
+  body { background: #2e2e2e; color: #e6e6e6; font-family: "Segoe UI", sans-serif; font-size: 12px; margin: 0; padding: 24px; }
+  .note { background: #4a3a1a; color: #e6e6e6; padding: 10px 14px; margin-bottom: 18px; max-width: 480px; }
+  .pane { width: 430px; background: #2e2e2e; border: 1px solid #4a4a4a; padding: 8px; }
+  .head { font-weight: bold; margin: 8px 0 4px 0; }
+  .faint { color: #aaaaaa; margin: 3px 0; }
+  .row { border-bottom: 1px solid #4a4a4a; margin-bottom: 4px; padding: 6px 6px 8px 10px; }
+  .line { margin: 4px 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  input[type=text] { background: #262626; color: #e6e6e6; border: 1px solid #4a4a4a; font: inherit; width: 64px; }
+  .swatch { width: 16px; height: 16px; border: 1px solid #4a4a4a; display: inline-block; cursor: pointer; }
+  .warnedge { border-color: #ff8080; }
+  .faded { opacity: 0.4; }
+  select { background: #262626; color: #e6e6e6; border: 1px solid #4a4a4a; font: inherit; width: 70px; }
+  .caption { margin-top: 14px; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="note">
+This is a mockup drawn by hand from HexColorBox.cs and ViewFiltersPane.cs, not a
+screenshot. It cannot show how Revit will render the pane, and it cannot show the Windows
+colour picker itself, which is the system's own dialog. Dark theme values from PanelTheme
+are used. The four states below are the control's whole vocabulary.
+</div>
+
+<div class="pane">
+  <div class="head">One filter row, as the second pass draws it</div>
+  <div class="row">
+    <div class="line">Prefix <input type="text" style="width:170px" value="(200-260) Sections Scope"> <span style="margin-left:auto"><button style="background:#3a3a3a;color:#e6e6e6;border:1px solid #4a4a4a">Remove row</button></span></div>
+    <div class="line"><label><input type="checkbox" checked> Enabled</label> <label><input type="checkbox"> Visible</label> <label><input type="checkbox"> Halftone</label></div>
+    <div class="line"><label><input type="checkbox" checked> Line colour</label> <input type="text" value="#0000FF"> <span class="swatch" style="background:#0000FF"></span> Weight <select><option>0</option></select> <span class="faint">0 keeps the view's own</span></div>
+    <div class="line"><label><input type="checkbox"> Foreground pattern</label> <select><option>none</option></select> <input type="text" class="faded" value="#FFFF00"> <span class="swatch faded" style="background:#FFFF00"></span></div>
+    <div class="line"><label><input type="checkbox"> Background pattern</label> <select><option>none</option></select> <input type="text" class="faded" value="#FFFF00"> <span class="swatch faded" style="background:#FFFF00"></span></div>
+  </div>
+
+  <div class="caption">The four states of one box</div>
+  <div class="line"><input type="text" value="#FF9900"> <span class="swatch" style="background:#FF9900"></span> <span class="faint">a valid colour, painted live, click opens the picker</span></div>
+  <div class="line"><input type="text" value="#GGGGGG"> <span class="swatch warnedge"></span> <span class="faint">a mistype: warning edge, the stored value unmoved</span></div>
+  <div class="line"><input type="text" value=""> <span class="swatch"></span> <span class="faint">cleared: really clears, and Apply re greys</span></div>
+  <div class="line"><input type="text" class="faded" value="#888888"> <span class="swatch faded" style="background:#888888"></span> <span class="faint">tick off: faded, takes no click</span></div>
+
+  <div class="caption">What a click opens</div>
+  <div class="faint">The Windows colour picker, already expanded, Red Green Blue fields
+  showing, seeded with the box's colour, in front of Revit. OK writes back upper case
+  #RRGGBB and repaints the square. Custom colours stay in the dialog's list for the rest
+  of the Revit session.</div>
+</div>
+</body>
+</html>

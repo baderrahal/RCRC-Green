@@ -11,7 +11,8 @@ own boxes. The csproj already carried the WinForms references for the progress w
 nothing was added there. The round asked for the control in Core as XAML and it cannot
 live there, the same call as the first pass's runner, in the log. The reader was cleared
 of the ticked box in the screenshot by the gate test over the shipped file. Nothing in
-this pass has been observed in Revit. The guide is `steps/2026-09-13-colour-box.md`.
+this pass has been observed in Revit. The guide is `steps/2026-09-13-colour-box.md`, the
+pass ships as pull request #111, and the mockup is `design/pr-111/colour-box.html`.
 
 Before that. First pass. The task exists whole: `RcrcGreen.Core/ViewFilters` holds the
 plot id rule, the name building and matching, the hex parse, the keyword split, the row
