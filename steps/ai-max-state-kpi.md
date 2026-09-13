@@ -1,5 +1,44 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty eighth pass, the four tests that stayed green while the code was broken:
+findings 10, 11, 33 and 48. **The audit files read 49 findings, 17 FIXED, 32 OPEN**, counted off
+them and moved by these four alone. **1673 tests, 33 added against the 1640 main carried** at the
+branch point `4315933`, 28 hook checks unchanged. All four still stood at today's lines, checked
+before anything was written.
+
+**ONE ASSERTION PER VALUE AGAINST ITS CELL.** `ValueInItsOwnCellTests` binds all thirteen values
+to their cells, one case each and two holding a whole plan, with every value a different number
+or word because two totals of a size are what let a swap through. It also pins that nothing
+lands on D7 on STREETS, which holds the Category formula.
+
+**THE READ BACK, AND THE FIRST VERSION OF THAT TEST THAT DID NOT WORK.** Corrupting a cell behind
+the tool's back catches nothing, because the corrupted cell is not one the run wrote, so it is
+read through `ReadBack` again, which is the trap the finding names. **The break went green under
+my own new test at 1666.** What catches it is a cell written TWICE in one patch: the file holds
+the second value while the outcome carries one landed cell per write. The useless case is kept
+with a comment saying it is useless and why.
+
+**A RUN THAT ACTUALLY WROTE.** `CreateFixture.RunThatWrote` patches a workbook for real and hands
+back a genuine `PatchOutcome.Done`, so the report and the status line can be asserted against
+what landed. The status line's N cells written from M plots was asserted nowhere before.
+
+**THE TWO COPIES OF THE REGION RULE WERE NOT THE SAME RULE.** The handler took the one region
+holding an area and left two unchosen. The fixture took the FIRST region whatever it held and
+however many there were. The handler's was right, and `RegionChoice.For` in Core is the one copy
+now, called by both. **No test ever told them apart**, because every multi region case passes an
+explicit empty choice that both copies answer alike, so the divergence sat exactly where nothing
+looked. `WhyUnchosen` beside it names which of the three cases an empty choice was.
+
+Four break watches, 4, 2, 3 and 6 red, all restored byte for byte and each checked for whether
+the red case names what was broken. **Break 3's third red is not mine**, a pre-existing case
+asserting the heading count is 0 on a refused run, checked rather than assumed. **Twice in two
+rounds a break has reddened something other than what it aimed at**, and this round it was a
+green case in a test I had just written, which is the reason that test was rewritten.
+
+MERGE_LINE
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Finding 48 is the only item that changes
+what the tool does, and it makes the running rule the tested one rather than altering it.
+
 Phase: 9, ship. Sixty seventh pass, the four things left open by the hook round before it. **A
 shared change, run alone.** Nothing under `src` or `tests`, so the dotnet suite is unchanged at
 **1640, 820 of them KPI**, off the branch point `70c4abe`. **The hook checks went from 15 cases

@@ -158,6 +158,15 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     upstream. The rule holds by intention twice over. Restored and rerun green | A run in the
     fixture carrying a `PatchOutcome.Done`, and one assertion per value against its landed cell
 
+    FIXED, in the sixty eighth pass, pull request 117. `CreateFixture.RunThatWrote` patches a
+    workbook for real and hands back a run carrying a genuine `PatchOutcome.Done`, rather than
+    an outcome built by hand, so what the report prints is what a run would put there.
+    `tests/RcrcGreen.Core.Tests/Kpi/RunThatWroteTests.cs` asserts one line per landed cell, the
+    heading's own words, the part counts and the status line's "N cells written from M plots",
+    which was asserted nowhere. **Watched: printing CELLS WRITTEN off the plan reddens 3, two
+    of them naming the landed cells and one pre-existing case that asserts the count is 0 on a
+    refused run, which the plan's writes make non-zero.**
+
 34. INTERFACE | `src/RcrcGreen.Revit/Kpi/KpiPanel.cs:749` and `:702` | Every region choice
     button calls `AskedToCreate()`, and the confirm for identical areas redraws so the user
     presses Create again. Each is a full run: every ticked plot's sheets, schedules and regions
@@ -332,6 +341,16 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     reconciliation and merge test takes the fixture's choice, and the handler's is in the Revit
     project where no test reaches it | The choice is what finding 15 turns on, and the tested
     copy is not the one that runs | The rule moved into Core, where the fixture can call it
+
+    FIXED, in the sixty eighth pass, pull request 117. `RegionChoice.For` in Core is the one
+    copy, called by `KpiRequestHandler` and by `CreateFixture`. **The two copies were NOT the
+    same rule.** The handler took the one region holding an area and left two unchosen; the
+    fixture took the FIRST region whatever it held and however many there were. The handler's
+    was right and is what Core carries. No test ever told them apart, because every multi region
+    case in the suite passes an explicit empty choice, which both copies answered alike.
+    `tests/RcrcGreen.Core.Tests/Kpi/RegionChoiceTests.cs` pins the cases where they differed.
+    **Watched: taking the first region in Core reddens 6, three of the direct cases and three
+    fixture based ones in `HeldReadingsTests`, `ReconciliationTests` and `StreetsAreaTests`.**
 
 49. INTERFACE | `src/RcrcGreen.Revit/Kpi/KpiPanel.cs:130` with
     `src/RcrcGreen.Core/Kpi/KpiCreatePlan.cs:166` | The date goes into E5 as inline text,

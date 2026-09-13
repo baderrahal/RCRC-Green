@@ -4,6 +4,129 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, sixty eighth pass. The four tests that stayed green while the code was broken
+
+Findings 10, 11, 33 and 48, three of them proved by the audits. The branch came off a fresh pull
+of main at `4315933`, so the baseline is **1640 tests, 820 of them KPI**, and this round adds
+**33, to 1673**. The hook checks are 28 and unchanged. **The audit files now read 49 findings,
+17 FIXED, 32 OPEN**, counted off them, moved by these four and nothing else. **Nothing in this
+round has been observed in Revit**, and nothing in it changes what the tool does except
+finding 48, which is the one item that was meant to.
+
+### All four still stood at today's lines
+
+Checked before anything was written. Finding 10's `KpiCreateTests` still asserted the cells in
+order and the sheet on each and no value against any cell. Finding 11's
+`EveryWrittenCellIsReadBackOffTheOutput` still checked `WorkbookPatcher.ReadBack` rather than
+what `Patch` put on the outcome. Finding 33's `PatchOutcome.Done` was still built in no test
+file but the patcher's own. Finding 48's rule still existed twice.
+
+### 10. One assertion per value against its cell
+
+`ValueInItsOwnCellTests` binds every value to the cell it belongs in. The three typed into E5,
+G5 and H5, the component, the reference and the location, the area, the shrubs and the lawn
+totals, the two street cells and the two fixed ones, plus two cases holding a whole plan at
+once so a pair cannot hide behind a case reading one of them. **Every value in it is a
+different number or a different word**, because two totals of a size are exactly what let a
+swap through.
+
+One case earns its place beyond the finding: nothing the tool writes may land on D7 on STREETS,
+which holds the Category formula, and the only thing keeping it off is that the fixed values
+are placed off their labels.
+
+### 11. The read back, and the first attempt at it that did not work
+
+**My first version of this test did not catch the break, and that is the more useful half of
+it.** It patched, corrupted a cell in the file behind the tool's back, and asserted the
+corruption was reported. The audit's break went green under it at 1666, because **a corrupted
+cell is not one the run wrote**, so it was read through `ReadBack` again, which is the very trap
+the finding names.
+
+What catches it is a cell written TWICE in one patch. The patcher applies writes in order, so
+the file holds the second value, while the outcome carries one landed cell per write. Reading
+the file gives the second for both. Reporting what was sent gives the first for the first
+entry. That is a real divergence rather than a contrived one: two writes for one cell is exactly
+the plan bug a read back exists to make visible.
+
+The corruption case is kept, with a comment saying plainly that it does not catch the break and
+why, so the next person does not write it again.
+
+### 33. A run that actually wrote
+
+`CreateFixture.RunThatWrote` patches a workbook for real and hands back a run carrying a genuine
+`PatchOutcome.Done`, rather than an outcome built by hand, so what the report prints is what a
+run would put there. `RunThatWroteTests` asserts one line per landed cell, the heading's own
+words, the part counts, and the status line's N cells written from M plots, which was asserted
+nowhere at all.
+
+### 48. The rule moved into Core, and the two copies were NOT the same rule
+
+**This is the answer to the question the round asked, and it is not the reassuring one.**
+
+```
+the handler   a hand pick wins, else the ONE region HOLDING AN AREA, else nothing
+the fixture   a hand pick wins, else the FIRST region, whatever it held, however many
+```
+
+They differ on two shapes. Two regions holding an area: the handler chooses nothing and lets the
+reconciliation refuse until a person picks, the fixture took the first. A single region holding
+NO area: the handler chooses nothing, the fixture took it anyway. **The handler's is right**, and
+it is what `RegionChoice.For` in Core carries. The handler keeps only the reading.
+
+**No test ever told them apart.** Every multi region case in the suite passes an explicit empty
+choice, and both copies answer that alike, the old one because an empty string is not null and
+the new one because an empty string is nobody having picked. So the suite was green before the
+move and green after it, and the divergence sat in the two shapes nothing exercised.
+`RegionChoiceTests` pins those shapes, and three of its cases are ones the fixture's copy
+answered wrongly.
+
+`RegionChoice.WhyUnchosen` is new beside it, naming which of the three cases it was, because an
+empty choice with no reason leaves somebody guessing between no regions, none holding an area,
+and two that do.
+
+### Four break watches, all restored byte for byte
+
+Every one checked with a diff against its backup, and every one checked for whether the red
+case is the one that names what was broken.
+
+1. **The shrubs and lawn totals swapped in `KpiCreatePlan.Of`. 4 red**, all mine, all naming the
+   pair: the two that name F11 and H11 and the two whole plan cases.
+2. **The `CellText` read replaced with `write.Stored`. 2 red**, both in `ReadBackNoticesTests`
+   and both naming the read back. **On the first version of that test it was 0 red**, which is
+   recorded above and is the reason the test is shaped the way it is.
+3. **CELLS WRITTEN printed off the plan. 3 red.** Two are mine and name the landed cells. **The
+   third is not mine and reddened for a related but different reason**:
+   `WorkbookFormulasTests.TheFormulaCountAndTheReadersOfWrittenRowsAreInTheReport` asserts the
+   heading reads CELLS WRITTEN (0) on a refused run, and the plan's writes make that count non
+   zero. Checked rather than assumed, and it covered the count on a refused run, never the
+   landed values on a run that wrote.
+4. **`RegionChoice.For` taking the first region. 6 red**, three of the direct cases and three
+   fixture based ones, in `HeldReadingsTests`, `ReconciliationTests` and `StreetsAreaTests`,
+   which is both halves the round asked to see.
+
+**Twice in two rounds a break has reddened something other than what it aimed at.** Last round it
+was a second guard catching what the first stopped catching. This round it was a green case that
+proved nothing, in a test I had just written. A green case does not prove the line you think it
+does, and the only way to find out is to break the line and look at the names.
+
+### Counts and the merge
+
+**1673 tests locally at this branch, 0 failed and 0 skipped, 33 added against the 1640 main
+carries** at the branch point `4315933`. Hook checks 28 of 28. Build zero warnings, measured
+after the last file was written.
+
+MERGE_LINE
+
+### Still open, for Bader
+
+- **Non-permeable hardscape** is still blank on every workbook and nobody has said where it
+  comes from. Unchanged.
+- **`--fixup` and `--squash`** build a message from a ref's subject, are not read by the commit
+  hooks and fall to the no message refusal. Unchanged from last round.
+- **32 audit findings stay open**, not renumbered and not reordered.
+
+---
+
 ## 2026-09-14, sixty seventh pass. Four things off the hook round before it
 
 **A shared change, so it runs alone.** Nothing under `src` or `tests`, so the dotnet suite is

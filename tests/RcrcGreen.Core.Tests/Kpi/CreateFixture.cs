@@ -85,6 +85,42 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// **A RUN THAT REALLY WROTE.** Every other run this fixture builds carries a refused
+        /// outcome or none, so <see cref="PatchOutcome.Done"/> was built in no test file but the
+        /// patcher's own and the section whose heading says every cell was read back off the
+        /// output was the one section no test reached.
+        ///
+        /// It patches a workbook for real rather than hand building an outcome, so what the
+        /// report prints is what a run would put there. The caller owns the folder and deletes
+        /// it.
+        /// </summary>
+        public static KpiCreateRun RunThatWrote(string folder, params CellWrite[] writes)
+        {
+            if (folder == null) throw new System.ArgumentNullException("folder");
+
+            CellWrite[] held = writes != null && writes.Length > 0
+                ? writes
+                : new[]
+                {
+                    CellWrite.Text(WorkbookFixture.MainSheet, "D3", "FRIDAY MOSQUE"),
+                    CellWrite.Number(WorkbookFixture.MainSheet, "D8", 3728.757),
+                    CellWrite.Number(WorkbookFixture.TreesSheet, "B4", 31)
+                };
+
+            string template = WorkbookFixture.Create(folder, "template.xlsx");
+            string output = System.IO.Path.Combine(folder, "ANH-008-MO-100006.xlsx");
+
+            PatchOutcome outcome = WorkbookPatcher.Patch(template, output, held);
+            if (!outcome.Written)
+            {
+                throw new System.InvalidOperationException(
+                    "the fixture's own patch was refused: " + outcome.Refusal);
+            }
+
+            return Run(outcome: outcome);
+        }
+
+        /// <summary>
         /// One press of Create as the handler would hand it over, with the DM-12 numbers the
         /// first real run measured. Enough of it to write the report against.
         /// </summary>
@@ -168,7 +204,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             PrintedGroup[] printedGroups = null)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
-            string chosen = chosenRegion ?? (held.Length > 0 ? held[0].TypeName : null);
+
+            // THE SAME RULE THE HANDLER RUNS, called rather than written out again. This used
+            // to take held[0] whatever it held and however many there were, which is not what
+            // the running tool does, so every test built on it was built on a choice that
+            // could not happen.
+            string chosen = RegionChoice.For(held, chosenRegion);
 
             // A plot read has one schedule of each kind unless a test names otherwise, and the
             // names are the model's own shape.
