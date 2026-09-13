@@ -85,7 +85,13 @@ namespace RcrcGreen.Core.Kpi
                 new MappedCell(KpiValue.Reference, "C5"),
                 new MappedCell(KpiValue.Location, "E4"),
                 new MappedCell(KpiValue.Shrubs, "F11"),
-                new MappedCell(KpiValue.Lawn, "H11")
+                new MappedCell(KpiValue.Lawn, "H11"),
+
+                // The two cells this template says are typed by hand, filled off the team's
+                // scope validation file rather than by hand. H8 is D8 times F8 and the workbook
+                // computes it, so nothing is written there.
+                new MappedCell(KpiValue.StreetsRoadWidth, "D8"),
+                new MappedCell(KpiValue.StreetsTotalLength, "F8")
             },
             new TreeSheet(ExistingTreesSheet),
             new TreeSheet(ProposedTreesSheet),
@@ -162,9 +168,18 @@ namespace RcrcGreen.Core.Kpi
                 case KpiValue.Location:
                     return Picked(picked.Location, "Location") + ", read off Project Information";
                 case KpiValue.Area:
-                    return "PRX_Intervention Area, totalled off the chosen filled regions in the 00 link";
+                    return "PRX_Intervention Area, off the chosen filled region in the 00 link";
                 case KpiValue.Shrubs:
                     return "SHRUBS & GROUND COVER TOTAL AREA from the shrubs and lawn schedule";
+                case KpiValue.StreetsRoadWidth:
+                    return StreetReferenceFile.WidthColumn + " from the street reference file, "
+                        + "matched on " + KpiNames.PlotUid2;
+                case KpiValue.StreetsTotalLength:
+                    return StreetReferenceFile.QuantityColumn + " from the street reference file, "
+                        + "matched on " + KpiNames.PlotUid2;
+                case KpiValue.Character:
+                case KpiValue.Context:
+                    return FixedCells.SourceInWords;
                 default:
                     return "LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule";
             }

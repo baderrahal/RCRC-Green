@@ -75,6 +75,73 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
+    /// What happened to ONE PLOT, which is now one workbook and one folder.
+    ///
+    /// **A checklist is one plot.** The team files them that way, so a press over 20 mosque
+    /// plots makes 20 folders and 20 workbooks rather than one file holding 20 plots added
+    /// together. This is the row the report prints per plot and the row the accounting counts.
+    /// </summary>
+    public sealed class PlotOutcome
+    {
+        private PlotOutcome(
+            string plotId, KpiTemplate template, PlotWorkbookPath where,
+            bool written, bool folderMade, string why)
+        {
+            if (string.IsNullOrWhiteSpace(plotId)) throw new ArgumentNullException("plotId");
+
+            PlotId = plotId.Trim();
+            Template = template;
+            Where = where ?? PlotWorkbookPath.Refused(string.Empty);
+            Written = written;
+            FolderMade = folderMade;
+            Why = why ?? string.Empty;
+        }
+
+        public static PlotOutcome Wrote(string plotId, KpiTemplate template, PlotWorkbookPath where)
+        {
+            return new PlotOutcome(plotId, template, where, true, true, string.Empty);
+        }
+
+        /// <summary>
+        /// The plot was read and its workbook was not written. The folder may or may not have
+        /// been made by then, so which it was travels rather than being assumed.
+        /// </summary>
+        public static PlotOutcome WroteNothing(
+            string plotId, KpiTemplate template, PlotWorkbookPath where, bool folderMade, string why)
+        {
+            return new PlotOutcome(plotId, template, where, false, folderMade, why);
+        }
+
+        public string PlotId { get; }
+
+        /// <summary>
+        /// Null where no template took the plot at all, which is a plot neither route placed.
+        /// </summary>
+        public KpiTemplate Template { get; }
+
+        public PlotWorkbookPath Where { get; }
+
+        public bool Written { get; }
+
+        /// <summary>
+        /// Whether this plot's own folder exists after the press. **A folder is created where it
+        /// does not exist and NEVER deleted**, so a refused write can still leave one behind and
+        /// the count says so rather than implying the tree was tidied up.
+        /// </summary>
+        public bool FolderMade { get; }
+
+        /// <summary>
+        /// Empty on a plot that was written. Never empty on one that was not.
+        /// </summary>
+        public string Why { get; }
+
+        public string TemplateName
+        {
+            get { return Template == null ? string.Empty : Template.Name; }
+        }
+    }
+
+    /// <summary>
     /// One press of Create over several templates: one run per template written exactly as one
     /// is written today, and the accounting that sits above all of them.
     ///
@@ -92,7 +159,9 @@ namespace RcrcGreen.Core.Kpi
             TemplateSplit split,
             IReadOnlyList<KpiCreateRun> runs,
             IReadOnlyList<TemplateOutcome> outcomes,
-            RunTiming timing = null)
+            RunTiming timing = null,
+            IReadOnlyList<PlotOutcome> plotOutcomes = null,
+            StreetReferenceFile streets = null)
         {
             if (split == null) throw new ArgumentNullException("split");
 
@@ -101,6 +170,54 @@ namespace RcrcGreen.Core.Kpi
             Runs = runs ?? new List<KpiCreateRun>();
             Outcomes = outcomes ?? new List<TemplateOutcome>();
             Timing = timing ?? RunTiming.NotTimed;
+            PlotOutcomes = plotOutcomes ?? new List<PlotOutcome>();
+            Streets = streets ?? StreetReferenceFile.NotSet;
+        }
+
+        /// <summary>
+        /// One per TICKED plot, whether it wrote a workbook or not. **This is the accounting the
+        /// round asks for**, and it is per plot because a checklist is per plot now.
+        /// </summary>
+        public IReadOnlyList<PlotOutcome> PlotOutcomes { get; }
+
+        /// <summary>
+        /// What the street reference file was, so the report says it once at the top rather than
+        /// once under each of 78 street plots.
+        /// </summary>
+        public StreetReferenceFile Streets { get; }
+
+        public int PlotsTicked
+        {
+            get { return PlotOutcomes.Count; }
+        }
+
+        /// <summary>
+        /// How many plot folders exist after the press, counted off the outcomes rather than off
+        /// the file system, because a folder somebody else made is not this run's doing.
+        /// </summary>
+        public int FoldersMade
+        {
+            get { return PlotOutcomes.Count(one => one.FolderMade); }
+        }
+
+        public int WorkbooksWritten
+        {
+            get { return PlotOutcomes.Count(one => one.Written); }
+        }
+
+        public int PlotsThatWroteNothing
+        {
+            get { return PlotOutcomes.Count(one => !one.Written); }
+        }
+
+        /// <summary>
+        /// Written plus wrote nothing must equal ticked. **The folders are counted beside them
+        /// and are deliberately NOT in the sum**, because a folder can exist for a plot whose
+        /// workbook was refused and one made by an earlier press is not made twice.
+        /// </summary>
+        public bool PlotCountsAddUp
+        {
+            get { return WorkbooksWritten + PlotsThatWroteNothing == PlotsTicked; }
         }
 
         public string DocumentTitle { get; }
@@ -177,6 +294,13 @@ namespace RcrcGreen.Core.Kpi
             get
             {
                 var held = new List<string>(Split.Refusals);
+                if (!PlotCountsAddUp)
+                {
+                    held.Add(PlotsTicked + " plots were ticked and "
+                        + (WorkbooksWritten + PlotsThatWroteNothing)
+                        + " were accounted for, which is a bug in this tool.");
+                }
+
                 if (!CountsAddUp)
                 {
                     held.Add(TemplatesTicked + " templates were ticked and "

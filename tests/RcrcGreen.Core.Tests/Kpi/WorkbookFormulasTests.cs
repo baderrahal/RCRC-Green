@@ -236,7 +236,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(2, ifs.Cells);
 
             string report = KpiCreateReport.Write(
-                CreateFixture.Run(outcome: outcome, outputPath: Output()), new DateTime(2026, 9, 10, 14, 28, 0));
+                CreateFixture.Run(outcome: outcome, outputRoot: _folder), new DateTime(2026, 9, 10, 14, 28, 0));
 
             Assert.Contains("  FUNCTIONS THE READER'S EXCEL MAY NOT HAVE, 1.", report);
             Assert.Contains("    _xlfn.IFS in 2 cells. Those cells need a version of Excel that has IFS.", report);
@@ -253,7 +253,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             }, MappedCells());
 
             string report = KpiCreateReport.Write(
-                CreateFixture.Run(outcome: outcome, outputPath: Output()), new DateTime(2026, 9, 10, 14, 28, 0));
+                CreateFixture.Run(outcome: outcome, outputRoot: _folder), new DateTime(2026, 9, 10, 14, 28, 0));
 
             Assert.Contains("== " + KpiCreateReport.FormulasHeading + " (8) ==", report);
             // Seven on the main sheet, D8, F8, D9, H9, E31, F31 and G31, and fourteen on each tree
@@ -289,7 +289,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(manual.WillRecalculate);
 
             string report = KpiCreateReport.Write(
-                CreateFixture.Run(outcome: outcome, outputPath: Output()), new DateTime(2026, 9, 10, 14, 28, 0));
+                CreateFixture.Run(outcome: outcome, outputRoot: _folder), new DateTime(2026, 9, 10, 14, 28, 0));
 
             Assert.Contains("  WILL EXCEL RECALCULATE THIS FILE: YES, five things checked off the output file, over what the file says and not over what Excel does with it", report);
             Assert.Contains("    calcMode              auto\r\n", report);
@@ -312,7 +312,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("xl/worksheets/sheet1.xml carries sheetCalcPr fullCalcOnLoad=\"1\"", found);
 
             string report = KpiCreateReport.Write(
-                CreateFixture.Run(outcome: outcome, outputPath: Output()), new DateTime(2026, 9, 10, 14, 28, 0));
+                CreateFixture.Run(outcome: outcome, outputRoot: _folder), new DateTime(2026, 9, 10, 14, 28, 0));
 
             Assert.Contains("    other calculation settings in the package: 1\r\n      xl/worksheets/sheet1.xml carries sheetCalcPr fullCalcOnLoad=\"1\"\r\n", report);
         }

@@ -1,5 +1,60 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty fourth pass, one workbook per plot in a folder tree, off how the team
+really files these. **The audit files stay the one record: counted off them today, 49
+findings, 13 FIXED, 36 OPEN, and this round closes none.** The round message said 32 open. That
+is not what the two files say and nothing here was renumbered to make it so.
+
+**A CHECKLIST IS ONE PLOT.** Tick MOSQUES and press once and you get 20 folders and 20 workbooks
+rather than one file with 20 plots added together. `PlotWorkbookPath` builds
+root/COMPONENT FOLDER/UID2/UID2.xlsx off the team's own folders, the plot gets a folder of its
+own so the PDF asked for later has somewhere to go, the folder is made where it is not there and
+never deleted, and the overwrite is unchanged. **NOTHING ABOUT READING A PLOT CHANGED**: the
+handler still reads a whole share in one pass and `OnePlot` fills, patches and files each
+reading on its own, with the merge functions taking a list of one.
+
+**`ComponentFolders` is a THIRD table off PRX_Component.** One says which workbook a plot is
+filled from and this says which folder it is filed in, and neither derives from the other: the
+two mosque values share one template and get two folders. **Eleven values reach EIGHT folders**,
+counted off Bader's own table, where the round message said nine, and GOVERMENT BUILDING is
+deliberately out of it. That count is an open question rather than a thing I guessed at.
+
+**`StreetReferenceFile` fills D8 and F8 on STREETS**, browsed for and remembered like the other
+two, read by the names in the header row. Measured on the real file: the four columns sit at D,
+H, I and O with no header over B at all, 313 rows are ANH-007-ST, 33 UIDs are on two rows and
+none of them is in ANH-007, and **the file writes an absent value as the text Null rather than
+an empty cell**, on 2,051 rows. Nothing is estimated from the component value, and the file
+proves why: 156 of the 313 street plots read a width of 15.
+
+**A platform answered differently from the machine the tool runs on.**
+`Path.GetInvalidFileNameChars` names nine characters on Windows and two on the Linux runner, so
+a UID2 reading ANH*007 was refused by the tool and accepted by the test meant to check it. The
+nine are data now and my own test caught it on the first run.
+
+**`FixedCells` holds Character as Urban Area Zone and Context as Urban, and WHICH CELL EACH GOES
+IN IS UNKNOWN.** Neither word is measured anywhere in this repository, so the map names no cell,
+every template reports both as not written with that reason in every run, and nothing is
+guessed. That is the one part of this round that is open rather than done.
+
+**The output folder is taken as the root**, a judgement, because the round's two sections
+disagree about how many browsed things there are and a folder deciding nothing is a dead end
+this file already records. The pointer file is unchanged so nobody's setting is lost.
+
+**Nothing is deleted.** What is no longer reached is listed in the rules with why each was kept:
+the merged species list across plots, the identical raw area check, the sum against the printed
+total, the plot counted into two workbooks and the output name box. **The rounding room on a
+group total does NOT stand down**, against the round message, because it is per schedule and per
+plot and nothing about it moved.
+
+Five break watches went red on 3, 2, 9, 3 and 1 tests and were restored byte for byte, each
+checked with a diff against its backup. **The fifth found a gap in my own test rather than in the
+code**: a plot that gets neither a folder nor a workbook was not in the accounting test, and it
+is now. Six existing tests were changed by hand, each because the truth under it moved. **Locally
+1625 tests at this branch, 0 failed and 0 skipped, 805 of them KPI, 47 added, against the 1578
+main carries** at the branch point `386948e`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS
+ARE WRITTEN HERE AFTER THE MERGE. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and the
+five correct workbooks are what a per plot press has to be held against.
+
 Phase: 9, ship. Sixty third pass, two answers from Bader and one short piece of work. **The
 audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
 

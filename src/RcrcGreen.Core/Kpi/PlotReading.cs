@@ -672,13 +672,15 @@ namespace RcrcGreen.Core.Kpi
             int softscapeRowsPassedOver = 0,
             IEnumerable<ScannedSchedule> printedSchedules = null,
             int softscapeTotalRow = 0,
-            IEnumerable<PrintedGroup> printedGroups = null)
+            IEnumerable<PrintedGroup> printedGroups = null,
+            string uid2 = null)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
             if (softscapeRowsPassedOver < 0) throw new ArgumentOutOfRangeException("softscapeRowsPassedOver");
             if (softscapeTotalRow < 0) throw new ArgumentOutOfRangeException("softscapeTotalRow");
 
             PlotId = plotId;
+            Uid2 = (uid2 ?? string.Empty).Trim();
             PrintedSchedules = Held(printedSchedules);
             SoftscapeTotalRow = softscapeTotalRow;
             PrintedGroups = Held(printedGroups);
@@ -750,6 +752,16 @@ namespace RcrcGreen.Core.Kpi
         public string Component { get; }
 
         public string Reference { get; }
+
+        /// <summary>
+        /// PRX_Plot_UID2 off the same first sheet the component and the reference come off.
+        ///
+        /// **It is read under its exact name and never through the Reference picker.** The user
+        /// may pick any of the four plot parameters as the workbook's reference, and the folder
+        /// tree and the street reference file both need this one specifically. Two facts asked
+        /// of one picker is the shape this repository keeps paying for.
+        /// </summary>
+        public string Uid2 { get; }
 
         /// <summary>
         /// The name of every schedule filtered on this plot whose name holds SOFTSCAPE. One is

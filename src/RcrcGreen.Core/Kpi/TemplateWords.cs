@@ -76,8 +76,8 @@ namespace RcrcGreen.Core.Kpi
 
             if (template.AreaIsTypedByHand)
             {
-                lines.Add("  No area cell. The road width and the total length are typed by "
-                    + "hand and the sheet works the area out. Those cells are left alone.");
+                lines.Add("  No area cell. The sheet works the area out from the road width "
+                    + "and the total length, and those two come off the street reference file.");
             }
 
             lines.Add("  " + string.Join(", ", KpiTemplates.TypedByTheTeam)

@@ -5,7 +5,17 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// The six values the finished tool reads out of Revit and writes into a workbook.
+    /// Every value the map places in a cell. **The first six come out of Revit and the last four
+    /// do not**, which is why each carries where it is from here rather than in a second list:
+    ///
+    /// <code>
+    /// Component Reference Location Area Shrubs Lawn   the model
+    /// StreetsRoadWidth StreetsTotalLength            the team's scope validation file
+    /// Character Context                              the same on every plot, Bader's answer
+    /// </code>
+    ///
+    /// They share one map because a cell reference is a cell reference, and a second table of
+    /// cells per template is a second record of the one fact the map exists to hold.
     /// </summary>
     public enum KpiValue
     {
@@ -14,7 +24,29 @@ namespace RcrcGreen.Core.Kpi
         Location,
         Area,
         Shrubs,
-        Lawn
+        Lawn,
+
+        /// <summary>
+        /// D8 on STREETS, off ROAD_WIDTH in the reference file. H8 is this times the length and
+        /// the workbook computes it, so nothing writes there.
+        /// </summary>
+        StreetsRoadWidth,
+
+        /// <summary>
+        /// F8 on STREETS, off ES_QUANTITY in the reference file.
+        /// </summary>
+        StreetsTotalLength,
+
+        /// <summary>
+        /// Always Urban Area Zone. **Which cell holds it is measured on no template yet**, so
+        /// the map names none and every template reports it as not written until one is.
+        /// </summary>
+        Character,
+
+        /// <summary>
+        /// Always Urban, and the same UNKNOWN cell.
+        /// </summary>
+        Context
     }
 
     /// <summary>

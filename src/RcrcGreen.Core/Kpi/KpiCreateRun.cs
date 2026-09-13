@@ -19,7 +19,7 @@ namespace RcrcGreen.Core.Kpi
             string documentTitle,
             KpiTemplate template,
             string templatePath,
-            string outputPath,
+            PlotWorkbookPath where,
             string componentParameter,
             string referenceParameter,
             string location,
@@ -54,7 +54,7 @@ namespace RcrcGreen.Core.Kpi
             DocumentTitle = documentTitle ?? string.Empty;
             Template = template;
             TemplatePath = templatePath ?? string.Empty;
-            OutputPath = outputPath ?? string.Empty;
+            Where = where ?? PlotWorkbookPath.Refused(string.Empty);
             ComponentParameter = componentParameter ?? string.Empty;
             ReferenceParameter = referenceParameter ?? string.Empty;
             Location = location ?? string.Empty;
@@ -78,7 +78,20 @@ namespace RcrcGreen.Core.Kpi
 
         public string TemplatePath { get; }
 
-        public string OutputPath { get; }
+        /// <summary>
+        /// Where this plot's workbook goes, whole: the component folder, the UID2, the plot's own
+        /// folder and the file in it, or the reason there is none.
+        ///
+        /// **It replaced a loose output path string.** The path and the folder it sits in were
+        /// two records of one fact the moment the tree existed, and this repository has paid for
+        /// that shape eight times.
+        /// </summary>
+        public PlotWorkbookPath Where { get; }
+
+        public string OutputPath
+        {
+            get { return Where.FilePath; }
+        }
 
         /// <summary>
         /// Which sheet parameter the user picked for the component and which of the four plot

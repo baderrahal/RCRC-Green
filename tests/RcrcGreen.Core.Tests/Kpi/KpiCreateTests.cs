@@ -304,13 +304,30 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Totalled.Adding(new[] { new PlotNumber("DM-11", 70.0) }),
                 Totalled.Adding(new[] { new PlotNumber("DM-11", 35.0) }),
                 null,
-                "2026-09-09", "B RAHAL", "BIM COORDINATOR");
+                "2026-09-09", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile);
 
             Assert.Equal(9, plan.Writes.Count);
-            Assert.Empty(plan.Skipped);
             Assert.Equal(new[] { "E5", "G5", "H5", "D3", "C5", "E4", "D8", "F11", "H11" },
                 plan.Writes.Select(one => one.Cell.ToString()));
             Assert.All(plan.Writes, one => Assert.Equal("<Park Name>", one.SheetName));
+
+            // **Four cells this template has none of, each named rather than silent.** The two
+            // street cells are only on STREETS. The two fixed ones are on no template's map yet,
+            // because which cell holds Character and which holds Context is measured nowhere.
+            Assert.Equal(
+                new[] { "StreetsRoadWidth", "StreetsTotalLength", "Character", "Context" },
+                plan.Skipped.Select(one => one.What).ToArray());
+            Assert.Equal(
+                new[]
+                {
+                    "only the STREETS template has this cell",
+                    "only the STREETS template has this cell",
+                    "no cell has been measured for it on any template, so nothing is written and "
+                        + "nothing is guessed",
+                    "no cell has been measured for it on any template, so nothing is written and "
+                        + "nothing is guessed"
+                },
+                plan.Skipped.Select(one => one.Why).ToArray());
         }
 
         /// <summary>
@@ -327,7 +344,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
-                "2026-09-09", "xx", "bb");
+                "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile);
 
             Assert.Equal("2026-09-09", Written(plan, "E5"));
             Assert.Equal("xx", Written(plan, "G5"));
@@ -346,7 +363,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
-                "2026-09-09", "   ", null);
+                "2026-09-09", "   ", null, CreateFixture.NoStreetFile);
 
             Assert.Equal("2026-09-09", Written(plan, "E5"));
             Assert.Equal(KpiCreatePlan.TypedByTheTeam, plan.Skipped.Single(one => one.Cell == "G5").Why);
@@ -362,7 +379,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
-                "  2026-09-09  ", "B RAHAL", "BIM COORDINATOR");
+                "  2026-09-09  ", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile);
 
             Assert.Equal("2026-09-09", Written(plan, "E5"));
             Assert.Equal("BIM COORDINATOR", Written(plan, "H5"));
@@ -385,7 +402,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
-                new[] { added }, null, null, null);
+                new[] { added }, null, null, null, CreateFixture.NoStreetFile);
 
             List<CellWrite> onTheSheet = plan.Writes
                 .Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet)
@@ -410,7 +427,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
                 new[] { Matched("Albizia lebbeck", CreateFixture.Proposed, 13, 7) },
-                null, null, null);
+                null, null, null, CreateFixture.NoStreetFile);
 
             List<CellWrite> onTheSheet = plan.Writes
                 .Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet)
@@ -434,7 +451,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
-                new[] { nowhere }, null, null, null);
+                new[] { nowhere }, null, null, null, CreateFixture.NoStreetFile);
 
             NotWritten said = plan.Skipped.Single(one => one.SheetName == KpiTemplates.ExistingTreesSheet);
 
@@ -464,7 +481,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Totalled.Adding(new[] { new PlotNumber("PL-17", 70.0) }),
                 Totalled.Adding(new[] { new PlotNumber("PL-17", 35.0) }),
                 null,
-                "2026-09-09", "B RAHAL", "BIM COORDINATOR");
+                "2026-09-09", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile);
 
             NotWritten skipped = plan.Skipped.Single(one => one.What == "Area");
             Assert.Equal(KpiCreatePlan.TypedByHand, skipped.Why);
@@ -487,7 +504,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null,
                 null,
                 null,
-                null, null, null);
+                null, null, null, CreateFixture.NoStreetFile);
 
             NotWritten component = plan.Skipped.Single(one => one.What == "Component");
             Assert.Equal("D3", component.Cell);
@@ -500,12 +517,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null, null,
-                null, null, null);
+                null, null, null, CreateFixture.NoStreetFile);
 
             Assert.Empty(plan.Writes);
-            Assert.Equal(9, plan.Skipped.Count);
+
+            // Nine as before, plus the four cells this template does not carry.
+            Assert.Equal(13, plan.Skipped.Count);
             Assert.Equal(6, plan.Skipped.Count(one => one.Why == KpiCreatePlan.NotFound));
             Assert.Equal(3, plan.Skipped.Count(one => one.Why == KpiCreatePlan.TypedByTheTeam));
+            Assert.Equal(2, plan.Skipped.Count(one => one.Why == KpiCreatePlan.NotAStreetTemplate));
+            Assert.Equal(2, plan.Skipped.Count(one => one.Why == FixedCells.NoCellMeasured));
         }
 
         [Fact]
@@ -513,7 +534,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null,
-                new[] { Matched("Albizia lebbeck", "Proposed", 18, 7) }, null, null, null);
+                new[] { Matched("Albizia lebbeck", "Proposed", 18, 7) }, null, null, null, CreateFixture.NoStreetFile);
 
             CellWrite write = Assert.Single(plan.Writes);
             Assert.Equal(KpiTemplates.ProposedTreesSheet, write.SheetName);
@@ -530,7 +551,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null,
-                new[] { unmatched }, null, null, null);
+                new[] { unmatched }, null, null, null, CreateFixture.NoStreetFile);
 
             Assert.Empty(plan.Writes);
             NotWritten skipped = plan.Skipped.Single(one => one.What.StartsWith("UNKNOWN"));

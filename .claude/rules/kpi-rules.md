@@ -22,19 +22,178 @@ The scanner came first and is still there. The pane now also fills: a plot picke
 choices the model cannot make, and a Create button that copies the template, patches it and
 writes a report. **It still creates nothing in the model and never writes to the template.**
 
-## One checklist can cover more than one plot
+## A CHECKLIST IS ONE PLOT, AND IT LIVES IN A FOLDER NAMED AFTER IT
 
-A checklist is not always one plot. It can be a whole asset made of several, and then the
-workbook wants the plots added together.
+**The team came back with how they actually file these, and it reverses the section that used
+to sit here.** A checklist is one plot. Tick MOSQUES and press once and you get 20 folders and
+20 workbooks, not one file with 20 plots added together. Nothing is added across plots anywhere
+any more.
+
+The tree, measured off the team's own folders:
+
+```
+MUGHARAZAT/                        the root the user browsed to
+   FRIDAY MOSQUE/                  the component folder
+      ANH-008-MO-100006/           the plot's own folder, its PRX_Plot_UID2
+         ANH-008-MO-100006.xlsx    the workbook, named after its folder
+```
+
+`PlotWorkbookPath` is the whole rule. **The plot gets a folder of its own holding one file**,
+which leaves room for the PDF asked for beside it later, and nothing here builds one. **The
+folder is created where it does not exist and NEVER deleted**, and the writer puts its file into
+whatever is already there. A workbook already at that path is overwritten silently, no
+confirmation and no second copy, which is Bader's decision and is unchanged.
+
+**A UID2 that would not sit in a path refuses rather than being cleaned.** Every other name this
+tool writes goes through `ScanFileName.Cleaned`, which is right for a name a person typed. This
+one is what the team searches folders by, so ANH/007 cleaned to ANH_007 is a plot nobody finds
+and no error anybody sees. **The refused characters are Windows's own, written out as data**,
+because `Path.GetInvalidFileNameChars` names nine and the control characters on Windows, where
+Revit runs, and two on the Linux runner the gate uses: asked of the platform, the test would
+pass on the runner while the tool refused the same name on a real machine.
+
+**NOTHING ABOUT READING A PLOT CHANGED.** Same schedules, same group rules, same Street Design
+rule, same canopy check, same alias, same cache fix, same read back. `OneTemplate` in
+`KpiRequestHandler` still reads its whole share in one pass, because the held readings, the
+progress count and the area unit are decided once per template. What changed is below the read:
+`OnePlot` fills, patches and files each reading on its own.
+
+**A refusal on one plot does not stop the rest**, the same rule a refusal on one template
+already followed, and each plot's own row says what happened to it.
+
+## The component folder is a THIRD table, and it is not the template name
+
+`ComponentFolders` answers a different question from `ComponentTemplates`. One says which
+WORKBOOK a plot is filled from and the other which FOLDER the filled workbook is filed in, and
+neither derives from the other:
+
+```
+DAILY MOSQUE          -> DAILY MOSQUE        NH STRT 20m ROW       -> STREETS
+FRIDAY MOSQUE         -> FRIDAY MOSQUE       NH STRT LESS 20m ROW  -> STREETS
+SCHOOL                -> SCHOOL              STREET 30m ROW        -> STREETS
+HEALTH                -> HEALTHCARE          STREET 36m ROW        -> STREETS
+PARKING LOT           -> PARKING LOT
+EXISTING PARK         -> EXISTING PARK
+FUTURE PARK           -> FUTURE PARKS
+```
+
+Confirmed by Bader against the team's folders. **The two mosque values share one template and
+get two folders**, and PARKING LOT and HEALTH share neither spelling with the template they fill
+from, so no string rule turns one into the other any more than one turns a component value into
+a template name.
+
+**SPELL THEM EXACTLY.** SCHOOL singular, FUTURE PARKS plural, EXISTING PARK singular. That is
+not a pattern, and one wrong letter makes a second folder beside the team's that nobody notices
+for a month.
+
+**Eleven values reach EIGHT folders, counted off the table.** The round message said nine. The
+team's snip also holds a GOVERMENT BUILDING folder, spelt that way, deliberately not in the
+table because no plot in either measured model carries a component for it, and whether that is
+the ninth is for the team. A value the table does not hold writes nothing and is named, the same
+way an unknown component already is, and nothing falls back to the template name.
+
+**The folder comes off the PLOT'S OWN component and never off the template**, which is what
+keeps DAILY MOSQUE and FRIDAY MOSQUE apart on a run that fills both from MOSQUES.
+
+## The street reference file fills the two cells STREETS types by hand
+
+`StreetReferenceFile` reads the team's Scope_Validation workbook, browsed for and remembered
+through its own pointer file beside the installed assembly, the same way the templates folder
+and the output root are. It fills D8, Streets ROW (m), and F8, Streets Total Length (m). **H8 is
+the two multiplied and the workbook computes it, so nothing is written there.**
+
+**Measured on Scope_Validation_21072026, 2026-09-13**, which is not in this repository and never
+will be. One sheet, a header row and 8,353 rows. The four wanted columns are NOT at the front and
+there is no header cell over column B at all, so they are found by the names in the header row:
+
+```
+D   ID_UID *          the plot, ANH-007-ST-100210
+H   ES_QUANTITY       330.65849900000001
+I   QUANTITY UNIT     m on 6,301 rows, sqm on 2,051, and Null on one
+O   ROAD_WIDTH        20
+```
+
+**313 rows are ANH-007-ST**, which is NG05's neighbourhood, and that number is what the round
+message predicted and the file measured.
+
+Six rules, all tested.
+
+**The UID is matched whole and without case**, never as a prefix and never against a name.
+
+**A street plot the file does not name gets both cells left empty and is NAMED in the report
+with its UID.** It is a note and never a refusal. **NOTHING IS ESTIMATED FROM THE COMPONENT
+VALUE.** STREET 30m ROW looks like it says 30, and the 313 street rows read 15 on 156 of them,
+20 on 65, 10 on 57, 30 on 15 and 36 on 13, with 5, 6, 8 and 12 among the rest. A width read off
+the component name would be a number nobody measured, in a client file, on more than half the
+plots.
+
+**QUANTITY UNIT is read and checked.** A row in anything but m is not used and is named, because
+2,051 of the file's rows are areas in sqm and one written into the total length cell would have
+the workbook compute an area of an area.
+
+**Two rows for one UID refuses and names both.** The file holds 33 such UIDs, none of them in
+ANH-007, so it fires on no NG05 plot today and is still the rule.
+
+**The file writes an absent value as the text Null in angle brackets rather than leaving the cell
+empty**, on all 2,051 sqm rows' road width and on one row's unit. It is text, so `CellNumber`
+reads no number out of it and the plot is named, which is why the numbers go through that tested
+reader rather than through a parse written here.
+
+**No file set, or one that cannot be read, is a NOTE and not a refusal.** Both cells stay empty,
+the run goes through, and the report says so once at the top rather than 78 times underneath.
+
+**Only STREETS asks it this round.** The file also holds parking, mosque, park, school, health
+and government rows and nothing reads them.
+
+## Two cells that are always the same, and no cell has been measured for either
+
+**Bader's answer: Character is always Urban Area Zone and Context is always Urban.** They come
+from no model, no schedule and no file, so `FixedCells` holds them as data.
+
+**WHICH CELL EACH GOES IN IS UNKNOWN.** Neither word appears in the map, in these rules, or in
+any run this repository records, and the round message says the STREETS sheet is laid out
+differently from the mosque one, Category and Character against Character and Context, so the
+templates do not even carry the same pair. So `KpiTemplates` names no cell for either and every
+template reports both as not written with that reason, one line per template in every run, until
+somebody measures them. A cell guessed here would put Urban Area Zone into whatever D4 happens
+to be on seven client templates and the workbook would look filled.
 
 **Which plots belong to one checklist is not written down anywhere.** Nothing groups by the
-plot prefix, by the component, or by anything else. The user ticks them and the tool adds up
-exactly what was ticked. `PlotTicks` is the one record of that choice and the list is drawn
-from it every time it changes.
+plot prefix, by the component, or by anything else. The user ticks them and the tool writes one
+workbook for each. `PlotTicks` is the one record of that choice and the list is drawn from it
+every time it changes.
 
 The plot list is the union of two sources, `PRX_Plot_ID` on the sheets and the
 `PRX_Ref Plot ID` filter value on the schedules. Both lists are kept, the disagreement is shown
 on screen, and neither wins. That is a seventh place two records of one fact could part.
+
+## What stands down now that a checklist is one plot
+
+**Nothing is deleted.** Deleting on reachability alone is the mistake this project made once,
+with `OutputName.Suggested`, and the rule beside it stands: a method the last caller stopped
+calling can still be the only record of a shape. What follows is no longer reached, with why it
+was kept.
+
+- **A merged species list across plots.** `KpiMerge.Species` is asked with one reading now, so a
+  `MergedSpecies` holding rows off two plots cannot be built. It is the only record of how a
+  species merges on the GROUP and the botanical name together, which is what stopped ALBIZIA
+  LEBBECK's 1 existing and 13 proposed becoming 14 in one sheet
+- **Two plots reporting an identical raw area.** `Reconciliation`'s `IdenticalArea` needs two
+  plots and there is one. It is the only record of the MM-03 and MM-04 measurement, 12182.05561411
+  on both, and of the rule that a double count nobody sees is the worst thing this tool can
+  produce
+- **`Totalled.Adds` over several plots.** One plot means the sum trivially equals the total. It
+  is the only record of the rule that every plot's own number is printed beside the total and the
+  total must equal their sum
+- **A plot counted into two workbooks.** `TemplateSplit.Refusals` is still computed on every
+  press and still cannot fire, which was already true and is written down here
+- **One output name box per template.** `OutputName.Suggested` and `Final` name no file any more,
+  because a workbook is named after its folder. They are the only record of the shape the working
+  runs wrote, GRP-KPI-Checklist-DD-MOSQUES.xlsx, and of the cleaning a typed name needs
+
+**The rounding room on a group total does NOT stand down**, against what the round message said.
+It is per schedule and per plot, inside `ShrubsAndLawnRows`, so a phased group's rows still have
+to add to its total within the project's own rounding step on every plot. Nothing about it moved.
 
 ## Adding printed numbers is allowed, working one out is not
 
