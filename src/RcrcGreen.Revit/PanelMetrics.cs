@@ -104,6 +104,18 @@ namespace RcrcGreen.Revit
         public const double HexWidth = 64.0;
 
         /// <summary>
+        /// How faded a disabled colour square draws, so a greyed row still shows which
+        /// colour it would use. **This number has not been seen in Revit.**
+        /// </summary>
+        public const double FadedOpacity = 0.4;
+
+        /// <summary>
+        /// The box around a colour square, all four sides, where Hairline is the one edge
+        /// a divider wants. **This number has not been seen in Revit.**
+        /// </summary>
+        public static readonly Thickness Outline = new Thickness(1.0);
+
+        /// <summary>
         /// A wider caption column for the KPI pane's typed boxes. Prepared by is the longest of
         /// the three captions and came out as Prepared b, running into its box, at the shared 54.
         ///

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using Autodesk.Revit.UI;
 using RcrcGreen.Core;
 using RcrcGreen.Core.ViewFilters;
@@ -575,6 +574,9 @@ namespace RcrcGreen.Revit.ViewFilters
                 if (Equals(edge.Tag, ShadeMark)) edge.Background = _theme.RowShade;
             }
 
+            HexColorBox colours = element as HexColorBox;
+            if (colours != null) colours.PaintFromTheTheme();
+
             DependencyObject holder = element as DependencyObject;
             if (holder == null) return;
 
@@ -639,11 +641,9 @@ namespace RcrcGreen.Revit.ViewFilters
 
             private readonly CheckBox _halftone = New("Halftone", "Draw the matched elements halftoned.");
 
-            private readonly CheckBox _lineTick = New("Line colour", "Override the line colour with the hex value beside it.");
+            private readonly CheckBox _lineTick = New("Line colour", "Override the line colour with the colour beside it.");
 
-            private readonly TextBox _lineHex = Hex();
-
-            private readonly Border _lineSwatch = Swatch();
+            private readonly HexColorBox _lineColour = new HexColorBox();
 
             private readonly ComboBox _weight = Weights();
 
@@ -651,13 +651,13 @@ namespace RcrcGreen.Revit.ViewFilters
 
             private readonly ComboBox _frontType = Patterns();
 
-            private readonly TextBox _frontHex = Hex();
+            private readonly HexColorBox _frontColour = new HexColorBox();
 
             private readonly CheckBox _backTick = New("Background pattern", "Override the surface and cut background pattern.");
 
             private readonly ComboBox _backType = Patterns();
 
-            private readonly TextBox _backHex = Hex();
+            private readonly HexColorBox _backColour = new HexColorBox();
 
             private readonly Button _remove;
 
@@ -668,17 +668,23 @@ namespace RcrcGreen.Revit.ViewFilters
                 _visible.IsChecked = starting.Visible;
                 _halftone.IsChecked = starting.Halftone;
                 _lineTick.IsChecked = starting.OverrideLineColor;
-                _lineHex.Text = starting.LineColor ?? string.Empty;
+                _lineColour.Hex = starting.LineColor ?? string.Empty;
                 _weight.SelectedIndex =
                     starting.LineWeight >= LineWeights.Default && starting.LineWeight <= LineWeights.Heaviest
                         ? starting.LineWeight
                         : LineWeights.Default;
                 _frontTick.IsChecked = starting.OverrideForegroundPattern;
                 _frontType.SelectedIndex = PatternIndex(starting.ForegroundPatternType);
-                _frontHex.Text = starting.ForegroundPatternColor ?? string.Empty;
+                _frontColour.Hex = starting.ForegroundPatternColor ?? string.Empty;
                 _backTick.IsChecked = starting.OverrideBackgroundPattern;
                 _backType.SelectedIndex = PatternIndex(starting.BackgroundPatternType);
-                _backHex.Text = starting.BackgroundPatternColor ?? string.Empty;
+                _backColour.Hex = starting.BackgroundPatternColor ?? string.Empty;
+
+                // The override tick greys its own colour box, so a colour that will not be
+                // applied does not read as one that will, and a greyed box takes no click.
+                _lineColour.IsEnabled = starting.OverrideLineColor;
+                _frontColour.IsEnabled = starting.OverrideForegroundPattern;
+                _backColour.IsEnabled = starting.OverrideBackgroundPattern;
 
                 _remove = new Button
                 {
@@ -689,7 +695,6 @@ namespace RcrcGreen.Revit.ViewFilters
                 _remove.Click += (sender, e) => removed(this);
 
                 Root = Built();
-                PaintSwatch();
                 Wire(changed);
             }
 
@@ -709,14 +714,14 @@ namespace RcrcGreen.Revit.ViewFilters
                     Visible = _visible.IsChecked == true,
                     Halftone = _halftone.IsChecked == true,
                     OverrideLineColor = _lineTick.IsChecked == true,
-                    LineColor = _lineHex.Text,
+                    LineColor = _lineColour.Hex,
                     LineWeight = _weight.SelectedIndex < 0 ? 0 : _weight.SelectedIndex,
                     OverrideForegroundPattern = _frontTick.IsChecked == true,
                     ForegroundPatternType = TypeWord(_frontType),
-                    ForegroundPatternColor = _frontHex.Text,
+                    ForegroundPatternColor = _frontColour.Hex,
                     OverrideBackgroundPattern = _backTick.IsChecked == true,
                     BackgroundPatternType = TypeWord(_backType),
-                    BackgroundPatternColor = _backHex.Text
+                    BackgroundPatternColor = _backColour.Hex
                 };
             }
 
@@ -746,8 +751,7 @@ namespace RcrcGreen.Revit.ViewFilters
 
                 var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
                 line.Children.Add(_lineTick);
-                line.Children.Add(_lineHex);
-                line.Children.Add(_lineSwatch);
+                line.Children.Add(_lineColour);
                 line.Children.Add(new TextBlock
                 {
                     Text = "Weight",
@@ -766,13 +770,13 @@ namespace RcrcGreen.Revit.ViewFilters
                 var front = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
                 front.Children.Add(_frontTick);
                 front.Children.Add(_frontType);
-                front.Children.Add(_frontHex);
+                front.Children.Add(_frontColour);
                 inside.Children.Add(front);
 
                 var back = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
                 back.Children.Add(_backTick);
                 back.Children.Add(_backType);
-                back.Children.Add(_backHex);
+                back.Children.Add(_backColour);
                 inside.Children.Add(back);
 
                 return new Border
@@ -788,15 +792,18 @@ namespace RcrcGreen.Revit.ViewFilters
             private void Wire(Action changed)
             {
                 _prefix.TextChanged += (sender, e) => changed();
-                _lineHex.TextChanged += (sender, e) => { PaintSwatch(); changed(); };
-                _frontHex.TextChanged += (sender, e) => changed();
-                _backHex.TextChanged += (sender, e) => changed();
+                _lineColour.HexChanged += (sender, e) => changed();
+                _frontColour.HexChanged += (sender, e) => changed();
+                _backColour.HexChanged += (sender, e) => changed();
                 WireTick(_enabled, changed);
                 WireTick(_visible, changed);
                 WireTick(_halftone, changed);
                 WireTick(_lineTick, changed);
                 WireTick(_frontTick, changed);
                 WireTick(_backTick, changed);
+                WireGate(_lineTick, _lineColour);
+                WireGate(_frontTick, _frontColour);
+                WireGate(_backTick, _backColour);
                 _weight.SelectionChanged += (sender, e) => changed();
                 _frontType.SelectionChanged += (sender, e) => changed();
                 _backType.SelectionChanged += (sender, e) => changed();
@@ -808,24 +815,10 @@ namespace RcrcGreen.Revit.ViewFilters
                 box.Unchecked += (sender, e) => changed();
             }
 
-            /// <summary>
-            /// The swatch answers one question, is this the colour I meant. A box that does
-            /// not parse paints nothing rather than a nearest guess. The brush is built
-            /// here rather than in PanelTheme because it is the user's own typed value
-            /// shown back at them, a datum with no per theme answer, and it is frozen
-            /// because one is made per keystroke.
-            /// </summary>
-            private void PaintSwatch()
+            private static void WireGate(CheckBox tick, HexColorBox colour)
             {
-                if (!HexColor.TryParse(_lineHex.Text, out byte r, out byte g, out byte b))
-                {
-                    _lineSwatch.Background = PanelTheme.Current().Clear;
-                    return;
-                }
-
-                var shown = new SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
-                shown.Freeze();
-                _lineSwatch.Background = shown;
+                tick.Checked += (sender, e) => colour.IsEnabled = true;
+                tick.Unchecked += (sender, e) => colour.IsEnabled = false;
             }
 
             private static CheckBox New(string caption, string tip)
@@ -836,31 +829,6 @@ namespace RcrcGreen.Revit.ViewFilters
                     Margin = PanelMetrics.Gap,
                     VerticalAlignment = VerticalAlignment.Center,
                     ToolTip = tip
-                };
-            }
-
-            private static TextBox Hex()
-            {
-                return new TextBox
-                {
-                    Width = PanelMetrics.HexWidth,
-                    Margin = PanelMetrics.Gap,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    ToolTip = "A colour as hex, #FF0000 or FF0000."
-                };
-            }
-
-            private static Border Swatch()
-            {
-                return new Border
-                {
-                    Width = PanelMetrics.Swatch,
-                    Height = PanelMetrics.Swatch,
-                    Margin = PanelMetrics.Gap,
-                    BorderThickness = PanelMetrics.Hairline,
-                    BorderBrush = PanelTheme.Current().Line,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Tag = HairlineMark
                 };
             }
 

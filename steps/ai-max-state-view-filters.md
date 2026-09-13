@@ -1,6 +1,19 @@
 # ai-max state, View Filters
 
-Phase: 9, ship. First pass. The task exists whole: `RcrcGreen.Core/ViewFilters` holds the
+Phase: 9, ship. Second pass, the colour box. `HexColorBox` in the Revit ViewFilters folder,
+one control used three times on every filter row, replacing the two bare pattern hex boxes
+and the lone swatch beside Line colour. Typing paints live through `HexColor.TryParse`,
+a pick comes back through `HexColor.Written` as upper case, an invalid type keeps the
+stored value through `HexColor.Kept`, all three in Core with 9 new tests, 1569 to 1578,
+0 failed and 0 skipped. The picker is the WinForms ColorDialog, FullOpen, owned by Revit's
+main window handle, custom colours static for the session. The override ticks gate their
+own boxes. The csproj already carried the WinForms references for the progress window, so
+nothing was added there. The round asked for the control in Core as XAML and it cannot
+live there, the same call as the first pass's runner, in the log. The reader was cleared
+of the ticked box in the screenshot by the gate test over the shipped file. Nothing in
+this pass has been observed in Revit. The guide is `steps/2026-09-13-colour-box.md`.
+
+Before that. First pass. The task exists whole: `RcrcGreen.Core/ViewFilters` holds the
 plot id rule, the name building and matching, the hex parse, the keyword split, the row
 normalisation, the scan plan, the apply gate, the settings file reader and the report, all
 with tests, 75 of them, 1456 to 1531, 0 failed and 0 skipped, build 0 warnings.

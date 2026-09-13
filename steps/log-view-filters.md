@@ -4,6 +4,117 @@ Newest entry first.
 
 ---
 
+## 2026-09-13, second pass. One colour box, three places, and the Windows picker behind it
+
+The round fixes the two pane faults: the two pattern rows had a hex box and no colour
+square where the line colour had one, and no square anywhere opened a picker. One control
+now, `HexColorBox` in `src/RcrcGreen.Revit/ViewFilters`, used three times on every row,
+and the old standing swatch beside Line colour is deleted with the code that painted it.
+The run logic, the transaction and everything under Apply are untouched. This round adds
+9 tests, 1569 to 1578, 0 failed and 0 skipped, build 0 warnings. **Nothing in this round
+has been observed in Revit**, and the picker in front of Revit, the expanded RGB fields
+and the session lived custom colours are exactly the kind of thing only a run can show.
+The round guide is `steps/2026-09-13-colour-box.md`.
+
+### What the control does
+
+The square paints live from the box's text through the one parser, `HexColor.TryParse`.
+A pick comes back through `HexColor.Written`, upper case `#RRGGBB`. The picker is the
+WinForms `ColorDialog`, `FullOpen` so the red, green and blue fields show, seeded with the
+box's own colour, owned by Revit's main window handle the same way the progress window is,
+so it opens in front. Custom colours live in one static array, shared by every box for the
+Revit session. The override tick greys its own box, and a greyed box takes no click.
+
+### Where it differs from the round's reference code, and why
+
+- **It lives in the Revit project, built in code, not in Core as XAML.** The round named
+  `RcrcGreen.Core\ViewFilters\HexColorBox.xaml`. Core is netstandard2.0 and cannot
+  reference WPF at all, and the Revit csproj records the repo's decision that the
+  interface is built in C# because an SDK style net48 project has no XAML step. Same call
+  as the first pass's runner, for the same reasons. The rules it applies, the parse, the
+  writer and the keep or take, are Core's `HexColor`, where the tests reach them.
+- **A mistype leaves the stored value alone, and a cleared box really clears.** The
+  reference code wrote every keystroke into `Hex`. The round's behaviour list and its
+  tests say an invalid hex turns the border red and leaves the stored value unchanged,
+  and where the sample code and the stated behaviour part, the stated behaviour wins. The
+  rule is `HexColor.Kept`, tested. Blank is the one refinement on top of the behaviour
+  list: this round's breaker found that a cleared box kept the old colour alive behind a
+  blank, ordinary looking field with Apply still green, so the colour somebody had just
+  removed would have come back on the next press. Clearing writes empty through now,
+  which re greys Apply, and only text that fails to parse keeps the stored value.
+  **The recorded consequence that stands:** while a box shows red garbage, the stored
+  value has not moved, so the scan gate stays green and Apply would run with the last
+  valid colour, and the typed garbage stays on screen until it is retyped. The warning
+  edge is the one thing saying the text is not the value.
+- **The brushes come from PanelTheme and the sizes from PanelMetrics**, where the
+  reference wrote grey, red, 70 and 20 inline, because a brush written in a pane file is
+  how the first panel shipped black on black. The warning edge is the theme's warning in
+  both themes, the box is the shipped hex width and swatch size, and the disabled fade and
+  the square's outline are two new named metrics. The one brush built in place is the
+  user's own colour shown back, frozen, with the line saying why.
+- **An empty box wears the plain hairline, not the warning.** The reference painted every
+  unparseable text red, the empty box included. Empty is nothing chosen, not a fault, and
+  a fresh row with red edges on three untouched boxes would read as three errors.
+- **The tick gates the box.** The old hex boxes were always live. The behaviour list says
+  the box greys and stops clicking when its override tick is off, so each box's
+  `IsEnabled` follows its own tick, set at build and on every tick change.
+- The `HexChanged` event rides the property change, so a valid type, a pick and a
+  programmatic set all reach the pane's gate through one door, where the reference relied
+  on XAML binding this pane does not use.
+
+### The csproj check
+
+`RcrcGreen.Revit.csproj` is SDK style and already carries
+`<Reference Include="System.Windows.Forms" />` and `System.Drawing`, put there for the KPI
+progress window, so the ColorDialog needed nothing added and `UseWindowsForms` stays as it
+was. Nothing about the target framework moved.
+
+### The extra check, the ticked Foreground pattern in the screenshot
+
+The reader is not setting it. The gate test
+`TheShippedDefaultsReadAsTheFourRowsTheRoundAskedFor` reads the shipped
+`install/ViewFilters.json` through the pane's own reader and asserts every override tick
+false on all four rows, and it passes, so the reader hands the ticks back off. The row
+editor sets its tick boxes from those values before any handler is wired, and nothing else
+writes a tick. So the tick in the screenshot was made by hand on the pane after the rows
+loaded, which is what the pane is for, or the installed ViewFilters.json beside the DLL on
+that machine differs from the shipped one, which this repo cannot see. The shipped
+defaults are unchanged either way.
+
+### What the round's breaker found
+
+A breaker went over the control, the row wiring and the Core rules before the round
+shipped. Fixed: the cleared box case above, which was its worst finding. Recorded rather
+than fixed, each with why:
+
+- **The ported run counts a filter as configured even when a ticked colour never
+  applied.** A ticked override over a blank or unparseable colour is skipped by the
+  body's own `if` with nothing logged, `filtersConfigured` still counts it, and the scan
+  never looks at colours at all. That is the body's own shape, this round was told not to
+  touch the run, and it goes on the ported body's open list beside the rule cloner and
+  the bare `GetFilters` catch.
+- **Picking the visually identical colour in the other case greys Apply.** The gate
+  compares stored text ordinally, a pick writes upper case, so `#ff0000` against
+  `#FF0000` asks for a rescan it does not need. Loud and one directional, a false grey
+  and never a false green, so it stays.
+- **The custom colour array is one static overwrite** and the owner handle is wrapped
+  unchecked, the same shape the progress window already uses. Two pickers at once should
+  be impossible on Revit's one interface thread, and a dead handle degrades to an
+  unowned dialog rather than a throw. Both stand as the inherited pattern.
+- The `_syncing` flag carries a constraint a future subscriber could trip, written on
+  the field now: nothing wired to `HexChanged` may set `Hex` back on the same box from
+  inside the callback.
+
+### What is left and what comes next
+
+- A run in Revit: steps 9 to 17 of the round guide are the whole check list, the picker in
+  front, the expanded fields, the upper case write back, the live repaint, the warning
+  edge, the cleared box re greying Apply, the session custom colours and the greyed box.
+- Known and recorded rather than fixed: the gate staying green under a red box, the
+  breaker's list above, and the first pass's open items stand.
+
+---
+
 ## 2026-09-13, first pass. The argus view filters run, ported behind its own pane
 
 Shipped as pull request #108, squash merged at `3bcebd5`, the title and the message passed
