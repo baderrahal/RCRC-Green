@@ -4,9 +4,12 @@ Several tasks share this repo and the sessions building them cannot see each oth
 boundaries live here and in `.claude/hooks/territory-check.sh` rather than in anybody's
 head. Read this before touching anything.
 
-**The hook's TASKS list is the authority on which tasks exist**, not this heading. This file
-fell behind it once already, so check the two against each other rather than trusting the
-count here.
+**`.claude/hooks/tasks.txt` is the record of which tasks exist**, and both this file and
+`territory-check.sh` read it rather than restating it. The hook reads it when it runs. The
+numbered list below says where each one lives, and `hook-tests.sh` refuses when the two
+disagree, because they came apart once already: the hook named six tasks and this file
+numbered five, missing View Filters, in the one document that decides which session may touch
+what. A task with no line in that file is invisible to the wall.
 
 ## The tasks and where each lives
 
@@ -18,13 +21,18 @@ count here.
    command. Its test files sit flat at the root of `tests/RcrcGreen.Core.Tests`.
 2. **KPI.** `src/RcrcGreen.Core/Kpi`, `src/RcrcGreen.Revit/Kpi` and
    `tests/RcrcGreen.Core.Tests/Kpi`.
-3. **Sheet Tool**, phase 1. `src/RcrcGreen.Core/SheetTool`, `src/RcrcGreen.Revit/SheetTool`
+3. **View Filters.** `src/RcrcGreen.Core/ViewFilters`, `src/RcrcGreen.Revit/ViewFilters` and
+   `tests/RcrcGreen.Core.Tests/ViewFilters`. Its rules are in
+   `.claude/rules/view-filters-rules.md` and the body of its run is a port, named as one
+   there. This is the entry that was missing: its code was in all three roots and this file
+   did not list it at all.
+4. **Sheet Tool**, phase 1. `src/RcrcGreen.Core/SheetTool`, `src/RcrcGreen.Revit/SheetTool`
    and `tests/RcrcGreen.Core.Tests/SheetTool` when it begins. What it does is not decided
    yet and the questions are in `steps/sheet-tool-phase1.md`.
-4. **Coordination Layout**, not started. `src/RcrcGreen.Core/CoordinationLayout`,
+5. **Coordination Layout**, not started. `src/RcrcGreen.Core/CoordinationLayout`,
    `src/RcrcGreen.Revit/CoordinationLayout` and
    `tests/RcrcGreen.Core.Tests/CoordinationLayout` when it begins.
-5. **BOQ Schedules**, not started. `src/RcrcGreen.Core/BoqSchedules`,
+6. **BOQ Schedules**, not started. `src/RcrcGreen.Core/BoqSchedules`,
    `src/RcrcGreen.Revit/BoqSchedules` and `tests/RcrcGreen.Core.Tests/BoqSchedules` when it
    begins.
 
@@ -56,8 +64,8 @@ its own code and leaves the others alone.
 - The one file every task edits is `src/RcrcGreen.Revit/RcrcGreenApplication.cs`, one line
   each, registering its own pane.
 - A new task creates its own pair on its first round, `steps/log-<task>.md` and
-  `steps/ai-max-state-<task>.md`, and adds its folder name to the TASKS list in
-  `.claude/hooks/territory-check.sh`.
+  `steps/ai-max-state-<task>.md`, adds its folder name to `.claude/hooks/tasks.txt` and adds
+  its entry to the numbered list above. Both, or `hook-tests.sh` refuses.
 
 ## The wall
 

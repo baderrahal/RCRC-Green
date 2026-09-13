@@ -7,9 +7,10 @@
 # that puts a Core/Shared change next to any task's work, because a Shared change runs
 # alone while every other session is stopped.
 #
-# The map lives here rather than being read off the folder tree, because a folder that is
-# not a task, such as Properties, must never be mistaken for one. A new task adds itself
-# to TASKS below on its first round, next to its folders.
+# The map is a written list rather than the folder tree, because a folder that is not a
+# task, such as Properties, must never be mistaken for one. The list is READ from
+# .claude/hooks/tasks.txt, which is the one record of it: it used to sit here as well as in
+# .claude/rules/territory.md and the two came apart. A new task adds its line to that file.
 
 set -euo pipefail
 
@@ -36,8 +37,34 @@ import os
 import subprocess
 import sys
 
-TASKS = ["DrawingSheet", "Kpi", "ViewFilters", "SheetTool", "CoordinationLayout",
-         "BoqSchedules"]
+TASKS_FILE = ".claude/hooks/tasks.txt"
+
+
+def tasks():
+    """The task folder names, read off the one file that records them.
+
+    A list that cannot be read refuses the commit rather than being guessed at or defaulted
+    to, because an empty list makes every path common and this wall stops refusing anything.
+    """
+    try:
+        holding = open(TASKS_FILE, encoding="utf-8")
+    except IOError:
+        return None
+    with holding:
+        found = []
+        for line in holding:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            found.append(line.split("\t")[0].strip())
+    return found or None
+
+
+TASKS = tasks()
+if not TASKS:
+    print("Refused. " + TASKS_FILE + " could not be read, so which folders belong to which"
+          " task is unknown and nothing could be checked.")
+    sys.exit(1)
 
 TASK_ROOTS = [
     "src/RcrcGreen.Core/",

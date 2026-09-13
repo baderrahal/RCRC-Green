@@ -1,5 +1,49 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty seventh pass, the four things left open by the hook round before it. **A
+shared change, run alone.** Nothing under `src` or `tests`, so the dotnet suite is unchanged at
+**1640, 820 of them KPI**, off the branch point `70c4abe`. **The hook checks went from 15 cases
+to 28.**
+
+**THE NOTEBOOK PATH WALKED PAST THE GUARD AND NOW CANNOT.** `block-paths.sh` is matched on
+Write, Edit AND NotebookEdit and read `file_path` only, where NotebookEdit's argument is
+`notebook_path`, so every notebook write arrived empty and took an `exit 0`. Measured:
+`/etc/evil.ipynb` exit 0 against exit 2 for the same path under `file_path`. It reads both keys
+now, **and a call carrying neither is refused** rather than waved through, which is the half
+that matters: all three tools carry one of the two keys, so anything reaching that branch is
+something the guard cannot see.
+
+**ONE RECORD OF WHICH TASKS EXIST.** The list sat in `territory-check.sh` and again in
+`territory.md`, six against five, View Filters missing from the file that decides who may touch
+what. **Measured which was right**: ViewFilters has code in all three roots plus its own rules,
+log and state files, while three of the five the document lists have no folder at all. The hook
+was right. `.claude/hooks/tasks.txt` is the record now, **the hook reads it** and refuses when
+it cannot, `territory.md` points at it and gains the missing entry, and a hook case refuses when
+the two disagree.
+
+**AN AMEND AND A REUSE ARE READ RATHER THAN REFUSED.** `--amend --no-edit` takes HEAD's message
+and `-C <ref>` takes that ref's, so `message_of` asks git for the one the command will really
+use and the hook checks it. `-c`, `--reuse-message` and `--reedit-message` go the same way.
+Refusing every amend would block a flow people use daily to catch the rare bad one. **Where it
+still cannot be got at it refuses and says which case**: an amend that would open an editor, a
+commit naming no message, and a ref git cannot read. The last two used to pass unchecked.
+
+**`hook-tests.sh` RUNS IN THE GATE**, its own step before the build, reading its own count back
+so a run that checks nothing fails rather than reporting green. A test nobody runs is not a
+test, which was the whole reason the previous round existed. The amend cases needed a HEAD whose
+message is known, so the file builds a scratch repo in the temp folder carrying a copy of the
+hooks, and the commit holding a credit line is made with `commit-tree` so it belongs to no
+branch and never reaches this repo. Checked against an empty `HOME` too.
+
+Six break watches, 1, 2, 1, 2, 1 and 1 red, all restored byte for byte. **Twice a break reddened
+a different case than the one aimed at**, both times because a second guard caught what the
+first stopped catching: the refuse-on-empty half covered the missing notebook key, and an
+uncaptured `-C` ref fell through to the no-message refusal. Defence working, and a reminder that
+a green case does not prove the line you think it does.
+
+MERGE_LINE
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and nothing in it touches the add-in.
+
 Phase: 9, ship. Sixty sixth pass, a shared change that runs alone. **The commit hooks could be
 bypassed in silence and now cannot.** Nothing else is in this round: no KPI code, no rules file,
 no test project, so the dotnet suite is unchanged at **1640, 820 of them KPI**, off the branch

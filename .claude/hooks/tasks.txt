@@ -1,0 +1,17 @@
+# THE RECORD OF WHICH TASKS SHARE THIS REPO. One per line: the folder name the code sits
+# under, a tab, then the team's name for it.
+#
+# It lives here rather than inside territory-check.sh because it was written down twice, once
+# in that script and once in .claude/rules/territory.md, and the two came apart: the script
+# named six tasks and the file numbered five, missing View Filters, in the one document that
+# decides which session may touch what. The script READS this now and the rules file points
+# at it, and hook-tests.sh refuses when the two disagree.
+#
+# A new task adds its line here on its first round. The folder name is the one that appears
+# under src/RcrcGreen.Core, src/RcrcGreen.Revit and tests/RcrcGreen.Core.Tests.
+DrawingSheet	Drawing Sheet
+Kpi	KPI
+ViewFilters	View Filters
+SheetTool	Sheet Tool
+CoordinationLayout	Coordination Layout
+BoqSchedules	BOQ Schedules
