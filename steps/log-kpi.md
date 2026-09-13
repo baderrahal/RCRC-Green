@@ -115,7 +115,7 @@ does, and the only way to find out is to break the line and look at the names.
 carries** at the branch point `4315933`. Hook checks 28 of 28. Build zero warnings, measured
 after the last file was written.
 
-MERGE_LINE
+Pull request 117, merged into main as `5ff81fd`. **The runner ran 28 hook cases and 1673 tests against the pull request head, 0 failed and 0 skipped. Locally the same 28 and 1673 ran at `5ff81fd`, 853 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
 
 ### Still open, for Bader
 
