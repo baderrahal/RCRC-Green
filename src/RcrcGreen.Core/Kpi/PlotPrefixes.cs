@@ -38,8 +38,11 @@ namespace RcrcGreen.Core.Kpi
     /// The two agree prefix by prefix with the eleven component values measured on the 1548
     /// scan, with nothing left over on either side, and a test says so.
     ///
-    /// **What the prefix is really for is grouping.** It lets the user tick every plot for one
-    /// template in one action, which is what the picker offers beside Select all and Clear.
+    /// **What the prefix was once for was grouping**, a row of buttons beside Select all and
+    /// Clear that ticked a template's plots in one press. The workbook rows do that now, through
+    /// <see cref="TickingATemplate"/>, and they ask the split rather than the prefix, so nothing
+    /// here gathers plots any more. The table itself is unchanged and is still both routes'
+    /// cross check.
     ///
     /// It is also the only thing that can place a plot with no sheet. The 1548 scan found four
     /// on a schedule and on none: EP-05, EP-11, EP-12 and EP-13. No sheet means no
@@ -94,8 +97,16 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Every prefix that belongs to one template, in the order the table lists them, so the
-        /// pane can say which prefixes a grouping button gathers.
+        /// Every prefix that belongs to one template, in the order the table lists them.
+        ///
+        /// **Kept because it is the only record of the many to one shape, and nothing calls it.**
+        /// Git says it never had a caller outside the tests at all, in any round. What it records
+        /// is that three prefixes mean STREETS and two mean MOSQUES while HEALTHCARE has one,
+        /// which is what makes the prefix a cross check rather than a key: read the other way,
+        /// off <see cref="For"/>, a template is reached one prefix at a time and the many to one
+        /// is invisible. One test writes those three lists out by hand and another asserts that
+        /// every template is reached by at least one prefix, which is what the agreement with
+        /// the component table rests on.
         /// </summary>
         public static IReadOnlyList<string> PrefixesFor(KpiTemplate template)
         {
@@ -105,48 +116,6 @@ namespace RcrcGreen.Core.Kpi
                 .Where(one => ReferenceEquals(one.Template, template))
                 .Select(one => one.Prefix)
                 .ToList();
-        }
-
-        /// <summary>
-        /// Every plot in the list whose prefix belongs to one template, in the order they came,
-        /// for the grouping buttons beside Select all and Clear.
-        /// </summary>
-        public static IReadOnlyList<string> PlotsFor(IEnumerable<string> plots, KpiTemplate template)
-        {
-            if (template == null) return new List<string>();
-
-            return (plots ?? Enumerable.Empty<string>())
-                .Where(one => ReferenceEquals(For(one), template))
-                .ToList();
-        }
-
-        /// <summary>
-        /// One entry per template the model's plots point at, in the order KpiTemplates lists
-        /// them, for the grouping buttons beside Select all and Clear. A template no plot points
-        /// at is left out rather than offered as a button that would tick nothing, and the plots
-        /// whose prefix the table does not hold are not in here at all: WithNoKnownPrefix is
-        /// what names those, because a plot no button reaches has to be visible.
-        /// </summary>
-        public static IReadOnlyList<TemplateByPrefix> Grouped(IEnumerable<string> plots)
-        {
-            IReadOnlyList<TemplateByPrefix> across = Across(plots);
-
-            return KpiTemplates.All
-                .Select(template => across.FirstOrDefault(one => ReferenceEquals(one.Template, template)))
-                .Where(one => one != null)
-                .ToList();
-        }
-
-        /// <summary>
-        /// The plots the table has no prefix for, in the order they came. They are named on the
-        /// pane rather than left out in silence, because a plot no grouping button reaches is
-        /// one somebody would tick by hand and never think to look for.
-        /// </summary>
-        public static IReadOnlyList<string> WithNoKnownPrefix(IEnumerable<string> plots)
-        {
-            TemplateByPrefix unknown = Across(plots).FirstOrDefault(one => one.Template == null);
-
-            return unknown == null ? new List<string>() : unknown.Plots;
         }
 
         /// <summary>

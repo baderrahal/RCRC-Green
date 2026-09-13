@@ -160,8 +160,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             // DM-12 is not ticked, because its component says SCHOOLS and its prefix says
             // MOSQUES, so NEITHER places it and no workbook would take it.
             Assert.Equal(new[] { "DM-14", "FM-05" }, after.Ticked.ToArray());
-            Assert.Equal(new[] { "DM-12", "DM-14", "FM-05" },
-                PlotPrefixes.PlotsFor(InTheModel, KpiTemplates.Mosques).ToArray());
+
+            // The two answers for DM-12, side by side. The prefix route on its own still says
+            // MOSQUES, which is what a grouping button would have ticked it on, and the split
+            // places it nowhere.
+            Assert.Same(KpiTemplates.Mosques, PlotPrefixes.For("DM-12"));
+            Assert.Null(PlotsPerTemplate.For("DM-12", disagreeing("DM-12")).Template);
         }
 
         /// <summary>

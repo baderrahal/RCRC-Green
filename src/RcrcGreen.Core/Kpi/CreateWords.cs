@@ -88,39 +88,6 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const string Creating = "Creating.";
 
-        /// <summary>
-        /// Over the grouping buttons. It says the prefix is what gathers them, because a button
-        /// reading MOSQUES beside a plot list nobody can see the rule behind is a button whose
-        /// answer has to be taken on trust.
-        /// </summary>
-        public const string GroupsHeading =
-            "Or tick every plot for one template at once, gathered by the plot prefix:";
-
-        /// <summary>
-        /// One grouping button's text: the template and how many plots it would tick, so the
-        /// count is known before the press rather than after it.
-        /// </summary>
-        public static string GroupLabel(TemplateByPrefix group)
-        {
-            if (group == null) throw new ArgumentNullException("group");
-
-            return group.Name + ", " + Count(group.Plots.Count, "plot");
-        }
-
-        /// <summary>
-        /// The plots no grouping button reaches, named rather than left out. A prefix the table
-        /// does not hold is a real answer and a plot carrying one is ticked by hand.
-        /// </summary>
-        public static string NoGroupFor(IReadOnlyList<string> plots)
-        {
-            if (plots == null || plots.Count == 0) return string.Empty;
-
-            return "No button gathers " + string.Join(", ", plots.ToArray())
-                + ". The prefix table does not hold "
-                + (plots.Count == 1 ? "that prefix" : "those prefixes")
-                + ", so tick " + (plots.Count == 1 ? "it" : "them") + " by hand.";
-        }
-
         public const string NoPlots =
             "No plot in this model. Open a model that holds one.";
 

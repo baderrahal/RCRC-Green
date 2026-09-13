@@ -278,11 +278,15 @@ one, and that was already right. `Took` asked for the plots off the answered tit
 what fired on every model opened, and it asks for nothing now. **The plots are read by the one
 press in the plots block**, and Create still reads what it needs itself.
 
-**The press is a judgement rather than a line Bader wrote.** The plot picker cannot be used
-before the plots exist, and the round said Create is the only thing that reads, so either the
-picker waits for a first press of Create or a press exists to fill it. A button is the smaller
-change and it replaces the row of grouping buttons this round removes, so the pane gains no
-control on balance. It is named here so it is cheap to overrule.
+**THE PRESS IS AGREED, AND THE RULE IS NOTHING READS WITHOUT A PRESS.** Bader's answer,
+correcting the round message this came out of: Create is the only thing that reads was the wrong
+wording and a button IS a press, so **the fault was a read nobody asked for rather than a way to
+ask for one.** The plot picker cannot be used before the plots exist, and this is how they come
+to exist.
+
+**It is better placed than the scan button it follows.** KPI Scan sat at the top of the pane and
+on the ribbon whether or not anybody needed it. This sits in the plots block, where the thing it
+produces goes, so the press and its result are in one place.
 
 ## Ticking a template ticks its plots
 
@@ -320,11 +324,36 @@ ordinary order and the plots cannot be ticked until they exist.
 REPLACED the ticks rather than adding, which was right when one checklist was one template and
 is wrong now that several are ticked at once. And they could tick a template's plots without
 that template's workbook being ticked, which is now impossible and is the point: the two halves
-of one choice move together. `CreateWords.GroupsHeading`, `GroupLabel`, `NoGroupFor`,
-`PlotTicks.OnlyFor`, `PlotPrefixes.Grouped`, `WithNoKnownPrefix` and `PlotsFor` are left in
-place and reachable only from tests. **They are NOT deleted**, because the round before this one
-deleted `OutputName.Suggested` on reachability alone and it was the only record of the output
-name's shape. Whether they go is Bader's call.
+of one choice move together.
+
+**The seven members they left behind are deleted, and the test was what each one RECORDS.**
+Bader's call, and the test is his: reachability is the wrong question, and a method nothing
+calls is kept when its shape is written down nowhere else and deleted when it is. All seven came
+out deleted, and each for its own reason:
+
+```
+CreateWords.GroupsHeading        that grouping went by the prefix     PlotPrefixes' own docstring
+CreateWords.GroupLabel           a row names its count before a press CreateWords.TemplateRow
+CreateWords.NoGroupFor           a plot no route places is named      TemplateSplit.Unplaced
+PlotTicks.OnlyFor                REPLACE rather than add              TickingATemplate, reversed
+PlotPrefixes.Grouped             the template list's own order        PlotsPerTemplate.Split
+PlotPrefixes.WithNoKnownPrefix   an unknown prefix is its own bucket  PlotPrefixes.Across
+PlotPrefixes.PlotsFor            the prefix route over a list         PlotPrefixes.For
+```
+
+**They came out the same because they are one feature's parts and not seven things.** A heading,
+a button's text, its footnote, its press and the three lookups that fed it are the grouping row,
+and a feature is removed as a feature. What was worth keeping was never among them: it is the
+prefix TABLE, which is the measurement, and `All`, `Of`, `For`, `Across` and `PrefixesFor` all
+stay. Two of the seven were worse than unused. `OnlyFor` implemented a rule the tool has since
+decided against, so it was a second and contradictory record waiting for a caller, and
+`NoGroupFor` told the reader to tick such a plot by hand, which now lands it in `Unplaced`
+writing nowhere.
+
+**`PrefixesFor` is the one kept on that test, and it is not one of the seven.** Nothing calls it
+either, and it is the only record of the many to one shape: three prefixes mean STREETS and two
+mean MOSQUES. Read the other way, off `For`, a template is reached one prefix at a time and the
+many to one is invisible. Its docstring says that and says nothing calls it.
 
 The plot list itself is untouched, so anybody who wants to pick plots by hand still can. It was
 the two not talking that was the fault rather than either one of them.
@@ -792,10 +821,10 @@ the prefix agrees, and where they disagree NEITHER decides, both are named and n
 preselected. A prefix the table does not hold cross checks nothing, which is different from one
 that disagrees.
 
-**What the prefix is really for is grouping.** One button per template beside Select all and
-Clear ticks every plot of that template at once. It REPLACES the ticks rather than adding to
-them, because one checklist is one template. A plot whose prefix the table does not hold is
-reached by no button and the pane names it, so it is ticked by hand rather than left invisible.
+**What the prefix was once for was grouping**, a row of buttons beside Select all and Clear
+that ticked a template's plots in one press. The workbook rows do that now, under the section
+above, and they ask the split rather than the prefix. Nothing here gathers plots any more and
+the seven members that did are deleted. The table is unchanged.
 
 **It is also the only thing that can place a plot with no sheet.** The 1548 scan found four on a
 schedule and on none, EP-05, EP-11, EP-12 and EP-13. No sheet means no PRX_Component. The pane

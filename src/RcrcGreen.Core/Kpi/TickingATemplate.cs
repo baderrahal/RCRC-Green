@@ -15,9 +15,9 @@ namespace RcrcGreen.Core.Kpi
     /// find a grouping button and press that too is the same fact asked for twice.
     ///
     /// **IT TICKS BY THE SPLIT'S OWN RULE AND NEVER BY THE PREFIX.** The grouping buttons this
-    /// replaces used <see cref="PlotPrefixes.PlotsFor"/>, which reads the two letters at the
-    /// front of a plot identifier and nothing else, while the split that decides which workbook
-    /// a plot really goes into reads PRX_Component first. Two rules for one question is the
+    /// replaces gathered plots with <see cref="PlotPrefixes.For"/>, which reads the two letters
+    /// at the front of a plot identifier and nothing else, while the split that decides which
+    /// workbook a plot really goes into reads PRX_Component first. Two rules for one question is the
     /// fault this repository keeps paying for: a plot ticked by the prefix could then land in no
     /// workbook at all, and the row's count would be a number nothing else agreed with. So this
     /// asks <see cref="PlotsPerTemplate.For"/>, the one rule, and the row's count is what will
