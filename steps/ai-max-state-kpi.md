@@ -41,7 +41,7 @@ first stopped catching: the refuse-on-empty half covered the missing notebook ke
 uncaptured `-C` ref fell through to the no-message refusal. Defence working, and a reminder that
 a green case does not prove the line you think it does.
 
-MERGE_LINE
+Pull request 116, merged into main as `5cf8017`. **The runner ran 28 hook cases and 1640 tests against the pull request head, 0 failed and 0 skipped, the hook step being the one this round added. Locally the same 28 and 1640 ran at `5cf8017`, 820 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and nothing in it touches the add-in.
 
 Phase: 9, ship. Sixty sixth pass, a shared change that runs alone. **The commit hooks could be
