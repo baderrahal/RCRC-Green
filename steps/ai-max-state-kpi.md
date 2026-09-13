@@ -51,8 +51,13 @@ checked with a diff against its backup. **The fifth found a gap in my own test r
 code**: a plot that gets neither a folder nor a workbook was not in the accounting test, and it
 is now. Six existing tests were changed by hand, each because the truth under it moved. **Locally
 1625 tests at this branch, 0 failed and 0 skipped, 805 of them KPI, 47 added, against the 1578
-main carries** at the branch point `386948e`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS
-ARE WRITTEN HERE AFTER THE MERGE. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and the
+main carries** at the branch point `386948e`. Build zero warnings. Pull request 113, merged into main as `ae9c324`,
+the runner executing 1625 tests against the pull request head, 0 failed and 0 skipped, and
+locally the same 1625 ran at the merge, 805 of them KPI. **The merged tree is not byte for byte
+the branch head**: Bader uploaded `Branded_Factsheet_Template.docx` straight to main at `57e606a`
+between the branch point and the merge, and every file this round touched landed intact, checked
+by diff over src, tests, .claude and steps. GitHub was in a declared major outage on Pull
+Requests throughout, which cost three 500s and a 502 and was retried rather than worked around. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and the
 five correct workbooks are what a per plot press has to be held against.
 
 Phase: 9, ship. Sixty third pass, two answers from Bader and one short piece of work. **The

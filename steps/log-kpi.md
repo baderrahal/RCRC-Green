@@ -14,7 +14,26 @@ files today: 29 plus 20 is 49 findings, 13 carrying a FIXED mark, so 36 are open
 message said 32. The files say 36 and nothing here was changed to make the two agree.
 **Nothing in this round has been observed in Revit.**
 
-PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+Pull request 113, merged into main as `ae9c324`. **The runner executed 1625 tests against the
+pull request head, 0 failed and 0 skipped. Locally the same 1625 ran at `ae9c324`, 0 failed and
+0 skipped, 805 of them KPI.** **The branch itself carried 1625, 47 added here**, against the
+1578 main held at the branch point `386948e`. Build zero warnings at the merge. The merge went
+through the API with the title and the message both passed on the call, and the commit came back
+off main carrying neither a co-author credit line nor a generated-by footer.
+
+**The merged tree is NOT byte for byte the branch head, and that is not a fault of this round.**
+Bader uploaded `Branded_Factsheet_Template.docx` straight to main through the web at 13:04 local,
+commit `57e606a`, which is between the branch point and the merge, so `ae9c324` sits on top of it.
+Every file this round touched landed intact, checked by diffing the branch head against merged
+main over `src`, `tests`, `.claude` and `steps`, which comes back empty. That 2 MB file is the
+only difference and it is not mine to touch. **This repository is public**, which is worth saying
+once beside a branded template nobody here put there.
+
+**GitHub was in a declared major outage on Pull Requests while this was merging.** Two squash
+merge calls came back 500 and 502 and the create call came back 500 once before that. Nothing was
+forced and nothing was worked around: the press was retried until it took, and the status page
+was still reading major outage when the merge that succeeded went through, so the page lagged the
+recovery rather than the other way round.
 
 ### What the reference file really measures
 
