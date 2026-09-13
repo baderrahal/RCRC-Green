@@ -4,6 +4,123 @@ Newest entry first.
 
 ---
 
+## 2026-09-13, sixty second pass. The header costs nothing, and a template ticks its plots
+
+Three things off the first press over several templates, NG05 at 08:37. Two faults and one
+regression. The other 36 audit findings stay open. The branch came off a fresh pull of main at
+`d6c9f4a`, so the baseline is **1443 tests, 750 of them KPI**, measured at that commit before
+anything was written. **Nothing in this round has been observed in Revit.**
+
+PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+
+### 1. Every path that can start a read, one by one
+
+Asked of the code rather than reasoned about. Five paths, four of them already right.
+
+```
+the pane becoming visible      Ask(WhichModel), the title alone        FREE     was right
+every redraw of the block      Ask(WhichModel), the title alone        FREE     was right
+a model answering with a title Ask(Plots), every sheet and schedule    HEAVY    THE FAULT
+Create                         the scan and the plot reads inside it   HEAVY    a press
+DocumentOpened, DocumentClosed the KPI pane subscribes to NEITHER      none     was right
+```
+
+The third is the one. `Took` asked for the plots whenever a title it had not read plots for
+answered, which is every model anybody opens, because a dockable pane is restored visible at
+Revit startup. It asks for nothing now.
+
+**The header is decided in Core.** `KpiHeader.Lines` is three states with one line each and
+only the third names a count. A model nothing has read says so and names NO NUMBER, because a
+read that has not happened is an absence rather than a zero, and the test asserts that line
+carries no digit at all.
+
+**The plot read is behind a press, and that press is a judgement of mine.** The round said
+Create is the only thing that reads, and the plot picker cannot be used before the plots exist,
+so either the picker waits for a first press of Create or a press exists to fill it. I added
+Read this model to the plots block, which is one control where this round removes a whole row of
+them. It is written into the rules as a judgement so it is cheap to overrule.
+
+### 2. Ticking a template ticks its plots
+
+`TickingATemplate` is the rule and the template row is the grouping button now, so the separate
+row of buttons is gone.
+
+**It ticks by the SPLIT'S rule and never by the prefix.** The buttons used
+`PlotPrefixes.PlotsFor`, two letters at the front of an identifier, while the split reads
+PRX_Component first. Two rules for one question is this repository's oldest fault, and here it
+would tick a plot that then lands in no workbook. A test ticks MOSQUES over a plot whose
+component says SCHOOL: the prefix would have taken it and the tick does not.
+
+The three things asked for. **A plot unticked by hand stays unticked** and the hand list clears
+when the model changes, because another model's DM-14 is not this one's. **The count on the row
+is what will go in**, which needed nothing new: the row counts off the split of the TICKED
+plots, so a hand untick moves it from 3 to 2. **A template with no plots still ticks and still
+says it will write nothing**, unchanged.
+
+One thing the round had to add that the message did not name: **a row ticked before the read
+gets its plots when the read lands.** The template rows come off the templates folder and need
+no model, so ticking MOSQUES and then pressing Read is the ordinary order.
+
+**What the buttons did that the rows do not**, which the round asked me to say. Two things, both
+deliberate. They REPLACED the ticks rather than adding, which was right when one checklist was
+one template and is wrong now. And they could tick a template's plots with that template's
+workbook unticked, which is now impossible and is the point. `GroupsHeading`, `GroupLabel`,
+`NoGroupFor`, `PlotTicks.OnlyFor`, `PlotPrefixes.Grouped`, `WithNoKnownPrefix` and `PlotsFor`
+are now reachable only from tests. **I did not delete them**, and that is the lesson of the
+round before: `OutputName.Suggested` was deleted on reachability alone and it was the only
+record of the output name's shape. Whether they go is Bader's call.
+
+### 3. The output names have their shape back
+
+`OutputName.Suggested` is restored and asked per row with that row's own file, so each ticked
+template carries the shape rather than one of them carrying it. Checked against what the working
+runs wrote: `GRP_KPI_Checklist_DD_MOSQUES.xlsx` suggests
+**GRP-KPI-Checklist-DD-MOSQUES.xlsx** and the STREETS file suggests
+**GRP-KPI-Checklist-DD-STREETS.xlsx**, both written out by hand in the test.
+
+**The deletion was mine and the reasoning was wrong.** A method the last caller stopped calling
+can still be the only record of a shape. That goes in the rules beside the restored method
+rather than only here.
+
+### The mockup
+
+`design/pr-103/kpi-pane.html`, hand drawn from the code: the table of every read path with its
+verdict, the header's three states side by side, the plots block before and after the one press
+with the grouping buttons struck through, and a ticked MOSQUES with DM-14 taken off by hand
+reading 19 rather than 20. It says in the file that it is a mockup and not a screenshot.
+
+### Three watches, one per item, all red
+
+**Item 1.** `KpiHeader.Lines` made to print the count line for a model nothing has read. **1
+red**: `KpiHeaderTests.ShownWithADocumentNothingHasReadNamesTheModelAndNoCount`.
+
+**Item 2.** The hand list check in `TickingATemplate.Ticked` replaced with one that never
+fires. **2 red**: `TickingATemplateTests.APlotUntickedByHandStaysUntickedWhenItsTemplateIsTicked`
+and `TheRowCountsWhatWillGoInRatherThanWhatItCouldTake`.
+
+**Item 3.** `OutputName.Suggested` made to answer the template name alone again, which is
+exactly the regression. **1 red**:
+`OutputNameTests.TheSuggestionIsTheTemplateFilesOwnNameAndKeepsItsShape`.
+
+All three restored byte for byte, each checked with a diff against its backup.
+
+### Two existing lines changed by hand
+
+`CreateWords.PlotsBlock`'s second state said the plots were BEING READ and its first promised
+that the pane reads a model's plots as soon as one is open. Both were true and both were the
+fault. They read as not read yet and waiting for a press now, and
+`KpiCreateTests.ThePlotsBlockReadsFourWaysOneLineEach` was changed with them, with its docstring
+saying why.
+
+### What worked on that press, on the record
+
+The link note fired and named the link, 1 instance of 6 not loaded with the file named. The
+area note fired on STREETS. The templates were opened 7 times over 16 redraws, which is the
+folder listing holding its recognitions as it should. The refusal named the missing output
+folder and what to press.
+
+---
+
 ## 2026-09-12, sixty first pass. Several templates in one press, one workbook each
 
 Round two of the two Bader sent together, off a fresh pull of main at `96b6239`, which carries

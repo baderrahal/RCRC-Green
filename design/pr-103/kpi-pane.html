@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The header costs nothing, pull request 103</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  table { border-collapse: collapse; font-size: 12px; margin: 8px 0 16px; max-width: 900px; }
+  th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; background: #fff; }
+  th { background: #ececec; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .strip { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .strip { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .status { background: #e4e4e4; border-top: 1px solid #c8c8c8; }
+  .dark  .status { background: #3a3a3a; border-top: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #ff8080; }
+  .light .head   { background: #ececec; }
+  .dark  .head   { background: #262626; }
+  .strip { padding: 5px 8px; }
+  .name { font-weight: bold; }
+  .body { padding: 8px; }
+  .head { padding: 3px 8px; font-weight: bold; margin: 6px 0 4px; }
+  .status { padding: 5px 8px; }
+  .row { margin: 3px 0; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 2px 6px; margin: 4px 0; }
+  .light .btn { background: #e1e1e1; color: #1a1a1a; }
+  .dark  .btn { background: #4a4a4a; color: #e6e6e6; border-color: #5e5e5e; }
+  .box { display: inline-block; border: 1px solid #adadad; background: #fff; color: #1a1a1a;
+         padding: 1px 4px; min-width: 210px; }
+  .lbl { display: inline-block; width: 84px; }
+  .gone { text-decoration: line-through; opacity: 0.55; }
+</style>
+</head>
+<body>
+
+<div class="warning">
+  <p><strong>This is a mockup and not a screenshot.</strong> It was drawn by hand from the
+  code in this pull request. It cannot show how Revit will really render the pane: the fonts,
+  the wrapping and the dockable pane's own chrome are Revit's, not this file's.</p>
+  <p><strong>Nothing here has been observed in Revit.</strong> Whether opening a model is quick
+  again is the one thing only a run can answer.</p>
+</div>
+
+<h1>The header costs nothing, and a template ticks its plots</h1>
+
+<h2>Every path that can start a read</h2>
+
+<table>
+  <tr><th>path</th><th>what it reads</th><th>cost</th><th>verdict</th></tr>
+  <tr><td>the pane becoming visible</td><td>the title alone</td><td>free</td><td>was already right</td></tr>
+  <tr><td>every redraw of the block</td><td>the title alone</td><td>free</td><td>was already right</td></tr>
+  <tr><td>a model answering with a title</td><td>every sheet and schedule</td><td>heavy</td><td><strong>the fault, now gone</strong></td></tr>
+  <tr><td>Read this model</td><td>every sheet and schedule</td><td>heavy</td><td>a press</td></tr>
+  <tr><td>Create</td><td>the scan and the plot reads</td><td>heavy</td><td>a press, was already right</td></tr>
+  <tr><td>DocumentOpened, DocumentClosed</td><td>the KPI pane subscribes to neither</td><td>none</td><td>was already right</td></tr>
+</table>
+
+<h2>The header, three states</h2>
+
+<div class="pair">
+  <div>
+    <p class="caption">No document</p>
+    <div class="panel light">
+      <div class="strip">
+        <div class="name">No model open</div>
+        <div class="faint">Open a model. This pane reads its name, which costs nothing, and
+        nothing else.</div>
+      </div>
+      <div class="body"><div class="row faint">the rest of the pane</div></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">Open, nothing has read it</p>
+    <div class="panel light">
+      <div class="strip">
+        <div class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+        <div class="faint">Not read yet. Counting every element is the read itself, so the
+        count waits for one.</div>
+      </div>
+      <div class="body"><div class="row faint">the rest of the pane</div></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">Open and read</p>
+    <div class="panel light">
+      <div class="strip">
+        <div class="name">RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached</div>
+        <div class="faint">Read at 08:37:04, 96959 elements in 1.4 seconds.</div>
+      </div>
+      <div class="body"><div class="row faint">the rest of the pane</div></div>
+    </div>
+  </div>
+</div>
+
+<p class="caption"><strong>Only the third names a count.</strong> The second must not say zero,
+because zero is a number and this is an absence. A test asserts that line carries no digit at
+all.</p>
+
+<h2>The plots block, before and after the one press</h2>
+
+<div class="pair">
+  <div>
+    <p class="caption">Nothing has read this model</p>
+    <div class="panel light">
+      <div class="body">
+        <div class="head">PLOTS</div>
+        <div class="row faint">This model has not been read yet. Reading it walks every sheet
+        and schedule, so it waits for a press.</div>
+        <div class="row"><span class="btn">Read this model</span></div>
+      </div>
+      <div class="status">Ready.</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="caption">After the press</p>
+    <div class="panel light">
+      <div class="body">
+        <div class="head">PLOTS</div>
+        <div class="row faint">The sheets and the schedules name the same 155 plots.</div>
+        <div class="row"><span class="btn">Select all</span> <span class="btn">Clear</span></div>
+        <div class="row gone">MOSQUES, 20 plots &nbsp; STREETS, 78 plots &nbsp; SCHOOLS, 6 plots</div>
+        <div class="row"><strong>3 of 155 plots ticked.</strong></div>
+        <div class="row">&#9745; DM-12 &nbsp;&nbsp; &#9745; DM-14 &nbsp;&nbsp; &#9745; FM-05</div>
+      </div>
+      <div class="status">Ready.</div>
+    </div>
+  </div>
+</div>
+
+<p class="caption">The struck row is the grouping buttons, which are gone: <strong>the template
+row is the grouping button now.</strong> The plot list itself is untouched, so anybody who wants
+to pick plots by hand still can.</p>
+
+<h2>Ticking a template, and a plot taken off by hand</h2>
+
+<div class="pair">
+  <div class="panel dark">
+    <div class="body">
+      <div class="head">TEMPLATES</div>
+      <div class="row">&#9745; GRP_KPI_Checklist_DD_MOSQUES.xlsx &nbsp; MOSQUES</div>
+      <div class="row">&#9744; GRP_KPI_Checklist_DD_SCHOOLS.xlsx &nbsp; SCHOOLS</div>
+      <div class="row faint">What MOSQUES would fill</div>
+      <div class="row"><span class="lbl">Written as</span><span class="box">GRP-KPI-Checklist-DD-MOSQUES.xlsx</span></div>
+      <div class="head">PLOTS</div>
+      <div class="row"><strong>19 of 155 plots ticked.</strong></div>
+      <div class="row">&#9745; DM-12 &nbsp;&nbsp; &#9744; DM-14 &nbsp;&nbsp; &#9745; DM-16</div>
+      <div class="head">CREATE</div>
+      <div class="row faint">MOSQUES: 19 plots, DM-12, DM-16, ...</div>
+      <div class="row"><span class="btn">Create</span></div>
+    </div>
+    <div class="status">Ready.</div>
+  </div>
+</div>
+
+<p class="caption">Ticking MOSQUES ticked its 20 plots. DM-14 was then unticked by hand and
+<strong>stays unticked</strong>: ticking a template is a starting point rather than a lock. The
+row counts 19, which is what will actually go in, not the 20 the template could take. And the
+name box carries the shape the working runs wrote, rather than reading MOSQUES.</p>
+
+</body>
+</html>
