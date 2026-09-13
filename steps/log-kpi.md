@@ -4,6 +4,139 @@ Newest entry first.
 
 ---
 
+## 2026-09-13, sixty third pass. The read press is agreed, and the seven members are judged
+
+Two answers from Bader and one short piece of work. The branch came off a fresh pull of main at
+`6e1b309`, so the baseline is **1456 tests, 763 of them KPI**, measured at that commit before
+anything was written. The other 36 audit findings stay open and this round closes none.
+**Nothing in this round has been observed in Revit.**
+
+PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+
+### 1. The Read this model button stays, and the judgement note comes off
+
+Bader's answer, in his words: the round message said Create is the only thing that reads and the
+rule is that nothing reads without a press. **A button is a press. The fault was a read nobody
+asked for rather than a way to ask for one.** So the wording was wrong and the button was right.
+
+He also placed it: **it is better placed than KPI Scan was.** That button sat at the top of the
+pane and on the ribbon whether or not anybody needed it, and this one sits in the plots block,
+where the thing it produces goes.
+
+The paragraph in `.claude/rules/kpi-rules.md` that named the press as my judgement and said it
+was cheap to overrule is replaced by that, recorded as agreed. Nothing in the code moved.
+
+### 2. The seven members, one at a time
+
+**Reachability is the wrong test and last round proved it**, because `OutputName.Suggested` was
+deleted on reachability alone and was the only record of the output name's shape. Bader's test
+is what each one RECORDS. Three questions each: what shape or measurement is it the written
+record of, is that shape written down anywhere else by name, and would any test lose its meaning
+without it.
+
+**`CreateWords.GroupsHeading`**, the line over the button row. It records that the grouping went
+by the plot prefix and that a button reading MOSQUES has to say what gathered its plots. That is
+written down in `PlotPrefixes`'s own class docstring and in the prefix section of
+`kpi-rules.md`. **No test anywhere references it**, not one, so no test loses anything and there
+is no red to watch for it either. DELETED.
+
+**`CreateWords.GroupLabel`**, a button's own text, MOSQUES, 2 plots. It records that a control
+offering to tick a template's plots names the count BEFORE the press rather than after it, and
+the plural of plot against that count. The rule is `CreateWords.TemplateRow`, which is live and
+prints MOSQUES: 2 plots, DM-12, FM-05 on every ticked row, and the plural comes off
+`CreateWords.Count`, which both of them call. `TheRowCountsWhatWillGoInRatherThanWhatItCouldTake`
+already asserts that line by hand. DELETED.
+
+**`CreateWords.NoGroupFor`**, the footnote naming the plots no button reached. It records that a
+plot no route places has to be visible rather than left out in silence. `TemplateSplit.Unplaced`
+records that now, the pane prints one warned line per unplaced plot with its own reason, the
+report heads a section PLOTS TICKED THAT WENT INTO NO WORKBOOK, and
+`APlotWhoseTemplateIsNotTickedIsNamedAndNotRead` asserts it by hand. **Its own advice is now
+false**: it says to tick such a plot by hand, and ticking one today lands it in `Unplaced`
+writing nowhere. DELETED.
+
+**`PlotTicks.OnlyFor`**, the press itself. It records REPLACE rather than add, on the reasoning
+that one checklist is one template. **That is not a duplicated record, it is a contradicted
+one.** `TickingATemplate.Ticked` adds, because several templates are ticked at once now, and its
+docstring and `kpi-rules.md` both say why replacing is wrong. A method implementing the rule the
+tool decided against is a second and contradictory record waiting for a caller, which is the
+shape this repository keeps paying for. DELETED.
+
+**`PlotPrefixes.Grouped`**, one entry per template the plots point at. Two shapes. The ordering,
+one entry per template in `KpiTemplates.All`'s own order rather than in the order the plots came,
+which `PlotsPerTemplate.Split` does and `TheSharesComeOutInTheTemplateListsOwnOrder` asserts. And
+leaving a template no plot points at out of the list, which is **deliberately reversed**: Bader's
+decision is that such a template stays ticked, stays listed and says it will write nothing, which
+is `PlotsPerTemplate.NoPlotBelongs`. One half recorded elsewhere and one half overruled. DELETED.
+
+**`PlotPrefixes.WithNoKnownPrefix`**, the plots the table has no prefix for. It records that an
+unknown prefix is a real answer with its own bucket rather than an absence. `Across` is what
+holds that bucket, it is live through `TemplateForComponent.OnePrefixTemplate`, and
+`AcrossNamesEveryTemplateTheChosenPlotsPointAt` asserts its name, (no prefix this tool knows), by
+hand. This was one line over it. DELETED.
+
+**`PlotPrefixes.PlotsFor`**, the prefix route applied over a list. `PlotPrefixes.For` is the
+route itself, it is live through `PlotsPerTemplate.For`, and `EveryConfirmedPrefixResolves`
+writes all ten prefix answers out by hand. The order it came back in, the model's own, is
+recorded by `TickingATemplate.PlotsOf` and asserted there. DELETED.
+
+### Why all seven came out the same
+
+Bader asked for this rather than for seven identical answers, and the answer is that **they are
+one feature's parts and not seven things.** A heading, a button's text, its footnote, its press
+and the three lookups that fed it are the grouping row, and a feature is removed as a feature.
+What was worth keeping was never among them. It is the prefix TABLE, which is the measurement
+the team confirmed, and `All`, `Of`, `For`, `Across` and `PrefixesFor` all stay.
+
+The two rounds come out opposite ways for a reason that is visible in the two subjects.
+`OutputName.Suggested` lost its last caller while **the thing it named still existed**, so it
+was the only record of a live shape. These seven lost their callers because **the thing they
+served stopped existing**, and every shape worth keeping had already been written down somewhere
+that is still live and still tested. Two of them were worse than merely unused, and those two
+are the ones worth reading twice: `OnlyFor` and `NoGroupFor` both give answers the tool has
+since decided against.
+
+### The one kept on that test, and it is not one of the seven
+
+**`PlotPrefixes.PrefixesFor` is reached only from tests and stays**, with a docstring that now
+says so in those words. Git says it never had a caller outside the tests in any round, which
+makes it a plainer case than the seven rather than a leftover of theirs. It is the only record of the many to one shape: three prefixes mean
+STREETS, two mean MOSQUES, HEALTHCARE has one. Read the other way, off `For`, a template is
+reached one prefix at a time and the many to one is invisible.
+`ThreePrefixesMeanStreetsAndTwoMeanMosques` writes those three lists out by hand and
+`EveryTemplateIsReachedByAtLeastOnePrefix` is what the agreement with the component table rests
+on. That is the comment Bader asked for, put where it applies rather than on a member that did
+not earn it.
+
+### The break watches
+
+Four, each restored byte for byte and each checked with a diff against its backup.
+
+```
+PlotsFor returns an empty list      3 red   GroupingGathersEveryPlotForOneTemplate
+                                            OneGroupingPressTicksEveryPlotOfThatTemplateAndNothingElse
+                                            ItTicksByTheSplitsRuleSoNoTickedPlotCanLandInNoWorkbook
+Grouped returns an empty list       2 red   GroupingOffersOneButtonPerTemplateThePlotsReallyPointAt
+                                            TheGroupingWordsSayWhatTheButtonDoesAndWhatItLeavesOut
+WithNoKnownPrefix returns nothing   1 red   APlotNoButtonGathersIsNamed
+GroupLabel drops its count and
+NoGroupFor drops its opening        1 red   TheGroupingWordsSayWhatTheButtonDoesAndWhatItLeavesOut
+```
+
+The first break reddened `OnlyFor`'s test through `OnlyFor`, which is how a deletion two members
+deep was watched rather than assumed. **`GroupsHeading` is the one with nothing to watch**, and
+that is its own finding: a constant no test and no caller mentions is a line of text nobody
+would learn was wrong.
+
+Five tests went with the members, the four that tested only them plus the grouping press. One
+test of my own was rewritten rather than deleted: the contrast in
+`ItTicksByTheSplitsRuleSoNoTickedPlotCanLandInNoWorkbook` used `PlotsFor` to show what a prefix
+button would have ticked, and it now names the two answers for DM-12 side by side,
+`PlotPrefixes.For` saying MOSQUES and `PlotsPerTemplate.For` placing it nowhere, which says the
+same thing about one plot instead of about a list.
+
+---
+
 ## 2026-09-13, sixty second pass. The header costs nothing, and a template ticks its plots
 
 Three things off the first press over several templates, NG05 at 08:37. Two faults and one

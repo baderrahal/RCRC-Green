@@ -93,8 +93,9 @@ namespace RcrcGreen.Core.Kpi
     ///
     /// **Which plots belong to one checklist is not written down anywhere.** Nothing here
     /// decides it by the plot prefix, by the component or by anything else. The user ticks them,
-    /// and OnlyFor is one press that ticks a whole prefix group rather than a rule that picks
-    /// one: what Create adds up is still exactly what is ticked when it is pressed.
+    /// and <see cref="TickingATemplate"/> is one press that ticks a workbook row's own plots
+    /// rather than a rule that picks one: what Create adds up is still exactly what is ticked
+    /// when it is pressed.
     /// </summary>
     public sealed class PlotTicks
     {
@@ -153,19 +154,6 @@ namespace RcrcGreen.Core.Kpi
         public PlotTicks All()
         {
             return new PlotTicks(Plots, Plots.All);
-        }
-
-        /// <summary>
-        /// Every plot of one template's prefixes ticked and nothing else, which is what a
-        /// grouping button does. It REPLACES the ticks rather than adding to them, because one
-        /// checklist is one template and a group added to what was already ticked would mix two.
-        ///
-        /// A plot whose prefix the table does not hold is reached by no group and is ticked by
-        /// hand, which is why the pane names those separately.
-        /// </summary>
-        public PlotTicks OnlyFor(KpiTemplate template)
-        {
-            return new PlotTicks(Plots, PlotPrefixes.PlotsFor(Plots.All, template));
         }
 
         public PlotTicks None()

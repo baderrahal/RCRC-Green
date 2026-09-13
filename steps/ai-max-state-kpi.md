@@ -1,5 +1,43 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty third pass, two answers from Bader and one short piece of work. **The
+audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**The Read this model button stays and is agreed.** Bader's answer: the round message's wording
+was wrong, the rule is that nothing reads without a press, a button IS a press, and the fault was
+a read nobody asked for rather than a way to ask for one. He also placed it, better than KPI
+Scan was, which sat at the top and on the ribbon whether or not anybody needed it, where this
+sits in the plots block with the thing it produces. The judgement note in the rules is replaced
+by that record. **No code changed for this item.**
+
+**All seven leftover members are deleted, on what each one RECORDS rather than on reachability.**
+`CreateWords.GroupsHeading`, `GroupLabel` and `NoGroupFor`, `PlotTicks.OnlyFor`, and
+`PlotPrefixes.Grouped`, `WithNoKnownPrefix` and `PlotsFor`, each with the place its shape lives
+named in the log and in the rules: the prefix docstring, `CreateWords.TemplateRow`,
+`TemplateSplit.Unplaced`, `TickingATemplate`, `PlotsPerTemplate.Split`, `PlotPrefixes.Across` and
+`PlotPrefixes.For`. **They came out the same because they are one feature's parts and not seven
+things**, and what was worth keeping was never among them: the prefix table is the measurement
+and `All`, `Of`, `For`, `Across` and `PrefixesFor` all stay. Two were worse than unused.
+`OnlyFor` implemented REPLACE, a rule the tool decided against, and `NoGroupFor` told the reader
+to tick such a plot by hand, which now lands it in `Unplaced` writing nowhere.
+
+**`PrefixesFor` is the one kept on that test and it is not one of the seven.** Nothing calls it
+either and it is the only record of the many to one shape, three prefixes meaning STREETS and two
+MOSQUES, which is invisible read the other way off `For`. Its docstring says that and says
+nothing calls it, which is the comment Bader asked for put where it applies.
+
+Four break watches went red on 3, 2, 1 and 1 tests and were restored byte for byte, each checked
+with a diff against its backup. The first reddened `OnlyFor`'s test through `OnlyFor`, so a
+deletion two members deep was watched rather than assumed. **`GroupsHeading` had nothing to
+watch**, no caller and no test anywhere, which is its own finding. Five tests went with the
+members and one of mine was rewritten rather than deleted, the contrast in
+`ItTicksByTheSplitsRuleSoNoTickedPlotCanLandInNoWorkbook`, which now names the two answers for
+DM-12 side by side instead of comparing two lists. **Locally 1451 tests at this branch, 0 failed
+and 0 skipped, 758 of them KPI, 5 fewer than the 1456 main carries** at the branch point
+`6e1b309`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS ARE WRITTEN HERE AFTER THE MERGE.
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and nothing in it changes what the tool
+does at run time.
+
 Phase: 9, ship. Sixty second pass, three things off the first press over several templates,
 NG05 at 08:37. Two faults and one regression of mine. **The audit files stay the one record: 49
 findings, 13 FIXED, 36 open, and this round closes none.**
