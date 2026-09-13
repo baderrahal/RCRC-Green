@@ -239,10 +239,95 @@ counted off one list and checked against its own length, so a template that fell
 branch is a refusal in those words rather than a row nobody printed. Each template's own
 reconciliation is unchanged and adds up within itself, over its own share of the plots.
 
-**`OutputName.Suggested` is deleted.** It offered the template file's own name and nothing
-called it once every row took its name from `CreateWords.SuggestedName` with that template's own
-plots. A method nothing reaches is the shape this repo deletes rather than leaves beside the
-thing that replaced it.
+**`OutputName.Suggested` is BACK, and deleting it was the fault.** It offered the template
+file's own name, nothing called it once every row named itself, and it was deleted as
+unreachable. The rows named themselves after the TEMPLATE alone, so the boxes read MOSQUES and
+a run would have written MOSQUES.xlsx, which nobody recognises in a folder three months later.
+The working runs wrote GRP-KPI-Checklist-DD-MOSQUES.xlsx and GRP-KPI-Checklist-DD-STREETS.xlsx
+and this is what wrote them. **Reachability is not the whole test for whether a thing is
+needed**: a method the last caller stopped calling can still be the only record of a shape, and
+this one was.
+
+## Nothing heavy runs without a press
+
+**Measured on the first press over several templates, NG05 at 08:37.** Opening a model in Revit
+started a read with no press behind it, and on NG05 that held the model for minutes.
+
+The cause was a line in the round that took the scan button away: the pane still needed the
+model's name and element count at the top, so read those when the pane is shown. **A dockable
+pane is restored VISIBLE at Revit startup**, so every model anybody opened was read before
+anyone had asked for anything.
+
+**THE HEADER MUST COST NOTHING.** The model's name is free. The element count is not: counting
+96,959 elements IS the read. `KpiHeader.Lines` is the whole decision, three states with one
+line each, and **only the third names a count**. A model nothing has read says so and names no
+number, because **a read that has not happened is an ABSENCE and not a zero**.
+
+Every path that can start a read, and whether a person asked:
+
+```
+the pane becoming visible        Ask(WhichModel), the title alone      FREE, and was right
+every redraw of the block        Ask(WhichModel), the title alone      FREE, and was right
+a model answering with a title   Ask(Plots), every sheet and schedule  THE FAULT, now gone
+Read this model                  Ask(Plots)                            A PRESS
+Create                           the scan and the plot reads inside it A PRESS, and was right
+```
+
+The KPI pane subscribes to DocumentOpened and DocumentClosed nowhere, so neither could start
+one, and that was already right. `Took` asked for the plots off the answered title, which is
+what fired on every model opened, and it asks for nothing now. **The plots are read by the one
+press in the plots block**, and Create still reads what it needs itself.
+
+**The press is a judgement rather than a line Bader wrote.** The plot picker cannot be used
+before the plots exist, and the round said Create is the only thing that reads, so either the
+picker waits for a first press of Create or a press exists to fill it. A button is the smaller
+change and it replaces the row of grouping buttons this round removes, so the pane gains no
+control on balance. It is named here so it is cheap to overrule.
+
+## Ticking a template ticks its plots
+
+**Measured on that same press**: MOSQUES, PARKING, SCHOOLS and STREETS ticked, six plots ticked,
+every one of them SC, and three of the four templates read no ticked plot belongs to them. The
+tool did exactly what it was told and **the specification was wrong.** A person who ticks
+MOSQUES has said which plots they mean, and making them find a grouping button and press that
+too is the same fact asked for twice.
+
+`TickingATemplate` is the rule. Ticking a row ticks every plot that belongs to it, unticking
+takes them off, and the row IS the grouping button, so the separate row of buttons is gone.
+
+**IT TICKS BY THE SPLIT'S OWN RULE AND NEVER BY THE PREFIX.** The grouping buttons gathered
+plots with `PlotPrefixes.PlotsFor`, which reads the two letters at the front of an identifier,
+while `PlotsPerTemplate` decides which workbook a plot really goes into by reading PRX_Component
+first. Two rules for one question is the fault this repository keeps paying for: a plot ticked
+by the prefix could then land in no workbook at all and the row's count would be a number
+nothing else agreed with. A test ticks MOSQUES on a plot whose component says SCHOOL and its
+prefix says MOSQUES, and the plot is NOT ticked, because neither route places it.
+
+**A plot ticked or unticked by hand wins.** Ticking a template is a starting point rather than
+a lock, so a plot taken off by hand stays off and the row then says 19 rather than 20. The pane
+holds that list and clears it when the model changes, because another model's DM-14 is not this
+one's. **The count on the row is what will actually go in**, which needs nothing new: the row
+reads its count off the split of the TICKED plots, so a hand untick moves it.
+
+**A template with no plots at all still ticks and still says it will write nothing**, exactly
+as before, and it stays listed.
+
+**A row ticked before the read gets its plots when the read lands.** The template rows come off
+the templates folder and need no model, so ticking MOSQUES and then pressing Read is the
+ordinary order and the plots cannot be ticked until they exist.
+
+**What the grouping buttons did that the rows do not.** Two things, both deliberate. They
+REPLACED the ticks rather than adding, which was right when one checklist was one template and
+is wrong now that several are ticked at once. And they could tick a template's plots without
+that template's workbook being ticked, which is now impossible and is the point: the two halves
+of one choice move together. `CreateWords.GroupsHeading`, `GroupLabel`, `NoGroupFor`,
+`PlotTicks.OnlyFor`, `PlotPrefixes.Grouped`, `WithNoKnownPrefix` and `PlotsFor` are left in
+place and reachable only from tests. **They are NOT deleted**, because the round before this one
+deleted `OutputName.Suggested` on reachability alone and it was the only record of the output
+name's shape. Whether they go is Bader's call.
+
+The plot list itself is untouched, so anybody who wants to pick plots by hand still can. It was
+the two not talking that was the fault rather than either one of them.
 
 ## Only the groups a tree list sheet is named for count
 

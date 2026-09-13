@@ -1,5 +1,49 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty second pass, three things off the first press over several templates,
+NG05 at 08:37. Two faults and one regression of mine. **The audit files stay the one record: 49
+findings, 13 FIXED, 36 open, and this round closes none.**
+
+**NOTHING HEAVY RUNS WITHOUT A PRESS.** Opening a model started a read with no press behind it,
+because `Took` asked for the plots off any title it had not read, and a dockable pane is
+restored visible at Revit startup. Five read paths were gone through one by one and four were
+already right: the two `WhichModel` asks are the title alone and free, Create is a press, and
+the KPI pane subscribes to DocumentOpened and DocumentClosed nowhere. The third was the fault
+and is gone. `KpiHeader.Lines` in Core is the header, three states and **only the third names a
+count**, because a read that has not happened is an absence rather than a zero.
+
+**The plot read now sits behind a press in the plots block, and that press is my judgement**
+rather than a line Bader wrote: the picker cannot be used before the plots exist. It is one
+control where this round removes a row of them, and it is written into the rules as a judgement
+so it is cheap to overrule.
+
+**Ticking a template row ticks its plots**, and the row IS the grouping button, so the separate
+row goes. `TickingATemplate` ticks by the SPLIT'S rule and never by the prefix, because a plot
+ticked by the prefix could land in no workbook at all. A plot ticked or unticked by hand wins,
+the hand list clears with the model, the row's count is what will really go in, and a template
+with no plots still ticks and still writes nothing. A row ticked before the read gets its plots
+when the read lands.
+
+**`OutputName.Suggested` is restored**, asked per row with that row's own file, so the boxes
+read GRP-KPI-Checklist-DD-MOSQUES.xlsx again rather than MOSQUES. Deleting it last round on
+reachability alone was wrong and that is now a rule: a method the last caller stopped calling
+can still be the only record of a shape.
+
+**What the grouping buttons did that the rows do not**, asked for in the round: they replaced
+the ticks rather than adding, and they could tick a template's plots with its workbook unticked.
+Both are deliberate now. Seven members are left reachable only from tests and **not deleted**,
+because of the lesson directly above. Whether they go is Bader's call.
+
+The round changes the pane, so it carries a mockup, hand drawn from the code.
+
+Three break watches went red on 1, 2 and 1 tests, one per item, and were restored byte for byte,
+each checked with a diff against its backup. **Two existing lines were changed by hand**, the
+plots block's first two states, which both promised the read that was the fault. **Locally 1456
+tests at this branch, 0 failed and 0 skipped, 763 of them KPI, 13 added, against the 1443 main
+carries** at the branch point `d6c9f4a`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS GO
+HERE AFTER THE MERGE. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and whether opening
+a model is quick again is the one thing only a run can answer.
+
 Phase: 9, ship. Sixty first pass, round two of the two Bader sent together, off a fresh pull of
 main carrying round one. **The audit files stay the one record: 49 findings, 13 FIXED, 36 open,
 not renumbered and not reordered, and this round closes none.**

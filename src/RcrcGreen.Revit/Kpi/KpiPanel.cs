@@ -94,7 +94,15 @@ namespace RcrcGreen.Revit.Kpi
         // no document open, or a scan pressed before the plot read returned, consumed the one
         // ask and nothing asked again, which left the plots block on open a model while a scan
         // filled the header.
-        private string _plotsAskedFor;
+        // **WHAT HAS BEEN READ, AND IT IS AN ABSENCE UNTIL SOMETHING READS.** The header used to
+        // count the elements as soon as the pane was shown, and counting 96,959 of them IS the
+        // read: a dockable pane is restored visible at Revit startup, so that fired on every
+        // model anybody opened and held NG05 for minutes with nobody having asked for anything.
+        private ReadOfTheModel _read = ReadOfTheModel.NotYet;
+
+        // Which plots the user took off by hand. Ticking a template is a starting point rather
+        // than a lock, so a plot held off here stays off when its template is ticked.
+        private readonly HashSet<string> _heldOff = new HashSet<string>(StringComparer.Ordinal);
 
         // The window a press of Create shows while it runs. Opened on this thread before the
         // external event is raised and closed when the run's last answer comes back, never
@@ -179,8 +187,7 @@ namespace RcrcGreen.Revit.Kpi
             Content = Layout();
             PaintFromTheTheme();
 
-            _modelName.Text = KpiPaneWords.NoModelName;
-            _readAt.Text = KpiPaneWords.NotScanned;
+            TheHeader();
             _date.Text = DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             _preparedBy.Text = RememberedNames.PreparedBy();
             _position.Text = RememberedNames.Position();
@@ -310,35 +317,47 @@ namespace RcrcGreen.Revit.Kpi
                 bool moved = !answered.Is(_model);
 
                 _model = answered;
-                _modelName.Text = KpiPaneWords.ModelNamed(_model.Title);
 
-                // A closed model forgets which plots were asked for, so the same model reopened
-                // is read again rather than left showing the last one's list.
-                if (!_model.IsOpen) _plotsAskedFor = null;
-
-                if (!string.Equals(_model.Title, _scannedTitle, StringComparison.Ordinal))
+                // **A DIFFERENT MODEL HAS NOT BEEN READ**, whatever was read of the last one,
+                // so everything that came off a read goes with it rather than sitting under a
+                // name it does not describe.
+                if (moved)
                 {
+                    _read = ReadOfTheModel.NotYet;
+                    _facts = null;
                     _scannedTitle = null;
-                    _readAt.Text = KpiPaneWords.NotScanned;
-                    if (_model.Title.Length > 0) _said.Text = KpiPaneWords.NotScanned;
+
+                    // The hand list is a set of plot identifiers, and another model's DM-14 is
+                    // not this one's. Holding it across would take a plot off a model nobody
+                    // had touched.
+                    _heldOff.Clear();
                 }
+
+                TheHeader();
+
+                if (!_model.IsOpen) _said.Text = KpiPaneWords.NoModel;
 
                 // Only when the answer moved. Drawing asks for this again, so redrawing on
                 // every answer would spin the external event for as long as the pane is open.
+                //
+                // **AND IT ASKS FOR NOTHING ELSE.** The plots used to be asked for here, off
+                // the answered title, which meant opening a model started a read with no press
+                // behind it. Nothing heavy runs without a press now: the plots are read by the
+                // press in the plots block, and Create reads what it needs itself.
                 if (moved) RedrawTemplates();
-
-                // The one place the plots are asked for, off the answered title rather than
-                // blind at show time. Once per model: the guard is the title the last ask was
-                // for, so a redraw asking WhichModel again does not re-read the plots, and a
-                // model opened under the pane, or one whose first ask was lost, is read the
-                // moment any request answers with it. Asked after the redraw so it wins the
-                // handler's one slot over the WhichModel that redraw raised.
-                if (_model.IsOpen && !string.Equals(_model.Title, _plotsAskedFor, StringComparison.Ordinal))
-                {
-                    _plotsAskedFor = _model.Title;
-                    Ask(KpiRequest.Plots);
-                }
             });
+        }
+
+        /// <summary>
+        /// The two lines at the top, decided in Core and drawn here. **Only a model something
+        /// has read names a count**, and a model nothing has read says so rather than saying
+        /// nought, because nought is a number and this is an absence.
+        /// </summary>
+        private void TheHeader()
+        {
+            IReadOnlyList<string> lines = KpiHeader.Lines(_model, _read);
+            _modelName.Text = lines[0];
+            _readAt.Text = lines[1];
         }
 
         private void Scanned(KpiScan scan, DateTime readAt)
@@ -348,7 +367,8 @@ namespace RcrcGreen.Revit.Kpi
                 // The scan says which model it describes and nothing about the open one. That
                 // comes from Took, which every answer from the handler now carries.
                 _scannedTitle = scan.Document.Title;
-                _readAt.Text = KpiPaneWords.ReadAt(readAt, scan.Document.ElementInstances, scan.Document.ReadSeconds);
+                _read = ReadOfTheModel.At(readAt, scan.Document.ElementInstances, scan.Document.ReadSeconds);
+                TheHeader();
             });
         }
 
@@ -505,6 +525,7 @@ namespace RcrcGreen.Revit.Kpi
                     choice.Click += (sender, e) =>
                     {
                         waiting.SettledAs = chosen;
+                        TickItsPlots(waiting);
                         Named(waiting);
                         RedrawTemplates();
                     };
@@ -636,6 +657,26 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(Faint(line));
             }
 
+            // **THE ONE PRESS THAT STARTS A READ APART FROM CREATE.** It used to start itself
+            // when the pane was shown, and a dockable pane is restored visible at Revit
+            // startup, so every model anybody opened was read with nobody having asked.
+            if (_model.IsOpen && _facts == null)
+            {
+                var read = new Button
+                {
+                    Content = PaneLabel.Escaped(CreateWords.ReadThisModel),
+                    Padding = PanelMetrics.CellPad,
+                    Margin = PanelMetrics.Row,
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
+                read.Click += (sender, e) =>
+                {
+                    Say(CreateWords.ReadingNow);
+                    Ask(KpiRequest.Plots);
+                };
+                _templates.Children.Add(read);
+            }
+
             if (_facts == null || _facts.Plots.All.Count == 0) return;
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
@@ -646,8 +687,6 @@ namespace RcrcGreen.Revit.Kpi
             buttons.Children.Add(all);
             buttons.Children.Add(none);
             _templates.Children.Add(buttons);
-
-            TheGroupButtons();
 
             _templates.Children.Add(new TextBlock
             {
@@ -666,7 +705,16 @@ namespace RcrcGreen.Revit.Kpi
                     IsChecked = _ticks.IsTicked(which),
                     Margin = PanelMetrics.Row
                 };
-                box.Click += (sender, e) => Ticked(_ticks.Toggled(which));
+                box.Click += (sender, e) =>
+                {
+                    // **A PLOT TICKED OR UNTICKED BY HAND WINS.** Ticking a template is a
+                    // starting point rather than a lock, so this is remembered and a later
+                    // template tick leaves it alone.
+                    if (_ticks.IsTicked(which)) _heldOff.Add(which);
+                    else _heldOff.Remove(which);
+
+                    Ticked(_ticks.Toggled(which));
+                };
                 list.Children.Add(box);
             }
 
@@ -717,41 +765,6 @@ namespace RcrcGreen.Revit.Kpi
             view.ScrollChanged += (sender, e) => _scrolled.Note(remembered, view.VerticalOffset, view.HorizontalOffset);
 
             return view;
-        }
-
-        /// <summary>
-        /// One button per template the model's plots point at, gathered by the plot prefix. It
-        /// is what the prefix is really for: ticking the 30 plots of one template by hand is the
-        /// same fault as marking 136 grid cells with 136 clicks.
-        ///
-        /// The prefix decides no template here. It gathers plots, the user presses the button,
-        /// and PRX_Component is still what preselects the template afterwards.
-        /// </summary>
-        private void TheGroupButtons()
-        {
-            IReadOnlyList<TemplateByPrefix> groups = PlotPrefixes.Grouped(_facts.Plots.All);
-            if (groups.Count == 0) return;
-
-            _templates.Children.Add(Faint(CreateWords.GroupsHeading));
-
-            var row = new WrapPanel { Margin = PanelMetrics.Row };
-            foreach (TemplateByPrefix group in groups)
-            {
-                TemplateByPrefix which = group;
-                var button = new Button
-                {
-                    Content = PaneLabel.Escaped(CreateWords.GroupLabel(which)),
-                    Padding = PanelMetrics.CellPad,
-                    Margin = PanelMetrics.Gap
-                };
-                button.Click += (sender, e) => Ticked(_ticks.OnlyFor(which.Template));
-                row.Children.Add(button);
-            }
-
-            _templates.Children.Add(row);
-
-            string none = CreateWords.NoGroupFor(PlotPrefixes.WithNoKnownPrefix(_facts.Plots.All));
-            if (none.Length > 0) _templates.Children.Add(Faint(none));
         }
 
         /// <summary>
@@ -1027,15 +1040,35 @@ namespace RcrcGreen.Revit.Kpi
         {
             if (tick.SettledAs == null || tick.Name.Text.Length > 0) return;
 
-            TemplateShare share = TheSplit().Shares.FirstOrDefault(
-                one => ReferenceEquals(one.Template, tick.SettledAs));
-            IReadOnlyList<string> mine = share == null ? new List<string>() : share.Plots;
+            // **THE SHAPE THE WORKING RUNS WROTE**, per row: the template file's own name,
+            // cleaned. The several templates round named each row after the template alone, so
+            // the boxes read MOSQUES and a run would have written MOSQUES.xlsx, which nobody
+            // recognises in a folder three months later.
+            tick.Name.Text = OutputName.Suggested(tick.Workbook.FileName);
+        }
 
-            var component = new AgreedValue(mine
-                .Select(plotId => new PlotText(plotId, _facts == null ? string.Empty : _facts.ComponentOn(plotId))));
+        /// <summary>
+        /// **TICKING A TEMPLATE ROW TICKS THE PLOTS THAT WILL GO INTO IT.** A person who ticks
+        /// MOSQUES has already said which plots they mean, and making them find a grouping
+        /// button and press that too was the same fact asked for twice. A plot held off by hand
+        /// stays off.
+        /// </summary>
+        private void TickItsPlots(WorkbookTick tick)
+        {
+            if (tick.SettledAs == null || _facts == null) return;
 
-            tick.Name.Text = CreateWords.SuggestedName(
-                tick.SettledAs, component.Agrees ? component.Value : string.Empty, mine);
+            _ticks = TickingATemplate.Ticked(_ticks, tick.SettledAs, ComponentOn, _heldOff);
+        }
+
+        /// <summary>
+        /// What one plot's sheets hold for the component, off the read the pane was given, or
+        /// nothing where no read has happened. It is the one route the split and the ticking
+        /// both ask, so a plot ticked by a template row is a plot that template's workbook
+        /// really gets.
+        /// </summary>
+        private string ComponentOn(string plotId)
+        {
+            return _facts == null ? string.Empty : _facts.ComponentOn(plotId);
         }
 
         /// <summary>
@@ -1045,9 +1078,7 @@ namespace RcrcGreen.Revit.Kpi
         private TemplateSplit TheSplit()
         {
             return PlotsPerTemplate.Split(
-                _ticks.Ticked,
-                plotId => _facts == null ? string.Empty : _facts.ComponentOn(plotId),
-                Settled().Select(one => one.SettledAs));
+                _ticks.Ticked, ComponentOn, Settled().Select(one => one.SettledAs));
         }
 
         /// <summary>
@@ -1081,10 +1112,21 @@ namespace RcrcGreen.Revit.Kpi
         private void ToggledWorkbook(RecognisedWorkbook workbook)
         {
             WorkbookTick already = TickFor(workbook);
-            if (already != null) _picks.Remove(already);
+            if (already != null)
+            {
+                _picks.Remove(already);
+
+                // **UNTICKING A TEMPLATE UNTICKS ITS PLOTS.** The row IS the grouping button
+                // now, so the two halves of one choice move together.
+                if (already.SettledAs != null)
+                {
+                    _ticks = TickingATemplate.Unticked(_ticks, already.SettledAs, ComponentOn);
+                }
+            }
             else
             {
                 _picks.Add(new WorkbookTick(workbook, workbook.Template));
+                TickItsPlots(_picks[_picks.Count - 1]);
                 Named(_picks[_picks.Count - 1]);
             }
 
@@ -1157,12 +1199,19 @@ namespace RcrcGreen.Revit.Kpi
                 _facts = facts;
                 _ticks = new PlotTicks(facts.Plots, _ticks.Ticked);
 
-                // The header's numbers come back with the plots, so the model's name has an
-                // element count under it as soon as the pane is shown. They used to come off
-                // the scan alone, which left the line empty until somebody pressed a button
-                // that no longer exists.
+                // **A ROW TICKED BEFORE THE READ GETS ITS PLOTS WHEN THE READ LANDS.** The
+                // template rows come off the templates folder and need no model, so ticking
+                // MOSQUES and then pressing Read is the ordinary order, and the plots cannot
+                // be ticked until they exist.
+                foreach (WorkbookTick tick in Settled()) TickItsPlots(tick);
+
+                // The header's count comes back with the plots, which is a PRESS now. It used
+                // to come back with a read that started itself when the pane was shown, so the
+                // count was there without anybody asking and the model was held while it was
+                // counted.
                 _scannedTitle = _model.Title;
-                _readAt.Text = KpiPaneWords.ReadAt(DateTime.Now, facts.ElementInstances, facts.ReadSeconds);
+                _read = ReadOfTheModel.At(DateTime.Now, facts.ElementInstances, facts.ReadSeconds);
+                TheHeader();
 
                 if (_componentParameter.Length == 0)
                 {

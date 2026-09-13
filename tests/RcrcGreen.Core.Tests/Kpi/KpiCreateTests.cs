@@ -750,18 +750,30 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// whether a document is open, which the pane reads off the live document, and by
         /// whether the plots have come back, a null standing for not answered rather than
         /// answered with none.
+        ///
+        /// **Two of the four lines changed by hand with the behaviour.** The second used to say
+        /// the plots were BEING READ, because opening a model started a read with no press
+        /// behind it, and the first used to promise that the pane reads a model's plots as soon
+        /// as one is open. Both were true and both were the fault: a docked pane is restored
+        /// visible at Revit startup, so that read fired on every model anybody opened and held
+        /// NG05 for minutes. Nothing heavy runs without a press now, and these two say so.
         /// </summary>
         [Fact]
         public void ThePlotsBlockReadsFourWaysOneLineEach()
         {
             // No document: the one place open a model is right.
             Assert.Equal(
-                new[] { "No model open. This pane reads a model's plots as soon as one is open." },
+                new[] { "No model open. Open one and this pane reads its name, which costs nothing." },
                 CreateWords.PlotsBlock(false, null));
 
-            // A document open, the plots not back yet: waiting, NOT open a model.
+            // A document open and nothing has read it: NOT open a model, and NOT reading, because
+            // nothing is reading. The read waits for a press.
             Assert.Equal(
-                new[] { "Reading the plots from the model. On a large model this takes a moment." },
+                new[]
+                {
+                    "This model has not been read yet. Reading it walks every sheet and schedule, "
+                        + "so it waits for a press."
+                },
                 CreateWords.PlotsBlock(true, null));
 
             // A document answered with no plots: the model holds none.

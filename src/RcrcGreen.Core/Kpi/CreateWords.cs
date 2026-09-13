@@ -63,6 +63,21 @@ namespace RcrcGreen.Core.Kpi
 
         public const string Clear = "Clear";
 
+        /// <summary>
+        /// The press that reads the plots. **Nothing heavy runs without one.** It is the only
+        /// control on this pane that starts a read apart from Create, which reads what it needs
+        /// itself, and it exists because the read that used to start on its own held the model
+        /// for minutes on every open.
+        /// </summary>
+        public const string ReadThisModel = "Read this model";
+
+        /// <summary>
+        /// The status line the moment that press is made, because on a model this size the read
+        /// is long enough that a pane saying nothing reads as a pane that took no notice.
+        /// </summary>
+        public const string ReadingNow =
+            "Reading the plots from this model. On a large model this takes a moment.";
+
         public const string Create = "Create";
 
         /// <summary>
@@ -265,19 +280,22 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Waiting on the plots, with a model open. NOT open a model, because a model is open
-        /// and the header names it. Read as soon as one press reaches the read, so it is a
-        /// moment on a large model rather than a state that stays.
+        /// A model is open and nothing has read it. NOT open a model, because a model is open
+        /// and the header names it, and NOT reading them, because nothing is reading: **the
+        /// read waits for a press.** A docked pane is restored visible at Revit startup, so a
+        /// read that started itself here fired on every model anybody opened and held NG05 for
+        /// minutes with nobody having asked for anything.
         /// </summary>
-        public const string ReadingThePlots =
-            "Reading the plots from the model. On a large model this takes a moment.";
+        public const string NothingHasReadThisModel =
+            "This model has not been read yet. Reading it walks every sheet and schedule, so it "
+            + "waits for a press.";
 
         /// <summary>
         /// No document at all, the one place open a model is the right thing to say. The pane
         /// reads a model's plots as soon as one is open, so it says so.
         /// </summary>
         public const string NoModelToReadPlotsFrom =
-            "No model open. This pane reads a model's plots as soon as one is open.";
+            "No model open. Open one and this pane reads its name, which costs nothing.";
 
         /// <summary>
         /// The lead lines of the plots block, one line per state, because open a model on a
@@ -294,7 +312,7 @@ namespace RcrcGreen.Core.Kpi
         {
             if (plots != null) return PlotSources(plots);
 
-            return new List<string> { documentOpen ? ReadingThePlots : NoModelToReadPlotsFrom };
+            return new List<string> { documentOpen ? NothingHasReadThisModel : NoModelToReadPlotsFrom };
         }
 
         /// <summary>
