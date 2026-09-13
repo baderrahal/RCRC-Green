@@ -1,5 +1,63 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty sixth pass, a shared change that runs alone. **The commit hooks could be
+bypassed in silence and now cannot.** Nothing else is in this round: no KPI code, no rules file,
+no test project, so the dotnet suite is unchanged at **1640, 820 of them KPI**, off the branch
+point `f7fca6d`.
+
+**A MESSAGE ON STANDARD INPUT IS REFUSED.** `commit-scope.py` skipped a message file named `-`
+with a bare continue, so a commit made with a heredoc handed `writing-check.sh` an empty string
+and every rule passed. The sixty fifth pass walked into it: its first commit carried a co-author
+credit line and was taken without a word. The refusal now names the remedy, which is to write
+the message to a file and name that file with the message flag and its path. **A hook runs
+BEFORE the command it checks**, so the heredoc does not exist yet and no amount of reading finds
+it.
+
+**THE FIRST VERSION OF THAT FIX WAS WRONG AND ITS OWN COMMIT SAID SO.** It reported the reason
+by printing a marker word into the message, copying what the older unreadable-file case had
+always done, and the hook searched the message for it. The commit carrying it was refused by its
+own message, for describing the hole and naming the marker. **A signal that travels in the data
+is not a signal.** The reasons come back beside the text now: `commit_message` hands back the
+text and what could not be read, `main` exits non-zero with the reasons on standard error, and
+the hook reads them off standard error. **Both markers are deleted, the older one included.** A
+case pins it, a message that talks about both failures while being neither, and that case is red
+against the marker version.
+
+**One correction to the last round's log.** It said all three hooks scanned an empty string.
+Only `writing-check.sh` asks for the message. The other two ask for paths and never read it.
+
+**A SECOND INSTANCE IN THE SAME FILE.** `read_commit_call` set a `found` flag for the
+unreadable-command case and its own comment said to let the caller fail closed. No caller read
+it, so an unbalanced quote was answered off the index, to all three hooks. The script exits
+non-zero now, because all three already refuse on that, and a `readable` flag carries it apart
+from `found` so an ordinary line holding no commit still passes.
+
+**`hook-tests.sh` is new and green on 15 cases.** It drives the real hooks with the payload
+Claude Code sends and checks the exit code. The three the round asked for are there: a message
+file it can read passes, one it cannot read refuses, and standard input refuses. It also holds
+the unreadable command against all three hooks and checks the ordinary shapes are still read.
+**It runs nothing in the gate**, which is dotnet only, so it is run by hand, and wiring it in is
+a question rather than a thing done here.
+
+Three break watches, 1, 4 and 2 red, all restored byte for byte. **The second found a gap in my
+own test before it found anything else**: against the first version of the fix it reddened 2 of
+3, because require-file refused for its own reason off an empty index, so a direct case on the
+scope script went in ahead of the hook cases.
+
+**The other three hooks were read path by path and two were probed. Nothing found in
+`require-file-on-commit.sh` or in `territory-check.sh`'s own logic**, both fail closed at every
+exit including a fault inside territory-check's embedded python. `writing-check.sh` skips a
+binary file in silence, which is left alone on purpose and named so it reads as looked at.
+**`block-paths.sh` has one real hole and it is NOT fixed here**: it is wired to NotebookEdit and
+reads `file_path`, where NotebookEdit's argument is `notebook_path`, so it passes every notebook
+write. Measured, and the repo holds no notebook. It is one line and it is Bader's call.
+
+**Recorded in `CLAUDE.md`**, under the things that have gone wrong, because that is what both
+sessions read and neither owns, so the Drawing Sheet session gets it too.
+
+MERGE_LINE
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and nothing in it touches the add-in.
+
 Phase: 9, ship. Sixty fifth pass, four things off the first per plot run. NG05 at 00:00, 99
 plots, 98 workbooks. **The tree is right, both files recalculate with zero errors and the street
 reference file works**: ANH-007-ST-100217 came out ROW 36, length 928.782391, and the workbook

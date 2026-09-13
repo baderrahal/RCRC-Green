@@ -224,6 +224,10 @@ the index, through `commit-scope.py`, and a hook script that cannot be found blo
   footer, a co-author credit line, an emoji, or a word from the list in
   `.claude/skills/ai-max/references/writing-rules.md`, which it skips. landscape is kept
 
+`hook-tests.sh` beside them is wired to nothing. It drives the three commit hooks and checks
+each answer, and it is run by hand after any change to a hook, because the gate runs only the
+dotnet tests.
+
 ## Things that have gone wrong before
 
 Add to this whenever something breaks. It is the only part that cannot be rediscovered by
@@ -233,6 +237,28 @@ reading the code.
 its file list on newlines, so a name holding a space reached the scanner in pieces that each
 read as a file that is not there. It passed unchecked. A check that cannot see its own subject
 has to refuse. The KPI scan names every read that did not happen at the top of its file.
+
+**The same hook, the same shape, a second time.** A commit whose message arrives on standard
+input, through `-F -` and a heredoc, puts it somewhere a hook cannot reach: the hook runs
+BEFORE the command, so the heredoc has not been written yet. `commit-scope.py` skipped a
+message file named `-` with a bare continue, `writing-check.sh` scanned an empty string, and a
+commit carrying a co-author credit line was taken in silence on 14 September. **Write a commit
+message to a file in one call and name that file on the next.** Standard input is refused now,
+by name and with that remedy, and so is a command line that cannot be read as a shell line at
+all, which used to be answered with whatever happened to be sitting in the index.
+
+**Set what is needed twice and the second one drifts.** `commit-scope.py` carried a `found`
+flag whose whole purpose was to say the command could not be read, and its own comment said to
+let the caller fail closed. No caller ever read it. The fix is that the script itself fails,
+because all three hooks already refuse on that, rather than a fourth place deciding again.
+
+**A signal that travels in the data is not a signal.** The first fix for the above reported an
+unreadable message by printing a marker word INTO the message, which is what the older
+unreadable-file case already did, and the hook searched the message for it. So a message that
+merely talks about the problem is indistinguishable from one that has it: the commit carrying
+that fix was refused by its own message, for naming the marker it introduced. The reason comes
+back beside the text now, as a non-zero exit with the reason on standard error, and every hook
+already refuses on a non-zero exit.
 
 **An assumption held for five rounds because nobody ran the thing.** The naming pattern came
 from four examples, the read was assumed to need a progress window, and PRX_Plot_ID was assumed
