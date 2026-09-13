@@ -4,6 +4,122 @@ Newest entry first.
 
 ---
 
+## 2026-09-13, sixty third pass. The panel at 35 sub plots, and five faults from the DM-02 run
+
+Branch `claude/rcrc-green-setup-wf9ham`, eight fixes over two pull requests, 105 merged as
+`d7ce76e` with 1483 tests on the runner and 106 as `ac17d08` with 1494, both 0 failed
+and 0 skipped, and both squash messages back byte for byte. Split as the brief offered,
+fixes 1 to 4 then 5 to 8, because 1 to 4 are one change to how the panel scales below step 3
+and share three files, and 5 to 8 are separate faults in the writer and the settings.
+
+**Fix 6 first, because it is the one that needed finding, and because half of it is UNKNOWN.**
+
+Two findings, both with file and line, and neither is what the brief guessed.
+
+`CodeFor` TRIMMED its two arguments and compared them ordinally against values
+`TitleBlockSettingsFile` deliberately does not trim, at
+`src/RcrcGreen.Core/DrawingSheet/TitleBlockSettings.cs:140`. So a pairing on a name carrying
+an edge space could never be found. A type in this model is called `LOD /  HARDSCAPE
+SCHEDULES` with two spaces, so edge spaces in these names are not hypothetical. I wrote a
+probe test against the unchanged code before touching it, it failed expecting `010` and
+getting the empty string, and the probe is a kept test now.
+
+The DM-02 cover page failed for a second reason, and it is in the user's own screenshot for
+fix 7. The dropdown reads `AR-PRX-Title_Block_A1 Cover Page   COVER PAGE`, and
+`TitleBlockType.ToString()` is family, three spaces, then type. So the model's FAMILY is
+`AR-PRX-Title_Block_A1 Cover Page` and the shipped file pairs `010 TITLE SHEET` with the
+family `AR-PRX-Title_Block_A1`. Two different families. `CodeFor` correctly answers nothing
+and no number is ever built for that sheet. **That is not a bug in `CodeFor`**, and fixing
+it by loosening the match would have been inventing a rule. Fix 8 is the remedy from the
+other side: the type can now be paired once and remembered.
+
+**How the sheet came out numbered 1 is UNKNOWN and I am not naming a likely cause.** The
+tool cannot produce it. `SheetNumberRun.Next` returns a built number or `Nothing` and never
+a bare digit. `RunPlan.cs:379` refuses a row with no number before the writer sees it. The
+number box is a plain `TextBox` starting at the row's own number. I traced every path from
+the panel's number build to `ViewSheet.Create` and could not establish which one put a `1`
+in the model. What the writer does now is READ THE NUMBER BACK off the sheet after setting
+it and refuse the sheet when Revit kept something else, deleting it again. That closes the
+hole whatever produced it, and it is the rule this repo already uses for viewport placement.
+
+**Fix 5 is the expensive one.** Five views were refused for no scope box on DM-02 and their
+five sheets were created anyway, each reported as made without the view it was waiting for.
+Five empty sheets, and five numbers taken in a model where a number cannot be reused. A row
+whose every view this same run refused is refused now, naming them. A sheet with no views BY
+DESIGN is untouched, so the cover page is still made, and a sheet keeping one of its two
+views is still made. The case that would break a careless version is a sheet carrying a view
+the model ALREADY HOLDS, which is not refused and not made, so the rule asks whether the run
+refused the view rather than whether it made it. There is a test on exactly that.
+
+**The panel at scale.** The run drew 245 plot rows in step 4, 247 preview cards in step 5,
+and the twelve item view checklist inside all seven definitions. The cause is mine:
+everything below step 3 was designed for one sub plot at a time.
+
+The typed sheet name moved off the row and onto the definition. The model settles that it
+never varies by plot: 600001A, 600002A and 600005A are all HARDSCAPE SCHEDULES. One box now,
+with the per plot row kept as an override behind a control saying how many rows are behind
+it. `SheetNameChoice` is the one resolver and an empty string beats the place below it,
+because clearing a box is somebody emptying it. The panel held a SECOND COPY of that rule in
+`NameShownFor`, which decides the letter order, so a name shown in the box and ordered by
+there would have drifted the moment either changed.
+
+A shut definition is two lines. `StepFourOpen` holds which is open, in Core with 13 tests
+rather than three ints on the panel, because taking a definition out shifts every index past
+it and that is an off-by-one no test in the Revit project can reach.
+
+The preview is gone. What replaced it counts what cannot be made BY REASON rather than by
+sentence, because every sentence names its plot and the five DM-02 refusals would have read
+as five reasons. Deleting the preview also took out the `View.Outline` read the panel did
+once per view, which I added last round and flagged as unmeasured. Nothing needs it now.
+`SheetPlacement` stays, because the writer places from it.
+
+**Fix 4 changed a rule I wrote, and the reason is worth keeping.** The range listed only sub
+plots the model holds, so widening it changed nothing and the user reported it as not
+working. They were right. The rule stops the TOOL inventing a plot, and a sub plot somebody
+types into a range is theirs. DM-02 settles it: no views, no scope box, and the team has
+already made its sheets. Both statements of the rule are updated rather than left
+disagreeing, in `core-rules.md` and in `CLAUDE.md`.
+
+**One decision in fix 4 is mine rather than the brief's.** What the model holds starts
+ticked and what it does not starts listed. The other way round, a single tick on a plot would
+queue a run over 96 sub plots nobody has looked at. Both are one click apart and it is easy
+to overrule.
+
+**Fix 4 and fix 5 interact, and it is worth knowing.** Now that fix 5 has landed, a sub plot
+the model does not hold will have most of its sheets refused, because their views cannot be
+made. Only a cover page survives. The two agree rather than fight, but it changes what fix 4
+buys and that is the user's call.
+
+Ten `PlotTickListTests` and one `TitleBlockSettingsTests` encoded rules this round changes.
+They are rewritten against the new rules rather than weakened.
+`EveryKindHasItsOwnHeadingAndNoneShareOne` caught the new refusal kind on its own, which is
+what it is for.
+
+Two things about the numbers. **The brief's base had moved twice by the time this ran.** It
+says `96b6239` at 1416 tests, and I measured that commit at 1416, so it was right when
+written. Main was `6e1b309` at 1456 when this branch was cut and `cda3d37` at 1451 when 105
+went to the gate, because `e2e14a3` deleted leftover members and their tests. The runner read
+1483 where the branch read 1488, which is 1451 plus this branch's 32, measured in a worktree
+rather than reasoned.
+
+**One deliberate break was a no-op the first time I wrote it.** Grouping refusals by sentence
+instead of by kind, written as a nested regroup, collapsed back to the same answer and proved
+nothing. I noticed it came back green, rewrote it properly, and watched 3 go red. The other
+five breaks across the two pull requests went red first time and every reversal left the file
+hash equal.
+
+Not observed in Revit, all of it. Specifically: a shut definition at a real pane width,
+opening and closing one, the one name box filling all 35 rows, the per plot rows behind their
+control, step 5's summary and its refusal list, a 99 line sub plot list and whether it is
+usable at that length, ticking a sub plot the model does not hold, the read back catching a
+number Revit did not take, whether `ViewSheet.SheetNumber` can silently keep a different
+value at all, the five DM-02 sheets now being refused, the line under the picker with a real
+choice in force, pairing `AR-PRX-Title_Block_A1 Cover Page` with `010 TITLE SHEET` and seeing
+a number built for it, and what the panel now costs to draw with 7 definitions over 35 sub
+plots. The mockup is `design/pr-106/panel.html` and it is drawn by hand from the code.
+
+---
+
 ## 2026-09-12, sixty second pass, third of three. The sheets, drawn before they are made
 
 Branch `claude/rcrc-green-setup-wf9ham`, pull request 99, merged as `105d750` with 1416

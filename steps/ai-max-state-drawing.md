@@ -13,8 +13,11 @@ again. Fix 5, a sheet whose every view this run refused is refused and names the
 refusal kind so step 5 counts it, and a cover page with no views by design is untouched. Fix 7,
 the line under the picker says which block is in force. Fix 8, a view type in neither file is
 named and said to have chosen nothing. Suite reads 1494 locally, the 1483 on merged main plus
-11. Three breaks watched red and reversed byte for byte. The pull request is 106 and the
-mockup is design/pr-106/panel.html.
+11. Three breaks watched red and reversed byte for byte. The mockup is
+design/pr-106/panel.html. Pull request 106 is merged as `ac17d08` with 1494 on the runner
+and 105 as `d7ce76e` with 1483, both 0 failed and 0 skipped, both squash messages back byte
+for byte, and merged main reads 1494 locally. The sixty third pass is done, eight fixes
+over two pull requests.
 
 Phase: 9, ship. Sixty third pass, first of two pull requests, fixes 1 to 4 of eight. The panel
 does not scale: a run on 35 sub plots with 7 sheet definitions drew 245 plot rows, 247 preview
