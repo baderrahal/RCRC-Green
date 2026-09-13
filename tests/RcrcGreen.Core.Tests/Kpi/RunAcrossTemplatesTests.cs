@@ -215,8 +215,16 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains(lines, one => one.Trim() == "templates refused                 0");
             Assert.Contains(lines, one => one.Trim() == "templates with nothing to write   1");
             Assert.Contains(lines, one => one.Trim() == "those four add up to the ticked count   YES");
-            Assert.Contains(lines, one => one.Trim() == "plots that went into a workbook   1");
-            Assert.Contains(lines, one => one.Trim() == "plots ticked and written nowhere  1");
+            // **The per plot accounting replaced the two lines that used to sit here**, which
+            // counted plots off the template outcomes. A checklist is one plot now, so the count
+            // that has to add up is per plot and counting it twice would be two records of one
+            // fact. This set carries no plot outcomes, so every one of them reads nought.
+            Assert.Contains(lines, one => one.Trim() == "plots ticked                      0");
+            Assert.Contains(lines, one => one.Trim() == "folders made                      0");
+            Assert.Contains(lines, one => one.Trim() == "workbooks written                 0");
+            Assert.Contains(lines, one => one.Trim() == "plots that wrote nothing          0");
+            Assert.Contains(lines, one => one.Trim()
+                == "written plus wrote nothing is the ticked count   YES");
 
             Assert.Contains(lines, one => one.Trim()
                 == "DM-12 | MOSQUES | Component | DAILY MOSQUE placed it in MOSQUES, and the plot prefix agrees");

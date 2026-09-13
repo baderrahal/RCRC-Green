@@ -368,7 +368,8 @@ namespace RcrcGreen.Revit.Kpi
                 passedOver,
                 printed,
                 totalRow,
-                groups);
+                groups,
+                sheet == null ? string.Empty : Held(sheet, KpiNames.PlotUid2));
         }
 
         private static string Threw(ViewSchedule schedule, Exception failed)

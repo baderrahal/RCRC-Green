@@ -70,7 +70,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null,
-                new[] { match }, null, null, null);
+                new[] { match }, null, null, null, CreateFixture.NoStreetFile);
 
             // The count reaches the sheet, and NOTHING is written over the client's cells.
             CellWrite quantity = Assert.Single(plan.Writes, one => one.Cell.ToString() == "B5");

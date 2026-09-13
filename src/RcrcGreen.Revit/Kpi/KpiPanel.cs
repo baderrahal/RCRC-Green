@@ -636,6 +636,87 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             _templates.Children.Add(Faint(TemplateWords.Output(folder)));
+
+            TheStreetReferenceFile();
+        }
+
+        /// <summary>
+        /// The third browsed thing, beside the templates folder and the output root. It is a
+        /// FILE rather than a folder, so it has its own pointer and its own existence check.
+        ///
+        /// **It is a note and never a refusal.** A run with none set writes every street plot's
+        /// road width and total length empty and says so, the same way the link note works, so
+        /// this line never greys anything out.
+        /// </summary>
+        private void TheStreetReferenceFile()
+        {
+            string file = StreetReferenceFileSetting.Read();
+            string remembered = StreetReferenceFileSetting.ReadRaw();
+
+            var line = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+            var browse = new Button
+            {
+                Content = PaneLabel.Escaped("Browse"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Gap,
+                ToolTip = "Point at the team's Scope_Validation workbook. It fills the road "
+                    + "width and the total length on STREETS plots, matched on "
+                    + KpiNames.PlotUid2 + ". It is remembered beside the installed add-in."
+            };
+            browse.Click += (sender, e) => BrowseForTheStreetReferenceFile();
+            DockPanel.SetDock(browse, Dock.Right);
+
+            var caption = new TextBlock
+            {
+                Text = "Street reference",
+                Width = PanelMetrics.WideLabelWidth,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(caption, Dock.Left);
+
+            line.Children.Add(browse);
+            line.Children.Add(caption);
+            line.Children.Add(new TextBlock
+            {
+                Text = file.Length == 0 ? "No file set" : file,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            _templates.Children.Add(line);
+
+            // A remembered file that has gone reads as none set unless this says otherwise, and
+            // a person would go looking for a Browse they had already pressed.
+            if (file.Length == 0 && remembered.Length > 0)
+            {
+                _templates.Children.Add(Warned(
+                    "The remembered street reference file is not there any more: " + remembered));
+            }
+
+            _templates.Children.Add(Faint(StreetReferenceFile.In(file).InWords));
+        }
+
+        private void BrowseForTheStreetReferenceFile()
+        {
+            using (var picking = new System.Windows.Forms.OpenFileDialog())
+            {
+                picking.Title = "The team's Scope_Validation workbook";
+                picking.Filter = "Excel workbook (*.xlsx)|*.xlsx";
+                picking.CheckFileExists = true;
+
+                string already = StreetReferenceFileSetting.Read();
+                if (already.Length > 0) picking.FileName = already;
+
+                if (picking.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                if (!StreetReferenceFileSetting.Remember(picking.FileName))
+                {
+                    Say("The file could not be remembered. "
+                        + StreetReferenceFileSetting.PointerFileName
+                        + " beside the installed add-in refused the write.");
+                }
+
+                RedrawTemplates();
+            }
         }
 
         /// <summary>

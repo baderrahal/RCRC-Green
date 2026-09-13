@@ -53,9 +53,12 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "Document: " + Shown(set.DocumentTitle));
             Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
             Line(report, "Read only. Nothing in the model was changed and no template was touched.");
-            Line(report, "This press covered " + set.TemplatesTicked
+            Line(report, "This press covered " + set.PlotsTicked
+                + (set.PlotsTicked == 1 ? " plot" : " plots")
+                + " over " + set.TemplatesTicked
                 + (set.TemplatesTicked == 1 ? " template" : " templates")
-                + ", one workbook each, and every template's own sections are below under its name.");
+                + ", ONE WORKBOOK PER PLOT in a folder of its own, and every template's own "
+                + "sections are below under its name.");
             Line(report, string.Empty);
 
             TheRunAccounting(report, set);
@@ -104,13 +107,25 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  templates with nothing to write   " + set.TemplatesWithNothingToWrite);
             Line(report, "  those four add up to the ticked count   "
                 + (set.CountsAddUp ? "YES" : "NO, WHICH IS A BUG IN THIS TOOL"));
-            Line(report, "  plots that went into a workbook   " + set.PlotsWritten.Count);
-            Line(report, "  plots ticked and written nowhere  " + set.Split.Unplaced.Count);
+
+            // **A CHECKLIST IS ONE PLOT**, so the count that matters is per plot. It is the one
+            // the round asks for and the one that has to add up.
+            Line(report, string.Empty);
+            Line(report, "  plots ticked                      " + set.PlotsTicked);
+            Line(report, "  folders made                      " + set.FoldersMade);
+            Line(report, "  workbooks written                 " + set.WorkbooksWritten);
+            Line(report, "  plots that wrote nothing          " + set.PlotsThatWroteNothing);
+            Line(report, "  written plus wrote nothing is the ticked count   "
+                + (set.PlotCountsAddUp ? "YES" : "NO, WHICH IS A BUG IN THIS TOOL"));
+            Line(report, "  a folder is made where it is not there and is never deleted, so it is");
+            Line(report, "  counted beside those two rather than among them");
 
             foreach (string refusal in set.Refusals) Line(report, "  REFUSED: " + refusal);
 
             Line(report, string.Empty);
+            Line(report, "  " + set.Streets.InWords);
 
+            Line(report, string.Empty);
             Line(report, "  template | plots | outcome");
             foreach (TemplateOutcome outcome in set.Outcomes)
             {
@@ -118,6 +133,50 @@ namespace RcrcGreen.Core.Kpi
                     outcome.Template.Name,
                     outcome.Plots.Count.ToString(CultureInfo.InvariantCulture),
                     CreateWords.TemplateOutcomeRow(outcome)));
+            }
+
+            Line(report, string.Empty);
+            ThePlots(report, set);
+        }
+
+        /// <summary>
+        /// One row per ticked plot: its component, the folder it was filed under, its UID2 and
+        /// the path that was written, or the reason nothing was.
+        ///
+        /// **Every ticked plot has a row**, including the ones no template took, because a plot
+        /// list that goes in longer than it comes out is the failure this whole section exists
+        /// to catch.
+        /// </summary>
+        private static void ThePlots(StringBuilder report, KpiCreateRunSet set)
+        {
+            Heading(report, "ONE WORKBOOK PER PLOT", set.PlotOutcomes.Count,
+                "the folder tree is the root, the component folder, the plot's UID2, and the "
+                + "workbook named after its folder");
+
+            Line(report, "  plot | template | folder | UID2 | written to, or why not");
+            foreach (PlotOutcome one in set.PlotOutcomes)
+            {
+                Line(report, "  " + Join(
+                    one.PlotId,
+                    Shown(one.TemplateName),
+                    Shown(one.Where.Folder),
+                    Shown(one.Where.Uid2),
+                    one.Written ? one.Where.FilePath : one.Why));
+            }
+
+            Line(report, string.Empty);
+
+            var missed = set.PlotOutcomes
+                .Where(one => !one.Written && one.Where.Uid2.Length > 0
+                    && one.Template != null && one.Template.Name == KpiTemplates.Streets.Name)
+                .ToList();
+
+            Heading(report, "STREET PLOTS THE REFERENCE FILE COULD NOT ANSWER FOR", missed.Count,
+                "their road width and total length cells are left empty and nothing is estimated "
+                + "from the component value");
+            foreach (PlotOutcome one in missed)
+            {
+                Line(report, "  " + Join(one.PlotId, one.Where.Uid2, one.Why));
             }
 
             Line(report, string.Empty);

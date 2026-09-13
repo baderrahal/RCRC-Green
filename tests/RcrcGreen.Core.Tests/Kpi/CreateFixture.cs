@@ -11,6 +11,14 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// </summary>
     internal static class CreateFixture
     {
+        /// <summary>
+        /// What a test that is not a street run hands the plan. It is a REQUIRED argument, so
+        /// every one of these call sites had to say something, which is the point: the three
+        /// the team types defaulted to null once and the handler quietly never passed them.
+        /// </summary>
+        public static readonly StreetReferenceAnswer NoStreetFile =
+            StreetReferenceAnswer.Nothing("this run reads no street reference file");
+
         public const string Existing = "Existing";
 
         public const string Proposed = "Proposed";
@@ -76,7 +84,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         public static KpiCreateRun Run(
             PlotReading[] readings = null,
-            string outputPath = null,
+            string outputRoot = null,
             PatchOutcome outcome = null,
             RunTiming timing = null,
             KpiTemplate template = null,
@@ -105,14 +113,15 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
                 which,
                 @"C:\templates\MOSQUES.xlsx",
-                outputPath ?? @"C:\models\MOSQUES DM-12.xlsx",
+                PlotWorkbookPath.For(
+                    outputRoot ?? @"C:\models", "FRIDAY MOSQUE", "ANH-008-MO-100006"),
                 "PRX_Component",
                 "PRX_Plot_UID2",
                 "KING FAHD",
                 held,
                 Reconciliation.Of(ticked ?? held.Select(one => one.PlotId).ToArray(), held, null, false, which),
                 KpiCreatePlan.Of(which, null, null, "KING FAHD", area, null, null,
-                    matches, "2026-09-09", "xx", "bb"),
+                    matches, "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile),
                 area,
                 Totalled.Nothing,
                 Totalled.Nothing,

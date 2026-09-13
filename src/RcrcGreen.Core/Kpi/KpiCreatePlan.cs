@@ -75,6 +75,13 @@ namespace RcrcGreen.Core.Kpi
         public const string TypedByHand =
             "typed by hand, because the sheet works the area out from the road width and length";
 
+        /// <summary>
+        /// Said of the road width and the total length on a template that has no such cell,
+        /// which is the other six. It is not the STREETS refusal and must not read like one.
+        /// </summary>
+        public const string NotAStreetTemplate =
+            "only the STREETS template has this cell";
+
         public const string NotFound = "not found on any chosen plot";
 
         public const string Disagreed = "the chosen plots disagreed";
@@ -134,9 +141,17 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<SpeciesMatch> matches,
             string date,
             string preparedBy,
-            string position)
+            string position,
+            StreetReferenceAnswer street)
         {
             if (template == null) throw new ArgumentNullException("template");
+
+            // **A REQUIRED ARGUMENT, like the three the team types.** Those three defaulted to
+            // null once, the handler never passed them, and the first real workbook went out
+            // carrying the template's own placeholders while the report said nobody had typed
+            // them. A street run whose two cells went missing the same way would look filled and
+            // compute an area of nothing.
+            if (street == null) throw new ArgumentNullException("street");
 
             var writes = new List<CellWrite>();
             var skipped = new List<NotWritten>();
@@ -160,6 +175,14 @@ namespace RcrcGreen.Core.Kpi
             Number(template, KpiValue.Area, area, writes, skipped);
             Number(template, KpiValue.Shrubs, shrubs, writes, skipped);
             Number(template, KpiValue.Lawn, lawn, writes, skipped);
+
+            // The two cells the STREETS sheet says are typed by hand, off the reference file.
+            // H8 is the two multiplied and the workbook computes it, so nothing goes there.
+            FromTheStreetFile(template, KpiValue.StreetsRoadWidth, street, street.Width, writes, skipped);
+            FromTheStreetFile(template, KpiValue.StreetsTotalLength, street, street.Length, writes, skipped);
+
+            // Always the same two words, and no template names a cell for either yet.
+            foreach (KpiValue value in FixedCells.Both) Fixed(template, value, writes, skipped);
 
             List<SpeciesMatch> held = (matches ?? Enumerable.Empty<SpeciesMatch>())
                 .Where(one => one != null)
@@ -214,6 +237,57 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return new KpiCreatePlan(template, writes, skipped, held, differences);
+        }
+
+        /// <summary>
+        /// A value the same on every plot into the cell the map names for it, or not written
+        /// with the reason. **Today it is never written**, because no template's map names a
+        /// cell for either and the measurement does not exist. That is one line per template in
+        /// the report rather than a silence, so the gap is visible in every run until it is
+        /// filled in.
+        /// </summary>
+        private static void Fixed(
+            KpiTemplate template, KpiValue value, List<CellWrite> writes, List<NotWritten> skipped)
+        {
+            MappedCell cell = template.CellFor(value);
+            if (cell == null)
+            {
+                skipped.Add(new NotWritten(
+                    template.MainSheetName, string.Empty, value.ToString(), FixedCells.NoCellMeasured));
+                return;
+            }
+
+            writes.Add(CellWrite.Text(template.MainSheetName, cell.Cell, FixedCells.ValueOf(value)));
+        }
+
+        /// <summary>
+        /// The road width or the total length off the reference file. A template with no such
+        /// cell says so in its own words, and a plot the file could not answer for carries the
+        /// file's own reason rather than a second wording of it.
+        /// </summary>
+        private static void FromTheStreetFile(
+            KpiTemplate template,
+            KpiValue value,
+            StreetReferenceAnswer street,
+            double number,
+            List<CellWrite> writes,
+            List<NotWritten> skipped)
+        {
+            MappedCell cell = template.CellFor(value);
+            if (cell == null)
+            {
+                skipped.Add(new NotWritten(
+                    template.MainSheetName, string.Empty, value.ToString(), NotAStreetTemplate));
+                return;
+            }
+
+            if (!street.Found)
+            {
+                skipped.Add(new NotWritten(template.MainSheetName, cell.Cell, value.ToString(), street.Why));
+                return;
+            }
+
+            writes.Add(CellWrite.Number(template.MainSheetName, cell.Cell, number));
         }
 
         /// <summary>

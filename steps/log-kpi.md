@@ -4,6 +4,178 @@ Newest entry first.
 
 ---
 
+## 2026-09-13, sixty fourth pass. One workbook per plot, in a folder tree
+
+The team came back with how they file these. A checklist is one plot and it lives in a folder
+named after it. The branch came off a fresh pull of main at `386948e`, so the baseline is
+**1578 tests, 758 of them KPI**, measured at that commit before anything was written. **The audit findings
+stay open, not renumbered and not reordered, and this round closes none. Counted off the two
+files today: 29 plus 20 is 49 findings, 13 carrying a FIXED mark, so 36 are open.** The round
+message said 32. The files say 36 and nothing here was changed to make the two agree.
+**Nothing in this round has been observed in Revit.**
+
+PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+
+### What the reference file really measures
+
+Bader sent Scope_Validation_21072026. It is not in this repository and never will be. Read for
+its shape and its numbers, 2026-09-13:
+
+```
+one sheet, Sheet1, header in row 1, 8,353 data rows
+D  ID_UID *        H  ES_QUANTITY     I  QUANTITY UNIT     O  ROAD_WIDTH
+A1 holds the number 21484 and there is NO B1 CELL AT ALL
+units      m 6,301,  sqm 2,051,  <Null> 1
+ANH-007-ST rows   313, which is exactly what the round message predicted
+ANH-007-ST-100210 reads 330.65849900000001, m, 20, the row the message names
+widths on those 313   15 on 156,  20 on 65,  10 on 57,  30 on 15,  36 on 13,  and 5, 6, 8, 12
+duplicate UIDs    33, NONE of them in ANH-007
+```
+
+**Three of those are why the code is shaped the way it is.**
+
+The four wanted columns sit at D, H, I and O with a gap at B, so a reader counting along the row
+would take C, G and L and one of them would be a status word. They are found by the names in the
+header row.
+
+**The file writes an absent value as the text Null in angle brackets** rather than leaving the
+cell empty, on all 2,051 sqm rows' road width and on one row's unit. Handed to a parser of my
+own it might have come back 0. It goes through `CellNumber`, which reads no number out of text,
+and the plot is named instead.
+
+**156 of 313 street plots read a width of 15.** The component values are STREET 30m ROW, STREET
+36m ROW, NH STRT 20m ROW and NH STRT LESS 20m ROW. Reading a width off the component name would
+have been wrong on more than half of them, which is what Bader's do not estimate is about, and
+the file proves it rather than the instruction alone.
+
+### 1. One workbook per plot, in the tree
+
+`PlotWorkbookPath` is the rule and `ComponentFolders` is the table under it. The handler's
+`OneTemplate` still reads its whole share in one pass, untouched, because the held readings, the
+progress count and the area unit are all decided once per template. `OnePlot` is new and sits
+under it: each reading is merged, reconciled, planned, patched and filed on its own.
+
+**Nothing about reading a plot changed.** The merge functions take a list of one now, which is
+what makes that literally true rather than a claim: the same `KpiMerge`, the same
+`Reconciliation`, the same `SpeciesMatching`, the same patcher.
+
+**The plot gets a folder of its own holding one file.** That reads as one level too deep until
+you know why, so it is written down: the PDF asked for later goes beside it.
+
+**A UID2 that would not sit in a path refuses rather than being cleaned**, because this one is
+what the team searches folders by and a cleaned name is a plot nobody finds.
+
+### 2. A platform answered differently from the machine the tool runs on
+
+`Path.GetInvalidFileNameChars` was the first guard on that UID2. On Windows it names nine
+characters and the control characters. **On the Linux runner this gate uses it names two**, the
+null and the forward slash, so `ANH*007?` was refused by the tool on a real machine and accepted
+by the test that exists to check the tool. My own test caught it on the first run.
+
+The nine are written out as data now and both separators are checked whichever machine this runs
+on. It is the same shape as every other rule here: ask what the thing IS, and where the answer
+depends on where you are standing, write the answer down.
+
+### 3. The component folder table, and a count that did not agree
+
+Eleven values, and **the table as Bader wrote it reaches EIGHT distinct folders.** The round
+message said nine. The eight are named in a test by hand rather than counted off the list, and
+the likely ninth is GOVERMENT BUILDING, spelt that way in the team's snip, deliberately not in
+the table because no plot in either measured model carries a component for it. **That is a
+question for Bader and nothing guesses at it.**
+
+The two mosque values share one template and get two folders, which is the whole reason this is
+a second table beside `ComponentTemplates` rather than a rule on the template name.
+
+### 4. Two cells that are always the same, and a cell reference that does not exist
+
+Character is always Urban Area Zone and Context is always Urban. `FixedCells` holds both.
+
+**Which cell each goes in is measured nowhere.** Neither word appears in the map, in the rules,
+or in any run this repository records, and the round message itself says the STREETS sheet is
+laid out differently, Category and Character against Character and Context. So the mechanism is
+built, no template's map names a cell, and every template reports both as not written with that
+reason, one line per template in every run, until somebody measures them.
+
+Guessing a cell reference would put Urban Area Zone into whatever D4 happens to be on seven
+client templates and the workbook would look filled. **That is the one part of this round that is
+UNKNOWN rather than done**, and it is one line per template in the map when the measurement
+arrives.
+
+### 5. A judgement about the root, cheap to overrule
+
+Section 2 calls the root a third remembered thing and section 4 calls the street file a third
+Browse button. Those two counts cannot both be right, so one of them had to be read.
+
+**I took the output folder to BE the root.** Three reasons. The street file being the third
+button counts templates, output and street, which leaves no room for a fourth. A second folder
+deciding nothing is how one stale string became a dead end here already, which this file records.
+And the pointer file name is unchanged, `kpi-output-folder.txt`, so nobody's existing setting is
+lost and the same refusal already guards it. If Bader wanted a fourth browsed thing it is one
+`RememberedFolder` and one pane row.
+
+### 6. The report, and what stands down
+
+One report for the run. The accounting gained the per plot half the round asks for: plots ticked,
+folders made, workbooks written, plots that wrote nothing, and **written plus wrote nothing must
+equal ticked**. The folders are counted beside those two and deliberately not among them, because
+a folder can outlive a refused workbook and one made by an earlier press is not made twice.
+
+Two lines that used to sit in the accounting, plots that went into a workbook and plots ticked and
+written nowhere, are gone. They counted plots off the TEMPLATE outcomes, and keeping them beside
+a per plot accounting would be two records of one fact.
+
+**Nothing is deleted.** What is no longer reached, and why each was kept, is in the rules file
+under its own heading: the merged species list across plots, the identical raw area check, the
+sum against the printed total across plots, the plot counted into two workbooks, and the output
+name box. Each is the only record of a measurement or a rule.
+
+**The rounding room on a group total does NOT stand down**, against what the round message said.
+It is per schedule and per plot, inside `ShrubsAndLawnRows`, and nothing about it moved. Said
+here because a round that reported it as stood down would be wrong in the log for ever.
+
+### The break watches
+
+Five, each restored byte for byte and each checked with a diff against its backup.
+
+```
+the plot's own folder dropped from the tree     3 red   ThePathIsTheRootTheFolderTheUidAndTheUidAgain
+                                                        FourStreetValuesFileIntoOneFolderAndKeepTheirOwnPlotFolders
+                                                        TheTwoMosqueComponentsShareATemplateAndNotAFolder
+FUTURE PARKS spelt singular, one letter         2 red   EveryComponentValueReachesItsFolder
+                                                        ElevenValuesReachEightFolders
+the four columns read at A B C D by position    9 red   every StreetReferenceTests case
+the two fixed cells skipped and unrecorded      3 red   TheTwoFixedValuesAreNamedAndNoCellIsGuessed
+                                                        EveryMappedCellWithAValueBecomesOneWrite
+                                                        AValueNoChosenPlotHeldIsSkippedAsNotFound
+a plot with no folder counted nowhere           1 red   WrittenPlusWroteNothingIsTheTickedCount
+```
+
+**The fifth found a gap in my own test rather than in the code.** Breaking
+`PlotsThatWroteNothing` to count only plots that got a folder went GREEN, because every plot in
+that test had one. A plot no route places gets neither a folder nor a workbook, which is exactly
+the case the accounting exists to catch, and it was not in the test. The case is in it now and
+the same break reddens it.
+
+Six existing tests were changed by hand, each because the truth under it moved:
+`EveryMappedCellWithAValueBecomesOneWrite` and `AValueNoChosenPlotHeldIsSkippedAsNotFound` for
+the four new cells, `TheStreetsBlockNamesNoAreaCellAndSaysWhy` because D8 is on the STREETS sheet
+now and is not an area, `TheExistingParksBlockNamesEveryCellAndWhereItsValueComesFrom` because
+one plot's area comes off its one chosen region rather than being totalled off several, and
+`TheReportOpensWithTheRunAndCarriesEveryTemplateUnderItsOwnName` for the per plot accounting.
+
+### Open, for Bader
+
+1. **Eight folders or nine.** The table gives eight. Is GOVERMENT BUILDING the ninth, and what
+   component value reaches it
+2. **Where Character and Context sit**, per template. Nothing is written until this is measured
+3. **The root and the output folder.** Taken as one thing, for the reasons above. If they are two
+   things, say so
+4. **The other six asset types in the reference file.** Parking, mosque, park, school, health and
+   government rows are all in there and nothing reads them
+
+---
+
 ## 2026-09-13, sixty third pass. The read press is agreed, and the seven members are judged
 
 Two answers from Bader and one short piece of work. The branch came off a fresh pull of main at

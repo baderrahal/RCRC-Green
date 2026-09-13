@@ -29,7 +29,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  D3  PRX_Component, read off the plot's first sheet",
                     "  C5  PRX_Plot_UID2, read off the plot's first sheet",
                     "  E4  Neighborhood Name, read off Project Information",
-                    "  D8  PRX_Intervention Area, totalled off the chosen filled regions in the 00 link",
+                    "  D8  PRX_Intervention Area, off the chosen filled region in the 00 link",
                     "  F11  SHRUBS & GROUND COVER TOTAL AREA from the shrubs and lawn schedule",
                     "  H11  LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule",
                     "  E5, G5, H5  the date, the person and their position, typed by the team on this pane and copied through, from no model",
@@ -98,13 +98,23 @@ namespace RcrcGreen.Core.Tests.Kpi
             IReadOnlyList<string> lines = TemplateWords.WouldFill(KpiTemplates.Streets, Picked);
 
             Assert.Contains(
-                "  No area cell. The road width and the total length are typed by hand and the "
-                + "sheet works the area out. Those cells are left alone.",
+                "  No area cell. The sheet works the area out from the road width and the total "
+                + "length, and those two come off the street reference file.",
                 lines);
 
-            // H7 and D8 are the two area cells anywhere in the map, so neither may appear.
+            // **D8 is on this sheet now and it is not an area.** It is the road width, off the
+            // reference file, and F8 is the total length. What still must not appear is an
+            // intervention area line, which is what an area cell would print.
+            Assert.True(KpiTemplates.Streets.AreaIsTypedByHand);
             Assert.All(lines, line => Assert.DoesNotContain("H7", line));
-            Assert.All(lines, line => Assert.DoesNotContain("D8", line));
+            Assert.All(lines, line => Assert.DoesNotContain("PRX_Intervention Area", line));
+
+            Assert.Contains(
+                "  D8  ROAD_WIDTH from the street reference file, matched on PRX_Plot_UID2",
+                lines);
+            Assert.Contains(
+                "  F8  ES_QUANTITY from the street reference file, matched on PRX_Plot_UID2",
+                lines);
         }
 
         [Fact]

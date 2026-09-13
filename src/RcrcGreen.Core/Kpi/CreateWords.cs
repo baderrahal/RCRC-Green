@@ -88,6 +88,30 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public const string Creating = "Creating.";
 
+        /// <summary>
+        /// What a template's row says when every one of its plots wrote. **It names the count and
+        /// the root rather than one path**, because a template is many workbooks now.
+        /// </summary>
+        public static string WorkbooksUnder(KpiTemplate template, int written, string root)
+        {
+            if (template == null) throw new ArgumentNullException("template");
+
+            return Count(written, "workbook") + " under " + (root ?? string.Empty);
+        }
+
+        /// <summary>
+        /// What a template's row says when some of its plots wrote nothing. Every plot that did
+        /// not is named with its own reason, because a count alone sends somebody to the report
+        /// to find out which.
+        /// </summary>
+        public static string SomePlotsWroteNothing(int written, int ticked, IReadOnlyList<string> why)
+        {
+            string opening = written + " of " + Count(ticked, "plot") + " wrote a workbook.";
+            if (why == null || why.Count == 0) return opening + " " + NoReasonRecorded;
+
+            return opening + " " + string.Join(" ", why.ToArray());
+        }
+
         public const string NoPlots =
             "No plot in this model. Open a model that holds one.";
 

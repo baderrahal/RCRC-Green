@@ -301,11 +301,19 @@ namespace RcrcGreen.Revit.Kpi
             // and off the pointer file rather than off anything the pane read earlier. A pane
             // deciding on a folder it had read once is what left Create refusing after the model
             // was saved, and the output folder can be browsed for a moment before this runs.
-            string outputFolder = OutputFolder.Read();
+            // **The root of the folder tree**, which is the folder the user already browses for.
+            // It is one remembered folder rather than two, because the workbooks go under it now
+            // and a second folder deciding nothing is how a stale string became a dead end here
+            // already.
+            string root = OutputFolder.Read();
+
+            // The reference file is read ONCE for the whole press. It is 8,353 rows and every
+            // street plot asks the same copy of it.
+            StreetReferenceFile streets = StreetReferenceFile.In(StreetReferenceFileSetting.Read());
 
             string cannot = CreateWords.CannotCreate(
                 OpenModel.Of(document.Title),
-                outputFolder,
+                root,
                 asked != null && asked.Templates.Count > 0,
                 asked != null && asked.Ticked.Count > 0);
 
@@ -340,6 +348,7 @@ namespace RcrcGreen.Revit.Kpi
 
             var runs = new List<KpiCreateRun>();
             var outcomes = new List<TemplateOutcome>();
+            var plotOutcomes = new List<PlotOutcome>();
             double readSeconds = 0.0;
 
             // **THE COUNT ONLY GROWS, ACROSS THE WHOLE PRESS.** Counted per template it would
@@ -376,13 +385,22 @@ namespace RcrcGreen.Revit.Kpi
                     continue;
                 }
 
-                OneTemplate(document, asked, pick, share, outputFolder, runs, outcomes,
-                    ref readSeconds, ref plotsRead, plotsToRead);
+                OneTemplate(document, asked, pick, share, root, streets, runs, outcomes,
+                    plotOutcomes, ref readSeconds, ref plotsRead, plotsToRead);
+            }
+
+            // **Every ticked plot is accounted for**, including the ones no template took, which
+            // would otherwise be counted by the split and by nothing else.
+            foreach (PlotTemplate left in split.Unplaced)
+            {
+                plotOutcomes.Add(PlotOutcome.WroteNothing(
+                    left.PlotId, left.Template, PlotWorkbookPath.Refused(left.Why), false, left.Why));
             }
 
             var set = new KpiCreateRunSet(
                 document.Title, split, runs, outcomes,
-                RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds));
+                RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
+                plotOutcomes, streets);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
@@ -411,9 +429,11 @@ namespace RcrcGreen.Revit.Kpi
             KpiCreateAsk asked,
             TemplatePick pick,
             TemplateShare share,
-            string outputFolder,
+            string root,
+            StreetReferenceFile streets,
             List<KpiCreateRun> runs,
             List<TemplateOutcome> outcomes,
+            List<PlotOutcome> plotOutcomes,
             ref double readSeconds,
             ref int plotsRead,
             int plotsToRead)
@@ -464,6 +484,65 @@ namespace RcrcGreen.Revit.Kpi
 
             if (!source.Reused) readSeconds += reading.Elapsed.TotalSeconds;
 
+            // **ONE WORKBOOK PER PLOT.** The read above is unchanged, share and all, because the
+            // held readings, the progress count and the area unit are all decided once per
+            // template. What changed is below it: each plot's own reading is filled, patched and
+            // filed on its own rather than added into one workbook with its neighbours.
+            string location = KpiPlotReader.Location(document, asked.LocationParameter);
+            SpeciesList existing = SpeciesList.In(pick.TemplatePath, pick.Template.ExistingTrees);
+            SpeciesList proposed = SpeciesList.In(pick.TemplatePath, pick.Template.ProposedTrees);
+
+            var wrote = new List<string>();
+            var why = new List<string>();
+
+            foreach (PlotReading one in readings)
+            {
+                OnePlot(
+                    document, asked, pick, counted, one, location, existing, proposed,
+                    areaUnit, source, reading.Elapsed.TotalSeconds, root, streets,
+                    runs, plotOutcomes, wrote, why);
+            }
+
+            // The template's own row is what its plots did, because a template is no longer one
+            // workbook. Written means every plot of it wrote, and anything less names the plots.
+            outcomes.Add(wrote.Count == share.Plots.Count
+                ? TemplateOutcome.Wrote(pick.Template, share.Plots,
+                    CreateWords.WorkbooksUnder(pick.Template, wrote.Count, root))
+                : TemplateOutcome.Refused(pick.Template, share.Plots,
+                    CreateWords.SomePlotsWroteNothing(wrote.Count, share.Plots.Count, why)));
+        }
+
+        /// <summary>
+        /// One plot, one workbook, one folder. **NOTHING ABOUT READING A PLOT CHANGES**: the
+        /// reading was taken above by the same reader with the same rules, and this fills that
+        /// one reading exactly as a share of one would have been filled.
+        ///
+        /// A refusal on one plot does not stop the rest, the same rule a refusal on one template
+        /// already followed, so everything that can end this plot ends this method and leaves an
+        /// outcome behind.
+        /// </summary>
+        private void OnePlot(
+            Document document,
+            KpiCreateAsk asked,
+            TemplatePick pick,
+            CountedGroups counted,
+            PlotReading held,
+            string location,
+            SpeciesList existing,
+            SpeciesList proposed,
+            ProjectUnit areaUnit,
+            ReadingsSource source,
+            double readSeconds,
+            string root,
+            StreetReferenceFile streets,
+            List<KpiCreateRun> runs,
+            List<PlotOutcome> plotOutcomes,
+            List<string> wrote,
+            List<string> why)
+        {
+            var readings = new List<PlotReading> { held };
+            var mine = new[] { held.PlotId };
+
             Totalled area = KpiMerge.Area(readings);
             Totalled shrubs = KpiMerge.Shrubs(readings);
             Totalled lawn = KpiMerge.Lawn(readings);
@@ -471,50 +550,90 @@ namespace RcrcGreen.Revit.Kpi
             AgreedValue reference = KpiMerge.Reference(readings);
 
             Reconciliation reconciliation = Reconciliation.Of(
-                share.Plots, readings, new[] { area, shrubs, lawn }, asked.IdenticalAreasConfirmed,
+                mine, readings, new[] { area, shrubs, lawn }, asked.IdenticalAreasConfirmed,
                 pick.Template);
 
-            string location = KpiPlotReader.Location(document, asked.LocationParameter);
             IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings, counted);
 
-            KpiCreatePlan plan;
+            // **The folder comes off the plot's OWN component, not the template's.** DAILY MOSQUE
+            // and FRIDAY MOSQUE fill one workbook and are filed in two folders, so a folder read
+            // off the template would put half the mosque plots in the wrong place.
+            PlotWorkbookPath where = PlotWorkbookPath.For(root, component.Value, held.Uid2);
+
+            // Only STREETS asks the reference file, and it is asked per plot on this plot's own
+            // UID2 rather than on whatever the user picked under Reference.
+            StreetReferenceAnswer street = ReferenceEquals(pick.Template, KpiTemplates.Streets)
+                ? streets.For(held.Uid2)
+                : StreetReferenceAnswer.Nothing(KpiCreatePlan.NotAStreetTemplate);
+
+            KpiCreatePlan plan = KpiCreatePlan.Of(
+                pick.Template, component, reference, location, area, shrubs, lawn,
+                reconciliation.AddsUp && where.Ok
+                    ? SpeciesMatching.Against(merged, pick.Template, existing, proposed)
+                    : null,
+                asked.Date, asked.PreparedBy, asked.Position, street);
+
             PatchOutcome outcome = null;
-            string outputPath = string.Empty;
-            SpeciesList existing = null;
-            SpeciesList proposed = null;
+            bool folderMade = false;
 
-            if (reconciliation.AddsUp)
+            if (reconciliation.AddsUp && where.Ok)
             {
-                existing = SpeciesList.In(pick.TemplatePath, pick.Template.ExistingTrees);
-                proposed = SpeciesList.In(pick.TemplatePath, pick.Template.ProposedTrees);
-
-                plan = KpiCreatePlan.Of(
-                    pick.Template, component, reference, location, area, shrubs, lawn,
-                    SpeciesMatching.Against(merged, pick.Template, existing, proposed),
-                    asked.Date, asked.PreparedBy, asked.Position);
-
-                outputPath = Path.Combine(outputFolder, OutputName.Final(pick.OutputName));
-                outcome = Patched(pick.TemplatePath, outputPath, plan.Writes, plan.ComputesFrom, Progressed);
-            }
-            else
-            {
-                plan = KpiCreatePlan.Of(
-                    pick.Template, component, reference, location, area, shrubs, lawn, null,
-                    asked.Date, asked.PreparedBy, asked.Position);
+                folderMade = MadeTheFolder(where, out string folderRefusal);
+                if (!folderMade) outcome = PatchOutcome.Refused(folderRefusal);
+                else
+                {
+                    outcome = Patched(
+                        pick.TemplatePath, where.FilePath, plan.Writes, plan.ComputesFrom, Progressed);
+                }
             }
 
             var run = new KpiCreateRun(
-                document.Title, pick.Template, pick.TemplatePath, outputPath,
+                document.Title, pick.Template, pick.TemplatePath, where,
                 asked.ComponentParameter, asked.ReferenceParameter, location,
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
                 merged, KpiMerge.Ungrouped(readings), outcome,
-                RunTiming.Of(reading.Elapsed.TotalSeconds, source.Reused ? 0.0 : reading.Elapsed.TotalSeconds),
+                RunTiming.Of(readSeconds, source.Reused ? 0.0 : readSeconds),
                 existing, proposed, source, asked.TemplatesListed, areaUnit, _scannedLinks);
 
             runs.Add(run);
-            outcomes.Add(run.Wrote
-                ? TemplateOutcome.Wrote(pick.Template, share.Plots, run.OutputPath)
-                : TemplateOutcome.Refused(pick.Template, share.Plots, CreateWords.WhyThisOneWroteNothing(run)));
+
+            if (run.Wrote)
+            {
+                wrote.Add(held.PlotId);
+                plotOutcomes.Add(PlotOutcome.Wrote(held.PlotId, pick.Template, where));
+                return;
+            }
+
+            string refusal = where.Ok ? CreateWords.WhyThisOneWroteNothing(run) : where.Why;
+            why.Add(held.PlotId + ": " + refusal);
+            plotOutcomes.Add(PlotOutcome.WroteNothing(
+                held.PlotId, pick.Template, where, folderMade, refusal));
+        }
+
+        /// <summary>
+        /// The plot's folder, made where it is not there. **It is never deleted and nothing in it
+        /// is touched**, so a press into a folder somebody already has writes its file beside
+        /// whatever is in there.
+        /// </summary>
+        private static bool MadeTheFolder(PlotWorkbookPath where, out string refusal)
+        {
+            refusal = string.Empty;
+
+            try
+            {
+                Directory.CreateDirectory(where.FolderPath);
+                return true;
+            }
+            catch (IOException failed)
+            {
+                refusal = "the folder " + where.FolderPath + " could not be made. " + failed.Message;
+                return false;
+            }
+            catch (UnauthorizedAccessException denied)
+            {
+                refusal = "the folder " + where.FolderPath + " was refused. " + denied.Message;
+                return false;
+            }
         }
 
 
