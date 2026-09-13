@@ -55,7 +55,7 @@ write. Measured, and the repo holds no notebook. It is one line and it is Bader'
 **Recorded in `CLAUDE.md`**, under the things that have gone wrong, because that is what both
 sessions read and neither owns, so the Drawing Sheet session gets it too.
 
-MERGE_LINE
+Pull request 115, merged into main as `7f10019`. **The runner executed 1640 tests against the pull request head, 0 failed and 0 skipped. Locally the same 1640 ran at `7f10019`, 0 failed and 0 skipped, 820 of them KPI, and `hook-tests.sh` is 15 of 15 there.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and nothing in it touches the add-in.
 
 Phase: 9, ship. Sixty fifth pass, four things off the first per plot run. NG05 at 00:00, 99

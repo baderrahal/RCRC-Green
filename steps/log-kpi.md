@@ -109,6 +109,19 @@ passes incidentally proves nothing, so a direct case on the scope script went in
 three hook cases. Same shape as last round, where a break watch went green and exposed a missing
 case rather than working code.
 
+### Counts and the merge
+
+**1640 dotnet tests locally at this branch, 0 failed and 0 skipped, 820 of them KPI, none added
+and none changed**, because nothing under `src` or `tests` moved. `hook-tests.sh` 15 of 15. Build
+zero warnings.
+
+Pull request 115, merged into main as `7f10019`. **The runner executed 1640 tests against the
+pull request head, 0 failed and 0 skipped. Locally the same 1640 ran at `7f10019`, 820 of them
+KPI, and the hook tests are 15 of 15 there.** The merge went through the API with the title and
+the message both passed on the call, the commit came back off main carrying neither a co-author
+credit line nor a generated-by footer, and **the merged tree is byte for byte the branch head**,
+checked by diffing `1836630` against `7f10019`.
+
 ### The other hooks, checked for the same shape
 
 The shape is a guard that cannot see its subject and passes rather than refusing. Every exit
