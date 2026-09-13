@@ -11,7 +11,13 @@ regression. The other 36 audit findings stay open. The branch came off a fresh p
 `d6c9f4a`, so the baseline is **1443 tests, 750 of them KPI**, measured at that commit before
 anything was written. **Nothing in this round has been observed in Revit.**
 
-PULL REQUEST AND MERGE NUMBERS ARE AT THE FOOT OF THIS ENTRY, written after the merge.
+Pull request 103, merged into main as `f41b044`. **The runner executed 1456 tests against its
+merged head, 0 failed and 0 skipped. Locally the same 1456 ran at `f41b044`, 0 failed and 0
+skipped, 763 of them KPI.** **The branch itself carried 1456, 13 added here**, against the 1443
+main held at the branch point `d6c9f4a`. Build zero warnings at the merge. The merged tree is
+byte for byte the branch head, nothing landed in between. The merge went through the API with
+the title and the message both passed on the call, and the commit came back off main carrying
+neither a co-author credit line nor a generated-by footer.
 
 ### 1. Every path that can start a read, one by one
 

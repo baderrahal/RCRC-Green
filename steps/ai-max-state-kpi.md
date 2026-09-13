@@ -43,8 +43,10 @@ Three break watches went red on 1, 2 and 1 tests, one per item, and were restore
 each checked with a diff against its backup. **Two existing lines were changed by hand**, the
 plots block's first two states, which both promised the read that was the fault. **Locally 1456
 tests at this branch, 0 failed and 0 skipped, 763 of them KPI, 13 added, against the 1443 main
-carries** at the branch point `d6c9f4a`. Build zero warnings. PULL REQUEST AND MERGE NUMBERS GO
-HERE AFTER THE MERGE. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and whether opening
+carries** at the branch point `d6c9f4a`. Build zero warnings. Pull request 103, merged into
+main as `f41b044`, the runner executing 1456 tests against the merged head, 0 failed and 0
+skipped, and locally the same 1456 ran at the merge, 763 of them KPI, the merged tree byte
+for byte the branch head. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and whether opening
 a model is quick again is the one thing only a run can answer.
 
 Phase: 9, ship. Sixty first pass, round two of the two Bader sent together, off a fresh pull of
