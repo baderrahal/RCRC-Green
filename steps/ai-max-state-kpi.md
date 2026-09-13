@@ -62,7 +62,7 @@ the hook can open. **The hook is not changed here**, because it belongs to no ta
 session depends on it. It is written up for Bader in the log with the one line fix.
 
 **Locally 1640 tests at this branch, 0 failed and 0 skipped, 820 of them KPI, 15 added, against
-the 1625 main carries** at the branch point `70fdb82`. Build zero warnings. MERGE_LINE
+the 1625 main carries** at the branch point `70fdb82`. Build zero warnings. Pull request 114, merged into main as `9c865b1`. **The runner executed 1640 tests against the pull request head, 0 failed and 0 skipped. Locally the same 1640 ran at `9c865b1`, 0 failed and 0 skipped, 820 of them KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head over src, tests, .claude and steps.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.**
 
 Phase: 9, ship. Sixty fourth pass, one workbook per plot in a folder tree, off how the team

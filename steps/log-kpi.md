@@ -155,6 +155,15 @@ file is `-`, the way an unreadable file is already refused through
 the 1625 main carries** at the branch point `70fdb82`. Build zero warnings, measured after the
 last file was written.
 
+Pull request 114, merged into main as `9c865b1`. **The runner executed 1640 tests against the
+pull request head, 0 failed and 0 skipped. Locally the same 1640 ran at `9c865b1`, 0 failed and
+0 skipped, 820 of them KPI.** The merge went through the API with the title and the message both
+passed on the call, and the commit came back off main carrying neither a co-author credit line
+nor a generated-by footer. **The merged tree IS byte for byte the branch head** this time,
+checked by diffing `4b6fc7c` against `9c865b1` over src, tests, .claude and steps, which comes
+back empty. Last round it was not, because a file was uploaded to main between the branch point
+and the merge, so this is checked rather than assumed.
+
 ---
 
 ## 2026-09-13, sixty fourth pass. One workbook per plot, in a folder tree
