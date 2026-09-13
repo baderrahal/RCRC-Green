@@ -1307,8 +1307,10 @@ namespace RcrcGreen.Revit
             // Where this one came from: the user's own settings, the shipped defaults, or
             // neither. A value that filled itself in is a different thing to the person
             // deciding whether to trust it than one they picked.
-            block.Children.Add(Faint(
-                _titleBlocks.WhereItCameFrom(sheet.Built(_columns.Shown).Views)));
+            block.Children.Add(Faint(_titleBlocks.WhereItCameFrom(
+                sheet.Built(_columns.Shown).Views,
+                sheet.TitleBlock == null ? null : sheet.TitleBlock.FamilyName,
+                sheet.TitleBlock == null ? null : sheet.TitleBlock.TypeName)));
 
             var perSheet = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
             perSheet.Children.Add(new TextBlock

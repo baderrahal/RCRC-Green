@@ -139,8 +139,13 @@ namespace RcrcGreen.Core
         /// </summary>
         public string CodeFor(string familyName, string typeName)
         {
-            string family = (familyName ?? string.Empty).Trim();
-            string type = (typeName ?? string.Empty).Trim();
+            // NOT trimmed. The file deliberately keeps every space a name carries, because a
+            // type in this model is called `LOD /  HARDSCAPE SCHEDULES` with two spaces, and
+            // trimming here compared a trimmed argument against an untrimmed stored value, so
+            // a pairing on a name with an edge space could never be found. Proved with a test
+            // before it was changed.
+            string family = familyName ?? string.Empty;
+            string type = typeName ?? string.Empty;
             if (family.Length == 0 || type.Length == 0) return string.Empty;
 
             var codes = _byType.Values
@@ -216,13 +221,30 @@ namespace RcrcGreen.Core
         /// names the disagreement rather than picking a winner, which is the rule this repo
         /// follows everywhere two sources answer one question.
         /// </summary>
-        public string WhereItCameFrom(IEnumerable<ViewType> ticked)
+        /// <param name="chosenFamily">The family of the block showing in the picker, or null
+        /// when nothing is picked. Without it this reported the remembered pairing beside a
+        /// picker showing something else, so one control named two different title blocks.
+        /// </param>
+        /// <param name="chosenTypeName">The type of the block showing in the picker.</param>
+        public string WhereItCameFrom(
+            IEnumerable<ViewType> ticked,
+            string chosenFamily = null,
+            string chosenTypeName = null)
         {
             List<ViewType> types = (ticked ?? Enumerable.Empty<ViewType>())
                 .Where(one => one != null)
                 .ToList();
 
-            if (types.Count == 0) return "No view is ticked for this sheet yet.";
+            string chosen = ((chosenFamily ?? string.Empty) + " "
+                + (chosenTypeName ?? string.Empty)).Trim();
+
+            if (types.Count == 0)
+            {
+                return chosen.Length == 0
+                    ? "No view is ticked for this sheet yet."
+                    : "No view is ticked for this sheet yet, so " + chosen
+                        + " is remembered against nothing.";
+            }
 
             List<TitleBlockPairing> found = types
                 .Select(For)
@@ -231,11 +253,13 @@ namespace RcrcGreen.Core
 
             if (found.Count == 0)
             {
-                return types.Count == 1
-                    ? "The settings hold no title block for " + types[0] + ". Pick one and it is "
-                        + "remembered for next time."
-                    : "The settings hold no title block for any of these views. Pick one and it "
-                        + "is remembered for next time.";
+                return (types.Count == 1
+                    ? "The settings hold no title block for " + types[0] + "."
+                    : "The settings hold no title block for any of these views.")
+                    + (chosen.Length == 0
+                        ? " Pick one and it is remembered for next time."
+                        : " " + chosen + " is in force, the one picked above, and picking it "
+                            + "again remembers it.");
             }
 
             List<string> distinct = found
@@ -257,15 +281,37 @@ namespace RcrcGreen.Core
                 ? "your own settings"
                 : "the shipped defaults";
 
-            string missing = found.Count < types.Count
-                ? " " + string.Join(", ", types
-                    .Where(one => For(one) == null)
-                    .Select(one => one.ToString())
-                    .ToArray())
-                    + " is in neither file and takes the same one."
-                : string.Empty;
+            string said = chosen.Length == 0 || string.CompareOrdinal(chosen, first.TitleBlock) == 0
+                ? first.TitleBlock + ", from " + where + "."
+                : chosen + " is in force, the one picked above. The settings remember "
+                    + first.TitleBlock + " for these views, from " + where + ".";
 
-            return first.TitleBlock + ", from " + where + "." + missing;
+            return said + Unpaired(types, chosen);
+        }
+
+        /// <summary>
+        /// What a view type with no pairing in either file adds to the line.
+        ///
+        /// It used to read "is in neither file and takes the same one", which says a block was
+        /// chosen for it when nothing was. On the run of 2026-09-13 sheet 7 said that about
+        /// (600) SIGNAGE SCHEDULE while the sheet quietly used the definition's block.
+        /// </summary>
+        private string Unpaired(IReadOnlyList<ViewType> types, string chosen)
+        {
+            List<ViewType> none = types.Where(one => For(one) == null).ToList();
+            if (none.Count == 0) return string.Empty;
+
+            string named = string.Join(", ", none.Select(one => one.ToString()).ToArray());
+
+            string takes = chosen.Length == 0
+                ? " and takes whatever this sheet is set to"
+                : " and takes this sheet's block, " + chosen + ", which nothing chose for it";
+
+            return " " + named
+                + (none.Count == 1 ? " has no pairing in either file" : " have no pairing in "
+                    + "either file")
+                + takes + ". Pick the block above to remember it for "
+                + (none.Count == 1 ? "that view." : "those views.");
         }
 
         /// <summary>

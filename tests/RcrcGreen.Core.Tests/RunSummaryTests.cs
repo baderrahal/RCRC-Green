@@ -156,7 +156,8 @@ namespace RcrcGreen.Core.Tests
                 RunRefusalKind.NoScopeBox,
                 RunRefusalKind.SheetKindIncomplete,
                 RunRefusalKind.SheetRowIncomplete,
-                RunRefusalKind.SheetNumberClashes
+                RunRefusalKind.SheetNumberClashes,
+                RunRefusalKind.SheetHasNoViewLeft
             };
 
             Assert.Equal(

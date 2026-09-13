@@ -117,7 +117,13 @@ namespace RcrcGreen.Core
         SheetRowIncomplete = 5,
 
         /// <summary>The number the row carries is one Revit will not take.</summary>
-        SheetNumberClashes = 6
+        SheetNumberClashes = 6,
+
+        /// <summary>
+        /// Every view the sheet was to carry was refused by this same run, so the sheet would
+        /// come out empty under a number nobody can reuse.
+        /// </summary>
+        SheetHasNoViewLeft = 7
     }
 
     /// <summary>
@@ -352,7 +358,15 @@ namespace RcrcGreen.Core
                     sections.Contains(key.ViewType) ? RunItemKind.Section : RunItemKind.PlanView));
             }
 
-            AddSheets(sheetsWanted, stillTicked, sheetNumbersInUse, items, refusals);
+            // The views are all decided by now, so a sheet can be asked whether anything it
+            // carries survived. Passed rather than re-derived, because working out a second
+            // time which views were refused is a second record of this run's own answer.
+            var refusedViews = new HashSet<PlotViewKey>(
+                refusals.Where(one => one.Type != null)
+                    .Select(one => new PlotViewKey(one.PlotId, one.Type)));
+
+            AddSheets(
+                sheetsWanted, stillTicked, sheetNumbersInUse, items, refusals, refusedViews);
 
             return new RunPlan(items, refusals);
         }
@@ -370,7 +384,8 @@ namespace RcrcGreen.Core
             HashSet<string> stillTicked,
             IEnumerable<string> sheetNumbersInUse,
             List<RunItem> items,
-            List<RunRefusal> refusals)
+            List<RunRefusal> refusals,
+            HashSet<PlotViewKey> refusedViews)
         {
             var arrivals = new List<SheetArrival>();
             int batchAt = 0;
@@ -426,6 +441,33 @@ namespace RcrcGreen.Core
                 .ThenBy(one => one.RowAt))
             {
                 SheetToMake row = one.Row;
+
+                if (row.Views.Count > 0
+                    && row.Views.All(view => refusedViews.Contains(
+                        new PlotViewKey(row.PlotId, view))))
+                {
+                    // Every view it was to carry was refused a moment ago, so the sheet would
+                    // be made empty and its number spent. The run of 2026-09-13 did exactly
+                    // that: five views refused for no scope box on DM-02, five sheets created
+                    // anyway, each reported as made without the view it was waiting for, and
+                    // five numbers now taken in the model.
+                    //
+                    // A sheet with no views BY DESIGN is untouched. The cover page carries
+                    // none and is still made.
+                    refusals.Add(RunRefusal.ForSheet(
+                        row.PlotId,
+                        row.SheetNumber,
+                        row.SheetName.Length == 0 ? row.ViewsInWords() : row.SheetName,
+                        "No sheet was made for " + row.PlotId + ", because this run refused "
+                        + (row.Views.Count == 1 ? "the view it carries, " : "every view it "
+                            + "carries, ")
+                        + string.Join(", ", row.Views
+                            .Select(view => ViewNaming.Of(row.PlotId, view)).ToArray())
+                        + ". It would have come out empty under a number nothing could "
+                        + "reuse.",
+                        RunRefusalKind.SheetHasNoViewLeft));
+                    continue;
+                }
 
                 if (!row.CanBeMade)
                 {

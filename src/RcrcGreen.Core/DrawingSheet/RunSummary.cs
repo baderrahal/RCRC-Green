@@ -128,6 +128,9 @@ namespace RcrcGreen.Core
                 case RunRefusalKind.SheetNumberClashes:
                     return "under a number the model already holds";
 
+                case RunRefusalKind.SheetHasNoViewLeft:
+                    return "on a sheet whose every view this run refused";
+
                 default:
                     return "for a reason the run did not name";
             }
