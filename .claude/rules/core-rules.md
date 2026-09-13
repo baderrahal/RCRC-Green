@@ -514,6 +514,44 @@ writer, which is what names every created view. It belongs in Shared beside the 
 reads a name apart, and it is not there because a change to Shared stops every other session
 and is the user's call.
 
+## A sheet with nothing left to carry is not made
+
+`RunPlan` refuses a sheet row whose every view this same run refused, under
+`RunRefusalKind.SheetHasNoViewLeft`, and names the views it was waiting for. **A sheet with no
+views BY DESIGN is untouched**, so the cover page is still made. A sheet keeping one of its two
+views is still made, and the writer names the one that did not go on.
+
+The run of 2026-09-13 08:51 is why. Five views were refused before the run, each "No scope box
+is named DM-02", and their five sheets were created anyway, each reported as made without the
+view it was waiting for. Five empty sheets, and five numbers taken in a model where a number
+cannot be reused.
+
+The refused views are passed into `AddSheets` rather than worked out again there, because
+deciding a second time which views this run refused is a second record of the run's own answer.
+
+## CodeFor compares against what the file stored
+
+`TitleBlockSettings.CodeFor` does not trim its arguments. The file deliberately keeps every
+space a name carries, because a type in this model is called `LOD /  HARDSCAPE SCHEDULES` with
+two spaces, so trimming here compared a trimmed argument against an untrimmed stored value and
+a pairing on a name with an edge space could never be found. Proved with a test before it was
+changed, and the test stays.
+
+## The line under the title block picker says which one is in force
+
+`WhereItCameFrom` takes the block showing in the picker. Without it the line reported the
+remembered pairing beside a picker showing something else, so one control named two different
+title blocks: on 2026-09-13 sheet 1 showed `AR-PRX-Title_Block_A1 Cover Page   COVER PAGE` in
+the dropdown and `AR-PRX-Title_Block_A1 LOD / SCHEDULES, from the shipped defaults` under it.
+
+A choice that agrees with the remembered one reads as it always did, or every line would carry
+the same name twice.
+
+**A view type in neither file says so plainly.** It used to read "is in neither file and takes
+the same one", which claims a block was chosen for it when nothing was. It names the type, says
+it takes this sheet's block and that nothing chose it, and says picking the block above
+remembers it.
+
 ## Which family type a view type is really built with
 
 `FamilyTypesInUse.Of` counts, per view type, every view family type in use and how many views

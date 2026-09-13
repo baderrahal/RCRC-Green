@@ -1,5 +1,21 @@
 # ai-max state, Drawing Sheet
 
+Phase: 9, ship. Sixty third pass, second of two pull requests, fixes 5 to 8. Fix 6 first because
+it is a diagnosis. CodeFor TRIMMED its arguments and compared them against values the file
+deliberately does not trim, so a pairing on a name with an edge space could never be found,
+proved with a test before changing it. The DM-02 cover page failed for a second reason the
+screenshots show: the model's family is AR-PRX-Title_Block_A1 Cover Page and the shipped pairing
+names AR-PRX-Title_Block_A1, so CodeFor correctly answers nothing and no number is built. HOW
+THE SHEET CAME OUT NUMBERED 1 IS UNKNOWN: SheetNumberRun.Next returns a built number or nothing
+and RunPlan refuses a numberless row before the writer, so the tool cannot produce it. The
+writer reads the number back off the sheet now, so whatever produced it cannot survive quietly
+again. Fix 5, a sheet whose every view this run refused is refused and names them, under its own
+refusal kind so step 5 counts it, and a cover page with no views by design is untouched. Fix 7,
+the line under the picker says which block is in force. Fix 8, a view type in neither file is
+named and said to have chosen nothing. Suite reads 1494 locally, the 1483 on merged main plus
+11. Three breaks watched red and reversed byte for byte. The pull request is 106 and the
+mockup is design/pr-106/panel.html.
+
 Phase: 9, ship. Sixty third pass, first of two pull requests, fixes 1 to 4 of eight. The panel
 does not scale: a run on 35 sub plots with 7 sheet definitions drew 245 plot rows, 247 preview
 cards and the 12 item view checklist inside all 7. Fix 1, the typed sheet name moves off the row

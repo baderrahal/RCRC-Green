@@ -739,6 +739,25 @@ namespace RcrcGreen.Revit
                 return;
             }
 
+            // Read back, never assumed. ViewSheet.Create gives the new sheet a number of
+            // Revit's own, and a set that does not take leaves that number in the model
+            // looking like one the tool chose. The run of 2026-09-13 has a sheet listed as
+            // 1 TITLE SHEET beside 010DM02A, 200DM02 and 600DM02A, and nothing in the tool
+            // can build a number like that. Whatever produced it, it cannot survive here now.
+            string took = sheet.SheetNumber ?? string.Empty;
+            if (string.CompareOrdinal(took, item.SheetNumber) != 0)
+            {
+                string kept = Deleted(document, sheet.Id)
+                    ? " It was deleted again."
+                    : " IT IS STILL IN THE MODEL under that number, and has to be sorted out "
+                        + "by hand.";
+
+                outcome.Refused(RunRefusal.ForSheet(item.PlotId, item.SheetNumber, item.SheetName,
+                    item.Name + " was not made. Revit took the number " + took
+                    + " rather than " + item.SheetNumber + "." + kept));
+                return;
+            }
+
             try
             {
                 sheet.Name = wanted.SheetName;

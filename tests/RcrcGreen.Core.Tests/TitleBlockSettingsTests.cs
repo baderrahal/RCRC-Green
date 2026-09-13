@@ -217,20 +217,129 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// Views that agree, with one of them in neither file, take the agreed one and the odd
-        /// one out is named rather than passed over.
+        /// A view type in neither file takes the sheet's block with nothing having chosen it,
+        /// and the line says exactly that.
+        ///
+        /// It used to read "is in neither file and takes the same one", which claims a block
+        /// was chosen for it. On the run of 2026-09-13 sheet 7 said that about (600) SIGNAGE
+        /// SCHEDULE while the sheet quietly used the definition's block.
         /// </summary>
         [Fact]
-        public void AViewWithNoPairingBesideTwoThatAgreeIsNamed()
+        public void AViewWithNoPairingIsNamedAndSaidToHaveChosenNothing()
         {
             TitleBlockSettings settings = TitleBlockSettings.Of(
                 null,
                 new[] { Pairing(Overall, "KEYPLAN"), Pairing(General, "KEYPLAN") });
 
-            string said = settings.WhereItCameFrom(new[] { Overall, General, Softscape });
+            string said = settings.WhereItCameFrom(
+                new[] { Overall, General, Softscape }, Family, "KEYPLAN");
 
             Assert.StartsWith("AR-PRX-Title_Block_A1 KEYPLAN, from the shipped defaults.", said);
-            Assert.Contains("(600) SOFTSCAPE SCHEDULE is in neither file", said);
+            Assert.Contains(
+                "(600) SOFTSCAPE SCHEDULE has no pairing in either file and takes this "
+                    + "sheet's block, AR-PRX-Title_Block_A1 KEYPLAN, which nothing chose for "
+                    + "it. Pick the block above to remember it for that view.",
+                said);
+        }
+
+        /// <summary>
+        /// With nothing picked yet there is no block to name, so the line says what it takes
+        /// rather than naming one.
+        /// </summary>
+        [Fact]
+        public void AnUnpairedViewWithNothingPickedSaysItTakesWhateverTheSheetIsSetTo()
+        {
+            TitleBlockSettings settings = TitleBlockSettings.Of(
+                null, new[] { Pairing(Overall, "KEYPLAN") });
+
+            Assert.Contains(
+                "(600) SOFTSCAPE SCHEDULE has no pairing in either file and takes whatever "
+                    + "this sheet is set to.",
+                settings.WhereItCameFrom(new[] { Overall, Softscape }));
+        }
+
+        /// <summary>
+        /// The picker and the line under it named two different title blocks. On the run of
+        /// 2026-09-13 sheet 1 showed Cover Page in the dropdown and LOD / SCHEDULES in the
+        /// line, which is one control saying two things.
+        /// </summary>
+        [Fact]
+        public void AChoiceThatDiffersFromTheRememberedOneIsSaidToBeInForce()
+        {
+            TitleBlockSettings settings = TitleBlockSettings.Of(
+                null, new[] { Pairing(Overall, "LOD / SCHEDULES") });
+
+            Assert.Equal(
+                "AR-PRX-Title_Block_A1 Cover Page COVER PAGE is in force, the one picked "
+                    + "above. The settings remember AR-PRX-Title_Block_A1 LOD / SCHEDULES for "
+                    + "these views, from the shipped defaults.",
+                settings.WhereItCameFrom(
+                    new[] { Overall }, "AR-PRX-Title_Block_A1 Cover Page", "COVER PAGE"));
+        }
+
+        /// <summary>
+        /// A choice that agrees with the remembered one adds nothing, or every line would
+        /// carry the same name twice.
+        /// </summary>
+        [Fact]
+        public void AChoiceThatAgreesWithTheRememberedOneReadsAsItAlwaysDid()
+        {
+            TitleBlockSettings settings = TitleBlockSettings.Of(
+                null, new[] { Pairing(Overall, "KEYPLAN") });
+
+            Assert.Equal(
+                "AR-PRX-Title_Block_A1 KEYPLAN, from the shipped defaults.",
+                settings.WhereItCameFrom(new[] { Overall }, Family, "KEYPLAN"));
+
+            Assert.Equal(
+                "AR-PRX-Title_Block_A1 KEYPLAN, from the shipped defaults.",
+                settings.WhereItCameFrom(new[] { Overall }));
+        }
+
+        /// <summary>
+        /// With no pairing at all the line still says which block is in force, rather than
+        /// only asking for one to be picked when one already is.
+        /// </summary>
+        [Fact]
+        public void NoPairingAtAllStillNamesTheChoiceInForce()
+        {
+            TitleBlockSettings settings = TitleBlockSettings.Of(null, null);
+
+            Assert.Equal(
+                "The settings hold no title block for (010) Overall Plan. "
+                    + "AR-PRX-Title_Block_A1 KEYPLAN is in force, the one picked above, and "
+                    + "picking it again remembers it.",
+                settings.WhereItCameFrom(new[] { Overall }, Family, "KEYPLAN"));
+
+            Assert.Equal(
+                "The settings hold no title block for (010) Overall Plan. Pick one and it is "
+                    + "remembered for next time.",
+                settings.WhereItCameFrom(new[] { Overall }));
+        }
+
+        /// <summary>
+        /// CodeFor compares against what the file stored, which is never trimmed, so it must
+        /// not trim its own arguments. It did, and a pairing on a name carrying an edge space
+        /// could never be found. A type in this model is called `LOD /  HARDSCAPE SCHEDULES`
+        /// with two spaces, so edge spaces in these names are not hypothetical.
+        /// </summary>
+        [Fact]
+        public void CodeForFindsAPairingWhoseNameCarriesAnEdgeSpace()
+        {
+            TitleBlockFileContents read = TitleBlockSettingsFile.Read(
+                "010\tTITLE SHEET\tAR-PRX-Title_Block_A1 \tCOVER PAGE\r\n");
+
+            Assert.Equal("AR-PRX-Title_Block_A1 ", read.Pairings[0].FamilyName);
+
+            TitleBlockSettings settings = TitleBlockSettings.Of(null, read.Pairings);
+
+            Assert.Equal("010", settings.CodeFor("AR-PRX-Title_Block_A1 ", "COVER PAGE"));
+
+            // And a family the settings do not pair still answers nothing, which is what the
+            // model's own AR-PRX-Title_Block_A1 Cover Page did on 2026-09-13.
+            Assert.Equal(
+                string.Empty,
+                settings.CodeFor("AR-PRX-Title_Block_A1 Cover Page", "COVER PAGE"));
         }
 
         /// <summary>

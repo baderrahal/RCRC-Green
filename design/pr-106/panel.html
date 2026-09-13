@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Step 4 collapsed and step 5 as a summary, pull requests 105 and 106</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #1a1a1a;
+         font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 30px 0 8px; }
+  .warning { border: 2px solid #b22222; background: #fff; padding: 12px 16px;
+             max-width: 900px; margin-bottom: 24px; }
+  .warning strong { color: #b22222; }
+  .warning p { margin: 6px 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .caption { font-size: 12px; margin: 0 0 6px; color: #444; max-width: 900px; }
+  code { background: #eee; padding: 0 3px; }
+  table.plain { border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  table.plain td, table.plain th { border: 1px solid #ccc; padding: 4px 10px;
+                                   text-align: left; vertical-align: top; }
+  .was { color: #b22222; }
+  .now { color: #1a6b33; }
+
+  /* Every value below is the one in PanelTheme.cs or PanelMetrics.cs and nothing else. */
+  .panel { width: 420px; border: 1px solid #999;
+           font: 12px/1.45 "Segoe UI", Arial, sans-serif; }
+  .light { background: #ffffff; color: #1a1a1a; }
+  .dark  { background: #2e2e2e; color: #e6e6e6; }
+  .light .head   { background: #e4e4e4; border-bottom: 1px solid #c8c8c8; }
+  .dark  .head   { background: #3a3a3a; border-bottom: 1px solid #4a4a4a; }
+  .light .faint  { color: #5e5e5e; }
+  .dark  .faint  { color: #aaaaaa; }
+  .light .warn   { color: #b22222; }
+  .dark  .warn   { color: #e08a8a; }
+  .light .defn   { background: #f3f3f3; border: 1px solid #c8c8c8; }
+  .dark  .defn   { background: #333333; border: 1px solid #4a4a4a; }
+  .head { padding: 5px 8px; display: flex; align-items: center; font-weight: bold; }
+  .head .sign { width: 15px; display: inline-block; font-weight: normal; }
+  .inside { padding: 6px 6px 8px 10px; }
+  .row { margin: 3px 0; }
+  .btn { display: inline-block; border: 1px solid #adadad; padding: 1px 7px; margin-left: 4px;
+         white-space: nowrap; }
+  .dark .btn { border-color: #5e5e5e; }
+  .defn { margin: 4px 0; padding: 6px 8px; }
+  .defn .title { font-weight: bold; display: flex; align-items: center;
+                 justify-content: space-between; }
+  .status { padding: 5px 8px; border-top: 1px solid #c8c8c8; }
+  .dark .status { border-top-color: #4a4a4a; }
+  .pick { border: 1px solid #adadad; background: #fff; padding: 1px 6px; display: inline-block;
+          min-width: 150px; }
+  .dark .pick { border-color: #5e5e5e; background: #262626; }
+  .tick { font-family: "Segoe UI Symbol", sans-serif; }
+</style>
+</head>
+<body>
+
+<h1>Step 4 collapsed and step 5 as a summary, pull requests 105 and 106</h1>
+
+<div class="warning">
+<p><strong>Nothing here has been through Revit.</strong> This is what the code draws read off
+the code, not a screenshot. Every count in it is the one from the run of 2026-09-13: 35 sub
+plots, 7 sheet definitions, 245 plot rows.</p>
+<p>Specifically unobserved: a shut definition at a real pane width, opening and closing one, the
+one name box filling all 35 rows, the per plot rows behind their control, step 5's refusal list,
+a 99 line sub plot list and whether it is usable at that length, and what the panel now costs to
+draw with 7 definitions over 35 sub plots.</p>
+</div>
+
+<h2>What the same pane held before and after</h2>
+
+<table class="plain">
+<tr><th></th><th class="was">before</th><th class="now">after</th></tr>
+<tr><td>step 4</td>
+    <td class="was">7 definitions drawn open: 7 title block dropdowns, 7 twelve line view
+    checklists, 245 plot rows</td>
+    <td class="now">7 lines of two, one definition openable at a time</td></tr>
+<tr><td>step 5</td><td class="was">247 preview cards</td>
+    <td class="now">two lines and a control</td></tr>
+<tr><td>a multi view sheet name</td><td class="was">one box per plot, 35 of them</td>
+    <td class="now">one box on the definition</td></tr>
+<tr><td>step 1 range</td><td class="was">01 to 99, listing only what the model holds</td>
+    <td class="now">lists every sub plot it covers, each saying which it is</td></tr>
+</table>
+
+<h2>Step 4, six shut and one open</h2>
+
+<p class="caption">A shut definition says what it is and what it makes. The open one shows
+everything it showed before, with the view checklist and the plot rows each behind their own
+control saying how much is there.</p>
+
+<div class="pair">
+
+<div class="panel light">
+  <div class="head"><span class="sign">4</span>SHEETS</div>
+  <div class="inside">
+
+    <div class="defn"><div class="title">Sheet 1
+      <span><span class="btn">Open</span><span class="btn">Remove</span></span></div>
+      <div class="faint">AR-PRX-Title_Block_A1 LOD, 1 view per sheet, (010) LIST OF
+        DRAWINGS.</div>
+      <div class="faint">1 sheet on each of 35 sub plots, 35 in all. Numbers are built.</div>
+    </div>
+
+    <div class="defn"><div class="title">Sheet 2
+      <span><span class="btn">Close</span><span class="btn">Remove</span></span></div>
+      <div class="row">Title block <span class="pick">AR-PRX-Title_Block_A1&nbsp;&nbsp;&nbsp;KEYPLAN
+        &nbsp;&#9662;</span></div>
+      <div class="faint">AR-PRX-Title_Block_A1 KEYPLAN, from the shipped defaults.</div>
+      <div class="row">Views per sheet &nbsp; <span class="tick">&#9673;</span>1
+        <span class="tick">&#9711;</span>2 <span class="tick">&#9711;</span>4</div>
+      <div class="row" style="display:flex;justify-content:space-between">Views on it
+        <span class="btn">Change</span></div>
+      <div class="faint">(010) Location Key Plan, (010) Overall Key Plan. 2 of 12 ticked in
+        step 2.</div>
+      <div class="faint">On AR-PRX-Title_Block_A1 KEYPLAN, 1 view per sheet, 2 sheets per
+        ticked plot.</div>
+      <div class="row" style="display:flex;justify-content:space-between">
+        <span>35 plot rows</span><span class="btn">Show</span></div>
+    </div>
+
+    <div class="defn"><div class="title">Sheet 6
+      <span><span class="btn">Open</span><span class="btn">Remove</span></span></div>
+      <div class="faint">AR-PRX-Title_Block_A1 LOD /&nbsp;&nbsp;HARDSCAPE SCHEDULES, 2 views
+        per sheet, (600) HARDSCAPE SCHEDULE, (600) FURNITURE SCHEDULE.</div>
+      <div class="faint">1 sheet on each of 35 sub plots, 35 in all. Numbers are built.</div>
+    </div>
+
+    <div class="row"><span class="btn">Add a sheet</span></div>
+  </div>
+  <div class="status">7 sheets described, 247 in all across the ticked sub plots.</div>
+</div>
+
+<div class="panel dark">
+  <div class="head"><span class="sign">4</span>SHEETS</div>
+  <div class="inside">
+    <div class="defn"><div class="title">Sheet 6
+      <span><span class="btn">Close</span><span class="btn">Remove</span></span></div>
+      <div class="faint">Holds 2 views, so the name is typed rather than proposed.</div>
+      <div class="row">Name <span class="pick">HARDSCAPE SCHEDULES &nbsp;&#9662;</span></div>
+      <div class="faint">Named HARDSCAPE SCHEDULES on 35 ticked sub plots.</div>
+      <div class="row" style="display:flex;justify-content:space-between">
+        <span>35 plot rows</span><span class="btn">Show</span></div>
+    </div>
+  </div>
+  <div class="status">Sheet 6 named once, on 35 sub plots.</div>
+</div>
+
+</div>
+
+<p class="caption">The dark pane is fix 1. That one box is what read <span class="was">34 rows
+still need a name or a number</span> after the user typed the name on DM-02. A per plot row can
+still override it, behind Show.</p>
+
+<h2>Step 5, a summary</h2>
+
+<p class="caption">Counted by reason, not by sentence. Every refusal sentence names its plot, so
+the five views refused for no scope box on DM-02 would read as five reasons if the sentence were
+the key.</p>
+
+<div class="pair">
+
+<div class="panel light">
+  <div class="head"><span class="sign">5</span>RUN</div>
+  <div class="inside">
+    <div class="row">140 plan views, 35 sections, 35 schedules, 247 sheets.</div>
+    <div class="row">12 things cannot be made: 5 on a sub plot with no scope box, 5 on a sheet
+      whose every view this run refused, 2 on a row missing its name or its number.</div>
+    <div class="row" style="display:flex;justify-content:space-between">
+      <span>12 refusals</span><span class="btn">Show</span></div>
+    <div class="row"><span class="btn" style="font-weight:bold">Run</span></div>
+  </div>
+  <div class="status">Press Run to make what is listed above.</div>
+</div>
+
+<div class="panel dark">
+  <div class="head"><span class="sign">5</span>RUN</div>
+  <div class="inside">
+    <div class="row">12 things cannot be made: 5 on a sub plot with no scope box, 5 on a sheet
+      whose every view this run refused, 2 on a row missing its name or its number.</div>
+    <div class="row" style="display:flex;justify-content:space-between">
+      <span>12 refusals</span><span class="btn">Hide</span></div>
+    <div class="faint">DM-02-(010) Overall Plan. No scope box is named DM-02. A view with no
+      scope box is useless on this project, so it is not created.</div>
+    <div class="faint">010DM02A OVERALL KEYPLAN. No sheet was made for DM-02, because this run
+      refused the view it carries, DM-02-(010) Overall Plan. It would have come out empty under
+      a number nothing could reuse.</div>
+    <div class="faint">200DM02 GENERAL ARRANGEMENT LAYOUT. No sheet was made for DM-02, because
+      this run refused the view it carries, DM-02-(200) General Arrangement Layout. It would
+      have come out empty under a number nothing could reuse.</div>
+  </div>
+  <div class="status">12 refusals, 5 of them sheets with nothing left to carry.</div>
+</div>
+
+</div>
+
+<p class="caption">The dark pane is fix 5. Those five sheets were <span class="was">created
+anyway</span> on 2026-09-13, each reported as made without the view it was waiting for. Five
+empty sheets and five numbers taken in a model where a number cannot be reused.</p>
+
+<h2>Step 1, the range lists what it covers</h2>
+
+<div class="panel light">
+  <div class="head"><span class="sign">1</span>PLOTS</div>
+  <div class="inside">
+    <div class="row"><span class="tick">&#9745;</span> DM</div>
+    <div class="row">From <span class="pick" style="min-width:50px">01</span>
+      &nbsp; To <span class="pick" style="min-width:50px">11</span></div>
+    <div class="row"><span class="tick">&#9744;</span> DM-01
+      <span class="faint">&nbsp;&nbsp;not in the model</span></div>
+    <div class="row"><span class="tick">&#9745;</span> DM-02
+      <span class="faint">&nbsp;&nbsp;sheet numbers DM02, no scope box, no views</span></div>
+    <div class="row faint">&nbsp;&nbsp;&nbsp;DM-03 to DM-10, not in the model</div>
+    <div class="row"><span class="tick">&#9745;</span> DM-11
+      <span class="faint">&nbsp;&nbsp;sheet numbers DM11, 16 views</span></div>
+    <div class="faint">11 sub plots, 2 of them in the model. The rest can still be ticked, and
+      sheets can be made for them.</div>
+  </div>
+  <div class="status">2 sub plots ticked on 1 plot.</div>
+</div>
+
+<p class="caption">What the model holds starts ticked and what it does not starts listed. That is
+my call rather than the brief's: the other way round, one tick on a plot would queue a run over
+96 sub plots nobody has looked at. Both are one click apart.</p>
+
+</body>
+</html>

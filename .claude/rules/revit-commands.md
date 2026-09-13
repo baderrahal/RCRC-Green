@@ -619,6 +619,18 @@ Clicking a card opens step 4 and scrolls to the described sheet whose row carrie
 found by the number rather than by counting cards, because one described sheet makes a row per
 ticked plot and a row can make more than one sheet.
 
+## A sheet number is read back off the sheet
+
+`ViewSheet.Create` gives a new sheet a number of Revit's own, and the writer then sets the one
+the panel built. **It reads the number back and compares it.** A set that did not take used to
+leave Revit's own number in the model looking like one the tool chose.
+
+The run of 2026-09-13 has a sheet listed as `1 TITLE SHEET` beside `010DM02A`, `200DM02` and
+`600DM02A`. Nothing in the tool can build a number like that: `SheetNumberRun.Next` returns a
+built number or nothing, and `RunPlan` refuses a row with no number before the writer ever sees
+it. **How that number reached the model is UNKNOWN.** What the read back does is make it
+impossible for the next one to survive quietly, whatever produced it.
+
 ## A count on the panel opens into the thing it counted
 
 Six numbers tell somebody how much is wrong and nothing about what. Every scope box case except
