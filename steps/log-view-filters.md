@@ -6,10 +6,15 @@ Newest entry first.
 
 ## 2026-09-13, first pass. The argus view filters run, ported behind its own pane
 
-The baseline is 1456 tests and this round adds 75, so main should carry 1531, 0 failed and
-0 skipped, which is what the runner and a local run both read. The build is 0 warnings and
-0 errors. **Nothing in this round has been observed in Revit.** Bader is the only person who
-can test there, and the round guide is `steps/2026-09-13-view-filters.md`.
+Shipped as pull request #108, squash merged at `3bcebd5`, the title and the message passed
+on the merge call and back off main byte for byte, no co-author line and no generated-by
+footer, which is the check territory.md asks of every squash merge. The runner read 1569
+tests on the merge, 0 failed and 0 skipped, and merged main reads 1569 locally too. The
+number is bigger than this round's own arithmetic because the sixty third Drawing Sheet
+pass, #105 and #106, landed on main while this round was being built: 1456 at this round's
+branch point, their 38, and this round's 75. The build is 0 warnings and 0 errors.
+**Nothing in this round has been observed in Revit.** Bader is the only person who can
+test there, and the round guide is `steps/2026-09-13-view-filters.md`.
 
 **What this round is.** A third task, View Filters, ported from a working run body Bader
 supplied from another host. The body of `Run` was copied as is into
