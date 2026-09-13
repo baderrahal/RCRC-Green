@@ -1,5 +1,48 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty ninth pass, the THIRD audit of the KPI tool. **It builds nothing and fixes
+nothing**, and the only files it writes are `steps/audit-kpi-3.md`, the log and this block. **This
+block is written because `require-file-on-commit.sh` refuses a commit without one**, which is the
+one place the round message and the hook disagree. **1673 tests, 853 KPI, 28 hook cases**,
+unchanged, and nothing under `src` or `tests` moved.
+
+**PART A, the 32 open findings.** Nine moved, twenty one stand, two stand in a different shape.
+The nine are 3, 20, 21, 22, 26 and 43, all from the rounds that took out the name box and the
+grouping buttons, plus half of 13 and half of 40. **29 and 41 stand and are worse**:
+`KpiCreateReport.cs` grew to 1277 lines, and `TemplateWords.cs` now stacks two docstrings BOTH
+describing the name box round 114 deleted.
+
+**THE STRONGEST FINDING IS 50, AND IT IS THE CHARACTER AND CONTEXT FAULT THREE CELLS UP.**
+`TypedByTheTeam = { "E5", "G5", "H5" }` is one array for all seven templates and the letters were
+measured on one, EXISTING PARKS, with three more inferred from accepted output. Character sat at
+D7 on two templates and F7 on the third because STREETS carries a Category FORMULA at D7, which
+is why those two are found by their labels now. **Row 5 is still written by letter and three
+templates have never been looked at.** The divergence is proven to exist in row 7 of the same
+sheets.
+
+**Findings 51 and 52 are the group row.** `IsStructureRow` needs cell 0 filled and every other
+cell empty, and the group name is read off cell 0. The first cell of a species row is the IMAGE.
+A group row printing with anything in that column is not recognised, its species attach to the
+group above and go to that group's sheet, and nothing refuses it because the species still add to
+the printed TOTAL. That is the Street Design shape again.
+
+**Three break watches, all reddening on the right names**, 2, 5 and 4 red, all restored byte for
+byte. **No test was found that would pass with its own behaviour broken**, which is a change from
+the last two audits and reads as round 117's four findings having gone where the weakness was.
+
+**The report was generated and counted rather than remembered.** One plot, no species, no schedule
+read is 152 lines, **68 of them nine sections whose count is zero**, six of which print a column
+header for a table with no rows. Seventeen headings carry a sentence explaining the rule, and not
+one says what the heading does not.
+
+Fourteen findings, 50 to 63, nine dropped for no cost. **No BLOCKS.** 50 and 51 become BLOCKS the
+moment their unmeasured case is real, and four of the five UNKNOWNs need only a file nobody has
+opened.
+
+MERGE_LINE
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT AND NOTHING IN IT CHANGES THE TOOL.** Every
+change since 14 September is still unrun, which is rounds 113, 114, both hook rounds and 117.
+
 Phase: 9, ship. Sixty eighth pass, the four tests that stayed green while the code was broken:
 findings 10, 11, 33 and 48. **The audit files read 49 findings, 17 FIXED, 32 OPEN**, counted off
 them and moved by these four alone. **1673 tests, 33 added against the 1640 main carried** at the
