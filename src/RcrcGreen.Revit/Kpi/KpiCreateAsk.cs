@@ -94,20 +94,20 @@ namespace RcrcGreen.Revit.Kpi
     /// </summary>
     internal sealed class TemplatePick
     {
-        public TemplatePick(KpiTemplate template, string templatePath, string outputName)
+        public TemplatePick(KpiTemplate template, string templatePath)
         {
             if (template == null) throw new ArgumentNullException("template");
 
             Template = template;
             TemplatePath = templatePath ?? string.Empty;
-            OutputName = outputName ?? string.Empty;
         }
 
         public KpiTemplate Template { get; }
 
         public string TemplatePath { get; }
 
-        public string OutputName { get; }
+        // It carried a typed output name until a workbook became one plot. Every file is named
+        // from its plot's own PRX_Plot_UID2 now, so there was nothing left for a box to say.
     }
 
     /// <summary>

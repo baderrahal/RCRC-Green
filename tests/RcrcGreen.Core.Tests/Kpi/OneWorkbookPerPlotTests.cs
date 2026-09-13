@@ -190,7 +190,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Totalled.Adding(new[] { new PlotNumber("ST-05", 96.0) }),
                 null,
                 "2026-09-13", "B RAHAL", "BIM COORDINATOR",
-                street);
+                street, CreateFixture.NoLabels);
         }
 
         private static string Written(KpiCreatePlan plan, string cell)
@@ -250,7 +250,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 KpiCreatePlan plan = KpiCreatePlan.Of(
                     template, null, null, string.Empty, null, null, null, null,
-                    null, null, null, StreetReferenceAnswer.Of(20.0, 330.0, "20", "330"));
+                    null, null, null, StreetReferenceAnswer.Of(20.0, 330.0, "20", "330"), CreateFixture.NoLabels);
 
                 Assert.Equal(
                     2,
@@ -273,6 +273,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("Urban Area Zone", FixedCells.ValueOf(KpiValue.Character));
             Assert.Equal("Urban", FixedCells.ValueOf(KpiValue.Context));
 
+            // **NO TEMPLATE'S MAP HOLDS A LETTER FOR EITHER, AND NONE EVER WILL.** STREETS
+            // carries a Category formula at D7 where MOSQUES and SCHOOLS carry Character, so a
+            // letter taken off two templates overwrites a formula on the third. The label on the
+            // sheet is the only route.
             foreach (KpiTemplate template in KpiTemplates.All)
             {
                 Assert.Null(template.CellFor(KpiValue.Character));
@@ -280,11 +284,12 @@ namespace RcrcGreen.Core.Tests.Kpi
 
                 KpiCreatePlan plan = KpiCreatePlan.Of(
                     template, null, null, string.Empty, null, null, null, null,
-                    null, null, null, StreetReferenceAnswer.Nothing("not a street run"));
+                    null, null, null, StreetReferenceAnswer.Nothing("not a street run"), CreateFixture.NoLabels);
 
+                // A template nothing opened writes neither and says which read did not happen.
                 Assert.Equal(
                     new[] { "Character", "Context" },
-                    plan.Skipped.Where(one => one.Why == FixedCells.NoCellMeasured)
+                    plan.Skipped.Where(one => one.Why == "the template was not opened")
                         .Select(one => one.What).ToArray());
             }
         }
@@ -299,7 +304,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.Throws<System.ArgumentNullException>(() => KpiCreatePlan.Of(
                 KpiTemplates.Streets, null, null, string.Empty, null, null, null, null,
-                null, null, null, null));
+                null, null, null, null, CreateFixture.NoLabels));
         }
     }
 }

@@ -275,7 +275,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiTemplates.Mosques, list, list);
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
-                KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null, CreateFixture.NoStreetFile);
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
             List<CellWrite> onTheSheet = plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet).ToList();
             Assert.Equal(new[] { "B5", "D5", "I5", "J5" }, onTheSheet.Select(one => one.Cell.ToString()));
@@ -301,7 +301,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("UNKNOWN", "Proposed", 16, 5, "-", "0") })
                     }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
-                null, null, null, CreateFixture.NoStreetFile);
+                null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
             // No name, no count, no measure. A row written with a name and a count alone is
             // what put seven error formulas into the 1836 workbook and deleted it.
@@ -339,7 +339,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("CONOCARPUS", "Proposed", 16, 5, "-", "5") })
                     }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
-                null, null, null, CreateFixture.NoStreetFile);
+                null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
             List<CellWrite> written = plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet).ToList();
             Assert.Equal(new[] { "B5", "D5", "J5" }, written.Select(one => one.Cell.ToString()));
@@ -370,7 +370,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("BAUHINIA PURPUREA", "Proposed", 19, 9, "6", "5") })
                     }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
-                null, null, null, CreateFixture.NoStreetFile);
+                null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
             Assert.Equal(new[] { "B5", "D5" },
                 plan.Writes.Where(one => one.SheetName == KpiTemplates.ProposedTreesSheet).Select(one => one.Cell.ToString()));
@@ -399,7 +399,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         CreateFixture.Plot("FM-05", species: new[] { CreateFixture.Species("PHOENIX DACTYLIFERA", "Existing", 27, 4, "25", "15") })
                     }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
-                null, null, null, CreateFixture.NoStreetFile);
+                null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
             // The count alone goes on a matched row.
             Assert.Equal(new[] { "B4" },

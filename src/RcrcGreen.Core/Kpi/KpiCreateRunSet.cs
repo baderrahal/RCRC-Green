@@ -15,25 +15,54 @@ namespace RcrcGreen.Core.Kpi
     public sealed class TemplateOutcome
     {
         private TemplateOutcome(
-            KpiTemplate template, IReadOnlyList<string> plots, bool written, string outputPath, string why)
+            KpiTemplate template, IReadOnlyList<string> plots, int workbooks, string outputPath, string why)
         {
             if (template == null) throw new ArgumentNullException("template");
 
             Template = template;
             Plots = plots ?? new List<string>();
-            Written = written;
+            Workbooks = workbooks;
             OutputPath = outputPath ?? string.Empty;
             Why = why ?? string.Empty;
         }
 
-        public static TemplateOutcome Wrote(KpiTemplate template, IReadOnlyList<string> plots, string outputPath)
+        /// <summary>
+        /// How many of this template's plots really wrote a workbook.
+        ///
+        /// **A template is not refused because one of its plots was.** The first per plot run
+        /// read MOSQUES: Nothing was written. 20 of 21 plots wrote a workbook, beside twenty
+        /// workbooks that existed on disk. The row counted what the run set out to do and the
+        /// sentence beside it counted what happened, which is two records of one fact inside one
+        /// line. This is the count, and every word the row says is read off it.
+        /// </summary>
+        public int Workbooks { get; }
+
+        /// <summary>
+        /// Every plot of this template wrote its workbook.
+        /// </summary>
+        public static TemplateOutcome Wrote(
+            KpiTemplate template, IReadOnlyList<string> plots, int workbooks, string where)
         {
-            return new TemplateOutcome(template, plots, true, outputPath, string.Empty);
+            return new TemplateOutcome(template, plots, workbooks, where, string.Empty);
         }
 
+        /// <summary>
+        /// Some wrote and some did not. The count is what happened and the reason names the ones
+        /// that did not, because a count alone sends somebody to the report to find out which.
+        /// </summary>
+        public static TemplateOutcome WroteSome(
+            KpiTemplate template, IReadOnlyList<string> plots, int workbooks, string where, string why)
+        {
+            return new TemplateOutcome(template, plots, workbooks, where, why);
+        }
+
+        /// <summary>
+        /// **NOTHING at all was written for this template**, which is the one case the word
+        /// refused still fits.
+        /// </summary>
         public static TemplateOutcome Refused(KpiTemplate template, IReadOnlyList<string> plots, string why)
         {
-            return new TemplateOutcome(template, plots, false, string.Empty, why);
+            return new TemplateOutcome(template, plots, 0, string.Empty, why);
         }
 
         /// <summary>
@@ -42,14 +71,30 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static TemplateOutcome NothingToWrite(KpiTemplate template, string why)
         {
-            return new TemplateOutcome(template, new List<string>(), false, string.Empty, why);
+            return new TemplateOutcome(template, new List<string>(), 0, string.Empty, why);
         }
 
         public KpiTemplate Template { get; }
 
         public IReadOnlyList<string> Plots { get; }
 
-        public bool Written { get; }
+        /// <summary>
+        /// **True when ANY of this template's plots wrote a workbook**, because twenty workbooks
+        /// on disk are twenty workbooks whatever happened to the twenty first plot.
+        /// </summary>
+        public bool Written
+        {
+            get { return Workbooks > 0; }
+        }
+
+        /// <summary>
+        /// Some wrote and some did not, which is neither of the two words that used to be the
+        /// only choices this row had.
+        /// </summary>
+        public bool WroteSomeOfThem
+        {
+            get { return Workbooks > 0 && Workbooks < Plots.Count; }
+        }
 
         public string OutputPath { get; }
 

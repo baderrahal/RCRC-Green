@@ -246,7 +246,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                             Existing("PROSOPIS JULIFLORA", 3)
                         },
                         KpiTemplates.Mosques, existing, proposed),
-                    null, null, null, CreateFixture.NoStreetFile);
+                    null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
                 List<CellWrite> onTheSheet = plan.Writes
                     .Where(one => one.SheetName == KpiTemplates.ExistingTreesSheet)
@@ -475,7 +475,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(4, matches[1].Row);
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
-                KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null, CreateFixture.NoStreetFile);
+                KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
             Assert.Single(plan.Writes, one => one.SheetName == KpiTemplates.ExistingTreesSheet);
             Assert.Equal("B5", Assert.Single(plan.Skipped, one => one.SheetName == KpiTemplates.ExistingTreesSheet).Cell);

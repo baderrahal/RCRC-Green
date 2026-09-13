@@ -173,7 +173,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     KpiTemplates.Mosques, existing, proposed);
 
                 KpiCreatePlan plan = KpiCreatePlan.Of(
-                    KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null, CreateFixture.NoStreetFile);
+                    KpiTemplates.Mosques, null, null, string.Empty, null, null, null, matches, null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
                 // PHOENIX is sized and goes in whole. UNKNOWN is not sized, so it takes no row
                 // at all and row 6 stays empty: no B6, no D6, and nothing for its measures.
@@ -274,7 +274,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         })
                     }, CreateFixture.Counted),
                     KpiTemplates.Mosques, list, list),
-                null, null, null, CreateFixture.NoStreetFile);
+                null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
             Assert.Equal(3, plan.Differences.Count);
 

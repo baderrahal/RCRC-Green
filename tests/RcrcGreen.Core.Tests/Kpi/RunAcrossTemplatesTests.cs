@@ -36,7 +36,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     new TemplateShare(KpiTemplates.Streets, new[] { "ST-05" }, string.Empty),
                     new TemplateShare(KpiTemplates.Schools, new string[0], "no ticked plot belongs to SCHOOLS")),
                 new List<KpiCreateRun>(),
-                TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12" }, @"C:\out\MOSQUES DM-12.xlsx"),
+                TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12" }, 1, @"C:\out\MOSQUES DM-12.xlsx"),
                 TemplateOutcome.Refused(KpiTemplates.Streets, new[] { "ST-05" }, "the workbook is open in Excel"),
                 TemplateOutcome.NothingToWrite(KpiTemplates.Schools, "no ticked plot belongs to SCHOOLS"));
 
@@ -83,18 +83,54 @@ namespace RcrcGreen.Core.Tests.Kpi
                     new TemplateShare(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, string.Empty),
                     new TemplateShare(KpiTemplates.Streets, new[] { "ST-05" }, string.Empty)),
                 new List<KpiCreateRun>(),
-                TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, @"C:\out\MOSQUES 2 plots.xlsx"),
+                TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, 2, @"C:\out\MOSQUES 2 plots.xlsx"),
                 TemplateOutcome.Refused(KpiTemplates.Streets, new[] { "ST-05" }, "the workbook is open in Excel"));
 
             Assert.True(set.Wrote);
             Assert.Equal(new[] { "DM-12", "FM-05" }, set.PlotsWritten.ToArray());
 
+            // The row carries whatever the run recorded as where the workbooks went, with no
+            // words of its own in front. In a real run that is the count and the root, because
+            // a template is many workbooks now and written to one path would be a lie.
             Assert.Equal(
-                "MOSQUES: written to C:\\out\\MOSQUES 2 plots.xlsx",
+                "MOSQUES: C:\\out\\MOSQUES 2 plots.xlsx",
                 CreateWords.TemplateOutcomeRow(set.Outcomes[0]));
             Assert.Equal(
                 "STREETS: Nothing was written. the workbook is open in Excel",
                 CreateWords.TemplateOutcomeRow(set.Outcomes[1]));
+        }
+
+        /// <summary>
+        /// **NEVER EVERY PLOT ON THE PANE.** This row listed all 78 street plots by name and the
+        /// create block ran off the screen. Past four it is the count and the range, and the
+        /// report holds the list.
+        /// </summary>
+        [Fact]
+        public void ARowOfManyPlotsNamesTheCountAndTheRangeRatherThanEveryPlot()
+        {
+            string[] streets = new string[78];
+            for (int at = 0; at < streets.Length; at++)
+            {
+                streets[at] = "ST-" + (at + 1).ToString("00", System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            Assert.Equal(
+                "STREETS: 78 plots, ST-01 to ST-78. The report names them.",
+                CreateWords.TemplateRow(
+                    new TemplateShare(KpiTemplates.Streets, streets, string.Empty)));
+
+            // Four still read outright, because four names are shorter than a range and a count.
+            Assert.Equal(
+                "MOSQUES: 4 plots, DM-12, DM-14, FM-05, FM-06. The report names them.",
+                CreateWords.TemplateRow(new TemplateShare(
+                    KpiTemplates.Mosques, new[] { "DM-12", "DM-14", "FM-05", "FM-06" }, string.Empty)));
+
+            // Five is one too many and falls back to the range.
+            Assert.Equal(
+                "MOSQUES: 5 plots, DM-12 to FM-07. The report names them.",
+                CreateWords.TemplateRow(new TemplateShare(
+                    KpiTemplates.Mosques,
+                    new[] { "DM-12", "DM-14", "FM-05", "FM-06", "FM-07" }, string.Empty)));
         }
 
         /// <summary>
@@ -104,7 +140,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheRowSaysWhatItWillGetOrWhyItWillGetNothing()
         {
             Assert.Equal(
-                "MOSQUES: 2 plots, DM-12, FM-05",
+                "MOSQUES: 2 plots, DM-12, FM-05. The report names them.",
                 CreateWords.TemplateRow(
                     new TemplateShare(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, string.Empty)));
 
@@ -116,32 +152,85 @@ namespace RcrcGreen.Core.Tests.Kpi
                         PlotsPerTemplate.NoPlotBelongs(KpiTemplates.Schools))));
 
             Assert.Equal(
-                "MOSQUES: 1 plot, DM-12",
+                "MOSQUES: 1 plot, DM-12. The report names them.",
                 CreateWords.TemplateRow(
                     new TemplateShare(KpiTemplates.Mosques, new[] { "DM-12" }, string.Empty)));
         }
 
         /// <summary>
-        /// The status line counts the four rather than adding the cells up, because which of six
-        /// wrote is the thing a person needs off one line.
+        /// **COUNT WORKBOOKS WHERE THE UNIT IS A WORKBOOK.** This line read 1 workbook written
+        /// of 2 templates ticked on the first per plot run, which wrote 98 of them: it counted
+        /// templates and called them workbooks. The templates are still said, as the thing the
+        /// plots were spread over, and the unit of every count is what the count is of.
         /// </summary>
         [Fact]
-        public void TheStatusLineCountsTheTemplatesAndNamesTheReport()
+        public void TheStatusLineCountsWorkbooksAndPlotsRatherThanTemplates()
         {
-            KpiCreateRunSet set = Set(
-                Split(
-                    new TemplateShare(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, string.Empty),
-                    new TemplateShare(KpiTemplates.Streets, new[] { "ST-05" }, string.Empty),
-                    new TemplateShare(KpiTemplates.Schools, new string[0], "nothing")),
-                new List<KpiCreateRun>(),
-                TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, @"C:\out\a.xlsx"),
-                TemplateOutcome.Refused(KpiTemplates.Streets, new[] { "ST-05" }, "the workbook is open in Excel"),
-                TemplateOutcome.NothingToWrite(KpiTemplates.Schools, "nothing"));
+            var split = Split(
+                new TemplateShare(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, string.Empty),
+                new TemplateShare(KpiTemplates.Streets, new[] { "ST-05" }, string.Empty),
+                new TemplateShare(KpiTemplates.Schools, new string[0], "nothing"));
+
+            var set = new KpiCreateRunSet(
+                "RCRC_NG03_EZ", split, new List<KpiCreateRun>(),
+                new[]
+                {
+                    TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12", "FM-05" }, 2, @"C:\out"),
+                    TemplateOutcome.Refused(KpiTemplates.Streets, new[] { "ST-05" }, "the workbook is open in Excel"),
+                    TemplateOutcome.NothingToWrite(KpiTemplates.Schools, "nothing")
+                },
+                null,
+                new[]
+                {
+                    PlotOutcome.Wrote("DM-12", KpiTemplates.Mosques,
+                        PlotWorkbookPath.For("R", "DAILY MOSQUE", "ANH-007-MO-100019")),
+                    PlotOutcome.Wrote("FM-05", KpiTemplates.Mosques,
+                        PlotWorkbookPath.For("R", "FRIDAY MOSQUE", "ANH-007-MO-100006")),
+                    PlotOutcome.WroteNothing("ST-05", KpiTemplates.Streets,
+                        PlotWorkbookPath.For("R", "STREET 36m ROW", "ANH-007-ST-100210"),
+                        true, "the workbook is open in Excel")
+                });
 
             Assert.Equal(
-                "1 workbook written of 3 templates ticked, 1 refused, 1 template with no plot of its own. "
-                + "2 plots went into a workbook. Report: C:\\reports\\run.txt",
+                "2 workbooks written of 3 plots ticked, 1 plot wrote nothing, "
+                + "1 template with no plot of its own, over 3 templates. "
+                + "Report: C:\\reports\\run.txt",
                 CreateWords.WroteAcross(set, @"C:\reports\run.txt"));
+        }
+
+        /// <summary>
+        /// **A TEMPLATE IS NOT REFUSED BECAUSE ONE OF ITS PLOTS WAS.** The first per plot run
+        /// read MOSQUES: Nothing was written. 20 of 21 plots wrote a workbook, with twenty
+        /// workbooks on disk. Some wrote and some did not is its own answer, and only a template
+        /// where NOTHING was written is refused.
+        /// </summary>
+        [Fact]
+        public void ATemplateWhoseOnePlotFailedStillWroteTheOtherTwenty()
+        {
+            TemplateOutcome some = TemplateOutcome.WroteSome(
+                KpiTemplates.Mosques, new string[21], 20, "20 workbooks under C:\\RCRC",
+                "20 of 21 plots wrote a workbook. DM-16: the workbook was open in Excel.");
+
+            Assert.True(some.Written);
+            Assert.True(some.WroteSomeOfThem);
+            Assert.False(some.WasRefused);
+            Assert.Equal(20, some.Workbooks);
+            Assert.Equal(
+                "MOSQUES: 20 workbooks under C:\\RCRC. 20 of 21 plots wrote a workbook. "
+                + "DM-16: the workbook was open in Excel.",
+                CreateWords.TemplateOutcomeRow(some));
+
+            // Nothing written at all keeps the word refused and the old sentence.
+            TemplateOutcome none = TemplateOutcome.Refused(
+                KpiTemplates.Streets, new[] { "ST-05" }, "the workbook is open in Excel");
+
+            Assert.False(none.Written);
+            Assert.False(none.WroteSomeOfThem);
+            Assert.True(none.WasRefused);
+            Assert.Equal(0, none.Workbooks);
+            Assert.Equal(
+                "STREETS: Nothing was written. the workbook is open in Excel",
+                CreateWords.TemplateOutcomeRow(none));
         }
 
         /// <summary>
@@ -192,7 +281,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiCreateRunSet set = Set(
                 split,
                 new[] { mosques },
-                TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12" }, @"C:\out\MOSQUES DM-12.xlsx"),
+                TemplateOutcome.Wrote(KpiTemplates.Mosques, new[] { "DM-12" }, 1, @"C:\out\MOSQUES DM-12.xlsx"),
                 TemplateOutcome.NothingToWrite(KpiTemplates.Schools,
                     PlotsPerTemplate.NoPlotBelongs(KpiTemplates.Schools)));
 

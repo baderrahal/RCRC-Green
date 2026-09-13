@@ -112,6 +112,35 @@ namespace RcrcGreen.Core.Kpi
             return opening + " " + string.Join(" ", why.ToArray());
         }
 
+        /// <summary>
+        /// Where the workbooks go and how each is named, said once in place of the name box.
+        ///
+        /// **The box was a lie.** It still read GRP-KPI-Checklist-DD-MOSQUES.xlsx after the round
+        /// that made a workbook one plot, and no file is called that any more: every one is named
+        /// from its plot's own PRX_Plot_UID2. A box a person can type into, whose text nothing
+        /// reads, is worse than no box.
+        ///
+        /// The example is a real path off the team's own folders, because a shape described in
+        /// words and a shape shown are two different amounts of help.
+        /// </summary>
+        public static string WhereTheWorkbooksGo(string root)
+        {
+            string where = string.IsNullOrWhiteSpace(root) ? "the output folder" : root.Trim();
+
+            return "One workbook per plot, under " + where
+                + ", in a folder named for the plot: the component folder, then the plot's "
+                + KpiNames.PlotUid2 + ", then the workbook named after that folder. "
+                + where + Separator + "FRIDAY MOSQUE" + Separator + "ANH-008-MO-100006"
+                + Separator + "ANH-008-MO-100006" + OutputName.Extension;
+        }
+
+        /// <summary>
+        /// The separator the example path is written with. Revit runs on Windows, so the example
+        /// reads the way a person will see it in Explorer rather than the way the machine this
+        /// was built on happens to spell it.
+        /// </summary>
+        public const string Separator = "\\";
+
         public const string NoPlots =
             "No plot in this model. Open a model that holds one.";
 
@@ -152,9 +181,31 @@ namespace RcrcGreen.Core.Kpi
 
             if (!share.WillWrite) return share.Template.Name + ": " + share.WhyNothing;
 
-            return share.Template.Name + ": " + Count(share.Plots.Count, "plot") + ", "
-                + string.Join(", ", share.Plots.ToArray());
+            // **NEVER EVERY PLOT.** This listed all 78 street plots by name and the block ran
+            // off the screen. The count and the range say the same thing in one line, and the
+            // report holds the list.
+            return share.Template.Name + ": " + Count(share.Plots.Count, "plot")
+                + Range(share.Plots) + ". The report names them.";
         }
+
+        /// <summary>
+        /// The span a list of plots covers, first to last in the order they came, or nothing at
+        /// all for a list short enough to read. Three plots named is shorter than three plots,
+        /// DM-12 to FM-05.
+        /// </summary>
+        public static string Range(IReadOnlyList<string> plots)
+        {
+            if (plots == null || plots.Count == 0) return string.Empty;
+            if (plots.Count <= ShownByName) return ", " + string.Join(", ", plots.ToArray());
+
+            return ", " + plots[0] + " to " + plots[plots.Count - 1];
+        }
+
+        /// <summary>
+        /// How many plots are named outright before a row falls back to the range. Four fits a
+        /// line and twenty does not, and 78 is what ran off the screen.
+        /// </summary>
+        public const int ShownByName = 4;
 
         /// <summary>
         /// The same row after the press: written with its path, or not written with its reason.
@@ -164,7 +215,15 @@ namespace RcrcGreen.Core.Kpi
         {
             if (outcome == null) throw new ArgumentNullException("outcome");
 
-            if (outcome.Written) return outcome.Template.Name + ": written to " + outcome.OutputPath;
+            // **What happened, never what was planned.** Some wrote and some did not is its own
+            // answer: the row used to say Nothing was written beside twenty workbooks on disk.
+            if (outcome.WroteSomeOfThem)
+            {
+                return outcome.Template.Name + ": " + outcome.OutputPath + ". "
+                    + (outcome.Why.Length == 0 ? NoReasonRecorded : outcome.Why);
+            }
+
+            if (outcome.Written) return outcome.Template.Name + ": " + outcome.OutputPath;
 
             return outcome.Template.Name + ": " + NothingWritten + " "
                 + (outcome.Why.Length == 0 ? NoReasonRecorded : outcome.Why);
@@ -192,20 +251,27 @@ namespace RcrcGreen.Core.Kpi
         {
             if (set == null) throw new ArgumentNullException("set");
 
+            // **COUNT WORKBOOKS WHERE THE UNIT IS A WORKBOOK.** This read 1 workbook written of
+            // 2 templates ticked on a press that wrote 98, because it counted templates and
+            // called them workbooks.
             var said = new List<string>
             {
-                Count(set.TemplatesWritten, "workbook") + " written of "
-                    + Count(set.TemplatesTicked, "template") + " ticked"
+                Count(set.WorkbooksWritten, "workbook") + " written of "
+                    + Count(set.PlotsTicked, "plot") + " ticked"
             };
 
-            if (set.TemplatesRefused > 0) said.Add(Count(set.TemplatesRefused, "refused"));
+            if (set.PlotsThatWroteNothing > 0)
+            {
+                said.Add(Count(set.PlotsThatWroteNothing, "plot") + " wrote nothing");
+            }
+
             if (set.TemplatesWithNothingToWrite > 0)
             {
                 said.Add(Count(set.TemplatesWithNothingToWrite, "template") + " with no plot of its own");
             }
 
-            string line = string.Join(", ", said.ToArray()) + ". "
-                + Count(set.PlotsWritten.Count, "plot") + " went into a workbook.";
+            string line = string.Join(", ", said.ToArray()) + ", over "
+                + Count(set.TemplatesTicked, "template") + ".";
 
             if (!set.Split.AddsUp)
             {
@@ -215,8 +281,15 @@ namespace RcrcGreen.Core.Kpi
             return string.IsNullOrWhiteSpace(reportWhere) ? line : line + " Report: " + reportWhere;
         }
 
+        /// <summary>
+        /// **It said typed by hand and they are not.** The road width and the total length come
+        /// off the team's scope validation file, matched on the plot's own PRX_Plot_UID2, since
+        /// the round that added it. A line about what the tool does is checked against what it
+        /// does.
+        /// </summary>
         public const string AreaTypedByHand =
-            "This template takes no area. The road width and the total length are typed by hand.";
+            "This template takes no area. The sheet works it out from the road width and the "
+            + "total length, and both come off the street reference file.";
 
         /// <summary>
         /// Under the Reference picker with nothing ticked. The values shown there belong to a

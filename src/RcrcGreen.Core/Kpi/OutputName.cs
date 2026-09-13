@@ -13,22 +13,13 @@ namespace RcrcGreen.Core.Kpi
     {
         public const string Extension = ".xlsx";
 
-        /// <summary>
-        /// The name a row offers: the template file's own name, cleaned. **The shape matters and
-        /// it was lost.** The several templates round deleted this as unreachable once every row
-        /// named itself, and the rows named themselves after the template alone, so the boxes
-        /// read MOSQUES and a run would have written MOSQUES.xlsx, which nobody recognises in a
-        /// folder three months later. The working runs wrote
-        /// GRP-KPI-Checklist-DD-MOSQUES.xlsx and GRP-KPI-Checklist-DD-STREETS.xlsx, and this is
-        /// what wrote them.
-        ///
-        /// Asked per ticked row with that row's own file, so several templates in one press each
-        /// carry the shape rather than one of them carrying it.
-        /// </summary>
-        public static string Suggested(string templateFileName)
-        {
-            return Final(templateFileName);
-        }
+        // **`Suggested` is deleted, and NOT on reachability this time.** It offered a row the
+        // template file's own name to write under, and was restored once after being deleted on
+        // reachability alone, because it was then the only record of the shape the working runs
+        // wrote. A workbook is one plot now and every one is named from its plot's own
+        // PRX_Plot_UID2, so there is no name to suggest: the SHAPE is gone rather than its last
+        // caller. `Final` stays, because the cleaning a name needs is still a rule and the
+        // extension beside it is what `PlotWorkbookPath` builds every file name with.
 
         /// <summary>
         /// What the file is really called: cleaned, and with .xlsx put back if the user left

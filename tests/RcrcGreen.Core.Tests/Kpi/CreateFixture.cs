@@ -19,6 +19,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         public static readonly StreetReferenceAnswer NoStreetFile =
             StreetReferenceAnswer.Nothing("this run reads no street reference file");
 
+        /// <summary>
+        /// What a test that is not about the two labelled cells hands the plan. Required, like
+        /// the street answer and the three the team types, so no caller can drop it in silence.
+        /// </summary>
+        public static readonly LabelledCells NoLabels = LabelledCells.NotRead;
+
         public const string Existing = "Existing";
 
         public const string Proposed = "Proposed";
@@ -121,7 +127,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 held,
                 Reconciliation.Of(ticked ?? held.Select(one => one.PlotId).ToArray(), held, null, false, which),
                 KpiCreatePlan.Of(which, null, null, "KING FAHD", area, null, null,
-                    matches, "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile),
+                    matches, "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile, CreateFixture.NoLabels),
                 area,
                 Totalled.Nothing,
                 Totalled.Nothing,

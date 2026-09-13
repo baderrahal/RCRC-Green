@@ -492,24 +492,43 @@ namespace RcrcGreen.Revit.Kpi
             SpeciesList existing = SpeciesList.In(pick.TemplatePath, pick.Template.ExistingTrees);
             SpeciesList proposed = SpeciesList.In(pick.TemplatePath, pick.Template.ProposedTrees);
 
+            // Character and Context go into the cell right of their label on this template's own
+            // sheet, so the labels are found ONCE per template off the template file, beside the
+            // two tree lists, rather than once per plot off files that are all copies of it.
+            LabelledCells labels = FixedCells.In(pick.TemplatePath, pick.Template);
+
             var wrote = new List<string>();
             var why = new List<string>();
 
             foreach (PlotReading one in readings)
             {
                 OnePlot(
-                    document, asked, pick, counted, one, location, existing, proposed,
+                    document, asked, pick, counted, one, location, existing, proposed, labels,
                     areaUnit, source, reading.Elapsed.TotalSeconds, root, streets,
                     runs, plotOutcomes, wrote, why);
             }
 
-            // The template's own row is what its plots did, because a template is no longer one
-            // workbook. Written means every plot of it wrote, and anything less names the plots.
-            outcomes.Add(wrote.Count == share.Plots.Count
-                ? TemplateOutcome.Wrote(pick.Template, share.Plots,
-                    CreateWords.WorkbooksUnder(pick.Template, wrote.Count, root))
-                : TemplateOutcome.Refused(pick.Template, share.Plots,
+            // **THE ROW COUNTS WHAT HAPPENED, NEVER WHAT WAS PLANNED.** A template whose plots
+            // wrote some workbooks wrote them, and only one where NOTHING was written is
+            // refused. The row used to read Nothing was written beside 20 of 21 plots wrote a
+            // workbook, with twenty workbooks on disk.
+            string where = CreateWords.WorkbooksUnder(pick.Template, wrote.Count, root);
+
+            if (wrote.Count == 0)
+            {
+                outcomes.Add(TemplateOutcome.Refused(pick.Template, share.Plots,
+                    CreateWords.SomePlotsWroteNothing(0, share.Plots.Count, why)));
+            }
+            else if (wrote.Count == share.Plots.Count)
+            {
+                outcomes.Add(TemplateOutcome.Wrote(pick.Template, share.Plots, wrote.Count, where));
+            }
+            else
+            {
+                outcomes.Add(TemplateOutcome.WroteSome(
+                    pick.Template, share.Plots, wrote.Count, where,
                     CreateWords.SomePlotsWroteNothing(wrote.Count, share.Plots.Count, why)));
+            }
         }
 
         /// <summary>
@@ -530,6 +549,7 @@ namespace RcrcGreen.Revit.Kpi
             string location,
             SpeciesList existing,
             SpeciesList proposed,
+            LabelledCells labels,
             ProjectUnit areaUnit,
             ReadingsSource source,
             double readSeconds,
@@ -571,7 +591,7 @@ namespace RcrcGreen.Revit.Kpi
                 reconciliation.AddsUp && where.Ok
                     ? SpeciesMatching.Against(merged, pick.Template, existing, proposed)
                     : null,
-                asked.Date, asked.PreparedBy, asked.Position, street);
+                asked.Date, asked.PreparedBy, asked.Position, street, labels);
 
             PatchOutcome outcome = null;
             bool folderMade = false;
