@@ -66,6 +66,23 @@ be read leaves one empty row and the reason on screen, never a guessed set. Rows
 the pane live only until the pane goes, which is recorded in the log as a question for the
 team.
 
+## One colour box, used three times on every row
+
+`HexColorBox` in the Revit ViewFilters folder is the hex box and its colour square, one
+control for the line colour and both patterns so the three cannot drift apart. It paints
+from the box's text through `HexColor.TryParse`, writes a pick back through
+`HexColor.Written` as upper case `#RRGGBB`, and takes typing through `HexColor.Kept`: a
+valid hex is taken, a cleared box really clears, and only a mistype keeps the stored
+value, so a warning edge means the text on screen is not the value the run would use,
+and the scan gate does not move for it. A blank box wears the plain hairline, because
+blank is nothing chosen rather than a fault, and it clears the value it sits over, since
+a colour surviving behind a blank field is how a removed colour comes back.
+The picker is the WinForms `ColorDialog`, `FullOpen`, owned by Revit's main window handle
+so it opens in front, its custom colours static for the Revit session. Each override tick
+greys its own box, and a greyed box takes no click. The control is code built in the
+Revit project, not XAML and not Core, for the reasons the runner's placement records, and
+every rule it applies lives in Core with the tests.
+
 ## No cancel, on purpose, for now
 
 `CheckCancellationRequested` is wired to a probe that answers not cancelled, because the
