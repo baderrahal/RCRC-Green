@@ -18,7 +18,7 @@ findings. Everything below about the Revit half is reasoned from the code.
 
 ## PART A. The 32 open findings at today's lines
 
-Nine moved. Twenty three stand. Two stand in a different shape and say so.
+**Six passed by, two moved in half, and twenty four still stand.** Counted off the block below.
 
 ```
  3  PASSED BY    _picked is gone. Preselect is called from Changed() at KpiPanel.cs:1062 and

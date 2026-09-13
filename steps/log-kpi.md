@@ -16,9 +16,9 @@ place the round message and the hook disagree.
 
 ### Part A, the 32 open findings
 
-Checked one at a time at today's lines. **Nine moved, twenty one still stand, two stand in a
-different shape.** The nine that moved are 3, 20, 21, 22, 26 and 43, all from rounds 113 and 114
-taking out the name box and the grouping buttons, plus the two halves that moved on 13 and 40.
+Checked one at a time at today's lines. **Six passed by, two moved in half, and twenty four
+still stand**, which is 32. The six are 3, 20, 21, 22, 26 and 43, all from rounds 113 and 114
+taking out the name box and the grouping buttons. The two halves are 13 and 40.
 Findings 29 and 41 stand and are WORSE than written: `KpiCreateReport.cs` grew to 1277 lines and
 `TemplateWords.cs` now stacks two docstrings BOTH describing the deleted name box.
 
@@ -63,7 +63,7 @@ heading does not already carry.
 **1673 tests, 0 failed and 0 skipped, 853 of them KPI, none added and none changed.** 28 hook
 cases. Build zero warnings, measured after the last file was written.
 
-MERGE_LINE
+Pull request 118, merged into main as `734695b`. **The runner ran 28 hook cases and 1673 tests against the pull request head, 0 failed and 0 skipped, BOTH UNCHANGED, because nothing under `src` or `tests` moved. Locally the same 28 and 1673 ran at `734695b`, 853 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
 
 ### Still open
 

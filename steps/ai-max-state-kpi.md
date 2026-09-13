@@ -6,9 +6,9 @@ block is written because `require-file-on-commit.sh` refuses a commit without on
 one place the round message and the hook disagree. **1673 tests, 853 KPI, 28 hook cases**,
 unchanged, and nothing under `src` or `tests` moved.
 
-**PART A, the 32 open findings.** Nine moved, twenty one stand, two stand in a different shape.
-The nine are 3, 20, 21, 22, 26 and 43, all from the rounds that took out the name box and the
-grouping buttons, plus half of 13 and half of 40. **29 and 41 stand and are worse**:
+**PART A, the 32 open findings.** Six passed by, two moved in half, twenty four still stand,
+which is 32. The six are 3, 20, 21, 22, 26 and 43, all from the rounds that took out the name box
+and the grouping buttons. The two halves are 13 and 40. **29 and 41 stand and are worse**:
 `KpiCreateReport.cs` grew to 1277 lines, and `TemplateWords.cs` now stacks two docstrings BOTH
 describing the name box round 114 deleted.
 
@@ -39,7 +39,7 @@ Fourteen findings, 50 to 63, nine dropped for no cost. **No BLOCKS.** 50 and 51 
 moment their unmeasured case is real, and four of the five UNKNOWNs need only a file nobody has
 opened.
 
-MERGE_LINE
+Pull request 118, merged into main as `734695b`. **The runner ran 28 hook cases and 1673 tests against the pull request head, 0 failed and 0 skipped, BOTH UNCHANGED, because nothing under `src` or `tests` moved. Locally the same 28 and 1673 ran at `734695b`, 853 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT AND NOTHING IN IT CHANGES THE TOOL.** Every
 change since 14 September is still unrun, which is rounds 113, 114, both hook rounds and 117.
 
