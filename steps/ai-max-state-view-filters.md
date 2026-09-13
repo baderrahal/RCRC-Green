@@ -12,7 +12,9 @@ nothing was added there. The round asked for the control in Core as XAML and it 
 live there, the same call as the first pass's runner, in the log. The reader was cleared
 of the ticked box in the screenshot by the gate test over the shipped file. Nothing in
 this pass has been observed in Revit. The guide is `steps/2026-09-13-colour-box.md`, the
-pass ships as pull request #111, and the mockup is `design/pr-111/colour-box.html`.
+pass shipped as pull request #111, squash merged at `386948e` with the message back byte
+for byte, the runner and merged main both reading 1578, and the mockup is
+`design/pr-111/colour-box.html`.
 
 Before that. First pass. The task exists whole: `RcrcGreen.Core/ViewFilters` holds the
 plot id rule, the name building and matching, the hex parse, the keyword split, the row
