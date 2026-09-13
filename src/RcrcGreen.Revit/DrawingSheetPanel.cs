@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Shapes;
 using Autodesk.Revit.UI;
 using RcrcGreen.Core;
 
@@ -161,12 +159,6 @@ namespace RcrcGreen.Revit
         private PanelStep _stepOpen = PanelStep.Plots;
 
         /// <summary>
-        /// Which described sheet the next draw should scroll to, set by a click on a preview
-        /// card and cleared by the draw that honours it. Minus one is nothing to scroll to.
-        /// </summary>
-        private int _bringSheetIntoView = -1;
-
-        /// <summary>
         /// Which definition is open in step 4 and which list inside it. One at a time on
         /// purpose: seven definitions drawn open is seven title block dropdowns, seven twelve
         /// line checklists and 245 plot rows in one pane.
@@ -175,6 +167,13 @@ namespace RcrcGreen.Revit
         /// index past it.
         /// </summary>
         private StepFourOpen _step4 = StepFourOpen.Nothing;
+
+        /// <summary>
+        /// Whether step 5's list of what cannot be made is open. Shut by default: the count
+        /// by reason is what somebody pressing Run needs, and the sentences are the detail
+        /// behind it.
+        /// </summary>
+        private bool _refusalsOpen;
 
         private bool _filling;
         private bool _readOnce;
@@ -605,6 +604,11 @@ namespace RcrcGreen.Revit
 
             inside.Children.Add(Scrolling(lines, PanelMetrics.ListHeight, "subplots " + which));
 
+            // Both numbers, because a range covering 99 of which the model holds 3 is the
+            // thing to see before ticking all of them.
+            inside.Children.Add(Faint(SubPlotLines.InWords(
+                LinesFor(which, _plots.InRangeOf(which)))));
+
             block.Children.Add(inside);
             return block;
         }
@@ -672,10 +676,23 @@ namespace RcrcGreen.Revit
             if (!_subPlotLines.TryGetValue(prefix, out lines)) return;
 
             lines.Children.Clear();
-            foreach (string subPlot in _plots.Matching(prefix, SearchIn(prefix)))
+            foreach (SubPlotLine line in LinesFor(prefix, _plots.Matching(prefix, SearchIn(prefix))))
             {
-                lines.Children.Add(SubPlotRow(subPlot));
+                lines.Children.Add(SubPlotRow(line));
             }
+        }
+
+        /// <summary>
+        /// What each sub plot in that list is, against the live read. The range covers sub
+        /// plots the model has never seen, so a line has to say which it is looking at.
+        /// </summary>
+        private IReadOnlyList<SubPlotLine> LinesFor(string prefix, IEnumerable<string> showing)
+        {
+            return SubPlotLines.Over(
+                showing,
+                _model.PlotIds,
+                _model.PlotsWithAScopeBox,
+                _model.Present);
         }
 
         private string SearchIn(string prefix)
@@ -702,15 +719,13 @@ namespace RcrcGreen.Revit
         /// no gap and no label, so the line read DM-02DM02 and the second half looked like
         /// the name printed twice.
         /// </summary>
-        private UIElement SubPlotRow(string plotId)
+        private UIElement SubPlotRow(SubPlotLine line)
         {
-            string which = plotId;
+            string which = line.PlotId;
 
-            // The suffix marks the sub plots no view carries, which are the ones with
-            // everything missing and the ones the old view-only list silently dropped.
-            // The words come from the record so the panel formats no rule of its own.
+            // Null for a sub plot the range covers and the model does not hold, which is
+            // ordinary now rather than a gap.
             PlotRecord record = _model.RecordOf(which);
-            string suffix = record == null ? string.Empty : record.NoViewsInWords();
 
             var tick = new CheckBox
             {
@@ -718,14 +733,15 @@ namespace RcrcGreen.Revit
                 IsChecked = _plots.IsTicked(which),
                 Margin = PanelMetrics.Row,
                 ToolTip = record == null
-                    ? which
+                    ? which + ", which this model does not hold. It can still be ticked and "
+                        + "sheets can be made for it."
                     : which + ", found through " + record.SourcesInWords() + "."
             };
             tick.Checked += (sender, e) => PlotTicked(which, true);
             tick.Unchecked += (sender, e) => PlotTicked(which, false);
 
             TextBlock said = Faint(
-                PanelSteps.SubPlotSaid(SheetNumberRun.StemOf(which), suffix));
+                PanelSteps.SubPlotSaid(SheetNumberRun.StemOf(which), line.InWords()));
             said.Margin = PanelMetrics.CellPad;
             said.VerticalAlignment = VerticalAlignment.Center;
 
@@ -1190,22 +1206,7 @@ namespace RcrcGreen.Revit
 
             for (int at = 0; at < _sheets.Count; at++)
             {
-                UIElement one = OneSheet(_sheets[at], at, rows, offers);
-
-                if (at == _bringSheetIntoView)
-                {
-                    _bringSheetIntoView = -1;
-
-                    // After it is on screen, not now. The tree is still being built and an
-                    // element with no place in it yet cannot be scrolled to.
-                    var here = one as FrameworkElement;
-                    if (here != null)
-                    {
-                        here.Loaded += (sender, e) => here.BringIntoView();
-                    }
-                }
-
-                block.Children.Add(one);
+                block.Children.Add(OneSheet(_sheets[at], at, rows, offers));
             }
 
             block.Children.Add(Secondary("Add a sheet", AddASheet,
@@ -2201,7 +2202,7 @@ namespace RcrcGreen.Revit
 
             block.Children.Add(NewViewAnswersBlock());
 
-            block.Children.Add(PreviewOfTheRun());
+            block.Children.Add(SummaryOfTheRun());
 
             block.Children.Add(ScopeBoxes());
 
@@ -2223,227 +2224,56 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// Every sheet the run will make, drawn before it is made, in the order it makes them.
+        /// What the run will do, before it does it: what it makes, and what it will not,
+        /// counted by reason with the sentences behind a control.
         ///
-        /// **Nothing here works out a layout.** Every rectangle on every card is a position out
-        /// of the Core placement the writer places from, so a card and the sheet it draws
-        /// cannot disagree. The one thing this method decides is how many pixels a foot is.
+        /// This drew a card per sheet, at real proportion with every viewport on it. A run
+        /// over 35 sub plots with 7 definitions drew 247 of them and the user asked for the
+        /// drawing to go. SheetPlacement stays, because the writer places from it.
         /// </summary>
-        private UIElement PreviewOfTheRun()
+        private UIElement SummaryOfTheRun()
         {
             var block = new StackPanel();
 
-            IReadOnlyList<PreviewedSheet> cards = RunPreview.Of(
-                PlanNow(), _model.TitleBlockSizes, _model.ViewSizesOnPaper);
+            RunPlan plan = PlanNow();
 
-            if (cards.Count == 0) return block;
+            string cannot = RunSummary.CannotMake(plan);
+            if (cannot.Length == 0) return block;
 
             block.Children.Add(new TextBlock
             {
-                Text = "The sheets, before they are made",
-                FontWeight = FontWeights.Bold,
-                Margin = PanelMetrics.Heading
+                Text = cannot,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = PanelMetrics.Row
             });
 
-            block.Children.Add(Faint(RunPreview.InWords(cards)));
+            var heading = new DockPanel { LastChildFill = true, Margin = PanelMetrics.Row };
+            Button openIt = Secondary(
+                _refusalsOpen ? "Hide" : "Show",
+                () => { _refusalsOpen = !_refusalsOpen; Redraw(); },
+                _refusalsOpen
+                    ? "Hides the reasons again."
+                    : "Lists every one, with the reason it gives.");
+            DockPanel.SetDock(openIt, Dock.Right);
+            heading.Children.Add(openIt);
+            heading.Children.Add(new TextBlock
+            {
+                Text = RunSummary.ListBehind(plan),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            block.Children.Add(heading);
 
-            var cardsAcross = new WrapPanel { Margin = PanelMetrics.Row };
-            foreach (PreviewedSheet card in cards) cardsAcross.Children.Add(OneCard(card));
-            block.Children.Add(cardsAcross);
+            if (!_refusalsOpen) return block;
+
+            var list = new StackPanel();
+            foreach (RunRefusal one in plan.Refusals)
+            {
+                list.Children.Add(Faint(one.Name + ". " + one.Because));
+            }
+
+            block.Children.Add(Scrolling(list, PanelMetrics.ListHeight, "run refusals"));
 
             return block;
-        }
-
-        /// <summary>
-        /// How wide a drawn sheet is on screen. Everything on it is scaled from this and the
-        /// sheet's real width, so the outline, the strip and every viewport keep the
-        /// proportions they come out at.
-        /// </summary>
-        private const double CardWidth = 150.0;
-
-        private UIElement OneCard(PreviewedSheet card)
-        {
-            var inside = new StackPanel { Margin = PanelMetrics.CellPad };
-
-            inside.Children.Add(card.CanBeDrawn ? Drawn(card) : NotDrawn());
-
-            var named = new TextBlock
-            {
-                Text = card.SheetNumber + (card.OfHowMany > 1
-                    ? "  " + card.Which + " of " + card.OfHowMany
-                    : string.Empty),
-                FontWeight = FontWeights.Bold,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                MaxWidth = CardWidth
-            };
-
-            inside.Children.Add(named);
-            inside.Children.Add(new TextBlock
-            {
-                Text = card.SheetName,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                MaxWidth = CardWidth,
-                Foreground = _theme.Faint
-            });
-
-            var marks = new TextBlock
-            {
-                TextWrapping = TextWrapping.Wrap,
-                MaxWidth = CardWidth,
-                Foreground = _theme.Warning
-            };
-
-            var said = new List<string>();
-
-            if (!card.CanBeDrawn)
-            {
-                // A card with no size knows nothing else about itself. Saying no views and
-                // not all measured here reads as two findings about the sheet, and both are
-                // only the one fact that its title block has never been measured.
-                said.Add("size not known");
-            }
-            else
-            {
-                if (card.CarriesWhatDidNotFit) said.Add("carries what did not fit");
-                if (card.HasNoViews) said.Add("no views");
-                if (card.AnythingNotMeasured) said.Add("not all measured");
-            }
-
-            marks.Text = string.Join(", ", said.ToArray());
-
-            if (marks.Text.Length > 0) inside.Children.Add(marks);
-
-            var around = new Border
-            {
-                BorderBrush = _theme.Line,
-                BorderThickness = new Thickness(1.0),
-                Margin = PanelMetrics.Gap,
-                Child = inside,
-                ToolTip = card.PlotId + ". " + card.InWords(),
-                Cursor = System.Windows.Input.Cursors.Hand
-            };
-
-            around.MouseLeftButtonUp += (sender, e) => OpenTheRowFor(card);
-            return around;
-        }
-
-        /// <summary>
-        /// The outline, the title strip and every viewport, each at the size and the place the
-        /// run will put it.
-        /// </summary>
-        private UIElement Drawn(PreviewedSheet card)
-        {
-            double feetToPixels = CardWidth / card.TitleBlock.WidthFeet;
-            double tall = card.TitleBlock.HeightFeet * feetToPixels;
-
-            var sheet = new Canvas
-            {
-                Width = CardWidth,
-                Height = tall,
-                Background = _theme.Background
-            };
-
-            // The strip down the right hand edge, whose share is the tool's own setting rather
-            // than a measurement off the model, the same one the layout takes off.
-            var strip = new Rectangle
-            {
-                Width = CardWidth * DrawingArea.TitleStripAcross,
-                Height = tall,
-                Fill = _theme.Strip
-            };
-
-            Canvas.SetLeft(strip, CardWidth - strip.Width);
-            Canvas.SetTop(strip, 0.0);
-            sheet.Children.Add(strip);
-
-            foreach (PlacedView view in card.Placed.Views)
-            {
-                double wide = view.View.Measured
-                    ? view.View.WidthFeet
-                    : view.CellWidthFeet * RunPreview.NominalShareOfTheCell;
-
-                double high = view.View.Measured
-                    ? view.View.HeightFeet
-                    : view.CellHeightFeet * RunPreview.NominalShareOfTheCell;
-
-                var box = new Rectangle
-                {
-                    Width = Math.Max(1.0, wide * feetToPixels),
-                    Height = Math.Max(1.0, high * feetToPixels),
-                    Stroke = view.BiggerThanItsCell ? _theme.Warning : _theme.Foreground,
-                    StrokeThickness = 1.0,
-
-                    // A view whose size is not known is drawn dashed, so a nominal rectangle
-                    // can never be mistaken for a measured one at a glance.
-                    StrokeDashArray = view.View.Measured
-                        ? null
-                        : new DoubleCollection(new[] { 2.0, 2.0 })
-                };
-
-                Canvas.SetLeft(box, (view.Spot.CentreX * feetToPixels) - (box.Width / 2.0));
-
-                // Revit counts Y up from the bottom of the sheet and a Canvas counts down from
-                // the top, so the centre is taken off the height rather than added to nothing.
-                Canvas.SetTop(
-                    box, tall - (view.Spot.CentreY * feetToPixels) - (box.Height / 2.0));
-
-                sheet.Children.Add(box);
-            }
-
-            return new Border
-            {
-                BorderBrush = _theme.Foreground,
-                BorderThickness = new Thickness(1.0),
-                Child = sheet
-            };
-        }
-
-        private UIElement NotDrawn()
-        {
-            return new Border
-            {
-                BorderBrush = _theme.Line,
-                BorderThickness = new Thickness(1.0),
-                Width = CardWidth,
-                Height = CardWidth * 0.7,
-                Child = new TextBlock
-                {
-                    Text = "size not known",
-                    TextWrapping = TextWrapping.Wrap,
-                    Foreground = _theme.Faint,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                }
-            };
-        }
-
-        /// <summary>
-        /// Opens step 4 at the described sheet this card came out of, found by the number on
-        /// its row rather than by counting cards, because one described sheet makes a row per
-        /// ticked plot and a row can make more than one sheet.
-        /// </summary>
-        private void OpenTheRowFor(PreviewedSheet card)
-        {
-            IReadOnlyList<IReadOnlyList<SheetRowShown>> rows = DescribedRows();
-
-            for (int at = 0; at < rows.Count; at++)
-            {
-                bool holdsIt = rows[at].Any(one => string.Equals(
-                    one.Row.SheetNumber, card.SheetNumber, StringComparison.Ordinal));
-
-                if (!holdsIt) continue;
-
-                _bringSheetIntoView = at;
-                _stepOpen = PanelStep.Sheets;
-                Redraw();
-                Say("Sheet " + (at + 1) + " in step 4 is the one that makes "
-                    + card.SheetNumber + " on " + card.PlotId + ".");
-                return;
-            }
-
-            _stepOpen = PanelStep.Sheets;
-            Redraw();
-            Say("No row in step 4 carries " + card.SheetNumber + " any more.");
         }
 
         /// <summary>

@@ -8,8 +8,16 @@ SheetNameChoice is the one resolver and both the row and the panel's letter orde
 where the panel held a second copy. Fix 2, a definition shut is two lines, SheetDefinitionLines,
 and the view checklist inside it shuts to a line naming what is ticked. StepFourOpen holds which
 definition and which list is open, in Core with tests, because removing a definition shifts
-every index past it. Suite reads 1486 locally, the 1456 on main plus 30. Fixes 3 and 4 next,
-then fixes 5 to 8 in a second pull request.
+every index past it. Fix 3, step 5 loses the 247 card preview and becomes a summary,
+RunSummary, counting what cannot be made BY REASON rather than by sentence, since every
+sentence names its plot. RunRefusalKind is set at all six refusal sites. SheetPlacement stays
+because the writer places from it, and deleting the preview took the unmeasured per view
+View.Outline read out of the panel read with it. Fix 4, the range LISTS every sub plot it
+covers and the model decides the TICKS, so a sub plot not in the model can be ticked and have
+sheets made for it. The model's own spelling wins on a number match. The rule is changed in
+core-rules.md and CLAUDE.md rather than left disagreeing. Suite reads 1488 locally, the 1456 on
+main plus 32. Three breaks watched red and reversed byte for byte, one of which was a no-op
+first time and was redone. Fixes 5 to 8 are the second pull request.
 
 Phase: 9, ship. Sixty second pass, third of three pull requests. The run preview: step 5 draws a
 card per sheet before it is made, the title block outline at its real proportion with its strip,

@@ -10,7 +10,8 @@ namespace RcrcGreen.Core.Tests
     /// per sub plot. Every expectation is written out by hand.
     ///
     /// The range ends are 01 to 99 whatever the model holds, because the team works across
-    /// models. What the model holds decides the LIST, never the range.
+    /// models. **The range decides the LIST and the model decides the TICKS.** It was the
+    /// other way round, so widening the range changed nothing on screen.
     /// </summary>
     public class PlotTickListTests
     {
@@ -51,48 +52,61 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal("07", PlotTickList.AsEnd(7));
             Assert.Equal("70", PlotTickList.AsEnd(70));
 
-            // A model holding one sub plot still offers all 99, which is the whole point.
+            // A model holding one sub plot lists all 99 and ticks the one it holds.
             PlotTickList small = PlotTickList.Over(new[] { "DM-41" }).TickingPlot("DM", true);
             Assert.Equal("01", small.FromOf("DM"));
             Assert.Equal("99", small.ToOf("DM"));
-            Assert.Equal(new[] { "DM-41" }, small.InRangeOf("DM"));
+            Assert.Equal(99, small.InRangeOf("DM").Count);
+            Assert.Equal("DM-01", small.InRangeOf("DM")[0]);
+            Assert.Equal("DM-99", small.InRangeOf("DM")[98]);
+            Assert.Equal(new[] { "DM-41" }, small.Ticked);
         }
 
         /// <summary>
-        /// One tick is one click's worth of work: the whole 01 to 99 range, every sub plot
-        /// the model holds inside it ticked, the ends filled in.
+        /// One tick is one click's worth of work: the whole 01 to 99 range listed, and the
+        /// sub plots the model holds inside it ticked. The other 96 are listed and not
+        /// ticked, or a single tick on a plot would queue a run over sub plots nobody has
+        /// looked at.
         /// </summary>
         [Fact]
-        public void TickingAPlotTakesTheWholeRangeTicked()
+        public void TickingAPlotListsTheWholeRangeAndTicksWhatTheModelHolds()
         {
             PlotTickList list = PlotTickList.Over(Model).TickingPlot("DM", true);
 
             Assert.Equal(new[] { "DM" }, list.TickedPlots);
-            Assert.Equal(new[] { "DM-41", "DM-42", "DM-43" }, list.InRange);
+            Assert.Equal(99, list.InRange.Count);
             Assert.Equal(new[] { "DM-41", "DM-42", "DM-43" }, list.Ticked);
             Assert.Equal("01", list.FromOf("DM"));
             Assert.Equal("99", list.ToOf("DM"));
             Assert.Equal(99, list.NumbersInRange);
             Assert.Equal(string.Empty, list.FromOf("FP"));
+
+            Assert.True(list.IsTicked("DM-41"));
+            Assert.False(list.IsTicked("DM-01"));
         }
 
         /// <summary>
-        /// The whole point of a free range: a range the open model holds nothing in is
-        /// still picked and still shown, because the model it was set up for is not open
-        /// yet. It lists nothing and it invents nothing.
+        /// A range the open model holds nothing in lists every sub plot it covers and ticks
+        /// none of them. This listed nothing, which is what made the range read as broken.
         /// </summary>
         [Fact]
-        public void ARangeTheModelHoldsNothingInIsKeptAndListsNothing()
+        public void ARangeTheModelHoldsNothingInListsItsCoverAndTicksNone()
         {
             PlotTickList list = PlotTickList.Over(Model)
                 .TickingPlot("DM", true)
-                .Ranging("DM", "50", "60");
+                .Ranging("DM", "50", "53");
 
             Assert.True(list.IsPlotTicked("DM"));
             Assert.Equal("50", list.FromOf("DM"));
-            Assert.Equal("60", list.ToOf("DM"));
-            Assert.Empty(list.InRangeOf("DM"));
-            Assert.Equal(11, list.NumbersInRange);
+            Assert.Equal("53", list.ToOf("DM"));
+            Assert.Equal(
+                new[] { "DM-50", "DM-51", "DM-52", "DM-53" }, list.InRangeOf("DM"));
+            Assert.Empty(list.Ticked);
+            Assert.Equal(4, list.NumbersInRange);
+
+            // And it can be ticked, which is the whole point. DM-02 holds no views and no
+            // scope box on the real model and the team has made its sheets.
+            Assert.True(list.Ticking("DM-51", true).IsTicked("DM-51"));
         }
 
         /// <summary>
@@ -106,12 +120,16 @@ namespace RcrcGreen.Core.Tests
                 .TickingPlot("FP", true)
                 .TickingPlot("DM", true);
 
-            Assert.Equal(
-                new[] { "DM-41", "DM-42", "DM-43", "FP-1", "FP-2" }, list.InRange);
             Assert.Equal(2, list.TickedPlotCount);
-            Assert.Equal(5, list.InRangeCount);
+            Assert.Equal(198, list.InRangeCount);
             Assert.Equal(5, list.TickedCount);
             Assert.Equal(198, list.NumbersInRange);
+
+            // Plot order however they were ticked, so the grid and the run read one order.
+            Assert.Equal(
+                new[] { "DM-41", "DM-42", "DM-43", "FP-1", "FP-2" }, list.Ticked);
+            Assert.Equal("DM-01", list.InRange[0]);
+            Assert.Equal("FP-99", list.InRange[197]);
         }
 
         /// <summary>
@@ -140,19 +158,26 @@ namespace RcrcGreen.Core.Tests
         }
 
         /// <summary>
-        /// A one digit sub plot sits at its own number, so 01 to 09 finds FP-1 and FP-2
-        /// however the model spells them.
+        /// A one digit sub plot sits at its own number, and the model's own spelling is what
+        /// the line carries. Generating FP-01 beside a model that spells it FP-1 would give
+        /// two lines for one sub plot and leave the views on the one nobody ticked.
         /// </summary>
         [Fact]
-        public void ASingleDigitSubPlotIsFoundByItsNumber()
+        public void TheModelsOwnSpellingWinsOverTheGeneratedOne()
         {
             PlotTickList list = PlotTickList.Over(Model)
                 .TickingPlot("FP", true)
-                .Ranging("FP", "01", "09");
+                .Ranging("FP", "01", "04");
 
-            Assert.Equal(new[] { "FP-1", "FP-2" }, list.InRangeOf("FP"));
+            Assert.Equal(
+                new[] { "FP-1", "FP-2", "FP-03", "FP-04" }, list.InRangeOf("FP"));
+            Assert.Equal(new[] { "FP-1", "FP-2" }, list.Ticked);
 
-            Assert.Empty(list.Ranging("FP", "03", "09").InRangeOf("FP"));
+            Assert.Equal(
+                new[] { "FP-03", "FP-04" }, list.Ranging("FP", "03", "04").InRangeOf("FP"));
+
+            Assert.Equal("DM-07", PlotTickList.Generated("DM", 7));
+            Assert.Equal("DM-70", PlotTickList.Generated("DM", 70));
         }
 
         [Fact]
@@ -184,7 +209,7 @@ namespace RcrcGreen.Core.Tests
             Assert.True(list.IsTicked("FP-1"));
             Assert.True(list.IsTicked("DM-42"));
             Assert.Equal(4, list.TickedCount);
-            Assert.Equal(5, list.InRangeCount);
+            Assert.Equal(198, list.InRangeCount);
         }
 
         /// <summary>
@@ -194,7 +219,9 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void TheSearchNarrowsToWhatTheLineHolds()
         {
-            PlotTickList list = PlotTickList.Over(Model).TickingPlot("DM", true);
+            PlotTickList list = PlotTickList.Over(Model)
+                .TickingPlot("DM", true)
+                .Ranging("DM", "41", "43");
 
             Assert.Equal(new[] { "DM-41", "DM-42", "DM-43" }, list.Matching("DM", string.Empty));
             Assert.Equal(new[] { "DM-41", "DM-42", "DM-43" }, list.Matching("DM", " 4 "));
@@ -202,6 +229,12 @@ namespace RcrcGreen.Core.Tests
             Assert.Equal(new[] { "DM-41", "DM-42", "DM-43" }, list.Matching("DM", "dm"));
             Assert.Empty(list.Matching("DM", "99"));
             Assert.Empty(list.Matching("FP", "1"));
+
+            // The search reaches a generated sub plot too, or a wide range would be
+            // unsearchable at exactly the size that needs searching.
+            Assert.Equal(
+                new[] { "DM-50" },
+                list.Ranging("DM", "49", "51").Matching("DM", "50"));
         }
 
         /// <summary>
@@ -211,7 +244,9 @@ namespace RcrcGreen.Core.Tests
         [Fact]
         public void AllAndNoneActOnWhatTheSearchShows()
         {
-            PlotTickList list = PlotTickList.Over(Model).TickingPlot("DM", true);
+            PlotTickList list = PlotTickList.Over(Model)
+                .TickingPlot("DM", true)
+                .Ranging("DM", "41", "43");
 
             list = list.TickingThese(list.Matching("DM", "4"), false);
             Assert.Empty(list.Ticked);
@@ -227,20 +262,29 @@ namespace RcrcGreen.Core.Tests
 
         /// <summary>
         /// Every plot offered comes from the model and nothing anywhere can add one, the
-        /// rule in core-rules.md. An unknown prefix, an unknown sub plot and a sub plot
-        /// whose plot is not ticked all change nothing. The free range picker does not
-        /// bend this: it offers two numbers, never a plot.
+        /// rule in core-rules.md, and it is about the PLOT and not the sub plot. An unknown
+        /// prefix and a sub plot whose plot is not ticked still change nothing. A sub plot
+        /// inside a ticked plot's range is the user's to tick, whether the model holds it or
+        /// not, which is what changed this round.
         /// </summary>
         [Fact]
-        public void NothingOutsideTheModelOrTheTickedPlotsCanBeTicked()
+        public void AnUnknownPlotCannotBeTickedAndAGeneratedSubPlotCan()
         {
             PlotTickList list = PlotTickList.Over(Model).TickingPlot("ZZ", true);
             Assert.Equal(0, list.TickedPlotCount);
 
             list = list.TickingPlot("DM", true).Ticking("DM-99", true).Ticking("FP-1", false);
-            Assert.Equal(new[] { "DM-41", "DM-42", "DM-43" }, list.Ticked);
-            Assert.False(list.IsTicked("DM-99"));
+            Assert.Equal(
+                new[] { "DM-41", "DM-42", "DM-43", "DM-99" },
+                list.Ticked.OrderBy(one => one, NaturalOrder.Comparer).ToArray());
+
+            Assert.True(list.IsTicked("DM-99"));
+
+            // FP is not ticked, so nothing under it can be.
             Assert.False(list.IsTicked("FP-1"));
+
+            // Outside the range, so still nothing to tick.
+            Assert.False(list.Ranging("DM", "41", "43").IsTicked("DM-99"));
 
             Assert.Empty(PlotTickList.Over(null).Prefixes);
             Assert.Same(PlotTickList.Nothing, PlotTickList.Nothing.Ticking(null, true));
@@ -282,7 +326,12 @@ namespace RcrcGreen.Core.Tests
                 .TickingPlot("DM", true);
 
             Assert.Equal(new[] { "DM-2", "DM-30", "DM-100" }, list.UnderPlot("DM"));
-            Assert.Equal(new[] { "DM-2", "DM-30" }, list.InRange);
+
+            // DM-100 is outside every range the two digit picker offers, so it is not on the
+            // list and cannot be ticked. Known, and the cost of two digit ends.
+            Assert.Equal(99, list.InRange.Count);
+            Assert.DoesNotContain("DM-100", list.InRange);
+            Assert.Equal(new[] { "DM-2", "DM-30" }, list.Ticked);
         }
 
         [Fact]

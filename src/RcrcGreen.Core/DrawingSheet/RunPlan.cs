@@ -90,23 +90,60 @@ namespace RcrcGreen.Core
     }
 
     /// <summary>
+    /// Why the run will not make something, as a category rather than as a sentence.
+    ///
+    /// The sentence names the plot, so counting by it gives a group of one per plot: five
+    /// views refused for no scope box on five plots read as five reasons. Step 5 counts by
+    /// this instead, and prints the sentences only when somebody opens the list.
+    /// </summary>
+    public enum RunRefusalKind
+    {
+        /// <summary>Set by a caller that did not say. Counted under its own heading rather
+        /// than folded into another, because a miscounted reason is worse than an unnamed
+        /// one.</summary>
+        Unsaid = 0,
+
+        AlreadyInTheModel = 1,
+
+        NoScheduleToCaptureFrom = 2,
+
+        NoScopeBox = 3,
+
+        /// <summary>The definition itself is short of its title block, so it makes nothing on
+        /// any plot.</summary>
+        SheetKindIncomplete = 4,
+
+        /// <summary>One plot's row is short of a name or a number.</summary>
+        SheetRowIncomplete = 5,
+
+        /// <summary>The number the row carries is one Revit will not take.</summary>
+        SheetNumberClashes = 6
+    }
+
+    /// <summary>
     /// One thing the run will not make, and why.
     /// </summary>
     public sealed class RunRefusal
     {
-        public RunRefusal(string plotId, ViewType type, string because)
+        public RunRefusal(
+            string plotId,
+            ViewType type,
+            string because,
+            RunRefusalKind kind = RunRefusalKind.Unsaid)
         {
             PlotId = plotId ?? string.Empty;
             Type = type;
             Because = because ?? string.Empty;
+            Kind = kind;
             Name = ViewNaming.Of(PlotId, type);
         }
 
-        private RunRefusal(string plotId, string name, string because)
+        private RunRefusal(string plotId, string name, string because, RunRefusalKind kind)
         {
             PlotId = plotId ?? string.Empty;
             Type = null;
             Because = because ?? string.Empty;
+            Kind = kind;
             Name = name ?? string.Empty;
         }
 
@@ -114,12 +151,17 @@ namespace RcrcGreen.Core
         /// A sheet that was not made. It is named the way the made one would have been, so the
         /// two sides of the report can still be held against each other.
         /// </summary>
-        public static RunRefusal ForSheet(string plotId, string sheetNumber, string sheetName, string because)
+        public static RunRefusal ForSheet(
+            string plotId,
+            string sheetNumber,
+            string sheetName,
+            string because,
+            RunRefusalKind kind = RunRefusalKind.Unsaid)
         {
             string named = (sheetNumber + " " + sheetName).Trim();
             if (named.Length == 0) named = (plotId ?? string.Empty) + " sheet";
 
-            return new RunRefusal(plotId, named, because);
+            return new RunRefusal(plotId, named, because, kind);
         }
 
         public string PlotId { get; }
@@ -127,6 +169,8 @@ namespace RcrcGreen.Core
         public ViewType Type { get; }
 
         public string Because { get; }
+
+        public RunRefusalKind Kind { get; }
 
         /// <summary>
         /// The same name the item would have carried had it been made. It is the same string on
@@ -257,7 +301,8 @@ namespace RcrcGreen.Core
                         key.PlotId,
                         key.ViewType,
                         "A view with this name is already in the model, added since the panel "
-                        + "last read it, so nothing is made over it. Press Refresh to see it."));
+                        + "last read it, so nothing is made over it. Press Refresh to see it.",
+                        RunRefusalKind.AlreadyInTheModel));
                     continue;
                 }
 
@@ -276,7 +321,11 @@ namespace RcrcGreen.Core
                                 + "definition to capture and nothing to build from.";
                         }
 
-                        refusals.Add(new RunRefusal(key.PlotId, key.ViewType, why));
+                        refusals.Add(new RunRefusal(
+                            key.PlotId,
+                            key.ViewType,
+                            why,
+                            RunRefusalKind.NoScheduleToCaptureFrom));
                     }
 
                     continue;
@@ -292,7 +341,8 @@ namespace RcrcGreen.Core
                                 + "the middle of the plot's scope box, so with no box there is "
                                 + "nowhere to cut."
                             : "No scope box is named " + key.PlotId + ". A view with no scope box "
-                                + "is useless on this project, so it is not created."));
+                                + "is useless on this project, so it is not created.",
+                        RunRefusalKind.NoScopeBox));
                     continue;
                 }
 
@@ -335,7 +385,8 @@ namespace RcrcGreen.Core
                         string.Empty,
                         batch.Definition.TitleBlock,
                         "No sheet of this kind was made on any plot, because it is missing "
-                        + batch.Definition.WhatIsMissing + ". The tool invents neither."));
+                        + batch.Definition.WhatIsMissing + ". The tool invents neither.",
+                        RunRefusalKind.SheetKindIncomplete));
                     batchAt++;
                     continue;
                 }
@@ -389,7 +440,8 @@ namespace RcrcGreen.Core
                         + row.WhatIsMissing + ". The tool invents neither."
                         + (row.WhyTheNumberIsMissing.Length == 0
                             ? string.Empty
-                            : " " + row.WhyTheNumberIsMissing)));
+                            : " " + row.WhyTheNumberIsMissing),
+                        RunRefusalKind.SheetRowIncomplete));
                     continue;
                 }
 
@@ -407,7 +459,8 @@ namespace RcrcGreen.Core
                         row.SheetName,
                         "No sheet was made for " + row.PlotId + ", because "
                         + SheetNumbers.FaultInWords(fault)
-                        + ", read off the model as the run was worked out. Renumber the row."));
+                        + ", read off the model as the run was worked out. Renumber the row.",
+                        RunRefusalKind.SheetNumberClashes));
                     continue;
                 }
 

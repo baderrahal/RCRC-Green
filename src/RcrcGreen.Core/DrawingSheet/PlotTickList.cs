@@ -293,6 +293,9 @@ namespace RcrcGreen.Core
         /// A sub plot tick routes to its own plot's selection, which ignores anything
         /// outside its range, so nothing the user cannot see can end up ticked and acted
         /// on. The rule is PlotSelection's, asked rather than repeated.
+        ///
+        /// A sub plot the model does not hold ticks like any other, because the range covers
+        /// it and the user put it there.
         /// </summary>
         public PlotTickList Ticking(string plotId, bool ticked)
         {
@@ -324,9 +327,22 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// The sub plots this model holds under one prefix whose number falls inside the
-        /// range, all ticked. The range ends are two numbers rather than two sub plots now,
-        /// so the model decides what exists and the user decides what is wanted.
+        /// Every sub plot the range covers under one prefix, all ticked, whether the model
+        /// holds it or not.
+        ///
+        /// **This used to filter the model's own list**, so widening the range changed nothing
+        /// on screen and the user reported the range as not working. They were right. The rule
+        /// it was protecting is that the TOOL never invents a plot, and a sub plot somebody
+        /// types into a range is theirs, not the tool's. DM-02 settles it: it holds no views
+        /// and no scope box, and the team has already made its sheets.
+        ///
+        /// **The model's own spelling wins where it has one.** Generating DM-02 beside a model
+        /// that spells it DM-2 would give two lines for one sub plot and lose the one that
+        /// carries the views, so the number decides the match and the model decides the text.
+        ///
+        /// **What the model holds starts ticked and what it does not starts listed.** Both are
+        /// one click apart, and the other way round a single tick on a plot would queue a run
+        /// over 96 sub plots nobody has seen.
         /// </summary>
         private PlotSelection Selection(string prefix, string from, string to)
         {
@@ -334,13 +350,47 @@ namespace RcrcGreen.Core
             int last = NumberIn(to);
             if (first <= 0 || last < first) return PlotSelection.AllOf(null);
 
-            return PlotSelection.AllOf(UnderPlot(prefix)
-                .Where(plotId =>
+            var spelt = new Dictionary<int, string>();
+            foreach (string plotId in UnderPlot(prefix))
+            {
+                int number = NumberOf(plotId);
+                if (number > 0 && !spelt.ContainsKey(number)) spelt.Add(number, plotId);
+            }
+
+            var covered = new List<string>();
+            var generated = new List<string>();
+            for (int number = first; number <= last; number++)
+            {
+                string held;
+                if (spelt.TryGetValue(number, out held))
                 {
-                    int number = NumberOf(plotId);
-                    return number >= first && number <= last;
-                })
-                .ToList());
+                    covered.Add(held);
+                    continue;
+                }
+
+                string made = Generated(prefix, number);
+                covered.Add(made);
+                generated.Add(made);
+            }
+
+            // **Listed, not ticked.** The range covers 99 sub plots by default and a model
+            // holds a handful, so ticking the whole cover would queue work on 96 sub plots
+            // nobody has looked at. The ask was to see them and to be able to tick one, which
+            // this leaves as one click each.
+            PlotSelection picked = PlotSelection.AllOf(covered);
+            foreach (string one in generated) picked = picked.Ticking(one, false);
+
+            return picked;
+        }
+
+        /// <summary>
+        /// A sub plot identifier the model does not hold, built from the prefix and the number.
+        /// Two digits, the shape every sub plot on both measured models uses and the shape the
+        /// range ends are offered in.
+        /// </summary>
+        public static string Generated(string prefix, int number)
+        {
+            return (prefix ?? string.Empty) + "-" + AsEnd(number);
         }
 
         private static int NumberIn(string end)

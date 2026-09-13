@@ -83,7 +83,13 @@ These come from the team and from real models. They are not guesses.
 - Views are named `<PlotID>-(<code>) <View name>`. PlotID is two uppercase letters, a dash,
   then digits, as in DM-41, and lowercase is invalid. The code is digits in round brackets and
   the view name is free text after the bracket and one space. A plot is also a scope box
-  named with the PlotID. A SHEET IS NOT NAMED THAT WAY: its name is the team's own word for
+  named with the PlotID. **THE TOOL NEVER INVENTS A PLOT, AND A SUB PLOT THE USER TYPES INTO
+  A RANGE IS NOT INVENTED BY THE TOOL.** Step 1 lists every sub plot the From and To cover,
+  in the model or not, each line saying which it is, and a sub plot the model does not hold
+  can be ticked and can have sheets made for it. DM-02 is why: it holds no views and no scope
+  box and the team has already made its sheets. What the model holds starts ticked and what
+  it does not starts listed. The plot prefixes offered still come from the model and nothing
+  adds one. A SHEET IS NOT NAMED THAT WAY: its name is the team's own word for
   it, held in a saved table per view type, because four of DM-11's eight sheet names differ
   from the view name upper cased: OVERALL KEYPLAN, PROJECT LOCATION KEY PLAN, and HARDSCAPE
   and SOFTSCAPE SCHEDULES, plural where the view names are not. Upper casing the view name
