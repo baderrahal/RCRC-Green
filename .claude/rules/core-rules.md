@@ -62,15 +62,26 @@ a plot takes its whole span with everything ticked, changing its range rebuilds 
 selection with everything in the new range ticked, unticking a plot forgets its range and
 its ticks, and nothing outside the model can be ticked at all.
 
-**The range is free and the list is not.** From and To offer 01 to 99 on every model,
-digits only, because the team works across models and a range filled from the open one
-could not be set up for the model it is meant for. The LIST under them still holds only
-the sub plots this model really carries inside the range, so a free range picker is not an
-invented plot, it is two numbers, and the count line says how many of the range exist
-here. A sub plot numbered above 99 falls outside every range, which is the known cost of
-two digit ends. `Matching` is what the search box narrows to and what All and None act on,
-so the sweep and the single tick mean the same thing, the rule `BulkMarking` already
-follows.
+**The range decides the list and the model decides the ticks.** From and To offer 01 to 99
+on every model, digits only, because the team works across models. The LIST holds every sub
+plot the range covers, in the model or not, and each line says which it is: not in the
+model, no scope box, or a view count. What the model holds starts ticked and what it does
+not starts listed, because a single tick on a plot would otherwise queue a run over 96 sub
+plots nobody has looked at, and both are one click apart.
+
+This used to filter the model's own list, so widening the range changed nothing on screen
+and the user reported the range as not working. They were right, and the rule it was
+protecting is narrower than it was written. **The rule is that the TOOL never invents a
+plot.** A sub plot somebody types into a range is theirs. DM-02 settles it: it holds no
+views and no scope box, and the team has already made its sheets. What still cannot happen
+is a plot prefix the model does not hold being offered at all, and a sub plot outside a
+ticked plot's range being ticked.
+
+The model's own spelling wins where it has one, matched on the number, so generating DM-02
+beside a model that spells it DM-2 cannot give two lines for one sub plot. A sub plot
+numbered above 99 falls outside every range, which is the known cost of two digit ends.
+`Matching` is what the search box narrows to and what All and None act on, so the sweep and
+the single tick mean the same thing, the rule `BulkMarking` already follows.
 
 ## A grid cell has four states and carries its sheet number
 

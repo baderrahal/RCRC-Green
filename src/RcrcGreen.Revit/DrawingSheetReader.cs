@@ -36,7 +36,6 @@ namespace RcrcGreen.Revit
             var viewPlotParameterValues = new List<string>();
             var viewTypes = new List<ViewType>();
             var present = new List<PlotViewPresence>();
-            var viewSizes = new List<ViewOnPaper>();
             var states = new List<ViewScopeBoxState>();
             var scheduleTypes = new List<ViewType>();
             var sectionTypes = new List<ViewType>();
@@ -124,48 +123,9 @@ namespace RcrcGreen.Revit
 
                 if (read.SourcesDisagree) disagree++;
 
-                // Only a view that belongs to a plot and a view type, because those are the
-                // only ones a described sheet can carry, and View.Outline is one property read
-                // per view that nothing else here needs. What that costs on a model of this
-                // size has not been measured.
-                if (read.Fills != null)
-                {
-                    viewSizes.Add(SizeOnPaper(view, ViewNaming.Of(
-                        read.Fills.Where.PlotId, read.Fills.Where.ViewType)));
-                }
-
                 // The one reader of a view's scope box state, shared with the assignment so
                 // the count on screen and the write can never read the model two ways.
                 states.Add(ScopeBoxScanner.StateOf(document, view));
-            }
-
-            // How big each title block type comes out. Sheet Width and Sheet Height are
-            // INSTANCE parameters, so a type on its own has no size and the first sheet found
-            // using it answers, which is the same read the run makes on a sheet it has just
-            // created. A type no sheet uses yet gets no measurement, which the preview says
-            // rather than filling in an A1 because the name looks like one.
-            var titleBlockSizes = new List<MeasuredTitleBlock>();
-            var measuredAlready = new HashSet<ElementId>();
-            foreach (FamilyInstance block in new FilteredElementCollector(document)
-                .OfCategory(BuiltInCategory.OST_TitleBlocks)
-                .WhereElementIsNotElementType()
-                .OfType<FamilyInstance>())
-            {
-                FamilySymbol symbol = block.Symbol;
-                if (symbol == null) continue;
-
-                // The symbol is the type, so its id is the exact key. A string built out of
-                // the two names would be a second way of saying which type this is.
-                if (!measuredAlready.Add(symbol.Id)) continue;
-
-                var onSheet = document.GetElement(block.OwnerViewId) as ViewSheet;
-
-                titleBlockSizes.Add(new MeasuredTitleBlock(
-                    symbol.FamilyName ?? string.Empty,
-                    symbol.Name ?? string.Empty,
-                    ModelScanner.Number(block.get_Parameter(BuiltInParameter.SHEET_WIDTH)),
-                    ModelScanner.Number(block.get_Parameter(BuiltInParameter.SHEET_HEIGHT)),
-                    onSheet == null ? string.Empty : onSheet.SheetNumber));
             }
 
             var scopeBoxNames = new List<string>();
@@ -285,9 +245,7 @@ namespace RcrcGreen.Revit
                 captured.NotParsed,
                 familyTypes,
                 templateNames,
-                levelNames,
-                titleBlockSizes,
-                viewSizes);
+                levelNames);
         }
 
         /// <summary>
@@ -342,16 +300,16 @@ namespace RcrcGreen.Revit
         /// <summary>
         /// How big a view comes out on a sheet, in paper feet, or not measured.
         ///
-        /// View.Outline is Revit's own answer and needs no viewport, so a view already in the
-        /// model can be drawn at its real size in the preview before anything is placed. A
-        /// schedule has none, because how big it comes out is not known until Revit has drawn
-        /// it, and anything Outline will not answer for reads as not measured rather than as a
-        /// size of zero, which would make every view look as though it fitted.
+        /// View.Outline is Revit's own answer and needs no viewport, so the fit can be worked
+        /// out before anything is placed. A schedule has none, because how big it comes out is
+        /// not known until Revit has drawn it, and anything Outline will not answer for reads
+        /// as not measured rather than as a size of zero, which would make every view look as
+        /// though it fitted.
         ///
-        /// **One read.** The run measures the same thing to work out its fit, and the preview
-        /// measures it to draw a view at its real size. Two readings would have agreed the day
-        /// they were written, and a preview drawn from the other one is a picture of a sheet
-        /// that is not the sheet.
+        /// It lives here rather than in the writer because the panel read it too, for the run
+        /// preview, and two readings of one measurement is two facts. The preview is gone and
+        /// the writer is the only caller left. It stays here rather than moving back, because
+        /// moving a method to follow its last caller is churn.
         /// </summary>
         internal static ViewOnPaper SizeOnPaper(View view, string named)
         {
