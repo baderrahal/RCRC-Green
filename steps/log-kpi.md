@@ -4,6 +4,76 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, sixty ninth pass. The third audit of the KPI tool
+
+**It builds nothing and fixes nothing.** The only files written are `steps/audit-kpi-3.md`, this
+log and the state block. **The state block is written because `require-file-on-commit.sh` refuses
+a commit without one**, not because the round wanted it, and that is worth recording as the one
+place the round message and the hook disagree.
+
+**1673 tests, 853 of them KPI, 28 hook cases**, green before and after. Nothing under `src` or
+`tests` moved.
+
+### Part A, the 32 open findings
+
+Checked one at a time at today's lines. **Nine moved, twenty one still stand, two stand in a
+different shape.** The nine that moved are 3, 20, 21, 22, 26 and 43, all from rounds 113 and 114
+taking out the name box and the grouping buttons, plus the two halves that moved on 13 and 40.
+Findings 29 and 41 stand and are WORSE than written: `KpiCreateReport.cs` grew to 1277 lines and
+`TemplateWords.cs` now stacks two docstrings BOTH describing the deleted name box.
+
+### The hunt the brief called most valuable
+
+**A fact measured once and generalised gave three findings, 50, 51 and 52.** The first is the
+strongest thing in the file.
+
+**`TypedByTheTeam = { "E5", "G5", "H5" }` is one array for all seven templates and the letters
+were measured on one.** That is the Character and Context fault three cells up. Character sat at
+D7 on two templates and F7 on the third, because STREETS carries a Category formula at D7, and
+that is why the tool now finds those two by their LABELS. **Row 5 is still written by letter**,
+and HEALTHCARE, PARKING and FUTURE PARKS have never been looked at. The divergence is proven to
+exist in row 7 of the same sheets.
+
+The other two are the group row. `IsStructureRow` needs cell 0 filled and every other cell empty,
+and the group name is then read off cell 0. **The first cell of a species row is the IMAGE**,
+which is the measured fact that broke four readers already. A group row printing with anything in
+the image column is not recognised at all, its species attach to the group above, and they go to
+that group's sheet. Nothing refuses it, because the species still add to the printed TOTAL.
+
+### Three break watches, and the honest result
+
+**All three reddened and every red case named what was broken.** The component folder spelling
+gave 2 red, the species alias gave 5, the square foot constant gave 4. All restored byte for
+byte, checked by diff.
+
+**No test was found that would pass with its own behaviour broken.** That is a change from the
+last two audits, where three such tests were proved, and the fair reading is that round 117's
+four test findings went to the places that were weak.
+
+### The report, measured rather than remembered
+
+A run was generated through the test fixture and counted. **One plot, no species, no schedule
+read is 152 lines, and 68 of them are nine sections whose count is zero.** Six of those nine
+print a column header for a table with no rows. Seventeen headings each carry a sentence
+explaining the rule rather than naming the contents, and not one of them says anything the
+heading does not already carry.
+
+### Counts
+
+**1673 tests, 0 failed and 0 skipped, 853 of them KPI, none added and none changed.** 28 hook
+cases. Build zero warnings, measured after the last file was written.
+
+MERGE_LINE
+
+### Still open
+
+Fourteen new findings, numbered 50 to 63, nine dropped for having no cost. **No BLOCKS**: nothing
+found can be shown to stop the tool or put a wrong number in a client workbook on a path that has
+been run. **Findings 50 and 51 become BLOCKS the moment their unmeasured case turns out real**,
+and four of the five open UNKNOWNs need nothing but a file nobody has opened.
+
+---
+
 ## 2026-09-14, sixty eighth pass. The four tests that stayed green while the code was broken
 
 Findings 10, 11, 33 and 48, three of them proved by the audits. The branch came off a fresh pull
