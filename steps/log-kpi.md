@@ -4,6 +4,123 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, sixty seventh pass. Four things off the hook round before it
+
+**A shared change, so it runs alone.** Nothing under `src` or `tests`, so the dotnet suite is
+unchanged at **1640, 820 of them KPI**. The branch came off a fresh pull of main at `70c4abe`.
+**The hook checks went from 15 cases to 28.** Nothing here has been observed in Revit and
+nothing here touches the add-in.
+
+### The notebook path walked past the guard
+
+`block-paths.sh` is matched on Write, Edit AND NotebookEdit, and read `file_path` only.
+**NotebookEdit's argument is `notebook_path`**, so every notebook write arrived as an empty
+string and took the `exit 0` written for a call with no path at all. Measured last round and
+again before the change: `/etc/evil.ipynb` came back exit 0 where the same path under
+`file_path` came back exit 2.
+
+It reads both keys now. **And a call carrying neither is refused rather than waved through**,
+which is the second half and the more important one: the three tools this hook is wired to all
+carry one of the two keys, so anything reaching that branch is something the guard cannot see.
+An empty string used to mean nothing to check, and it meant the check was blind.
+
+### The task list was written down twice and the two came apart
+
+`territory-check.sh` named six tasks and `.claude/rules/territory.md` numbered five, missing
+View Filters, in the one document that decides which session may touch what.
+
+**Which is right was measured rather than assumed.** ViewFilters has code in all three roots,
+`src/RcrcGreen.Core/ViewFilters`, `src/RcrcGreen.Revit/ViewFilters` and
+`tests/RcrcGreen.Core.Tests/ViewFilters`, plus its own rules file, its own log and its own
+state file. Three of the five the document does list have no folder at all yet. **The hook was
+right and the document was behind**, and a task the wall does not know about is a task any
+session can edit without being stopped.
+
+So the list is `.claude/hooks/tasks.txt` now, one line per task, the folder name and the
+team's name for it. **The hook READS it** rather than carrying a copy, and a list it cannot
+read refuses the commit, because an empty list makes every path common and the wall stops
+refusing anything. `territory.md` points at it, gains its View Filters entry and renumbers, and
+**a hook case refuses when the two disagree**, comparing the file's own
+`src/RcrcGreen.Core/<name>` mentions against the record. The instruction for a new task now
+says both places, and the check is what makes that true rather than hoped for.
+
+### An amend and a reuse are READ, not refused
+
+Both have a message git can be asked for. `--amend --no-edit` takes HEAD's and `-C <ref>` takes
+that ref's, so `message_of` asks `git log -1 --format=%B` for the one the command will really
+use and the hook checks that. `-c`, `--reuse-message` and `--reedit-message` go the same way.
+**Refusing every amend to catch the rare bad one would block a flow people use every day**,
+which is the wrong trade and is why this was left open rather than closed the easy way.
+
+Where the message still cannot be got at, it refuses, the way an unreadable file already does,
+and each refusal says which case it is:
+
+```
+--amend --no-edit          reads HEAD's message
+-C <ref>                   reads that ref's message
+--amend, no --no-edit      refused, the final message is not decided yet
+no message flag at all     refused, it would be typed into an editor
+-C <a ref git cannot read> refused, and the ref is named
+```
+
+The last two are a behaviour change on commands that used to pass unchecked. A bare commit and
+a bare amend both open an editor, which cannot complete in this environment anyway, and the
+refusal names the remedy.
+
+### hook-tests.sh runs in the gate
+
+It was a test nobody ran, which is its own kind of silence and the whole reason the round
+before this one existed. It is a step of its own in `tests.yml`, **before the build**, because
+it takes about a second and a broken guard is worth knowing about before anything else starts.
+**It reads its own count back**, the same way the dotnet step does, so a run that checks
+nothing fails rather than reporting green. Checked by feeding that guard a run of zero cases.
+
+**The amend cases needed a HEAD whose message is known**, which this repo cannot provide, so
+the file builds a scratch repo in the temp folder: a copy of the hooks, the one file the
+writing check reads its word list from, a state file for the require-file hook, and commits
+that can say anything because none of it reaches this repo. The commit carrying a credit line
+is made with `commit-tree`, so it belongs to no branch. Checked against an empty `HOME` as
+well, since the runner has no global git config.
+
+### Six break watches, all restored byte for byte
+
+1. `block-paths.sh` reading `file_path` only. **1 red**, and NOT the one expected: the notebook
+   path outside the repo stayed refused, because the refuse-on-empty half caught it instead.
+   **The two halves back each other up**, which is worth knowing and is why the next one exists.
+2. Both halves reverted, which is exactly the code that was on main. **2 red**, the notebook
+   path outside the repo and the call with neither key. That is the hole as it really was.
+3. The hook hardcoding the task list instead of reading it. **1 red**, the case that hides the
+   record and expects a refusal.
+4. `territory.md` dropping View Filters again. **2 red**, both halves of the comparison, the
+   missing name and the name the record does not hold.
+5. An amend handing back an empty message, the old shape. **1 red**, an amend with a credit
+   line is refused.
+6. `-C` no longer capturing its ref. **1 red**, and again not the one expected: the credit line
+   case still refused, because an uncaptured ref falls through to no message at all and is
+   refused for that reason instead. The clean reuse case is the one that reddened.
+
+**Twice now a break reddened a different case than the one aimed at**, both times because a
+second guard caught what the first stopped catching. That is defence working, and it is also a
+reminder that a green case does not prove the line you think it does.
+
+### Counts and the merge
+
+**1640 dotnet tests locally at this branch, 0 failed and 0 skipped, 820 of them KPI, none
+added and none changed**, because nothing under `src` or `tests` moved. Hook checks 28 of 28.
+Build zero warnings.
+
+MERGE_LINE
+
+### Still open
+
+- **`--fixup=<ref>` and `--squash=<ref>`** build a message from that ref's subject. They are
+  not read here and fall to the no-message refusal. Nothing in this repo uses them, so it is
+  written down rather than guessed at.
+- **Non-permeable hardscape** is still blank on every workbook, unchanged and still nobody's
+  answer.
+
+---
+
 ## 2026-09-14, sixty sixth pass. The commit hooks could be bypassed in silence
 
 **A shared change, so it runs alone.** Nothing else is in this round: no KPI code, no rules

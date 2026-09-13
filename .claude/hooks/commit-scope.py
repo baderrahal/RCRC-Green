@@ -74,6 +74,13 @@ class CommitCall(object):
         # False only when the command could not be read as a shell line at all. It is not
         # the same as found, which is False for an ordinary line carrying no commit.
         self.readable = True
+        # A message can come from a commit that already exists rather than from this command
+        # line. --amend --no-edit takes HEAD's and -C <ref> takes that ref's, and both are
+        # asked of git rather than refused, because refusing every amend blocks a normal
+        # flow to catch nothing.
+        self.amend = False
+        self.no_edit = False
+        self.reuse_refs = []
 
 
 def find_commit_arguments(tokens):
@@ -160,10 +167,16 @@ def read_one_commit(call, arguments):
                     call.messages.append(value)
                 elif name == "--file":
                     call.message_files.append(value)
+                elif name in ("--reuse-message", "--reedit-message"):
+                    call.reuse_refs.append(value)
                 at += 1
                 continue
             if name == "--all":
                 call.all_flag = True
+            elif name == "--amend":
+                call.amend = True
+            elif name == "--no-edit":
+                call.no_edit = True
             at += 1
             continue
 
@@ -187,6 +200,10 @@ def read_one_commit(call, arguments):
                         call.messages.append(value)
                     elif letter == "F":
                         call.message_files.append(value)
+                    elif letter in ("C", "c"):
+                        # -C reuses a commit's message and -c reuses it and opens an editor.
+                        # Both start from that ref, which is what gets checked.
+                        call.reuse_refs.append(value)
                     position = len(cluster)
                     continue
                 position += 1
@@ -202,6 +219,18 @@ def git(arguments):
     if done.returncode != 0:
         return None
     return done.stdout
+
+
+def message_of(ref):
+    """The message of a commit that already exists, or None when git cannot say.
+
+    This is what makes an amend and a reuse checkable rather than refusable. %B is the raw
+    body, subject and all, which is exactly the text the new commit would carry.
+    """
+    raw = git(["log", "-1", "--format=%B", ref])
+    if raw is None:
+        return None
+    return raw.decode("utf-8", "replace")
 
 
 def split_paths(raw):
@@ -247,6 +276,19 @@ def commit_message(call):
     """
     parts = list(call.messages)
     problems = []
+
+    # A message that already exists somewhere git can be asked for it. Checking it is the
+    # point: an amend carrying a credit line is as much a commit as any other, and refusing
+    # every amend to catch that would block a flow people use every day.
+    for ref in call.reuse_refs:
+        held = message_of(ref)
+        if held is None:
+            problems.append(
+                "The commit message is reused from " + ref
+                + ", which git could not read, so what this commit would say is unknown.")
+            continue
+        parts.append(held)
+
     for path in call.message_files:
         if path == "-":
             # The message is on standard input, which a PreToolUse hook cannot reach: the
@@ -266,7 +308,25 @@ def commit_message(call):
             # skipping it would pass a message nothing looked at.
             problems.append(
                 "The commit message file " + path + " could not be read.")
-    return "\n\n".join(parts), problems
+
+    if parts or problems:
+        return "\n\n".join(parts), problems
+
+    # Nothing on the command line said what the message is. An amend that keeps the existing
+    # one is the case where git still knows, so ask it.
+    if call.amend and call.no_edit:
+        held = message_of("HEAD")
+        if held is None:
+            return "", ["The commit amends HEAD, whose message git could not read."]
+        return held, []
+
+    if call.amend:
+        return "", ["The commit amends HEAD and opens an editor, so its final message is not"
+                    " decided yet and cannot be read here. Pass --no-edit to keep HEAD's"
+                    " message, or name the new one with -m or -F and a file."]
+
+    return "", ["The commit names no message, so it would be typed into an editor and there"
+                " is nothing here to read. Name the message with -m, or with -F and a file."]
 
 
 def main():

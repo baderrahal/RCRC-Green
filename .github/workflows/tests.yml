@@ -18,6 +18,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The hooks are the only thing standing between two sessions that cannot see each
+      # other, and they had no test until one of them was walked past in silence. Run by
+      # hand they are run by nobody, so they run here, first, because they take a second
+      # and a broken guard is worth knowing about before a build starts.
+      #
+      # A run that checks nothing reports green forever, so the count is read back the same
+      # way the dotnet one is.
+      - name: Check the hooks
+        run: |
+          bash .claude/hooks/hook-tests.sh | tee hook-results.txt
+          STATUS=${PIPESTATUS[0]}
+          if [ "$STATUS" -ne 0 ]; then
+            echo "The hook checks failed."
+            exit 1
+          fi
+          RAN=$(grep -oE '^[0-9]+ passed' hook-results.txt | grep -oE '[0-9]+')
+          if [ -z "$RAN" ] || [ "$RAN" -eq 0 ]; then
+            echo "Zero hook cases ran. This step is not protecting anything."
+            exit 1
+          fi
+          echo "$RAN hook cases ran."
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
