@@ -1,0 +1,62 @@
+[
+  {
+    "Prefix": "(200-260) Presentation",
+    "Enabled": true,
+    "Visible": true,
+    "OverrideLineColor": false,
+    "LineColor": "#FF0000",
+    "LineWeight": 0,
+    "OverrideForegroundPattern": false,
+    "ForegroundPatternType": "none",
+    "ForegroundPatternColor": "#00FF00",
+    "OverrideBackgroundPattern": false,
+    "BackgroundPatternType": "none",
+    "BackgroundPatternColor": "#00FF00",
+    "Halftone": false
+  },
+  {
+    "Prefix": "(200-260) Sections Scope",
+    "Enabled": true,
+    "Visible": false,
+    "OverrideLineColor": false,
+    "LineColor": "#0000FF",
+    "LineWeight": 0,
+    "OverrideForegroundPattern": false,
+    "ForegroundPatternType": "none",
+    "ForegroundPatternColor": "#FFFF00",
+    "OverrideBackgroundPattern": false,
+    "BackgroundPatternType": "none",
+    "BackgroundPatternColor": "#FFFF00",
+    "Halftone": false
+  },
+  {
+    "Prefix": "(200-260) Intervention Limit",
+    "Enabled": true,
+    "Visible": true,
+    "OverrideLineColor": false,
+    "LineColor": "#FF9900",
+    "LineWeight": 0,
+    "OverrideForegroundPattern": false,
+    "ForegroundPatternType": "none",
+    "ForegroundPatternColor": "#FF9900",
+    "OverrideBackgroundPattern": false,
+    "BackgroundPatternType": "none",
+    "BackgroundPatternColor": "#FF9900",
+    "Halftone": false
+  },
+  {
+    "Prefix": "(215) Borders Edging",
+    "Enabled": true,
+    "Visible": true,
+    "OverrideLineColor": false,
+    "LineColor": "#888888",
+    "LineWeight": 0,
+    "OverrideForegroundPattern": false,
+    "ForegroundPatternType": "none",
+    "ForegroundPatternColor": "#888888",
+    "OverrideBackgroundPattern": false,
+    "BackgroundPatternType": "none",
+    "BackgroundPatternColor": "#888888",
+    "Halftone": false
+  }
+]
