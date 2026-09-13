@@ -4,6 +4,159 @@ Newest entry first.
 
 ---
 
+## 2026-09-13, sixty fifth pass. Four things off the first per plot run
+
+The tree is right and both files recalculate with zero errors. The street reference file works:
+ANH-007-ST-100217 came out ROW 36, length 928.782391, and the workbook computed the area at
+33,436.17 itself. So this round is the four things the run showed, and every one of them is
+wording or a count rather than anything that reads a model. The branch came off a fresh pull of
+main at `70fdb82`, so the baseline is **1625 tests, 805 of them KPI**, measured at that commit
+before anything was written. **The audit findings stay open, not renumbered and not reordered,
+and this round closes none of them.** **Nothing in this round has been observed in Revit.**
+
+### Character and Context are found by their labels, never by a letter
+
+Bader measured them off the three workbooks written on 13 September:
+
+```
+MOSQUES   Character label C7, value D7.   Context label E7, value F7.
+SCHOOLS   Character label C7, value D7.   Context label E7, value F7.
+STREETS   Category  label C7, value D7.   Character label E7, value F7.
+                                          Context   label G7, value H7.
+```
+
+**A map holding a letter would have overwritten a formula.** Two of the three templates put
+Character at D7 and the third puts a Category formula there, so Character at D7 because two
+templates say so destroys the street sheet's own calculation on the third. Nothing in
+`FixedCells` holds a letter now. The template is opened when Create is pressed, its main sheet
+is read, the label is looked for on it, and the cell to the RIGHT of the label is what gets
+written. The street's Category is never touched because nothing looks for the word Category.
+
+A label is matched whole, without case and with edge whitespace off, so Characteristics is not
+Character. A template naming neither label writes nothing and says which label was missing. One
+naming a label TWICE also writes nothing, and says both cells, because nothing says which of the
+two is meant.
+
+`LabelledCell` carries what the value cell ALREADY HOLDS, which is not decoration. The mosque
+template came filled, holding Urban Area Zone at D7 and Urban at F7 before this tool touched it,
+and the street file has both blank. Without that the report would read as though this run had
+put the mosque's values there.
+
+`KpiCreatePlan.Of` takes the labels as a thirteenth REQUIRED argument and throws on null. A
+default would have meant a caller that forgot them wrote nothing and said the template was not
+opened, which is a lie that looks like a finding.
+
+### The name box is gone, and the reason is the second one
+
+It read GRP-KPI-Checklist-DD-MOSQUES.xlsx and no file has been called that since the folder tree
+landed. Every workbook is named from its plot's UID2. The box is out and one line stands where it
+was, saying the root, then the component folder, then the UID2, with the workbook named after its
+folder, and showing one real path.
+
+**`OutputName.Suggested` is DELETED, and this is the second of the two reasons a thing gets
+deleted here, not the first.** The first is reachability, which is the test that was wrong last
+round. This is the other one: **the shape it is the record of no longer exists.** There is no
+one file per template any more, so a name built from a template and a date is not an unused
+method, it is a method describing a thing this tool does not do. Its test went with it.
+`OutputName.Final` and `Extension` stay, because a file still has to be named and they are what
+names it.
+
+### Count what happened, never what was planned
+
+The run said **MOSQUES: Nothing was written. 20 of 21 plots wrote a workbook.** Twenty workbooks
+were on disk. One line held two records of one fact: the row counted what the run set out to do
+and the sentence beside it counted what happened.
+
+`TemplateOutcome` counts workbooks now. `Workbooks` is the number, `Written` is that number above
+zero, and the new `WroteSomeOfThem` is the case that had no word before, some wrote and some did
+not. **Refused is kept for a template where NOTHING was written**, which is the one place the
+word still fits. The summary line went the same way: it read 1 workbook written of 2 templates
+ticked on a run that wrote 98, because it was counting templates and calling them workbooks. It
+counts workbooks, plots and templates each as itself now.
+
+### The create block was a wall
+
+Nine lines of red and orange before the button, and on 78 street plots the plot list alone ran
+off the screen.
+
+- **A template row never lists every plot.** `CreateWords.Range` names up to four and gives the
+  count and the first to last beyond that, so STREETS reads 78 plots, ST-01 to ST-78. The report
+  names them, and the row says so.
+- **A refusal and a note no longer look alike.** One stops a workbook and the other does not.
+  The three that are notes rather than refusals, the links, the groups left out and a template
+  with no ticked plot, go through a new `Noted` that reads in the ordinary text colour and starts
+  with the word Note. Nothing moved and no control changed.
+- **The link note was six lines of paths.** `LinksLoaded.OnThePane` gives the count and what to
+  do about it, and the names stay in the report where there is room for them.
+- **The STREETS area line was wrong.** It said the number is typed by hand. It is not: the sheet
+  works the area out from the road width and the total length, and both of those come off the
+  street reference file. Corrected.
+
+### Four break watches, all restored byte for byte
+
+Each break was made with a script, built, tested, then restored from a backup and checked with a
+diff that comes back empty.
+
+1. `FixedCells.Off` taking `"D" + row` as the value cell, which is the letter two of the three
+   templates use, rather than the cell right of the label. **5 red**, every one of them in
+   `LabelledCellsTests`: the mosque layout, the street layout, the plan writing, a label found
+   twice and the whole word match. The street one is the one that matters, because that break is
+   exactly the bug the round exists to prevent.
+2. `TemplateOutcome.WroteSomeOfThem` returning false, so 20 of 21 reads as refused again.
+   **1 red**, `ATemplateWhoseOnePlotFailedStillWroteTheOtherTwenty`.
+3. `CreateWords.Range` listing every plot by name whatever the count. **1 red**,
+   `ARowOfManyPlotsNamesTheCountAndTheRangeRatherThanEveryPlot`.
+4. `WroteAcross` counting templates and calling them workbooks. **1 red**,
+   `TheStatusLineCountsWorkbooksAndPlotsRatherThanTemplates`.
+
+Seven existing tests were changed by hand, each because the truth under it moved rather than
+because it was failing: two skip reasons now read the template was not opened, the two fixed
+values are named without a cell being guessed, a template row drops the words written to and
+gains The report names them, and the area reason names the reference file.
+
+### Open, for Bader
+
+**NON-PERMEABLE HARDSCAPE IS BLANK ON EVERY WORKBOOK AND NO NOTE MENTIONS IT.** Nobody has said
+where it comes from. It is not read, it is not computed and nothing in this repository names a
+schedule, a parameter or a filter that would produce it. It is written down here rather than
+guessed at. Three things would settle it: which schedule or parameter holds it, whether it is an
+area or a count, and whether a plot with none should print a zero or stay blank. Until one of
+those answers arrives the cell stays blank and the report says nothing about it, which is the
+honest state rather than the finished one.
+
+### A guard that failed open, found by walking into it
+
+**`writing-check.sh` cannot see a commit message passed on standard input, and says nothing.**
+This round's first commit was made with `-F -` and a heredoc. It carried a co-author credit line,
+which is exactly what that hook exists to refuse, and the commit was taken without a word.
+
+The mechanism is one line. `commit-scope.py` reads the message out of the COMMAND, and for a
+`-F` path it opens the file, except that `if path == "-": continue` skips it in silence. The hook
+then scans an empty string, finds nothing and passes. Checked by calling the script by hand with
+that command: what comes back as the message is zero bytes. The other two commit hooks read the
+same script, so the same command hides a commit's message from all of them.
+
+**This is the shape CLAUDE.md already records at the top of its list**, and it is the second time
+for this same file. The first was the file list split on newlines, where a name holding a space
+reached the scanner in pieces. The rule that came out of it was that a check which cannot see its
+own subject has to refuse. A path of `-` is that case: the message is real and the hook has no
+way to read it, so the honest answer is a refusal naming the reason rather than a pass.
+
+The commit was reset and made again through a message file the hook can open, so the guard really
+ran on it, and the credit line is gone. **The hook itself is NOT changed here.** It belongs to no
+task, every session depends on it, and a one line fix to a shared guard is not something to slip
+into a KPI round. It is written down for Bader instead. The fix is small: refuse when a message
+file is `-`, the way an unreadable file is already refused through
+`RCRC_UNREADABLE_MESSAGE_FILE`.
+
+### Counts
+
+**Locally 1640 tests at this branch, 0 failed and 0 skipped, 820 of them KPI, 15 added, against
+the 1625 main carries** at the branch point `70fdb82`. Build zero warnings, measured after the
+last file was written.
+
+---
+
 ## 2026-09-13, sixty fourth pass. One workbook per plot, in a folder tree
 
 The team came back with how they file these. A checklist is one plot and it lives in a folder

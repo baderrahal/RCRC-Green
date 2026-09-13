@@ -105,7 +105,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             TemplateShare share = Assert.Single(split.Shares);
             Assert.Equal(2, share.Plots.Count);
-            Assert.Equal("MOSQUES: 2 plots, DM-12, FM-05", CreateWords.TemplateRow(share));
+            Assert.Equal("MOSQUES: 2 plots, DM-12, FM-05. The report names them.", CreateWords.TemplateRow(share));
 
             Assert.Equal(
                 "MOSQUES: 2 of the 3 plots that belong to it, the rest unticked by hand.",

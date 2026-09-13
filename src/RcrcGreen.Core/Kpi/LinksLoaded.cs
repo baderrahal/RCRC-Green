@@ -96,6 +96,24 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public string Warning { get; }
 
+        /// <summary>
+        /// The same state said short, for the pane. **The full warning is six lines of link
+        /// paths** and the create block was nine lines of colour before the button, so the
+        /// screen gets the count and what to do and the report gets the names.
+        /// </summary>
+        public string OnThePane
+        {
+            get
+            {
+                if (Warning.Length == 0) return string.Empty;
+                if (Unloaded.Count == 0) return Warning;
+
+                return Unloaded.Count + " of " + Instances
+                    + " linked models are not loaded, so a schedule that lists what they hold "
+                    + "lists nothing. Load them and read the model again. The report names them.";
+            }
+        }
+
         public IReadOnlyList<string> Unloaded { get; }
 
         /// <summary>

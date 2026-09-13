@@ -57,7 +57,6 @@ namespace RcrcGreen.Revit.Kpi
             {
                 Workbook = workbook;
                 SettledAs = settledAs;
-                Name = new TextBox { MinWidth = PanelMetrics.ColumnWidth };
             }
 
             public RecognisedWorkbook Workbook { get; }
@@ -67,8 +66,6 @@ namespace RcrcGreen.Revit.Kpi
             /// templates waits for the user to say which, and nothing is guessed meanwhile.
             /// </summary>
             public KpiTemplate SettledAs { get; set; }
-
-            public TextBox Name { get; }
         }
 
         private PanelTheme _theme = PanelTheme.Current();
@@ -526,7 +523,6 @@ namespace RcrcGreen.Revit.Kpi
                     {
                         waiting.SettledAs = chosen;
                         TickItsPlots(waiting);
-                        Named(waiting);
                         RedrawTemplates();
                     };
                     either.Children.Add(choice);
@@ -557,17 +553,6 @@ namespace RcrcGreen.Revit.Kpi
                     });
                 }
 
-                var named = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
-                var caption = new TextBlock
-                {
-                    Text = "Written as",
-                    Width = PanelMetrics.WideLabelWidth,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                DockPanel.SetDock(caption, Dock.Left);
-                named.Children.Add(caption);
-                named.Children.Add(Reparented(tick.Name));
-                _templates.Children.Add(named);
             }
 
             TheOutputFolder();
@@ -636,6 +621,12 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             _templates.Children.Add(Faint(TemplateWords.Output(folder)));
+
+            // **In place of the name box, which had gone stale.** It still read
+            // GRP-KPI-Checklist-DD-MOSQUES.xlsx when every workbook is named from its plot's
+            // own UID2. Said once here rather than once per ticked row, because the shape is
+            // the same for every template.
+            _templates.Children.Add(Faint(CreateWords.WhereTheWorkbooksGo(folder)));
 
             TheStreetReferenceFile();
         }
@@ -927,7 +918,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 _templates.Children.Add(share.WillWrite
                     ? Faint(CreateWords.TemplateRow(share))
-                    : Warned(CreateWords.TemplateRow(share)));
+                    : Noted(CreateWords.TemplateRow(share)));
             }
 
             foreach (PlotTemplate left in split.Unplaced)
@@ -955,7 +946,7 @@ namespace RcrcGreen.Revit.Kpi
             // model with no link loaded is a legitimate thing to open, so Create stays live.
             if (_facts != null && _facts.Links.Worth)
             {
-                _templates.Children.Add(Warned(_facts.Links.Warning));
+                _templates.Children.Add(Noted(_facts.Links.OnThePane));
             }
 
             foreach (WorkbookTick tick in Settled().Where(one => one.SettledAs.AreaIsTypedByHand))
@@ -998,7 +989,7 @@ namespace RcrcGreen.Revit.Kpi
             foreach (KpiCreateRun run in Held().Where(one => one.Template != null))
             {
                 string leftOut = CreateWords.GroupsLeftOut(run.Readings, run.Template);
-                if (leftOut.Length > 0) _templates.Children.Add(Warned(run.Template.Name + ": " + leftOut));
+                if (leftOut.Length > 0) _templates.Children.Add(Noted(run.Template.Name + ": " + leftOut));
             }
 
             // Greyed out on what the PANE owns and on nothing else. Whether a model is open
@@ -1109,7 +1100,6 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             _picks.Add(new WorkbookTick(offered, choice.Preselected));
-            Named(_picks[_picks.Count - 1]);
         }
 
         /// <summary>
@@ -1117,17 +1107,6 @@ namespace RcrcGreen.Revit.Kpi
         /// suggestion rule is the one a single template run already used, asked per row with
         /// that template's own share of the ticked plots.
         /// </summary>
-        private void Named(WorkbookTick tick)
-        {
-            if (tick.SettledAs == null || tick.Name.Text.Length > 0) return;
-
-            // **THE SHAPE THE WORKING RUNS WROTE**, per row: the template file's own name,
-            // cleaned. The several templates round named each row after the template alone, so
-            // the boxes read MOSQUES and a run would have written MOSQUES.xlsx, which nobody
-            // recognises in a folder three months later.
-            tick.Name.Text = OutputName.Suggested(tick.Workbook.FileName);
-        }
-
         /// <summary>
         /// **TICKING A TEMPLATE ROW TICKS THE PLOTS THAT WILL GO INTO IT.** A person who ticks
         /// MOSQUES has already said which plots they mean, and making them find a grouping
@@ -1208,8 +1187,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 _picks.Add(new WorkbookTick(workbook, workbook.Template));
                 TickItsPlots(_picks[_picks.Count - 1]);
-                Named(_picks[_picks.Count - 1]);
-            }
+                }
 
             // The line describes what the preselection did or did not do, so a tick by hand is
             // what makes it untrue whichever way it read. A line left standing beside the state
@@ -1248,8 +1226,7 @@ namespace RcrcGreen.Revit.Kpi
                 _ticks.Ticked,
                 Settled().Select(one => new TemplatePick(
                     one.SettledAs,
-                    Path.Combine(folder, one.Workbook.FileName),
-                    one.Name.Text)),
+                    Path.Combine(folder, one.Workbook.FileName))),
                 _componentParameter,
                 _referenceParameter,
                 _locationParameter,
@@ -1463,6 +1440,24 @@ namespace RcrcGreen.Revit.Kpi
                 _templatesListed = TemplateListing.Nothing;
                 RedrawTemplates();
             }
+        }
+
+        /// <summary>
+        /// A NOTE, which is not a refusal. **They were the same colour**, so nine lines of red
+        /// and orange sat over the Create button on the first per plot run and nothing said
+        /// which of them stopped a workbook. One stops a workbook and the other does not, and
+        /// the two have to look different: a refusal keeps the warning colour and a note takes
+        /// the body colour with the word Note in front of it.
+        /// </summary>
+        private TextBlock Noted(string text)
+        {
+            return new TextBlock
+            {
+                Text = "Note. " + text,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = _theme.Foreground,
+                Margin = PanelMetrics.Row
+            };
         }
 
         private TextBlock Faint(string text)

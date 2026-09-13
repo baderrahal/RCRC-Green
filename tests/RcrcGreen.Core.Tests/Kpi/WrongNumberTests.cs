@@ -502,9 +502,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = KpiCreateReport.Write(run, new DateTime(2026, 9, 10, 9, 28, 0))
                 .Split(new[] { "\r\n" }, StringSplitOptions.None);
 
-            const string why = "not read. This template takes no area. The road width and the total length "
-                + "are typed by hand. No filled region was read for any plot and nothing about the area "
-                + "was refused on.";
+            // The reason names the reference file now. The road width and the total length are
+            // not typed by hand any more and have not been since the round that reads them.
+            const string why = "not read. This template takes no area. The sheet works it out from the "
+                + "road width and the total length, and both come off the street reference file. No "
+                + "filled region was read for any plot and nothing about the area was refused on.";
 
             Assert.Contains("  plots with an area   " + why, lines);
             Assert.Contains("  AREA, SQUARE METRES, " + why, lines);

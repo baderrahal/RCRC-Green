@@ -82,6 +82,14 @@ namespace RcrcGreen.Core.Kpi
         public const string NotAStreetTemplate =
             "only the STREETS template has this cell";
 
+        /// <summary>
+        /// The two labelled cells, as the plan found them, so the report can say which cell each
+        /// value went into and what it already held. **A template that came filled already holds
+        /// the value**, measured on the mosque file, and the line must not read as though this
+        /// run put it there.
+        /// </summary>
+        public IReadOnlyList<LabelledCell> Labelled { get; private set; }
+
         public const string NotFound = "not found on any chosen plot";
 
         public const string Disagreed = "the chosen plots disagreed";
@@ -100,6 +108,7 @@ namespace RcrcGreen.Core.Kpi
             Skipped = skipped;
             Matches = matches;
             Differences = differences;
+            Labelled = new List<LabelledCell>();
         }
 
         public KpiTemplate Template { get; }
@@ -142,7 +151,8 @@ namespace RcrcGreen.Core.Kpi
             string date,
             string preparedBy,
             string position,
-            StreetReferenceAnswer street)
+            StreetReferenceAnswer street,
+            LabelledCells labels)
         {
             if (template == null) throw new ArgumentNullException("template");
 
@@ -152,6 +162,7 @@ namespace RcrcGreen.Core.Kpi
             // them. A street run whose two cells went missing the same way would look filled and
             // compute an area of nothing.
             if (street == null) throw new ArgumentNullException("street");
+            if (labels == null) throw new ArgumentNullException("labels");
 
             var writes = new List<CellWrite>();
             var skipped = new List<NotWritten>();
@@ -181,8 +192,10 @@ namespace RcrcGreen.Core.Kpi
             FromTheStreetFile(template, KpiValue.StreetsRoadWidth, street, street.Width, writes, skipped);
             FromTheStreetFile(template, KpiValue.StreetsTotalLength, street, street.Length, writes, skipped);
 
-            // Always the same two words, and no template names a cell for either yet.
-            foreach (KpiValue value in FixedCells.Both) Fixed(template, value, writes, skipped);
+            // Always the same two words, into the cell right of each label on this template's
+            // own sheet. Never a letter: STREETS carries a Category formula where the other two
+            // carry Character, so a letter taken off two templates would overwrite it on a third.
+            foreach (KpiValue value in FixedCells.Both) Fixed(template, value, labels, writes, skipped);
 
             List<SpeciesMatch> held = (matches ?? Enumerable.Empty<SpeciesMatch>())
                 .Where(one => one != null)
@@ -236,7 +249,10 @@ namespace RcrcGreen.Core.Kpi
                 Measured(match, "diameter", match.Species.Diameter, match.DiameterColumn, match.WhyNoDiameterColumn, writes, skipped);
             }
 
-            return new KpiCreatePlan(template, writes, skipped, held, differences);
+            return new KpiCreatePlan(template, writes, skipped, held, differences)
+            {
+                Labelled = FixedCells.Labels.Select(labels.For).ToList()
+            };
         }
 
         /// <summary>
@@ -247,17 +263,22 @@ namespace RcrcGreen.Core.Kpi
         /// filled in.
         /// </summary>
         private static void Fixed(
-            KpiTemplate template, KpiValue value, List<CellWrite> writes, List<NotWritten> skipped)
+            KpiTemplate template,
+            KpiValue value,
+            LabelledCells labels,
+            List<CellWrite> writes,
+            List<NotWritten> skipped)
         {
-            MappedCell cell = template.CellFor(value);
-            if (cell == null)
+            LabelledCell found = labels.For(FixedCells.LabelOf(value));
+            if (!found.Found)
             {
                 skipped.Add(new NotWritten(
-                    template.MainSheetName, string.Empty, value.ToString(), FixedCells.NoCellMeasured));
+                    template.MainSheetName, string.Empty, value.ToString(), found.Why));
                 return;
             }
 
-            writes.Add(CellWrite.Text(template.MainSheetName, cell.Cell, FixedCells.ValueOf(value)));
+            writes.Add(CellWrite.Text(
+                template.MainSheetName, found.ValueCell, FixedCells.ValueOf(value)));
         }
 
         /// <summary>

@@ -145,18 +145,37 @@ the run goes through, and the report says so once at the top rather than 78 time
 **Only STREETS asks it this round.** The file also holds parking, mosque, park, school, health
 and government rows and nothing reads them.
 
-## Two cells that are always the same, and no cell has been measured for either
+## Two cells that are always the same, found by their LABELS and never by a letter
 
 **Bader's answer: Character is always Urban Area Zone and Context is always Urban.** They come
 from no model, no schedule and no file, so `FixedCells` holds them as data.
 
-**WHICH CELL EACH GOES IN IS UNKNOWN.** Neither word appears in the map, in these rules, or in
-any run this repository records, and the round message says the STREETS sheet is laid out
-differently from the mosque one, Category and Character against Character and Context, so the
-templates do not even carry the same pair. So `KpiTemplates` names no cell for either and every
-template reports both as not written with that reason, one line per template in every run, until
-somebody measures them. A cell guessed here would put Urban Area Zone into whatever D4 happens
-to be on seven client templates and the workbook would look filled.
+**Where each goes was measured on the three workbooks written on 13 September:**
+
+```
+MOSQUES   Character label C7, value D7.   Context label E7, value F7.
+SCHOOLS   Character label C7, value D7.   Context label E7, value F7.
+STREETS   Category  label C7, value D7.   Character label E7, value F7.
+          Context   label G7, value H7.
+```
+
+**THE STREET SHEET IS WHY NOTHING HOLDS A LETTER.** It carries a Category at C7 whose value cell
+D7 holds a FORMULA, so its Character and Context sit one pair to the right. A map that put
+Character at D7 because two templates out of three do would overwrite that formula on the third.
+
+So `FixedCells.In` reads the template's own main sheet, finds the cell whose text is the label,
+and writes the cell to its RIGHT. **Nothing looks for the word Category**, so D7 on STREETS is
+never reached by anything. The labels are matched whole, without case and with edge whitespace
+off, so Characteristics is not Character.
+
+Three refusals, all tested and all silent about no cell. A template naming neither label writes
+nothing and says which sheet it looked on. A template naming a label TWICE writes nothing and
+names both cells, the same rule a plot on two rows of the reference file follows. And a template
+nothing opened says the read did not happen rather than reading as a sheet with no label.
+
+**The mosque file came filled**, holding Urban Area Zone at D7 and Urban at F7 already, and the
+read carries what the cell already held so a line can say so rather than reading as though this
+run put it there. The street file has both blank.
 
 **Which plots belong to one checklist is not written down anywhere.** Nothing groups by the
 plot prefix, by the component, or by anything else. The user ticks them and the tool writes one
@@ -187,13 +206,71 @@ was kept.
   total must equal their sum
 - **A plot counted into two workbooks.** `TemplateSplit.Refusals` is still computed on every
   press and still cannot fire, which was already true and is written down here
-- **One output name box per template.** `OutputName.Suggested` and `Final` name no file any more,
-  because a workbook is named after its folder. They are the only record of the shape the working
-  runs wrote, GRP-KPI-Checklist-DD-MOSQUES.xlsx, and of the cleaning a typed name needs
+- **`OutputName.Final` and the cleaning it holds.** `Extension` beside it is what
+  `PlotWorkbookPath` builds every file name with, so the class is live. `Final` is the only
+  record of the cleaning a typed name needs
 
 **The rounding room on a group total does NOT stand down**, against what the round message said.
 It is per schedule and per plot, inside `ShrubsAndLawnRows`, so a phased group's rows still have
 to add to its total within the project's own rounding step on every plot. Nothing about it moved.
+
+## The name box is gone, and this is the second reason a thing gets deleted
+
+The box read GRP-KPI-Checklist-DD-MOSQUES.xlsx after the round that made a workbook one plot,
+and **no file is called that any more**: every one is named from its plot's own PRX_Plot_UID2. A
+box a person can type into whose text nothing reads is worse than no box.
+
+In its place, one line under the output folder saying where the files go and how each is named,
+with a real example path off the team's own folders. Said once rather than once per ticked row,
+because the shape is the same for every template.
+
+**`OutputName.Suggested` is deleted, and this time it is not a reachability judgement.** It was
+deleted once on reachability alone, restored because it was then the only record of the output
+name's shape, and the rule beside that restoration still stands. What is different now is that
+the SHAPE is gone rather than its last caller: there is no output name to suggest, because no
+name is typed anywhere. Two reasons a thing gets deleted, and this is the second one.
+
+## What the pane says before the press, and how much of it
+
+**Measured on the first per plot run, NG05 at 00:00**: nine lines of red and orange above the
+Create button, and on 78 street plots the plot list alone ran off the screen.
+
+**NEVER EVERY PLOT ON THE PANE.** `CreateWords.TemplateRow` names up to four plots outright and
+past that gives the count and the range, STREETS: 78 plots, ST-01 to ST-78, and says the report
+names them. Four is what fits a line, and the report holds the list because that is where a list
+belongs.
+
+**A REFUSAL AND A NOTE LOOK DIFFERENT.** They were the same colour, so nothing said which of the
+nine lines stopped a workbook. A refusal keeps the warning colour. A note takes the body colour
+and opens with the word Note, through `Noted` in the pane beside `Warned` and `Faint`. What is a
+note: the link state, a group no sheet takes, and a ticked template no plot belongs to. What is
+a refusal: a reconciliation that does not add up, an identical area waiting on a confirm, and a
+plot no route places.
+
+**THE LINK NOTE IS THE COUNT AND WHAT TO DO.** `LinksLoaded.Warning` is six lines of link paths
+and stays as it is for the report. `LinksLoaded.OnThePane` is the short half, how many of how
+many are not loaded, what to do, and that the report names them.
+
+**The area line for STREETS said typed by hand and they are not.** The road width and the total
+length come off the reference file. A line about what the tool does is checked against what it
+does, which is a rule this file already carries and this is the second time it has bitten.
+
+Nothing moved and no control changed. This is wording and how much of it.
+
+## Count what happened, never what was planned
+
+**Measured on that same run**: the pane and the report both read MOSQUES: Nothing was written.
+20 of 21 plots wrote a workbook, with twenty workbooks on disk. One line held two records of one
+fact, the row counting what the run set out to do and the sentence counting what it did.
+
+`TemplateOutcome.Workbooks` is the count of plots that really wrote, and every word the row says
+is read off it. Three answers rather than two: every plot wrote, SOME wrote with the ones that
+did not named, or NOTHING was written, which is the one case the word refused still fits.
+
+**COUNT WORKBOOKS WHERE THE UNIT IS A WORKBOOK.** The summary read 1 workbook written of 2
+templates ticked on a press that wrote 98, because it counted templates and called them
+workbooks. It counts workbooks and plots now, with the templates said as the thing the plots
+were spread over.
 
 ## Adding printed numbers is allowed, working one out is not
 

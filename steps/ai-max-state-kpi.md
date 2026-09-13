@@ -1,5 +1,70 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Sixty fifth pass, four things off the first per plot run. NG05 at 00:00, 99
+plots, 98 workbooks. **The tree is right, both files recalculate with zero errors and the street
+reference file works**: ANH-007-ST-100217 came out ROW 36, length 928.782391, and the workbook
+computed the area at 33,436.17 itself. **The audit files stay the one record and this round
+closes none of their findings.** Everything here is wording or a count. Nothing new reads a
+model.
+
+**CHARACTER AND CONTEXT ARE FOUND BY THEIR LABELS AND NEVER BY A LETTER.** Measured by Bader off
+the three workbooks written on 13 September: mosques and schools carry Character at C7 with its
+value at D7 and Context at E7 with its value at F7, and streets carry a Category FORMULA at D7
+with Character and Context one pair to the right at F7 and H7. A map holding D7 because two of
+three templates say so would have destroyed the street sheet's own calculation. `FixedCells.In`
+opens the template when Create is pressed, reads its main sheet, looks for the label and writes
+the cell to its RIGHT. The street's Category is never touched because nothing looks for the word
+Category. A label matched whole and without case, a template naming neither writing nothing and
+saying so, a label found twice writing nothing and naming both cells, and `LabelledCell.Holds`
+carrying what the cell already held, because the mosque template came filled and the report must
+not read as though this run put those values there. `KpiCreatePlan.Of` takes the labels as a
+thirteenth REQUIRED argument and throws on null.
+
+**The name box is gone and `OutputName.Suggested` is DELETED on the SECOND of the two reasons.**
+Reachability is the first and it is the test that was wrong last round. This is the other one:
+the shape it recorded no longer exists, because there is no one file per template any more. One
+line stands where the box was, saying the root, the component folder, the UID2 and the workbook
+named after its folder, with one real path. `Final` and `Extension` stay, because a file still
+has to be named.
+
+**COUNT WHAT HAPPENED, NEVER WHAT WAS PLANNED.** The run read MOSQUES: Nothing was written. 20 of
+21 plots wrote a workbook, beside twenty workbooks on disk. `TemplateOutcome` counts workbooks
+now, `WroteSomeOfThem` is the case that had no word before, and **refused is kept only where
+NOTHING was written**. The summary line read 1 workbook written of 2 templates ticked on a run
+that wrote 98, so it counts workbooks, plots and templates each as itself.
+
+**The create block is one line per template with its notes under it.** `CreateWords.Range` names
+up to four plots and gives the count and the first to last beyond that, so 78 street plots read
+as a count and a range rather than 78 names. A note and a refusal no longer look alike: the
+links, the groups left out and a template with no ticked plot go through a new `Noted` in the
+ordinary text colour. `LinksLoaded.OnThePane` gives the count and what to do rather than six
+lines of paths. The STREETS area line said the number is typed by hand and it is not, so it now
+says the sheet works it out from the road width and the total length off the reference file.
+**Nothing moved and no control changed.**
+
+Four break watches went red on 5, 1, 1 and 1 tests and were restored byte for byte, each checked
+with a diff against its backup. The first is the one that matters: taking D7 as the value cell,
+which is what two of the three templates use, reddens the street test that exists to stop the
+formula being overwritten. Seven existing tests were changed by hand, each because the truth
+under it moved.
+
+**OPEN, FOR BADER: non-permeable hardscape is blank on every workbook and no note mentions it.**
+Nobody has said where it comes from and nothing here names a schedule, a parameter or a filter
+that would produce it. It is written in the log as a question rather than guessed at. Three
+things would settle it: which schedule or parameter holds it, whether it is an area or a count,
+and whether a plot with none prints a zero or stays blank.
+
+**`writing-check.sh` CANNOT SEE A COMMIT MESSAGE PASSED ON STANDARD INPUT.** This round's first
+commit used `-F -` and carried a co-author credit line, which that hook exists to refuse, and it
+was taken in silence. `commit-scope.py` skips a message file named `-` with a bare continue, so
+all three commit hooks scan an empty string. The commit was reset and made again through a file
+the hook can open. **The hook is not changed here**, because it belongs to no task and every
+session depends on it. It is written up for Bader in the log with the one line fix.
+
+**Locally 1640 tests at this branch, 0 failed and 0 skipped, 820 of them KPI, 15 added, against
+the 1625 main carries** at the branch point `70fdb82`. Build zero warnings. MERGE_LINE
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.**
+
 Phase: 9, ship. Sixty fourth pass, one workbook per plot in a folder tree, off how the team
 really files these. **The audit files stay the one record: counted off them today, 49
 findings, 13 FIXED, 36 OPEN, and this round closes none.** The round message said 32 open. That
