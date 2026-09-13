@@ -4,14 +4,16 @@ using System.Linq;
 using System.Reflection;
 using Autodesk.Revit.UI;
 using RcrcGreen.Revit.Kpi;
+using RcrcGreen.Revit.ViewFilters;
 
 namespace RcrcGreen.Revit
 {
     /// <summary>
-    /// Builds the ribbon and registers the two dockable panes.
+    /// Builds the ribbon and registers the three dockable panes.
     ///
-    /// One tab holding two panels side by side. Drawing Sheet keeps its single button. KPI is
-    /// a panel built to carry several buttons later and carries one this round.
+    /// One tab holding three panels side by side. Drawing Sheet keeps its single button. KPI
+    /// is a panel built to carry several buttons later and carries one this round. View
+    /// Filters carries its one button the same way.
     /// </summary>
     public class RcrcGreenApplication : IExternalApplication
     {
@@ -20,6 +22,8 @@ namespace RcrcGreen.Revit
         public const string DrawingSheetPanelName = "Drawing Sheet";
 
         public const string KpiPanelName = "KPI";
+
+        public const string ViewFiltersPanelName = "View Filters";
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -49,6 +53,12 @@ namespace RcrcGreen.Revit
                 ShowKpiCommand.PaneTitle,
                 () => new KpiPanel());
 
+            ShowViewFiltersCommand.PaneRegistered = Registered(
+                application,
+                ShowViewFiltersCommand.PaneId,
+                ShowViewFiltersCommand.PaneTitle,
+                () => new ViewFiltersPane());
+
             RibbonPanel drawingSheet = PanelNamed(application, DrawingSheetPanelName);
             Add(drawingSheet, ShowDrawingSheetCommand.ButtonName, ShowDrawingSheetCommand.ButtonText,
                 typeof(ShowDrawingSheetCommand),
@@ -77,6 +87,20 @@ namespace RcrcGreen.Revit
                       + "itself when it needs to, and writes a text file saying where every value "
                       + "came from. It creates nothing in the model and never writes to a template."
                     : ShowKpiCommand.NotAvailable);
+
+            // The third panel, one button, same shape as the KPI one. Scan in the pane reads
+            // and changes nothing, and Apply is the only thing that writes, one transaction.
+            RibbonPanel viewFilters = PanelNamed(application, ViewFiltersPanelName);
+            Add(viewFilters, ShowViewFiltersCommand.ButtonName, ShowViewFiltersCommand.ButtonText,
+                typeof(ShowViewFiltersCommand),
+                ShowViewFiltersCommand.PaneRegistered
+                    ? "Open the View Filters pane."
+                    : ShowViewFiltersCommand.NotAvailableTip,
+                ShowViewFiltersCommand.PaneRegistered
+                    ? "Scan shows, per plot, which of the keyword views' filters exist, will be "
+                      + "created, or cannot be. Apply adds and configures them in one "
+                      + "transaction, one undo, and writes a report of every line it logged."
+                    : ShowViewFiltersCommand.NotAvailable);
 
             return Result.Succeeded;
         }

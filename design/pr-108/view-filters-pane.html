@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>View Filters pane, hand drawn from the code</title>
+<style>
+  body { background: #2e2e2e; color: #e6e6e6; font-family: "Segoe UI", sans-serif; font-size: 12px; margin: 0; padding: 24px; }
+  .note { background: #4a3a1a; color: #e6e6e6; padding: 10px 14px; margin-bottom: 18px; max-width: 460px; }
+  .pane { width: 420px; background: #2e2e2e; border: 1px solid #4a4a4a; }
+  .strip { background: #262626; padding: 6px 8px; }
+  .strip b { display: block; }
+  .strip span { color: #aaaaaa; }
+  .body { padding: 8px; }
+  .head { font-weight: bold; margin: 10px 0 4px 0; }
+  .faint { color: #aaaaaa; margin: 3px 0; }
+  textarea { width: 96%; height: 56px; background: #262626; color: #e6e6e6; border: 1px solid #4a4a4a; font: inherit; }
+  .row { border-bottom: 1px solid #4a4a4a; margin-bottom: 4px; padding: 6px 6px 8px 10px; }
+  .line { margin: 3px 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  input[type=text] { background: #262626; color: #e6e6e6; border: 1px solid #4a4a4a; font: inherit; }
+  .hex { width: 64px; }
+  .swatch { width: 16px; height: 16px; border: 1px solid #4a4a4a; display: inline-block; }
+  select { background: #262626; color: #e6e6e6; border: 1px solid #4a4a4a; font: inherit; width: 70px; }
+  button { background: #3a3a3a; color: #e6e6e6; border: 1px solid #4a4a4a; padding: 2px 8px; font: inherit; }
+  button.primary { background: #6eb083; color: #1a1a1a; }
+  button[disabled] { color: #777777; }
+  table { border-collapse: collapse; margin: 4px 0; }
+  th, td { border: 0; padding: 2px 6px; height: 20px; text-align: left; white-space: nowrap; }
+  tr:nth-child(odd) td { background: #343434; }
+  .status { background: #262626; border-top: 1px solid #4a4a4a; padding: 6px 8px; }
+</style>
+</head>
+<body>
+<div class="note">
+This is a mockup drawn by hand from ViewFiltersPane.cs, not a screenshot. It cannot show
+how Revit will render the pane, only the layout and the wording, so it is for reading
+before an install is spent. Dark theme values from PanelTheme are used. The grid, the
+lists and the results are example values in the code's own words, not a run's output.
+</div>
+
+<div class="pane">
+  <div class="strip">
+    <b>View Filters</b>
+    <span>Scan reads and changes nothing. Apply writes once, one undo.</span>
+  </div>
+  <div class="body">
+    <div class="head">KEYWORDS</div>
+    <div class="faint">A view is read when its name holds any of these, one per line. A comma or a semicolon also separates them.</div>
+    <textarea>Location Key Plan
+Overall Key Plan
+General Arrangement Layout</textarea>
+
+    <div class="head">FILTER ROWS</div>
+    <div class="faint">The rows below are the defaults from ViewFilters.json beside the installed add-in.</div>
+
+    <div class="row">
+      <div class="line">Prefix <input type="text" size="24" value="(200-260) Presentation"> <button>Remove row</button></div>
+      <div class="line"><label><input type="checkbox" checked> Enabled</label> <label><input type="checkbox" checked> Visible</label> <label><input type="checkbox"> Halftone</label></div>
+      <div class="line"><label><input type="checkbox"> Line colour</label> <input type="text" class="hex" value="#FF0000"> <span class="swatch" style="background:#FF0000"></span> Weight <select><option>0</option></select> <span class="faint">0 keeps the view's own</span></div>
+      <div class="line"><label><input type="checkbox"> Foreground pattern</label> <select><option>none</option></select> <input type="text" class="hex" value="#00FF00"></div>
+      <div class="line"><label><input type="checkbox"> Background pattern</label> <select><option>none</option></select> <input type="text" class="hex" value="#00FF00"></div>
+    </div>
+    <div class="row">
+      <div class="line">Prefix <input type="text" size="24" value="(200-260) Sections Scope"> <button>Remove row</button></div>
+      <div class="line"><label><input type="checkbox" checked> Enabled</label> <label><input type="checkbox"> Visible</label> <label><input type="checkbox"> Halftone</label></div>
+      <div class="line"><label><input type="checkbox"> Line colour</label> <input type="text" class="hex" value="#0000FF"> <span class="swatch" style="background:#0000FF"></span> Weight <select><option>0</option></select> <span class="faint">0 keeps the view's own</span></div>
+      <div class="line"><label><input type="checkbox"> Foreground pattern</label> <select><option>none</option></select> <input type="text" class="hex" value="#FFFF00"></div>
+      <div class="line"><label><input type="checkbox"> Background pattern</label> <select><option>none</option></select> <input type="text" class="hex" value="#FFFF00"></div>
+    </div>
+    <div class="faint">Two more rows follow the same shape, (200-260) Intervention Limit and (215) Borders Edging.</div>
+    <button>Add row</button>
+
+    <div class="head">SCAN</div>
+    <div class="faint">Rows are plots, columns are the filter prefixes, and each square says whether that filter exists, will be created, or cannot be.</div>
+    <button>Scan</button>
+    <div class="faint">Read 41 matching views on NG05: 12 plots, 3 skipped, 2 blocked.</div>
+    <table>
+      <tr><th></th><th>(200-260) Presentation</th><th>(200-260) Sections Scope</th></tr>
+      <tr><td><b>DM-2</b></td><td>Exists</td><td>Will create</td></tr>
+      <tr><td><b>DM-41</b></td><td>Will create</td><td>Cannot create</td></tr>
+      <tr><td><b>PF-12</b></td><td>Exists</td><td>Exists</td></tr>
+    </table>
+    <div class="head">Skipped, 3 views whose names do not start with a plot id</div>
+    <div class="faint">General Arrangement Layout</div>
+    <div class="head">Blocked, 2 views whose templates own the filters setting</div>
+    <div class="faint">NS-06-(010) Overall Key Plan&nbsp;&nbsp;&nbsp;template PRX-Overall 010</div>
+
+    <div class="head">APPLY</div>
+    <button class="primary" disabled>Apply</button>
+    <div class="faint">Scan again</div>
+
+    <div class="head">RESULTS</div>
+    <div class="faint">Views evaluated 41</div>
+    <div class="faint">Views modified 36</div>
+    <div class="faint">Filters added to views 22</div>
+    <div class="faint">Filters configured 72</div>
+    <div class="faint">Filters created in the document 9</div>
+    <div class="faint">Filter lookups with nothing to use 2</div>
+    <div class="faint">Views skipped, no plot id 3</div>
+    <div class="faint">Views blocked by their template 2</div>
+  </div>
+  <div class="status">Done. 36 of 41 views changed. The report is in the reports folder.</div>
+</div>
+</body>
+</html>

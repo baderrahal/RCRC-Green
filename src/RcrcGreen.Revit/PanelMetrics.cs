@@ -84,6 +84,26 @@ namespace RcrcGreen.Revit
         public const double LabelWidth = 54.0;
 
         /// <summary>
+        /// The View Filters keyword box, tall enough to show its three default lines at
+        /// once. Added for that pane and used by nothing on the other two.
+        /// **This number has not been seen in Revit.**
+        /// </summary>
+        public const double KeywordsHeight = 64.0;
+
+        /// <summary>
+        /// The square that shows what a hex box parses to on a View Filters row. Small on
+        /// purpose: it answers is this the colour I meant, nothing more.
+        /// **This number has not been seen in Revit.**
+        /// </summary>
+        public const double Swatch = 16.0;
+
+        /// <summary>
+        /// A View Filters hex box and its weight picker, sized for #FF0000 and two digits.
+        /// **This number has not been seen in Revit.**
+        /// </summary>
+        public const double HexWidth = 64.0;
+
+        /// <summary>
         /// A wider caption column for the KPI pane's typed boxes. Prepared by is the longest of
         /// the three captions and came out as Prepared b, running into its box, at the shared 54.
         ///

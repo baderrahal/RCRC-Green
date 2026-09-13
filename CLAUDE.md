@@ -1,9 +1,11 @@
 # RCRC Green
 
-A Revit 2024 add-in for the landscape production team, built as four tasks by sessions that
-cannot see each other. Drawing Sheet reads the model, shows a grid of which views exist per
-plot, and creates the missing ones. KPI scans a model and fills the client's GRP KPI
-Checklist workbook from it. Coordination Layout and BOQ Schedules are next.
+A Revit 2024 add-in for the landscape production team, built as separate tasks by sessions
+that cannot see each other. Drawing Sheet reads the model, shows a grid of which views exist
+per plot, and creates the missing ones. KPI scans a model and fills the client's GRP KPI
+Checklist workbook from it. View Filters adds and configures per plot view filters on the
+keyword views, a run ported whole from another host, with its rules in
+`.claude/rules/view-filters-rules.md`. Coordination Layout and BOQ Schedules are next.
 
 Read `.claude/skills/ai-max/SKILL.md` and `.claude/rules/territory.md` before doing any work
 in this repo. The first sets the phase order, the writing rules and the reporting rules. The

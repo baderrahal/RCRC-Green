@@ -19,6 +19,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\presets.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
 
 .PARAMETER Configuration
 Which build to install. Release unless you are debugging.
@@ -128,6 +129,15 @@ $presets = Join-Path $PSScriptRoot 'presets.txt'
 if (Test-Path -LiteralPath $presets) {
     Copy-Item -LiteralPath $presets -Destination $assemblyFolder -Force
     $copied.Add((Join-Path $assemblyFolder 'presets.txt'))
+}
+
+# The View Filters pane's default filter rows. Copied on every install like the title
+# blocks, so a new default reaches the machine, and the pane edits rows in memory only, so
+# nothing a person chose is overwritten by this.
+$viewFilters = Join-Path $PSScriptRoot 'ViewFilters.json'
+if (Test-Path -LiteralPath $viewFilters) {
+    Copy-Item -LiteralPath $viewFilters -Destination $assemblyFolder -Force
+    $copied.Add((Join-Path $assemblyFolder 'ViewFilters.json'))
 }
 
 $templatesPointer = Join-Path $assemblyFolder 'templates-folder.txt'
