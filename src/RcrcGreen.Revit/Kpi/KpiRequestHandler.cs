@@ -675,19 +675,12 @@ namespace RcrcGreen.Revit.Kpi
                     ? KpiPlotReader.RegionsFor(document, plotId)
                     : new List<RegionArea>();
 
-                // One region holding an area answers itself. More than one is a question the
-                // type name cannot settle, so it is left unchosen and the reconciliation
-                // refuses until a person picks.
-                string chosen = string.Empty;
-                if (areaWanted)
-                {
-                    chosen = asked.RegionChosenFor(plotId);
-                    if (chosen.Length == 0)
-                    {
-                        List<RegionArea> holding = regions.Where(one => one.HoldsAnArea).ToList();
-                        if (holding.Count == 1) chosen = holding[0].TypeName;
-                    }
-                }
+                // The rule is RegionChoice.For in Core, where the tests reach the copy that
+                // runs. It used to be written out here and again in the test fixture, and the
+                // two were not the same rule.
+                string chosen = areaWanted
+                    ? RegionChoice.For(regions, asked.RegionChosenFor(plotId))
+                    : string.Empty;
 
                 return KpiPlotReader.Read(
                     document, plotId, asked.ComponentParameter, asked.ReferenceParameter,

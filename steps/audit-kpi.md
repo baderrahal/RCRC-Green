@@ -186,6 +186,15 @@ any of the nineteen.
     gate says nothing. Shrubs and lawn are adjacent cells holding similar magnitudes, so nobody
     would catch it by eye either | A test file: one assertion per value against its cell
 
+    FIXED, in the sixty eighth pass, pull request 117.
+    `tests/RcrcGreen.Core.Tests/Kpi/ValueInItsOwnCellTests.cs` binds every value the tool
+    writes to the cell it belongs in, one case per value and two more holding a whole plan at
+    once: the three the team types into E5, G5 and H5, the component, the reference and the
+    location, the area, the shrubs and the lawn totals, the two street cells and the two fixed
+    ones. Every value in it is a different number or a different word, because two totals of a
+    size are what let a swap through. **Watched: the same swap of the shrubs and lawn totals in
+    `KpiCreatePlan.Of` reddens 4, the two that name the pair and the two whole plan cases.**
+
 11. QA | `src/RcrcGreen.Core/Kpi/WorkbookPatcher.cs:102` | **Nothing tests the read back.**
     Proved: replacing the `CellText` read of the output with `write.Stored`, so every landed cell
     reported what was sent, left the suite green at 904, 0 failed. Restored and rerun green.
@@ -195,6 +204,16 @@ any of the nineteen.
     the Drawing Sheet was rebuilt around after four views printed as both created and not
     created. Here it holds by intention only | A test that patches, corrupts the output, and
     asserts the outcome notices
+
+    FIXED, in the sixty eighth pass, pull request 117.
+    `tests/RcrcGreen.Core.Tests/Kpi/ReadBackNoticesTests.cs` reaches what `Patch` put on the
+    outcome rather than the separate public method. **The first attempt at it did not work and
+    that is recorded in the file**: corrupting a cell behind the tool's back proves nothing,
+    because the corrupted cell is not one the run wrote and the break stayed green under it. The
+    case that catches it is a cell written TWICE in one patch: the file holds the second value,
+    the outcome carries one landed cell per write, and reading the file gives the second for
+    both while reporting what was sent gives the first for the first entry. **Watched: replacing
+    the `CellText` read with `write.Stored` reddens 2, both naming the read back.**
 
 12. WIRING | `src/RcrcGreen.Revit/Kpi/KpiRequestHandler.cs:79` | The one slot guard stops only
     `WhichModel` from displacing another request. `Scan`, `Plots` and `Create` still overwrite
