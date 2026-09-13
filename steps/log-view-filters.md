@@ -6,6 +6,11 @@ Newest entry first.
 
 ## 2026-09-13, second pass. One colour box, three places, and the Windows picker behind it
 
+Shipped as pull request #111, squash merged at `386948e`, the title and the message passed
+on the merge call and back off main byte for byte, no co-author line and no generated-by
+footer. The runner read 1578 tests on the merge, 0 failed and 0 skipped, and merged main
+reads 1578 locally, the same number, because nothing else landed under this round.
+
 The round fixes the two pane faults: the two pattern rows had a hex box and no colour
 square where the line colour had one, and no square anywhere opened a picker. One control
 now, `HexColorBox` in `src/RcrcGreen.Revit/ViewFilters`, used three times on every row,
