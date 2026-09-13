@@ -36,7 +36,8 @@ import os
 import subprocess
 import sys
 
-TASKS = ["DrawingSheet", "Kpi", "ViewFilters", "CoordinationLayout", "BoqSchedules"]
+TASKS = ["DrawingSheet", "Kpi", "ViewFilters", "SheetTool", "CoordinationLayout",
+         "BoqSchedules"]
 
 TASK_ROOTS = [
     "src/RcrcGreen.Core/",

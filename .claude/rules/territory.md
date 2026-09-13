@@ -1,8 +1,12 @@
 # Territory
 
-Four tasks share this repo and the sessions building them cannot see each other. The
+Several tasks share this repo and the sessions building them cannot see each other. The
 boundaries live here and in `.claude/hooks/territory-check.sh` rather than in anybody's
 head. Read this before touching anything.
+
+**The hook's TASKS list is the authority on which tasks exist**, not this heading. This file
+fell behind it once already, so check the two against each other rather than trusting the
+count here.
 
 ## The tasks and where each lives
 
@@ -14,10 +18,13 @@ head. Read this before touching anything.
    command. Its test files sit flat at the root of `tests/RcrcGreen.Core.Tests`.
 2. **KPI.** `src/RcrcGreen.Core/Kpi`, `src/RcrcGreen.Revit/Kpi` and
    `tests/RcrcGreen.Core.Tests/Kpi`.
-3. **Coordination Layout**, not started. `src/RcrcGreen.Core/CoordinationLayout`,
+3. **Sheet Tool**, phase 1. `src/RcrcGreen.Core/SheetTool`, `src/RcrcGreen.Revit/SheetTool`
+   and `tests/RcrcGreen.Core.Tests/SheetTool` when it begins. What it does is not decided
+   yet and the questions are in `steps/sheet-tool-phase1.md`.
+4. **Coordination Layout**, not started. `src/RcrcGreen.Core/CoordinationLayout`,
    `src/RcrcGreen.Revit/CoordinationLayout` and
    `tests/RcrcGreen.Core.Tests/CoordinationLayout` when it begins.
-4. **BOQ Schedules**, not started. `src/RcrcGreen.Core/BoqSchedules`,
+5. **BOQ Schedules**, not started. `src/RcrcGreen.Core/BoqSchedules`,
    `src/RcrcGreen.Revit/BoqSchedules` and `tests/RcrcGreen.Core.Tests/BoqSchedules` when it
    begins.
 
