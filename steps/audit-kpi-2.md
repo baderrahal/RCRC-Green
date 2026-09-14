@@ -124,6 +124,18 @@ None new. Finding 2 of the first audit is the open BLOCKS and is unchanged.
     `StreetsAreaTests.OnStreetsTwoPlotsReadingOneAreaDoNotRefuse` and its MOSQUES twin go red
     without it. Not observed in Revit.
 
+    REVERSED IN THE SEVENTY THIRD PASS, pull request 122, BECAUSE THE TEMPLATE CHANGED. **The
+    finding was right and its fix was right.** The client then reissued the STREETS template with
+    ONE cell different in the whole workbook, measured by diffing the two files: 4,160 cells
+    against 4,159, no named range moved, no other sheet touched. H8, Streets Total Area, was
+    `=Width*F8` and is empty, and their reference copy says it is PRX_Intervention Area off the
+    00 link. So STREETS has an area cell again and takes an area again, by one entry in its own
+    map, and every area path turns back on for it because they all ask the map and none of them
+    asks the template's name. The tests that pinned the old behaviour are rewritten as their
+    mirrors in `StreetsTakesAnAreaTests`. **Nothing here says the fix was wrong**, and the shape
+    the finding named, a template whose map holds no area cell, is still expressed and still
+    guarded.
+
 32. REPORTS | `src/RcrcGreen.Core/Kpi/ScheduleRows.cs:168-171` with
     `src/RcrcGreen.Core/Kpi/KpiCreateReport.cs:136-170` | **The softscape schedule prints a
     TOTAL row and nothing reads it, so a species row the reader drops is invisible.**

@@ -961,9 +961,11 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(Noted(_facts.Links.OnThePane));
             }
 
-            foreach (WorkbookTick tick in Settled().Where(one => one.SettledAs.AreaIsTypedByHand))
+            // No template names no area cell today, STREETS included since the client emptied
+            // H8, so this draws nothing. It stays because the map can still express one.
+            foreach (WorkbookTick tick in Settled().Where(one => one.SettledAs.TakesNoArea))
             {
-                _templates.Children.Add(Faint(tick.SettledAs.Name + ": " + CreateWords.AreaTypedByHand));
+                _templates.Children.Add(Faint(tick.SettledAs.Name + ": " + CreateWords.TakesNoArea));
             }
 
             foreach (KpiCreateRun run in Held().Where(one => !one.Reconciliation.AddsUp))

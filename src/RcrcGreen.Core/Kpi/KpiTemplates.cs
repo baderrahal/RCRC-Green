@@ -83,9 +83,16 @@ namespace RcrcGreen.Core.Kpi
                 new MappedCell(KpiValue.Shrubs, "F11"),
                 new MappedCell(KpiValue.Lawn, "H11"),
 
-                // The two cells this template says are typed by hand, filled off the team's
-                // scope validation file rather than by hand. H8 is D8 times F8 and the workbook
-                // computes it, so nothing is written there.
+                // **H8 WAS =Width*F8 AND THE CLIENT EMPTIED IT.** One cell changed in the whole
+                // reissued workbook, 4,160 against 4,159, and their reference copy says it is
+                // PRX_Intervention Area off the 00 link, the same source every other template's
+                // area comes from. So this template takes an area again and every area path
+                // turns back on for it, because they all read the map rather than the name.
+                new MappedCell(KpiValue.Area, "H8"),
+
+                // Two cells this sheet used to compute H8 from and still holds, filled off the
+                // team's scope validation file rather than typed by hand. Three cells on one row
+                // from three sources now, and the workbook computes none of them.
                 new MappedCell(KpiValue.StreetsRoadWidth, "D8"),
                 new MappedCell(KpiValue.StreetsTotalLength, "F8")
             },

@@ -4,6 +4,158 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy third pass. STREETS takes an area again, because the client reissued it
+
+**1732 tests, 912 of them KPI, 28 hook cases**, against the 1729 main carries at the branch
+point. Build zero warnings. **No audit finding is closed, renumbered or reordered: read off the
+three files, 63 numbered findings, 19 carrying a FIXED mark, 44 open.** Finding 31 keeps its
+FIXED mark and gains a note, for the reason under item 1.
+
+### The measurement this round rests on, which is one cell
+
+The client reissued the STREETS template and it was diffed against the one that ran this
+morning. **4,160 cells against 4,159, no named range moved, no other sheet touched.**
+
+```
+H8, Streets Total Area (m2)     was  =Width*F8     now  empty
+```
+
+Their reference copy says where the three cells of that row come from:
+
+```
+H8 = REVIT 00 LINK / ID FILLED REGION "RCRC_OUT OF SCOPE (PRESENTATION)" / PRX_Intervention Area
+D8 = EXCEL FILE "Scope Validation 21072026" / COLUMN O1 "ROAD_WIDTH"
+F8 = EXCEL FILE "Scope Validation 21072026" / COLUMN H1 "ES_QUANTITY"
+```
+
+**Three cells on one row, three sources, and the workbook computes none of them.**
+
+### 1. STREETS takes an area again, and finding 31 is reversed by the TEMPLATE changing
+
+`KpiTemplates` gained one entry, `new MappedCell(KpiValue.Area, "H8")`, and every area path
+turned back on for STREETS with nothing else touched. That is the whole change, and it is the
+answer to the round's own instruction not to hard code H8: **`KpiTemplate.TakesNoArea` reads the
+MAP**, so the filled region read, the region choice, the reconciliation refusal, the identical
+area confirm and the report section all ask that one thing and all came back on together.
+
+**Finding 31's entry keeps its FIXED mark and carries a note saying the template changed.** The
+finding was right when it was written, its fix was right, and writing it off as wrong would put
+a false record in the audit file. What is recorded under it is REVERSED IN THE SEVENTY THIRD
+PASS, pull request 122, BECAUSE THE TEMPLATE CHANGED. **The counts are untouched at 63, 19 and
+44**, because a reversal is not a finding and renumbering would break every reference to the
+other 62.
+
+**`AreaIsTypedByHand` is renamed `TakesNoArea`, and the old name was a lie from the first day.**
+No template ever typed an area by hand. STREETS computed one from two cells, which is not typing,
+and the other six read one from the model. **A name that tells one template's story stops being
+true when that template changes**, and this one was read by four call sites in two projects. The
+words it fed said typed by hand on the pane, in the create plan and in the template block, and
+all three now say the template names no area cell, which is what the property really answers.
+
+**No template names no area cell today**, so that path is live for nothing. It is kept, with
+that fact written down beside it, because the map can still express such a template and it is
+one client reissue from being needed again. This round is the proof.
+
+### 2. The client's note names a type and at least two street plots disagree. NOTHING chooses on it
+
+Their note names `RCRC_OUT OF SCOPE (PRESENTATION)`. The rule is unchanged and nothing was
+narrowed to that type: the plot's own regions are read, the one holding a non zero area is
+taken, and more than one asks. Measured 9 September, and it is why:
+
+```
+DM-11, DM-12, DM-13     area on OUT OF SCOPE, cadastral 0
+NS-19, NS-06            area on CADASTRAL LIMIT, out of scope 0
+```
+
+**NS-19 and NS-06 are street plots**, which are the plots this note is written for.
+
+`RegionChoice.TheNoteNames` holds the note's type as data and `AgainstTheNote` turns a chosen
+type into `the type the note names` or `NOT the type the note names` or `nothing chosen`. The
+region table in the create report carries that as a column beside each plot's real answer, and
+the closing line under it says outright that nothing chooses on the name.
+
+**OPEN QUESTION FOR BADER.** The client's note says the area is on OUT OF SCOPE and NS-19 and
+NS-06 hold it on CADASTRAL LIMIT with out of scope at 0. Is the note wrong for street plots, are
+those two plots modelled wrongly, or is it correct for both types on different plots and the
+note simply names the commoner one? The tool reads neither name and takes whichever region holds
+the area, so it is right either way today. **A run over 78 street plots now answers it by
+counting**, one column per plot, which is a measurement rather than an argument. Nothing changes
+in the code until he says so.
+
+### 3. A FIXTURE WHOSE NAMES ARE NOT THE MODEL'S CANNOT CATCH A RULE ABOUT NAMES
+
+Break watch 2 broke `RegionChoice` to settle two regions holding an area on the type the note
+names, which is exactly the rule item 2 forbids. Three tests went red and **all eight cases of
+`RegionChoiceTests`, the file that owns the rule, stayed GREEN.**
+
+Its fixture read `CADASTRAL LIMIT` and `OUT OF SCOPE (PRESENTATION)`. The model's types are
+`RCRC_CADASTRAL LIMIT` and `RCRC_OUT OF SCOPE (PRESENTATION)`, measured in the 00 link, 124 and
+155 regions. So a rule keyed on the real type name walked past every case in the file written to
+protect that rule. The names are the model's own now and a case was added for the note's type in
+both orders. The same break then reddens 2 of them.
+
+**A test file about type names that does not carry the model's type names is a test file about
+nothing**, and it read exactly like a passing suite for as long as it stood.
+
+### 4. Read every rule off the template, never off the notes copy
+
+The reissued pair disagrees with itself about rows:
+
+```
+                          notes copy      template
+existing canopy sum       M93             M102
+native count over         H3:H91          H3:H101
+```
+
+**THE TEMPLATE WINS.** The notes copy says where a value comes from and nothing else, and the
+annotations were plainly made on an older file.
+
+**This is the SECOND time an annotated set and a production set have differed.** The first was
+the seven of 9 September, where the annotated set carried the mapping in green note cells and
+the production set carried no note cell at all, measured at zero in all seven, which is why
+`KpiTemplates` holds the map as data and nothing reads a mapping out of a workbook. That the two
+can also disagree about a ROW is new. Nothing in the tool reads either of those two ranges, so
+no code changed for this and it is written into the rules file as the rule for the next one.
+
+### 5. Street Design and Proposed are both Proposed on STREETS. CONFIRMED
+
+Bader confirmed it with the client, 14 September. **Nothing changes in code**: that is what
+`KpiTemplate.GroupsCountedAsProposed` has done since the sixtieth pass and what ST-05 measured,
+369 existing, 2 proposed, 68 street design, 70 into Tree List - Proposed against the schedule's
+own TOTAL of 439. It is recorded in `kpi-rules.md` as CONFIRMED BY BADER with the date, because
+**a rule the client has confirmed reads differently from one the tool inferred**, and this one
+had been sitting as a September decision nobody had checked since.
+
+The two beside it are recorded as NOT confirmed in the same place, so the confirmation cannot
+quietly cover them: a Street Design group is still left out and named on every template that is
+not STREETS, which is Bader's own decision of 10 September, and a group named anything other
+than Existing, Proposed or Street Design is out of scope on every template including STREETS.
+**A confirmation covers what was asked and nothing sitting next to it.**
+
+### The two break watches, and what each reddened
+
+**Break 1, the area cell.** STREETS' area cell set to `H7`, the letter the other six use.
+**4 red.** `StreetsNamesH8ForTheAreaAndItsOtherCellsAreUnmoved` failed with `Expected: "H8" /
+Actual: "H7"`, which names the thing that was broken.
+
+**Break 2, the note's type.** `RegionChoice` made to settle two regions holding an area by
+taking the one the note names. **3 red**, among them
+`OnStreetsTwoRegionsHoldingAnAreaAskTheSameWayAsOnMosques`. It reddened what it aimed at and it
+ALSO showed the gap in section 3 above, which is the only reason that gap was found.
+
+Both files were copied out before the break and `diff -q` against the copy after restoring them,
+so the suite that produced 1732 is over the real code and not over a half restored file.
+
+### Still open, unchanged by this round
+
+The 44 audit findings. A row written into an empty one carries no family, no genus and no native
+flag. A matched species whose height or diameter in Revit differs from the client's row. The
+1548 scan's GOVERMENT BUILDING folder, spelt that way, and whether it is the ninth. Whether rows
+edited in the pane should outlive the pane. And the note's own type, item 2 above, which is the
+new one.
+
+---
+
 ## 2026-09-14, seventy second pass. A plot could get a template and no folder, and six did
 
 Two things off the 09:18 run, NG05, 156 plots over 7 templates, 150 workbooks. **1729 tests, 909

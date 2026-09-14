@@ -25,16 +25,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Assert.NotNull(template.CellFor(KpiValue.Shrubs));
                 Assert.NotNull(template.CellFor(KpiValue.Lawn));
 
-                if (template.Name == "STREETS")
-                {
-                    Assert.Null(template.CellFor(KpiValue.Area));
-                    Assert.True(template.AreaIsTypedByHand);
-                }
-                else
-                {
-                    Assert.NotNull(template.CellFor(KpiValue.Area));
-                    Assert.False(template.AreaIsTypedByHand);
-                }
+                // **Every template names an area cell**, STREETS included since the client
+                // emptied its H8 and said it comes off the 00 link.
+                Assert.NotNull(template.CellFor(KpiValue.Area));
+                Assert.False(template.TakesNoArea);
 
                 foreach (MappedCell cell in template.Cells)
                 {
@@ -68,7 +62,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("MOSQUES", "D3", "E4", "H7", "F10", "H10")]
         [InlineData("PARKING", "D3", "E4", "H7", "F10", "H10")]
         [InlineData("SCHOOLS", "D3", "E4", "H7", "F10", "H10")]
-        [InlineData("STREETS", "D3", "E4", null, "F11", "H11")]
+        [InlineData("STREETS", "D3", "E4", "H8", "F11", "H11")]
         public void EachValueGoesIntoTheCellMeasuredOffTheAnnotatedSet(
             string name, string component, string location, string area, string shrubs, string lawn)
         {

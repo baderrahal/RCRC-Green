@@ -392,8 +392,7 @@ namespace RcrcGreen.Core.Kpi
         /// section reads as a read that did not happen and never as a plot with no area. The
         /// words are the pane's own line for the same condition, with why nothing was refused.
         /// </summary>
-        public static readonly string AreaNotRead = "not read. " + CreateWords.AreaTypedByHand
-            + " No filled region was read for any plot and nothing about the area was refused on.";
+        public static readonly string AreaNotRead = "not read. " + CreateWords.TakesNoArea;
 
         /// <summary>
         /// Each plot's own number and the total underneath it, so the arithmetic can be checked
@@ -1121,8 +1120,8 @@ namespace RcrcGreen.Core.Kpi
         private static void TheRegions(StringBuilder report, KpiCreateRun run)
         {
             Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF, AND WHAT IT READ");
-            Line(report, "  plot | chosen type | raw square feet | written square metres | "
-                + "as the model prints it | offered");
+            Line(report, "  plot | chosen type | against the client's note | raw square feet | "
+                + "written square metres | as the model prints it | offered");
             foreach (PlotReading reading in run.Readings)
             {
                 RegionArea chosen = reading.ChosenRegion;
@@ -1130,6 +1129,7 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, "  " + Join(
                     reading.PlotId,
                     reading.ChosenRegionTypeName.Length == 0 ? "(none)" : reading.ChosenRegionTypeName,
+                    RegionChoice.AgainstTheNote(reading.ChosenRegionTypeName),
                     chosen == null ? "(none)" : Exactly(chosen.RawSquareFeet),
                     chosen == null ? "(none)" : Exactly(chosen.SquareMetres),
                     chosen == null ? "(none)" : Shown(chosen.Printed),
@@ -1138,6 +1138,15 @@ namespace RcrcGreen.Core.Kpi
                         : string.Join(", ", reading.Regions
                             .Select(one => one.TypeName + " " + Number(one.SquareMetres)).ToArray())));
             }
+
+            // **The client's note names one type and at least two street plots disagree.** The
+            // tool chooses on the area rather than the name, and printing the note beside the
+            // real answer is what turns that disagreement into a count somebody can read off a
+            // run over 78 street plots.
+            Line(report, "  The client's note for the area cell names "
+                + RegionChoice.TheNoteNames + ". Nothing here chooses on that name:");
+            Line(report, "  the plot's own region holding an area decides, and the column above "
+                + "says whether the two agreed.");
         }
 
         /// <summary>

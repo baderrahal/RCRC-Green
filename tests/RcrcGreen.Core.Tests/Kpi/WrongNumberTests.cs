@@ -410,12 +410,26 @@ namespace RcrcGreen.Core.Tests.Kpi
     }
 
     /// <summary>
-    /// Finding 31. **STREETS has no area cell, so on STREETS the area is not read and nothing
-    /// about the area is refused on.** MM-03 and MM-04 are street plots reading one raw area,
-    /// and the first 78 plot run would have ended asking the user to confirm an area the
-    /// workbook has no cell for, then read all 78 again.
+    /// **THE CLIENT REISSUED THE STREETS TEMPLATE AND H8 IS EMPTY, SO STREETS TAKES AN AREA
+    /// AGAIN.** One cell changed in the whole workbook, measured by diffing it against the one
+    /// that ran on 14 September: 4,160 cells against 4,159, no named range moved, no other sheet
+    /// touched.
+    ///
+    /// <code>
+    /// H8, Streets Total Area (m2)   was  =Width*F8   now  empty
+    /// </code>
+    ///
+    /// Their reference copy says H8 is PRX_Intervention Area off the 00 link, which is where
+    /// every other template's area comes from. D8 and F8 are unchanged and still come off the
+    /// scope validation file, so **three cells on one row now come from three sources and the
+    /// workbook computes none of them.**
+    ///
+    /// This reverses finding 31, and it reverses it because THE TEMPLATE CHANGED rather than
+    /// because the finding or its fix was wrong. STREETS is back on the same path as every other
+    /// template, and it got there by one entry in its own map: nothing anywhere tests the
+    /// template's NAME.
     /// </summary>
-    public class StreetsAreaTests
+    public class StreetsTakesAnAreaTests
     {
         private static PlotReading[] TwoStreetPlotsReadingOneArea()
         {
@@ -432,35 +446,60 @@ namespace RcrcGreen.Core.Tests.Kpi
             };
         }
 
+        /// <summary>
+        /// **THE ONE CELL THAT MOVED, WRITTEN OUT BY HAND.** H8 is the area, D8 the road width
+        /// and F8 the total length, and the other four are as they were. Nothing here reads the
+        /// template's name: the map is what turns the area on.
+        /// </summary>
         [Fact]
-        public void OnStreetsTwoPlotsReadingOneAreaDoNotRefuse()
+        public void StreetsNamesH8ForTheAreaAndItsOtherCellsAreUnmoved()
         {
-            Reconciliation held = Reconciliation.Of(
-                new[] { "MM-03", "MM-04" }, TwoStreetPlotsReadingOneArea(), null, false, KpiTemplates.Streets);
+            Assert.Equal("H8", KpiTemplates.Streets.CellFor(KpiValue.Area).Cell);
+            Assert.False(KpiTemplates.Streets.TakesNoArea);
 
-            Assert.True(held.AddsUp);
-            Assert.False(held.AreaWanted);
-            Assert.Empty(held.IdenticalAreas);
-            Assert.Empty(held.WithoutArea);
+            Assert.Equal("D8", KpiTemplates.Streets.CellFor(KpiValue.StreetsRoadWidth).Cell);
+            Assert.Equal("F8", KpiTemplates.Streets.CellFor(KpiValue.StreetsTotalLength).Cell);
+            Assert.Equal("D3", KpiTemplates.Streets.CellFor(KpiValue.Component).Cell);
+            Assert.Equal("E4", KpiTemplates.Streets.CellFor(KpiValue.Location).Cell);
+            Assert.Equal("F11", KpiTemplates.Streets.CellFor(KpiValue.Shrubs).Cell);
+            Assert.Equal("H11", KpiTemplates.Streets.CellFor(KpiValue.Lawn).Cell);
         }
 
         /// <summary>
-        /// The same two plots on a template with an area cell still refuse, so the guard is
-        /// where it was and only STREETS steps round it.
+        /// **No template names no area cell now**, so the path that skips the region read is
+        /// live for nothing and every template goes down the same one.
         /// </summary>
         [Fact]
-        public void OnMosquesTheSameTwoPlotsStillRefuse()
+        public void EveryTemplateNamesAnAreaCell()
         {
-            Reconciliation held = Reconciliation.Of(
-                new[] { "MM-03", "MM-04" }, TwoStreetPlotsReadingOneArea(), null, false, KpiTemplates.Mosques);
-
-            Assert.False(held.AddsUp);
-            Assert.True(held.AreaWanted);
-            Assert.Contains(held.Refusals, one => one.Contains("report the same area"));
+            Assert.All(KpiTemplates.All, one => Assert.False(one.TakesNoArea, one.Name + " names no area cell"));
         }
 
+        /// <summary>
+        /// **This is the case finding 31 turned off, and it is on again.** Two street plots
+        /// reading one raw area refuse exactly as two mosque plots do, because the template has
+        /// a cell for that number now.
+        /// </summary>
         [Fact]
-        public void OnStreetsTwoRegionsHoldingAnAreaAskNothing()
+        public void OnStreetsTwoPlotsReadingOneAreaRefuseAsTheyDoOnMosques()
+        {
+            foreach (KpiTemplate template in new[] { KpiTemplates.Streets, KpiTemplates.Mosques })
+            {
+                Reconciliation held = Reconciliation.Of(
+                    new[] { "MM-03", "MM-04" }, TwoStreetPlotsReadingOneArea(), null, false, template);
+
+                Assert.False(held.AddsUp, template.Name + " did not refuse");
+                Assert.True(held.AreaWanted, template.Name + " did not want the area");
+                Assert.Contains(held.Refusals, one => one.Contains("report the same area"));
+            }
+        }
+
+        /// <summary>
+        /// And two regions holding an area ask on STREETS the same way, because which of a
+        /// plot's two regions carries it varies by plot and the type name cannot settle it.
+        /// </summary>
+        [Fact]
+        public void OnStreetsTwoRegionsHoldingAnAreaAskTheSameWayAsOnMosques()
         {
             PlotReading reading = CreateFixture.Plot(
                 "NS-19",
@@ -471,12 +510,16 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 chosenRegion: string.Empty);
 
-            Assert.True(Reconciliation.Of(new[] { "NS-19" }, new[] { reading }, null, false, KpiTemplates.Streets).AddsUp);
+            Assert.False(Reconciliation.Of(new[] { "NS-19" }, new[] { reading }, null, false, KpiTemplates.Streets).AddsUp);
             Assert.False(Reconciliation.Of(new[] { "NS-19" }, new[] { reading }, null, false, KpiTemplates.Mosques).AddsUp);
         }
 
+        /// <summary>
+        /// A street plot with no filled region is named for the area now, where it used to be
+        /// named only for its schedules.
+        /// </summary>
         [Fact]
-        public void OnStreetsAPlotWithNothingElseIsNotBlamedForTheArea()
+        public void OnStreetsAPlotWithNoRegionIsNamedForTheAreaToo()
         {
             PlotReading reading = CreateFixture.Plot(
                 "NS-19",
@@ -489,36 +532,66 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "NS-19" }, new[] { reading }, null, false, KpiTemplates.Streets);
 
             PlotAndReason nothing = Assert.Single(held.ContributedNothing);
-            Assert.Equal("no softscape schedule, no shrubs and lawn schedule", nothing.Reason);
+            Assert.Equal(
+                "no softscape schedule, no shrubs and lawn schedule, no filled region holding an area",
+                nothing.Reason);
         }
 
+        /// <summary>
+        /// **The report prints the area working for STREETS now**, and the paragraph saying the
+        /// area is not a schedule row prints with it, because on this template it is read.
+        /// </summary>
         [Fact]
-        public void TheReportSaysTheAreaWasNotReadAndWhy()
+        public void TheReportPrintsTheAreaWorkingForStreets()
         {
             KpiCreateRun run = CreateFixture.Run(
-                new[] { CreateFixture.Plot("MM-03", regions: new RegionArea[0], chosenRegion: string.Empty) },
+                new[] { CreateFixture.Plot("MM-03", regions: new[] { CreateFixture.Region(CreateFixture.OutOfScope, 1131.7) }) },
                 template: KpiTemplates.Streets);
 
-            string[] lines = KpiCreateReport.Write(run, new DateTime(2026, 9, 10, 9, 28, 0))
+            string[] lines = KpiCreateReport.Write(run, new DateTime(2026, 9, 14, 9, 18, 0))
                 .Split(new[] { "\r\n" }, StringSplitOptions.None);
 
-            // The reason names the reference file now. The road width and the total length are
-            // not typed by hand any more and have not been since the round that reads them.
-            const string why = "not read. This template takes no area. The sheet works it out from the "
-                + "road width and the total length, and both come off the street reference file. No "
-                + "filled region was read for any plot and nothing about the area was refused on.";
+            Assert.Contains("  AREA, SQUARE METRES, 1 plot", lines);
+            Assert.Contains("  plots with an area   1", lines);
+            Assert.DoesNotContain(lines, line => line.Contains("names no area cell"));
+            Assert.Contains(lines, line => line.StartsWith("  THE AREA IS NOT A SCHEDULE ROW", StringComparison.Ordinal));
+        }
 
-            Assert.Contains("  plots with an area   " + why, lines);
-            Assert.Contains("  AREA, SQUARE METRES, " + why, lines);
-            Assert.Contains("    area: not read, the template takes none", lines);
-            Assert.Contains("  WHICH REGION EACH PLOT'S AREA CAME OFF: " + why, lines);
-            Assert.DoesNotContain(lines, line => line.StartsWith("  MM-03 | ", StringComparison.Ordinal));
-            Assert.DoesNotContain(lines, line => line.StartsWith("  AREA, SQUARE METRES, 1 plot", StringComparison.Ordinal));
+        /// <summary>
+        /// **The client's note names one type and the report says whether the plot agreed.** At
+        /// least two street plots disagree with it, NS-19 and NS-06, measured on 9 September, so
+        /// nothing chooses on the name and the column is what turns the disagreement into a
+        /// count a run over 78 street plots can be read for.
+        /// </summary>
+        [Fact]
+        public void EachPlotSaysWhetherItsAreaCameOffTheTypeTheNoteNames()
+        {
+            Assert.Equal("RCRC_OUT OF SCOPE (PRESENTATION)", RegionChoice.TheNoteNames);
+            Assert.Equal("the type the note names", RegionChoice.AgainstTheNote(CreateFixture.OutOfScope));
+            Assert.Equal("NOT the type the note names", RegionChoice.AgainstTheNote(CreateFixture.Cadastral));
+            Assert.Equal("nothing chosen", RegionChoice.AgainstTheNote(string.Empty));
 
-            // The schedule claim still holds on STREETS and the area paragraph is about a read
-            // that did not happen, so the first prints and the second does not.
-            Assert.Contains("  The shrubs, the lawn and every tree quantity came off a row the schedule", lines);
-            Assert.DoesNotContain(lines, line => line.StartsWith("  THE AREA IS NOT A SCHEDULE ROW", StringComparison.Ordinal));
+            KpiCreateRun run = CreateFixture.Run(
+                new[]
+                {
+                    CreateFixture.Plot("NS-19", regions: new[] { CreateFixture.Region(CreateFixture.Cadastral, 900.0) }),
+                    CreateFixture.Plot("ST-05", regions: new[] { CreateFixture.Region(CreateFixture.OutOfScope, 250.0) })
+                },
+                template: KpiTemplates.Streets,
+                ticked: new[] { "NS-19", "ST-05" });
+
+            string report = KpiCreateReport.Write(run, new DateTime(2026, 9, 14, 9, 18, 0));
+
+            Assert.Contains(
+                "  plot | chosen type | against the client's note | raw square feet | "
+                + "written square metres | as the model prints it | offered",
+                report);
+            Assert.Contains("  NS-19 | RCRC_CADASTRAL LIMIT | NOT the type the note names | ", report);
+            Assert.Contains("  ST-05 | RCRC_OUT OF SCOPE (PRESENTATION) | the type the note names | ", report);
+            Assert.Contains(
+                "  The client's note for the area cell names RCRC_OUT OF SCOPE (PRESENTATION). "
+                + "Nothing here chooses on that name:",
+                report);
         }
 
         [Fact]

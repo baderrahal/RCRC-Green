@@ -338,9 +338,17 @@ namespace RcrcGreen.Core.Kpi
         /// the round that added it. A line about what the tool does is checked against what it
         /// does.
         /// </summary>
-        public const string AreaTypedByHand =
-            "This template takes no area. The sheet works it out from the road width and the "
-            + "total length, and both come off the street reference file.";
+        /// <summary>
+        /// Said of a template whose map names no area cell, which is none of the seven today.
+        ///
+        /// **It read that STREETS works its area out from the road width and the total length,
+        /// and that stopped being true when the client emptied H8.** The words say what the tool
+        /// does rather than what a sheet once did, so the next template that names no area cell
+        /// gets a line that is true of it.
+        /// </summary>
+        public const string TakesNoArea =
+            "This template names no area cell, so no filled region is read for it and nothing "
+            + "about the area is refused on.";
 
         /// <summary>
         /// Under the Reference picker with nothing ticked. The values shown there belong to a
