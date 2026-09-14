@@ -468,11 +468,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// STREETS takes no area at all. The sheet works it out from the road width and the
-        /// total length, which the team types.
+        /// **STREETS writes its area now**, since the client emptied H8, and it writes it off
+        /// the same total every other template's area comes off. The skip reason this used to
+        /// assert is for a template that names no area cell, which is none of the seven.
         /// </summary>
         [Fact]
-        public void StreetsSkipsTheAreaAndSaysItIsTypedByHand()
+        public void StreetsWritesItsAreaIntoH8LikeEveryOtherTemplate()
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Streets,
@@ -485,8 +486,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null,
                 "2026-09-09", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile, CreateFixture.NoLabels);
 
-            NotWritten skipped = plan.Skipped.Single(one => one.What == "Area");
-            Assert.Equal(KpiCreatePlan.TypedByHand, skipped.Why);
+            Assert.Equal("1000", plan.Writes.Single(one => one.Cell.ToString() == "H8").Stored);
+            Assert.DoesNotContain(plan.Skipped, one => one.What == "Area");
             Assert.DoesNotContain(plan.Writes, one => one.Cell.ToString() == "D8");
         }
 

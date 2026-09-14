@@ -102,28 +102,29 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Fact]
-        public void TheStreetsBlockNamesNoAreaCellAndSaysWhy()
+        public void TheStreetsBlockNamesAllThreeCellsOfRowEightAndWhereEachComesFrom()
         {
             IReadOnlyList<string> lines = TemplateWords.WouldFill(KpiTemplates.Streets, Picked);
 
+            // **Three cells on one row from three sources**, since the client emptied H8. The
+            // area is off the 00 link, the width and the length off the reference file, and the
+            // workbook computes none of the three.
             Assert.Contains(
-                "  No area cell. The sheet works the area out from the road width and the total "
-                + "length, and those two come off the street reference file.",
+                "  H8  PRX_Intervention Area, off the chosen filled region in the 00 link",
                 lines);
-
-            // **D8 is on this sheet now and it is not an area.** It is the road width, off the
-            // reference file, and F8 is the total length. What still must not appear is an
-            // intervention area line, which is what an area cell would print.
-            Assert.True(KpiTemplates.Streets.AreaIsTypedByHand);
-            Assert.All(lines, line => Assert.DoesNotContain("H7", line));
-            Assert.All(lines, line => Assert.DoesNotContain("PRX_Intervention Area", line));
-
             Assert.Contains(
                 "  D8  ROAD_WIDTH from the street reference file, matched on PRX_Plot_UID2",
                 lines);
             Assert.Contains(
                 "  F8  ES_QUANTITY from the street reference file, matched on PRX_Plot_UID2",
                 lines);
+
+            // The no area cell line is for a template that names none, and this one does now.
+            Assert.False(KpiTemplates.Streets.TakesNoArea);
+            Assert.DoesNotContain(CreateWords.TakesNoArea, lines);
+
+            // H7 is the other six templates' area cell and is not on this sheet.
+            Assert.All(lines, line => Assert.DoesNotContain("H7", line));
         }
 
         [Fact]

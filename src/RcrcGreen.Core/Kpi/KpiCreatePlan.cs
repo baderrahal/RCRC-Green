@@ -72,8 +72,14 @@ namespace RcrcGreen.Core.Kpi
     {
         public const string NotInThisTemplate = "not in this template";
 
-        public const string TypedByHand =
-            "typed by hand, because the sheet works the area out from the road width and length";
+        /// <summary>
+        /// Said of the area on a template whose map names no cell for it, which is none of the
+        /// seven since the client emptied STREETS H8. It used to read that the sheet works the
+        /// area out from the road width and the length, which was STREETS and is no longer true
+        /// of anything.
+        /// </summary>
+        public const string NoAreaCell =
+            "this template names no area cell, so no filled region was read for it";
 
         /// <summary>
         /// Said of the road width and the total length on a template that has no such cell,
@@ -506,7 +512,7 @@ namespace RcrcGreen.Core.Kpi
             if (cell == null)
             {
                 skipped.Add(new NotWritten(template.MainSheetName, string.Empty, value.ToString(),
-                    value == KpiValue.Area ? TypedByHand : NotInThisTemplate));
+                    value == KpiValue.Area ? NoAreaCell : NotInThisTemplate));
                 return;
             }
 

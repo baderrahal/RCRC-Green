@@ -28,7 +28,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = LinesOf(CreateFixture.Run());
 
             Assert.Contains(
-                "  plot | chosen type | raw square feet | written square metres | "
+                "  plot | chosen type | against the client's note | raw square feet | written square metres | "
                 + "as the model prints it | offered",
                 lines);
 
@@ -107,7 +107,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = LinesOf(run);
             string row = lines.Single(line => line.StartsWith("  NS-19 | ", StringComparison.Ordinal));
 
-            Assert.Equal("  NS-19 | (none) | (none) | (none) | (none) | (none)", row);
+            Assert.Equal("  NS-19 | (none) | nothing chosen | (none) | (none) | (none) | (none)", row);
         }
 
         /// <summary>

@@ -1,5 +1,65 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy third pass, the client reissued the STREETS template and one cell in it
+changed. **1732 tests, 912 of them KPI, 3 added, against the 1729 main carries** at the branch
+point `151922b`, measured by running the suite at that commit rather than quoted from the round
+before, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none. Finding 31
+keeps its FIXED mark and gains a note under it, which changes no count.
+
+**THE MEASUREMENT THE ROUND RESTS ON IS ONE CELL.** The reissued STREETS template diffed against
+the one that ran this morning: 4,160 cells against 4,159, no named range moved, no other sheet
+touched. H8, Streets Total Area (m2), was `=Width*F8` and is now empty, and the client's own
+reference copy says it is PRX_Intervention Area off the 00 link. So three cells on one row come
+from three sources and the workbook computes none of them.
+
+**1. STREETS TAKES AN AREA AGAIN, THROUGH ONE ENTRY IN ITS OWN MAP.**
+`new MappedCell(KpiValue.Area, "H8")` and nothing else, because `KpiTemplate.TakesNoArea` reads
+the MAP and every path that skips an area asks that one thing. The region read, the region
+choice, the reconciliation refusal, the identical area confirm and the report section all came
+back on together. **H8 is hard coded nowhere.**
+
+**Finding 31 is REVERSED BY THE TEMPLATE CHANGING, not by being wrong.** Its FIXED mark stands
+and the note under it says so, with the pull request named. **`AreaIsTypedByHand` is renamed
+`TakesNoArea`**, because no template ever typed an area: STREETS computed one and the other six
+read one, and a name that tells one template's story stops being true when that template
+changes. Four call sites in two projects read it and three sets of words said typed by hand.
+
+**2. THE CLIENT'S NOTE NAMES A REGION TYPE AND NOTHING CHOOSES ON IT.** The rule is unchanged:
+the plot's own regions, the one holding a non zero area, and more than one asks.
+`RegionChoice.TheNoteNames` is the note's type held as data and read by nothing that decides,
+and the report's region table carries a column per plot saying whether the area came off the
+type the note names. **DM-11, DM-12 and DM-13 hold it on OUT OF SCOPE and NS-19 and NS-06 hold
+it on CADASTRAL LIMIT**, and NS plots are street plots. **OPEN QUESTION FOR BADER**, in the log
+with both plots named, and a run over 78 street plots answers it by counting.
+
+**3. A FIXTURE WHOSE NAMES ARE NOT THE MODEL'S CANNOT CATCH A RULE ABOUT NAMES.** Break watch 2
+broke exactly the rule `RegionChoiceTests` owns and **all eight of its cases stayed GREEN**,
+because its fixture read `CADASTRAL LIMIT` and `OUT OF SCOPE (PRESENTATION)` without the `RCRC_`
+prefix the model carries. The names are the model's own now, a case was added, and the same
+break reddens 2 of them.
+
+**4. READ EVERY RULE OFF THE TEMPLATE, NEVER OFF THE NOTES COPY.** The notes copy sums existing
+canopy at M93 and counts native over H3:H91 where the template uses M102 and H3:H101. THE
+TEMPLATE WINS. **Second time an annotated set and a production set have differed**, the first
+being the seven of 9 September. Nothing reads either range, so no code changed and it is written
+into the rules file for the next one.
+
+**5. STREET DESIGN AND PROPOSED ARE BOTH PROPOSED ON STREETS. CONFIRMED BY BADER, 14 September.**
+Nothing changes in code, which is the point: it is recorded in `kpi-rules.md` as confirmed rather
+than as a September decision nobody had checked. The two beside it are recorded as NOT confirmed
+so the confirmation cannot cover them quietly.
+
+Two break watches, 4 red and 3 red, both restored and proved byte for byte with `diff -q`. The
+first failed `StreetsNamesH8ForTheAreaAndItsOtherCellsAreUnmoved` with `Expected: "H8" / Actual:
+"H7"`, naming what was broken. The second reddened what it aimed at and found the fixture gap in
+item 3 as well.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run over street plots is what
+writes an area into H8 and what answers the note's question by counting 78 plots.
+
 Phase: 9, ship. Seventy second pass, two things off the 09:18 run, NG05, 156 plots over 7
 templates, 150 workbooks. **1729 tests, 909 of them KPI, 23 added, against the 1706 main
 carries** at the branch point `0b29cf7`, 28 hook cases unchanged, build zero warnings.

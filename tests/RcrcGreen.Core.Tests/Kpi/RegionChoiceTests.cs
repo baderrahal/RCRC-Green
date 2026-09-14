@@ -14,8 +14,19 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// </summary>
     public sealed class RegionChoiceTests
     {
-        private const string Cadastral = "CADASTRAL LIMIT";
-        private const string OutOfScope = "OUT OF SCOPE (PRESENTATION)";
+        /// <summary>
+        /// **The model's own type names, with the RCRC_ prefix they really carry**, measured on
+        /// the 00 link: RCRC_CADASTRAL LIMIT on 124 regions and RCRC_OUT OF SCOPE (PRESENTATION)
+        /// on 155.
+        ///
+        /// **These used to read without the prefix and that cost the file its whole job.** A
+        /// break that made two regions holding an area settle on the type the client's note
+        /// names left every case here GREEN, because no name in the file was the name the rule
+        /// looked for. A fixture whose names are not the model's cannot catch a rule about
+        /// names.
+        /// </summary>
+        private const string Cadastral = "RCRC_CADASTRAL LIMIT";
+        private const string OutOfScope = "RCRC_OUT OF SCOPE (PRESENTATION)";
 
         private static RegionArea Region(string typeName, double squareMetres)
         {
@@ -52,6 +63,28 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TwoRegionsHoldingAnAreaChooseNothing()
         {
+            Assert.Equal(
+                string.Empty,
+                RegionChoice.For(
+                    new[] { Region(Cadastral, 900.0), Region(OutOfScope, 250.0) },
+                    null));
+        }
+
+        /// <summary>
+        /// **AND THE CLIENT'S OWN NOTE DOES NOT SETTLE IT EITHER, IN EITHER ORDER.** Their note
+        /// for the reissued STREETS area cell names RCRC_OUT OF SCOPE (PRESENTATION), and at
+        /// least two street plots carry their area the other way round. So the pair refuses
+        /// whichever of the two is handed over first, and nothing anywhere reaches for the name.
+        /// </summary>
+        [Fact]
+        public void TheTypeTheClientsNoteNamesSettlesNothingInEitherOrder()
+        {
+            Assert.Equal(
+                string.Empty,
+                RegionChoice.For(
+                    new[] { Region(OutOfScope, 900.0), Region(Cadastral, 250.0) },
+                    null));
+
             Assert.Equal(
                 string.Empty,
                 RegionChoice.For(
@@ -120,10 +153,15 @@ namespace RcrcGreen.Core.Tests.Kpi
                 RegionChoice.WhyUnchosen(new[] { Region(Cadastral, 0.0) }));
 
             Assert.Equal(
-                "2 filled regions hold an area, " + Cadastral + " and " + OutOfScope
-                + ", and the type name cannot say which is the plot's",
+                "2 filled regions hold an area, RCRC_CADASTRAL LIMIT and "
+                + "RCRC_OUT OF SCOPE (PRESENTATION), and the type name cannot say which is the plot's",
                 RegionChoice.WhyUnchosen(
                     new[] { Region(Cadastral, 900.0), Region(OutOfScope, 250.0) }));
+
+            // **The one the client's note names is in that pair and settles nothing.** NS-19 and
+            // NS-06 carry their area on cadastral with out of scope at 0, measured on
+            // 9 September, and NS plots are street plots.
+            Assert.Equal(OutOfScope, RegionChoice.TheNoteNames);
 
             Assert.Equal(
                 string.Empty,

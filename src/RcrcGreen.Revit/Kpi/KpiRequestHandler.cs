@@ -446,10 +446,11 @@ namespace RcrcGreen.Revit.Kpi
             CountedGroups counted = CountedGroups.Of(pick.Template);
             var readings = new List<PlotReading>();
 
-            // **A TEMPLATE THAT TAKES NO AREA HAS ITS REGIONS LEFT UNREAD.** STREETS types the
-            // road width and the total length by hand and the sheet works the area out, so its
-            // map holds no area cell.
-            bool areaWanted = !pick.Template.AreaIsTypedByHand;
+            // **A TEMPLATE THAT NAMES NO AREA CELL HAS ITS REGIONS LEFT UNREAD**, which is none
+            // of the seven since the client emptied STREETS H8 and said it comes off the 00
+            // link. STREETS reads its regions like every other template now, and it does so
+            // because this asks the MAP rather than the template's name.
+            bool areaWanted = !pick.Template.TakesNoArea;
 
             // **A CHOICE MADE AFTER A REFUSAL IS APPLIED TO WHAT WAS ALREADY READ.** The run this
             // template produced last press is the record, Core says whether it can answer this

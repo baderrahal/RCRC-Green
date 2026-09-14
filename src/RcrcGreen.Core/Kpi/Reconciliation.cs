@@ -213,7 +213,7 @@ namespace RcrcGreen.Core.Kpi
         {
             if (template == null) throw new ArgumentNullException("template");
 
-            bool areaWanted = !template.AreaIsTypedByHand;
+            bool areaWanted = !template.TakesNoArea;
 
             List<string> wanted = (ticked ?? Enumerable.Empty<string>())
                 .Where(one => !string.IsNullOrWhiteSpace(one))

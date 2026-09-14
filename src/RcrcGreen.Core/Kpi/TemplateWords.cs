@@ -74,10 +74,9 @@ namespace RcrcGreen.Core.Kpi
                 lines.Add("  " + cell.Cell + "  " + KpiTemplates.SourceOf(cell.Value, chosen));
             }
 
-            if (template.AreaIsTypedByHand)
+            if (template.TakesNoArea)
             {
-                lines.Add("  No area cell. The sheet works the area out from the road width "
-                    + "and the total length, and those two come off the street reference file.");
+                lines.Add("  " + CreateWords.TakesNoArea);
             }
 
             lines.Add("  " + ReferenceOnThisSheet(chosen));

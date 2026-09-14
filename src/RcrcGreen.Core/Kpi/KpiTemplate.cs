@@ -186,7 +186,17 @@ namespace RcrcGreen.Core.Kpi
             return Cells.FirstOrDefault(cell => cell.Value == value);
         }
 
-        public bool AreaIsTypedByHand
+        /// <summary>
+        /// Whether this template's map names no area cell, which is what turns the filled region
+        /// read, the area total and every area refusal off for it.
+        ///
+        /// **It was called AreaIsTypedByHand and no template ever typed one.** That name was the
+        /// STREETS story: the sheet computed H8 from the road width and the total length, and the
+        /// client then emptied H8 and said it comes off the 00 link. **No template takes no area
+        /// today**, so this answers false for all seven, and it is kept because the map can still
+        /// express a template that names none and every path that would read one asks this.
+        /// </summary>
+        public bool TakesNoArea
         {
             get { return CellFor(KpiValue.Area) == null; }
         }

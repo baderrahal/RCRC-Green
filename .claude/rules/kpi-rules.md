@@ -148,8 +148,10 @@ a test over these lines refuses it the same way the template block's test does.
 
 `StreetReferenceFile` reads the team's Scope_Validation workbook, browsed for and remembered
 through its own pointer file beside the installed assembly, the same way the templates folder
-and the output root are. It fills D8, Streets ROW (m), and F8, Streets Total Length (m). **H8 is
-the two multiplied and the workbook computes it, so nothing is written there.**
+and the output root are. It fills D8, Streets ROW (m), and F8, Streets Total Length (m). **H8
+used to be the two multiplied and the workbook computed it. The client emptied it**, under the
+section below, so three cells on one row now come from three sources and the sheet computes none
+of them.
 
 **Measured on Scope_Validation_21072026, 2026-09-13**, which is not in this repository and never
 will be. One sheet, a header row and 8,353 rows. The four wanted columns are NOT at the front and
@@ -193,6 +195,83 @@ the run goes through, and the report says so once at the top rather than 78 time
 
 **Only STREETS asks it this round.** The file also holds parking, mosque, park, school, health
 and government rows and nothing reads them.
+
+## STREETS takes an area again, because the client reissued the template
+
+**ONE CELL CHANGED IN THE WHOLE WORKBOOK**, measured by diffing the reissued STREETS template
+against the one that ran on 14 September: 4,160 cells against 4,159, no named range moved, no
+other sheet touched.
+
+```
+H8, Streets Total Area (m2)     was  =Width*F8     now  empty
+```
+
+Their reference copy says why, and it is the same source every other template's area comes from:
+
+```
+H8 = REVIT 00 LINK / ID FILLED REGION "RCRC_OUT OF SCOPE (PRESENTATION)" / PRX_Intervention Area
+D8 = EXCEL FILE "Scope Validation 21072026" / COLUMN O1 "ROAD_WIDTH"
+F8 = EXCEL FILE "Scope Validation 21072026" / COLUMN H1 "ES_QUANTITY"
+```
+
+**So three cells on one row come from three sources and the workbook computes none of them.**
+
+**THIS REVERSES FINDING 31, AND IT REVERSES IT BECAUSE THE TEMPLATE CHANGED.** The finding was
+right, its fix was right, and the audit entry says so rather than saying the fix was wrong.
+STREETS is on the same path as every other template now: its plot's filled regions are read from
+the 00 link, `RegionChoice` chooses, the cell is written, and the reconciliation refuses or asks
+exactly as it does on the other six.
+
+**IT GOT THERE BY ONE ENTRY IN ITS OWN MAP.** `new MappedCell(KpiValue.Area, "H8")`, and nothing
+else changed, because `KpiTemplate.TakesNoArea` reads the MAP and every path that skips an area
+asks that one thing. **H8 is hard coded nowhere.** The letters on these sheets have moved before
+and row 7 proved it, so the cell is taken off the template the same way every other value is.
+
+## The client's note names one region type and at least two street plots disagree
+
+Their note for the area cell names `RCRC_OUT OF SCOPE (PRESENTATION)`. **NOTHING CHOOSES ON IT.**
+
+Measured on 9 September: DM-11, DM-12 and DM-13 carry their area on OUT OF SCOPE with cadastral
+at 0, and **NS-19 and NS-06 carry it the other way round, on CADASTRAL LIMIT with out of scope
+at 0. NS plots are street plots.** So the note is right about some plots and wrong about others,
+which is the rule this file already carries: which of a plot's two regions holds the area varies
+by plot and the type name cannot decide it.
+
+The rule is unchanged. Narrow to the plot's own regions, take the one holding a non-zero area,
+and where more than one does, ask. `RegionChoice.TheNoteNames` is the note's type held as data
+and read by nothing that chooses.
+
+**THE REPORT SAYS, PER PLOT, WHICH TYPE THE AREA CAME OFF AND WHETHER IT WAS THE ONE THE NOTE
+NAMES.** One column, `the type the note names` or `NOT the type the note names` or `nothing
+chosen`, beside the plot's real answer. A run over 78 street plots then tells the team whether
+the note holds, **which is a measurement rather than an argument**, and it is an open question in
+`steps/log-kpi.md` until such a run exists.
+
+**A FIXTURE WHOSE NAMES ARE NOT THE MODEL'S CANNOT CATCH A RULE ABOUT NAMES.** `RegionChoiceTests`
+read `CADASTRAL LIMIT` and `OUT OF SCOPE (PRESENTATION)` without the `RCRC_` prefix the model
+really carries, so a break that settled two regions on the type the note names left all eight of
+its cases GREEN. They are the model's own names now and two cases go red against that break.
+
+## Read every rule off the template, never off the notes copy
+
+**Two files arrive: the template the team fills, and a reference copy carrying the green source
+notes. THEY ARE NOT THE SAME WORKBOOK.** Measured on the reissued STREETS pair:
+
+```
+                          notes copy      template
+existing canopy sum       M93             M102
+native count over         H3:H91          H3:H101
+```
+
+So the annotations were made on an older file. **The notes say where a value comes from and
+nothing else.** Where the two disagree about a range, a row or a sheet, THE TEMPLATE WINS, and
+the disagreement is named in the log rather than reconciled quietly.
+
+**This is the second time an annotated set and a production set have differed.** The first was
+the seven of 9 September, where the annotated set carried the mapping in green text and the
+production set carried no note cell at all, which is why `KpiTemplates` holds the map as data
+and nothing reads a mapping out of a workbook. That the two sets can also disagree about a ROW
+is new, and it is why every row fact is read off the file the run is filling.
 
 ## SIX CELLS ON THE MAIN SHEET, EVERY ONE FOUND BY A LABEL AND NEVER BY A LETTER
 
@@ -488,13 +567,20 @@ or read from the model on this press, with the reason, so a read of 0.0 seconds 
 is true and says why. A model edited between the refusal and the pick is the one thing none of
 those comparisons can see, and that is for Bader.
 
-**It knows the template, and on a template with no area cell the area is not read.** STREETS
-types the road width and the total length by hand and the sheet works the area out. MM-03 and
-MM-04 are street plots and both read 12182.05561411 in the 00 link, so a reconciliation that
+**It knows the template, and on a template that names no area cell the area is not read.** That
+was STREETS, whose sheet worked the area out from the road width and the total length, and MM-03
+and MM-04 are street plots both reading 12182.05561411 in the 00 link, so a reconciliation that
 did not know the template would have ended the first 78 plot run asking the user to confirm an
-area the workbook has no cell for, then read all 78 again. On such a template no filled region
-is read, nothing about the area is refused on, and the report says the area was not read and
-why rather than leaving the section empty.
+area the workbook had no cell for, then read all 78 again. On such a template no filled region
+is read, nothing about the area is refused on, and the report says the area was not read and why
+rather than leaving the section empty.
+
+**NO TEMPLATE NAMES NO AREA CELL TODAY**, since the client emptied STREETS H8, so that path is
+live for nothing and every template goes down the same one. It is kept because the map can still
+express a template that names none and `KpiTemplate.TakesNoArea` is what every one of those
+paths asks. **It was called `AreaIsTypedByHand` and no template ever typed one**: that name was
+the STREETS story rather than the rule, and a name that tells one template's story is a name
+that stops being true when that template changes.
 
 **A refused schedule read refuses the write.** A column the heading row did not name, a cell
 holding a digit past where its number ends, a species row with no whole count: each travels on
@@ -841,6 +927,30 @@ TOTAL           439
 
 ST-05's proposed trees are 2 plus 68, 70, its existing are 369, and 369 plus 70 is 439, the
 TOTAL the schedule prints. That is the test.
+
+### CONFIRMED BY BADER, 14 September, and the two things beside it are not
+
+**The client confirmed it: STREET DESIGN AND PROPOSED ARE BOTH PROPOSED on STREETS.** That is
+what the tool already does through `KpiTemplate.GroupsCountedAsProposed`, and it has run. ST-05
+read Existing 369, Proposed 2 and Street Design 68, and 2 plus 68 went into Tree List - Proposed
+as 70, against the schedule's own TOTAL of 439. **NOTHING IN THE CODE CHANGES.** What changes is
+what the line rests on. **A rule the client has confirmed reads differently from one the tool
+inferred**, and until 14 September this was a decision made in September that nobody had checked
+since.
+
+**The two things that travel with it are NOT confirmed**, and they are written out here so they
+stay visible rather than being carried along by the confirmation above.
+
+- **On every template that is not STREETS, a Street Design group is still LEFT OUT and named.**
+  That is Bader's decision of 10 September and the client has not been asked about it. DM-16 and
+  FM-05 are where it fires today, both on MOSQUES
+- **A group named anything other than Existing, Proposed or Street Design is out of scope on
+  EVERY template, STREETS included.** No tree list sheet is named for it and no decision takes
+  it, so it is left out and named. Nobody has confirmed that either, and no such group has been
+  measured on any model
+
+**A confirmation covers what was asked and nothing sitting next to it.** All three of these were
+one paragraph in this file and the client answered one of them.
 
 **It is data on the template and it is keyed on the template, never on the plot prefix.**
 `KpiTemplate.GroupsCountedAsProposed` holds Street Design on STREETS and nothing on the other
