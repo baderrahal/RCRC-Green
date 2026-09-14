@@ -32,7 +32,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             var fields = PdfForms.Roads.Fields
                 .Select(one => PdfFixture.Field(
-                    one.FieldName, one.Value == moved ? "THE CLIENT CHANGED THIS" : one.Note))
+                    one.FieldName,
+                    one.Value == moved ? "THE CLIENT CHANGED THIS" : one.Note,
+                    one.X, one.Y))
                 .ToList();
 
             return PdfFixture.Form(_folder, fileName, fields);
@@ -45,7 +47,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
                 Today,
-                workbookWritten);
+                workbookWritten,
+                PdfWorkbookNumbers.None);
         }
 
         [Fact]
@@ -66,7 +69,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("14/09/2026",
                 outcome.Landed.Single(one => one.Value == PdfValue.ReportDate).Landed);
             Assert.Equal("20", outcome.Landed.Single(one => one.Value == PdfValue.Row).Landed);
-            Assert.Equal("330.66", outcome.Landed.Single(one => one.Value == PdfValue.Length).Landed);
+
+            // **The form asks km and the reference file gives m**, so 330.66 metres lands as
+            // 0.33066 kilometres and the unit travels beside it.
+            PdfLandedField length = outcome.Landed.Single(one => one.Value == PdfValue.Length);
+            Assert.Equal("0.33066", length.Landed);
+            Assert.Equal("km", length.Unit);
+            Assert.Equal("m", outcome.Landed.Single(one => one.Value == PdfValue.Row).Unit);
         }
 
         /// <summary>
@@ -134,7 +143,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             PdfOutcome outcome = PdfChecklist.Write(
                 RoadsForm(),
                 Path.Combine(_folder, "never.pdf"),
-                PdfFill.Of(CreateFixture.Plot("ZZ-01"), CountedGroups.Of(KpiTemplates.Mosques), null, Today, true));
+                PdfFill.Of(CreateFixture.Plot("ZZ-01"), CountedGroups.Of(KpiTemplates.Mosques), null, Today, true,
+                    PdfWorkbookNumbers.None));
 
             Assert.False(outcome.Written);
             Assert.Null(outcome.Check);
@@ -220,7 +230,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains(glance.InWords, report);
             Assert.Contains(KpiCreateReport.PdfHeading, report);
             Assert.Contains("ST-05 | Projects Basic Data - Roads", report);
-            Assert.Contains("field | what was sent | what landed", report);
+            Assert.Contains("field | unit | what was sent | what landed", report);
             Assert.Contains("left blank | why", report);
             Assert.Contains(PdfFill.GroundCoverIsNotPrintedApart, report);
         }

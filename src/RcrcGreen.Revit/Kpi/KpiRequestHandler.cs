@@ -635,7 +635,9 @@ namespace RcrcGreen.Revit.Kpi
             // **THE EXCEL IS WRITTEN FIRST AND THE PDF SECOND**, because two of the PDF's fields
             // read cells out of the workbook this run has just written. The ordering is a rule
             // and this is the line that keeps it.
-            PdfOutcome pdf = ThePdf(held, counted, street, where, run.Wrote, folderMade);
+            PdfOutcome pdf = ThePdf(
+                held, counted, street, where, run.Wrote, folderMade,
+                WorkbookNumbers(pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn));
 
             if (run.Wrote)
             {
@@ -648,6 +650,43 @@ namespace RcrcGreen.Revit.Kpi
             why.Add(held.PlotId + ": " + refusal);
             plotOutcomes.Add(PlotOutcome.WroteNothing(
                 held.PlotId, pick.Template, where, folderMade, refusal).WithPdf(pdf));
+        }
+
+        /// <summary>
+        /// What the PDF's two computed fields are worked out from, off this plot's own workbook.
+        ///
+        /// **THE EXCEL IS WRITTEN FIRST AND THE PDF SECOND**, so every part of this is a number
+        /// this run really wrote: the canopy off the rows it wrote counts into, the planting,
+        /// the lawn and the area off the same three totals the workbook's cells took. The
+        /// formula check is the output's own, read back after the patch, and it is what says
+        /// whether the workbook still computes the canopy the way this tool does.
+        /// </summary>
+        private static PdfWorkbookNumbers WorkbookNumbers(
+            KpiTemplate template,
+            KpiCreatePlan plan,
+            PatchOutcome outcome,
+            SpeciesList existing,
+            SpeciesList proposed,
+            Totalled area,
+            Totalled shrubs,
+            Totalled lawn)
+        {
+            if (outcome == null || !outcome.Written) return PdfWorkbookNumbers.None;
+
+            CanopyTotal canopy = CanopyArea.From(plan);
+
+            // The diameter column is chosen per sheet off that sheet's own heading row, so the
+            // canopy formula this tool expects is built with the column the list really used
+            // rather than with a letter written in here.
+            var columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { template.ExistingTrees.SheetName, existing == null ? string.Empty : existing.DiameterColumn },
+                { template.ProposedTrees.SheetName, proposed == null ? string.Empty : proposed.DiameterColumn }
+            };
+
+            return new PdfWorkbookNumbers(
+                canopy, shrubs.Total, lawn.Total, area.Total,
+                WorkbookArithmetic.Canopy(outcome.Formulas, canopy, columns));
         }
 
         /// <summary>
@@ -667,9 +706,10 @@ namespace RcrcGreen.Revit.Kpi
             StreetReferenceAnswer street,
             PlotWorkbookPath where,
             bool workbookWritten,
-            bool folderMade)
+            bool folderMade,
+            PdfWorkbookNumbers numbers)
         {
-            PdfPlan plan = PdfFill.Of(held, counted, street, DateTime.Today, workbookWritten);
+            PdfPlan plan = PdfFill.Of(held, counted, street, DateTime.Today, workbookWritten, numbers);
 
             if (!plan.Wanted) return PdfOutcome.WroteNothing(held.PlotId, plan.Form, plan.Why, null);
 
