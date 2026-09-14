@@ -324,10 +324,11 @@ namespace RcrcGreen.Core.Kpi
         /// this is that rule one step further, so the working is not a courtesy: it is the only
         /// way anybody can hold these two against the workbook once Excel has opened it.
         ///
-        /// **What was NOT checked is said too.** The workbook's own Total Green cover cell and
-        /// its canopy percentage cell hold formulas whose text is measured nowhere in this
-        /// repository, so nothing here looked for either, and that is a line rather than a
-        /// silence.
+        /// **And what each was held against in the workbook is said beside it.** The Total Green
+        /// cover cell and the canopy percentage cell are found by their labels and read off the
+        /// file, so the report names the cell, its formula and whether it agrees. A template with
+        /// no canopy percentage cell, which is both templates this form is ever fed by, says so
+        /// rather than reading as a check that passed.
         /// </summary>
         private static void TheComputed(StringBuilder report, PdfOutcome pdf)
         {
@@ -340,7 +341,13 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, "    " + Join(field.FieldName, field.Working));
             }
 
-            Line(report, "    " + WorkbookArithmetic.NotCheckedAgainstTheWorkbook);
+            if (pdf.WhatWasChecked.Count == 0) return;
+
+            Line(report, "    what the workbook was held against");
+            foreach (string line in pdf.WhatWasChecked)
+            {
+                Line(report, "      " + line);
+            }
         }
 
         /// <summary>

@@ -510,13 +510,20 @@ namespace RcrcGreen.Revit.Kpi
             // two tree lists, rather than once per plot off files that are all copies of it.
             LabelledCells labels = LabelledPlaces.In(pick.TemplatePath, pick.Template);
 
+            // **The two cells the workbook COMPUTES are found the same way and NEVER written.**
+            // Their row differs by template, D9 on three and D8 on four, so a letter could not
+            // reach both, and the percentage sits two columns right of its label rather than one.
+            // Read once per template beside the rest.
+            LabelledCells computed = LabelledPlaces.In(
+                pick.TemplatePath, pick.Template, ComputedPlaces.All);
+
             var wrote = new List<string>();
             var why = new List<string>();
 
             foreach (PlotReading one in readings)
             {
                 OnePlot(
-                    document, asked, pick, counted, one, location, existing, proposed, labels,
+                    document, asked, pick, counted, one, location, existing, proposed, labels, computed,
                     areaUnit, source, reading.Elapsed.TotalSeconds, root, streets,
                     runs, plotOutcomes, wrote, why);
             }
@@ -563,6 +570,7 @@ namespace RcrcGreen.Revit.Kpi
             SpeciesList existing,
             SpeciesList proposed,
             LabelledCells labels,
+            LabelledCells computed,
             ProjectUnit areaUnit,
             ReadingsSource source,
             double readSeconds,
@@ -637,7 +645,8 @@ namespace RcrcGreen.Revit.Kpi
             // and this is the line that keeps it.
             PdfOutcome pdf = ThePdf(
                 held, counted, street, where, run.Wrote, folderMade,
-                WorkbookNumbers(pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn));
+                WorkbookNumbers(
+                    pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn, computed));
 
             if (run.Wrote)
             {
@@ -669,7 +678,8 @@ namespace RcrcGreen.Revit.Kpi
             SpeciesList proposed,
             Totalled area,
             Totalled shrubs,
-            Totalled lawn)
+            Totalled lawn,
+            LabelledCells computed)
         {
             if (outcome == null || !outcome.Written) return PdfWorkbookNumbers.None;
 
@@ -684,9 +694,35 @@ namespace RcrcGreen.Revit.Kpi
                 { template.ProposedTrees.SheetName, proposed == null ? string.Empty : proposed.DiameterColumn }
             };
 
+            // **The green cover cell is read first, because it is what names the canopy cell.**
+            // The percentage check then holds its own formula against that same cell rather than
+            // against a letter, so the two cannot name two different canopies.
+            SummaryCellCheck greenCover = WorkbookArithmetic.GreenCoverCell(
+                outcome.Formulas, template.MainSheetName,
+                computed.For(ComputedPlaces.GreenCoverName),
+                MappedTo(template, KpiValue.Shrubs), MappedTo(template, KpiValue.Lawn));
+
+            SummaryCellCheck percentage = WorkbookArithmetic.PercentageCell(
+                outcome.Formulas, template.MainSheetName,
+                computed.For(ComputedPlaces.PercentageName),
+                greenCover.CanopyCell, MappedTo(template, KpiValue.Area));
+
             return new PdfWorkbookNumbers(
                 canopy, shrubs.Total, lawn.Total, area.Total,
-                WorkbookArithmetic.Canopy(outcome.Formulas, canopy, columns));
+                WorkbookArithmetic.Canopy(outcome.Formulas, canopy, columns),
+                greenCover, percentage);
+        }
+
+        /// <summary>
+        /// The cell the template's own map names for one value, or empty where it names none.
+        /// **Empty never matches a cell**, so a template with no such entry fails the check
+        /// naming what the formula really read rather than passing on a null.
+        /// </summary>
+        private static string MappedTo(KpiTemplate template, KpiValue value)
+        {
+            MappedCell held = template.CellFor(value);
+
+            return held == null ? string.Empty : held.Cell;
         }
 
         /// <summary>

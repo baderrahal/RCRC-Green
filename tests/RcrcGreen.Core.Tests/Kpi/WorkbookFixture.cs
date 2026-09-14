@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using RcrcGreen.Core.Kpi;
 
 namespace RcrcGreen.Core.Tests.Kpi
 {
@@ -281,7 +282,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             string secondDiameterHeading = null,
             string secondDiameterColumn = "K",
             string canopyReads = null,
-            string alsoReads = null)
+            string alsoReads = null,
+            bool withGreenCoverLabel = false,
+            bool withPercentageLabel = false,
+            string greenCoverFormula = null)
         {
             string path = Path.Combine(folder, fileName);
 
@@ -343,10 +347,20 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<sheetData>"
                     + "<row r=\"3\"><c r=\"D3\" t=\"inlineStr\"><is><t>&lt;Component&gt;</t></is></c></row>"
                     + "<row r=\"7\"><c r=\"H7\"><v>0</v></c></row>"
-                    + "<row r=\"8\"><c r=\"D8\"><f>F8+F10+H10</f><v>0</v></c><c r=\"F8\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
+                    + "<row r=\"8\">"
+                    + (withGreenCoverLabel
+                        ? "<c r=\"C8\" t=\"inlineStr\"><is><t>" + ComputedPlaces.GreenCoverLabel + "</t></is></c>"
+                        : string.Empty)
+                    + "<c r=\"D8\"><f>" + (greenCoverFormula ?? "F8+F10+H10") + "</f><v>0</v></c><c r=\"F8\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
                     + "<row r=\"9\"><c r=\"D9\"><f>D8/H7</f><v>0</v></c><c r=\"H9\"><f>H8/Area</f><v>0</v></c></row>"
                     + "<row r=\"10\"><c r=\"F10\"><v>0</v></c><c r=\"H10\"><v>0</v></c></row>"
-                    + "<row r=\"31\"><c r=\"E31\"><f>D8</f><v>0</v></c>"
+                    + "<row r=\"31\">"
+                    + (withPercentageLabel
+                        ? "<c r=\"C31\" t=\"inlineStr\"><is><t>" + ComputedPlaces.PercentageLabel + "</t></is></c>"
+                        : string.Empty)
+                    + (withPercentageLabel
+                        ? "<c r=\"E31\" t=\"str\"><f>IF(Area&lt;1,\" \",F8/Area)</f><v> </v></c>"
+                        : "<c r=\"E31\"><f>D8</f><v>0</v></c>")
                     + "<c r=\"F31\" t=\"str\"><f>_xlfn.IFS(Area&lt;1,\" \",D9&lt;1,\" \",E31&lt;H31-(H31*7%),\"Insufficient\",TRUE,\"YES\")</f><v> </v></c>"
                     + "<c r=\"G31\" t=\"str\"><f>_xlfn.IFS(F31=\"YES\",\"COMPLIANT\",TRUE,\"NOT COMPLIANT\")</f><v> </v></c>"
                     + "<c r=\"H31\"><v>13</v></c></row>"

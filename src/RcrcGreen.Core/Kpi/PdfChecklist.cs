@@ -119,7 +119,8 @@ namespace RcrcGreen.Core.Kpi
                     one.Unit, one.Working));
             }
 
-            return PdfOutcome.Wrote(plan.PlotId, plan.Form, outputPath, check, landed, plan.Blank);
+            return PdfOutcome.Wrote(
+                plan.PlotId, plan.Form, outputPath, check, landed, plan.Blank, plan.WhatWasChecked);
         }
 
         /// <summary>

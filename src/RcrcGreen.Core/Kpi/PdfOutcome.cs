@@ -64,7 +64,8 @@ namespace RcrcGreen.Core.Kpi
     {
         private PdfOutcome(
             string plotId, PdfForm form, bool written, string path, string refusal,
-            PdfFormCheck check, IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank)
+            PdfFormCheck check, IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank,
+            IEnumerable<string> whatWasChecked)
         {
             PlotId = plotId ?? string.Empty;
             Form = form;
@@ -74,18 +75,26 @@ namespace RcrcGreen.Core.Kpi
             Check = check;
             Landed = (landed ?? Enumerable.Empty<PdfLandedField>()).ToList();
             Blank = (blank ?? Enumerable.Empty<PdfFieldFill>()).ToList();
+            WhatWasChecked = (whatWasChecked ?? Enumerable.Empty<string>()).ToList();
         }
+
+        /// <summary>
+        /// What the two computed numbers were held against in the workbook, one line each.
+        /// </summary>
+        public IReadOnlyList<string> WhatWasChecked { get; }
 
         public static PdfOutcome Wrote(
             string plotId, PdfForm form, string path, PdfFormCheck check,
-            IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank)
+            IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank,
+            IEnumerable<string> whatWasChecked = null)
         {
-            return new PdfOutcome(plotId, form, true, path, string.Empty, check, landed, blank);
+            return new PdfOutcome(
+                plotId, form, true, path, string.Empty, check, landed, blank, whatWasChecked);
         }
 
         public static PdfOutcome WroteNothing(string plotId, PdfForm form, string why, PdfFormCheck check)
         {
-            return new PdfOutcome(plotId, form, false, string.Empty, why, check, null, null);
+            return new PdfOutcome(plotId, form, false, string.Empty, why, check, null, null, null);
         }
 
         public string PlotId { get; }

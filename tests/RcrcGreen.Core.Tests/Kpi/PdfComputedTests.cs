@@ -59,6 +59,23 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// The workbook agreeing with this tool on both computed cells, which is what the seven
+        /// real templates were measured to do. The percentage answers nothing to check, which is
+        /// what the two park templates really carry.
+        /// </summary>
+        private static SummaryCellCheck GreenCoverAgrees()
+        {
+            return SummaryCellCheck.Agreeing(
+                ComputedPlaces.GreenCoverName, "D9", "F9+F11+H11", "F9");
+        }
+
+        private static SummaryCellCheck PercentageHasNoCell()
+        {
+            return SummaryCellCheck.WithNothingToCheck(
+                ComputedPlaces.PercentageName, WorkbookArithmetic.TheWorkbookHasNoPercentageCell);
+        }
+
+        /// <summary>
         /// **THE CANOPY IS THE WORKBOOK'S OWN COLUMN, WORKED OUT THE WORKBOOK'S OWN WAY.**
         /// Measured on the MOSQUES template, Tree List - Proposed row 21:
         /// `L21 =IF(ISBLANK(J21)," ",ROUND(PI()*(J21/2)^2,0))` and `M21 =IF(ISBLANK(B21)," ",L21*B21)`.
@@ -188,7 +205,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             CanopyTotal canopy = CanopyArea.Of(new[] { new CanopyRow(Proposed, 4, "ALBIZIA LEBBECK", 11, 8.0) });
 
             PdfPlan plan = Plan("EP-05", KpiTemplates.ExistingParks, new PdfWorkbookNumbers(
-                canopy, 0.0, 0.0, 771.0, ArithmeticCheck.Agreeing(new[] { "Tree List - Proposed L4 = a formula" })));
+                canopy, 0.0, 0.0, 771.0,
+                ArithmeticCheck.Agreeing(new[] { "Tree List - Proposed L4 = a formula" }),
+                GreenCoverAgrees(), PercentageHasNoCell()));
 
             PdfFieldFill greened = Field(plan, PdfValue.TotalAreasToBeGreened);
             Assert.Equal("0.00055", greened.Text);
@@ -216,7 +235,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheRoadsFormIsFilledFromItsOwnNoteAndSaysSo()
         {
             CanopyTotal canopy = CanopyArea.Of(new[] { new CanopyRow(Proposed, 4, "ALBIZIA LEBBECK", 11, 8.0) });
-            var numbers = new PdfWorkbookNumbers(canopy, 410.0, 60.0, 771.0, ArithmeticCheck.Agreeing(null));
+            var numbers = new PdfWorkbookNumbers(
+                canopy, 410.0, 60.0, 771.0, ArithmeticCheck.Agreeing(null),
+                GreenCoverAgrees(), PercentageHasNoCell());
 
             PdfFieldFill roads = Field(Plan("ST-05", KpiTemplates.Streets, numbers), PdfValue.TotalAreasToBeGreened);
             PdfFieldFill parks = Field(Plan("EP-05", KpiTemplates.ExistingParks, numbers), PdfValue.TotalAreasToBeGreened);
@@ -257,7 +278,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 drifted.Why);
 
             PdfPlan plan = Plan("EP-05", KpiTemplates.ExistingParks,
-                new PdfWorkbookNumbers(canopy, 410.0, 60.0, 771.0, drifted));
+                new PdfWorkbookNumbers(
+                    canopy, 410.0, 60.0, 771.0, drifted, GreenCoverAgrees(), PercentageHasNoCell()));
 
             Assert.Equal(drifted.Why, Field(plan, PdfValue.TotalAreasToBeGreened).Why);
             Assert.Equal(drifted.Why, Field(plan, PdfValue.PercentageCanopy).Why);
@@ -280,7 +302,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(WorkbookArithmetic.NoRowsWritten, nothing.Why);
 
             PdfPlan plan = Plan("EP-05", KpiTemplates.ExistingParks,
-                new PdfWorkbookNumbers(CanopyTotal.Nothing, 410.0, 60.0, 771.0, nothing));
+                new PdfWorkbookNumbers(
+                    CanopyTotal.Nothing, 410.0, 60.0, 771.0, nothing,
+                    GreenCoverAgrees(), PercentageHasNoCell()));
 
             Assert.Equal("0.00047", Field(plan, PdfValue.TotalAreasToBeGreened).Text);
 

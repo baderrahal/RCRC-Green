@@ -4,6 +4,106 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy eighth pass. The other two formulas, measured and guarded
+
+**1886 tests, 1066 of them KPI, 7 added, against the 1879 main carries** at `2c698c7`, which is
+also this branch's point, 28 hook cases unchanged, build zero warnings. **No audit finding is
+closed, renumbered or reordered: read off the three files, 63 numbered findings, 19 carrying a
+FIXED mark, 44 open.**
+
+### The open question is closed, by a measurement rather than by an argument
+
+The round before computed the two numbers and guarded only the canopy column, because the text of
+the other two formulas was measured nowhere in this repository. The one thing near it was `H9 =
+H8/Area` on EXISTING PARKS, one template, and building a discovery rule on that is the shape this
+repo has paid for five times. **Bader measured both on all seven.**
+
+```
+TOTAL GREEN COVER, the same shape on all seven in two row layouts
+  EXISTING PARKS, FUTURE PARKS, STREETS    D9 = F9+F11+H11
+  HEALTHCARE, MOSQUES, PARKING, SCHOOLS    D8 = F8+F10+H10
+
+PERCENTAGE CANOPY, in SECTION 3 and not section 1
+  HEALTHCARE, MOSQUES, PARKING, SCHOOLS    label C31, value E31 = IF(Area<1," ",F8/Area)
+  STREETS                                  label C32, value E32 = IF(Area<1," ",F9/Area)
+  EXISTING PARKS and FUTURE PARKS          NO SUCH LABEL AT ALL
+```
+
+Canopy plus planting plus lawn, and canopy over area, which is what the tool already computes. **So
+the arithmetic was right and only the checking was missing.** The open question is taken out of the
+log by this entry.
+
+### The note is wrong about where the percentage is, which is the second one
+
+The client's own note says the cell to the right of `Total area covered by canopy`. **There is no
+such label in section 1 on any template.** The cell is in section 3 under `% of Total area covered
+by canopy`, and its value sits TWO columns right of the label rather than one, the cell one to the
+right being empty on all five that carry it.
+
+That is the second note on these forms measured to be wrong about its own subject. The first was
+the TOTAL Shrubs tooltip last round. Both were found by measuring rather than by reading, which is
+what the rule that a note is checked and never used to decide anything is for.
+
+### The one form that asks for it is fed by the two templates that do not carry it
+
+Percentage Total area covered by canopy is on the Parks PDF alone, which EP and FP plots reach, and
+EXISTING PARKS and FUTURE PARKS have no such cell. **So the percentage check answers nothing to
+check on every run the tool makes today.**
+
+It is a fact about the client's files rather than a fault to fix. The tool holds the canopy and the
+area, so **it still computes and writes the number**, and the report says the workbook has no cell
+to hold it against. An absence is not a drift, and `SummaryCellCheck.NothingToCheck` is what tells
+the two apart rather than a reading of the reason.
+
+The check is built anyway, because it is right and because it fires the day a park template grows
+the cell or another form grows the field.
+
+### How both are checked, with no letter anywhere
+
+**Two row layouts are why neither cell is a letter**, the lesson row 7 and row 5 both taught.
+`ComputedPlaces` holds the two labels and the distance right of each, and it is read through the
+same `LabelledPlaces` lookup every other labelled cell uses. **It sits beside `LabelledPlaces.All`
+rather than inside it**, because those two cells hold the client's own formulas and a value written
+into one would destroy them. A test says so in those words.
+
+`GreenCoverCell` reads the cell the label chose and requires exactly three single cells, two of
+them the template's own map's planting and lawn cells. **The third IS the canopy cell**, learnt
+from the formula rather than written in, and carried to the percentage check, so the two cannot
+name two different canopies. `PercentageCell` then requires exactly the canopy cell and the map's
+area cell. `IF(Area<1," ",F8/Area)` reads F8 and whatever `Area` points at, through the new
+`FormulaCell.SingleCellsRead`, **so the defined name is checked as well as the cell** and no
+formula text is matched anywhere.
+
+**A label named nowhere is a refusal for the green cover and nothing to check for the percentage**,
+because the measurement differs: all seven carry the green cover label and two of the seven carry
+no percentage label at all.
+
+**The green cover label text comes from the client's own PDF note** and is confirmed by where it
+lands, D9 on three templates and D8 on four. The report prints the cell the label chose on every
+run, so a template whose label reads anything else is one line rather than a silence.
+
+### What is measured and what is not
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and neither check has been run against a real
+client template. Both are proven against a workbook the tests build in the MOSQUES shape, with the
+labels at C8 and C31 and the measured formulas at D8 and E31. **The first real run is what confirms
+the green cover label text**, because the report prints the cell it chose.
+
+**The two computed numbers have still never been held against a workbook Excel has recalculated.**
+That stands from last round and is still the first thing the next run should do.
+
+### Two break watches
+
+```
+the green cover cell is never held against this tool's three cells   1 red, the drifted case,
+                                                                     expecting False and getting True
+the percentage value is taken one column right rather than two       2 red, one naming 2 against 1
+```
+
+Both restored byte for byte, checked with `diff -q`, and the suite green at 1886 after.
+
+---
+
 ## 2026-09-14, seventy seventh pass. Two numbers computed, and every unit named
 
 **Pull request 126, merged into main as `5fca585`.** The runner ran 28 hook cases and 1879 tests
@@ -103,10 +203,11 @@ rule on one template is the shape this repo has paid for five times, D7 and the 
 among them, so nothing looks for either cell. The report says
 `WorkbookArithmetic.NotCheckedAgainstTheWorkbook` beside both numbers.
 
-**OPEN QUESTION FOR BADER.** What do the Total Green cover cell and the canopy percentage cell
-hold, as formula text, on all seven templates. With that measured the guard closes and the tool's
-sum can be held against the workbook's own. Until then the canopy column is guarded and the sum is
-not, and the report says which.
+**CLOSED IN THE SEVENTY EIGHTH PASS, BY THE MEASUREMENT IT ASKED FOR.** Bader measured both cells
+on all seven templates. The green cover is canopy plus planting plus lawn in two row layouts, D9 on
+three templates and D8 on four, and the percentage is canopy over area in section 3 under a label
+the client's note names wrongly. Both are guarded now, found by their labels. The entry at the top
+of this file has the numbers.
 
 ### The two units, and the forty that need none
 

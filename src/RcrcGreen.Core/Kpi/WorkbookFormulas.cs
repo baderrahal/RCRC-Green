@@ -59,6 +59,23 @@ namespace RcrcGreen.Core.Kpi
 
         public string InWords { get; }
 
+        /// <summary>
+        /// A column number as Excel's own letters. One record, asked by the area itself and by
+        /// the reader that prints a cell.
+        /// </summary>
+        internal static string Letters(int number)
+        {
+            string letters = string.Empty;
+            while (number > 0)
+            {
+                int remainder = (number - 1) % 26;
+                letters = (char)('A' + remainder) + letters;
+                number = (number - 1) / 26;
+            }
+
+            return letters;
+        }
+
         public bool IsOneCell
         {
             get { return FirstColumn == LastColumn && FirstRow == LastRow; }
@@ -99,6 +116,12 @@ namespace RcrcGreen.Core.Kpi
             Text = text;
             SharedWith = sharedWith ?? string.Empty;
             Reads = reads;
+            SingleCellsRead = reads
+                .Where(one => one.IsOneCell)
+                .Select(one => new WorkbookCell(one.SheetName, CellArea.Letters(one.FirstColumn) + one.FirstRow))
+                .GroupBy(one => one.SheetName + "!" + one.Cell, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .ToList();
             Literals = literals;
             HasArithmetic = hasArithmetic;
             FunctionsExcelMayNotHave = functionsExcelMayNotHave;
@@ -121,6 +144,19 @@ namespace RcrcGreen.Core.Kpi
         public string SharedWith { get; }
 
         internal IReadOnlyList<CellArea> Reads { get; }
+
+        /// <summary>
+        /// Every SINGLE cell this formula reads, in the order they appear and without repeats,
+        /// **with defined names resolved to the cells they point at**. A range is left out,
+        /// because a formula summing a column is not reading one named thing.
+        ///
+        /// It is what the arithmetic guard asks: the workbook's Total Green cover cell must read
+        /// the three cells this tool adds, and its canopy percentage cell must read the canopy
+        /// and the area, and both are answered off this rather than off the formula's text.
+        /// `IF(Area&lt;1," ",F8/Area)` reads F8 and whatever `Area` points at, which is how the
+        /// defined name is checked as well as the cell.
+        /// </summary>
+        public IReadOnlyList<WorkbookCell> SingleCellsRead { get; }
 
         /// <summary>
         /// Every string literal in the formula, as written. A formula holding one and an
@@ -862,15 +898,7 @@ namespace RcrcGreen.Core.Kpi
 
         private static string Letters(int number)
         {
-            string letters = string.Empty;
-            while (number > 0)
-            {
-                int remainder = (number - 1) % 26;
-                letters = (char)('A' + remainder) + letters;
-                number = (number - 1) / 26;
-            }
-
-            return letters;
+            return CellArea.Letters(number);
         }
     }
 }
