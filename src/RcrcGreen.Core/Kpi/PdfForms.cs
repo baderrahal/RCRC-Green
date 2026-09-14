@@ -50,7 +50,14 @@ namespace RcrcGreen.Core.Kpi
         TotalShrubs,
 
         GroundCover,
-        Lawn
+        Lawn,
+
+        /// <summary>
+        /// A field on the form that this tool names nowhere. It gets EMPTIED rather than left,
+        /// because the client's default value in it is their own note to whoever fills the form
+        /// by hand, and a note printed in a box reads as an answer.
+        /// </summary>
+        NotOne
     }
 
     /// <summary>

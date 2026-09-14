@@ -81,6 +81,14 @@ namespace RcrcGreen.Core.Kpi
                 .Select(one => new KeyValuePair<string, string>(one.FieldName, one.Text))
                 .ToList();
 
+            // **EVERY TEXT FIELD IS WRITTEN OR EMPTIED.** What the client's template holds in a
+            // field nobody filled is their own note to a person filling it by hand, and a note
+            // printed in a box reads as an answer. The tick boxes and the Reset button are not
+            // text, so they are left exactly as they are.
+            IReadOnlyList<PdfFieldFill> emptied = PdfEmptying.For(plan, fields);
+            values.AddRange(emptied.Select(
+                one => new KeyValuePair<string, string>(one.FieldName, string.Empty)));
+
             byte[] filled = PdfFormFile.Filled(file, values, out refusal);
             if (filled == null)
             {
@@ -119,8 +127,22 @@ namespace RcrcGreen.Core.Kpi
                     one.Unit, one.Working));
             }
 
+            // **What landed in an emptied field is read back too**, off the same second read, so
+            // a box the tool meant to clear and did not is visible rather than assumed.
+            var cleared = new List<PdfLandedField>();
+            foreach (PdfFieldFill one in emptied)
+            {
+                PdfFieldRead found = back.FirstOrDefault(
+                    held => string.Equals(held.Name, one.FieldName, StringComparison.Ordinal));
+
+                cleared.Add(new PdfLandedField(
+                    one.Value, one.FieldName, string.Empty,
+                    found == null ? string.Empty : found.Value, string.Empty, string.Empty, one.Why));
+            }
+
             return PdfOutcome.Wrote(
-                plan.PlotId, plan.Form, outputPath, check, landed, plan.Blank, plan.WhatWasChecked);
+                plan.PlotId, plan.Form, outputPath, check, landed, plan.Blank, plan.WhatWasChecked,
+                cleared);
         }
 
         /// <summary>

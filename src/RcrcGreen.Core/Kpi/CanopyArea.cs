@@ -103,11 +103,25 @@ namespace RcrcGreen.Core.Kpi
     public static class CanopyArea
     {
         /// <summary>
-        /// The canopy rows of one plot, off the species this run really matched to a row.
+        /// The canopy rows of one plot, off the species this run really put a count into.
         ///
-        /// **Every row this run wrote a count into, and no other**, because the canopy the
-        /// workbook computes is over the rows its own counts sit in. A species that reached no
-        /// row contributes nothing here and nothing there.
+        /// **EVERY ROW THIS RUN WROTE A COUNT INTO, MATCHED OR WRITTEN IN**, because the canopy
+        /// the workbook computes is over the rows its own counts sit in and a matched row carries
+        /// a count just as a written one does.
+        ///
+        /// **THE 18:15 RUN MEASURED WHAT LEAVING THE MATCHED ROWS OUT COSTS.** Total Green cover
+        /// came out as the planting plus the lawn and nothing else on every plot of 150:
+        /// ANH-007-MO-100001 wrote 0.000105 km², which is 105 square metres, beside a workbook
+        /// holding shrubs 70 and lawn 35, with twelve proposed trees contributing no canopy at
+        /// all. The canopy percentage read 0 on both park PDFs, which is the same fault one step
+        /// downstream.
+        ///
+        /// **AND THE DIAMETER OF A MATCHED ROW IS READ OFF THE WORKBOOK, NOT OFF THE RUN.** The
+        /// tool writes a diameter only into a row it creates. A matched row is the client's own
+        /// row: its measures are already in the file, the formulas beside it already read them,
+        /// and the only thing Revit adds is the count in column B. So its canopy comes off the
+        /// sheet's own diameter column, which is exactly the rule the species matching already
+        /// follows.
         /// </summary>
         public static CanopyTotal From(KpiCreatePlan plan)
         {
@@ -116,16 +130,41 @@ namespace RcrcGreen.Core.Kpi
             var rows = new List<CanopyRow>();
             foreach (SpeciesMatch match in plan.Matches)
             {
-                if (!match.Added || match.NotReachedByTheTotal || match.Row <= 0) continue;
-
-                MeasureAnswer diameter = match.Species.Diameter;
+                if (match.NotReachedByTheTotal || match.Row <= 0) continue;
 
                 rows.Add(new CanopyRow(
                     match.SheetName, match.Row, match.Species.BotanicalName, match.Species.Quantity,
-                    diameter.Write ? diameter.Value : 0.0));
+                    match.Added ? FromTheRun(match) : OffTheWorkbook(match)));
             }
 
             return Of(rows);
+        }
+
+        /// <summary>
+        /// A row this run created carries the diameter this run wrote into it, off the schedule.
+        /// </summary>
+        private static double FromTheRun(SpeciesMatch match)
+        {
+            MeasureAnswer diameter = match.Species.Diameter;
+
+            return diameter.Write ? diameter.Value : 0.0;
+        }
+
+        /// <summary>
+        /// A row the client already held carries the client's own diameter. **It travels on the
+        /// match already**, as `WorkbookDiameter`, read off the sheet's own diameter column where
+        /// the match was made, so nothing here looks the row up a second time and the two cannot
+        /// come apart. A diameter that does not read as a number contributes nothing and is
+        /// named, the same as a row with none.
+        /// </summary>
+        private static double OffTheWorkbook(SpeciesMatch match)
+        {
+            double held;
+            return double.TryParse(
+                (match.WorkbookDiameter ?? string.Empty).Trim(),
+                NumberStyles.Float, CultureInfo.InvariantCulture, out held)
+                ? held
+                : 0.0;
         }
 
         public static CanopyTotal Of(IEnumerable<CanopyRow> rows)

@@ -262,12 +262,17 @@ namespace RcrcGreen.Core.Tests.Kpi
             string report = KpiCreateReport.Write(
                 CreateFixture.Run(outcome: outcome, outputRoot: _folder), new DateTime(2026, 9, 10, 14, 28, 0));
 
-            Assert.Contains("== " + KpiCreateReport.FormulasHeading + " (8) ==", report);
+            // **THE HEADING COUNTS WHAT THE BODY PRINTS.** Four shapes on a row this run wrote
+            // into: L7 returning a space, M7 doing arithmetic on it, M10 summing M7, and the
+            // main sheet's chain off that. It used to count the errors and print every risk, so
+            // the 18:15 report carried a heading of (0) over 526 lines.
+            Assert.Contains("== " + KpiCreateReport.FormulasHeading + " (", report);
             // Seven on the main sheet, D8, F8, D9, H9, E31, F31 and G31, and fourteen on each tree
             // sheet, L4 to L9, M4 to M9, B10 and M10.
             Assert.Contains("  formulas in the output   35, of which ", report);
             Assert.Contains("  THIS RUN IS REFUSED ON WHAT FOLLOWS. The output was written, checked and deleted again.", report);
             Assert.Contains("  Tree List - Proposed | M7 | IF(ISBLANK(B7),\" \",L7*B7) | #VALUE!: L7 returns text and this formula does arithmetic on it", report);
+            Assert.Contains("  Only formulas reading a cell on a row this run wrote into are here.", report);
             Assert.Contains("  <Mosques> H7 | present, holds 62023 | read by 3 formulas", report);
             Assert.Contains("== CELLS WRITTEN (0) ==\r\nNOTHING WAS WRITTEN\r\n  The output was written, checked and deleted again.", report);
         }

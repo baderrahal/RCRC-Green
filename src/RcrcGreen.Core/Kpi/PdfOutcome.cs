@@ -11,8 +11,9 @@ namespace RcrcGreen.Core.Kpi
     {
         public PdfLandedField(
             PdfValue value, string fieldName, string sent, string landed,
-            string unit = null, string working = null)
+            string unit = null, string working = null, string why = null)
         {
+            Why = why ?? string.Empty;
             Value = value;
             Unit = unit ?? string.Empty;
             Working = working ?? string.Empty;
@@ -44,6 +45,12 @@ namespace RcrcGreen.Core.Kpi
             get { return Working.Length > 0; }
         }
 
+        /// <summary>
+        /// Why an EMPTIED field was emptied, so a blank box is a decision on the record rather
+        /// than an oversight. Empty on a field this run wrote a value into.
+        /// </summary>
+        public string Why { get; }
+
         public string Sent { get; }
 
         /// <summary>What the output really holds, which is what the report prints.</summary>
@@ -65,8 +72,9 @@ namespace RcrcGreen.Core.Kpi
         private PdfOutcome(
             string plotId, PdfForm form, bool written, string path, string refusal,
             PdfFormCheck check, IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank,
-            IEnumerable<string> whatWasChecked)
+            IEnumerable<string> whatWasChecked, IEnumerable<PdfLandedField> emptied)
         {
+            Emptied = (emptied ?? Enumerable.Empty<PdfLandedField>()).ToList();
             PlotId = plotId ?? string.Empty;
             Form = form;
             Written = written;
@@ -83,18 +91,31 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public IReadOnlyList<string> WhatWasChecked { get; }
 
+        /// <summary>
+        /// Every field this run CLEARED, with why and what landed in it. **A blank box is a
+        /// decision on the record**, so the report names each one rather than leaving a reader
+        /// to wonder whether the tool forgot it.
+        /// </summary>
+        public IReadOnlyList<PdfLandedField> Emptied { get; }
+
+        public IEnumerable<PdfLandedField> EmptiedButNotCleared
+        {
+            get { return Emptied.Where(one => one.Landed.Length > 0); }
+        }
+
         public static PdfOutcome Wrote(
             string plotId, PdfForm form, string path, PdfFormCheck check,
             IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank,
-            IEnumerable<string> whatWasChecked = null)
+            IEnumerable<string> whatWasChecked = null,
+            IEnumerable<PdfLandedField> emptied = null)
         {
             return new PdfOutcome(
-                plotId, form, true, path, string.Empty, check, landed, blank, whatWasChecked);
+                plotId, form, true, path, string.Empty, check, landed, blank, whatWasChecked, emptied);
         }
 
         public static PdfOutcome WroteNothing(string plotId, PdfForm form, string why, PdfFormCheck check)
         {
-            return new PdfOutcome(plotId, form, false, string.Empty, why, check, null, null, null);
+            return new PdfOutcome(plotId, form, false, string.Empty, why, check, null, null, null, null);
         }
 
         public string PlotId { get; }

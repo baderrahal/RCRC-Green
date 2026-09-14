@@ -65,11 +65,22 @@ namespace RcrcGreen.Core.Kpi
             TheRunAccounting(report, set);
             TheSplit(report, set);
 
+            // **EVERY PLOT GETS ITS OWN BLOCK.** It used to take the FIRST run of each
+            // template and print that one, so the 18:15 run over 156 plots carried detail for
+            // seven of them: EP-01, FP-16, HF-01, DM-11, PL-17, SC-03 and MM-01, the first of
+            // each. The species list, the schedule print, the cells written and the
+            // reconciliation, which are the sections that make this tool checkable at all,
+            // covered 4 percent of the run.
+            //
+            // **The counts stay counts of the RUN**, because they already are: THIS RUN AT A
+            // GLANCE and the accounting above both count over every run of the press, and a
+            // block's own reconciliation reads 1 of 1 because a block IS one plot. That is why
+            // a block per plot was chosen over one set of blocks carrying every plot: nothing
+            // has to be re-counted and no number moves.
             foreach (TemplateOutcome outcome in set.Outcomes)
             {
                 TemplateOutcome held = outcome;
-                KpiCreateRun run = set.Runs.FirstOrDefault(
-                    one => ReferenceEquals(one.Template, held.Template));
+                var mine = set.Runs.Where(one => ReferenceEquals(one.Template, held.Template)).ToList();
 
                 Line(report, string.Empty);
                 Line(report, "================================================================");
@@ -78,7 +89,7 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, "================================================================");
                 Line(report, string.Empty);
 
-                if (run == null)
+                if (mine.Count == 0)
                 {
                     Line(report, "  No plot of this run belongs to it, so nothing was read for it and");
                     Line(report, "  nothing was written. It stays ticked and stays listed.");
@@ -86,7 +97,18 @@ namespace RcrcGreen.Core.Kpi
                     continue;
                 }
 
-                report.Append(Write(run, writtenAt));
+                Line(report, "  " + mine.Count + (mine.Count == 1 ? " plot" : " plots")
+                    + " of this press belong to it, and each has its own block below.");
+                Line(report, string.Empty);
+
+                foreach (KpiCreateRun run in mine)
+                {
+                    Line(report, "----------------------------------------------------------------");
+                    Line(report, "PLOT: " + Shown(OnePlotOf(run)) + "   TEMPLATE: " + held.Template.Name);
+                    Line(report, "----------------------------------------------------------------");
+
+                    report.Append(Write(run, writtenAt, false));
+                }
             }
 
             return report.ToString();
@@ -300,6 +322,7 @@ namespace RcrcGreen.Core.Kpi
                 }
 
                 TheComputed(report, one.Pdf);
+                TheEmptied(report, one.Pdf);
 
                 if (one.Pdf.Blank.Count == 0) continue;
 
@@ -351,6 +374,29 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// Every field this run CLEARED, with why.
+        ///
+        /// **THE CLIENT'S DEFAULT VALUES ARE NOTES FOR WHOEVER FILLS THE FORM BY HAND.** Measured
+        /// on the 18:15 run: 150 PDFs went out with `Revit / softscape &amp; shrubs &amp; lawn
+        /// schedule / total water demand /1000` printed inside the irrigation box. Every text
+        /// field the tool does not write is emptied now, and **a blank box is a decision on the
+        /// record** rather than something a reader has to take on trust.
+        /// </summary>
+        private static void TheEmptied(StringBuilder report, PdfOutcome pdf)
+        {
+            if (pdf.Emptied.Count == 0) return;
+
+            Line(report, "    EMPTIED, " + pdf.Emptied.Count + " | why | what landed");
+            foreach (PdfLandedField field in pdf.Emptied)
+            {
+                Line(report, "    " + Join(
+                    field.FieldName,
+                    field.Why,
+                    field.Landed.Length == 0 ? "empty" : Shown(field.Landed) + "   STILL HOLDS THIS"));
+            }
+        }
+
+        /// <summary>
         /// Which plots went to which template and by which route, and every ticked plot that
         /// went nowhere with why. **A plot whose template is not ticked is not read and is named
         /// here**, so a plot list that goes in longer than it comes out is visible at the top of
@@ -383,16 +429,41 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
         }
 
+        /// <summary>
+        /// The plot a run is for, off its own reconciliation, which is the one record of which
+        /// plots the run covered. Empty where the run carries none, said rather than guessed.
+        /// </summary>
+        private static string OnePlotOf(KpiCreateRun run)
+        {
+            return run.Reconciliation == null || run.Reconciliation.Ticked.Count == 0
+                ? "UNKNOWN"
+                : string.Join(", ", run.Reconciliation.Ticked.ToArray());
+        }
+
         public static string Write(KpiCreateRun run, DateTime writtenAt)
+        {
+            return Write(run, writtenAt, true);
+        }
+
+        /// <summary>
+        /// One run's sections. <paramref name="withTheFilePreamble"/> is false for a block
+        /// inside the whole press's file, where the document, the time and the read only line
+        /// are already at the top and repeating them 156 times says nothing.
+        /// </summary>
+        public static string Write(KpiCreateRun run, DateTime writtenAt, bool withTheFilePreamble)
         {
             if (run == null) throw new ArgumentNullException("run");
 
             var report = new StringBuilder();
 
-            Line(report, "RCRC Green KPI checklist");
-            Line(report, "Document: " + Shown(run.DocumentTitle));
-            Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            Line(report, "Read only. Nothing in the model was changed and the template was not touched.");
+            if (withTheFilePreamble)
+            {
+                Line(report, "RCRC Green KPI checklist");
+                Line(report, "Document: " + Shown(run.DocumentTitle));
+                Line(report, "Written: " + writtenAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
+                Line(report, "Read only. Nothing in the model was changed and the template was not touched.");
+            }
+
             TheClock(report, run);
             TheLinks(report, run);
             TheCoarseStep(report, run);
@@ -862,8 +933,13 @@ namespace RcrcGreen.Core.Kpi
         {
             FormulaCheck check = run.Outcome == null ? FormulaCheck.NotChecked : run.Outcome.Formulas;
 
-            Heading(report, FormulasHeading, check.AtRisk.Count(one => one.IsAnError),
-                "formulas that would read an error, checked off the output file over what its formulas read and never by evaluating one");
+            // **THE HEADING COUNT AND THE BODY COME OFF ONE LIST.** The heading used to count
+            // the errors and the body printed every risk, so the 18:15 report carried a heading
+            // of (0) over 526 lines. A section nobody can trust hides the real risk inside it.
+            IReadOnlyList<RepeatedFormula> risks = FormulaRepeats.Of(check.AtRisk);
+
+            Heading(report, FormulasHeading, risks.Count,
+                "formula shapes at risk on a row this run wrote into, checked off the output file over what its formulas read and never by evaluating one");
 
             if (!check.WasChecked)
             {
@@ -882,15 +958,25 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
-            Line(report, "  FORMULAS AT RISK, " + check.AtRisk.Count
+            Line(report, "  FORMULAS AT RISK, " + risks.Count
                 + ": a formula returning text where a number was expected, the #VALUE! that arithmetic on it gives,");
             Line(report, "  a #DIV/0! off a divisor holding nought or nothing, and every formula that reads one of them.");
             Line(report, "  A divide by zero is REPORTED and never refused on, and its line says whether this run wrote the cell it divides by.");
-            Line(report, "  sheet | cell | formula | why");
-            foreach (FormulaAtRisk one in check.AtRisk)
+
+            // **ONLY WHAT THE RUN IS ANSWERABLE FOR, AND ONE LINE PER SHAPE.** The 18:15 report
+            // printed 526, most of them G31 to G36 saying one sentence per row per template
+            // about cells this run never wrote into. A formula the run did not affect is not at
+            // risk from the run, and the same formula filled down a column is one finding.
+            Line(report, "  Only formulas reading a cell on a row this run wrote into are here. "
+                + check.AtRisk.Count + " were found in all, of which "
+                + FormulaRepeats.FromWhatTheRunWrote(check.AtRisk).Count + " read such a cell.");
+            Line(report, "  sheet | cells | formula | why");
+            foreach (RepeatedFormula one in risks)
             {
-                Line(report, "  " + Join(one.SheetName, one.Cell, one.Text,
-                    one.Reason + (one.FromWrittenRow ? string.Empty : " (not from a row this run wrote into)")));
+                Line(report, "  " + Join(one.SheetName, one.Where, one.Text,
+                    one.Reason + (one.Repeats
+                        ? "   THE SAME SHAPE ON " + one.Cells.Count + " CELLS, said once"
+                        : string.Empty)));
             }
 
             Line(report, string.Empty);

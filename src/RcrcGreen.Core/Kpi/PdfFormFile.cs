@@ -13,13 +13,33 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PdfFieldRead
     {
-        public PdfFieldRead(string name, string value, int objectNumber, double x = 0.0, double y = 0.0)
+        public PdfFieldRead(
+            string name, string value, int objectNumber, double x = 0.0, double y = 0.0,
+            string fieldType = null)
         {
             Name = name ?? string.Empty;
             Value = value ?? string.Empty;
             ObjectNumber = objectNumber;
             X = x;
             Y = y;
+            FieldType = fieldType ?? string.Empty;
+        }
+
+        /// <summary>
+        /// The field's own kind as the file states it, `Tx` for text, `Btn` for a tick box or a
+        /// push button, `Ch` for a choice, `Sig` for a signature. **Inherited from the parent
+        /// where the field states none**, which is how an AcroForm is defined.
+        ///
+        /// **IT IS WHAT DECIDES WHICH FIELDS ARE EMPTIED, rather than a list of names.** Ask the
+        /// API what a thing IS rather than what it is called: the four stage tick boxes and the
+        /// Reset button are left alone because they are buttons, not because anybody wrote their
+        /// names down.
+        /// </summary>
+        public string FieldType { get; }
+
+        public bool IsText
+        {
+            get { return string.Equals(FieldType, "Tx", StringComparison.Ordinal); }
         }
 
         /// <summary>
@@ -93,6 +113,9 @@ namespace RcrcGreen.Core.Kpi
         private static readonly Regex Rectangle = new Regex(
             @"/Rect\s*\[\s*(-?[0-9.]+)\s+(-?[0-9.]+)", RegexOptions.CultureInvariant);
 
+        private static readonly Regex FieldKind =
+            new Regex(@"/FT\s*/([A-Za-z]+)", RegexOptions.CultureInvariant);
+
         private static readonly Regex ParentReference =
             new Regex(@"/Parent\s+(\d+)\s+\d+\s+R", RegexOptions.CultureInvariant);
 
@@ -151,9 +174,13 @@ namespace RcrcGreen.Core.Kpi
 
             var titles = new Dictionary<int, string>();
             var parents = new Dictionary<int, int>();
+            var kinds = new Dictionary<int, string>();
 
             foreach (KeyValuePair<int, string> one in bodies)
             {
+                Match kind = FieldKind.Match(one.Value);
+                if (kind.Success) kinds[one.Key] = kind.Groups[1].Value;
+
                 Match title = FieldTitle.Match(one.Value);
                 if (!title.Success) continue;
 
@@ -171,10 +198,36 @@ namespace RcrcGreen.Core.Kpi
                 found.Add(new PdfFieldRead(
                     FullName(one.Key, titles, parents), ValueOf(bodies[one.Key]), one.Key,
                     where.Success ? Rounded(where.Groups[1].Value) : 0.0,
-                    where.Success ? Rounded(where.Groups[2].Value) : 0.0));
+                    where.Success ? Rounded(where.Groups[2].Value) : 0.0,
+                    KindOf(one.Key, kinds, parents)));
             }
 
             return found.OrderBy(one => one.Name, StringComparer.Ordinal).ToList();
+        }
+
+        /// <summary>
+        /// A field's kind, its own where it states one and its parent's where it does not, which
+        /// is how AcroForm inheritance is defined. A chain that leads nowhere answers empty, and
+        /// an empty kind is never taken for text, so a field this tool cannot classify is left
+        /// exactly as the client had it.
+        /// </summary>
+        private static string KindOf(int number, Dictionary<int, string> kinds, Dictionary<int, int> parents)
+        {
+            var seen = new HashSet<int>();
+            int at = number;
+
+            while (seen.Add(at))
+            {
+                string kind;
+                if (kinds.TryGetValue(at, out kind)) return kind;
+
+                int up;
+                if (!parents.TryGetValue(at, out up)) return string.Empty;
+
+                at = up;
+            }
+
+            return string.Empty;
         }
 
         /// <summary>
