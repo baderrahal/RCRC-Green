@@ -208,6 +208,57 @@ namespace RcrcGreen.Core.Kpi
         public const int ShownByName = 4;
 
         /// <summary>
+        /// **The 09:18 run read six plots and dropped them at the last step**, after the read,
+        /// with no word of it before the press. EP-05, EP-11, EP-12, EP-13, EP-15 and FM-08 have
+        /// no sheet, so no component, so the plot prefix placed them into a template exactly as
+        /// its own rule says, and then the folder table had nothing for them.
+        ///
+        /// Five of the six file under their template's own folder now. The one that cannot is
+        /// named HERE, before the press, rather than after its read: **reading a plot and
+        /// throwing it away is work nobody asked for.**
+        /// </summary>
+        public static IReadOnlyList<string> PlotsWithNoComponent(TemplateSplit split)
+        {
+            var lines = new List<string>();
+            if (split == null) return lines;
+
+            List<PlotTemplate> byPrefix = split.Answers
+                .Where(one => one.Route == TemplateRoute.Prefix)
+                .ToList();
+            if (byPrefix.Count == 0) return lines;
+
+            List<string> filed = byPrefix
+                .Where(one => ComponentFolders.OnlyFolderFor(one.Template).Length > 0)
+                .Select(one => one.PlotId)
+                .ToList();
+
+            List<PlotTemplate> nowhere = byPrefix
+                .Where(one => ComponentFolders.OnlyFolderFor(one.Template).Length == 0)
+                .ToList();
+
+            lines.Add(byPrefix.Count.ToString(CultureInfo.InvariantCulture)
+                + (byPrefix.Count == 1 ? " ticked plot carries" : " ticked plots carry")
+                + " no component, because it is on no sheet, and the plot prefix placed "
+                + (byPrefix.Count == 1 ? "it" : "each one") + Range(byPrefix.Select(one => one.PlotId).ToList()) + ".");
+
+            if (filed.Count > 0)
+            {
+                lines.Add(filed.Count.ToString(CultureInfo.InvariantCulture) + " of those file under "
+                    + (filed.Count == 1 ? "its" : "their") + " template's own folder"
+                    + Range(filed) + ".");
+            }
+
+            foreach (PlotTemplate one in nowhere)
+            {
+                lines.Add(one.PlotId + " WILL BE READ AND WRITTEN NOWHERE: "
+                    + ComponentFolders.NoFolderForTemplate(one.Template)
+                    + ". Untick it, or give it a sheet carrying a component.");
+            }
+
+            return lines;
+        }
+
+        /// <summary>
         /// The same row after the press: written with its path, or not written with its reason.
         /// Never one line for the run that hides which of six failed.
         /// </summary>

@@ -928,6 +928,18 @@ namespace RcrcGreen.Revit.Kpi
 
             foreach (string refusal in split.Refusals) _templates.Children.Add(Warned(refusal));
 
+            // **A plot with no component is placed by its prefix and may still have no folder.**
+            // The 09:18 run read six of them and dropped every one at the last step, after the
+            // read and with nothing said before the press. The count is a note and the plot that
+            // can be filed nowhere is a refusal, both here rather than twenty minutes later.
+            IReadOnlyList<string> noComponent = CreateWords.PlotsWithNoComponent(split);
+            for (int at = 0; at < noComponent.Count; at++)
+            {
+                _templates.Children.Add(noComponent[at].Contains("WRITTEN NOWHERE")
+                    ? Warned("   " + noComponent[at])
+                    : Noted(noComponent[at]));
+            }
+
             // After the press, each row says what happened to it. Never one line for the run
             // that hides which of six failed.
             if (_lastSet != null)

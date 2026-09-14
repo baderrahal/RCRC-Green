@@ -4,6 +4,130 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy second pass. A plot could get a template and no folder, and six did
+
+Two things off the 09:18 run, NG05, 156 plots over 7 templates, 150 workbooks. **1729 tests, 909
+of them KPI, 28 hook cases**, against the 1706 main carries at the branch point `0b29cf7`. Build
+zero warnings. **No audit finding is closed, renumbered or reordered: read off the three files at
+these lines, 63 numbered findings, 19 carrying a FIXED mark, 44 open.**
+
+### What worked, recorded because a round of faults hides it
+
+The label lookup reached C5, E5, G5 and H5 on every template that ran, measured on the output:
+ANH-007-ST-100130 carries its reference, the date, the person and their position. Character and
+Context are filled. Three cells written over something the template already held are named.
+**Four of the seven asset types ran for the first time**, and HEALTHCARE, MOSQUES, PARKING and
+one STREETS workbook recalculate with ZERO errors.
+
+### 1. A plot could get a template and no folder
+
+EP-05, EP-11, EP-12, EP-13, EP-15 and FM-08 were ticked, READ, and dropped at the last step with
+`the component folder table does not hold an empty component`. They are on no sheet, so no
+component, so `PlotsPerTemplate` placed them by their PLOT PREFIX, which is what its own rule
+says it must do and what its docstring names four of those very plots as the case for. Then the
+folder table, keyed on the component, had nothing for them.
+
+**Two routes to a template and one to a folder.** The two records shape, where the two records
+are the two steps of one decision.
+
+**THE PROPOSAL, SAID BEFORE IT WAS DONE, BECAUSE THE FOLDER NAME IS THE TEAM'S FILING AND NOT A
+FACT ABOUT THE MODEL.** Three shapes were on the table and two of them add an eighth table, a
+template to folder map or a prefix to folder map, each another record to keep in step with the
+two that exist. The third refuses the plot, honest and costing six of a hundred and fifty six
+every run.
+
+**I took none of the three, because the relation is already written down twice over.** Both
+tables are keyed on the same eleven component values, so which folders a template reaches is
+read off the two together rather than held as a third thing. Counted off them by hand:
+
+```
+EXISTING PARKS   EXISTING PARK      HEALTHCARE   HEALTHCARE     STREETS   STREETS
+FUTURE PARKS     FUTURE PARKS       PARKING      PARKING LOT
+SCHOOLS          SCHOOL             MOSQUES      DAILY MOSQUE and FRIDAY MOSQUE
+```
+
+**Six templates reach exactly ONE folder and MOSQUES reaches two.** So a plot with no component
+of its own is filed where every other plot of its template is filed, which places the five park
+plots, and where a template reaches more than one nothing is derived, which still refuses FM-08
+with a reason naming both folders rather than naming an empty component. Same shape as two
+filled regions holding an area on one plot: one answer answers itself and two is a question the
+data cannot settle.
+
+**An absence and an answer nobody knows stay two different things.** A component the table does
+not hold still places nothing and still names the value. Falling back to the template there
+would file a value the team has never seen under a folder the team never chose, and that is the
+one thing a folder rule must never do.
+
+**AND THE PLOT IS NAMED BEFORE THE PRESS.** `CreateWords.PlotsWithNoComponent` counts the ticked
+plots with no component, says how many file under their template's own folder, and names by name
+the one that can be filed nowhere, with what to do about it. The count is a note and that plot
+is a refusal, both above Create rather than twenty minutes later in a report. A run where every
+ticked plot carries a component says nothing at all, because a line about nothing is one the
+team reads past on every other press. No line names `PRX_COMPONENT`, which is in no model, and a
+test refuses it.
+
+### 2. Two divide by zero errors, and what I can and cannot say about them
+
+ANH-007-SC-100004 and ANH-007-ST-100130 each recalculate with 2 #DIV/0!, neither on the main
+sheet, both on plots with few trees.
+
+**WHICH SHEET AND WHICH CELLS IS UNKNOWN FROM THIS REPOSITORY, AND I AM NOT GOING TO GUESS.** No
+client workbook is in it and none ever will be, so the four cells cannot be found by reading
+code. What I did establish is why the report was silent about them: **the formula check knew one
+shape only**, a formula returning text off ISBLANK and the arithmetic on it. It could not see a
+division at all, so it named nothing, and the answer to whether the tool wrote something those
+formulas read was in no file.
+
+So the tool is taught to say it. `WorkbookFormulas` reads a division whose divisor is ONE CELL
+and asks what that cell holds: a nought or a blank is #DIV/0!, and the line names the cell, the
+formula and **whether THIS RUN wrote the cell being divided by**, which is the half that would
+make it the tool's doing rather than the client's arithmetic. The next run answers Bader's
+question by itself, on the real templates, for all four.
+
+Two things it refuses to judge, both on purpose. A divisor that is an expression, a range or a
+function call, because working out what it computes to would be evaluating the formula. And **a
+divisor that is itself a FORMULA**, because the patcher drops every cached value on the way out,
+so a formula cell in the output holds no number at all and reading that absence as a nought
+would call every computed divisor an error.
+
+**IT IS REPORTED AND NEVER REFUSED ON.** A plot with no trees really has no average, so the
+divide by zero is the client's own arithmetic over a real number, and deleting a correct
+workbook over it is worse than printing a line. Turning that into a refusal where the run wrote
+the divisor is a decision for Bader once a run has named them, and it is not taken here.
+**No client formula is changed either way.** A test asserts the output stays on disk and the
+patch is not refused, on both the run wrote it and the run did not write it cases, because a
+check that started deleting 150 correct workbooks would be a far worse fault than the one it
+reports.
+
+### What is not a fault, recorded so nobody chases it
+
+Both parks workbooks recalculate with 44 #N/A at F31 to F74. An untouched EXISTING PARKS
+template recalculates with 45, and **the one that goes away is a divide by zero on the empty
+area, which the run fixed by filling it.** The 44 are the PARK PROGRAMME section failing because
+the Criteria sheet's programme table is empty in the client's own file, measured on 8 September.
+The parks workbooks are correct and carry a fault the client shipped. It is in the rules beside
+the 45 against 44 measurement that was already there.
+
+### Break watch
+
+One, restored byte for byte and checked with a diff against its backup.
+
+**A template reaching two folders takes the first rather than refusing.** Three red, and
+`AMosquePlotWithNoComponentIsStillRefusedAndBothFoldersAreNamed` fails on `Assert.False(path.Ok)`:
+the mosque plot was filed under DAILY MOSQUE by a guess, which is the thing that must never
+happen, and the red names it.
+
+### Existing tests changed by hand
+
+Fourteen call sites of `PlotWorkbookPath.For` gained the template argument, each given the one
+its own component really means rather than a convenient one, and the GOVERMENT BUILDING case
+passes null because no template placed that plot. Nothing else moved.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run is what shows the five park
+plots writing workbooks and what names the four #DIV/0! cells by sheet and by cell.
+
+---
+
 ## 2026-09-14, seventy first pass. The date is on every template twice, and the guard was firing
 
 Bader's answer to the question the round before left open, and one thing his answer turned up

@@ -20,9 +20,17 @@ namespace RcrcGreen.Core.Tests.Kpi
             return string.Join(Path.DirectorySeparatorChar.ToString(), parts);
         }
 
-        private static PlotWorkbookPath Where(string component, string uid2)
+        /// <summary>
+        /// The template is what files a plot carrying no component of its own, so these pass
+        /// the one their component really means and the empty component cases name theirs.
+        /// </summary>
+        private static PlotWorkbookPath Where(string component, string uid2, KpiTemplate template = null)
         {
-            return PlotWorkbookPath.For(Joined("R", "MUGHARAZAT"), component, uid2);
+            return PlotWorkbookPath.For(
+                Joined("R", "MUGHARAZAT"),
+                template ?? ComponentTemplates.For(component),
+                component,
+                uid2);
         }
 
         private static TemplateSplit Split(params string[] plots)

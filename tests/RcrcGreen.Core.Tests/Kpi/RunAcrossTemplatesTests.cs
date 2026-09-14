@@ -183,11 +183,11 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[]
                 {
                     PlotOutcome.Wrote("DM-12", KpiTemplates.Mosques,
-                        PlotWorkbookPath.For("R", "DAILY MOSQUE", "ANH-007-MO-100019")),
+                        PlotWorkbookPath.For("R", KpiTemplates.Mosques, "DAILY MOSQUE", "ANH-007-MO-100019")),
                     PlotOutcome.Wrote("FM-05", KpiTemplates.Mosques,
-                        PlotWorkbookPath.For("R", "FRIDAY MOSQUE", "ANH-007-MO-100006")),
+                        PlotWorkbookPath.For("R", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100006")),
                     PlotOutcome.WroteNothing("ST-05", KpiTemplates.Streets,
-                        PlotWorkbookPath.For("R", "STREET 36m ROW", "ANH-007-ST-100210"),
+                        PlotWorkbookPath.For("R", KpiTemplates.Streets, "STREET 36m ROW", "ANH-007-ST-100210"),
                         true, "the workbook is open in Excel")
                 });
 

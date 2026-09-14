@@ -327,6 +327,15 @@ namespace RcrcGreen.Core.Kpi
             @"ISBLANK\s*\(\s*([^()]+?)\s*\)",
             RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+        /// <summary>
+        /// A division whose divisor is ONE CELL, which is the only shape a #DIV/0! can be read
+        /// off text. A divisor that is an expression, a range or a function call is not judged,
+        /// because working out what it computes to would be evaluating the formula.
+        /// </summary>
+        private static readonly Regex DividedByACell = new Regex(
+            @"/\s*((?:(?:'(?:[^']|'')+'|[A-Za-z_][A-Za-z0-9_.]*)!)?\$?[A-Z]{1,3}\$?[0-9]{1,7})(?![A-Za-z0-9_(:])",
+            RegexOptions.CultureInvariant);
+
         private static readonly Regex Xlfn = new Regex(
             @"_xlfn\.([A-Za-z_][A-Za-z0-9_.]*)",
             RegexOptions.CultureInvariant);
@@ -638,6 +647,48 @@ namespace RcrcGreen.Core.Kpi
                 }
             }
 
+            // **A DIVISION BY A CELL HOLDING NOUGHT OR NOTHING IS #DIV/0!**, and the tool could
+            // not see one. The 09:18 run wrote two workbooks that recalculate with two of them
+            // each, ANH-007-SC-100004 and ANH-007-ST-100130, neither on the main sheet and both
+            // on plots with few trees, and the report named nothing because this check knew only
+            // the blank ISBLANK shape.
+            //
+            // **It is reported and never refused on, deliberately.** A plot with no trees really
+            // has no average, so the divide by zero is the client's own arithmetic over a real
+            // number, and deleting a correct workbook over it is worse than printing a line. The
+            // reason says whether THIS RUN wrote the cell being divided by, which is the half
+            // that would make it the tool's doing, and turning that half into a refusal is a
+            // decision for Bader once a run has named them.
+            foreach (FormulaCell formula in formulas)
+            {
+                if (risk.ContainsKey(formula.Where)) continue;
+
+                foreach (Match divide in DividedByACell.Matches(formula.Text))
+                {
+                    Match reference = Reference.Match(divide.Groups[1].Value);
+                    if (!reference.Success) continue;
+
+                    CellArea area = AreaOf(reference, formula.SheetName);
+                    if (!area.IsOneCell) continue;
+
+                    string holds = DivisorThatIsNought(states, area);
+                    if (holds.Length == 0) continue;
+
+                    bool written = wrote.Any(one =>
+                        string.Equals(one.SheetName, area.SheetName, StringComparison.Ordinal)
+                        && one.Cell.ColumnNumber == area.FirstColumn
+                        && one.Cell.Row == area.FirstRow);
+
+                    Add(risk, order, new FormulaAtRisk(formula.SheetName, formula.Cell, formula.Text,
+                        "#DIV/0!: " + area.InWords + " " + holds + " and this formula divides by it. "
+                        + (written
+                            ? "THIS RUN WROTE THAT CELL."
+                            : "This run wrote nothing into that cell."),
+                        2, false));
+                    break;
+                }
+            }
+
             bool changed = true;
             while (changed)
             {
@@ -670,6 +721,34 @@ namespace RcrcGreen.Core.Kpi
         private static string Named(FormulaAtRisk one, string ownSheet)
         {
             return (string.Equals(one.SheetName, ownSheet, StringComparison.Ordinal) ? string.Empty : one.SheetName + "!") + one.Cell;
+        }
+
+        /// <summary>
+        /// Why this cell would make a division #DIV/0!, or empty when it would not.
+        ///
+        /// **A cell holding a FORMULA is never judged.** The patcher drops every cached value on
+        /// the way out, so a formula cell in the output holds no number at all, and reading that
+        /// absence as a nought would call every computed divisor a divide by zero.
+        /// </summary>
+        private static string DivisorThatIsNought(
+            Dictionary<string, Dictionary<string, CellState>> states, CellArea area)
+        {
+            Dictionary<string, CellState> sheet;
+            CellState held = null;
+            if (states.TryGetValue(area.SheetName, out sheet))
+            {
+                sheet.TryGetValue(Letters(area.FirstColumn) + area.FirstRow, out held);
+            }
+
+            if (held == null || (!held.HasValue && !held.HasFormula)) return "is blank,";
+            if (held.HasFormula) return string.Empty;
+
+            double number;
+            bool isNought = double.TryParse(
+                held.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out number)
+                && number == 0.0;
+
+            return isNought ? "holds " + held.Text + "," : string.Empty;
         }
 
         private static bool IsBlankIn(Dictionary<string, Dictionary<string, CellState>> states, CellArea area)

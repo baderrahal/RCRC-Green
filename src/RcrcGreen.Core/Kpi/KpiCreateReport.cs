@@ -716,7 +716,9 @@ namespace RcrcGreen.Core.Kpi
 
             Line(report, string.Empty);
             Line(report, "  FORMULAS AT RISK, " + check.AtRisk.Count
-                + ": a formula returning text where a number was expected, the #VALUE! that arithmetic on it gives, and every formula that reads one");
+                + ": a formula returning text where a number was expected, the #VALUE! that arithmetic on it gives,");
+            Line(report, "  a #DIV/0! off a divisor holding nought or nothing, and every formula that reads one of them.");
+            Line(report, "  A divide by zero is REPORTED and never refused on, and its line says whether this run wrote the cell it divides by.");
             Line(report, "  sheet | cell | formula | why");
             foreach (FormulaAtRisk one in check.AtRisk)
             {

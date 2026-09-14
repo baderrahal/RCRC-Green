@@ -71,12 +71,31 @@ namespace RcrcGreen.Core.Kpi
             return new PlotWorkbookPath(false, string.Empty, string.Empty, string.Empty, string.Empty, why);
         }
 
-        public static PlotWorkbookPath For(string root, string component, string uid2)
+        /// <summary>
+        /// Where this plot's checklist goes. The TEMPLATE is here because a plot with no
+        /// component of its own reached that template by its plot prefix, and the folder every
+        /// component of that template files under is the only thing that can file it.
+        /// </summary>
+        public static PlotWorkbookPath For(string root, KpiTemplate template, string component, string uid2)
         {
             if (string.IsNullOrWhiteSpace(root)) return Refused(NoRoot);
 
             string folder = ComponentFolders.For(component);
-            if (folder.Length == 0) return Refused(ComponentFolders.NoFolderFor(component));
+            if (folder.Length == 0)
+            {
+                // **An absence and an answer nobody knows are two different things.** A component
+                // the table does not hold still places nothing, because falling back there would
+                // file a value the team has never seen under a folder the team never chose. An
+                // EMPTY component is the plot with no sheet, placed by its prefix, and it is
+                // filed where every other plot of its template is filed.
+                if (!string.IsNullOrWhiteSpace(component))
+                {
+                    return Refused(ComponentFolders.NoFolderFor(component));
+                }
+
+                folder = ComponentFolders.OnlyFolderFor(template);
+                if (folder.Length == 0) return Refused(ComponentFolders.NoFolderForTemplate(template));
+            }
 
             string held = (uid2 ?? string.Empty).Trim();
             if (held.Length == 0) return Refused(NoUid2);
