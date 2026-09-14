@@ -53,6 +53,13 @@ restored byte for byte, checked with `diff -q`, and the suite green at 1916 afte
 the two report files. **The two computed numbers have still never been held against a workbook Excel
 has recalculated.**
 
+Pull request 132, merged into main as `cc85143`. **The runner ran 28 hook cases and 1916 tests
+against the pull request head `f8e6644`, 0 failed and 0 skipped. Locally the same 28 and 1916 ran
+after the last file was written, 1096 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 Phase: 9, ship. Seventy ninth pass, one rule for every label and every unit off the page. **1902
 tests, 1082 of them KPI, 16 added, against the 1886 main carries** at `d609559`, which is also this
 branch's point, 28 hook cases unchanged, build zero warnings.
