@@ -1118,6 +1118,189 @@ written, the numbers are right, and the note says where the model needs correcti
 schedules, never species, because on a run of 78 plots a long list is not read. The report
 keeps the full detail with the counts and the areas left out.
 
+## A PDF beside every workbook
+
+Every plot already gets a workbook in a folder named after its UID2. It gets a PDF beside it
+now, filled from the same run, named after the same UID2.
+
+```
+<root>/<COMPONENT FOLDER>/<UID2>/<UID2>.xlsx
+<root>/<COMPONENT FOLDER>/<UID2>/<UID2>.pdf
+```
+
+**THE EXCEL IS WRITTEN FIRST AND THE PDF SECOND**, because two of the PDF's fields read cells
+out of the workbook this run has just written. That ordering is a rule and `OnePlot` in
+`KpiRequestHandler` is the one line that keeps it. Overwritten silently if one is there, the
+same as the workbook.
+
+### The three forms, and the prefix is what picks one
+
+```
+Projects Basic Data - Parks                                42 fields   EP, FP
+Projects Basic Data - Open spaces associated to buildings  49 fields   HF, FM, DM, PL, SC
+Projects Basic Data - Roads                                34 fields   NS, ST, MM
+```
+
+**KEYED ON THE PLOT PREFIX, which is the first thing the prefix decides on its own.** Everywhere
+else in this tool it cross checks a component that has the last word. Which form a plot gets is
+the team's filing and `PRX_Component` says nothing about it. A prefix `PdfForms` does not hold
+writes no PDF and is named, and a test walks every prefix `PlotPrefixes` holds so the two
+records cannot say different things about which prefixes exist.
+
+### Every field was read off the files and checked back against them
+
+`PdfForms` is the table, measured on 14 September off the three PDFs themselves. **Then the
+whole table was run back against the client's own files**: every field name found, every note
+matching, on all three, with nothing missing and nothing differing.
+
+**THE SOURCE OF EACH VALUE IS IN THE FIELD'S VALUE, NOT ITS DEFAULT VALUE.** The round message
+said default value. Measured: only the four stage tick boxes carry a default at all, and on the
+open spaces and roads forms that default is a tick on all four while the real state sits in the
+value. So the client writes the source into the value, and the tool holds it as the note.
+
+**A FIELD WITH NO NOTE IS NOT FILLED.** Bader, 14 September. The forms carry many, sidewalks,
+medians, water tanks, toilets, kiosks, seating, play areas, bridges and a catwalk, and none is
+in the table.
+
+**THE FOUR STAGE TICK BOXES ARE LEFT EXACTLY AS THEY ARE.** Schematic Design holds a tick and
+the other three a space, on all three forms, and the tool names no field for any of them.
+
+### Three things the round message said that the files do not
+
+All three were measured off the files, and the file is the record.
+
+- **The open spaces TOTAL Shrubs note is NOT wrong.** The round said it carries the same note as
+  Existing Shrubs. Measured: `Proposed Shrubs.1.1` holds `sum of the above or from revit`, which
+  is right, and so do the other two forms. The conclusion is unchanged, all three mean the sum,
+  and what Bader confirmed with the client is not a fault that is in these files
+- **Parks and Roads name NO Project Type field at all.** The round said it is typed text on
+  those two and left alone. It is not there to leave alone, and only the open spaces form asks
+  for a component
+- **THE ROADS FORM'S Total areas to be greened NAMES THE CANOPY CELL.** Parks and open spaces
+  both name Total Green cover divided by 1,000,000, and roads names
+  `excel the cell on the right of "Total area covered by canopy "` for a field all three call
+  the same thing. **It is held here exactly as the file has it** so the check does not refuse
+  the form over the client's own copy and paste, and which the client means is an open question
+  in `steps/log-kpi.md`
+
+### The form is checked on every run and a form that has moved is left alone
+
+**THE TOOL MUST NOT TRUST THE FIELD NAMES.** On the open spaces form, which five of the nine
+prefixes use, the UID is a field called `undefined_4.1`, the lawn area is `0_2`, the ground
+cover is `0` and the total trees is `Proposed Trees.1`. Bader has asked the client to fix it and
+they have not.
+
+So `PdfFormCheck` runs before a byte is written, on every plot, over the field names AND the
+note sitting in each. **Where either has moved it writes NOTHING and names what moved**, with
+what the file holds beside what the tool knows. Writing a lawn area into a box called `0_2` that
+has become something else is exactly the silent wrong number this tool exists to prevent.
+
+Only the fields this tool FILLS are checked. The client's own sidewalks and toilets can move
+freely, because nothing here writes into them.
+
+**Which file in the browsed folder is which form is decided by the fields it holds and never by
+its name**, through the same check, so a renamed form still works and a file named like a form
+and shaped like something else does not.
+
+### Fill the form, never rebuild the page, and that is a measurement
+
+**PDFsharp 6.2.2 was evaluated and rejected.** It is MIT, it ships netstandard2.0 so net48 can
+consume it, and it carries `PdfAcroForm`, `PdfTextField` and `PdfCheckBoxField`. Opened on the
+client's own Parks form it read all 42 fields and then threw on the first one touched:
+
+```
+No appropriate font found for family name 'Courier New'.
+Implement IFontResolver and assign to 'GlobalFontSettings.FontResolver'
+```
+
+because setting a value makes it REGENERATE the field's appearance stream. **Regenerating the
+appearance is redrawing what the client drew**, in whatever font the machine resolves, which is
+the one thing this round forbids. Every other library found is commercial and per seat: iText 7
+is AGPL or paid, and IronPDF, Aspose, Syncfusion, DevExpress, Apryse and DynamicPDF all require
+a paid licence, which the twenty person rule rules out.
+
+**So there is no package, and the file work is the workbook's own rule applied to a PDF.**
+`PdfFormFile` copies the client's bytes whole and appends an incremental update: the changed
+field objects, a cross reference section and a trailer pointing back at the one the file already
+had. **Every byte of the client's file is still there, in order, untouched by construction**, and
+a test asserts the source bytes are the first bytes of the answer.
+
+**It works because these files hold no object streams.** Measured on all three: zero `/ObjStm`,
+no encryption, so every field dictionary is a plain top level object. A form that arrives with
+object streams is refused by name rather than half written.
+
+**The stale appearance is dropped and NeedAppearances is set**, so the viewer draws the new
+value off the field's own default appearance, which the client set. Keeping the old appearance
+beside a new value shows the client's note on screen over the number underneath it, and a stale
+word that looks like an answer is the worst thing this tool can put in a file.
+
+**A field is read by its FULL name, built through the parent chain**, because on the open spaces
+form the lawn area's own title is `0_2` and the total trees is titled `1` under a parent titled
+`Proposed Trees`. A title on its own names nothing.
+
+Measured on the client's three files: Parks 2,121,502 bytes in and 2,123,241 out, open spaces
+937,743 and 939,292, roads 1,926,881 and 1,928,708. Every field count unchanged, the Reset
+button and the tick boxes untouched, and the written values read back through a second reader.
+
+**AFTER WRITING, THE FIELDS ARE READ BACK OFF THE OUTPUT**, and the report prints what landed
+rather than what was sent, the same rule every written cell of the workbook already follows.
+
+### The shrubs split by phase, which the workbook has never wanted
+
+The PDF wants Existing Shrubs and Proposed Shrubs apart where the main sheet's F11 is one
+number. **The phase rows are already read**: a group prints one subtotal per phase and then the
+group total, which is the shape the 0928 run measured, and `GroupSubtotal.Phases` has carried
+them since.
+
+**IT IS NOT A SECOND RULE BESIDE THE ONE FOR TREES.** `ShrubsByPhase` sorts each phase row by
+`CountedGroups.SheetFor`, the same method that decides which tree list a species goes on, so
+Street Design counts as Proposed on STREETS and is left out everywhere else without a word of
+that rule being written twice. FM-05's shrubs print Proposed 361 and Street Design 459 with a
+group total of 820: on MOSQUES the proposed shrubs are 361 and on STREETS they are 820.
+
+**TOTAL SHRUBS IS EXISTING PLUS PROPOSED, on all three forms, and never the group total row**,
+which holds every phase the schedule printed.
+
+A group that printed no phase row at all splits into nothing and says so, because its one row is
+the whole group and nothing on it says which phase that is. A plot whose schedule printed no
+shrubs group leaves all three fields blank and names it: **an absence is not a nought.**
+
+### Four fields are left blank on every run, each named, each a question for Bader
+
+- **Ground Cover.** The schedule prints SHRUBS & GROUND COVER as one group over one set of rows,
+  on every scan this project has taken. **Nothing prints ground cover on its own, so nothing is
+  derived**: splitting one printed number in two would be a number nobody measured
+- **Total areas to be greened** and **Percentage Total area covered by canopy.** Both are cells
+  the WORKBOOK computes, and the patcher drops the cached result of every formula cell on
+  purpose so Excel recalculates rather than opening on stale zeros. **So the number is not in
+  the file this run wrote**, and reading it back reads an empty cell. Computing it here would be
+  working the client's own formula out again, which this tool never does
+- **Irrigation water demand.** The shrubs and lawn schedule prints L/DAY as its last column and
+  nothing in this tool has ever read it. There is no number to write and adding that read is a
+  round of its own
+
+**A PLOT WHOSE WORKBOOK WAS NOT WRITTEN STILL GETS ITS PDF**, Bader's decision, with the fields
+that read the workbook named as not written and everything that comes from Revit still going in.
+
+### Where the forms live
+
+**A FOURTH BROWSE BUTTON**, beside the templates folder, the output root and the street
+reference file, remembered in `kpi-forms-folder.txt` beside the installed assembly through the
+same `RememberedFolder` the other three use. Bader's decision. The forms are the client's
+documents, so they are browsed for rather than shipped.
+
+**No folder set is a NOTE and never a refusal.** The workbooks are written, the PDFs are not,
+and the pane says so before the press rather than 102 times afterwards.
+
+**Which file is which form is decided once per press** and held, because deciding it means
+opening and scanning a PDF and 78 street plots would otherwise open one file 78 times. Cleared
+at the start of every press, so a corrected form dropped into the folder between two presses is
+seen on the second.
+
+**NO CLIENT PDF ENTERS THIS REPOSITORY.** The forms carry the client's branding, the project
+name, the consultant and a real contract reference, and this repository is public, so `*.pdf`
+is ignored beside `*.xlsx` and every test builds its own small AcroForm in the temp folder.
+
 ## Matching a species is plain or it is nothing
 
 The workbook's own column D is the only species list there is and `SpeciesList` reads it out of

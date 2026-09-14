@@ -42,3 +42,8 @@ reports/*
 # Green Riyadh KPI targets, neighbourhood names and the full plant palette, and this
 # repository is public. Tests build their own small workbooks in the temp folder instead.
 *.xlsx
+
+# No client PDF form, filled or blank, ever. The Projects Basic Data forms carry the client's
+# branding, the project name, the consultant and a real contract reference, and this repository
+# is public. Tests build their own small AcroForm in the temp folder instead.
+*.pdf

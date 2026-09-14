@@ -141,6 +141,11 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
+            Line(report, "  " + glance.Pdfs.InWords);
+            foreach (string one in glance.Pdfs.WithNoPdf) Line(report, "    " + one);
+            foreach (string one in glance.Pdfs.FormsThatDidNotMatch) Line(report, "    " + one);
+
+            Line(report, string.Empty);
         }
 
         /// <summary>
@@ -217,6 +222,7 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
+            ThePdfs(report, set);
 
             var missed = set.PlotOutcomes
                 .Where(one => !one.Written && one.Where.Uid2.Length > 0
@@ -229,6 +235,72 @@ namespace RcrcGreen.Core.Kpi
             foreach (PlotOutcome one in missed)
             {
                 Line(report, "  " + Join(one.PlotId, one.Where.Uid2, one.Why));
+            }
+
+            Line(report, string.Empty);
+        }
+
+        public const string PdfHeading = "ONE PDF PER PLOT, BESIDE ITS WORKBOOK";
+
+        /// <summary>
+        /// Per plot: which form, which fields were written with the values that LANDED, which
+        /// were left blank and why, and whether the form matched what this tool knows.
+        ///
+        /// **Everything here is read back off the file that was written**, never off the plan,
+        /// which is the rule every written cell of the workbook already follows.
+        /// </summary>
+        private static void ThePdfs(StringBuilder report, KpiCreateRunSet set)
+        {
+            var held = set.PlotOutcomes.Where(one => one.Pdf != null).ToList();
+
+            Heading(report, PdfHeading, held.Count,
+                "the form is keyed on the plot prefix, the file is named after the same "
+                + KpiNames.PlotUid2 + " as the workbook, and the client's own bytes are copied "
+                + "whole with the values appended after them");
+
+            if (held.Count == 0)
+            {
+                Line(report, "  No PDF was planned in this press.");
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  plot | form | written to, or why not | the form matched");
+            foreach (PlotOutcome one in held)
+            {
+                Line(report, "  " + Join(
+                    one.PlotId,
+                    Shown(one.Pdf.FormName),
+                    one.Pdf.Written ? one.Pdf.Path : one.Pdf.Refusal,
+                    one.Pdf.Check == null ? "the file was never opened" : one.Pdf.Check.Matched ? "YES" : "NO"));
+            }
+
+            foreach (PlotOutcome one in held)
+            {
+                if (one.Pdf.Landed.Count == 0 && one.Pdf.Blank.Count == 0) continue;
+
+                Line(report, string.Empty);
+                Line(report, "  " + one.PlotId + ", " + Shown(one.Pdf.FormName));
+
+                if (one.Pdf.Landed.Count > 0)
+                {
+                    Line(report, "    field | what was sent | what landed");
+                    foreach (PdfLandedField field in one.Pdf.Landed)
+                    {
+                        Line(report, "    " + Join(
+                            field.FieldName,
+                            Shown(field.Sent),
+                            Shown(field.Landed) + (field.Agrees ? string.Empty : "   THESE DIFFER")));
+                    }
+                }
+
+                if (one.Pdf.Blank.Count == 0) continue;
+
+                Line(report, "    left blank | why");
+                foreach (PdfFieldFill field in one.Pdf.Blank)
+                {
+                    Line(report, "    " + Join(field.FieldName, field.Why));
+                }
             }
 
             Line(report, string.Empty);

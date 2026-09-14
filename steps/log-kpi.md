@@ -4,6 +4,148 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy sixth pass. A PDF beside every workbook
+
+**1821 tests, 1001 of them KPI, 58 added, against the 1763 main carries** at the branch point
+`bb10f9d`, measured by running the suite at that commit, 28 hook cases unchanged, build zero
+warnings. **No audit finding is closed, renumbered or reordered: read off the three files, 63
+numbered findings, 19 carrying a FIXED mark, 44 open.**
+
+### The three forms were read off the files, and the files disagree with the round message three times
+
+Every field name and every note in `PdfForms` was read out of the client's own three PDFs and
+then **run back against those files**: all three forms matched, with nothing missing and no note
+differing. That check is the foundation of the round and it is why the three differences below
+are stated as measurements rather than opinions.
+
+- **THE SOURCES ARE IN THE FIELD'S VALUE, NOT ITS DEFAULT VALUE.** Only the four stage tick
+  boxes carry a default at all, and on open spaces and roads that default is a tick on all four
+  while the real state sits in the value
+- **The open spaces TOTAL Shrubs note is NOT wrong.** `Proposed Shrubs.1.1` holds
+  `sum of the above or from revit` and so do the other two forms. All three mean the sum, which
+  is what Bader confirmed, but the fault he confirmed is not in these files
+- **Parks and Roads name NO Project Type field.** It is not typed text to be left alone, it is
+  absent, and only the open spaces form asks for a component
+
+**AND A FOURTH, WHICH IS AN OPEN QUESTION FOR BADER.** The ROADS form's `Total areas to be
+greened` names `excel the cell on the right of "Total area covered by canopy "` where parks and
+open spaces both name Total Green cover divided by 1,000,000, for a field all three call the
+same thing. It is held exactly as the file has it so the check does not refuse the form over the
+client's own copy and paste. **Which cell the client means on a road is not something this tool
+can settle**, and it is one of the fields left blank anyway, under the section below.
+
+### The library was picked by search and rejected by measurement
+
+**PDFsharp 6.2.2 is the only serious open candidate**: MIT, netstandard2.0 so net48 consumes it,
+and it carries `PdfAcroForm`, `PdfTextField` and `PdfCheckBoxField`. Opened on the client's own
+Parks form it read all 42 fields and threw on the first one touched, `No appropriate font found
+for family name 'Courier New'`, because setting a value makes it REGENERATE the field's
+appearance stream. **Regenerating the appearance is redrawing what the client drew**, in
+whatever font the machine resolves, which is the one thing this round forbids.
+
+Rejected on licence: iText 7 is AGPL or paid, and IronPDF, Aspose, Syncfusion, DevExpress,
+Apryse and DynamicPDF are all per seat commercial, which the twenty person rule rules out.
+
+**So there is no package at all, and that is the workbook's own rule applied to a PDF.** A PDF
+supports an incremental update by its own design: the client's bytes are copied whole and the
+changed objects are appended after them with a new cross reference section. Measured on the
+three real files, and a test asserts the source bytes are the first bytes of the answer:
+
+```
+Parks        2,121,502 in   2,123,241 out   42 fields before and after
+Open spaces    937,743 in     939,292 out   49 fields before and after
+Roads        1,926,881 in   1,928,708 out   34 fields before and after
+```
+
+The Reset button, the tick boxes and the typed fields all survive, and the written values read
+back through a second and independent reader.
+
+**It works because these files hold no object streams.** Zero `/ObjStm` on all three, no
+encryption, so every field dictionary is a plain top level object. A form that arrives with
+object streams is refused by name rather than half written.
+
+**The stale appearance is dropped and NeedAppearances is set.** Keeping the old appearance
+beside a new value shows the client's note on screen over the number underneath it, and a stale
+word that looks like an answer is the worst thing this tool can put in a file.
+
+### 1. The shrubs split by phase, and it needed no new schedule read
+
+The phase rows have been read since the 0928 run: a group prints one subtotal per phase and then
+the group total, and `GroupSubtotal.Phases` has carried them ever since. **So the split is a read
+off what is already there rather than the big piece the round expected.**
+
+**IT IS NOT A SECOND RULE BESIDE THE ONE FOR TREES.** `ShrubsByPhase` sorts each phase row by
+`CountedGroups.SheetFor`, the same method the species merge asks, so Street Design counts as
+Proposed on STREETS and is left out elsewhere with nothing written twice. FM-05 prints Proposed
+361 and Street Design 459 under a group total of 820: on MOSQUES the proposed shrubs are 361 and
+on STREETS they are 820, and the group total row is never the answer.
+
+### 2. Ground cover is NOT printed apart, so nothing is written and it is named
+
+The schedule prints SHRUBS & GROUND COVER as one group over one set of rows, on every scan this
+project has taken. **Nothing prints ground cover on its own.** Splitting one printed number into
+two would be a number nobody measured, so the field is left blank with that reason on every plot.
+
+### 3. Total shrubs is existing plus proposed on all three forms
+
+Recorded, with the correction above that the note Bader confirmed as wrong is not the note these
+files hold. Never the group total row.
+
+### 4. A plot whose workbook was not written still gets its PDF
+
+Bader's decision. The fields that read the workbook are named as not written and everything that
+comes from Revit still goes in, and the reason reads differently from the one a written workbook
+gets, because they are different facts.
+
+### THREE MORE FIELDS ARE BLANK ON EVERY RUN, AND ONE OF THEM IS A REAL FINDING
+
+**Total areas to be greened and Percentage Total area covered by canopy cannot be read out of
+the workbook this tool writes.** Both are cells the workbook COMPUTES, and the patcher drops the
+cached result of every formula cell on purpose so Excel recalculates rather than opening on
+stale zeros, which is a rule this file has carried since the first real output read seven zeros
+beside correct inputs. **So the number is not in the file, and reading it back reads an empty
+cell.** Computing it here would be working the client's own formula out again, which this tool
+never does.
+
+**That is a question for Bader and there are three ways out**, none of them this round's to
+pick: the team opens each workbook once and the PDF is filled on a second press, or the tool
+learns to compute those two cells, or the cache rule is relaxed for them and the stale zeros
+fault comes back. The ordering rule still stands and is still written down, because the day one
+of those answers lands the Excel must already have been written.
+
+**Irrigation water demand is the third.** The shrubs and lawn schedule prints L/DAY as its last
+column and nothing in this tool has ever read it. There is no number to write and adding that
+read is a round of its own.
+
+### The three break watches, and the first one found a weak test
+
+**Break 1, a phase the template leaves out falls through.** **0 RED THE FIRST TIME.** The case
+that should have caught it asserted the three NUMBERS, which the break leaves right, because a
+left out phase then reaches the sheet lookup and lands in the no sheet list instead. The numbers
+were the same and the reporting was wrong. The case now pins the left out list and the phases
+with no sheet apart, and the same break reddens it at
+`Assert.Empty() Failure: Collection was not empty, ["Street Design"]`. **A test that asserts
+only the number cannot catch a rule about which bucket a thing went into.**
+
+**Break 2, the note stops being checked and only the field name is.** **3 red**, led by
+`AFormWhoseNoteHasMovedIsLeftAloneAndNamed`, with the end to end case and the glance behind it.
+
+**Break 3, the stale appearance is kept beside the new value.** **1 red**,
+`TheStaleAppearanceIsDroppedAndNeedAppearancesIsSet`, printing the dictionary that still carries
+`/AP<</N 5 0 R>>` next to the new value.
+
+All four touched files were copied out first and `diff -q` against the copy after restoring, and
+the restored code was run against the client's three real forms again afterwards.
+
+### Still open
+
+The 44 audit findings. The three blank fields above, each a question for Bader. The roads form's
+canopy note. `CLAUDE.md` line 209, still carrying the NS-19 and NS-06 claim the seventy fifth
+pass corrected, which is the repo wide file and not this task's. A row written into an empty one
+carrying no family, no genus and no native flag. The GOVERMENT BUILDING folder.
+
+---
+
 ## 2026-09-14, seventy fifth pass. The client's note decides a tie, and a reason reaches the file
 
 **1763 tests, 943 of them KPI, 16 added, against the 1747 main carries** at the branch point

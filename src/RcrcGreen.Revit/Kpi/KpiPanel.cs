@@ -629,6 +629,75 @@ namespace RcrcGreen.Revit.Kpi
             _templates.Children.Add(Faint(CreateWords.WhereTheWorkbooksGo(folder)));
 
             TheStreetReferenceFile();
+            TheFormsFolder();
+        }
+
+        /// <summary>
+        /// The FOURTH browsed thing, beside the templates folder, the output root and the street
+        /// reference file. Bader's decision.
+        ///
+        /// **It is a note and never a refusal.** A press with none set writes every workbook and
+        /// no PDF, so this line greys nothing out.
+        /// </summary>
+        private void TheFormsFolder()
+        {
+            string folder = FormsFolder.Read();
+
+            var line = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+            var browse = new Button
+            {
+                Content = PaneLabel.Escaped("Browse"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Gap,
+                ToolTip = "Point at the folder holding the client's three Projects Basic Data "
+                    + "forms. Each plot gets one PDF beside its workbook, on the form its plot "
+                    + "prefix names. It is remembered beside the installed add-in."
+            };
+            browse.Click += (sender, e) => BrowseForTheFormsFolder();
+            DockPanel.SetDock(browse, Dock.Right);
+
+            var caption = new TextBlock
+            {
+                Text = "Forms folder",
+                Width = PanelMetrics.WideLabelWidth,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(caption, Dock.Left);
+
+            line.Children.Add(browse);
+            line.Children.Add(caption);
+            line.Children.Add(new TextBlock
+            {
+                Text = folder.Length == 0 ? "No folder set" : folder,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            _templates.Children.Add(line);
+
+            _templates.Children.Add(folder.Length == 0
+                ? Noted(TemplateWords.FormsFolder(folder))
+                : Faint(TemplateWords.FormsFolder(folder)));
+        }
+
+        private void BrowseForTheFormsFolder()
+        {
+            using (var picking = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                picking.Description = "The folder holding the client's Projects Basic Data forms";
+
+                string already = FormsFolder.Read();
+                if (already.Length > 0) picking.SelectedPath = already;
+
+                if (picking.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                if (!FormsFolder.Remember(picking.SelectedPath))
+                {
+                    Say("The folder could not be remembered. " + FormsFolder.PointerFileName
+                        + " beside the installed add-in refused the write.");
+                }
+
+                RedrawTemplates();
+            }
         }
 
         /// <summary>

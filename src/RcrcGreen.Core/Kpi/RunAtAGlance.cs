@@ -212,6 +212,59 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
+    /// How many PDFs the press wrote, how many plots got a workbook and no PDF, and how many
+    /// forms did not match what the tool knows.
+    ///
+    /// **The third count is the one that would otherwise go unnoticed.** A client reissuing a
+    /// form with its field names moved writes nothing into it and says so per plot, and on 78
+    /// street plots that is 78 lines nobody reads. One number at the top says it once.
+    /// </summary>
+    public sealed class PdfGlance
+    {
+        public PdfGlance(int written, IEnumerable<string> withNoPdf, IEnumerable<string> formsThatDidNotMatch)
+        {
+            Written = written;
+            WithNoPdf = (withNoPdf ?? Enumerable.Empty<string>()).ToList();
+            FormsThatDidNotMatch = (formsThatDidNotMatch ?? Enumerable.Empty<string>()).ToList();
+        }
+
+        public static readonly PdfGlance NonePlanned = new PdfGlance(0, null, null);
+
+        public int Written { get; }
+
+        /// <summary>
+        /// One line per plot whose workbook was written and whose PDF was not, the plot and the
+        /// reason. **A count with nobody named sends a person back through the file.**
+        /// </summary>
+        public IReadOnlyList<string> WithNoPdf { get; }
+
+        /// <summary>
+        /// One line per form the tool read and did not recognise, said once per form rather than
+        /// once per plot.
+        /// </summary>
+        public IReadOnlyList<string> FormsThatDidNotMatch { get; }
+
+        public string InWords
+        {
+            get
+            {
+                if (Written == 0 && WithNoPdf.Count == 0)
+                {
+                    return "THE PDFS: no PDF was planned in this press, so none was written and "
+                        + "nothing about a form was checked.";
+                }
+
+                return "THE PDFS: " + Written
+                    + (Written == 1 ? " PDF was written" : " PDFs were written") + ", "
+                    + WithNoPdf.Count + " of the plots that got a workbook got no PDF, and "
+                    + FormsThatDidNotMatch.Count
+                    + (FormsThatDidNotMatch.Count == 1 ? " form did not match" : " forms did not match")
+                    + " what this tool knows.";
+            }
+        }
+    }
+
+    /// <summary>
     /// The three questions one press answers, counted once over every template so each can be
     /// read in one look instead of out of hundreds of lines.
     ///
@@ -222,12 +275,16 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class RunGlance
     {
-        public RunGlance(AreaCellGlance streetsArea, RegionGlance regions, DivisionGlance divisions)
+        public RunGlance(
+            AreaCellGlance streetsArea, RegionGlance regions, DivisionGlance divisions, PdfGlance pdfs = null)
         {
             StreetsArea = streetsArea ?? AreaCellGlance.NoStreetPlots;
             Regions = regions ?? RegionGlance.NoAreaRead;
             Divisions = divisions ?? DivisionGlance.NoneFound;
+            Pdfs = pdfs ?? PdfGlance.NonePlanned;
         }
+
+        public PdfGlance Pdfs { get; }
 
         public AreaCellGlance StreetsArea { get; }
 
@@ -242,7 +299,34 @@ namespace RcrcGreen.Core.Kpi
         {
             if (set == null) throw new ArgumentNullException("set");
 
-            return new RunGlance(StreetsArea(set), Regions(set), Divisions(set));
+            return new RunGlance(StreetsArea(set), Regions(set), Divisions(set), Pdfs(set));
+        }
+
+        /// <summary>
+        /// Counted off the PLOT OUTCOMES, which carry what each plot's PDF really did, and the
+        /// forms counted once each rather than once per plot that used one.
+        /// </summary>
+        private static PdfGlance Pdfs(KpiCreateRunSet set)
+        {
+            int written = 0;
+            var without = new List<string>();
+            var forms = new List<string>();
+            var named = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (PlotOutcome one in set.PlotOutcomes)
+            {
+                if (one.Pdf == null) continue;
+
+                if (one.Pdf.Written) written = written + 1;
+                else if (one.Written) without.Add(one.PlotId + ": " + one.Pdf.Refusal);
+
+                if (!one.Pdf.FormDidNotMatch) continue;
+
+                string form = one.Pdf.FormName.Length == 0 ? "(no form)" : one.Pdf.FormName;
+                if (named.Add(form)) forms.Add(form + ": " + one.Pdf.Check.Why);
+            }
+
+            return new PdfGlance(written, without, forms);
         }
 
         /// <summary>
