@@ -52,6 +52,13 @@ client's three real PDFs, and the canopy guard was proven against a workbook the
 **The two computed numbers have never been held against a workbook Excel has recalculated**, and
 that is the first thing the next run should do.
 
+Pull request 126, merged into main as `5fca585`. **The runner ran 28 hook cases and 1879 tests
+against the pull request head `9cabd2d`, 0 failed and 0 skipped. Locally the same 28 and 1879 ran
+after the last file was written, 1059 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 Phase: 9, ship. Seventy sixth pass, a PDF beside every workbook. **1821 tests, 1001 of them KPI,
 58 added, against the 1763 main carries** at the branch point `bb10f9d`, measured by running the
 suite at that commit, 28 hook cases unchanged, build zero warnings.
