@@ -130,9 +130,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Which of a plot's two regions carries the area varies by plot and the type name
-        /// cannot decide it, so two regions holding an area is a question for the user rather
-        /// than a number the tool picks.
+        /// Two regions holding an area with NEITHER of them the type the client's note names is
+        /// still a question for the user rather than a number the tool picks. **That is what
+        /// this case was always protecting** and it is unchanged.
         /// </summary>
         [Fact]
         public void APlotWithTwoRegionsHoldingAnAreaRefusesUntilOneIsPicked()
@@ -142,7 +142,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 regions: new[]
                 {
                     CreateFixture.Region(CreateFixture.Cadastral, 900.0),
-                    CreateFixture.Region(CreateFixture.OutOfScope, 250.0)
+                    CreateFixture.Region(CreateFixture.NotTheNote, 250.0)
                 },
                 chosenRegion: string.Empty);
 
@@ -157,11 +157,38 @@ namespace RcrcGreen.Core.Tests.Kpi
                 regions: new[]
                 {
                     CreateFixture.Region(CreateFixture.Cadastral, 900.0),
-                    CreateFixture.Region(CreateFixture.OutOfScope, 250.0)
+                    CreateFixture.Region(CreateFixture.NotTheNote, 250.0)
                 },
                 chosenRegion: CreateFixture.Cadastral);
 
             Assert.True(Reconciliation.Of(new[] { "NS-19" }, new[] { picked }, null, false, KpiTemplates.Mosques).AddsUp);
+        }
+
+        /// <summary>
+        /// **AND THE PAIR THE CLIENT'S NOTE SETTLES WRITES WITH NO PICK AT ALL.** Bader's
+        /// decision of 14 September, off the 14:29 run where 51 of 78 street plots wrote nothing
+        /// for exactly this and every one of the 51 offered the note's type as one of its two.
+        /// NS-02's own numbers, written out by hand: cadastral 3982, out of scope 4295.
+        /// </summary>
+        [Fact]
+        public void APlotWhoseTwoRegionsIncludeTheNotesTypeWritesWithNoPick()
+        {
+            var reading = CreateFixture.Plot(
+                "NS-02",
+                regions: new[]
+                {
+                    CreateFixture.Region(CreateFixture.Cadastral, 3982.0),
+                    CreateFixture.Region(CreateFixture.OutOfScope, 4295.0)
+                },
+                chosenRegion: string.Empty);
+
+            Reconciliation held = Reconciliation.Of(
+                new[] { "NS-02" }, new[] { reading }, null, false, KpiTemplates.Streets);
+
+            Assert.True(held.AddsUp, string.Join(" ", held.Refusals));
+            Assert.Equal(CreateFixture.OutOfScope, reading.ChosenRegionTypeName);
+            Assert.Equal(RegionRoute.TheTypeTheNoteNames, reading.ChosenRegionPick.Route);
+            Assert.Equal(4295.0, KpiMerge.Area(new[] { reading }).Total);
         }
 
         /// <summary>

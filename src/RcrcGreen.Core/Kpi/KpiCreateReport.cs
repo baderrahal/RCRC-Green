@@ -1172,8 +1172,8 @@ namespace RcrcGreen.Core.Kpi
         private static void TheRegions(StringBuilder report, KpiCreateRun run)
         {
             Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF, AND WHAT IT READ");
-            Line(report, "  plot | chosen type | against the client's note | raw square feet | "
-                + "written square metres | as the model prints it | offered");
+            Line(report, "  plot | chosen type | how it was chosen | against the client's note | "
+                + "raw square feet | written square metres | as the model prints it | offered");
             foreach (PlotReading reading in run.Readings)
             {
                 RegionArea chosen = reading.ChosenRegion;
@@ -1181,6 +1181,7 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, "  " + Join(
                     reading.PlotId,
                     reading.ChosenRegionTypeName.Length == 0 ? "(none)" : reading.ChosenRegionTypeName,
+                    reading.ChosenRegionPick.InWords,
                     RegionChoice.AgainstTheNote(reading.ChosenRegionTypeName),
                     chosen == null ? "(none)" : Exactly(chosen.RawSquareFeet),
                     chosen == null ? "(none)" : Exactly(chosen.SquareMetres),
@@ -1191,14 +1192,18 @@ namespace RcrcGreen.Core.Kpi
                             .Select(one => one.TypeName + " " + Number(one.SquareMetres)).ToArray())));
             }
 
-            // **The client's note names one type and at least two street plots disagree.** The
-            // tool chooses on the area rather than the name, and printing the note beside the
-            // real answer is what turns that disagreement into a count somebody can read off a
-            // run over 78 street plots.
+            // **The 14:29 run settled the note and Bader then made it decide a tie.** The how
+            // column is what separates a choice the client's note made from one a person made
+            // on the pane, because the two carry different weight and a type name alone says
+            // neither.
             Line(report, "  The client's note for the area cell names "
-                + RegionChoice.TheNoteNames + ". Nothing here chooses on that name:");
-            Line(report, "  the plot's own region holding an area decides, and the column above "
-                + "says whether the two agreed.");
+                + RegionChoice.TheNoteNames + ". One region holding an area still decides");
+            Line(report, "  by itself whatever it is called. Where MORE THAN ONE holds an area "
+                + "and the note's type is");
+            Line(report, "  among them, the note decides, which is Bader's decision of "
+                + "14 September, and the how column");
+            Line(report, "  says so. Where it is not among them the run still asks, and the "
+                + "column reads chosen by hand.");
         }
 
         /// <summary>

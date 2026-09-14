@@ -237,10 +237,13 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Plot("DM-11", KpiTemplates.Mosques, OutOfScope),
                 CreateFixture.Run(readings: new[]
                 {
+                    // **NEITHER of these is the type the client's note names**, so this pair
+                    // still chooses nothing. A pair holding the note's type chooses itself since
+                    // Bader's decision of 14 September and would not be counted here at all.
                     CreateFixture.Plot("MM-03", regions: new[]
                     {
-                        CreateFixture.Region(OutOfScope, 12182.05561411),
-                        CreateFixture.Region(Cadastral, 9000.0)
+                        CreateFixture.Region(Cadastral, 12182.05561411),
+                        CreateFixture.Region(CreateFixture.NotTheNote, 9000.0)
                     })
                 })));
 
@@ -439,7 +442,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new DateTime(2026, 9, 14, 9, 18, 0));
 
             Assert.Contains("WHICH REGION EACH PLOT'S AREA CAME OFF, AND WHAT IT READ", report);
-            Assert.Contains("NS-19 | " + Cadastral + " | NOT the type the note names", report);
+            Assert.Contains(
+                "NS-19 | " + Cadastral + " | the only region holding an area | NOT the type the note names",
+                report);
         }
     }
 }

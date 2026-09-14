@@ -28,12 +28,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = LinesOf(CreateFixture.Run());
 
             Assert.Contains(
-                "  plot | chosen type | against the client's note | raw square feet | written square metres | "
-                + "as the model prints it | offered",
+                "  plot | chosen type | how it was chosen | against the client's note | "
+                + "raw square feet | written square metres | as the model prints it | offered",
                 lines);
 
             string row = lines.Single(line => line.StartsWith("  DM-12 | ", StringComparison.Ordinal));
 
+            Assert.Contains("the only region holding an area", row);
             Assert.Contains("40136.006313679296", row);
             Assert.Contains("3728.7570000000005", row);
             Assert.Contains("3728.76 m2", row);
@@ -107,7 +108,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = LinesOf(run);
             string row = lines.Single(line => line.StartsWith("  NS-19 | ", StringComparison.Ordinal));
 
-            Assert.Equal("  NS-19 | (none) | nothing chosen | (none) | (none) | (none) | (none)", row);
+            Assert.Equal(
+                "  NS-19 | (none) | nothing chosen | nothing chosen | (none) | (none) | (none) | (none)",
+                row);
         }
 
         /// <summary>

@@ -678,12 +678,13 @@ namespace RcrcGreen.Revit.Kpi
                     ? KpiPlotReader.RegionsFor(document, plotId)
                     : new List<RegionArea>();
 
-                // The rule is RegionChoice.For in Core, where the tests reach the copy that
+                // The rule is RegionChoice.Pick in Core, where the tests reach the copy that
                 // runs. It used to be written out here and again in the test fixture, and the
-                // two were not the same rule.
-                string chosen = areaWanted
-                    ? RegionChoice.For(regions, asked.RegionChosenFor(plotId))
-                    : string.Empty;
+                // two were not the same rule. The pick carries HOW it was chosen, so the report
+                // can say the client's note decided rather than a person.
+                RegionPick chosen = areaWanted
+                    ? RegionChoice.Pick(regions, asked.RegionChosenFor(plotId))
+                    : RegionPick.Nothing;
 
                 return KpiPlotReader.Read(
                     document, plotId, asked.ComponentParameter, asked.ReferenceParameter,

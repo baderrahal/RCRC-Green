@@ -281,15 +281,42 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Why one template of several wrote nothing, for its own row. The same answer the
-        /// status line gives for a single template run, without the report line, because the
-        /// report is named once for the whole press rather than once per row.
+        /// Why one plot wrote nothing, **for the REPORT FILE**, with every reason written out.
+        ///
+        /// **A REASON THAT POINTS AT A SCREEN IS NOT A REASON.** The 14:29 run's report said
+        /// `Nothing was written. 1 reason, shown in full above the Create button.` on 102 rows
+        /// of 7,083 lines, and the reason itself appeared NOWHERE in the file. The plot, the
+        /// template, the folder and the UID2 were all there, and then it pointed at a pane
+        /// nobody has open. Two lines down, a plot refused by its own path read `no
+        /// PRX_Plot_UID2 was read off this plot's first sheet`, which is what a record looks
+        /// like.
+        ///
+        /// **The count and the pointer belong on the PANE and nowhere else**, where the reasons
+        /// really are in red directly above the button, and that is what
+        /// <see cref="Wrote"/> still says. A file is read on its own.
         /// </summary>
         public static string WhyThisOneWroteNothing(KpiCreateRun run)
         {
             if (run == null) throw new ArgumentNullException("run");
 
-            return WhyNothingWasWritten(run, string.Empty);
+            return WhyNothingWasWritten(run, string.Empty, true);
+        }
+
+        /// <summary>
+        /// Every refusal the accounting holds, written out. **Where a refusal genuinely has
+        /// several reasons the file holds all of them**, because a report short of the second
+        /// one reads exactly like a plot that had one.
+        /// </summary>
+        private static string EveryReason(IReadOnlyList<string> refusals)
+        {
+            List<string> said = (refusals ?? new List<string>())
+                .Where(one => !string.IsNullOrWhiteSpace(one))
+                .Select(one => one.Trim())
+                .ToList();
+
+            return NothingWritten + " " + (said.Count == 0
+                ? NoReasonRecorded
+                : string.Join(" ", said.ToArray()));
         }
 
         /// <summary>
@@ -618,7 +645,10 @@ namespace RcrcGreen.Core.Kpi
         {
             if (run == null) throw new ArgumentNullException("run");
 
-            if (!run.Wrote) return WhyNothingWasWritten(run, reportWhere);
+            // **The pane keeps the count and the pointer**, because the reasons really are in
+            // red directly above the button and the 0928 run printed the same four lines twice
+            // on one screen. The FILE gets them written out, through the method above.
+            if (!run.Wrote) return WhyNothingWasWritten(run, reportWhere, false);
 
             return Count(run.Outcome.Landed.Count, "cell") + " written from "
                 + Count(run.Readings.Count, "plot") + ", "
@@ -658,17 +688,21 @@ namespace RcrcGreen.Core.Kpi
         /// Never empty. The accounting speaks first because it refuses before anything is
         /// copied, then the patch, and then the line that says nobody recorded a reason.
         ///
-        /// The accounting's reasons are counted rather than repeated, because the pane has them
-        /// in red directly above the button. The patch's refusal is said in full, because
-        /// nothing else on the pane carries it.
+        /// **Where the answer goes decides one thing only**: the accounting's reasons are
+        /// counted and pointed at on the pane, where they are already on screen in red, and
+        /// written out in the file, which is read on its own. The patch's refusal is said in
+        /// full either way, because nothing else on the pane carries it. One method, so the two
+        /// cannot come apart anywhere else.
         /// </summary>
-        private static string WhyNothingWasWritten(KpiCreateRun run, string reportWhere)
+        private static string WhyNothingWasWritten(KpiCreateRun run, string reportWhere, bool intoTheFile)
         {
             string why;
 
             if (!run.Reconciliation.AddsUp)
             {
-                why = ReasonsAreAbove(run.Reconciliation.Refusals.Count);
+                why = intoTheFile
+                    ? EveryReason(run.Reconciliation.Refusals)
+                    : ReasonsAreAbove(run.Reconciliation.Refusals.Count);
             }
             else
             {

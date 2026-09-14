@@ -234,7 +234,7 @@ namespace RcrcGreen.Revit.Kpi
             string componentParameter,
             string referenceParameter,
             CountedGroups counted,
-            string chosenRegionTypeName,
+            RegionPick chosenRegion,
             IReadOnlyList<RegionArea> regions,
             ProjectUnit areaUnit,
             double regionSeconds)
@@ -360,7 +360,7 @@ namespace RcrcGreen.Revit.Kpi
                 subtotals,
                 regions,
                 regionSeconds + clock.Elapsed.TotalSeconds,
-                chosenRegionTypeName,
+                chosenRegion,
                 notes,
                 refusals,
                 totalRead,

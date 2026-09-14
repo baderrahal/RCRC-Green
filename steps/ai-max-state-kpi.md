@@ -1,5 +1,56 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy fifth pass, the client's note decides a tie and a reason reaches the
+file. **1763 tests, 943 of them KPI, 16 added, against the 1747 main carries** at the branch
+point `9fbcea4`, measured by running the suite at that commit, 28 hook cases unchanged, build
+zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**TWO OPEN QUESTIONS CLOSED BY THE 14:29 RUN, both by a count rather than an argument.** Of 156
+plots wanting an area, 98 took it off RCRC_OUT OF SCOPE (PRESENTATION), ZERO off a type the
+client's note does not name, and 58 chose no region. **The note holds**, and the 9 September
+reading of NS-19 and NS-06 was wrong because those plots carry BOTH and one column was read.
+And **no #DIV/0! anywhere in the press**, so the two the 09:18 run left unexplained are not in
+this model's output. **Both were answered by the two lines put at the top of the report a round
+before**, which is the whole case for having put them there.
+
+**1. THE NOTE'S TYPE DECIDES A TIE.** Bader's decision of 14 September, off 51 of 78 street
+plots that wrote nothing for exactly this and every one of which offered the note's type as one
+of its two. `RegionChoice.Pick` in order: a person's pick wins, one region holding an area
+answers itself whatever it is called, and more than one with the note's type among them takes
+it. **The question stays where the note's type is not among them**, and where it is held by two
+at once. **RCRC_CADASTRAL LIMIT is written nowhere in the tool.**
+
+**`WhyUnchosen` asks `Pick` rather than deciding again**, which was not optional: the first
+version left it deciding for itself and a test went red inside the hour on a pick that chooses
+beside a reason still printing a question.
+
+**THE REPORT SAYS WHO CHOSE.** `RegionPick` is the type and the route as ONE record, set where
+the choice is made, and the region table gained one column, `how it was chosen`.
+
+**AND THE PICK USED TO DROP THE PLOT'S UID2**, so a plot answered after a refusal was refused
+again with a sentence about the model that was about `WithChosenRegion`. Found while reading
+that path, fixed, pinned.
+
+**2. A REASON THAT POINTS AT A SCREEN IS NOT A REASON.** Seven places produce a refusal that can
+reach the file and **TWO wrote a pointer**, both through one method. Five were already right.
+`CreateWords.WhyNothingWasWritten` now takes where the answer is going: the file gets every
+reason written out and the PANE keeps the count and the pointer, where the reasons are already
+in red above the button. **Nothing went red when I made that change**, which is the finding
+inside the finding, and `ReasonInTheFileTests` is seven cases now.
+
+Three break watches, 7 red, 3 red and 1 red, each naming what it broke, all restored and proved
+byte for byte with `diff -q`.
+
+**OPEN AND NOT THIS TASK'S TO FIX.** `CLAUDE.md` line 209 still carries the corrected NS-19 and
+NS-06 claim. It is the repo wide file rather than KPI territory, so this round left it and said
+so in the log. Two records of one fact, knowingly left standing for one round.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next street run is what shows all 51
+plots writing.
+
 Phase: 9, ship. Seventy fourth pass, three lines at the top of the report so a run can be checked
 at a glance. **1747 tests, 927 of them KPI, 15 added, against the 1732 main carries** at the
 branch point `16bed93`, measured by running the suite at that commit rather than quoted from the
