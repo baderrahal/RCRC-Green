@@ -155,10 +155,25 @@ namespace RcrcGreen.Core.Tests.Kpi
             string report = KpiCreateReport.Write(
                 CreateFixture.Run(outcome: outcome), new DateTime(2026, 9, 14, 9, 18, 0));
 
-            Assert.Contains(
+            // **A DIVIDE BY ZERO ON A CELL THIS RUN DID NOT WRITE IS NOT IN THE DETAIL SECTION
+            // ANY MORE, AND IT IS STILL COUNTED AND STILL NAMED.** The section reports what the
+            // run is answerable for, and the glance at the top of the whole press counts every
+            // division and names the cell each divides by, off the same unfiltered list. This
+            // run wrote D3 alone, so H7's division is the client's own arithmetic.
+            Assert.DoesNotContain(
                 "#DIV/0!: H7 holds 0, and this formula divides by it. "
                 + "This run wrote nothing into that cell.",
                 report);
+
+            FormulaAtRisk found = outcome.Formulas.AtRisk.Single(
+                one => one.IsDivideByZero && one.Cell == "D9");
+
+            Assert.False(found.DivisorThisRunWrote);
+            Assert.False(found.FromWrittenRow);
+            Assert.Equal(
+                "#DIV/0!: H7 holds 0, and this formula divides by it. "
+                + "This run wrote nothing into that cell.",
+                found.Reason);
         }
     }
 }

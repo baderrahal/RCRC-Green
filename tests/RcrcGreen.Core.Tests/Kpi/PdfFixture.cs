@@ -28,13 +28,17 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         public sealed class FixtureField
         {
-            public FixtureField(string name, string note, double x, double y)
+            public FixtureField(string name, string note, double x, double y, bool aTickBox = false)
             {
                 Name = name;
                 Note = note;
                 X = x;
                 Y = y;
+                IsATickBox = aTickBox;
             }
+
+            /// <summary>Built as /FT/Btn rather than /FT/Tx, which is what a stage box is.</summary>
+            public bool IsATickBox { get; }
 
             public string Name { get; }
 
@@ -93,6 +97,19 @@ namespace RcrcGreen.Core.Tests.Kpi
                 // The second field carries an appearance, so a fill can be seen to drop it.
                 string appearance = objects.Count == 1 ? "/AP<</N 5 0 R>>" : string.Empty;
 
+                // **A TICK BOX IS A BUTTON AND IS LEFT EXACTLY AS IT IS.** The four stage boxes
+                // and the Reset button on the client's forms are the only fields the tool never
+                // touches, and it leaves them because of what they ARE rather than because
+                // anybody wrote their names down.
+                if (one.IsATickBox)
+                {
+                    objects.Add(at + " 0 obj\n<</Type/Annot/Subtype/Widget/FT/Btn/T" + Literal(one.Name)
+                        + "/V" + Literal(one.Note)
+                        + "/DA(/Helv 0 Tf 0 g)/Rect" + Rectangle(one) + "/P 4 0 R>>\nendobj\n");
+                    at = at + 1;
+                    continue;
+                }
+
                 objects.Add(at + " 0 obj\n<</Type/Annot/Subtype/Widget/FT/Tx/T" + Literal(one.Name)
                     + "/V" + Literal(one.Note) + appearance
                     + "/DA(/Helv 0 Tf 0 g)/Rect" + Rectangle(one) + "/P 4 0 R>>\nendobj\n");
@@ -145,6 +162,15 @@ namespace RcrcGreen.Core.Tests.Kpi
         public static FixtureField Field(string name, string note, double x = 0.0, double y = 0.0)
         {
             return new FixtureField(name, note, x, y);
+        }
+
+        /// <summary>
+        /// A stage tick box, built as a button so the emptying rule meets the thing it must
+        /// leave alone rather than a text field pretending to be one.
+        /// </summary>
+        public static FixtureField TickBox(string name, string held)
+        {
+            return new FixtureField(name, held, 0.0, 0.0, true);
         }
 
         private static string Rectangle(FixtureField one)

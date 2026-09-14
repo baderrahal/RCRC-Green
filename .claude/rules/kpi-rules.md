@@ -1477,6 +1477,163 @@ ANH-006-NP-100002: an area of 771, 0.000550 square kilometres greened and a perc
 cell where the other two name Total Green cover. Each form gets what its own file says, the working
 says which of the two the number is, and which the client means stays an open question.
 
+### Every field is WRITTEN or EMPTIED, and the tick boxes are the only third case
+
+**THE CLIENT'S DEFAULT VALUES ARE NOTES FOR WHOEVER FILLS THE FORM BY HAND. THEY ARE NOT
+CONTENT.** Measured on all eight PDFs of the 18:15 run over NG05:
+
+```
+Irrigation water demand   held  Revit / softscape & shrubs & lawn schedule / total water demand /1000
+Ground Cover              held  REVIT SHEET/... GROUND COVER TOTAL AREA
+```
+
+**150 PDFs went to a client with the instruction for filling a box printed inside that box.** The
+tool wrote the fields it had values for and left every other one exactly as the template had it,
+so a note sat where an answer belongs, and a note in a box reads as an answer.
+
+**A FIELD THE TOOL DOES NOT FILL MUST LOOK LIKE A FIELD NOBODY HAS FILLED.** So every text field
+of every form this tool writes is now WRITTEN or EMPTIED, including every field the tool has no
+source for and names nowhere.
+
+**The only fields left as the template has them are the ones that are NOT TEXT.** That is the four
+stage tick boxes and the Reset button, and they are left because of what they ARE rather than
+because anybody listed their names: `PdfFieldRead.FieldType` is read off the file's own `/FT`,
+inherited through the parent chain the way an AcroForm defines it, and only `Tx` is cleared. **A
+field whose kind cannot be read at all is left alone too**, because this tool does not clear what
+it cannot classify.
+
+All three forms, field by field:
+
+```
+WRITTEN, where the plot has a value      the 14 fields PdfForms names, per form
+EMPTIED, with its own reason             a named field the plot had no value for, which carries
+                                         the reason it already had, so the ground cover says the
+                                         schedule prints no such group rather than a general line
+EMPTIED, as having no source at all      every other text field: on Roads the sidewalk, median,
+                                         sidemedian, empty areas and water tanks, on Parks the two
+                                         people counts, the cycling and pedestrian paths, the
+                                         toilets, kiosk, play grounds, fitness area, muga sport
+                                         field, running track and water tanks, and on Open spaces
+                                         the length, the paths, the maintenance road, the toilets,
+                                         kiosk, exhibition spaces, parking provided, seating and
+                                         play areas, the bridges, the catwalk and the water tanks
+LEFT AS THE TEMPLATE HAS IT              Schematic Design, Detailed Design, Tender and
+                                         Construction, and the Reset button. Four tick boxes and
+                                         one push button, all /FT/Btn, none of them text
+```
+
+**THE REPORT NAMES EVERY EMPTIED FIELD WITH WHY, per plot**, and reads back what landed in each,
+so a blank box is a decision on the record rather than an oversight and a box the tool meant to
+clear and did not is visible.
+
+### The canopy covers every row this run put a count into
+
+**Measured on the 18:15 run: Total Green cover was the planting plus the lawn and nothing else, on
+every plot of 150.**
+
+```
+ANH-007-MO-100001   PDF 0.000105 km2, which is 105 m2.  Its workbook holds shrubs 70 and lawn 35.
+                    12 proposed trees, canopy absent.
+ANH-007-NP-100001   PDF 0.000849 km2, and that same PDF's Lawn field reads 849.
+                    55 existing and 38 proposed trees, canopy absent.
+```
+
+The canopy percentage read 0 on both park PDFs, which is the same fault one step downstream, and
+it comes right with it.
+
+**BOTH CANDIDATES WERE CHECKED AND THE FIRST IS WHAT DID IT.** The rows it read were not the rows
+it wrote: `CanopyArea.From` took only matches with `Added` true, which is a species WRITTEN INTO AN
+EMPTY ROW, so every row the client's list already held was left out whatever its diameter said. On
+a plot whose species all match, that is every row.
+
+**The second candidate is real on the same rows and is fixed with it.** The tool writes a diameter
+only into a row it creates. A matched row is the client's own row: its measures are already in the
+file and the formulas beside it already read them, so its canopy comes off the workbook's own
+diameter, which travels on the match as `WorkbookDiameter`, read off the sheet's own diameter
+column where the match was made. **Nothing looks the row up a second time**, so the two cannot come
+apart.
+
+### The header says WHICH read produced its count
+
+**A COUNT BESIDE A MODEL NAME IS A CLAIM THAT THE MODEL WAS READ.** Measured at 18:06:58: the
+header read `108733 elements in 0.8 seconds` while the status line still read
+`Reading the plots from this model`. At 18:09:37 the same model read in 46.2 seconds.
+
+**Two different reads set that line and it printed them the same way.** The plots press counts the
+elements and reads the sheets and the schedules the plot list comes off, in under a second. The
+scan inside Create reads the whole document into nine sections, in 46.2. Neither number was wrong
+and the line made the first of them a claim about the model.
+
+`ReadOfTheModel` carries which read produced it now, `ThePlots` or `TheWholeModel`, and the line
+reads `Counted at ...` with a sentence saying the model itself was not read, or `Read at ...` for
+the scan.
+
+**Every path that can start a read, and every path that can set the count, one by one:**
+
+```
+Ask(WhichModel), on every draw of the pane    the document TITLE alone           FREE, already right
+Ask(Plots), the Read this model button        the plots and the element count    A PRESS, already right
+Ask(Create), the Create button                the scan and the plot reads        A PRESS, already right
+Found(facts), after the Plots answer          SETS the count, as the plots read  now says which read
+Scanned(scan), after Create's own scan        SETS the count, as the whole model now says which read
+a document closing under the pane             CLEARS the count to NotYet         already right
+```
+
+**Nothing asks for a read without a press**, and the fifty seventh pass's fix holds: `Ask(Plots)`
+is in the Read button's own handler and nowhere else.
+
+**And the status line says the read landed.** It used to keep saying it was reading, which is why
+the header carried a finished count beside a line still claiming to work. A status line that never
+stops saying it is working is the same fault as one that never starts.
+
+### Every plot gets its own block
+
+**Measured on the 18:15 report: the detail blocks covered exactly seven plots of 156**, EP-01,
+FP-16, HF-01, DM-11, PL-17, SC-03 and MM-01, the first of each template, because `WriteAll` took
+`FirstOrDefault` of each template's runs. The species list, the schedule print, the cells written
+and the reconciliation, which are the sections that make this tool checkable at all, covered 4
+percent of the run.
+
+**A block per plot was chosen over one set of blocks carrying every plot, and the reason is that
+no count has to move.** A block IS one plot, so its own reconciliation reads one of one and stays
+true, and the counts OF THE RUN are already above every block, in THIS RUN AT A GLANCE and in the
+run accounting, counted over every run of the press. Nothing is re-counted and nothing is stated
+twice.
+
+The file preamble is printed once at the top rather than once per block, because the document, the
+time and the read only line said 156 times say nothing.
+
+### Only the formulas this run is answerable for, said once per shape
+
+**Measured on the 18:15 report: 10,708 lines, of which WHAT THE WORKBOOK WILL COMPUTE FROM THIS
+was 5,180, under a heading reading (0) over a body of 526.** Most of the 526 were G31 to G36
+repeating one sentence per row per template about cells the run never wrote into, and every one of
+those lines said so itself, `(not from a row this run wrote into)`.
+
+Three rules, all in `FormulaRepeats` rather than at the printer, so the count above the section and
+the lines in it come off one list:
+
+- **A FORMULA THE RUN DID NOT AFFECT IS NOT AT RISK FROM THE RUN.** Only the ones reading a cell on
+  a row this run wrote into are reported. The section already knew which those were and printed the
+  number
+- **THE HEADING COUNT AND THE BODY AGREE.** A heading of 0 above 526 lines is a section nobody can
+  trust, and a real risk in it would be invisible
+- **ONE FORMULA FILLED DOWN A COLUMN IS ONE FINDING**, with its cells listed, as a span where they
+  run down one column with no gap and as a list otherwise, so no line claims to cover a cell it
+  does not. The grouping is on the shape, every digit run replaced, and the printed line carries
+  the real cells, so the normalisation decides what groups and hides nothing
+
+**A #DIV/0! on a cell this run did not write is no longer in this section and is still counted and
+still named**, in THE DIVISIONS at the top of the press, which counts every division off the
+unfiltered list and says which cell each divides by. The detail section reports what the run is
+answerable for and the glance reports what the workbook will do.
+
+**WHAT THE FILE COMES TO IS UNKNOWN UNTIL THE NEXT RUN.** The split of the 526 between written row
+and not is in neither report file, so the new line count cannot be worked out from what was
+measured, and a number reasoned out here would be a guess. What is determined: the at risk body
+carries only written row findings, one line per shape rather than one per row, and the detail that
+was missing for 149 plots is now in the file. The next run's own heading counts answer it.
+
 ### The units of the fields nobody fills, on record
 
 **A FIELD WITH NO NOTE IS NOT FILLED** and that is unchanged. These are recorded for the day the

@@ -65,7 +65,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             IReadOnlyList<string> lines = KpiHeader.Lines(
                 OpenModel.Of("RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached"),
-                ReadOfTheModel.At(new DateTime(2026, 9, 13, 8, 37, 4), 96959, 1.4));
+                ReadOfTheModel.TheWholeModel(new DateTime(2026, 9, 13, 8, 37, 4), 96959, 1.4));
 
             Assert.Equal(
                 new[]
@@ -77,6 +77,31 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// **THE PLOTS READ IS NOT A READ OF THE MODEL AND THE LINE SAYS SO.** The 18:15 session
+        /// showed the header carrying `108733 elements in 0.8 seconds` after the plots press and
+        /// `46.2 seconds` after Create's scan, on the same model, printed the same way. A count
+        /// beside a model name is a claim that the model was read, so the two now read
+        /// differently and the plots one says what it really did.
+        /// </summary>
+        [Fact]
+        public void ThePlotsPressCountsTheElementsAndSaysItDidNotReadTheModel()
+        {
+            IReadOnlyList<string> lines = KpiHeader.Lines(
+                OpenModel.Of("RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached"),
+                ReadOfTheModel.ThePlots(new DateTime(2026, 9, 14, 18, 6, 58), 108733, 0.8));
+
+            Assert.Equal(
+                "Counted at 18:06:58, 108733 elements in 0.8 seconds."
+                + " The plots were read, and the elements counted. The model itself was not read.",
+                lines[1]);
+
+            Assert.False(
+                ReadOfTheModel.ThePlots(new DateTime(2026, 9, 14, 18, 6, 58), 108733, 0.8).WholeModel);
+            Assert.True(
+                ReadOfTheModel.TheWholeModel(new DateTime(2026, 9, 14, 18, 9, 37), 108733, 46.2).WholeModel);
+        }
+
+        /// <summary>
         /// A read that has not happened carries no numbers at all, so nothing downstream can
         /// print one off it by mistake.
         /// </summary>
@@ -85,7 +110,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.False(ReadOfTheModel.NotYet.Happened);
             Assert.Equal(0, ReadOfTheModel.NotYet.Elements);
-            Assert.True(ReadOfTheModel.At(new DateTime(2026, 9, 13, 8, 37, 4), 1, 0.1).Happened);
+            Assert.True(ReadOfTheModel.TheWholeModel(new DateTime(2026, 9, 13, 8, 37, 4), 1, 0.1).Happened);
+            Assert.True(ReadOfTheModel.ThePlots(new DateTime(2026, 9, 13, 8, 37, 4), 1, 0.1).Happened);
         }
 
         /// <summary>

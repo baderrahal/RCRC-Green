@@ -78,6 +78,20 @@ namespace RcrcGreen.Core.Kpi
         public const string ReadingNow =
             "Reading the plots from this model. On a large model this takes a moment.";
 
+        /// <summary>
+        /// **The line the moment that read lands, because nothing said it had.** The status line
+        /// kept saying it was reading after the plots came back, so the 18:15 session showed a
+        /// header carrying a count and a count of seconds beside a line still claiming to be
+        /// working. A status line that never stops saying it is working is the same fault as one
+        /// that never starts.
+        /// </summary>
+        public static string PlotsAreRead(int plots)
+        {
+            return plots == 1
+                ? "Read. 1 plot in this model."
+                : "Read. " + plots.ToString(CultureInfo.InvariantCulture) + " plots in this model.";
+        }
+
         public const string Create = "Create";
 
         /// <summary>

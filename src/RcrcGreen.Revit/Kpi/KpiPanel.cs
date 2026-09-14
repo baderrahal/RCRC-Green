@@ -364,7 +364,8 @@ namespace RcrcGreen.Revit.Kpi
                 // The scan says which model it describes and nothing about the open one. That
                 // comes from Took, which every answer from the handler now carries.
                 _scannedTitle = scan.Document.Title;
-                _read = ReadOfTheModel.At(readAt, scan.Document.ElementInstances, scan.Document.ReadSeconds);
+                _read = ReadOfTheModel.TheWholeModel(
+                    readAt, scan.Document.ElementInstances, scan.Document.ReadSeconds);
                 TheHeader();
             });
         }
@@ -1351,8 +1352,16 @@ namespace RcrcGreen.Revit.Kpi
                 // count was there without anybody asking and the model was held while it was
                 // counted.
                 _scannedTitle = _model.Title;
-                _read = ReadOfTheModel.At(DateTime.Now, facts.ElementInstances, facts.ReadSeconds);
+
+                // **THE PLOTS READ IS NOT A READ OF THE MODEL** and the header says which of the
+                // two produced the count, because 0.8 seconds off this press and 46.2 off
+                // Create's scan printed the same way on one model.
+                _read = ReadOfTheModel.ThePlots(DateTime.Now, facts.ElementInstances, facts.ReadSeconds);
                 TheHeader();
+
+                // And the status line says the read landed. It used to keep saying it was
+                // reading, so the pane showed a finished count beside a line still working.
+                Say(CreateWords.PlotsAreRead(facts.Plots.All.Count));
 
                 if (_componentParameter.Length == 0)
                 {

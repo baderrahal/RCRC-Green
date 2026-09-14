@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using RcrcGreen.Core.Kpi;
 using Xunit;
@@ -139,6 +140,68 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// **A MATCHED ROW CARRIES CANOPY, AND ITS DIAMETER COMES OFF THE WORKBOOK.**
+        ///
+        /// Measured on the 18:15 run: Total Green cover was the planting plus the lawn and
+        /// nothing else on every plot of 150. ANH-007-MO-100001 wrote 0.000105 km², which is 105
+        /// square metres, beside a workbook holding shrubs 70 and lawn 35, with twelve proposed
+        /// trees contributing nothing. ANH-007-NP-100001 wrote 0.000849, and that same PDF's
+        /// Lawn field reads 849, with 55 existing and 38 proposed trees contributing nothing.
+        ///
+        /// **BOTH CANDIDATES WERE CHECKED AND IT WAS THE FIRST.** The rows it read were not the
+        /// rows it wrote: it took only matches with `Added` true, which is a species written into
+        /// an empty row, so every row the client's list already held was left out whatever its
+        /// diameter said. The second candidate is real on the same rows and was fixed with it:
+        /// the tool writes a diameter only into a row it creates, so a matched row's canopy has
+        /// to come off the client's own cell.
+        /// </summary>
+        [Fact]
+        public void AMatchedRowCountsAndItsDiameterComesOffTheWorkbook()
+        {
+            var matched = new SpeciesMatch(
+                CreateFixture.Merged("ALBIZIA LEBBECK", CreateFixture.Proposed, "DM-11", 12),
+                KpiTemplates.ProposedTreesSheet, 21, "Albizia lebbeck", string.Empty,
+                added: false,
+                list: SpeciesList.Holding(
+                    new[] { new SpeciesListRow(21, "Albizia lebbeck", "15", "8") }, 4, 83,
+                    diameterColumn: "J"),
+                listRow: new SpeciesListRow(21, "Albizia lebbeck", "15", "8"));
+
+            // **THROUGH CanopyArea.From, which is the method that dropped them.** Asserting on a
+            // CanopyRow built by hand would have stayed green over exactly this break.
+            KpiCreateRun run = CreateFixture.Run(matches: new[] { matched });
+
+            CanopyTotal canopy = CanopyArea.From(run.Plan);
+
+            // Eight metres across is fifty square metres a tree, and twelve of them are 600.
+            Assert.False(matched.Added);
+            Assert.Equal("8", matched.WorkbookDiameter);
+            Assert.Equal(600.0, canopy.SquareMetres);
+            Assert.Equal(
+                "Tree List - Proposed row 21, ALBIZIA LEBBECK: ROUND(PI()*(8/2)^2, 0) * 12 = 600",
+                Assert.Single(canopy.Rows).Working);
+        }
+
+        /// <summary>
+        /// **And a row this run created still counts, off the diameter this run wrote into it.**
+        /// The two routes are one method and a fix to either must not drop the other.
+        /// </summary>
+        [Fact]
+        public void ARowThisRunCreatedCountsOffTheDiameterTheRunWrote()
+        {
+            var added = new SpeciesMatch(
+                CreateFixture.Merged("PHOENIX DACTYLIFERA", CreateFixture.Proposed, "DM-11", 3),
+                KpiTemplates.ProposedTreesSheet, 85, string.Empty, string.Empty, added: true);
+
+            CanopyTotal canopy = CanopyArea.From(CreateFixture.Run(matches: new[] { added }).Plan);
+
+            // The fixture's species prints a diameter of 8, so fifty square metres a tree.
+            Assert.True(added.Added);
+            Assert.Equal(150.0, canopy.SquareMetres);
+        }
+
+        /// <summary>
+        /// **Total Green cover is the canopy plus the planting plus the lawn**        /// <summary>
         /// **Total Green cover is the canopy plus the planting plus the lawn**, and the working
         /// names all three. Measured on the first real filled workbook, which recalculated to
         /// Total Green cover 1518 off canopy 1048, planting 410 and lawn 60.

@@ -4,6 +4,127 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, eightieth pass. Five faults off the 18:15 run
+
+**1916 tests, 1096 of them KPI, 14 added, against the 1902 main carries** at `d266374`, which is
+also this branch's point, 28 hook cases unchanged, build zero warnings. **No audit finding is
+closed, renumbered or reordered: read off the three files, 63 numbered findings, 19 carrying a
+FIXED mark, 44 open.**
+
+### 1. The client's filling instructions were printed in the client's PDF
+
+The tool wrote the fields it had values for and left every other one as the template had it, so
+`Revit / softscape & shrubs & lawn schedule / total water demand /1000` sat inside the irrigation
+box on all 150 PDFs, and the open spaces Ground Cover box, the one really named `0`, carried its
+own REVIT SHEET note. **A note in a box reads as an answer.**
+
+Every text field is WRITTEN or EMPTIED now, including every field the tool has no source for and
+names nowhere. **The four stage tick boxes and the Reset button are the only fields left as the
+template has them, and they are left because of WHAT THEY ARE**: the field's kind comes off the
+file's own `/FT`, inherited through the parent chain the way an AcroForm defines it, and only `Tx`
+is cleared. A field whose kind cannot be read at all is left alone, because this tool does not
+clear what it cannot classify.
+
+The report names every emptied field with why, per plot, and reads back what landed in each. **A
+blank box is a decision on the record.**
+
+### 2. The canopy was zero because the rows it read were not the rows it wrote
+
+**Both candidates were checked and the FIRST is what did it**, against the round message's
+expectation. `CanopyArea.From` took only matches with `Added` true, which is a species written
+into an EMPTY row, so every row the client's list already held was left out whatever its diameter
+said. On a plot whose species all match, that is every row, which is why Total Green cover came
+out as the planting plus the lawn on every plot of 150.
+
+**The second candidate is real on the same rows and is fixed with it.** The tool writes a diameter
+only into a row it creates, so a matched row's canopy comes off the workbook's own diameter. It
+travels on the match already, as `WorkbookDiameter`, read off the sheet's own diameter column
+where the match was made, so nothing looks the row up a second time.
+
+**The percentage comes right with it rather than by assumption**: it is canopy over area and the
+canopy was the zero.
+
+### 3. The pane was not reading unasked, and the header was claiming a read that did not happen
+
+**Every path that can start a read was gone through and none of them fires without a press.**
+`Ask(Plots)` is in the Read button's own handler and nowhere else, which is where the fifty
+seventh pass put it. `Ask(WhichModel)` reads the document title alone. `Ask(Create)` is a press.
+
+**What was wrong is the claim, not the read.** Two different reads set the header's count and it
+printed them the same way: the plots press counts the elements and reads the sheets and schedules
+the plot list comes off, in under a second, and the scan inside Create reads the whole document,
+in 46.2. Neither number was wrong and the line made the first of them a claim about the model.
+`ReadOfTheModel` carries which read produced it now and the line reads `Counted at ...` with a
+sentence saying the model itself was not read.
+
+**And the status line never said the read had landed**, which is why the 18:06:58 screen showed a
+finished count beside a line still saying it was reading. It says so now. A status line that never
+stops saying it is working is the same fault as one that never starts.
+
+### 4. 149 of 156 plots had no detail, because the report took the first run of each template
+
+`WriteAll` took `FirstOrDefault` of each template's runs, so the blocks covered EP-01, FP-16,
+HF-01, DM-11, PL-17, SC-03 and MM-01 and nothing else.
+
+**Every plot gets its own block. The counts stay counts of the run because they already are**:
+THIS RUN AT A GLANCE and the run accounting both count over every run of the press, above every
+block, and a block's own reconciliation reads one of one because a block IS one plot. That is why
+a block per plot was chosen over one set of blocks carrying every plot: nothing has to be
+re-counted and no number moves. The file preamble is printed once at the top rather than 156
+times.
+
+### 5. The formulas section
+
+Three rules, all in `FormulaRepeats` so the heading count and the body come off one list. Only
+formulas reading a cell on a row this run wrote into. The heading counts exactly what the body
+prints. One formula filled down a column is one finding, with its cells as a span where they
+really are one and as a list otherwise.
+
+**A #DIV/0! on a cell this run did not write is out of this section and still counted and still
+named**, in THE DIVISIONS at the top of the press, off the unfiltered list. The detail section
+reports what the run is answerable for and the glance reports what the workbook will do.
+
+**WHAT THE FILE COMES TO IS UNKNOWN UNTIL THE NEXT RUN**, and that is said rather than estimated.
+The split of the 526 between written row and not is in neither report file, so the new line count
+cannot be worked out from what was measured. The next run's own heading counts answer it, section
+by section.
+
+### One for the team, not a fault to fix
+
+**The plot list reads `On a schedule and on no sheet, 7: -, EP-05, EP-11, EP-12, EP-13, EP-15,
+FM-08`.** The first of the seven is a plot whose name is a single dash. It is on a schedule, so
+some schedule in the model filters `PRX_Ref Plot ID` on `-`. Nothing in the tool invents a plot,
+so it came off the model. **For Bader to find.**
+
+### What is measured and what is not
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every number above is off the 18:15 output
+pairs and the two report files. The emptying is proven against a PDF the tests build carrying a
+note in a field the tool names nowhere and a tick box built as a button. The canopy, the header,
+the per plot blocks and the formulas section are proven in Core.
+
+**The two computed numbers have still never been held against a workbook Excel has recalculated.**
+
+### Five break watches, one per fault
+
+```
+a tick box is emptied with the text fields         2 red, first naming the tick box left alone
+the canopy takes only the rows this run created    1 red, expecting 600 and getting 0
+the header prints the plots count as a read        1 red, naming the missing sentence
+only the first plot of each template gets a block  1 red, EveryPlotOfEveryTemplateGetsItsOwnBlock
+formulas the run never affected are at risk        1 red, every FromWrittenRow assert
+```
+
+**The second one went green the first time and the test was wrong, not the break.** It asserted on
+a `CanopyRow` built by hand rather than going through `CanopyArea.From`, which is the method that
+dropped the rows. It goes through `From` now and the same break reddens it. That is the fifth time
+in nine rounds a break reddened something other than what it aimed at, and the first time the test
+written to catch it was the thing at fault.
+
+All restored byte for byte, checked with `diff -q`, and the suite green at 1916 after.
+
+---
+
 ## 2026-09-14, seventy ninth pass. One rule for every label, and every unit off the page
 
 **Pull request 130, merged into main as `b8bf73e`.** The runner ran 28 hook cases and 1902 tests

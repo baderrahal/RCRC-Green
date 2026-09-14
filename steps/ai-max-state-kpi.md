@@ -1,5 +1,58 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eightieth pass, five faults off the 18:15 run. **1916 tests, 1096 of them KPI, 14
+added, against the 1902 main carries** at `d266374`, which is also this branch's point, 28 hook
+cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**1. THE CLIENT'S FILLING INSTRUCTIONS WERE PRINTED IN THE CLIENT'S PDF**, on all 150. Every text
+field is WRITTEN or EMPTIED now, including every field the tool has no source for and names
+nowhere. **The four tick boxes and the Reset button are the only fields left as the template has
+them, and they are left because of WHAT THEY ARE**: the kind comes off the file's own `/FT`,
+inherited through the parent chain, and only `Tx` is cleared. A kind that cannot be read is left
+alone. The report names every emptied field with why and reads back what landed in each.
+
+**2. THE CANOPY WAS ZERO AND IT WAS THE FIRST CANDIDATE, NOT THE SECOND.** `CanopyArea.From` took
+only matches with `Added` true, a species written into an EMPTY row, so every row the client's list
+already held was left out whatever its diameter said. The second candidate is real on the same rows
+and is fixed with it: a matched row's diameter comes off the workbook, travelling on the match as
+`WorkbookDiameter`, so nothing looks the row up twice. **The percentage comes right with it because
+it is canopy over area and the canopy was the zero.**
+
+**3. NOTHING READS WITHOUT A PRESS, AND THE HEADER WAS CLAIMING A READ THAT DID NOT HAPPEN.** Every
+path was gone through: `Ask(Plots)` is in the Read button's handler and nowhere else, `WhichModel`
+reads the title alone, `Create` is a press. **What was wrong is the claim.** Two different reads set
+the count and printed the same way, the plots press at under a second and Create's scan at 46.2.
+`ReadOfTheModel` carries which read produced it and the line reads `Counted at ...` with a sentence
+saying the model itself was not read. **And the status line now says the read landed**, which is why
+18:06:58 showed a finished count beside a line still claiming to work.
+
+**4. 149 OF 156 PLOTS HAD NO DETAIL.** `WriteAll` took the first run of each template. Every plot
+gets its own block now. **The counts stay counts of the run because they already are**, above every
+block, so nothing is re-counted and no number moves. That is why a block per plot beat one set of
+blocks carrying every plot.
+
+**5. THE FORMULAS SECTION.** Only formulas reading a cell on a row this run wrote into, the heading
+counting exactly what the body prints, and one formula filled down a column said once with its
+cells. A #DIV/0! on a cell this run did not write is out of the section and still counted in THE
+DIVISIONS off the unfiltered list. **What the file comes to is UNKNOWN until the next run**, said
+rather than estimated, because the split of the 526 is in neither report file.
+
+**FOR BADER, NOT A FAULT TO FIX.** The plot list holds a plot whose name is a single dash, on a
+schedule and on no sheet. Some schedule filters `PRX_Ref Plot ID` on `-`. Nothing in the tool
+invents a plot, so it came off the model.
+
+Five break watches, one per fault: 2, 1, 1, 1 and 1 red. **The second went green the first time and
+the TEST was wrong**, asserting on a `CanopyRow` built by hand rather than going through the method
+that dropped the rows. It goes through `CanopyArea.From` now and the same break reddens it. All
+restored byte for byte, checked with `diff -q`, and the suite green at 1916 after.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every number is off the 18:15 output pairs and
+the two report files. **The two computed numbers have still never been held against a workbook Excel
+has recalculated.**
+
 Phase: 9, ship. Seventy ninth pass, one rule for every label and every unit off the page. **1902
 tests, 1082 of them KPI, 16 added, against the 1886 main carries** at `d609559`, which is also this
 branch's point, 28 hook cases unchanged, build zero warnings.
