@@ -43,6 +43,13 @@ first real run is what confirms the green cover label text**, because the report
 chose. **The two computed numbers have still never been held against a workbook Excel has
 recalculated**, which stands from last round.
 
+Pull request 128, merged into main as `3fcb4c4`. **The runner ran 28 hook cases and 1886 tests
+against the pull request head `eeff6c1`, 0 failed and 0 skipped. Locally the same 28 and 1886 ran
+after the last file was written, 1066 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 Phase: 9, ship. Seventy seventh pass, two numbers computed and every unit named. **1879 tests,
 1059 of them KPI, 58 added, against the 1821 main carries** at `e1d8848`, which is also this
 branch's point, 28 hook cases unchanged, build zero warnings.
