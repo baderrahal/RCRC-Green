@@ -149,6 +149,25 @@ findings, 19 FIXED, 44 OPEN.** The round message said 30 open, which is 32 minus
 out the twelve of audit 3 that still stand. Nothing here was renumbered to make the message
 right.
 
+### The merge
+
+Pull request 119, merged into main as `afb85a9`. **The runner ran 28 hook cases and 1700 tests against the pull request head, 0 failed and 0 skipped. Locally the same 28 and 1700 ran at `afb85a9`, 880 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
+
+### A message file left behind by the round before
+
+**The record commit on main was first taken carrying the sixty ninth pass's message.** The
+scratchpad held a `record.txt` from that round, the call that would have overwritten it was
+refused whole by `require-file-on-commit.sh` because the staging and the commit were in one
+Bash command, and the next call named `record.txt` on the message flag. Git found a real file,
+read a real message and committed it. **Nothing failed**, which is the whole shape of it.
+
+`CLAUDE.md` already says to write a commit message to a file in one call and name that file on
+the next. It does not say the file has to be one THIS round wrote, and a stale file of the same
+name is indistinguishable from a fresh one to every hook and to git. The commit was amended with
+a message written to a new name. **A file that is there is not the same as a file you put
+there**, which is the same shape as the tool's own rule that a copy taken once and never
+refreshed reads exactly like a fact.
+
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every change since 14 September is still
 unrun, which is rounds 113, 114, both hook rounds, 117 and this one. The one thing only a run
 can answer is whether the real templates spell `REF :`, `Date:` and `Prepared By:` the way the

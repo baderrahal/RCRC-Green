@@ -50,6 +50,13 @@ finding was touched. Counted off the three files: **63 numbered findings, 19 FIX
 The round message said 30 open, which leaves out the twelve of audit 3 that still stand, and
 nothing was renumbered to make it right.
 
+Pull request 119, merged into main as `afb85a9`. **The runner ran 28 hook cases and 1700 tests against the pull request head, 0 failed and 0 skipped. Locally the same 28 and 1700 ran at `afb85a9`, 880 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
+**The record commit on main was first taken carrying the sixty ninth pass's message**, off a
+`record.txt` that round had left in the scratchpad, because the call meant to overwrite it was
+refused whole and the next call named the file anyway. Git read a real file and nothing failed.
+Amended with a message written to a new name, and written up in the log: a file that is there is
+not the same as a file you put there.
+
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Whether the real templates spell the three
 labels the way the measurement says is the one thing only a run can answer, and a run says so
 plainly rather than guessing.
