@@ -55,10 +55,17 @@ namespace RcrcGreen.Core.Tests.Kpi
             return Path.Combine(_folder, "filled.xlsx");
         }
 
+        /// <summary>
+        /// The six cells a MOSQUES fill names on its main sheet. C5 is the plot reference, which
+        /// left the map when it became a cell found by the REF : label, so it is named here the
+        /// way a real plan names it beside the map's own five.
+        /// </summary>
         private static WorkbookCell[] MappedCells()
         {
             return KpiTemplates.Mosques.Cells
-                .Select(cell => new WorkbookCell(KpiTemplates.Mosques.MainSheetName, cell.Cell))
+                .Select(cell => cell.Cell)
+                .Concat(new[] { FilledMarks.ReferenceCell })
+                .Select(cell => new WorkbookCell(KpiTemplates.Mosques.MainSheetName, cell))
                 .ToArray();
         }
 

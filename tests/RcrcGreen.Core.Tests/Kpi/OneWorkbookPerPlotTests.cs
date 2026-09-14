@@ -262,8 +262,10 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// **The two fixed values are named and no cell is guessed.** Character is always Urban
-        /// Area Zone and Context is always Urban, and which cell each goes in is measured on no
-        /// template, so every template reports both as not written with that reason.
+        /// Area Zone and Context is always Urban, and which cell each goes in comes off the
+        /// label on the template's own sheet, so a template nothing opened reports both as not
+        /// written with that reason. The four cells of row 5 go the same way now, so they are
+        /// in the list beside them.
         /// </summary>
         [Fact]
         public void TheTwoFixedValuesAreNamedAndNoCellIsGuessed()
@@ -286,9 +288,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                     template, null, null, string.Empty, null, null, null, null,
                     null, null, null, StreetReferenceAnswer.Nothing("not a street run"), CreateFixture.NoLabels);
 
-                // A template nothing opened writes neither and says which read did not happen.
+                // A template nothing opened writes NONE of the six cells found by a label and
+                // says which read did not happen, in the order the table holds them.
                 Assert.Equal(
-                    new[] { "Character", "Context" },
+                    new[] { "Date", "Prepared by", "Position", "Reference", "Character", "Context" },
                     plan.Skipped.Where(one => one.Why == "the template was not opened")
                         .Select(one => one.What).ToArray());
             }

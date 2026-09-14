@@ -171,15 +171,15 @@ namespace RcrcGreen.Core.Kpi
 
             if (byName.Count == 1)
             {
-                FilledCell decided = FilledMarks.Decide(byName[0], cells);
+                FilledCell decided = FilledMarks.Decide(cells);
                 return decided == null ? Matched(fileName, byName[0]) : Filled(fileName, byName[0], decided);
             }
 
             bool existing = KpiNames.Holds(fileName, "EXISTING");
             bool future = KpiNames.Holds(fileName, "FUTURE");
 
-            // Both parks map every cell to the same place, so either answers for both.
-            FilledCell park = FilledMarks.Decide(KpiTemplates.ExistingParks, cells);
+            // The marks read the same cells whatever the template, so one answer covers both.
+            FilledCell park = FilledMarks.Decide(cells);
             if (park != null)
             {
                 // A filled park checklist is not offered either way, and its file name says

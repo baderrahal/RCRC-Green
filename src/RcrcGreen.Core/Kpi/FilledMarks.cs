@@ -79,56 +79,74 @@ namespace RcrcGreen.Core.Kpi
     /// other cells the tool writes cannot, because a clean template already holds real text in
     /// some of them and a number cell says nothing about who put the number there.
     ///
+    /// **Both marks are live on every run.** The reference used to be skipped when the ticked
+    /// plots disagreed on it, which a checklist covering several plots usually did, so the typed
+    /// date was often the only mark left. Since a workbook became one plot the plots cannot
+    /// disagree, so the reference cell always carries that plot's own reference and both marks
+    /// decide. That limit has gone and is recorded as gone, because a limit that no longer bites
+    /// is as misleading as one that does.
+    ///
     /// **Two limits, both stated rather than guarded against.** A filled workbook the tool wrote
-    /// neither cell into reads as a template. The reference cell is skipped when the ticked
-    /// plots disagree on it or none of them holds it, which a checklist covering several plots
-    /// usually does, so on such a run the typed date is the only mark left, and the date box is
-    /// prefilled with today but can be cleared. And a client set that hinted the shape of a
+    /// neither cell into reads as a template. And a client set that hinted the shape of a
     /// reference rather than bracketing it, DM-00 at C5, would be withheld, because nothing
     /// separates a hint from the thing it stands for. Neither measured set does that.
     ///
     /// The first is the safe way round: offering a filled file costs a rerun, and withholding a
     /// real template leaves the team unable to fill anything at all. The second is visible in
     /// one line, because the report prints what the cell held.
+    ///
+    /// **THIS IS THE ONE PLACE THAT STILL READS ROW 5 BY LETTER, AND IT IS ON PURPOSE.** The
+    /// cells the run WRITES are found by their labels, in <see cref="LabelledPlaces"/>, because
+    /// a letter is what the row 7 divergence proved cannot be trusted. This check runs over a
+    /// file whose template is not known yet, on every workbook in the folder, so it reads the
+    /// letters row 5 was measured to hold on all seven templates on 14 September. The two are
+    /// two records of one fact and a test holds them against each other over the measured row
+    /// 5: the cells the labels choose must be the cells these marks read.
     /// </summary>
     public static class FilledMarks
     {
         /// <summary>
-        /// E5, the date the team types on the pane and the tool copies through. A template
-        /// holds a placeholder or nothing there, and neither reads as a date.
+        /// E5 on all seven templates, measured on 14 September, which is where the cell right of
+        /// the Date: label at D5 lands. The letter is here rather than borrowed from the write
+        /// side, because the write side has no letter any more.
+        /// </summary>
+        public const string DateCell = "E5";
+
+        /// <summary>
+        /// C5 on all seven templates, measured on 14 September, which is where the cell right of
+        /// the REF : label at B5 lands.
+        /// </summary>
+        public const string ReferenceCell = "C5";
+
+        /// <summary>
+        /// The date the team types on the pane and the tool copies through. A template holds a
+        /// placeholder or nothing there, and neither reads as a date.
         /// </summary>
         public static readonly FilledMark Date =
-            new FilledMark(KpiTemplates.TypedByTheTeam[0], "a date", ReadsAsADate);
+            new FilledMark(DateCell, "a date", ReadsAsADate);
 
         /// <summary>
-        /// The marks that can name a workbook of this template as filled. The reference mark
-        /// takes its cell off the template rather than holding a second copy of it.
+        /// The plot reference, read off the plot's first sheet and copied through.
         /// </summary>
-        public static IReadOnlyList<FilledMark> For(KpiTemplate template)
-        {
-            if (template == null) throw new ArgumentNullException("template");
-
-            var marks = new List<FilledMark> { Date };
-
-            MappedCell reference = template.CellFor(KpiValue.Reference);
-            if (reference != null)
-            {
-                marks.Add(new FilledMark(reference.Cell, "a plot reference", ReadsAsAReference));
-            }
-
-            return marks;
-        }
+        public static readonly FilledMark Reference =
+            new FilledMark(ReferenceCell, "a plot reference", ReadsAsAReference);
 
         /// <summary>
-        /// Every cell any mark of any template reads, which is what the peek asks the file for
-        /// before a template is known.
+        /// The marks that can name a workbook as filled, in the order they decide. **Neither
+        /// takes a template**, because row 5 reads the same on all seven, which is what the
+        /// 14 September measurement settled.
+        /// </summary>
+        public static readonly IReadOnlyList<FilledMark> All = new[] { Date, Reference };
+
+        /// <summary>
+        /// Every cell the marks read, which is what the peek asks the file for before a template
+        /// is known.
         /// </summary>
         public static IReadOnlyList<string> CellsRead
         {
             get
             {
-                return KpiTemplates.All
-                    .SelectMany(template => For(template))
+                return All
                     .Select(mark => mark.Cell)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
@@ -139,12 +157,11 @@ namespace RcrcGreen.Core.Kpi
         /// The first mark whose cell holds something the tool would have written, or nothing
         /// when this workbook reads as a template.
         /// </summary>
-        public static FilledCell Decide(KpiTemplate template, IReadOnlyDictionary<string, string> cells)
+        public static FilledCell Decide(IReadOnlyDictionary<string, string> cells)
         {
-            if (template == null) throw new ArgumentNullException("template");
             if (cells == null) return null;
 
-            foreach (FilledMark mark in For(template))
+            foreach (FilledMark mark in All)
             {
                 string holds;
                 if (!cells.TryGetValue(mark.Cell, out holds)) continue;

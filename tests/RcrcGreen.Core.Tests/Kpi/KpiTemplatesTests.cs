@@ -16,8 +16,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             foreach (KpiTemplate template in KpiTemplates.All)
             {
                 Assert.NotNull(template.CellFor(KpiValue.Component));
-                Assert.NotNull(template.CellFor(KpiValue.Reference));
                 Assert.NotNull(template.CellFor(KpiValue.Location));
+
+                // **The plot reference is not in the map any more.** It went in at C5 on all
+                // seven and is found by the REF : label on the sheet now, the same way the date,
+                // the person and their position are.
+                Assert.Null(template.CellFor(KpiValue.Reference));
                 Assert.NotNull(template.CellFor(KpiValue.Shrubs));
                 Assert.NotNull(template.CellFor(KpiValue.Lawn));
 
@@ -58,20 +62,19 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Theory]
-        [InlineData("EXISTING PARKS", "D3", "C5", "E4", "D8", "F11", "H11")]
-        [InlineData("FUTURE PARKS", "D3", "C5", "E4", "D8", "F11", "H11")]
-        [InlineData("HEALTHCARE", "D3", "C5", "E4", "H7", "F10", "H10")]
-        [InlineData("MOSQUES", "D3", "C5", "E4", "H7", "F10", "H10")]
-        [InlineData("PARKING", "D3", "C5", "E4", "H7", "F10", "H10")]
-        [InlineData("SCHOOLS", "D3", "C5", "E4", "H7", "F10", "H10")]
-        [InlineData("STREETS", "D3", "C5", "E4", null, "F11", "H11")]
+        [InlineData("EXISTING PARKS", "D3", "E4", "D8", "F11", "H11")]
+        [InlineData("FUTURE PARKS", "D3", "E4", "D8", "F11", "H11")]
+        [InlineData("HEALTHCARE", "D3", "E4", "H7", "F10", "H10")]
+        [InlineData("MOSQUES", "D3", "E4", "H7", "F10", "H10")]
+        [InlineData("PARKING", "D3", "E4", "H7", "F10", "H10")]
+        [InlineData("SCHOOLS", "D3", "E4", "H7", "F10", "H10")]
+        [InlineData("STREETS", "D3", "E4", null, "F11", "H11")]
         public void EachValueGoesIntoTheCellMeasuredOffTheAnnotatedSet(
-            string name, string component, string reference, string location, string area, string shrubs, string lawn)
+            string name, string component, string location, string area, string shrubs, string lawn)
         {
             KpiTemplate template = Named(name);
 
             Assert.Equal(component, template.CellFor(KpiValue.Component).Cell);
-            Assert.Equal(reference, template.CellFor(KpiValue.Reference).Cell);
             Assert.Equal(location, template.CellFor(KpiValue.Location).Cell);
             Assert.Equal(shrubs, template.CellFor(KpiValue.Shrubs).Cell);
             Assert.Equal(lawn, template.CellFor(KpiValue.Lawn).Cell);
@@ -118,10 +121,19 @@ namespace RcrcGreen.Core.Tests.Kpi
                 typeof(TreeSheet).GetProperties().Select(property => property.Name));
         }
 
+        /// <summary>
+        /// **E5, G5 and H5 used to be an array here, one for all seven templates.** They are
+        /// found by their labels on each template's own sheet now, so no map may name them, and
+        /// this is what goes red if one is ever put back.
+        /// </summary>
         [Fact]
-        public void TheTeamTypesTheDateThePersonAndThePosition()
+        public void NoTemplateMapsTheCellsTheLabelsNowChoose()
         {
-            Assert.Equal(new[] { "E5", "G5", "H5" }, KpiTemplates.TypedByTheTeam);
+            foreach (KpiTemplate template in KpiTemplates.All)
+            {
+                Assert.DoesNotContain(template.Cells, one =>
+                    one.Cell == "E5" || one.Cell == "G5" || one.Cell == "H5");
+            }
         }
 
         [Fact]

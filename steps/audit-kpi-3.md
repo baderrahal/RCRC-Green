@@ -107,6 +107,25 @@ of their unmeasured cases turns out to be real, and both say exactly what measur
     one PARKING and one FUTURE PARKS template and record row 5, or move the three to the label
     lookup `FixedCells.In` already does for Character and Context
 
+    FIXED, in the seventieth pass, pull request 119. **Both remedies, because Bader did the
+    measurement and it changed what the fix had to be.** Row 5 was measured on all seven
+    templates on 14 September: `B5 REF :`, `D5 Date:` and `F5 Prepared By:` on every one, with
+    the four value cells at C5, E5, G5 and H5, and NO FORMULA at any of them on any of the
+    seven. So the letters were right on all seven BY LUCK and no workbook was ever damaged.
+    The three, and the plot reference with them, are found by their labels now:
+    `LabelledPlaces` is the one table, `KpiTemplates.TypedByTheTeam` is deleted and
+    `KpiValue.Reference` is out of every template's map.
+    `RowFiveTests.TheLabelsLandOnC5E5G5AndH5OnAllSeven` rebuilds each template's own row 5 and
+    checks all four cells on all seven, and
+    `RowFiveTests.ThePlanWritesTheFourValuesIntoThoseFourCellsOnAllSeven` checks the values
+    really get there. **Two things the fix turned up that the finding did not name.** No label
+    names the position cell: H5 is a DISTANCE of two from Prepared By, said out loud rather
+    than dressed up as a label, and whether the real sheets name it elsewhere is UNKNOWN. And
+    `FilledMarks` still reads E5 and C5 by letter on purpose, because it runs over a file whose
+    template is not known yet, so
+    `RowFiveTests.TheCellsTheLabelsChooseAreTheCellsTheFilledCheckReads` holds the two records
+    against each other. Not observed in Revit.
+
 51. LOGIC | `src/RcrcGreen.Core/Kpi/ScheduleRows.cs:153-163` with `:262` and `:469` | **A group
     row is recognised as a row whose FIRST cell holds text and every other cell is empty, and
     its name is then read off cell 0.** `IsStructureRow` is the whole rule. The shape was
@@ -141,6 +160,17 @@ of their unmeasured cases turns out to be real, and both say exactly what measur
     That is an improvement nobody recorded, and the rules file still describes the multi plot
     limit as current. **A limit that has gone away is as misleading as one that has not** | A
     line in `kpi-rules.md`, and the measurement in finding 50 first
+
+    FIXED, in the seventieth pass, pull request 119. `kpi-rules.md` says both marks are live on
+    every run and why the limit went, and the `FilledMarks` docstring that carried the same
+    stale sentence says it too. The round also answered the question the limit raised, by
+    measurement rather than by reasoning: **a clean EXISTING PARKS or FUTURE PARKS template,
+    whose E5 and C5 are both empty, IS OFFERED in the templates list and was never withheld.**
+    `RowFiveTests.ACleanExistingParksTemplateIsOffered`, its FUTURE PARKS twin, the case with
+    those cells absent from the file altogether and `ACleanMosquesTemplateIsOffered` go through
+    the peek and the recognition the pane really calls, and
+    `AFilledParksWorkbookIsStillWithheld` beside them proves the check is not simply dead. Not
+    observed in Revit.
 
 ### COSTLY
 

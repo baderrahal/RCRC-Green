@@ -123,5 +123,75 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("xx", run.Plan.Writes.Single(one => one.Cell.ToString() == "G5").Stored);
             Assert.Equal("bb", run.Plan.Writes.Single(one => one.Cell.ToString() == "H5").Stored);
         }
+
+        /// <summary>
+        /// **A cell this run wrote that was not empty is named with what it held.** Measured on
+        /// 14 September: both park templates already hold " Architect Engineer" at H5, and the
+        /// run writes the typed position over it. Overwriting somebody's text has to be visible
+        /// rather than silent.
+        /// </summary>
+        [Fact]
+        public void TheReportNamesEveryCellItWroteThatWasNotEmptyAndWhatItHeld()
+        {
+            var labels = LabelledCells.Holding(
+                "<Mosques>",
+                new[]
+                {
+                    LabelledCell.At("Reference", "REF :", "B5", "C5", string.Empty),
+                    LabelledCell.At("Date", "Date:", "D5", "E5", string.Empty),
+                    LabelledCell.At("Prepared by", "Prepared By:", "F5", "G5", string.Empty),
+                    LabelledCell.At("Position", "Prepared By:", "F5", "H5", "Architect Engineer")
+                });
+
+            string report = KpiCreateReport.Write(CreateFixture.Run(labels: labels), Noon);
+
+            Assert.Contains("== CELLS WRITTEN OVER SOMETHING THE TEMPLATE ALREADY HELD (1) ==", report);
+            Assert.Contains(
+                "each one found by its label, with what the template held there before this run",
+                report);
+            Assert.Contains("  value | label | label cell | cell written | what it held", report);
+            Assert.Contains("  Position | Prepared By: | F5 | H5 | Architect Engineer", report);
+
+            // The other three were empty, so nothing was written over in them.
+            Assert.DoesNotContain("| E5 |", report);
+            Assert.DoesNotContain("| G5 |", report);
+        }
+
+        /// <summary>
+        /// A run that wrote over nothing says so with a count of 0 and prints NO column header,
+        /// because a header over an empty table is the shape the third audit counted six of.
+        /// </summary>
+        [Fact]
+        public void ARunThatWroteOverNothingPrintsNoColumnHeader()
+        {
+            string report = KpiCreateReport.Write(CreateFixture.Run(), Noon);
+
+            Assert.Contains("== CELLS WRITTEN OVER SOMETHING THE TEMPLATE ALREADY HELD (0) ==", report);
+            Assert.DoesNotContain("  value | label | label cell | cell written | what it held", report);
+        }
+
+        /// <summary>
+        /// A cell the label found that was not empty and that this run did NOT write, because
+        /// nobody typed into its box, is not in the section either: nothing was written over.
+        /// </summary>
+        [Fact]
+        public void ACellThatWasNotEmptyAndWasNotWrittenIsNotCountedAsWrittenOver()
+        {
+            var labels = LabelledCells.Holding(
+                "<Mosques>",
+                new[]
+                {
+                    LabelledCell.At("Date", "Date:", "D5", "E5", string.Empty),
+                    LabelledCell.At("Prepared by", "Prepared By:", "F5", "G5", string.Empty),
+                    LabelledCell.At("Position", "Prepared By:", "F5", "H5", "Architect Engineer"),
+                    LabelledCell.At("Reference", "REF :", "B5", "C5", "ANH-007-MO-100019")
+                });
+
+            // Nothing agreed on a reference, so C5 is not written even though it holds something.
+            string report = KpiCreateReport.Write(CreateFixture.Run(labels: labels), Noon);
+
+            Assert.Contains("== CELLS WRITTEN OVER SOMETHING THE TEMPLATE ALREADY HELD (1) ==", report);
+            Assert.DoesNotContain("| C5 | ANH-007-MO-100019", report);
+        }
     }
 }

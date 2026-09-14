@@ -235,6 +235,7 @@ namespace RcrcGreen.Core.Kpi
             TheReconciliation(report, run);
             ThePlots(report, run);
             TheCellsWritten(report, run);
+            TheCellsWrittenOver(report, run);
             TheCellsNotWritten(report, run);
             TheFormulas(report, run);
             TheSpecies(report, run);
@@ -594,6 +595,57 @@ namespace RcrcGreen.Core.Kpi
 
             TheCache(report, run.Outcome.Cache);
             Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// **Every cell this run wrote that was not empty, and what it held.**
+        ///
+        /// Measured on 14 September: both park templates already hold the text
+        /// " Architect Engineer" at H5, which is the position cell, and the mosque template came
+        /// holding Urban Area Zone at D7 and Urban at F7. The run writes over all of them, which
+        /// is right, and **overwriting somebody's text has to be visible rather than silent.**
+        ///
+        /// Only cells found by a label are here, because those are the ones whose previous
+        /// contents are read on the way to choosing them, and only cells this run really wrote,
+        /// so a template naming no label is under CELLS NOT WRITTEN with its own reason instead.
+        ///
+        /// The column header is printed only when there is a row under it, because a header over
+        /// an empty table is the shape the third audit counted six of.
+        /// </summary>
+        private static void TheCellsWrittenOver(StringBuilder report, KpiCreateRun run)
+        {
+            List<LabelledCell> over = WrittenOver(run);
+
+            Heading(report, "CELLS WRITTEN OVER SOMETHING THE TEMPLATE ALREADY HELD", over.Count,
+                "each one found by its label, with what the template held there before this run");
+
+            if (over.Count > 0)
+            {
+                Line(report, "  value | label | label cell | cell written | what it held");
+                foreach (LabelledCell cell in over)
+                {
+                    Line(report, "  " + Join(
+                        cell.Name, cell.Label, cell.LabelCell, cell.ValueCell, cell.Holds));
+                }
+            }
+
+            Line(report, string.Empty);
+        }
+
+        private static List<LabelledCell> WrittenOver(KpiCreateRun run)
+        {
+            KpiCreatePlan plan = run.Plan;
+            if (plan == null) return new List<LabelledCell>();
+
+            var written = new HashSet<string>(
+                plan.Writes
+                    .Where(one => string.Equals(one.SheetName, plan.Template.MainSheetName, StringComparison.Ordinal))
+                    .Select(one => one.Cell.ToString()),
+                StringComparer.OrdinalIgnoreCase);
+
+            return plan.Labelled
+                .Where(one => one.WasNotEmpty && written.Contains(one.ValueCell))
+                .ToList();
         }
 
         /// <summary>

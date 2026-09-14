@@ -304,16 +304,17 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Totalled.Adding(new[] { new PlotNumber("DM-11", 70.0) }),
                 Totalled.Adding(new[] { new PlotNumber("DM-11", 35.0) }),
                 null,
-                "2026-09-09", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile, CreateFixture.NoLabels);
+                "2026-09-09", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile,
+                CreateFixture.RowFive("<Park Name>"));
 
             Assert.Equal(9, plan.Writes.Count);
             Assert.Equal(new[] { "E5", "G5", "H5", "D3", "C5", "E4", "D8", "F11", "H11" },
                 plan.Writes.Select(one => one.Cell.ToString()));
             Assert.All(plan.Writes, one => Assert.Equal("<Park Name>", one.SheetName));
 
-            // **Four cells this template has none of, each named rather than silent.** The two
-            // street cells are only on STREETS. The two fixed ones are on no template's map yet,
-            // because which cell holds Character and which holds Context is measured nowhere.
+            // **Four cells this run does not reach, each named rather than silent.** The two
+            // street cells are only on STREETS. Character and Context are not named on this
+            // fixture's sheet, because row 7 on a park template has never been measured.
             Assert.Equal(
                 new[] { "StreetsRoadWidth", "StreetsTotalLength", "Character", "Context" },
                 plan.Skipped.Select(one => one.What).ToArray());
@@ -322,8 +323,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 {
                     "only the STREETS template has this cell",
                     "only the STREETS template has this cell",
-                    "the template was not opened",
-                    "the template was not opened"
+                    "no cell on <Park Name> reads Character, so nothing is written and no cell is guessed at",
+                    "no cell on <Park Name> reads Context, so nothing is written and no cell is guessed at"
                 },
                 plan.Skipped.Select(one => one.Why).ToArray());
         }
@@ -342,7 +343,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
-                "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile, CreateFixture.NoLabels);
+                "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile,
+                CreateFixture.RowFive("<Mosques>"));
 
             Assert.Equal("2026-09-09", Written(plan, "E5"));
             Assert.Equal("xx", Written(plan, "G5"));
@@ -361,7 +363,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
-                "2026-09-09", "   ", null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
+                "2026-09-09", "   ", null, CreateFixture.NoStreetFile,
+                CreateFixture.RowFive("<Mosques>"));
 
             Assert.Equal("2026-09-09", Written(plan, "E5"));
             Assert.Equal(KpiCreatePlan.TypedByTheTeam, plan.Skipped.Single(one => one.Cell == "G5").Why);
@@ -377,7 +380,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Mosques, null, null, string.Empty, null, null, null, null,
-                "  2026-09-09  ", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile, CreateFixture.NoLabels);
+                "  2026-09-09  ", "B RAHAL", "BIM COORDINATOR", CreateFixture.NoStreetFile,
+                CreateFixture.RowFive("<Mosques>"));
 
             Assert.Equal("2026-09-09", Written(plan, "E5"));
             Assert.Equal("BIM COORDINATOR", Written(plan, "H5"));
@@ -515,21 +519,21 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.ExistingParks, null, null, string.Empty, null, null, null, null,
-                null, null, null, CreateFixture.NoStreetFile, CreateFixture.NoLabels);
+                null, null, null, CreateFixture.NoStreetFile,
+                CreateFixture.RowFive("<Park Name>"));
 
             Assert.Empty(plan.Writes);
 
-            // Nine as before, plus the four cells this template does not carry.
+            // Nine as before, plus the four cells this run does not reach.
             Assert.Equal(13, plan.Skipped.Count);
             Assert.Equal(6, plan.Skipped.Count(one => one.Why == KpiCreatePlan.NotFound));
             Assert.Equal(3, plan.Skipped.Count(one => one.Why == KpiCreatePlan.TypedByTheTeam));
             Assert.Equal(2, plan.Skipped.Count(one => one.Why == KpiCreatePlan.NotAStreetTemplate));
 
-            // Character and Context are skipped because nothing opened a template to look for
-            // their labels, which is what NoLabels stands for. They are no longer skipped
-            // because no cell was measured: the cells are measured now and are found by label.
+            // Character and Context are skipped because this fixture's sheet names neither
+            // label. Row 7 on a park template has never been measured, and nothing guesses.
             Assert.Equal(
-                2, plan.Skipped.Count(one => one.Why == "the template was not opened"));
+                2, plan.Skipped.Count(one => one.Why.StartsWith("no cell on <Park Name> reads", StringComparison.Ordinal)));
         }
 
         [Fact]

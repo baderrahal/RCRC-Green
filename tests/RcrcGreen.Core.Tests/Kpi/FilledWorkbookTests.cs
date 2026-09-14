@@ -35,21 +35,22 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// Two cells can decide it and both are cells the tool writes: the date the team types
-        /// and the plot reference read off the plot's first sheet. The reference cell comes off
-        /// the template rather than a second copy of the map.
+        /// and the plot reference read off the plot's first sheet. **Neither takes a template**,
+        /// because row 5 was measured to read the same on all seven on 14 September.
         /// </summary>
         [Fact]
         public void TheMarksAreTheCellsTheToolWrites()
         {
             Assert.Equal(new[] { "E5", "C5" }, FilledMarks.CellsRead);
 
-            IReadOnlyList<FilledMark> marks = FilledMarks.For(KpiTemplates.Mosques);
+            IReadOnlyList<FilledMark> marks = FilledMarks.All;
             Assert.Equal(2, marks.Count);
             Assert.Equal("E5", marks[0].Cell);
             Assert.Equal("a date", marks[0].What);
             Assert.Equal("C5", marks[1].Cell);
             Assert.Equal("a plot reference", marks[1].What);
-            Assert.Equal(KpiTemplates.TypedByTheTeam[0], FilledMarks.Date.Cell);
+            Assert.Equal(FilledMarks.DateCell, FilledMarks.Date.Cell);
+            Assert.Equal(FilledMarks.ReferenceCell, FilledMarks.Reference.Cell);
         }
 
         [Fact]

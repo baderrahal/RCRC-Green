@@ -27,12 +27,15 @@ namespace RcrcGreen.Core.Tests.Kpi
                 {
                     "Main sheet <Park Name>:",
                     "  D3  PRX_Component, read off the plot's first sheet",
-                    "  C5  PRX_Plot_UID2, read off the plot's first sheet",
                     "  E4  Neighborhood Name, read off Project Information",
                     "  D8  PRX_Intervention Area, off the chosen filled region in the 00 link",
                     "  F11  SHRUBS & GROUND COVER TOTAL AREA from the shrubs and lawn schedule",
                     "  H11  LAWN (GRASS) TOTAL AREA from the shrubs and lawn schedule",
-                    "  E5, G5, H5  the date, the person and their position, typed by the team on this pane and copied through, from no model",
+                    "  The plot reference is PRX_Plot_UID2, read off the plot's first sheet, and it goes into "
+                    + "the cell the REF : label chooses on the template's own sheet when Create is pressed.",
+                    "  The date, the person and their position are typed by the team on this pane and copied "
+                    + "through, from no model, into the cells the Date: and Prepared By: labels choose on the "
+                    + "template's own sheet when Create is pressed.",
                     "Tree List - Existing: one quantity into column B per botanical name in column D, over every row that names one",
                     "Tree List - Proposed: one quantity into column B per botanical name in column D, over every row that names one",
                     "  Which rows hold a name and which rows the total reaches are read off the file when "
@@ -70,8 +73,14 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiTemplates.ExistingParks, ChosenParameters.NonePicked);
 
             Assert.Contains("  D3  the parameter picked under Component, read off the plot's first sheet", lines);
-            Assert.Contains("  C5  the parameter picked under Reference, read off the plot's first sheet", lines);
             Assert.Contains("  E4  the parameter picked under Location, read off Project Information", lines);
+
+            // The reference names no cell, because the label picks it when the template is
+            // opened, and it still names the picker its value will come from.
+            Assert.Contains(
+                "  The plot reference is the parameter picked under Reference, read off the plot's first sheet, "
+                + "and it goes into the cell the REF : label chooses on the template's own sheet when Create is pressed.",
+                lines);
         }
 
         /// <summary>

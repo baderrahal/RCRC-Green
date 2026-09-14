@@ -80,9 +80,8 @@ namespace RcrcGreen.Core.Kpi
                     + "and the total length, and those two come off the street reference file.");
             }
 
-            lines.Add("  " + string.Join(", ", KpiTemplates.TypedByTheTeam)
-                + "  the date, the person and their position, typed by the team on this pane "
-                + "and copied through, from no model");
+            lines.Add("  " + ReferenceOnThisSheet(chosen));
+            lines.Add("  " + TypedOnThisPane);
 
             lines.Add(TreeListLine(template.ExistingTrees));
             lines.Add(TreeListLine(template.ProposedTrees));
@@ -90,6 +89,30 @@ namespace RcrcGreen.Core.Kpi
 
             return lines;
         }
+
+        /// <summary>
+        /// The plot reference used to be one of the mapped cells and read C5 on this line. It is
+        /// found by its own label now, so the cell is not known until the template is opened.
+        /// </summary>
+        public static string ReferenceOnThisSheet(ChosenParameters chosen)
+        {
+            return "The plot reference is "
+                + KpiTemplates.SourceOf(KpiValue.Reference, chosen)
+                + ", and it goes into the cell the " + LabelledPlaces.ReferenceLabel
+                + " label chooses on the template's own sheet when Create is pressed.";
+        }
+
+        /// <summary>
+        /// **This line used to name three cells, E5, G5 and H5.** It cannot name a cell any more:
+        /// the three are found by their labels on the template's own sheet when Create is
+        /// pressed, so which cell each lands in is not known until the file is opened, and the
+        /// report says what it found. A line about what the tool does is checked against what it
+        /// does, which is a rule this project has paid for twice.
+        /// </summary>
+        public const string TypedOnThisPane =
+            "The date, the person and their position are typed by the team on this pane and "
+            + "copied through, from no model, into the cells the Date: and Prepared By: labels "
+            + "choose on the template's own sheet when Create is pressed.";
 
         /// <summary>
         /// **This line used to print a row range off the map, B4 to B83, and the map was wrong.**
