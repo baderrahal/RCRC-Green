@@ -137,6 +137,13 @@ only the number cannot catch a rule about which bucket a thing went into.**
 All four touched files were copied out first and `diff -q` against the copy after restoring, and
 the restored code was run against the client's three real forms again afterwards.
 
+### The merge
+
+Pull request 125, merged into main as `524231f`, through the API with the commit title and the
+commit message both passed on the call. **The runner ran 28 hook cases and 1821 tests against the
+pull request head `ddaef08`, 0 failed and 0 skipped.** The merged tree is byte for byte the branch
+head and the message off main carries neither a co-author credit line nor a generated-by footer.
+
 ### Still open
 
 The 44 audit findings. The three blank fields above, each a question for Bader. The roads form's

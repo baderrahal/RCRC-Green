@@ -46,6 +46,13 @@ pins the buckets now and the same break reddens it. The other two reddened 3 and
 what it broke. All restored byte for byte, and the restored code was run against the client's
 three real forms again afterwards.
 
+Pull request 125, merged into main as `524231f`. **The runner ran 28 hook cases and 1821 tests
+against the pull request head `ddaef08`, 0 failed and 0 skipped. Locally the same 28 and 1821 ran
+after the last file was written, 1001 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and that is worth saying twice this time:
 the file work was proven against the client's three real PDFs outside Revit, and the pane, the
 fourth folder and the per plot ordering have not been pressed once.
