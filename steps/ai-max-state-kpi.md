@@ -55,6 +55,12 @@ workbook Excel has recalculated.**
 already answers and the next run puts in one line at the top; what the parks templates' canopy
 formula reads; and what the report's other sections come to, which the next run prints.
 
+**Pull request 134, merged into main as `8b90fe0`.** The runner ran 28 hook cases and 1928
+tests against the pull request head `25ce207`, 0 failed and 0 skipped. The merge went through
+the API with the title and the message both passed on the call, the commit came back off main
+carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte
+for byte the branch head, checked with a diff that named no file.
+
 Phase: 9, ship. Eightieth pass, five faults off the 18:15 run. **1916 tests, 1096 of them KPI, 14
 added, against the 1902 main carries** at `d266374`, which is also this branch's point, 28 hook
 cases unchanged, build zero warnings.
