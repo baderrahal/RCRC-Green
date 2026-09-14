@@ -1,5 +1,57 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy seventh pass, two numbers computed and every unit named. **1879 tests,
+1059 of them KPI, 58 added, against the 1821 main carries** at `e1d8848`, which is also this
+branch's point, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**MY CORRECTION TO THE TOTAL SHRUBS NOTE WAS TOO NARROW AND BADER'S READING HOLDS.** The round
+before checked the field's `/V` and called the record right. The `/TU` tooltip on the PARKS form
+reads `Existing Shrubs` on the row the page prints TOTAL Shrubs Area (m²), and on the Proposed row
+above it. So there is a real wrong label in these files, on a different form from the one the
+round message named. **The conclusion never moved and the tool never followed the note:** it
+writes existing plus proposed on all three forms and always did.
+
+**THE POSITION IS THE THIRD RECORD NOW.** Every field of all three forms carries its measured x
+and y off its own `/Rect`, `PdfFormCheck` compares them with half a point of room against rows
+twenty points apart, and a field that has moved writes nothing and is named. Every field matched
+by note was then gone through one by one, and the thirteen that were right are named beside the
+one that was not.
+
+**THE TWO WORKBOOK CELLS ARE COMPUTED, FROM WHAT THIS RUN WROTE AND READ, WITH THE WORKING
+SHOWN.** Total Green cover is canopy plus planting plus lawn, the canopy percentage is canopy over
+area, and planting, lawn and area are the three totals this run wrote into the workbook's own
+cells. The canopy is the workbook's own column worked out again, rounding INSIDE per tree off the
+measured `L21 =IF(ISBLANK(J21)," ",ROUND(PI()*(J21/2)^2,0))`. **Adding printed numbers with the
+working shown was already the rule and this is that rule one step further**, written into
+`kpi-rules.md` out loud because it is the first number this tool produces that no schedule printed.
+
+**THE GUARD IS HALF BUILT, ON PURPOSE, AND THE OTHER HALF IS AN OPEN QUESTION.**
+`WorkbookArithmetic.Canopy` reads the output's own formulas and blanks BOTH numbers where a row's
+canopy formula differs from the text the tool knows, naming the row and every formula on it. **The
+Total Green cover cell and the percentage cell cannot be checked, because the text of neither is
+measured anywhere in this repository on any of the seven templates.** The one thing near it is
+`H9 = H8/Area` on EXISTING PARKS, one template, and building on one example is the shape this repo
+has paid for five times. So nothing looks for either cell and the report says so beside both
+numbers. **What Bader has to measure is named: the formula text of both cells on all seven.**
+
+**TWO UNITS CONVERT AND FORTY DO NOT, and every one of the forty two is named.** The road length
+is metres into a box printed km, so it is divided by a thousand FOR THE PDF ALONE and the Excel is
+untouched. The canopy percentage is a ratio times a hundred with no sign, checked against the
+client's own filled ANH-006-NP-100002, where 550 square metres of canopy is their 0.000550 square
+kilometres exactly and 550 over 771 is their 71. A row in any unit but m never reaches the
+conversion, because `StreetReferenceFile.For` already refuses it by name.
+
+Four break watches, each reddening the case that names what it broke: 4, 3, 3 and 2 red. All
+restored byte for byte, checked with `diff -q`, and the suite green at 1879 after.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The tooltips and the positions came off the
+client's three real PDFs, and the canopy guard was proven against a workbook the tests build.
+**The two computed numbers have never been held against a workbook Excel has recalculated**, and
+that is the first thing the next run should do.
+
 Phase: 9, ship. Seventy sixth pass, a PDF beside every workbook. **1821 tests, 1001 of them KPI,
 58 added, against the 1763 main carries** at the branch point `bb10f9d`, measured by running the
 suite at that commit, 28 hook cases unchanged, build zero warnings.

@@ -280,10 +280,12 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<FormulaAtRisk> atRisk,
             IEnumerable<ComputedFrom> computesFrom,
             IEnumerable<FunctionUse> functionsExcelMayNotHave,
-            string refusal)
+            string refusal,
+            IEnumerable<FormulaCell> allFormulas = null)
         {
             WasChecked = wasChecked;
             FormulaCount = formulaCount;
+            AllFormulas = (allFormulas ?? Enumerable.Empty<FormulaCell>()).ToList();
             ReadingWrittenRows = (readingWrittenRows ?? Enumerable.Empty<FormulaCell>()).ToList();
             AtRisk = (atRisk ?? Enumerable.Empty<FormulaAtRisk>()).ToList();
             ComputesFrom = (computesFrom ?? Enumerable.Empty<ComputedFrom>()).ToList();
@@ -297,6 +299,16 @@ namespace RcrcGreen.Core.Kpi
         public bool WasChecked { get; }
 
         public int FormulaCount { get; }
+
+        /// <summary>
+        /// Every formula in the output, kept so a caller can ask what one named cell computes.
+        ///
+        /// **The canopy check asks it.** The tool's own canopy arithmetic copies the workbook's
+        /// canopy column, and a matched row is a row this run wrote only a count into, so that
+        /// row's canopy formula reads nothing this run wrote and never reaches
+        /// <see cref="ReadingWrittenRows"/>. Checking it needs every formula.
+        /// </summary>
+        public IReadOnlyList<FormulaCell> AllFormulas { get; }
 
         /// <summary>
         /// Every formula whose text reads a cell on a row this run wrote into.
@@ -408,7 +420,8 @@ namespace RcrcGreen.Core.Kpi
                 .ThenBy(one => one.Name, StringComparer.Ordinal)
                 .ToList();
 
-            return new FormulaCheck(true, formulas.Count, readingWritten, atRisk, computed, functions, Refusal(atRisk));
+            return new FormulaCheck(
+                true, formulas.Count, readingWritten, atRisk, computed, functions, Refusal(atRisk), formulas);
         }
 
         private static Dictionary<string, string> DefinedNames(ZipArchive zip, string workbookPart)

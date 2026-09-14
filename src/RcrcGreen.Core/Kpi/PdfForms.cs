@@ -59,14 +59,38 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PdfFormField
     {
-        public PdfFormField(PdfValue value, string fieldName, string note)
+        public PdfFormField(PdfValue value, string fieldName, string note, double x, double y, string unit)
         {
             if (string.IsNullOrWhiteSpace(fieldName)) throw new ArgumentNullException("fieldName");
 
             Value = value;
             FieldName = fieldName;
             Note = note ?? string.Empty;
+            X = x;
+            Y = y;
+            Unit = unit ?? string.Empty;
         }
+
+        /// <summary>
+        /// Where the field sits on the page, measured off the file on 14 September.
+        ///
+        /// **THE POSITION IS THE THIRD RECORD AND IT IS THE ONE A PERSON READS.** The name and
+        /// the note were checked and the position was not, and a field that MOVES to another row
+        /// keeps both while meaning something else. On the open spaces form every shrub row
+        /// carries two boxes, a quantity at x=500.5 and an area at x=548.1, so a field that
+        /// slipped one column would take a number into the wrong box with its name and its note
+        /// intact.
+        /// </summary>
+        public double X { get; }
+
+        public double Y { get; }
+
+        /// <summary>
+        /// The unit the FORM asks for, as its own unit column prints it. **Every conversion the
+        /// tool does is named here and in the report**, because a unit that matches by luck
+        /// reads the same as one nobody checked.
+        /// </summary>
+        public string Unit { get; }
 
         public PdfValue Value { get; }
 
@@ -179,28 +203,28 @@ namespace RcrcGreen.Core.Kpi
         public static readonly PdfForm Parks = new PdfForm(
             "Projects Basic Data - Parks", 42, new[] { "EP", "FP" }, new[]
             {
-                new PdfFormField(PdfValue.Uid, "UID", Uid2),
-                new PdfFormField(PdfValue.ReportDate, "Report Date", DateOfTheDay),
-                new PdfFormField(PdfValue.Area, "Area", RegionArea),
+                new PdfFormField(PdfValue.Uid, "UID", Uid2, 132.2, 671.6, "text"),
+                new PdfFormField(PdfValue.ReportDate, "Report Date", DateOfTheDay, 132.2, 660.4, "a date"),
+                new PdfFormField(PdfValue.Area, "Area", RegionArea, 215.2, 611.3, "m2"),
                 new PdfFormField(PdfValue.TotalAreasToBeGreened, "Total areas to be greened",
-                    "excel the cell on the right of  \"Total Green cover (m²) \" /1000000"),
+                    "excel the cell on the right of  \"Total Green cover (m²) \" /1000000", 215.2, 580.3, "km2"),
                 new PdfFormField(PdfValue.PercentageCanopy, "Percentage Total area covered by canopy",
-                    "excel the cell on the right of  \"Total area covered by canopy \""),
+                    "excel the cell on the right of  \"Total area covered by canopy \"", 215.2, 549.4, "%"),
                 new PdfFormField(PdfValue.IrrigationWaterDemand, "Irrigation water demand",
-                    "Revit / softscape & shrubs & lawn schedule / total water demand /1000"),
-                new PdfFormField(PdfValue.ExistingTrees, "Existing Trees", TreesExisting),
-                new PdfFormField(PdfValue.ProposedTrees, "Proposed Trees", TreesProposed),
-                new PdfFormField(PdfValue.TotalTrees, "TOTAL trees", "sum of the above or from revit"),
+                    "Revit / softscape & shrubs & lawn schedule / total water demand /1000", 476.9, 497.8, "m3 a day"),
+                new PdfFormField(PdfValue.ExistingTrees, "Existing Trees", TreesExisting, 477.0, 611.3, "a count"),
+                new PdfFormField(PdfValue.ProposedTrees, "Proposed Trees", TreesProposed, 477.0, 601.0, "a count"),
+                new PdfFormField(PdfValue.TotalTrees, "TOTAL trees", "sum of the above or from revit", 477.0, 590.6, "a count"),
                 new PdfFormField(PdfValue.ExistingShrubs, "Existing Shrubs Area (m²)",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ EXISTING SHRUBS  TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ EXISTING SHRUBS  TOTAL AREA", 519.2, 580.3, "m2"),
                 new PdfFormField(PdfValue.ProposedShrubs, "Proposed Shrubs Area (m²)",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ PROPOSED SHRUBS  TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ PROPOSED SHRUBS  TOTAL AREA", 519.2, 570.2, "m2"),
                 new PdfFormField(PdfValue.TotalShrubs, "TOTAL Shrubs Area (m²)",
-                    "Sum of the above or from revit"),
+                    "Sum of the above or from revit", 519.2, 560.3, "m2"),
                 new PdfFormField(PdfValue.GroundCover, "Ground Cover",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/GROUND COVER TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/GROUND COVER TOTAL AREA", 519.6, 549.4, "m2"),
                 new PdfFormField(PdfValue.Lawn, "Lawn",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/LAWN (GRASS) TOTAL AREA")
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/LAWN (GRASS) TOTAL AREA", 519.6, 539.0, "m2")
             });
 
         /// <summary>
@@ -214,37 +238,37 @@ namespace RcrcGreen.Core.Kpi
             new[] { "HF", "FM", "DM", "PL", "SC" }, new[]
             {
                 new PdfFormField(PdfValue.ProjectType, "undefined_4.0",
-                    "REVIT SHEETS /TITLE BLOCK/PRX_COMPONENT"),
-                new PdfFormField(PdfValue.Uid, "undefined_4.1", Uid2),
-                new PdfFormField(PdfValue.ReportDate, "undefined_4.2", DateOfTheDay),
-                new PdfFormField(PdfValue.Area, "Area", RegionArea),
+                    "REVIT SHEETS /TITLE BLOCK/PRX_COMPONENT", 108.7, 664.3, "text"),
+                new PdfFormField(PdfValue.Uid, "undefined_4.1", Uid2, 108.7, 650.3, "text"),
+                new PdfFormField(PdfValue.ReportDate, "undefined_4.2", DateOfTheDay, 108.7, 636.6, "a date"),
+                new PdfFormField(PdfValue.Area, "Area", RegionArea, 203.2, 551.2, "m2"),
                 new PdfFormField(PdfValue.TotalAreasToBeGreened, "Total areas to be greened",
-                    "Excel file/ the cel beside Total Green cover (m²)/1000000"),
+                    "Excel file/ the cel beside Total Green cover (m²)/1000000", 203.2, 510.4, "km2"),
                 new PdfFormField(PdfValue.IrrigationWaterDemand, "Irrigation water demand",
-                    "REVIT/softscape & shrubs schedule total Water demand / 1000"),
-                new PdfFormField(PdfValue.ExistingTrees, "Existing Trees", TreesExisting),
-                new PdfFormField(PdfValue.ProposedTrees, "Proposed Trees.0", TreesProposed),
-                new PdfFormField(PdfValue.TotalTrees, "Proposed Trees.1", "SUM THE ABOVE OF FROM REVIT"),
+                    "REVIT/softscape & shrubs schedule total Water demand / 1000", 500.4, 551.2, "m3 a day"),
+                new PdfFormField(PdfValue.ExistingTrees, "Existing Trees", TreesExisting, 500.5, 449.2, "a count"),
+                new PdfFormField(PdfValue.ProposedTrees, "Proposed Trees.0", TreesProposed, 500.5, 428.9, "a count"),
+                new PdfFormField(PdfValue.TotalTrees, "Proposed Trees.1", "SUM THE ABOVE OF FROM REVIT", 500.5, 408.9, "a count"),
                 new PdfFormField(PdfValue.ExistingShrubs, "Existing Shrubs.1",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/ EXISTING SHRUBS TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/ EXISTING SHRUBS TOTAL AREA", 548.1, 387.9, "m2"),
                 new PdfFormField(PdfValue.ProposedShrubs, "Proposed Shrubs.1.0",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/ PROPOSED SHRUBS TOTAL AREA"),
-                new PdfFormField(PdfValue.TotalShrubs, "Proposed Shrubs.1.1", "sum of the above or from revit"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/ PROPOSED SHRUBS TOTAL AREA", 548.1, 367.4, "m2"),
+                new PdfFormField(PdfValue.TotalShrubs, "Proposed Shrubs.1.1", "sum of the above or from revit", 548.1, 346.9, "m2"),
                 new PdfFormField(PdfValue.GroundCover, "0",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/GROUND COVER TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/GROUND COVER TOTAL AREA", 548.5, 326.6, "m2"),
                 new PdfFormField(PdfValue.Lawn, "0_2",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/LAWN (GRASS) TOTAL AREA")
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/LAWN (GRASS) TOTAL AREA", 548.5, 306.2, "m2")
             });
 
         public static readonly PdfForm Roads = new PdfForm(
             "Projects Basic Data - Roads", 34, new[] { "NS", "ST", "MM" }, new[]
             {
-                new PdfFormField(PdfValue.Uid, "UID", Uid2),
-                new PdfFormField(PdfValue.ReportDate, "Report Date", DateOfTheDay),
+                new PdfFormField(PdfValue.Uid, "UID", Uid2, 82.2, 634.9, "text"),
+                new PdfFormField(PdfValue.ReportDate, "Report Date", DateOfTheDay, 82.2, 619.2, "a date"),
                 new PdfFormField(PdfValue.Row, "Row",
-                    "EXCEL FILE \"Scope Validation 21072026\" /COLUMN O1 \"ROAD_WIDTH\""),
+                    "EXCEL FILE \"Scope Validation 21072026\" /COLUMN O1 \"ROAD_WIDTH\"", 191.9, 538.9, "m"),
                 new PdfFormField(PdfValue.Length, "Length",
-                    "EXCEL FILE \"Scope Validation 21072026\" /COLUMN H1 \"ES_QUANTITY\""),
+                    "EXCEL FILE \"Scope Validation 21072026\" /COLUMN H1 \"ES_QUANTITY\"", 191.9, 521.0, "km"),
 
                 // **THIS NOTE NAMES THE CANOPY CELL AND THE OTHER TWO FORMS NAME TOTAL GREEN
                 // COVER**, for a field all three call Total areas to be greened. It is recorded
@@ -252,23 +276,23 @@ namespace RcrcGreen.Core.Kpi
                 // the client's own copy and paste, and the disagreement is an open question in
                 // the log rather than a number chosen quietly.
                 new PdfFormField(PdfValue.TotalAreasToBeGreened, "Total areas to be greened",
-                    "excel the cell on the right of  \"Total area covered by canopy \""),
+                    "excel the cell on the right of  \"Total area covered by canopy \"", 191.9, 503.2, "km2"),
 
                 new PdfFormField(PdfValue.IrrigationWaterDemand, "Irrigation water demand",
-                    "Revit / softscape & shrubs & lawn schedule / total water demand /1000"),
-                new PdfFormField(PdfValue.ExistingTrees, "Existing Trees", TreesExisting),
-                new PdfFormField(PdfValue.ProposedTrees, "Proposed Trees", TreesProposed),
-                new PdfFormField(PdfValue.TotalTrees, "TOTAL trees", "sum of the above or from revit"),
+                    "Revit / softscape & shrubs & lawn schedule / total water demand /1000", 191.9, 360.0, "m3 a day"),
+                new PdfFormField(PdfValue.ExistingTrees, "Existing Trees", TreesExisting, 500.0, 538.9, "a count"),
+                new PdfFormField(PdfValue.ProposedTrees, "Proposed Trees", TreesProposed, 500.0, 521.0, "a count"),
+                new PdfFormField(PdfValue.TotalTrees, "TOTAL trees", "sum of the above or from revit", 500.0, 503.2, "a count"),
                 new PdfFormField(PdfValue.ExistingShrubs, "Existing Shrubs Area (m²)",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ EXISTING SHRUBS  TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ EXISTING SHRUBS  TOTAL AREA", 547.7, 485.1, "m2"),
                 new PdfFormField(PdfValue.ProposedShrubs, "Proposed Shrubs Area (m²)",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ PROPOSED SHRUBS  TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/ PROPOSED SHRUBS  TOTAL AREA", 547.7, 467.3, "m2"),
                 new PdfFormField(PdfValue.TotalShrubs, "TOTAL Shrubs Area (m²)",
-                    "sum of the above or from revit"),
+                    "sum of the above or from revit", 547.7, 449.5, "m2"),
                 new PdfFormField(PdfValue.GroundCover, "Ground Cover",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/GROUND COVER TOTAL AREA"),
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS&LAWN SCHEDULE/GROUND COVER TOTAL AREA", 548.0, 431.6, "m2"),
                 new PdfFormField(PdfValue.Lawn, "Lawn",
-                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/LAWN (GRASS) TOTAL AREA")
+                    "REVIT SHEET/REVIT COPONENTS LINK /SHRUBS & LAWN SCHEDULE/LAWN (GRASS) TOTAL AREA", 548.0, 413.8, "m2")
             });
 
         public static readonly IReadOnlyList<PdfForm> All = new[] { Parks, OpenSpaces, Roads };

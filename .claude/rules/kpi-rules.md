@@ -1169,10 +1169,17 @@ the other three a space, on all three forms, and the tool names no field for any
 
 All three were measured off the files, and the file is the record.
 
-- **The open spaces TOTAL Shrubs note is NOT wrong.** The round said it carries the same note as
-  Existing Shrubs. Measured: `Proposed Shrubs.1.1` holds `sum of the above or from revit`, which
-  is right, and so do the other two forms. The conclusion is unchanged, all three mean the sum,
-  and what Bader confirmed with the client is not a fault that is in these files
+- **The open spaces TOTAL Shrubs VALUE is not wrong and its TOOLTIP on PARKS is.** The round
+  before this one checked one key of the dictionary and said the note was fine. Measured:
+  `Proposed Shrubs.1.1` on open spaces holds `sum of the above or from revit` in its `/V` and
+  `Proposed Shrubs` in its `/TU`, both right. **On PARKS the row the page prints TOTAL Shrubs
+  Area (m²) carries `/TU(Existing Shrubs)`**, and so does the row above it printed Proposed
+  Shrubs Area (m²). So there IS a wrong label in these files, on the form the round named a
+  different way round, and the correction was too narrow. Roads' tooltips all match their own
+  rows. The conclusion never moved: all three mean the sum, Bader confirmed it with the client
+  on 14 September, and the tool has always written existing plus proposed. **The note on this
+  field is not to be trusted on any form.** The whole section below on the position exists
+  because of it
 - **Parks and Roads name NO Project Type field at all.** The round said it is typed text on
   those two and left alone. It is not there to leave alone, and only the open spaces form asks
   for a component
@@ -1182,6 +1189,162 @@ All three were measured off the files, and the file is the record.
   the same thing. **It is held here exactly as the file has it** so the check does not refuse
   the form over the client's own copy and paste, and which the client means is an open question
   in `steps/log-kpi.md`
+
+### The position is the THIRD record, and it is the one a person reads
+
+The field name was checked and the note was checked and **where the field sits on the page was
+not**, which is how a wrong tooltip went unnoticed for a round. A field that MOVES to another row
+keeps its name and its note while meaning something else, and on the open spaces form every shrub
+row carries TWO boxes, a quantity at x 500.5 and an area at x 548.1, so a field slipping one
+column would take a number into the wrong box with both its other records intact.
+
+Every field of all three forms carries its measured x and y now, read off each `/Rect` on 14
+September, and `PdfFormCheck` compares them. **A field that has moved writes nothing and is named
+with where it sits beside where this tool measured it.** The room is `PdfFormCheck.Tolerance`,
+half a point, against rows about twenty points apart, because a viewer rounds a rectangle and
+half a point is nowhere near a row.
+
+The open spaces shrub column, measured down the right of the page, is what settled the TOTAL
+Shrubs question three ways rather than one:
+
+```
+y=449.2  Existing Trees     y=387.9  Existing Shrubs
+y=428.9  Proposed Trees     y=367.4  Proposed Shrubs
+y=408.9  TOTAL trees        y=346.9  TOTAL Shrubs      /V sum of the above or from revit
+                            y=326.6  Ground Cover
+                            y=306.2  Lawn
+```
+
+**Which fields were matched by NOTE rather than by position, and what each one checked out as**,
+gone through one by one on 14 September. All fourteen on each form now carry all three records,
+and this is the list of what the position said about each:
+
+```
+Uid, ReportDate, ProjectType    text and a date, one box each, position agrees
+Area                            one box, position agrees
+Row, Length                     roads only, two rows one above the other, position agrees
+TotalAreasToBeGreened           one box, position agrees, and its NOTE differs by form, below
+PercentageCanopy                parks only, one box, position agrees
+IrrigationWaterDemand           one box, position agrees, nothing is written into it
+ExistingTrees, ProposedTrees    the two rows above TOTAL trees, position agrees
+TotalTrees                      the row under them, position agrees
+ExistingShrubs, ProposedShrubs  the two rows above TOTAL Shrubs, position agrees
+TotalShrubs                     the row under them, position agrees, AND ITS TOOLTIP LIES ON
+                                PARKS, which is the one the note got wrong
+GroundCover, Lawn               the two rows under it, position agrees
+```
+
+So one of fourteen disagreed, and it is the one the round message named. Every other field was
+right and is said to be right here, because a field checked and found right reads exactly like
+one nobody looked at.
+
+### Two numbers the tool COMPUTES, with their working shown
+
+**Total Green cover and the canopy percentage are cells the WORKBOOK computes**, and the patcher
+drops every cached formula result on purpose so Excel recalculates, so neither number is in the
+file the run just wrote. Three ways out were on the table and two are refused: opening a hundred
+and fifty workbooks by hand is not a workflow, and relaxing the cache rule brings back the stale
+zeros that took four rounds to kill. **So the tool computes both, from what it itself wrote and
+read, and shows its working.**
+
+```
+Total Green cover   = canopy + planting + lawn
+Percentage canopy   = canopy / area
+```
+
+Planting, lawn and area are the three totals this run wrote into the workbook's own cells, handed
+to the PDF on `PdfWorkbookNumbers` rather than worked out a second way. The canopy is built by
+`CanopyArea.From`, over **every row this run wrote a count into and no other**, because the canopy
+the workbook computes is over the rows its own counts sit in.
+
+**The arithmetic is the workbook's own column, and the rounding is INSIDE.** Measured by Bader on
+the MOSQUES template, Tree List - Proposed row 21:
+
+```
+L21  =IF(ISBLANK(J21)," ",ROUND(PI()*(J21/2)^2,0))
+M21  =IF(ISBLANK(B21)," ",L21*B21)
+```
+
+So eight metres across is fifty square metres per tree and three of them are 150. Rounding the sum
+instead gives 151, which is a different number from the workbook on every row.
+
+**A row with no canopy diameter is NAMED and is not counted as nought**, because its own L cell
+returns a space in the workbook too, so it adds nothing there either.
+
+**Adding printed numbers with the working shown was already the rule. This is that rule one step
+further** and it is said out loud because it is the first time this tool produces a number no
+schedule printed. Every computed field prints under COMPUTED, not read, with its parts.
+
+### The guard on the one formula the computing copies
+
+**Read the formula off the file and refuse where it differs.** `WorkbookArithmetic.Canopy` takes
+the output's own `FormulaCheck`, and for every row this run wrote a count into it looks on that
+row for a cell carrying the text the tool knows, built with the diameter column that sheet's own
+heading row chose. **A row whose canopy formula differs, or that carries none, blanks BOTH
+computed fields and names the row and every formula on it.** Both numbers rest on the canopy, so a
+canopy short of one row is a number that reads as complete and is wrong.
+
+Nothing writes the diameter column in. J is what row 21 uses and every sheet's own comes off its
+heading, the rule `SpeciesList` already follows, so the caller hands the column in.
+
+**A CHECK THAT COULD NOT BE MADE AND NOTHING TO CHECK ARE TWO DIFFERENT THINGS**, told apart by
+`ArithmeticCheck.NothingToCheck` and never by reading the reason, because a signal that travels in
+the data is not a signal. A run that wrote no tree row has no canopy and no canopy formula, so its
+green cover is the planting and the lawn and it is written. A workbook whose formulas were never
+read computes nothing at all.
+
+**AND WHAT IS NOT CHECKED IS SAID RATHER THAN GUESSED AT.** The workbook's own Total Green cover
+cell and its canopy percentage cell carry formulas of their own, and **the text of neither is
+measured anywhere in this repository, on any of the seven templates.** The one thing near it is H9
+reading `H8/Area` on EXISTING PARKS, one template, which is the shape this repo has paid for
+taking as a rule five times over. So nothing looks for either cell, the report says
+`WorkbookArithmetic.NotCheckedAgainstTheWorkbook` beside the two numbers, and what to measure is
+an open question in the log: the formula text of both cells on all seven templates.
+
+### Every unit on all three forms, one by one
+
+**A UNIT THAT MATCHES BY LUCK READS THE SAME AS ONE NOBODY CHECKED**, so every field carries the
+unit the form's own unit column prints, the report prints it beside every written value, and a
+test writes the whole table out by hand. Two conversions happen and forty do not.
+
+```
+field                     form asks   source gives              conversion
+Uid, ProjectType          text        a parameter value         none
+ReportDate                a date      today                     none, printed dd/MM/yyyy
+Area                      m2          m2, converted once by     none
+                                      AreaUnits at the Revit
+                                      boundary
+Row            roads      m           m, the reference file's   NONE, and it is checked: the
+                                      ES ROAD_WIDTH             page prints m beside this box
+Length         roads      km          m, the reference file's   DIVIDE BY 1000, for the PDF
+                                      ES_QUANTITY               alone
+TotalAreasToBeGreened     km2         m2, computed above        DIVIDE BY 1,000,000
+PercentageCanopy  parks   %           a ratio                   TIMES 100, and NO percent sign,
+                                                                because the form prints one
+IrrigationWaterDemand     m3 a day    nothing is read yet       nothing is written
+ExistingTrees,            a count     a schedule subtotal       none
+ProposedTrees,
+TotalTrees
+ExistingShrubs,           m2          a phase row's area        none
+ProposedShrubs,
+TotalShrubs,
+GroundCover, Lawn                     ground cover is not printed apart, so nothing is written
+```
+
+**The road length is metres into a box printed km.** The workbook's own Streets Total Length (m)
+cell takes the metres unchanged, measured on ST-100130 reading 174, **so the division is for the
+PDF alone and the Excel is left exactly as it was.** A row in any unit but m never reaches the
+conversion: `StreetReferenceFile.For` already refuses it, naming the plot, the row and what the
+unit said, and the PDF field is left blank carrying that reason. Checked rather than assumed.
+
+**The percentage is a ratio times a hundred with no sign**, checked against the client's own
+filled ANH-006-NP-100002: an area of 771, 0.000550 square kilometres greened and a percentage of
+71. Eleven trees eight metres across are 550 square metres, which is 0.00055 square kilometres
+exactly as their form has it, and 550 over 771 is 0.7134, which their form prints as 71.
+
+**The Roads form's Total areas to be greened is filled from ITS OWN note**, which names the canopy
+cell where the other two name Total Green cover. Each form gets what its own file says, the working
+says which of the two the number is, and which the client means stays an open question.
 
 ### The form is checked on every run and a form that has moved is left alone
 

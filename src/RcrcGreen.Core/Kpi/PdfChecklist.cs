@@ -115,7 +115,8 @@ namespace RcrcGreen.Core.Kpi
                     held => string.Equals(held.Name, one.FieldName, StringComparison.Ordinal));
 
                 landed.Add(new PdfLandedField(
-                    one.Value, one.FieldName, one.Text, found == null ? string.Empty : found.Value));
+                    one.Value, one.FieldName, one.Text, found == null ? string.Empty : found.Value,
+                    one.Unit, one.Working));
             }
 
             return PdfOutcome.Wrote(plan.PlotId, plan.Form, outputPath, check, landed, plan.Blank);

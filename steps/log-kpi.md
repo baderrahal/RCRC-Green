@@ -4,6 +4,153 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy seventh pass. Two numbers computed, and every unit named
+
+**1879 tests, 1059 of them KPI, 58 added, against the 1821 main carries** at `e1d8848`, which is
+also this branch's point, 28 hook cases unchanged, build zero warnings. **No audit finding is
+closed, renumbered or reordered: read off the three files, 63 numbered findings, 19 carrying a
+FIXED mark, 44 open.**
+
+### My correction to the TOTAL Shrubs note was too narrow, and Bader's reading holds
+
+The round before said the open spaces TOTAL Shrubs note is NOT wrong, on one measurement: the
+field's `/V` reads `sum of the above or from revit`. **That was one key of the dictionary.** The
+field also carries a `/TU`, the tooltip a person sees, and reading all three forms' tooltips this
+round found a real wrong label:
+
+```
+PARKS  y=570.2  Proposed Shrubs Area (m²)   /TU(Existing Shrubs)
+PARKS  y=560.3  TOTAL Shrubs Area (m²)      /TU(Existing Shrubs)  /V(Sum of the above or from revit)
+OPEN   y=346.9  Proposed Shrubs.1.1         /TU(Proposed Shrubs)  /V(sum of the above or from revit)
+ROADS           every tooltip matches its own row
+```
+
+So there IS a wrong label in these files, on the PARKS form rather than the open spaces one, and
+a tool matching by note would put the existing shrub area into a box the page prints TOTAL in a
+client document. **The conclusion never moved and the tool never followed the note:** it writes
+`shrubs.TotalSquareMetres`, existing plus proposed, on all three forms, and that was already
+pinned by a test. What is new is that the note on that field is recorded as not to be trusted.
+
+**A correction that checks one field of a record and calls the record right is the same shape as
+reading a schedule value by cell position.** It reached the right answer about the open spaces
+form and the wrong answer about the file set.
+
+### The position is the third record now, and every field was gone through one by one
+
+The name was checked and the note was checked and where the field sits was not. Every field of
+all three forms carries its measured x and y, read off each `/Rect`, and `PdfFormCheck` compares
+them with half a point of room against rows about twenty points apart. **A field that has moved
+writes nothing and is named with where it sits beside where this tool measured it.**
+
+Then every field matched by note was gone through, and the ones that were right are named as
+well as the one that was not, because a field checked and found right reads exactly like one
+nobody looked at. Fourteen fields on each of three forms, one disagreement, and it is the one
+the round message named. The list is in `kpi-rules.md`.
+
+### The two workbook cells are COMPUTED, and the working is printed
+
+Neither number is in the file this run wrote, because the patcher drops every cached formula
+result on purpose so Excel recalculates. Opening a hundred and fifty workbooks by hand is not a
+workflow and relaxing the cache rule brings back the stale zeros that took four rounds to kill.
+
+```
+Total Green cover  = canopy + planting + lawn
+Percentage canopy  = canopy / area
+```
+
+Planting, lawn and area are the three totals this run wrote into the workbook's own cells, handed
+over on `PdfWorkbookNumbers` rather than worked out a second way. The canopy is `CanopyArea.From`
+over every row this run wrote a count into and no other, using the workbook's own column:
+
+```
+L21  =IF(ISBLANK(J21)," ",ROUND(PI()*(J21/2)^2,0))
+M21  =IF(ISBLANK(B21)," ",L21*B21)
+```
+
+**The rounding is INSIDE, per tree.** Eight metres across is fifty square metres each and three of
+them are 150, where rounding the sum gives 151. A row with no diameter is named and is not counted
+as nought, because its own L cell returns a space in the workbook too.
+
+**Adding printed numbers with the working shown was already allowed. This is that rule one step
+further** and it is written into `kpi-rules.md` out loud, because it is the first time this tool
+produces a number no schedule printed. Every computed field prints under COMPUTED, not read, with
+its parts.
+
+### The guard, and the half of it that cannot be built yet
+
+`WorkbookArithmetic.Canopy` reads the output's own formulas and, for every row this run wrote a
+count into, looks on that row for a cell carrying the text the tool knows, built with the diameter
+column that sheet's own heading chose. **A row whose formula differs, or that carries none, blanks
+BOTH computed fields and names the row and every formula on it.**
+
+**A check that could not be made and nothing to check are two different things**, told apart by a
+property and never by reading the reason. A run that wrote no tree row has no canopy formula in
+play at all, so its green cover is the planting and the lawn and it is written. A workbook whose
+formulas were never read computes nothing.
+
+**THE OTHER TWO FORMULAS CANNOT BE CHECKED AND THAT IS SAID RATHER THAN FAKED.** The round asked
+for the Total Green cover cell and the percentage cell to be read and compared against what the
+tool knows. **The tool knows neither, because the text of neither is measured anywhere in this
+repository, on any of the seven templates.** The one thing near it is `H9 = H8/Area` on EXISTING
+PARKS, one template, recorded in `kpi-rules.md` from the 2026-09-09 check. Building a discovery
+rule on one template is the shape this repo has paid for five times, D7 and the shrubs subtotal
+among them, so nothing looks for either cell. The report says
+`WorkbookArithmetic.NotCheckedAgainstTheWorkbook` beside both numbers.
+
+**OPEN QUESTION FOR BADER.** What do the Total Green cover cell and the canopy percentage cell
+hold, as formula text, on all seven templates. With that measured the guard closes and the tool's
+sum can be held against the workbook's own. Until then the canopy column is guarded and the sum is
+not, and the report says which.
+
+### The two units, and the forty that need none
+
+**LENGTH ON ROADS ASKS km AND THE SOURCE GIVES m.** The reference file's QUANTITY UNIT reads m and
+the workbook's Streets Total Length (m) cell takes the metres unchanged, measured on ST-100130
+reading 174. So the metres are divided by a thousand for the PDF alone and the Excel is left
+exactly as it was. 330.66 metres lands as 0.33066.
+
+**A row in any unit but m never reaches the conversion.** `StreetReferenceFile.For` already
+refuses it, naming the plot, the row and what the unit said, and the PDF field carries that
+reason. Checked at the line rather than assumed.
+
+**PERCENTAGE CANOPY IS A RATIO TIMES A HUNDRED WITH NO SIGN**, because the form prints one in its
+own unit column. Checked against the client's filled ANH-006-NP-100002: area 771, 0.000550 square
+kilometres greened, percentage 71. Eleven trees eight metres across are 550 square metres, so the
+square kilometres land on their 0.00055 exactly, and 550 over 771 is 0.7134, which their form
+prints as 71.
+
+**And then every field on all three forms was gone through**, forty two of them, and the whole
+table is in `kpi-rules.md` and in a test written out by hand. Two conversions, forty none. The
+ones that need none are named as well as the two that do, because a unit that matches by luck
+reads the same as one nobody checked.
+
+**The Roads form's Total areas to be greened is filled from ITS OWN note**, which names the canopy
+cell where the other two name Total Green cover. Each form gets what its own file says and the
+working says which of the two the number is. Which the client means stays the open question it
+was.
+
+### What is measured here and what is not
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The tooltips and the positions were read out
+of the client's three real PDFs. The canopy formula and the arithmetic guard were proven against a
+workbook the tests build, not against a client one. **The two computed numbers have never been
+held against a workbook Excel has recalculated**, which is the first thing the next run should do:
+open one filled workbook, read its Total Green cover and its canopy percentage, and hold them
+against what the PDF beside it says.
+
+### Four break watches, each naming what it broke
+
+```
+TotalShrubs writes the existing area          4 red, first naming 84 against 30
+Total Green cover drops the lawn              3 red, first naming 620 against 560
+the canopy guard is ignored                   3 red, the drifted case naming the empty reason
+the road length is not divided                2 red, both naming 0.33066 against 330.66
+```
+
+All restored byte for byte, checked with `diff -q`, and the suite green at 1879 after.
+
+---
+
 ## 2026-09-14, seventy sixth pass. A PDF beside every workbook
 
 **1821 tests, 1001 of them KPI, 58 added, against the 1763 main carries** at the branch point

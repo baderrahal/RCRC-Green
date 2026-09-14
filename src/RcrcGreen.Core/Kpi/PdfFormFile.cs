@@ -13,12 +13,22 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PdfFieldRead
     {
-        public PdfFieldRead(string name, string value, int objectNumber)
+        public PdfFieldRead(string name, string value, int objectNumber, double x = 0.0, double y = 0.0)
         {
             Name = name ?? string.Empty;
             Value = value ?? string.Empty;
             ObjectNumber = objectNumber;
+            X = x;
+            Y = y;
         }
+
+        /// <summary>
+        /// Where the field sits on the page, off its own rectangle. Nought where the field
+        /// carries none, which is a parent that only holds kids.
+        /// </summary>
+        public double X { get; }
+
+        public double Y { get; }
 
         public string Name { get; }
 
@@ -79,6 +89,9 @@ namespace RcrcGreen.Core.Kpi
 
         private static readonly Regex FieldValueHex =
             new Regex(@"/V\s*<[0-9A-Fa-f\s]*>", RegexOptions.CultureInvariant);
+
+        private static readonly Regex Rectangle = new Regex(
+            @"/Rect\s*\[\s*(-?[0-9.]+)\s+(-?[0-9.]+)", RegexOptions.CultureInvariant);
 
         private static readonly Regex ParentReference =
             new Regex(@"/Parent\s+(\d+)\s+\d+\s+R", RegexOptions.CultureInvariant);
@@ -153,8 +166,12 @@ namespace RcrcGreen.Core.Kpi
             var found = new List<PdfFieldRead>();
             foreach (KeyValuePair<int, string> one in titles)
             {
+                Match where = Rectangle.Match(bodies[one.Key]);
+
                 found.Add(new PdfFieldRead(
-                    FullName(one.Key, titles, parents), ValueOf(bodies[one.Key]), one.Key));
+                    FullName(one.Key, titles, parents), ValueOf(bodies[one.Key]), one.Key,
+                    where.Success ? Rounded(where.Groups[1].Value) : 0.0,
+                    where.Success ? Rounded(where.Groups[2].Value) : 0.0));
             }
 
             return found.OrderBy(one => one.Name, StringComparer.Ordinal).ToList();
@@ -388,6 +405,16 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return built.ToString();
+        }
+
+        /// <summary>
+        /// A position to a tenth of a point, which is how the measurements were taken and far
+        /// finer than any row is tall. The rows of the shrubs table sit about twenty points
+        /// apart, so a tenth cannot confuse two of them.
+        /// </summary>
+        private static double Rounded(string text)
+        {
+            return Math.Round(double.Parse(text, CultureInfo.InvariantCulture), 1);
         }
 
         private static int Number(string text)

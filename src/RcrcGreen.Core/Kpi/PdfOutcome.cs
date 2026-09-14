@@ -9,9 +9,13 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PdfLandedField
     {
-        public PdfLandedField(PdfValue value, string fieldName, string sent, string landed)
+        public PdfLandedField(
+            PdfValue value, string fieldName, string sent, string landed,
+            string unit = null, string working = null)
         {
             Value = value;
+            Unit = unit ?? string.Empty;
+            Working = working ?? string.Empty;
             FieldName = fieldName ?? string.Empty;
             Sent = sent ?? string.Empty;
             Landed = landed ?? string.Empty;
@@ -20,6 +24,25 @@ namespace RcrcGreen.Core.Kpi
         public PdfValue Value { get; }
 
         public string FieldName { get; }
+
+        /// <summary>
+        /// The unit the value is written IN, as the form's own unit column prints it. **A number
+        /// in the wrong unit is plausible and a number with its unit beside it is checkable**,
+        /// which is why every written field carries one and the report prints it.
+        /// </summary>
+        public string Unit { get; }
+
+        /// <summary>
+        /// How a computed value was worked out, empty for one that was read off the model or the
+        /// reference file. **Two of this form's fields are numbers no schedule printed**, so they
+        /// carry their parts and a person can check them against the workbook.
+        /// </summary>
+        public string Working { get; }
+
+        public bool Computed
+        {
+            get { return Working.Length > 0; }
+        }
 
         public string Sent { get; }
 

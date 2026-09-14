@@ -52,7 +52,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             return PdfFill.Of(
                 reading, CountedGroups.Of(template ?? KpiTemplates.Mosques),
-                null, Today, workbookWritten);
+                null, Today, workbookWritten, PdfWorkbookNumbers.None);
         }
 
         private static string Wrote(PdfPlan plan, PdfValue value)
@@ -193,26 +193,28 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **The two fields that read the workbook are left blank and named, and the reason is
-        /// the tool's own cache rule.** Total Green cover is a formula, and the patcher drops
-        /// every cached formula result on purpose so Excel recalculates, so the number is not in
-        /// the file this run wrote.
+        /// **A plot whose workbook was not written computes neither number and says so.** Bader
+        /// asked for the PDF either way, so everything off Revit still goes in and the two the
+        /// workbook's own numbers are built from are named.
         /// </summary>
         [Fact]
-        public void TheFieldsThatReadTheWorkbookAreBlankAndSayWhy()
+        public void APlotWithNoWorkbookComputesNeitherNumberAndSaysWhy()
         {
-            PdfPlan written = PdfFill.Of(
-                Plot("EP-05"), CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, true);
-
-            Assert.Equal(PdfFill.TheWorkbookHasNotComputedItYet, Blank(written, PdfValue.TotalAreasToBeGreened));
-            Assert.Equal(PdfFill.TheWorkbookHasNotComputedItYet, Blank(written, PdfValue.PercentageCanopy));
-
-            // **A plot whose workbook was not written reads differently**, because that is a
-            // different fact and Bader asked for the PDF either way.
             PdfPlan refused = PdfFill.Of(
-                Plot("EP-05"), CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, false);
+                Plot("EP-05"), CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, false,
+                PdfWorkbookNumbers.None);
 
             Assert.Equal(PdfFill.TheWorkbookWasNotWritten, Blank(refused, PdfValue.TotalAreasToBeGreened));
+            Assert.Equal(PdfFill.TheWorkbookWasNotWritten, Blank(refused, PdfValue.PercentageCanopy));
+
+            // **A workbook that was written but whose formulas were never read computes nothing
+            // either**, because the canopy is the workbook's own arithmetic worked out again and
+            // a check that cannot see its subject has to refuse.
+            PdfPlan unchecked_ = PdfFill.Of(
+                Plot("EP-05"), CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, true,
+                PdfWorkbookNumbers.None);
+
+            Assert.Equal(WorkbookArithmetic.NoWorkbookRead, Blank(unchecked_, PdfValue.TotalAreasToBeGreened));
         }
 
         /// <summary>
@@ -273,16 +275,18 @@ namespace RcrcGreen.Core.Tests.Kpi
                 CreateFixture.Plot("ST-05", uid2: "ANH-007-ST-100210"),
                 CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
-                Today, true);
+                Today, true, PdfWorkbookNumbers.None);
 
+            // The width is metres into a box the form prints m beside, so it goes in unchanged.
+            // The length is metres into a box the form prints km beside, so it is divided.
             Assert.Equal("20", Wrote(found, PdfValue.Row));
-            Assert.Equal("330.66", Wrote(found, PdfValue.Length));
+            Assert.Equal("0.33066", Wrote(found, PdfValue.Length));
 
             PdfPlan missing = PdfFill.Of(
                 CreateFixture.Plot("ST-05", uid2: "ANH-007-ST-100210"),
                 CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Nothing("the file names no row for this plot"),
-                Today, true);
+                Today, true, PdfWorkbookNumbers.None);
 
             Assert.Equal("the file names no row for this plot", Blank(missing, PdfValue.Row));
         }
@@ -340,7 +344,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AFormWhoseFieldsAndNotesHoldIsMatched()
         {
             PdfForm form = PdfForms.Roads;
-            var fields = form.Fields.Select(one => new PdfFieldRead(one.FieldName, one.Note, 1)).ToList();
+            var fields = form.Fields
+                .Select(one => new PdfFieldRead(one.FieldName, one.Note, 1, one.X, one.Y)).ToList();
             fields.Add(new PdfFieldRead("Sidewalk Quantity", string.Empty, 1));
 
             PdfFormCheck check = PdfFormCheck.Of(form, fields, string.Empty);

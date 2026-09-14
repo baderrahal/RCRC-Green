@@ -284,15 +284,22 @@ namespace RcrcGreen.Core.Kpi
 
                 if (one.Pdf.Landed.Count > 0)
                 {
-                    Line(report, "    field | what was sent | what landed");
+                    // **THE UNIT IS PRINTED BESIDE EVERY WRITTEN VALUE.** A number in the wrong
+                    // unit reads exactly like one nobody checked, and two of this form's fields
+                    // are converted on the way in, the road length from metres to kilometres and
+                    // the green cover from square metres to square kilometres.
+                    Line(report, "    field | unit | what was sent | what landed");
                     foreach (PdfLandedField field in one.Pdf.Landed)
                     {
                         Line(report, "    " + Join(
                             field.FieldName,
+                            Shown(field.Unit),
                             Shown(field.Sent),
                             Shown(field.Landed) + (field.Agrees ? string.Empty : "   THESE DIFFER")));
                     }
                 }
+
+                TheComputed(report, one.Pdf);
 
                 if (one.Pdf.Blank.Count == 0) continue;
 
@@ -304,6 +311,36 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// The fields this run COMPUTED rather than read, each with the parts it was worked out
+        /// from.
+        ///
+        /// **THEY ARE THE FIRST NUMBERS THIS TOOL PRODUCES THAT NO SCHEDULE PRINTED.** The
+        /// workbook computes a total green cover and a canopy percentage of its own and the
+        /// patcher drops every cached formula result on purpose, so neither is in the file the
+        /// run wrote. Adding printed numbers with the working shown is already the rule here and
+        /// this is that rule one step further, so the working is not a courtesy: it is the only
+        /// way anybody can hold these two against the workbook once Excel has opened it.
+        ///
+        /// **What was NOT checked is said too.** The workbook's own Total Green cover cell and
+        /// its canopy percentage cell hold formulas whose text is measured nowhere in this
+        /// repository, so nothing here looked for either, and that is a line rather than a
+        /// silence.
+        /// </summary>
+        private static void TheComputed(StringBuilder report, PdfOutcome pdf)
+        {
+            var computed = pdf.Landed.Where(one => one.Computed).ToList();
+            if (computed.Count == 0) return;
+
+            Line(report, "    COMPUTED, not read | how");
+            foreach (PdfLandedField field in computed)
+            {
+                Line(report, "    " + Join(field.FieldName, field.Working));
+            }
+
+            Line(report, "    " + WorkbookArithmetic.NotCheckedAgainstTheWorkbook);
         }
 
         /// <summary>

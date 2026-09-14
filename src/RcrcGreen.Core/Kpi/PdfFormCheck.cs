@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -17,7 +18,7 @@ namespace RcrcGreen.Core.Kpi
     {
         private PdfFormCheck(
             PdfForm form, bool read, string refusal, int fieldsFound,
-            IEnumerable<string> missing, IEnumerable<string> differingNotes)
+            IEnumerable<string> missing, IEnumerable<string> differingNotes, IEnumerable<string> moved)
         {
             Form = form;
             Read = read;
@@ -25,11 +26,29 @@ namespace RcrcGreen.Core.Kpi
             FieldsFound = fieldsFound;
             Missing = (missing ?? Enumerable.Empty<string>()).ToList();
             DifferingNotes = (differingNotes ?? Enumerable.Empty<string>()).ToList();
+            Moved = (moved ?? Enumerable.Empty<string>()).ToList();
         }
+
+        /// <summary>
+        /// **How far a field may sit from where it was measured, in points.** The rows of these
+        /// tables are about twenty points apart, so half a point admits a nudge and refuses a
+        /// field that has moved to another row or another column.
+        /// </summary>
+        public const double Tolerance = 0.5;
+
+        /// <summary>
+        /// Fields still carrying their name and their note that have MOVED on the page, each
+        /// said with where it was and where it is.
+        ///
+        /// **This is the record the other two cannot make.** A field that slips one column keeps
+        /// its name and its note and means something else entirely, and on the open spaces form
+        /// every shrub row carries a quantity box and an area box a few points apart.
+        /// </summary>
+        public IReadOnlyList<string> Moved { get; }
 
         public static PdfFormCheck NotRead(PdfForm form, string refusal)
         {
-            return new PdfFormCheck(form, false, refusal, 0, null, null);
+            return new PdfFormCheck(form, false, refusal, 0, null, null, null);
         }
 
         public PdfForm Form { get; }
@@ -58,7 +77,7 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public bool Matched
         {
-            get { return Read && Missing.Count == 0 && DifferingNotes.Count == 0; }
+            get { return Read && Missing.Count == 0 && DifferingNotes.Count == 0 && Moved.Count == 0; }
         }
 
         public string Why
@@ -79,6 +98,11 @@ namespace RcrcGreen.Core.Kpi
                     said.Add("fields whose note has moved: " + string.Join(" and ", DifferingNotes.ToArray()));
                 }
 
+                if (Moved.Count > 0)
+                {
+                    said.Add("fields that have moved on the page: " + string.Join(" and ", Moved.ToArray()));
+                }
+
                 return "the form does not match what this tool knows, so nothing was written into it. "
                     + string.Join(". ", said.ToArray());
             }
@@ -97,6 +121,7 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<PdfFieldRead> held = fields ?? new List<PdfFieldRead>();
             var missing = new List<string>();
             var differing = new List<string>();
+            var moved = new List<string>();
 
             foreach (PdfFormField wanted in form.Fields)
             {
@@ -114,9 +139,15 @@ namespace RcrcGreen.Core.Kpi
                     differing.Add(wanted.FieldName + " holds " + Shown(found.Value)
                         + " where this tool knows " + Shown(wanted.Note));
                 }
+
+                if (Math.Abs(found.X - wanted.X) > Tolerance || Math.Abs(found.Y - wanted.Y) > Tolerance)
+                {
+                    moved.Add(wanted.FieldName + " sits at " + Place(found.X, found.Y)
+                        + " where this tool measured it at " + Place(wanted.X, wanted.Y));
+                }
             }
 
-            return new PdfFormCheck(form, true, string.Empty, held.Count, missing, differing);
+            return new PdfFormCheck(form, true, string.Empty, held.Count, missing, differing, moved);
         }
 
         /// <summary>
@@ -128,6 +159,12 @@ namespace RcrcGreen.Core.Kpi
         {
             return string.Equals((held ?? string.Empty).Trim(), (wanted ?? string.Empty).Trim(),
                 StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string Place(double x, double y)
+        {
+            return "x " + x.ToString("0.#", CultureInfo.InvariantCulture)
+                + ", y " + y.ToString("0.#", CultureInfo.InvariantCulture);
         }
 
         private static string Shown(string text)
