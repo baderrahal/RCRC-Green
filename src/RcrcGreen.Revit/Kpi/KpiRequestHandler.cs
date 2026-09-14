@@ -577,8 +577,10 @@ namespace RcrcGreen.Revit.Kpi
 
             // **The folder comes off the plot's OWN component, not the template's.** DAILY MOSQUE
             // and FRIDAY MOSQUE fill one workbook and are filed in two folders, so a folder read
-            // off the template would put half the mosque plots in the wrong place.
-            PlotWorkbookPath where = PlotWorkbookPath.For(root, component.Value, held.Uid2);
+            // off the template would put half the mosque plots in the wrong place. The template
+            // is passed for the one case that has no component at all, where its own folder is
+            // the only thing that can file the plot.
+            PlotWorkbookPath where = PlotWorkbookPath.For(root, pick.Template, component.Value, held.Uid2);
 
             // Only STREETS asks the reference file, and it is asked per plot on this plot's own
             // UID2 rather than on whatever the user picked under Reference.

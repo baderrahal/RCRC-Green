@@ -95,6 +95,55 @@ way an unknown component already is, and nothing falls back to the template name
 **The folder comes off the PLOT'S OWN component and never off the template**, which is what
 keeps DAILY MOSQUE and FRIDAY MOSQUE apart on a run that fills both from MOSQUES.
 
+### A plot with NO component is filed under its template's own folder
+
+**Measured on the 09:18 run, NG05, 156 plots over 7 templates, 150 workbooks.** Six plots were
+ticked, READ, and dropped at the last step: EP-05, EP-11, EP-12, EP-13, EP-15 and FM-08, each
+with `the component folder table does not hold an empty component`.
+
+They are on no sheet, so they carry no component, so `PlotsPerTemplate` placed them by their
+PLOT PREFIX, which is exactly what its own rule says it must do and what its docstring names
+EP-05, EP-11, EP-12 and EP-13 as the case for. Then this table, keyed on the component, had
+nothing for them. **Two routes to a template and one to a folder**, which is the two records
+shape where the two records are the two steps of one decision.
+
+**NOTHING NEW IS WRITTEN DOWN TO FIX IT, AND THAT IS THE WHOLE POINT.** Three shapes were on the
+table and two of them add an eighth table, a template to folder map or a prefix to folder map,
+which is another record to keep in step with these two. The third refuses the plot, which is
+honest and costs six plots of a hundred and fifty six on every run.
+
+The answer is none of the three, because the relation is ALREADY written down twice over. Both
+tables are keyed on the same eleven component values, so which folders a template reaches is
+read off the two of them together, `ComponentFolders.FoldersOf`. Counted off the tables by hand:
+
+```
+EXISTING PARKS   EXISTING PARK      HEALTHCARE   HEALTHCARE     STREETS   STREETS
+FUTURE PARKS     FUTURE PARKS       PARKING      PARKING LOT
+SCHOOLS          SCHOOL             MOSQUES      DAILY MOSQUE and FRIDAY MOSQUE
+```
+
+**Six templates reach exactly ONE folder and MOSQUES reaches two.** So a plot carrying no
+component is filed where every other plot of its template is filed, which places five of the
+six, and **where a template reaches more than one folder nothing is derived**, which still
+refuses FM-08. That is the same shape as two filled regions holding an area on one plot: one
+answer answers itself and two is a question the data cannot settle.
+
+**AN ABSENCE AND AN ANSWER NOBODY KNOWS ARE TWO DIFFERENT THINGS.** A component the table does
+not hold still places nothing and still names the value, because falling back to the template
+there would file a value the team has never seen under a folder the team never chose. This is
+for an EMPTY component only.
+
+**AND THE PLOT IS NAMED BEFORE THE PRESS.** `CreateWords.PlotsWithNoComponent` counts the ticked
+plots carrying no component, says how many of them file under their template's own folder, and
+names by name the one that can be filed nowhere, above Create rather than twenty minutes later
+in a report. **Reading five park plots and throwing them away is work nobody asked for.** The
+count is a note and the plot that goes nowhere is a refusal, and a run where every ticked plot
+carries a component says nothing at all, because a line about nothing is one the team reads past
+on every other press.
+
+**The line names no parameter.** `PRX_COMPONENT` is the workbook's note and is in no model, and
+a test over these lines refuses it the same way the template block's test does.
+
 ## The street reference file fills the two cells STREETS types by hand
 
 `StreetReferenceFile` reads the team's Scope_Validation workbook, browsed for and remembered
@@ -1410,6 +1459,36 @@ and reported as it landed, never as it was sent.
 The untouched client file recalculates with 45 errors and a correctly filled one with 44. The
 44 are the PARK PROGRAMME section failing on an empty Criteria table either way, so a filled
 file showing 44 errors is correct.
+
+**THE 44 ARE NOT A FAULT AND NOBODY SHOULD CHASE THEM.** Confirmed again on the 09:18 run: both
+parks workbooks recalculate with 44 #N/A at F31 to F74, and an UNTOUCHED EXISTING PARKS template
+recalculates with 45. **The one that goes away is a divide by zero on the empty area, which the
+run fixed by filling it.** The 44 are the PARK PROGRAMME section failing because the Criteria
+sheet's programme table is empty in the client's own file, measured on 8 September. The parks
+workbooks are correct and carry a fault the client shipped.
+
+### A divide by zero is reported now, and never refused on
+
+**The 09:18 run wrote two workbooks recalculating with 2 #DIV/0! each**, ANH-007-SC-100004 and
+ANH-007-ST-100130, neither on the main sheet and both on plots with few trees. The report named
+none of them, because the formula check knew ONE shape: a formula returning text off ISBLANK and
+the arithmetic on it. **Which sheet and which cells those four are cannot be worked out from
+this repository**, because no client workbook is in it and none ever will be, so the tool is
+taught to say it and the next run answers the question by itself.
+
+`WorkbookFormulas` reads a division whose divisor is ONE CELL and asks what that cell holds. A
+nought or a blank is #DIV/0!. A divisor that is an expression, a range or a function call is not
+judged, because working out what it computes to would be evaluating the formula, and **a cell
+holding a FORMULA is never judged either**: the patcher drops every cached value on the way out,
+so a formula cell in the output holds no number at all and reading that absence as a nought
+would call every computed divisor an error.
+
+**IT IS REPORTED AND NEVER REFUSED ON, DELIBERATELY.** A plot with no trees really has no
+average, so the divide by zero is the client's own arithmetic over a real number, and deleting a
+correct workbook over it is worse than printing a line. The reason says whether THIS RUN wrote
+the cell being divided by, which is the half that would make it the tool's doing, and turning
+that half into a refusal is a decision for Bader once a run has named them. **No client formula
+is changed either way.**
 
 **EXCEL SHOWED ZEROS WHERE THE NUMBERS WERE RIGHT.** The first real output read 0 for Total Green
 cover, Canopy Area, Total Trees, Total Trees Native, Total Trees Adaptive, Total Planting Area and

@@ -140,7 +140,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void ThePathIsTheRootTheFolderTheUidAndTheUidAgain()
         {
             PlotWorkbookPath path = PlotWorkbookPath.For(
-                Joined("C:", "RCRC", "MUGHARAZAT"), "FRIDAY MOSQUE", "ANH-008-MO-100006");
+                Joined("C:", "RCRC", "MUGHARAZAT"), KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006");
 
             Assert.True(path.Ok);
             Assert.Equal("FRIDAY MOSQUE", path.Folder);
@@ -163,9 +163,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void FourStreetValuesFileIntoOneFolderAndKeepTheirOwnPlotFolders()
         {
             PlotWorkbookPath wide = PlotWorkbookPath.For(
-                Joined("R"), "STREET 36m ROW", "ANH-007-ST-100210");
+                Joined("R"), KpiTemplates.Streets, "STREET 36m ROW", "ANH-007-ST-100210");
             PlotWorkbookPath narrow = PlotWorkbookPath.For(
-                Joined("R"), "NH STRT LESS 20m ROW", "ANH-007-ST-100050");
+                Joined("R"), KpiTemplates.Streets, "NH STRT LESS 20m ROW", "ANH-007-ST-100050");
 
             Assert.Equal(Joined("R", "STREETS", "ANH-007-ST-100210", "ANH-007-ST-100210.xlsx"),
                 wide.FilePath);
@@ -176,7 +176,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void NoRootIsARefusalThatSaysSo()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For("  ", "FRIDAY MOSQUE", "ANH-008-MO-100006");
+            PlotWorkbookPath path = PlotWorkbookPath.For("  ", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006");
 
             Assert.False(path.Ok);
             Assert.Equal(string.Empty, path.FilePath);
@@ -188,7 +188,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AComponentTheTableDoesNotHoldWritesNothingAndIsNamed()
         {
             PlotWorkbookPath path = PlotWorkbookPath.For(
-                Joined("R"), "GOVERMENT BUILDING", "ANH-007-GB-100001");
+                Joined("R"), null, "GOVERMENT BUILDING", "ANH-007-GB-100001");
 
             Assert.False(path.Ok);
             Assert.Equal(
@@ -200,7 +200,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void NoUidMeansNoFolderAndNoFileBecauseBothAreNamedAfterIt()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(Joined("R"), "SCHOOL", "   ");
+            PlotWorkbookPath path = PlotWorkbookPath.For(Joined("R"), KpiTemplates.Schools, "SCHOOL", "   ");
 
             Assert.False(path.Ok);
             Assert.Equal(
@@ -220,7 +220,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             foreach (string separator in new[] { "/", "\\" })
             {
                 PlotWorkbookPath slashed = PlotWorkbookPath.For(
-                    Joined("R"), "SCHOOL", "ANH" + separator + "007");
+                    Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH" + separator + "007");
 
                 Assert.False(slashed.Ok);
                 Assert.Equal(
@@ -243,14 +243,14 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' },
                 PlotWorkbookPath.RefusedInAName);
 
-            PlotWorkbookPath starred = PlotWorkbookPath.For(Joined("R"), "SCHOOL", "ANH*007?");
+            PlotWorkbookPath starred = PlotWorkbookPath.For(Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH*007?");
 
             Assert.False(starred.Ok);
             Assert.Equal(
                 "PRX_Plot_UID2 reads ANH*007?, which holds '*' '?', so it cannot name a folder",
                 starred.Why);
 
-            PlotWorkbookPath colon = PlotWorkbookPath.For(Joined("R"), "SCHOOL", "ANH:007");
+            PlotWorkbookPath colon = PlotWorkbookPath.For(Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH:007");
 
             Assert.False(colon.Ok);
             Assert.Equal(

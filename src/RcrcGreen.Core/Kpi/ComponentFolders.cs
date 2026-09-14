@@ -109,13 +109,90 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// Said beside a plot whose component this table does not hold, naming the value so the
-        /// next entry can be measured rather than guessed at.
+        /// next entry can be measured rather than guessed at. **An EMPTY component no longer
+        /// reaches this**, because an absence is a different thing from an answer nobody knows,
+        /// and it is answered by <see cref="OnlyFolderFor"/> below.
         /// </summary>
         public static string NoFolderFor(string component)
         {
             return "the component folder table does not hold "
                 + (string.IsNullOrWhiteSpace(component) ? "an empty component" : component.Trim())
                 + ", so nothing says which folder this plot is filed under";
+        }
+
+        /// <summary>
+        /// Every folder the components of one template file under, read off THIS table and
+        /// <see cref="ComponentTemplates"/> together rather than held as an eighth table.
+        ///
+        /// Both are keyed on the same eleven component values, so which folders a template
+        /// reaches is already written down twice over and there is nothing here to drift from.
+        /// Counted off the two: six templates reach exactly ONE folder each and MOSQUES reaches
+        /// TWO, because DAILY MOSQUE and FRIDAY MOSQUE fill one workbook and are filed apart.
+        /// </summary>
+        public static IReadOnlyList<string> FoldersOf(KpiTemplate template)
+        {
+            if (template == null) return new List<string>();
+
+            var seen = new List<string>();
+            foreach (ComponentFolder one in All)
+            {
+                if (!ReferenceEquals(ComponentTemplates.For(one.Component), template)) continue;
+                if (!seen.Contains(one.Folder, StringComparer.Ordinal)) seen.Add(one.Folder);
+            }
+
+            return seen;
+        }
+
+        /// <summary>
+        /// The folder a plot with NO COMPONENT AT ALL is filed under, or empty when the table
+        /// cannot say.
+        ///
+        /// **The 09:18 run read six plots and dropped them at the last step.** EP-05, EP-11,
+        /// EP-12, EP-13, EP-15 and FM-08 have no sheet, so no PRX_Component, so
+        /// <see cref="PlotsPerTemplate"/> placed them by their PLOT PREFIX, exactly as its own
+        /// rule says it should. Then this table, keyed on the component, had nothing for them.
+        /// Two routes to a template and one to a folder, which is the two records shape where
+        /// the two records are the two steps of one decision.
+        ///
+        /// **Nothing new is written down to fix it.** Where every component of a plot's template
+        /// files under ONE folder, that folder is where every plot of that template goes, so a
+        /// plot the prefix placed into EXISTING PARKS files where every other EXISTING PARKS
+        /// plot files. That is read off the table rather than chosen, and it places five of the
+        /// six.
+        ///
+        /// **Where a template reaches more than one folder, nothing is derived.** MOSQUES files
+        /// under DAILY MOSQUE and FRIDAY MOSQUE and a plot with no component cannot say which,
+        /// so FM-08 is still refused, with a reason that names both folders instead of naming an
+        /// empty component. It is refused BEFORE the press now rather than after its read.
+        ///
+        /// **This is for an ABSENT component only.** A component the table does not hold still
+        /// places nothing, because that is an answer nobody has measured rather than an absence,
+        /// and falling back to the template there would file a value the team has never seen
+        /// under a folder the team never chose.
+        /// </summary>
+        public static string OnlyFolderFor(KpiTemplate template)
+        {
+            IReadOnlyList<string> folders = FoldersOf(template);
+            return folders.Count == 1 ? folders[0] : string.Empty;
+        }
+
+        /// <summary>
+        /// Why a plot with no component of its own cannot be filed under its template's folder,
+        /// naming the folders so the answer is checkable against the table.
+        /// </summary>
+        public static string NoFolderForTemplate(KpiTemplate template)
+        {
+            if (template == null) return "no template placed this plot, so it has no folder either";
+
+            IReadOnlyList<string> folders = FoldersOf(template);
+            if (folders.Count == 0)
+            {
+                return "no component in the folder table fills " + template.Name
+                    + ", so nothing says which folder a plot with no component is filed under";
+            }
+
+            return template.Name + " files under " + string.Join(" and ", folders.ToArray())
+                + ", and this plot carries no component to say which";
         }
     }
 }

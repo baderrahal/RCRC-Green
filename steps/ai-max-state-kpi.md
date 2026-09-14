@@ -1,5 +1,60 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy second pass, two things off the 09:18 run, NG05, 156 plots over 7
+templates, 150 workbooks. **1729 tests, 909 of them KPI, 23 added, against the 1706 main
+carries** at the branch point `0b29cf7`, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none. Both items are
+faults off a run rather than audit entries, so they are in the log.
+
+**WHAT WORKED, recorded because a round of faults hides it.** The label lookup reached C5, E5,
+G5 and H5 on every template that ran, four of the seven asset types ran for the first time, and
+HEALTHCARE, MOSQUES, PARKING and one STREETS workbook recalculate with ZERO errors.
+
+**1. A PLOT COULD GET A TEMPLATE AND NO FOLDER, AND SIX DID.** EP-05, EP-11, EP-12, EP-13,
+EP-15 and FM-08 were ticked, READ, and dropped at the last step. No sheet means no component, so
+the prefix placed them, and the folder table keyed on the component had nothing for them. Two
+routes to a template and one to a folder.
+
+**The fix adds no eighth table, and that is the whole of why it was chosen.** Both tables are
+keyed on the same eleven components, so which folders a template reaches is already written down
+twice over and is read off the two together. **Six templates reach exactly one folder and
+MOSQUES reaches two**, so a plot with no component is filed where every other plot of its
+template is filed, which places the five park plots, and MOSQUES derives nothing, which still
+refuses FM-08 with both folders named. An absence and an answer nobody knows stay two different
+things: a component the table does not hold still places nothing.
+
+**And it is named BEFORE the press.** The count of ticked plots with no component is a note and
+the plot that can be filed nowhere is a refusal, both above Create. Reading five park plots and
+throwing them away is work nobody asked for.
+
+**2. THE TWO DIVIDE BY ZERO ERRORS. WHICH CELLS THEY ARE IS UNKNOWN FROM THIS REPOSITORY** and
+is not guessed at: no client workbook is here and none ever will be. What was established is why
+the report said nothing about them, which is that **the formula check could not see a division
+at all**. It can now: a divisor holding a nought or nothing is named with its cell, its formula
+and **whether THIS RUN wrote it**, so the next run answers the question by itself on the real
+templates. An expression, a range or a formula cell as the divisor is not judged, each for its
+own stated reason.
+
+**It is REPORTED and never refused on**, with a test that the output stays on disk either way,
+because a plot with no trees really has no average and deleting 150 correct workbooks over the
+client's arithmetic would be a far worse fault than the one it reports. Turning it into a
+refusal where the run wrote the divisor is Bader's decision once a run has named them. No client
+formula is changed.
+
+**NOT A FAULT, recorded so nobody chases it.** Both parks workbooks recalculate with 44 #N/A at
+F31 to F74 and an untouched template with 45. The one that goes away is a divide by zero on the
+empty area the run filled. The 44 are the PARK PROGRAMME section over an empty Criteria table in
+the client's own file.
+
+One break watch, 3 red, restored byte for byte. A template reaching two folders taking the first
+files a mosque plot by a guess, and the red is the case asserting that plot is refused. Fourteen
+call sites gained the template argument, each given the one its own component really means.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run is what shows the five park
+plots writing workbooks and what names the four #DIV/0! cells by sheet and by cell.
+
 Phase: 9, ship. Seventy first pass, Bader's answer to the open question and the live fault his
 answer turned up. **1706 tests, 886 of them KPI, 6 added, against the 1700 main carries** at the
 branch point `bfbab7f`, 28 hook cases unchanged, build zero warnings.
