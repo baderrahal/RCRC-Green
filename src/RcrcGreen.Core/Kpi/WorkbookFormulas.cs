@@ -155,7 +155,9 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class FormulaAtRisk
     {
-        public FormulaAtRisk(string sheetName, string cell, string text, string reason, int level, bool fromWrittenRow)
+        public FormulaAtRisk(
+            string sheetName, string cell, string text, string reason, int level, bool fromWrittenRow,
+            bool isDivideByZero = false, bool divisorThisRunWrote = false)
         {
             SheetName = sheetName ?? string.Empty;
             Cell = cell ?? string.Empty;
@@ -163,7 +165,28 @@ namespace RcrcGreen.Core.Kpi
             Reason = reason ?? string.Empty;
             Level = level;
             FromWrittenRow = fromWrittenRow;
+            IsDivideByZero = isDivideByZero;
+            DivisorThisRunWrote = divisorThisRunWrote;
         }
+
+        /// <summary>
+        /// **A division by a cell holding nought or nothing**, which is the one kind of risk the
+        /// run's own summary counts on its own.
+        ///
+        /// It is a property rather than a word to look for in <see cref="Reason"/>. **A signal
+        /// that travels in the data is not a signal**: this repo already shipped one reason
+        /// reported by printing a marker word into the message it described, and the commit
+        /// carrying that fix was refused by its own message. A counter that searched the
+        /// sentence would count a sentence that merely talks about a division.
+        /// </summary>
+        public bool IsDivideByZero { get; }
+
+        /// <summary>
+        /// True when THIS RUN wrote the cell being divided by, which is the half that makes the
+        /// error the tool's doing rather than the client's arithmetic over a real number. False
+        /// on every risk that is not a division.
+        /// </summary>
+        public bool DivisorThisRunWrote { get; }
 
         public string SheetName { get; }
 
@@ -684,7 +707,7 @@ namespace RcrcGreen.Core.Kpi
                         + (written
                             ? "THIS RUN WROTE THAT CELL."
                             : "This run wrote nothing into that cell."),
-                        2, false));
+                        2, false, true, written));
                     break;
                 }
             }

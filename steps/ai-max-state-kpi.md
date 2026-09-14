@@ -1,5 +1,57 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy fourth pass, three lines at the top of the report so a run can be checked
+at a glance. **1747 tests, 927 of them KPI, 15 added, against the 1732 main carries** at the
+branch point `16bed93`, measured by running the suite at that commit rather than quoted from the
+round before, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**WHAT THIS ROUND IS.** All three questions were answerable before it and all three were spread
+over hundreds of lines: the streets area over one block per plot, the region type over one row
+per plot, and the divisions over one formula section per template. **Nothing was moved and
+nothing new was measured.** `RunAtAGlance.Of` counts what the runs already carry, and
+`THIS RUN AT A GLANCE` is the FIRST section of the file, above the run's own accounting and above
+every per template block.
+
+**a. THE STREETS AREA, COUNTED OFF THE OUTCOME AND OFF THE MAP.** A street plot got a value when
+the template's own area cell landed in its output holding something, read back off the file, so
+**nothing here names H8** and nothing reads what the fill set out to write. A cell that landed
+holding nothing did not get a value. The plots without one are NAMED with the reason their own
+run recorded. **A press with no street plot says so rather than counting nought of nought**,
+because no street plot is not the same fact as every street plot failing.
+
+**b. THE REGION TYPE, COUNTED AS THE RUN FOUND THEM.** `RegionChoice.TheNoteNames` sorts to the
+top so the two counts the team asks for are the first two rows, and **RCRC_CADASTRAL LIMIT is
+deliberately not written in beside it**: a rule naming two types counts a model's third under
+nothing, and a test builds one and checks it is counted under its own name. A plot that chose no
+region is counted apart from every type, because two regions holding an area is a question
+waiting on a person and none holding one is a plot with nothing to read.
+
+**c. THE DIVISIONS, AND THE KIND TRAVELS ON THE FINDING.** `FormulaAtRisk.IsDivideByZero` and
+`DivisorThisRunWrote` are properties set where the risk is built. **A signal that travels in the
+data is not a signal**, and a counter searching `Reason` would count a reason that merely talks
+about a division. Break watch 2 proved why: stopping the two flags left **every one of
+`DivideByZeroTests` GREEN**, because those five cases assert the sentence, and reddened three of
+the new ones.
+
+**THE GLANCE HEADING CARRIES NO COUNT, and every other heading in this report does.** Three is
+how many questions there are rather than how many of anything this run found, and a constant
+sitting where a count goes reads as a measurement. Written with the count first, taken out after
+reading a sample report, pinned by a test that also checks the heading below it still counts.
+
+**Two stale docstrings corrected**, both descriptions of the tool that contradicted the tool.
+`KpiValue.StreetsRoadWidth` said the workbook computes H8 and nothing writes there.
+`Reconciliation.AreaWanted` said STREETS types the road width and the total length by hand.
+
+Three break watches, 1 red, 3 red and 1 red, each naming what it broke, all restored and proved
+byte for byte with `diff -q`.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next street run is what fills these
+three lines with real numbers, and the region count is what answers the client's note against
+NS-19 and NS-06.
+
 Phase: 9, ship. Seventy third pass, the client reissued the STREETS template and one cell in it
 changed. **1732 tests, 912 of them KPI, 3 added, against the 1729 main carries** at the branch
 point `151922b`, measured by running the suite at that commit rather than quoted from the round

@@ -4,6 +4,105 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy fourth pass. Three lines at the top, so a run can be checked at a glance
+
+**1747 tests, 927 of them KPI, 15 added, against the 1732 main carries** at the branch point
+`16bed93`, 28 hook cases unchanged, build zero warnings. **No audit finding is closed, renumbered
+or reordered: read off the three files, 63 numbered findings, 19 carrying a FIXED mark, 44 open.**
+
+### What this round is, and what it is not
+
+**All three questions were answerable before this and all three were spread over hundreds of
+lines.** The streets area sat in one block per plot, the region type in one row per plot, and the
+divisions in one formula section per template. On the 156 plot run that is a person reading a
+2,000 line file to count three things. **Nothing was moved and nothing new was measured.**
+`RunAtAGlance.Of` counts what the runs already carry and `THIS RUN AT A GLANCE` prints it as the
+FIRST section, above the run's accounting and above every per template block.
+
+### a. The streets area, counted off the outcome and off the map
+
+A street plot got a value when the template's OWN area cell landed in its output holding
+something. **The cell comes off the map, so nothing here names H8**, and the count is read back
+off the file rather than taken from what the fill set out to write, which is the rule every other
+count in this report already follows. A cell that landed holding nothing did not get a value, and
+a test says so.
+
+**The plots that did not get one are NAMED with the reason their own run recorded**, so the line
+under the count says the same thing as the plot's block further down. A count with nobody named
+sends a person back through 78 blocks, which is what this section exists to save.
+
+**A press with no street plot says so rather than counting nought of nought.** No street plot in
+the press is not the same fact as every street plot failing, and the two read identically as a
+bare 0 of 0.
+
+### b. The region type, counted as the run found them
+
+Two counts and a list. **No second type name is written into the code.**
+`RegionChoice.TheNoteNames` is held because it is the note being checked and it sorts to the top,
+so the two counts the team asks for are the first two rows whatever a model holds.
+**RCRC_CADASTRAL LIMIT is deliberately not named beside it**: a rule naming two types counts a
+model's third type under nothing, and a test builds a plot on a type neither name covers and
+checks it is counted under its own name.
+
+A plot that chose no region is counted apart from every type. Two regions holding an area is a
+question waiting on a person and none holding one is a plot with nothing to read, and neither is
+a disagreement with the client's note.
+
+### c. The divisions, and the second number is the one that matters
+
+`FormulaAtRisk` gained two properties, `IsDivideByZero` and `DivisorThisRunWrote`, set where the
+risk is built. **A signal that travels in the data is not a signal**, which this repo has paid
+for once already: a reason reported by printing a marker word into the message it described, and
+the commit carrying that fix refused by its own message. A counter searching `Reason` for
+`#DIV/0!` would count a reason that merely talks about a division.
+
+**Measured, and it is the reason the properties exist.** Break watch 2 stopped the two flags
+travelling and **every one of `DivideByZeroTests` stayed GREEN**, because those five cases assert
+the reason SENTENCE. Three of the new cases went red. A test file about a finding cannot catch
+the finding losing its kind while it only reads the words the finding prints.
+
+### The glance heading is the one heading carrying no count
+
+Every other heading in this report prints how many rows sit under it, so a section that found
+nothing reads differently from one nobody filled in. **Three is how many questions there are
+rather than how many of anything this run found**, and a constant sitting where a count goes is a
+number that reads as a measurement. It was written with the count first and taken out after
+reading the sample report, and a test now pins it and checks the heading below it still counts.
+
+### Two stale docstrings corrected on the way past
+
+Both were descriptions of the tool that contradicted the tool, which is a shape this repo already
+carries three entries about.
+
+- `KpiValue.StreetsRoadWidth` read `H8 is this times the length and the workbook computes it, so
+  nothing writes there`. The client emptied H8 in the seventy third pass and the tool writes it
+- `Reconciliation.AreaWanted` read `STREETS types the road width and the total length by hand and
+  the sheet works the area out`. The reference file fills both and the area is read off the link
+
+### The three break watches, and what each reddened
+
+**Break 1, a landed cell holding nothing counts as a value.** **1 red**,
+`AnAreaCellThatLandedEmptyIsCountedAsNotWritten`, `Expected: 0 / Actual: 1`.
+
+**Break 2, the kind and the divisor stop travelling on the finding.** **3 red**,
+`TheKindAndTheDivisorAreProperties` first at `Assert.True(ours.IsDivideByZero)`, with the count
+and the report cases behind it. `DivideByZeroTests` stayed green, which is section c above.
+
+**Break 3, the note's type is no longer forced to the top of the list.** **1 red**,
+`TheTypeTheNoteNamesIsTheFirstRowEvenWhenItIsTheSmallerCount`, printing both orders.
+
+All three files were copied out first and `diff -q` against the copy after restoring, so the
+suite that produced 1747 is over the real code.
+
+### Still open, unchanged by this round
+
+The 44 audit findings. The client's note against NS-19 and NS-06, which is what the region count
+above now answers on a real street run. A row written into an empty one carrying no family, no
+genus and no native flag. A matched species whose height or diameter in Revit differs from the
+client's row. The GOVERMENT BUILDING folder. Whether rows edited in the pane should outlive it.
+
+---
+
 ## 2026-09-14, seventy third pass. STREETS takes an area again, because the client reissued it
 
 **1732 tests, 912 of them KPI, 28 hook cases**, against the 1729 main carries at the branch

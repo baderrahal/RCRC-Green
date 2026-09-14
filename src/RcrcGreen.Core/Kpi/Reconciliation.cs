@@ -184,9 +184,13 @@ namespace RcrcGreen.Core.Kpi
         public IReadOnlyList<string> WithoutArea { get; }
 
         /// <summary>
-        /// False when the template's map holds no area cell. STREETS types the road width and
-        /// the total length by hand and the sheet works the area out, so no filled region was
-        /// read for any plot and nothing about the area is refused on.
+        /// False when the template's map holds no area cell, and then no filled region is read
+        /// for any plot and nothing about the area is refused on.
+        ///
+        /// **NO TEMPLATE NAMES NO AREA CELL TODAY.** STREETS was the one that did, because its
+        /// sheet worked the area out from the road width and the total length, and the client
+        /// emptied that cell. The path is kept because the map can still express such a template
+        /// and this is what every one of those paths asks.
         /// </summary>
         public bool AreaWanted { get; }
 
