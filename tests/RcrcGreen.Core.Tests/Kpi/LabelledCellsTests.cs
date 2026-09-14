@@ -48,11 +48,14 @@ namespace RcrcGreen.Core.Tests.Kpi
                 foreach (KeyValuePair<string, string> cell in row
                     .OrderBy(one => CellRef.Parse(one.Key).ColumnNumber))
                 {
+                    // **The value is escaped as well as the sheet name.** A cell holding the
+                    // R1 set's own <Date> wrote a start tag into the part and produced a file
+                    // no XML reader opens, which the fixture reported as a workbook fault.
                     sheet.Append(cell.Value.StartsWith("=", StringComparison.Ordinal)
                         ? "<c r=\"" + cell.Key + "\"><f>"
-                            + cell.Value.Substring(1) + "</f><v>0</v></c>"
+                            + Escaped(cell.Value.Substring(1)) + "</f><v>0</v></c>"
                         : "<c r=\"" + cell.Key + "\" t=\"inlineStr\"><is><t>"
-                            + cell.Value + "</t></is></c>");
+                            + Escaped(cell.Value) + "</t></is></c>");
                 }
 
                 sheet.Append("</row>");
@@ -100,7 +103,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// Every real main sheet name is wrapped in angle brackets, and Excel stores them escaped
-        /// in the attribute. A fixture that wrote them raw produced a file no XML reader opens.
+        /// in the attribute. A fixture that wrote them raw produced a file no XML reader opens,
+        /// and so did a cell holding the R1 set's own bracketed placeholders, so both go through
+        /// this.
         /// </summary>
         private static string Escaped(string name)
         {
@@ -151,7 +156,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     { "E7", "Context" }, { "F7", "Urban" }
                 });
 
-            LabelledCells found = FixedCells.In(path, KpiTemplates.Mosques);
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Mosques);
 
             Assert.True(found.Read);
             Assert.Equal("<Mosques>", found.SheetName);
@@ -188,7 +193,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 "streets.xlsx");
 
-            LabelledCells found = FixedCells.In(path, KpiTemplates.Streets);
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Streets);
 
             Assert.Equal("F7", found.For("Character").ValueCell);
             Assert.Equal("H7", found.For("Context").ValueCell);
@@ -221,7 +226,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 KpiTemplates.Streets, null, null, string.Empty, null, null, null, null,
                 null, null, null, StreetReferenceAnswer.Nothing("not looked up"),
-                FixedCells.In(path, KpiTemplates.Streets));
+                LabelledPlaces.In(path, KpiTemplates.Streets));
 
             Assert.Equal("Urban Area Zone",
                 plan.Writes.Single(one => one.Cell.ToString() == "F7").Stored);
@@ -242,7 +247,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new Dictionary<string, string> { { "C7", "Something else" } },
                 "bare.xlsx");
 
-            LabelledCells found = FixedCells.In(path, KpiTemplates.Healthcare);
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Healthcare);
 
             Assert.True(found.Read);
             Assert.False(found.For("Character").Found);
@@ -256,7 +261,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null, null, null, StreetReferenceAnswer.Nothing("not a street run"), found);
 
             Assert.Equal(
-                new[] { "Character", "Context" },
+                new[] { "Date", "Prepared by", "Position", "Reference", "Character", "Context" },
                 plan.Skipped
                     .Where(one => one.Why.StartsWith("no cell on", StringComparison.Ordinal))
                     .Select(one => one.What).ToArray());
@@ -277,7 +282,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 "twice.xlsx");
 
-            LabelledCells found = FixedCells.In(path, KpiTemplates.Schools);
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Schools);
 
             Assert.False(found.For("Character").Found);
             Assert.Equal(
@@ -303,7 +308,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 },
                 "case.xlsx");
 
-            LabelledCells found = FixedCells.In(path, KpiTemplates.Schools);
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Schools);
 
             Assert.Equal("D7", found.For("Character").ValueCell);
             Assert.Equal("F7", found.For("Context").ValueCell);
@@ -322,7 +327,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("AZ12", "BA12")]
         public void TheValueCellIsTheOneToTheRight(string label, string value)
         {
-            Assert.Equal(value, FixedCells.RightOf(CellRef.Parse(label)));
+            Assert.Equal(value, LabelledPlaces.RightOf(CellRef.Parse(label), 1));
         }
 
         /// <summary>
@@ -334,9 +339,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.False(LabelledCells.NotRead.Read);
             Assert.Equal("the template was not opened", LabelledCells.NotRead.For("Character").Why);
-            Assert.False(FixedCells.In(null, KpiTemplates.Mosques).Read);
+            Assert.False(LabelledPlaces.In(null, KpiTemplates.Mosques).Read);
 
-            LabelledCells missing = FixedCells.In(
+            LabelledCells missing = LabelledPlaces.In(
                 Path.Combine(_folder, "not-here.xlsx"), KpiTemplates.Mosques);
 
             Assert.False(missing.Read);
@@ -355,7 +360,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new Dictionary<string, string> { { "C7", "Character" } },
                 "wrong-sheet.xlsx");
 
-            LabelledCells found = FixedCells.In(path, KpiTemplates.Mosques);
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Mosques);
 
             Assert.False(found.Read);
             Assert.Equal("the template holds no sheet named <Mosques>", found.Why);

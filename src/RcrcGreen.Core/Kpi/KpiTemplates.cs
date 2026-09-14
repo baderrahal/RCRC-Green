@@ -44,13 +44,10 @@ namespace RcrcGreen.Core.Kpi
 
         public const int TreeHeaderRow = 3;
 
-        /// <summary>
-        /// The same in every template and not from Revit: E5 the date, G5 the person, H5
-        /// their position. The team types them on the pane and the tool copies them through,
-        /// so a filled checklist carries who filled it and when. Nothing reads them from a
-        /// model, which is why they are here rather than in a template's mapped cells.
-        /// </summary>
-        public static readonly string[] TypedByTheTeam = { "E5", "G5", "H5" };
+        // The date, the person and their position used to sit here as the letters E5, G5 and
+        // H5, one array for all seven templates measured on one of them. They are found by
+        // their labels on the template's own sheet now, in LabelledPlaces, next to the row 5
+        // measurement and next to the row 7 divergence that is the reason.
 
         // What a template holds in the cells the team fills is not one thing, measured on two
         // sets, so no placeholder is recorded here and none decides anything. The rule that
@@ -82,7 +79,6 @@ namespace RcrcGreen.Core.Kpi
             new[]
             {
                 new MappedCell(KpiValue.Component, "D3"),
-                new MappedCell(KpiValue.Reference, "C5"),
                 new MappedCell(KpiValue.Location, "E4"),
                 new MappedCell(KpiValue.Shrubs, "F11"),
                 new MappedCell(KpiValue.Lawn, "H11"),
@@ -114,7 +110,6 @@ namespace RcrcGreen.Core.Kpi
                 new[]
                 {
                     new MappedCell(KpiValue.Component, "D3"),
-                    new MappedCell(KpiValue.Reference, "C5"),
                     new MappedCell(KpiValue.Location, "E4"),
                     new MappedCell(KpiValue.Area, "D8"),
                     new MappedCell(KpiValue.Shrubs, "F11"),
@@ -132,7 +127,6 @@ namespace RcrcGreen.Core.Kpi
                 new[]
                 {
                     new MappedCell(KpiValue.Component, "D3"),
-                    new MappedCell(KpiValue.Reference, "C5"),
                     new MappedCell(KpiValue.Location, "E4"),
                     new MappedCell(KpiValue.Area, "H7"),
                     new MappedCell(KpiValue.Shrubs, "F10"),

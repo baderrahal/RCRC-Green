@@ -83,10 +83,11 @@ namespace RcrcGreen.Core.Kpi
             "only the STREETS template has this cell";
 
         /// <summary>
-        /// The two labelled cells, as the plan found them, so the report can say which cell each
-        /// value went into and what it already held. **A template that came filled already holds
-        /// the value**, measured on the mosque file, and the line must not read as though this
-        /// run put it there.
+        /// Every cell found by a label, as the plan found it, so the report can say which cell
+        /// each value went into and WHAT IT ALREADY HELD. **A template that came filled already
+        /// holds the value**, measured on the mosque file at D7 and on both park files at H5,
+        /// and a run that writes over somebody's text has to say so rather than reading as
+        /// though the cell had been empty.
         /// </summary>
         public IReadOnlyList<LabelledCell> Labelled { get; private set; }
 
@@ -120,12 +121,21 @@ namespace RcrcGreen.Core.Kpi
         public IReadOnlyList<MeasureDifference> Differences { get; }
 
         /// <summary>
-        /// Every cell the map names on the main sheet, written or not, for the formula check
-        /// to say whether the workbook's own arithmetic has its inputs.
+        /// Every cell on the main sheet this fill names, written or not, for the formula check
+        /// to say whether the workbook's own arithmetic has its inputs. That is the map's own
+        /// cells AND the cells the labels chose, because the reference left the map for a label
+        /// and dropping it here would quietly shorten the check.
         /// </summary>
         public IReadOnlyList<WorkbookCell> ComputesFrom
         {
-            get { return Template.Cells.Select(cell => new WorkbookCell(Template.MainSheetName, cell.Cell)).ToList(); }
+            get
+            {
+                return Template.Cells.Select(cell => cell.Cell)
+                    .Concat(Labelled.Where(one => one.Found).Select(one => one.ValueCell))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Select(cell => new WorkbookCell(Template.MainSheetName, cell))
+                    .ToList();
+            }
         }
 
         public IReadOnlyList<CellWrite> Writes { get; }
@@ -167,21 +177,26 @@ namespace RcrcGreen.Core.Kpi
             var writes = new List<CellWrite>();
             var skipped = new List<NotWritten>();
 
-            // E5, G5 and H5 sit in the same place in every template and none of them comes
-            // from Revit. The team types them on the pane and the tool copies them through,
-            // so a filled checklist carries who filled it and when.
+            // None of the three comes from Revit. The team types them on the pane and the tool
+            // copies them through, so a filled checklist carries who filled it and when.
             //
             // **These three are required arguments and used to default to null.** The handler
             // called this without them, so the first real workbook came out holding the
-            // template's own <Date>, <Name> and <Position> while the report said nobody had
-            // typed them, on a run where all three boxes were filled in. A default that reads
-            // as a deliberate empty is how a whole link in a chain goes missing in silence.
-            Typed(template, KpiTemplates.TypedByTheTeam[0], "Date", date, writes, skipped);
-            Typed(template, KpiTemplates.TypedByTheTeam[1], "Prepared by", preparedBy, writes, skipped);
-            Typed(template, KpiTemplates.TypedByTheTeam[2], "Position", position, writes, skipped);
+            // template's own placeholders while the report said nobody had typed them, on a run
+            // where all three boxes were filled in. A default that reads as a deliberate empty
+            // is how a whole link in a chain goes missing in silence.
+            //
+            // **They used to go in by letter, E5, G5 and H5 on all seven.** They go into the
+            // cells their labels choose now, for the reason row 7 already proved.
+            Typed(template, LabelledPlaces.DateName, "Date", date, labels, writes, skipped);
+            Typed(template, LabelledPlaces.PreparedByName, "Prepared by", preparedBy, labels, writes, skipped);
+            Typed(template, LabelledPlaces.PositionName, "Position", position, labels, writes, skipped);
 
             Agreed(template, KpiValue.Component, component, writes, skipped);
-            Agreed(template, KpiValue.Reference, reference, writes, skipped);
+
+            // The plot reference went in by letter too, C5 on all seven, and REF : at B5 names
+            // it on all seven, so it is found the same way as the three above.
+            AgreedAtTheLabel(template, LabelledPlaces.ReferenceName, KpiValue.Reference, reference, labels, writes, skipped);
             Text(template, KpiValue.Location, location, writes, skipped);
             Number(template, KpiValue.Area, area, writes, skipped);
             Number(template, KpiValue.Shrubs, shrubs, writes, skipped);
@@ -251,16 +266,14 @@ namespace RcrcGreen.Core.Kpi
 
             return new KpiCreatePlan(template, writes, skipped, held, differences)
             {
-                Labelled = FixedCells.Labels.Select(labels.For).ToList()
+                Labelled = LabelledPlaces.All.Select(one => labels.For(one.Name)).ToList()
             };
         }
 
         /// <summary>
-        /// A value the same on every plot into the cell the map names for it, or not written
-        /// with the reason. **Today it is never written**, because no template's map names a
-        /// cell for either and the measurement does not exist. That is one line per template in
-        /// the report rather than a silence, so the gap is visible in every run until it is
-        /// filled in.
+        /// One of the two values that are the same on every plot, into the cell its label chose,
+        /// or not written with the reason. Nothing looks for the word Category, so the street
+        /// sheet's own formula at D7 is never reached.
         /// </summary>
         private static void Fixed(
             KpiTemplate template,
@@ -359,21 +372,72 @@ namespace RcrcGreen.Core.Kpi
                 string.IsNullOrWhiteSpace(workbookHolds) ? "(blank)" : workbookHolds.Trim()));
         }
 
+        /// <summary>
+        /// One of the three the team types, into the cell its label chose. A template whose
+        /// sheet does not name the label writes nothing and carries the read's own reason, and
+        /// a box nobody typed into carries its own, so the two cases never read alike.
+        /// </summary>
         private static void Typed(
             KpiTemplate template,
-            string cell,
+            string name,
             string what,
             string held,
+            LabelledCells labels,
             List<CellWrite> writes,
             List<NotWritten> skipped)
         {
-            if (string.IsNullOrWhiteSpace(held))
+            LabelledCell found = labels.For(name);
+            if (!found.Found)
             {
-                skipped.Add(new NotWritten(template.MainSheetName, cell, what, TypedByTheTeam));
+                skipped.Add(new NotWritten(template.MainSheetName, string.Empty, what, found.Why));
                 return;
             }
 
-            writes.Add(CellWrite.Text(template.MainSheetName, cell, held.Trim()));
+            if (string.IsNullOrWhiteSpace(held))
+            {
+                skipped.Add(new NotWritten(template.MainSheetName, found.ValueCell, what, TypedByTheTeam));
+                return;
+            }
+
+            writes.Add(CellWrite.Text(template.MainSheetName, found.ValueCell, held.Trim()));
+        }
+
+        /// <summary>
+        /// A value every chosen plot has to agree on, into the cell its label chose rather than
+        /// the cell a map names. The refusals are the mapped <see cref="Agreed"/>'s own, so the
+        /// two cannot say different things about one disagreement.
+        /// </summary>
+        private static void AgreedAtTheLabel(
+            KpiTemplate template,
+            string name,
+            KpiValue value,
+            AgreedValue agreed,
+            LabelledCells labels,
+            List<CellWrite> writes,
+            List<NotWritten> skipped)
+        {
+            LabelledCell found = labels.For(name);
+            if (!found.Found)
+            {
+                skipped.Add(new NotWritten(
+                    template.MainSheetName, string.Empty, value.ToString(), found.Why));
+                return;
+            }
+
+            if (agreed == null || agreed.Distinct.Count == 0)
+            {
+                skipped.Add(new NotWritten(template.MainSheetName, found.ValueCell, value.ToString(), NotFound));
+                return;
+            }
+
+            if (!agreed.Agrees)
+            {
+                skipped.Add(new NotWritten(template.MainSheetName, found.ValueCell, value.ToString(),
+                    Disagreed + ": " + string.Join(", ", agreed.Distinct.ToArray())));
+                return;
+            }
+
+            writes.Add(CellWrite.Text(template.MainSheetName, found.ValueCell, agreed.Value));
         }
 
         private static void Agreed(

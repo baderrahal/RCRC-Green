@@ -145,7 +145,7 @@ the run goes through, and the report says so once at the top rather than 78 time
 **Only STREETS asks it this round.** The file also holds parking, mosque, park, school, health
 and government rows and nothing reads them.
 
-## Two cells that are always the same, found by their LABELS and never by a letter
+## SIX CELLS ON THE MAIN SHEET, EVERY ONE FOUND BY A LABEL AND NEVER BY A LETTER
 
 **Bader's answer: Character is always Urban Area Zone and Context is always Urban.** They come
 from no model, no schedule and no file, so `FixedCells` holds them as data.
@@ -176,6 +176,73 @@ nothing opened says the read did not happen rather than reading as a sheet with 
 **The mosque file came filled**, holding Urban Area Zone at D7 and Urban at F7 already, and the
 read carries what the cell already held so a line can say so rather than reading as though this
 run put it there. The street file has both blank.
+
+### Row 5 came here too, and the letters were right on all seven by luck
+
+**The date, the person, their position and the plot reference went in by letter**, E5, G5, H5
+and C5, one array for all seven templates measured on ONE of them. Finding 50 named it as the
+row 7 fault three cells up. Bader then measured row 5 on all seven, on 14 September:
+
+```
+HEALTHCARE, MOSQUES, PARKING, SCHOOLS, STREETS
+  B5 REF :   C5 the UID   D5 Date:   E5 the date
+  F5 Prepared By:         G5 a name  H5 a position
+
+EXISTING PARKS and FUTURE PARKS
+  B5 REF :   C5 EMPTY     D5 Date:   E5 EMPTY
+  F5 Prepared By:         G5 EMPTY   H5 holds the text " Architect Engineer"
+```
+
+**NO FORMULA SITS AT C5, E5, G5 OR H5 ON ANY OF THE SEVEN**, so the letter map never overwrote
+anything and no workbook is damaged. The letters were right on all seven BY LUCK, the way D7
+would have been right on two templates out of three, and the next template set is what a letter
+cannot survive. What really differs between the two sets is what those cells HOLD.
+
+`LabelledPlaces` is the one table now, six entries, each a name, a label and how many columns
+right of the label its cell sits. `LabelledPlaces.In` opens the template's own main sheet once
+when Create is pressed and finds all six in one pass. A test rebuilds each template's own row 5
+and checks the lookup lands on C5, E5, G5 and H5 on all seven, and a second one checks the four
+values really reach those cells through the plan.
+
+**NO LABEL NAMES THE POSITION CELL, AND THAT IS THIS ROUND'S OWN FINDING.** Three labels sit on
+row 5 and they reach three of the four cells. H5 is one further along than the person's name,
+under the same Prepared By, which both park templates confirm by already holding a position
+there. It is written as a DISTANCE of two from that label, said out loud in the code, in the
+report and here, because a distance dressed up as a label would be the one thing in this lookup
+nobody could see. Whether the real sheets name it somewhere else is UNKNOWN and is for the team.
+Two places under one label also refuse together when the sheet carries that label twice, because
+the thing that cannot be resolved is the label they share.
+
+**THE LABELS ARE SPELT EXACTLY AS THE CELLS READ**, the space before the colon in `REF :`
+included, and the match is whole, without case and with edge whitespace off. A template whose
+label reads anything else writes nothing for it and says so. Nothing reaches for a near miss,
+because a near miss is how a value lands in a cell nobody measured.
+
+**A CELL THIS RUN WRITES THAT WAS NOT EMPTY IS NAMED IN THE REPORT WITH WHAT IT HELD.** Both
+park templates hold a position at H5 already and the mosque template came holding Urban Area
+Zone at D7 and Urban at F7. The run writes over all of them, which is right, and **overwriting
+somebody's text has to be visible rather than silent.** `LabelledCell.Holds` carries what was
+there, `KpiCreatePlan.Labelled` carries all six, and CELLS WRITTEN OVER SOMETHING THE TEMPLATE
+ALREADY HELD prints the value, the label, the label cell, the cell written and what it held.
+Only cells this run really wrote are in it, so a template naming no label is under CELLS NOT
+WRITTEN with its own reason instead, and the column header is printed only when there is a row
+under it. **That property was set and read nowhere for a round**, which is why the line did not
+exist until somebody measured a template that came filled.
+
+**ONE PLACE STILL READS ROW 5 BY LETTER AND IT IS ON PURPOSE.** `FilledMarks` decides whether a
+workbook in the templates folder is a filled checklist rather than a template, and it runs over
+a file whose template is not known yet, so it reads `E5` and `C5` as row 5 was measured to hold
+them on all seven. That is two records of one fact, which is the shape this repo keeps paying
+for, so a test holds them against each other over the measured row 5: the cells the labels
+choose must be the cells those marks read. Moving the peek onto the labels is a round of its
+own, named in the log.
+
+**THE PANE NAMES NO CELL FOR ANY OF THE FOUR ANY MORE.** It cannot: which cell each lands in is
+not known until the template is opened at the press. The line under the map says the reference
+comes from the chosen parameter and goes where the `REF :` label sends it, and the line under
+that says the same of the three the team types. A line about what the tool does is checked
+against what it does, which is a rule this file already carries and this is the third time it
+has bitten.
 
 **Which plots belong to one checklist is not written down anywhere.** Nothing groups by the
 plot prefix, by the component, or by anything else. The user ticks them and the tool writes one
@@ -1398,16 +1465,31 @@ with a shared string resolved to its text because an Excel re-save stores it tha
 pane lists a filled file greyed in the same list. Nothing is deleted or moved, and browsing to
 a folder that holds one is untouched.
 
-**Two limits, both stated rather than guarded against.** A filled workbook the tool wrote
-neither cell into reads as a template. `KpiCreatePlan` skips the reference cell when the ticked
-plots disagree on it or none of them holds it, which a checklist covering several plots usually
-does, so on such a run the typed date is the only mark left, and the date box is prefilled with
-today but can be cleared. And a client set that hinted the shape of a reference rather than
-bracketing it, DM-00 at C5, would be withheld, because nothing separates a hint from the thing
-it stands for, and neither measured set does that. The first is the safe way round: offering a
-filled file costs a rerun, and withholding a real template leaves the team unable to fill
-anything. The second is visible in one line, because the report prints what the cell held. Both
-are for Bader.
+**BOTH MARKS ARE LIVE ON EVERY RUN, AND THE LIMIT THAT SAID OTHERWISE HAS GONE.** This file
+used to say the reference cell is skipped when the ticked plots disagree on it, which a
+checklist covering several plots usually does, so the typed date was often the only mark left.
+**A checklist is one plot now**, since the round that made one workbook per plot, so the plots
+cannot disagree, the reference cell always carries that plot's own reference, and both marks
+decide on every run. Nobody recorded the improvement when it happened and the limit sat here
+reading as current for six rounds. **A limit that has gone away is as misleading as one that
+has not.**
+
+**Two limits stand, both stated rather than guarded against.** A filled workbook the tool wrote
+neither cell into reads as a template. And a client set that hinted the shape of a reference
+rather than bracketing it, DM-00 at C5, would be withheld, because nothing separates a hint
+from the thing it stands for, and neither measured set does that. The first is the safe way
+round: offering a filled file costs a rerun, and withholding a real template leaves the team
+unable to fill anything. The second is visible in one line, because the report prints what the
+cell held. Both are for Bader.
+
+**A CLEAN TEMPLATE WHOSE E5 IS EMPTY IS OFFERED, MEASURED RATHER THAN REASONED.** Row 5 on
+both park templates holds nothing at C5, E5 or G5, so the question was whether the filled check
+withholds every clean park template. It does not: `FilledMark.Reads` answers false for an empty
+cell and for a cell that is not in the file at all, and `Decide` then hands back nothing. Tested
+over both park templates and over MOSQUES, on real .xlsx files the tests build, through the
+peek and the recognition the pane really calls. **There was no live fault on the two park
+templates**, and the rule that nothing is ever withheld on a cell the tool has never written is
+what made it so.
 
 ## Every run that ends with no file says why
 
@@ -1678,8 +1760,10 @@ files are not in this repository and never will be. What is committed is what it
 Every mapped cell agreed with the annotation, D3, C5, E4, D8, F11 and H11, and E5, G5 and H5
 read DATE OF THE DAY, EMPLOYEE NAME and EMPLOYEE POSITION. Those three come from nowhere in
 Revit. The team types them into the pane and the tool copies them through, so a filled
-checklist carries who filled it and when. They sit in the same three cells in every template,
-which is why `KpiTemplates.TypedByTheTeam` holds them rather than a template's mapped cells.
+checklist carries who filled it and when. **That those three sit in the same cells in every
+template was read off this one file and held for six rounds**, which is what finding 50 named
+and what the 14 September measurement of all seven settled. Nothing holds their letters now:
+they and the reference are found by their labels, under the section above.
 
 Two things the check found that reading the map could not:
 
@@ -1804,10 +1888,11 @@ the schedule claim for the numbers it is true of and names the area separately.
 
 ## What the team types reaches the cells
 
-E5, G5 and H5 come from no model. The pane collects them, and **it used to collect them and hand
-none of the three on**: `KpiCreateAsk` did not carry them and `KpiCreatePlan.Of` defaulted all
-three to null, so the first real workbook came out holding the template's own placeholders while
-the report said nobody had typed them, on a run where all three boxes were filled in.
+The date, the person and their position come from no model. The pane collects them, and **it
+used to collect them and hand none of the three on**: `KpiCreateAsk` did not carry them and
+`KpiCreatePlan.Of` defaulted all three to null, so the first real workbook came out holding the
+template's own placeholders while the report said nobody had typed them, on a run where all
+three boxes were filled in.
 
 The three are REQUIRED arguments of `KpiCreatePlan.Of` now, so a caller that forgets them does
 not compile. A default that reads as a deliberate empty is how a whole link in a chain goes

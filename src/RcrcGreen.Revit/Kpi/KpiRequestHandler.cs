@@ -495,7 +495,7 @@ namespace RcrcGreen.Revit.Kpi
             // Character and Context go into the cell right of their label on this template's own
             // sheet, so the labels are found ONCE per template off the template file, beside the
             // two tree lists, rather than once per plot off files that are all copies of it.
-            LabelledCells labels = FixedCells.In(pick.TemplatePath, pick.Template);
+            LabelledCells labels = LabelledPlaces.In(pick.TemplatePath, pick.Template);
 
             var wrote = new List<string>();
             var why = new List<string>();

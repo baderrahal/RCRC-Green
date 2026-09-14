@@ -1,5 +1,59 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventieth pass, findings 50 and 53 off the third audit plus two things Bader's
+own measurement turned up. **1700 tests, 880 of them KPI, 27 added, against the 1673 main
+carries** at the branch point `86b322f`, 28 hook cases unchanged, build zero warnings.
+
+**THE MEASUREMENT IS THE ROUND.** Row 5 read on all seven templates on 14 September: `B5 REF :`,
+`D5 Date:` and `F5 Prepared By:` on every one, the four value cells at C5, E5, G5 and H5, and
+**NO FORMULA at any of the four on any of the seven.** The letter map never overwrote anything
+and no workbook is damaged, so finding 50 did not become a BLOCKS. The letters were right on all
+seven BY LUCK, and FUTURE PARKS, one of the three never looked at, is the one that differs: not
+in where the cells are but in what they HOLD.
+
+**THE FOUR CELLS ARE FOUND BY THEIR LABELS NOW.** `LabelledPlaces` is one table of six places,
+each a name, a label and how many columns right its cell sits. `KpiTemplates.TypedByTheTeam` is
+deleted and `KpiValue.Reference` is out of every map, with a test refusing any map that names
+E5, G5 or H5 again. **CHECK YOUR WORK: the lookup lands on C5, E5, G5 and H5 on all seven**,
+asserted against each template's own rebuilt row 5, and a second theory says the four values get
+there through the plan.
+
+**NO LABEL NAMES THE POSITION CELL, AND THAT IS THIS ROUND'S OWN FINDING.** Three labels reach
+three cells. H5 is one further along than the person's name under the same Prepared By, which
+both park templates confirm by holding a position there already. It is written as a DISTANCE of
+two and said out loud in the code, the rules and the log, rather than dressed up as a label.
+**Whether the sheets name it somewhere off row 5 is UNKNOWN** and is for Bader.
+
+**A CELL IT WRITES THAT WAS NOT EMPTY IS NAMED WITH WHAT IT HELD.** `KpiCreatePlan.Labelled` was
+set and read nowhere, so the mosque template's D7 and both park templates' H5 were written over
+in silence. CELLS WRITTEN OVER SOMETHING THE TEMPLATE ALREADY HELD is that line. Nothing stopped
+writing.
+
+**THE FILLED CHECK WAS MEASURED RATHER THAN REASONED ABOUT: A CLEAN PARKS TEMPLATE IS OFFERED.**
+An empty E5 reads as not filled, so both park templates and MOSQUES come back offered through
+the real peek and recognition path, and a filled park workbook beside them is still withheld.
+**There was no live fault on the two park templates.** `FilledMarks` still reads E5 and C5 by
+letter on purpose, because it runs before any template is recognised, and a test holds those two
+records against the labels' own answer. Moving the peek onto the labels is a round of its own
+and is in the log as a question.
+
+**Finding 53: the multi plot limit went away at round 113 and nobody recorded it.** Both marks
+have been live for six rounds. The rules file and the `FilledMarks` docstring say so now.
+
+Three break watches, 16, 14 and 2 red, all restored byte for byte and each checked for whether
+the red names what was broken. Eight existing tests changed by hand, each because the truth
+under it moved, and `LabelFixture` now escapes cell values because a cell holding `<Date>` wrote
+a start tag into the sheet part.
+
+**The audit files.** 50 and 53 carry a FIXED mark with the pass that closed them and no other
+finding was touched. Counted off the three files: **63 numbered findings, 19 FIXED, 44 OPEN.**
+The round message said 30 open, which leaves out the twelve of audit 3 that still stand, and
+nothing was renumbered to make it right.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Whether the real templates spell the three
+labels the way the measurement says is the one thing only a run can answer, and a run says so
+plainly rather than guessing.
+
 Phase: 9, ship. Sixty ninth pass, the THIRD audit of the KPI tool. **It builds nothing and fixes
 nothing**, and the only files it writes are `steps/audit-kpi-3.md`, the log and this block. **This
 block is written because `require-file-on-commit.sh` refuses a commit without one**, which is the

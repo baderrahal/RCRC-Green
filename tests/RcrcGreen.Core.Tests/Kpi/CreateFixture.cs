@@ -20,10 +20,34 @@ namespace RcrcGreen.Core.Tests.Kpi
             StreetReferenceAnswer.Nothing("this run reads no street reference file");
 
         /// <summary>
-        /// What a test that is not about the two labelled cells hands the plan. Required, like
-        /// the street answer and the three the team types, so no caller can drop it in silence.
+        /// What a test hands the plan when the template was never opened. Required, like the
+        /// street answer and the three the team types, so no caller can drop it in silence.
         /// </summary>
         public static readonly LabelledCells NoLabels = LabelledCells.NotRead;
+
+        /// <summary>
+        /// **Row 5 as Bader measured it on all seven templates on 14 September**, which is what
+        /// a real press finds: REF : at B5, Date: at D5 and Prepared By: at F5, reaching C5, E5,
+        /// G5 and H5. The value cells are empty here, because what a template holds in them is
+        /// the one thing that differs between the two measured sets and a fixture that picked
+        /// one would be asserting a set rather than a layout.
+        ///
+        /// **Row 7 is not in here.** It differs across the three templates it has been measured
+        /// on, and the two park templates have never been looked at, so a test that wants it
+        /// names it itself.
+        /// </summary>
+        public static LabelledCells RowFive(string mainSheetName)
+        {
+            return LabelledCells.Holding(
+                mainSheetName,
+                new[]
+                {
+                    LabelledCell.At(LabelledPlaces.ReferenceName, LabelledPlaces.ReferenceLabel, "B5", "C5", string.Empty),
+                    LabelledCell.At(LabelledPlaces.DateName, LabelledPlaces.DateLabel, "D5", "E5", string.Empty),
+                    LabelledCell.At(LabelledPlaces.PreparedByName, LabelledPlaces.PreparedByLabel, "F5", "G5", string.Empty),
+                    LabelledCell.At(LabelledPlaces.PositionName, LabelledPlaces.PreparedByLabel, "F5", "H5", string.Empty)
+                });
+        }
 
         public const string Existing = "Existing";
 
@@ -137,7 +161,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             TemplateListing templatesListed = null,
             string[] ticked = null,
             ProjectUnit areaUnit = null,
-            LinksLoaded links = null)
+            LinksLoaded links = null,
+            LabelledCells labels = null)
         {
             KpiTemplate which = template ?? KpiTemplates.Mosques;
 
@@ -163,7 +188,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 held,
                 Reconciliation.Of(ticked ?? held.Select(one => one.PlotId).ToArray(), held, null, false, which),
                 KpiCreatePlan.Of(which, null, null, "KING FAHD", area, null, null,
-                    matches, "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile, CreateFixture.NoLabels),
+                    matches, "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile,
+                    labels ?? RowFive(which.MainSheetName)),
                 area,
                 Totalled.Nothing,
                 Totalled.Nothing,

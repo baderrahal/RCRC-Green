@@ -4,6 +4,159 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventieth pass. Row 5 goes to the label lookup, and what its cells already hold
+
+Findings 50 and 53 off the third audit, and two things Bader's own measurement turned up that
+the audit does not name. **1700 tests, 880 of them KPI, 28 hook cases**, against the 1673 main
+carries at the branch point `86b322f`. Build zero warnings.
+
+### The measurement, which is the whole round
+
+Bader opened all seven templates and read row 5, on 14 September:
+
+```
+HEALTHCARE, MOSQUES, PARKING, SCHOOLS, STREETS
+  B5 REF :   C5 the UID   D5 Date:   E5 the date
+  F5 Prepared By:         G5 a name  H5 a position
+
+EXISTING PARKS and FUTURE PARKS
+  B5 REF :   C5 EMPTY     D5 Date:   E5 EMPTY
+  F5 Prepared By:         G5 EMPTY   H5 holds the text " Architect Engineer"
+```
+
+**NO FORMULA SITS AT C5, E5, G5 OR H5 ON ANY OF THE SEVEN.** So the letter map never overwrote
+anything, no workbook is damaged, and finding 50 did not become a BLOCKS. What it did become is
+this: the letters were right on all seven BY LUCK, the way D7 would have been right on two
+templates out of three, and **FUTURE PARKS, one of the three nobody had ever looked at, is the
+one that differs.** What differs is not where the cells are. It is what they HOLD.
+
+### The four cells are found by their labels now
+
+`LabelledPlaces` is one table of six places, each a name, a label and how many columns right of
+the label its cell sits: the reference off `REF :`, the date off `Date:`, the person off
+`Prepared By:`, the position off the same label two along, and Character and Context off their
+own words. `LabelledPlaces.In` opens the template's main sheet once at the press and finds all
+six in one pass, which is the read that already existed for the last two.
+
+**`KpiTemplates.TypedByTheTeam` is deleted and `KpiValue.Reference` is out of every template's
+map.** A test refuses any map that names E5, G5 or H5 again.
+
+**CHECK YOUR WORK, which the round asked for.** `RowFiveTests.TheLabelsLandOnC5E5G5AndH5OnAllSeven`
+builds each template's own main sheet carrying the row 5 its set was measured to hold, runs the
+real lookup and asserts the label cell and the value cell of all four, on all seven. Green on
+all seven. A second theory asserts the four values reach those cells through the plan.
+
+### NO LABEL NAMES THE POSITION CELL, AND THAT IS THIS ROUND'S OWN FINDING
+
+Three labels sit on row 5 and they reach three cells: B5 to C5, D5 to E5, F5 to G5. **H5 has no
+label of its own.** It is one further along than the person's name, under the same Prepared By,
+and both park templates confirm what it is by already holding a position there.
+
+So it is written as a DISTANCE of two from that label rather than as a label, and the distance
+is said out loud in `LabelledPlace.StepsRight`, in the class docstring, in the rules file and
+here, because a distance dressed up as a label would be the one thing in this lookup nobody
+could see. **Whether the real sheets name the position cell somewhere off row 5 is UNKNOWN**,
+because the measurement covers row 5 and nothing else. That is a question for Bader: if a label
+does name it, the distance should go.
+
+One thing follows from two places sharing a label: a sheet carrying `Prepared By:` twice refuses
+the person AND the position together, because the thing that cannot be resolved is the label
+they share. It has a test.
+
+### A cell it writes that was not empty, and what it held
+
+`KpiCreatePlan.Labelled` was set and read NOWHERE. It existed to carry what each labelled cell
+already held and no report line ever printed it, so the mosque template's Urban Area Zone at D7
+and both park templates' " Architect Engineer" at H5 were written over in silence.
+
+**CELLS WRITTEN OVER SOMETHING THE TEMPLATE ALREADY HELD** is that line, per value, with the
+label, the label cell, the cell written and what it held. Only cells this run really wrote are
+in it, so a template naming no label stays under CELLS NOT WRITTEN with its own reason, and the
+column header prints only when there is a row under it, because a header over an empty table is
+a shape the third audit counted six of.
+
+**Nothing stopped writing.** Overwriting is right and it is now visible.
+
+### The filled check, measured rather than reasoned
+
+The round asked what the filled check does TODAY with an empty E5, because E5 is empty on both
+park templates, and whether a clean park template is offered or withheld.
+
+**It is OFFERED. There was no live fault on the two park templates.** `FilledMark.Reads` is
+false for an empty string, for whitespace and for a cell that is not in the file at all, so
+`Decide` hands back nothing and the workbook is a template. The tests go through the real path,
+`PeekedWorkbook.Of` on an .xlsx the test builds and then `RecognisedWorkbook.Recognise`, exactly
+as `KpiPanel` calls them: both park templates with the cells empty, the same with those cells
+absent from the file altogether, and MOSQUES with the R1 set's placeholders. A filled park
+workbook beside them is still withheld, so the four green cases are the rule answering rather
+than the check being dead.
+
+### One place still reads row 5 by letter, on purpose
+
+`FilledMarks` runs over every workbook in the templates folder before any template is
+recognised, so it has no labels to ask and reads `E5` and `C5` as the measurement says they are
+on all seven. That is two records of one fact, which is the shape this repo keeps paying for, so
+`RowFiveTests.TheCellsTheLabelsChooseAreTheCellsTheFilledCheckReads` holds them against each
+other over the measured row 5 and goes red when either moves.
+
+**OPEN, FOR BADER: whether the peek should find its cells by label too.** It would delete the
+last two letters. It means the peek reads the whole first sheet rather than two cells, on every
+workbook in the folder, and it changes `RecognisedWorkbook.Recognise`, the pane's call and about
+two hundred lines of test. It is a round of its own and it is not this one.
+
+### Finding 53, the limit that had gone away
+
+`kpi-rules.md` still said the reference cell is skipped when the ticked plots disagree on it,
+which was true when a checklist covered several plots. **A checklist has been one plot since
+round 113**, so the plots cannot disagree, the reference always carries that plot's own
+reference, and both marks have been live for six rounds with nobody recording it. The rules file
+says so now and so does the `FilledMarks` docstring that carried the same sentence.
+
+### The pane names no cell for any of the four
+
+It cannot. Which cell each lands in is not known until the template is opened at the press. The
+line under the map says the reference comes from the chosen parameter and goes where the `REF :`
+label sends it, and the line under that says the same of the three the team types. **A line
+about what the tool does is checked against what it does**, and this is the third time that rule
+has bitten.
+
+### Break watches
+
+Three, each restored byte for byte and checked with a diff against its backup.
+
+- **The position steps one column instead of two.** 16 red: both row 5 theories on all seven
+  templates, the distance test and the park template's H5 read. The red names H5 and the
+  position, which is what was broken
+- **`FilledMarks.DateCell` reads E6.** 14 red, and
+  `TheCellsTheLabelsChooseAreTheCellsTheFilledCheckReads` is among them, which is the guard that
+  exists for exactly that parting
+- **A cell written over is never reported.** 2 red, both naming the written over section
+
+### Existing tests changed by hand, each because the truth under it moved
+
+`CreateFixture.Run` now hands the plan the measured row 5 rather than a template nothing opened,
+because that is what a real press does. Eight tests moved with it: four plan tests, two skip
+lists that now name all six labelled places rather than two, the map completeness theory that
+no longer asserts a reference cell, and the pane block whose line no longer names three letters.
+`LabelFixture` now escapes cell VALUES as well as the sheet name, because a cell holding the R1
+set's own `<Date>` wrote a start tag into the sheet part and produced a file no XML reader opens.
+
+### The audit files
+
+Findings 50 and 53 carry a FIXED mark with the pass that closed them. **No other finding was
+touched, renumbered or reordered.** Counted off the three files at these lines: **63 numbered
+findings, 19 FIXED, 44 OPEN.** The round message said 30 open, which is 32 minus 2 and leaves
+out the twelve of audit 3 that still stand. Nothing here was renumbered to make the message
+right.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every change since 14 September is still
+unrun, which is rounds 113, 114, both hook rounds, 117 and this one. The one thing only a run
+can answer is whether the real templates spell `REF :`, `Date:` and `Prepared By:` the way the
+measurement says, and a run says so plainly: a label the sheet does not name writes nothing and
+names the sheet it looked on.
+
+---
+
 ## 2026-09-14, sixty ninth pass. The third audit of the KPI tool
 
 **It builds nothing and fixes nothing.** The only files written are `steps/audit-kpi-3.md`, this

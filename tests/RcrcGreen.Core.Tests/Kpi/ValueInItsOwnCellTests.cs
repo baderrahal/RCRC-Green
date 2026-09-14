@@ -35,6 +35,28 @@ namespace RcrcGreen.Core.Tests.Kpi
             return found.Stored;
         }
 
+        /// <summary>
+        /// Row 5 as BOTH park templates hold it, measured on 14 September. **H5 already holds a
+        /// position**, " Architect Engineer", which the run writes over, so the fixture carries
+        /// it rather than a blank.
+        ///
+        /// **Row 7 on a park template has never been measured**, so this names no label for
+        /// Character or Context and the plan writes neither, which is what a park run really
+        /// does until somebody opens one and looks.
+        /// </summary>
+        private static LabelledCells ParkLabels()
+        {
+            return LabelledCells.Holding(
+                ParkSheet,
+                new[]
+                {
+                    LabelledCell.At("Reference", "REF :", "B5", "C5", string.Empty),
+                    LabelledCell.At("Date", "Date:", "D5", "E5", string.Empty),
+                    LabelledCell.At("Prepared by", "Prepared By:", "F5", "G5", string.Empty),
+                    LabelledCell.At("Position", "Prepared By:", "F5", "H5", " Architect Engineer")
+                });
+        }
+
         private static KpiCreatePlan ParkPlan()
         {
             return KpiCreatePlan.Of(
@@ -47,13 +69,14 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Totalled.Adding(new[] { new PlotNumber("DM-11", LawnMetres) }),
                 null,
                 "2026-09-14", "B RAHAL", "BIM COORDINATOR",
-                CreateFixture.NoStreetFile, CreateFixture.NoLabels);
+                CreateFixture.NoStreetFile, ParkLabels());
         }
 
         /// <summary>
         /// The three the team types on the pane. They went out once holding the template's own
         /// placeholders while the report said nobody typed them, so each is bound to its cell
-        /// by name here rather than counted.
+        /// by name here rather than counted. **The cells are the ones the labels chose** rather
+        /// than three letters this tool holds.
         /// </summary>
         [Fact]
         public void TheDateGoesInE5AndNowhereElse()
@@ -140,12 +163,18 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static KpiCreatePlan StreetPlan()
         {
+            // Row 5 as the five non park templates hold it, and row 7 as STREETS holds it,
+            // one pair right of where the other two carry it because of its Category formula.
             var labels = LabelledCells.Holding(
                 StreetSheet,
                 new[]
                 {
-                    LabelledCell.At(FixedCells.CharacterLabel, "E7", "F7", string.Empty),
-                    LabelledCell.At(FixedCells.ContextLabel, "G7", "H7", string.Empty)
+                    LabelledCell.At("Reference", "REF :", "B5", "C5", "<UID>"),
+                    LabelledCell.At("Date", "Date:", "D5", "E5", "<Date>"),
+                    LabelledCell.At("Prepared by", "Prepared By:", "F5", "G5", "<Name>"),
+                    LabelledCell.At("Position", "Prepared By:", "F5", "H5", "<Position>"),
+                    LabelledCell.At(FixedCells.CharacterLabel, FixedCells.CharacterLabel, "E7", "F7", string.Empty),
+                    LabelledCell.At(FixedCells.ContextLabel, FixedCells.ContextLabel, "G7", "H7", string.Empty)
                 });
 
             return KpiCreatePlan.Of(
