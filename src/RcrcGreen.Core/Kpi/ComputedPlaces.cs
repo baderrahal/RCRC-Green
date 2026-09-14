@@ -49,16 +49,26 @@ namespace RcrcGreen.Core.Kpi
         public const string PercentageName = "Percentage canopy";
 
         /// <summary>
-        /// **Taken from the client's own PDF note**, which reads
-        /// `excel the cell on the right of  "Total Green cover (m²) "`, and confirmed by where it
-        /// lands: the cell one column right of it is D9 on three templates and D8 on four, which
-        /// is what was measured. The report prints the cell the label chose on every run, so a
-        /// template whose label reads anything else is one line rather than a silence.
+        /// **SPELT AS THE FILE HOLDS IT, LEADING SPACE AND ALL.** Measured by Bader on all seven
+        /// templates on 14 September, at C9 on EXISTING PARKS, FUTURE PARKS and STREETS and at C8
+        /// on the other four:
+        ///
+        /// <code>
+        /// ' Total Green cover (m²)'
+        /// </code>
+        ///
+        /// **The client's PDF note writes it WITHOUT the space, and that is where this text came
+        /// from the first time.** A label is what the file holds, not what a note calls it, which
+        /// is the same lesson the TOTAL Shrubs tooltip and the percentage's own note already
+        /// taught. The space costs nothing either way, because
+        /// <see cref="LabelText.Same"/> takes edge whitespace off both sides, but the constant
+        /// records the measurement rather than the note.
         /// </summary>
-        public const string GreenCoverLabel = "Total Green cover (m²)";
+        public const string GreenCoverLabel = " Total Green cover (m²)";
 
         /// <summary>
-        /// **Spelt exactly as the cell reads**, per cent sign and all. It is NOT
+        /// **Spelt exactly as the cell reads**, per cent sign and all, and this one carries NO
+        /// leading space, measured at C31 on four templates and C32 on STREETS. It is NOT
         /// `Total area covered by canopy`, which the note names and no template carries in
         /// section 1.
         /// </summary>

@@ -106,48 +106,48 @@ namespace RcrcGreen.Core.Tests.Kpi
         // Parks: EP and FP.
         [InlineData("Projects Basic Data - Parks", PdfValue.Uid, "text")]
         [InlineData("Projects Basic Data - Parks", PdfValue.ReportDate, "a date")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.Area, "m2")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.TotalAreasToBeGreened, "km2")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.Area, "m²")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.TotalAreasToBeGreened, "km²")]
         [InlineData("Projects Basic Data - Parks", PdfValue.PercentageCanopy, "%")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.IrrigationWaterDemand, "m3 a day")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.ExistingTrees, "a count")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.ProposedTrees, "a count")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.TotalTrees, "a count")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.ExistingShrubs, "m2")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.ProposedShrubs, "m2")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.TotalShrubs, "m2")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.GroundCover, "m2")]
-        [InlineData("Projects Basic Data - Parks", PdfValue.Lawn, "m2")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.IrrigationWaterDemand, "m³/day")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.ExistingTrees, "count")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.ProposedTrees, "count")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.TotalTrees, "count")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.ExistingShrubs, "m²")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.ProposedShrubs, "m²")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.TotalShrubs, "m²")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.GroundCover, "m²")]
+        [InlineData("Projects Basic Data - Parks", PdfValue.Lawn, "m²")]
         // Open spaces: HF, FM, DM, PL and SC.
         [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ProjectType, "text")]
         [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.Uid, "text")]
         [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ReportDate, "a date")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.Area, "m2")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.TotalAreasToBeGreened, "km2")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.IrrigationWaterDemand, "m3 a day")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ExistingTrees, "a count")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ProposedTrees, "a count")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.TotalTrees, "a count")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ExistingShrubs, "m2")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ProposedShrubs, "m2")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.TotalShrubs, "m2")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.GroundCover, "m2")]
-        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.Lawn, "m2")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.Area, "m²")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.TotalAreasToBeGreened, "km²")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.IrrigationWaterDemand, "m³/day")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ExistingTrees, "count")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ProposedTrees, "count")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.TotalTrees, "count")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ExistingShrubs, "m²")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.ProposedShrubs, "m²")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.TotalShrubs, "m²")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.GroundCover, "m²")]
+        [InlineData("Projects Basic Data - Open spaces associated to buildings", PdfValue.Lawn, "m²")]
         // Roads: NS, ST and MM.
         [InlineData("Projects Basic Data - Roads", PdfValue.Uid, "text")]
         [InlineData("Projects Basic Data - Roads", PdfValue.ReportDate, "a date")]
         [InlineData("Projects Basic Data - Roads", PdfValue.Row, "m")]
         [InlineData("Projects Basic Data - Roads", PdfValue.Length, "km")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.TotalAreasToBeGreened, "km2")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.IrrigationWaterDemand, "m3 a day")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.ExistingTrees, "a count")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.ProposedTrees, "a count")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.TotalTrees, "a count")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.ExistingShrubs, "m2")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.ProposedShrubs, "m2")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.TotalShrubs, "m2")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.GroundCover, "m2")]
-        [InlineData("Projects Basic Data - Roads", PdfValue.Lawn, "m2")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.TotalAreasToBeGreened, "km²")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.IrrigationWaterDemand, "m³/day")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.ExistingTrees, "count")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.ProposedTrees, "count")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.TotalTrees, "count")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.ExistingShrubs, "m²")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.ProposedShrubs, "m²")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.TotalShrubs, "m²")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.GroundCover, "m²")]
+        [InlineData("Projects Basic Data - Roads", PdfValue.Lawn, "m²")]
         public void TheUnitTableIsWhatEachFormAsksFor(string formName, PdfValue value, string unit)
         {
             PdfForm form = PdfForms.All.Single(one => one.Name == formName);
@@ -167,6 +167,59 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(14, PdfForms.OpenSpaces.Fields.Count);
             Assert.Equal(14, PdfForms.Roads.Fields.Count);
             Assert.Equal(42, PdfForms.All.Sum(one => one.Fields.Count));
+        }
+
+        /// <summary>
+        /// **FOUR CONVERSIONS AND EVERY OTHER FIELD IS WRITTEN IN THE UNIT IT WAS READ IN**, off
+        /// the page by position on 14 September. Three of the four are live and the fourth is
+        /// unreachable, because no water demand is read off any schedule yet.
+        /// </summary>
+        [Fact]
+        public void FourFieldsConvertAndTheOtherThirtyEightDoNot()
+        {
+            // Live: metres into km, square metres into km2, and a ratio times a hundred.
+            Assert.Equal("km", PdfForms.Roads.FieldFor(PdfValue.Length).Unit);
+            Assert.Equal("km\u00B2", PdfForms.Parks.FieldFor(PdfValue.TotalAreasToBeGreened).Unit);
+            Assert.Equal("%", PdfForms.Parks.FieldFor(PdfValue.PercentageCanopy).Unit);
+
+            // The fourth, on all three forms, which nothing reaches today.
+            foreach (PdfForm form in PdfForms.All)
+            {
+                Assert.Equal("m\u00B3/day", form.FieldFor(PdfValue.IrrigationWaterDemand).Unit);
+            }
+
+            Assert.Contains("divides by 1000", PdfFill.WaterDemandIsNotReadYet);
+            Assert.Contains("litres a day", PdfFill.WaterDemandIsNotReadYet);
+
+            // And the two that read like conversions and are not: the road width is metres into
+            // a box printed m, and every area is square metres into a box printed m2.
+            Assert.Equal("m", PdfForms.Roads.FieldFor(PdfValue.Row).Unit);
+            Assert.Equal("m\u00B2", PdfForms.OpenSpaces.FieldFor(PdfValue.Area).Unit);
+        }
+
+        /// <summary>
+        /// **THE REPORT PRINTS THE UNIT THE FORM ASKS FOR, never the unit the source gave.** They
+        /// differ on four fields, and printing the source's would make a converted value look
+        /// unconverted. 330.66 metres lands as 0.33066 with `km` beside it, not `m`.
+        /// </summary>
+        [Fact]
+        public void TheUnitBesideAWrittenValueIsTheFormsAndNotTheSources()
+        {
+            PdfPlan plan = PdfFill.Of(
+                CreateFixture.Plot("ST-05", uid2: "ANH-007-ST-100210"),
+                CountedGroups.Of(KpiTemplates.Streets),
+                StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
+                Today, true, PdfWorkbookNumbers.None);
+
+            PdfFieldFill length = plan.Fields.Single(one => one.Value == PdfValue.Length);
+
+            Assert.Equal("0.33066", length.Text);
+            Assert.Equal("km", length.Unit);
+            Assert.NotEqual("m", length.Unit);
+
+            // The road width beside it converts nothing and reads m, so the two are told apart
+            // by the unit rather than by which number looks bigger.
+            Assert.Equal("m", plan.Fields.Single(one => one.Value == PdfValue.Row).Unit);
         }
 
         /// <summary>

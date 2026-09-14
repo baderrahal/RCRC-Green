@@ -211,7 +211,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             PdfFieldFill greened = Field(plan, PdfValue.TotalAreasToBeGreened);
             Assert.Equal("0.00055", greened.Text);
-            Assert.Equal("km2", greened.Unit);
+            Assert.Equal("km²", greened.Unit);
             Assert.True(greened.Computed);
             Assert.Equal(
                 "canopy 550 plus planting 0 plus lawn 0 is 550 square metres, off 1 tree row, "

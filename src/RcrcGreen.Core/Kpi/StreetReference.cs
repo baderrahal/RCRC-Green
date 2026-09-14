@@ -370,14 +370,17 @@ namespace RcrcGreen.Core.Kpi
             return Holding(path, sheetName, headerRow, rows);
         }
 
+        /// <summary>
+        /// The column whose heading is the wanted name. **The same one rule every other whole
+        /// label lookup in this tool asks**, so a heading with an edge space is the same heading
+        /// and a double space between words is a different one. It used to trim the cell alone
+        /// and compare against the name as written, which is one side of a two sided question.
+        /// </summary>
         private static string ColumnNamed(Dictionary<string, string> header, string wanted)
         {
             foreach (KeyValuePair<string, string> cell in header)
             {
-                if (string.Equals(cell.Value.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
-                {
-                    return cell.Key;
-                }
+                if (LabelText.Same(cell.Value, wanted)) return cell.Key;
             }
 
             return string.Empty;

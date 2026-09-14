@@ -4,6 +4,118 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy ninth pass. One rule for every label, and every unit off the page
+
+**1902 tests, 1082 of them KPI, 16 added, against the 1886 main carries** at `d609559`, which is
+also this branch's point, 28 hook cases unchanged, build zero warnings. **No audit finding is
+closed, renumbered or reordered: read off the three files, 63 numbered findings, 19 carrying a
+FIXED mark, 44 open.**
+
+### The leading space is real and the field was NOT being blanked, which I measured before saying
+
+The warning I ended the last round with was that the green cover label text came from the client's
+note and the first real run would confirm it. Bader measured all seven and the note is indeed
+wrong: every template holds ` Total Green cover (m²)` with a LEADING SPACE.
+
+**The round message says the lookup as built matches nothing and blanks the field on every plot.
+It does not, and I measured that rather than agreeing with it.** The cell's text was trimmed where
+it was read, at `LabelledPlaces.Off`, so the leading space came off before the comparison. A
+fixture carrying the real label with its space passed all seven cases first time.
+
+Then I took that trim out to find whether it was what saved it:
+
+```
+LabelledCellsTests.TheLabelIsMatchedWholeAndWithoutCase        D7 against nothing
+ComputedCellTests.TheGreenCoverCellIsFoundByItsLabelAndNames   red
+ComputedCellTests.AGreenCoverCellThatHasDriftedIsNamed         no cell on <Mosques> reads
+                                                               Total Green cover (m²)
+ComputedCellTests.ThePercentageCellSitsTwoColumnsRight         red
+RowFiveTests.ThePositionCellOnAParkTemplateIsReadAsHolding     " Architect Engineer"
+```
+
+**So it was landing, and nothing anywhere said why.** That is the finding, and it is worse than
+the fault the round message expected: a rule living in a bare `Trim()` that nothing names, covering
+ONE SIDE of a two sided comparison. A label constant carrying a stray space would still have failed
+with no sign of where to look, and the fifth line shows a second thing riding on the same trim.
+
+### One rule, eleven labels, and the ones that were already right are named
+
+`LabelText.Same` is that rule now, asked by every whole label lookup. **Edge whitespace off BOTH
+sides, without case, and the inside untouched.** A double space between words is a different label,
+because `LOD /  HARDSCAPE SCHEDULES` really carries two.
+
+Every whole label this tool looks up, checked one by one. Eleven, and one carries an edge space:
+
+```
+REF :, Date:, Prepared By: (twice), Character, Context    already right, no edge space
+% of Total area covered by canopy                         already right, no edge space
+ Total Green cover (m²)                                   THE ONE, now spelt as the file holds it
+ID_UID *, ES_QUANTITY, QUANTITY UNIT, ROAD_WIDTH          already right, AND one sided
+```
+
+**The four street reference columns were the second one sided comparison**, trimming the file's
+heading and comparing it against the name as written. They were found by looking rather than by
+failing, which is the point of going through every one.
+
+**One lookup is a different question and is left alone.** `ScheduleColumns.Holding` asks
+`KpiNames.Holds`, which splits a heading into runs of letters, so edge whitespace cannot reach it.
+It asks whether a heading HOLDS a word rather than whether it IS a label. Checked, already immune,
+and recorded as such rather than changed.
+
+### The fixture was reading the code back to itself
+
+The workbook fixture wrote `ComputedPlaces.GreenCoverLabel` into the label cell. **A fixture of the
+tool's own constant is a fixture of a sheet the client does not have**, and it is exactly how a
+case goes green over a lookup that finds nothing. Both labels are written out by hand now, the
+green cover with its leading space and `xml:space="preserve"` the way Excel stores such a cell, the
+percentage with none, so one label with an edge space and one without go through the same lookup on
+the same sheet.
+
+### Every unit on all three forms, read off the page by position
+
+**FOUR CONVERSIONS. Every other field is written in the unit it was read in.** The whole table is
+in `kpi-rules.md` with the date. Three conversions are live and the fourth, litres a day into
+m³/day, is unreachable because nothing reads a water demand off any schedule. Its reason names the
+unit and the division now, so the day the read is built the rule is beside it rather than in a
+constant nobody prints.
+
+**THE REPORT PRINTS THE FORM'S UNIT AND IT ALREADY DID.** Checked at the line: the fill is handed
+`wanted.Unit` off the form's own field, so the answer to what it prints today is the form's, and a
+test pins it rather than leaving it to be read off the code. The unit strings are what the page
+prints now, `m²`, `km²`, `m³/day` and `count`, where they were `m2`, `km2`, `m3 a day` and
+`a count`.
+
+**AND THE FIELDS NOBODY FILLS ARE ON RECORD WITH THEIR UNITS**, so nobody measures the page again
+the day the client annotates one.
+
+**CYCLING PATHS AND PEDESTRIAN PATHS ARE lm ON THE PARKS FORM AND km ON THE OPEN SPACES FORM.** The
+same row name, two units, on two forms this one tool fills. Nothing writes them today so it costs
+nothing now, and it would cost a thousandfold error in a client document the day somebody adds a
+note to one and reads the other form's unit. **The Bridges and Catwalk row spells Lenght**, the
+client's spelling, written as it is the way PRX_Furniture Lenght already is.
+
+### What is measured and what is not
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The labels and the units were measured by
+Bader off the client's own seven templates and three forms. The lookup is proven against workbooks
+the tests build carrying the measured label text.
+
+**The two computed numbers have still never been held against a workbook Excel has recalculated**,
+which stands from two rounds back.
+
+### Two break watches
+
+```
+the label side of the rule is no longer trimmed    5 red, each naming the pair that stopped
+                                                   matching, first " Total Green cover (m²)"
+                                                   against "Total Green cover (m²)"
+the road length prints the source's unit           4 red, every one naming km against m
+```
+
+Both restored byte for byte, checked with `diff -q`, and the suite green at 1902 after.
+
+---
+
 ## 2026-09-14, seventy eighth pass. The other two formulas, measured and guarded
 
 **Pull request 128, merged into main as `3fcb4c4`.** The runner ran 28 hook cases and 1886 tests

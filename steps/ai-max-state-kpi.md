@@ -1,5 +1,54 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy ninth pass, one rule for every label and every unit off the page. **1902
+tests, 1082 of them KPI, 16 added, against the 1886 main carries** at `d609559`, which is also this
+branch's point, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**THE LEADING SPACE IS REAL AND THE FIELD WAS NOT BEING BLANKED.** All seven templates hold
+` Total Green cover (m²)` and the client's note writes it without, which is where the constant came
+from. The round message expected the lookup to match nothing. **Measured: it was landing**, because
+the cell's text was trimmed where it was read, and a fixture carrying the real label passed first
+time. Taking that trim out reddened five cases, one of them reading `no cell on <Mosques> reads
+Total Green cover (m²)`. So the rule was right and **lived in a bare `Trim()` that nothing named,
+covering one side of a two sided comparison**, which is worse than the fault expected: a label
+constant with a stray space would still have failed with no sign of where to look.
+
+**`LabelText.Same` IS THAT RULE NOW, ASKED BY EVERY WHOLE LABEL LOOKUP.** Edge whitespace off BOTH
+sides, without case, and the inside untouched, because `LOD /  HARDSCAPE SCHEDULES` really carries
+two spaces. Eleven labels checked one by one and the ones already right are named as well as the
+one that was not: REF :, Date:, Prepared By: twice over, Character, Context and the percentage all
+carried no edge space; the green cover is the one that does and is spelt as the file holds it now;
+**the four street reference column names were a second one sided comparison** and were found by
+looking rather than by failing. `ScheduleColumns.Holding` asks a different question, whether a
+heading holds a word, and is recorded as checked and already immune.
+
+**THE FIXTURE WAS READING THE CODE BACK TO ITSELF**, writing the tool's own constant into the label
+cell. Both labels are written out by hand now, the green cover with its space and
+`xml:space="preserve"`, the percentage with none.
+
+**FOUR CONVERSIONS AND EVERY OTHER FIELD IS WRITTEN IN THE UNIT IT WAS READ IN**, read off the page
+by position. Three are live and the fourth, litres a day into m³/day, is unreachable because
+nothing reads a water demand, so its reason carries the unit and the division for the day it is
+built. **The report prints the form's unit and already did**, checked at the line and pinned by a
+test rather than left to be read off the code. The unit strings are what the page prints now, m²,
+km², m³/day and count.
+
+**THE FIELDS NOBODY FILLS ARE ON RECORD WITH THEIR UNITS**, and Cycling paths and Pedestrian paths
+are lm on the Parks form and km on the Open spaces form. Same row name, two units, two forms, one
+tool. Nothing writes them today and it would be a thousandfold error the day somebody adds a note
+to one and reads the other form's unit.
+
+Two break watches, each reddening the case that names what it broke: 5 and 4 red. Both restored
+byte for byte, checked with `diff -q`, and the suite green at 1902 after.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The labels and the units are Bader's
+measurements off the client's own seven templates and three forms, and the lookup is proven against
+workbooks the tests build carrying the measured label text. **The two computed numbers have still
+never been held against a workbook Excel has recalculated.**
+
 Phase: 9, ship. Seventy eighth pass, the other two formulas measured and guarded. **1886 tests,
 1066 of them KPI, 7 added, against the 1879 main carries** at `2c698c7`, which is also this
 branch's point, 28 hook cases unchanged, build zero warnings.

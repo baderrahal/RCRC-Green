@@ -394,7 +394,10 @@ namespace RcrcGreen.Core.Kpi
                 if (reference == null) continue;
                 if (CellRef.TryParse(reference.Value) == null) continue;
 
-                texts[reference.Value] = (WorkbookPackage.TextOf(cell, shared) ?? string.Empty).Trim();
+                // Trimmed because what a value cell HOLDS is reported to a person, and the two
+                // park templates hold " Architect Engineer" with a leading space. The MATCH
+                // above does not depend on it: LabelText.Same trims both sides itself.
+                texts[reference.Value] = LabelText.Trimmed(WorkbookPackage.TextOf(cell, shared));
             }
 
             var found = new Dictionary<string, LabelledCell>(StringComparer.OrdinalIgnoreCase);
@@ -442,8 +445,12 @@ namespace RcrcGreen.Core.Kpi
         {
             string onlyOn = onlyRow == null ? string.Empty : OnlyOn(onlyRow.Value, anchorLabel);
 
+            // **THE ONE RULE, ASKED HERE AND NOWHERE ELSE IN THIS LOOKUP.** It trims both sides
+            // itself, so the match no longer rides on how the cell's text happened to be stored:
+            // a label constant carrying an edge space is the same label, and a double space
+            // between words is not.
             string[] at = texts
-                .Where(one => string.Equals(one.Value, place.Label, StringComparison.OrdinalIgnoreCase))
+                .Where(one => LabelText.Same(one.Value, place.Label))
                 .Where(one => onlyRow == null || CellRef.Parse(one.Key).Row == onlyRow.Value)
                 .Select(one => one.Key)
                 .OrderBy(one => CellRef.Parse(one).Row)
