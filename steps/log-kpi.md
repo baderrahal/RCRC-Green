@@ -118,6 +118,13 @@ them pins the pane's pointer so the fix cannot travel too far the other way.
 
 All three files were copied out first and `diff -q` against the copy after restoring.
 
+### The merge
+
+Pull request 124, merged into main as `5706bd2`, through the API with the commit title and the
+commit message both passed on the call. **The runner ran 28 hook cases and 1763 tests against the
+pull request head `3ae4868`, 0 failed and 0 skipped.** The merged tree is byte for byte the branch
+head and the message off main carries neither a co-author credit line nor a generated-by footer.
+
 ### OPEN, and it is Bader's call because it is not this task's file
 
 **`CLAUDE.md` line 209 still carries the corrected claim**, that NS-19 and NS-06 hold their area

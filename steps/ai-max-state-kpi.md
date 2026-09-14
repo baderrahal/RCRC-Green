@@ -48,6 +48,13 @@ byte for byte with `diff -q`.
 NS-06 claim. It is the repo wide file rather than KPI territory, so this round left it and said
 so in the log. Two records of one fact, knowingly left standing for one round.
 
+Pull request 124, merged into main as `5706bd2`. **The runner ran 28 hook cases and 1763 tests
+against the pull request head `3ae4868`, 0 failed and 0 skipped. Locally the same 28 and 1763 ran
+after the last file was written, 943 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next street run is what shows all 51
 plots writing.
 
