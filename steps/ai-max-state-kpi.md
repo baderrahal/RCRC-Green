@@ -1,5 +1,55 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy sixth pass, a PDF beside every workbook. **1821 tests, 1001 of them KPI,
+58 added, against the 1763 main carries** at the branch point `bb10f9d`, measured by running the
+suite at that commit, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**NOTHING ABOUT THE WORKBOOK CHANGED.** The 14:29 run's 102 workbooks over 7 templates are
+written by the same code down the same path, and the PDF is added after it.
+
+**EVERY FIELD WAS READ OFF THE CLIENT'S OWN FILES AND CHECKED BACK AGAINST THEM.** All three
+forms matched, nothing missing and no note differing. Three things the round message said are
+corrected by that measurement: the sources are in the field's VALUE rather than its default
+value, the open spaces TOTAL Shrubs note is NOT the wrong one, and Parks and Roads name no
+Project Type field at all. A fourth is an open question: the ROADS form's Total areas to be
+greened names the canopy cell where the other two name Total Green cover.
+
+**THE LIBRARY WAS PICKED BY SEARCH AND REJECTED BY MEASUREMENT.** PDFsharp 6.2.2 is MIT and
+netstandard2.0 and carries the AcroForm types, and on the client's own Parks form it read all 42
+fields and threw on the first one touched because setting a value REGENERATES the appearance
+stream, which is redrawing what the client drew. Every other library is per seat commercial.
+**So there is no package**: `PdfFormFile` copies the client's bytes whole and appends an
+incremental update, which is the workbook's own rule applied to a PDF, and a test asserts the
+source bytes are the first bytes of the answer.
+
+**THE FORM IS CHECKED ON EVERY RUN, over the field names AND the note in each**, and a form
+whose either has moved is left alone and named. Five of the nine prefixes use a form whose UID
+is a field called undefined_4.1 and whose lawn area is 0_2.
+
+**The shrubs split by phase needed no new schedule read**: the phase rows have been carried
+since the 0928 run, and `ShrubsByPhase` sorts them by the same `CountedGroups.SheetFor` the
+species merge asks, so there is no second rule.
+
+**FOUR FIELDS ARE BLANK ON EVERY RUN AND EACH IS NAMED.** Ground cover, because nothing prints
+it apart from shrubs. Total areas to be greened and Percentage canopy, because **both are cells
+the workbook COMPUTES and the patcher drops every cached formula result on purpose**, so the
+number is not in the file this run wrote. Irrigation water demand, because no water demand is
+read off any schedule yet. **The second of those is the round's real finding and it is Bader's
+to answer.**
+
+Three break watches. The first reddened NOTHING the first time, because the case asserted the
+three numbers and the break left those right while putting a phase in the wrong bucket. The case
+pins the buckets now and the same break reddens it. The other two reddened 3 and 1, each naming
+what it broke. All restored byte for byte, and the restored code was run against the client's
+three real forms again afterwards.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and that is worth saying twice this time:
+the file work was proven against the client's three real PDFs outside Revit, and the pane, the
+fourth folder and the per plot ordering have not been pressed once.
+
 Phase: 9, ship. Seventy fifth pass, the client's note decides a tie and a reason reaches the
 file. **1763 tests, 943 of them KPI, 16 added, against the 1747 main carries** at the branch
 point `9fbcea4`, measured by running the suite at that commit, 28 hook cases unchanged, build

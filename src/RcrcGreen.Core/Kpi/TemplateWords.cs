@@ -50,6 +50,24 @@ namespace RcrcGreen.Core.Kpi
             + "because the tool never writes to a template. Pick another folder unless you "
             + "meant this.";
 
+        /// <summary>
+        /// The forms folder line, under the output folder. **A note and never a refusal**: a
+        /// press with none set writes every workbook and no PDF, and says so before it starts
+        /// rather than 102 times afterwards.
+        /// </summary>
+        public static string FormsFolder(string formsFolder)
+        {
+            if (string.IsNullOrWhiteSpace(formsFolder))
+            {
+                return "Note. No forms folder is set, so the workbooks are written and no PDF is. "
+                    + "Browse to the folder holding the client's three Projects Basic Data forms.";
+            }
+
+            return "One PDF per plot beside its workbook, filled from " + formsFolder
+                + ". The form is keyed on the plot prefix, the client's own bytes are copied "
+                + "whole, and a form whose fields have moved is left alone and named.";
+        }
+
         public static string Output(string outputFolder)
         {
             if (string.IsNullOrWhiteSpace(outputFolder)) return NoOutputFolder;

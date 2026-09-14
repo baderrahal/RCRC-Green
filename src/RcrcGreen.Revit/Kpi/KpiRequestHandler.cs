@@ -48,6 +48,13 @@ namespace RcrcGreen.Revit.Kpi
         private LinksLoaded _scannedLinks = LinksLoaded.NotRead;
 
         /// <summary>
+        /// Which file in the forms folder is which form, held for the press. **Deciding it
+        /// means opening and scanning a PDF**, and on 78 street plots that is 78 opens of one
+        /// file. Keyed on the folder and the form together, so browsing elsewhere decides again.
+        /// </summary>
+        private readonly Dictionary<string, string> _formFiles = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        /// <summary>
         /// Called back on the Revit thread with the document title, empty when no document is
         /// open. The pane marshals to its own thread itself.
         ///
@@ -351,6 +358,11 @@ namespace RcrcGreen.Revit.Kpi
             var plotOutcomes = new List<PlotOutcome>();
             double readSeconds = 0.0;
 
+            // **Each press decides which file is which form once.** Held across the press so 78
+            // street plots open one file once, and cleared at the start of it so a corrected
+            // form dropped into the folder between two presses is seen on the second.
+            _formFiles.Clear();
+
             // **THE COUNT ONLY GROWS, ACROSS THE WHOLE PRESS.** Counted per template it would
             // restart at 1 on the second workbook, and a progress line that goes backwards is
             // the one thing the rule about it forbids. The total is every plot every ticked
@@ -620,17 +632,102 @@ namespace RcrcGreen.Revit.Kpi
 
             runs.Add(run);
 
+            // **THE EXCEL IS WRITTEN FIRST AND THE PDF SECOND**, because two of the PDF's fields
+            // read cells out of the workbook this run has just written. The ordering is a rule
+            // and this is the line that keeps it.
+            PdfOutcome pdf = ThePdf(held, counted, street, where, run.Wrote, folderMade);
+
             if (run.Wrote)
             {
                 wrote.Add(held.PlotId);
-                plotOutcomes.Add(PlotOutcome.Wrote(held.PlotId, pick.Template, where));
+                plotOutcomes.Add(PlotOutcome.Wrote(held.PlotId, pick.Template, where).WithPdf(pdf));
                 return;
             }
 
             string refusal = where.Ok ? CreateWords.WhyThisOneWroteNothing(run) : where.Why;
             why.Add(held.PlotId + ": " + refusal);
             plotOutcomes.Add(PlotOutcome.WroteNothing(
-                held.PlotId, pick.Template, where, folderMade, refusal));
+                held.PlotId, pick.Template, where, folderMade, refusal).WithPdf(pdf));
+        }
+
+        /// <summary>
+        /// One plot's PDF, beside its workbook.
+        ///
+        /// **A PLOT WHOSE WORKBOOK WAS NOT WRITTEN STILL GETS ONE.** Bader's decision: the
+        /// fields that read the workbook are left blank and named, and everything that comes
+        /// from Revit still goes in. What it needs is the plot's own folder, which is made for
+        /// the workbook and is never deleted.
+        ///
+        /// **No forms folder set is a NOTE and not a refusal.** Every plot says so once in its
+        /// own row and the press goes through.
+        /// </summary>
+        private PdfOutcome ThePdf(
+            PlotReading held,
+            CountedGroups counted,
+            StreetReferenceAnswer street,
+            PlotWorkbookPath where,
+            bool workbookWritten,
+            bool folderMade)
+        {
+            PdfPlan plan = PdfFill.Of(held, counted, street, DateTime.Today, workbookWritten);
+
+            if (!plan.Wanted) return PdfOutcome.WroteNothing(held.PlotId, plan.Form, plan.Why, null);
+
+            string folder = FormsFolder.Read();
+            if (string.IsNullOrWhiteSpace(folder))
+            {
+                return PdfOutcome.WroteNothing(held.PlotId, plan.Form, PdfChecklist.NoFormFolder, null);
+            }
+
+            if (!folderMade || !where.Ok)
+            {
+                return PdfOutcome.WroteNothing(held.PlotId, plan.Form,
+                    "this plot has no folder to write into. " + where.Why, null);
+            }
+
+            string why;
+            string formPath = FormFileFor(folder, plan.Form, out why);
+            if (formPath.Length == 0)
+            {
+                return PdfOutcome.WroteNothing(held.PlotId, plan.Form, why, null);
+            }
+
+            return PdfChecklist.Write(formPath, PdfChecklist.Beside(where), plan);
+        }
+
+        /// <summary>
+        /// Which file in the browsed folder is this form, **decided by the fields it holds and
+        /// never by its name**, and held for the press so 78 street plots open one file once.
+        /// </summary>
+        private string FormFileFor(string folder, PdfForm form, out string why)
+        {
+            why = string.Empty;
+            string key = folder + "|" + form.Name;
+            if (_formFiles.TryGetValue(key, out string already))
+            {
+                if (already.Length == 0) why = PdfChecklist.NoFormFile + form.Name;
+                return already;
+            }
+
+            string[] files;
+            try
+            {
+                files = Directory.GetFiles(folder, "*" + PdfChecklist.Extension);
+            }
+            catch (IOException failed)
+            {
+                why = "the forms folder could not be read. " + failed.Message;
+                return string.Empty;
+            }
+            catch (UnauthorizedAccessException denied)
+            {
+                why = "the forms folder was refused. " + denied.Message;
+                return string.Empty;
+            }
+
+            string found = PdfChecklist.FileFor(files, form, out why);
+            _formFiles[key] = found;
+            return found;
         }
 
         /// <summary>

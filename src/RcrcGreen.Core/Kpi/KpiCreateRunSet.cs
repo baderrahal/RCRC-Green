@@ -130,7 +130,7 @@ namespace RcrcGreen.Core.Kpi
     {
         private PlotOutcome(
             string plotId, KpiTemplate template, PlotWorkbookPath where,
-            bool written, bool folderMade, string why)
+            bool written, bool folderMade, string why, PdfOutcome pdf)
         {
             if (string.IsNullOrWhiteSpace(plotId)) throw new ArgumentNullException("plotId");
 
@@ -140,11 +140,28 @@ namespace RcrcGreen.Core.Kpi
             Written = written;
             FolderMade = folderMade;
             Why = why ?? string.Empty;
+            Pdf = pdf;
+        }
+
+        /// <summary>
+        /// What this plot's PDF run did, or null where no PDF was attempted at all, which is a
+        /// press with no forms folder set. **A plot whose workbook was refused still gets one**,
+        /// with the fields that read the workbook left blank and named: Bader's decision.
+        /// </summary>
+        public PdfOutcome Pdf { get; }
+
+        /// <summary>
+        /// The same outcome carrying what its PDF did. The workbook half is built first and this
+        /// is put on it after, because the Excel is written first and the PDF second.
+        /// </summary>
+        public PlotOutcome WithPdf(PdfOutcome pdf)
+        {
+            return new PlotOutcome(PlotId, Template, Where, Written, FolderMade, Why, pdf);
         }
 
         public static PlotOutcome Wrote(string plotId, KpiTemplate template, PlotWorkbookPath where)
         {
-            return new PlotOutcome(plotId, template, where, true, true, string.Empty);
+            return new PlotOutcome(plotId, template, where, true, true, string.Empty, null);
         }
 
         /// <summary>
@@ -154,7 +171,7 @@ namespace RcrcGreen.Core.Kpi
         public static PlotOutcome WroteNothing(
             string plotId, KpiTemplate template, PlotWorkbookPath where, bool folderMade, string why)
         {
-            return new PlotOutcome(plotId, template, where, false, folderMade, why);
+            return new PlotOutcome(plotId, template, where, false, folderMade, why, null);
         }
 
         public string PlotId { get; }

@@ -187,4 +187,32 @@ namespace RcrcGreen.Revit.Kpi
             return Pointer.Remember(folder);
         }
     }
+
+    /// <summary>
+    /// Where the client's three Projects Basic Data forms live.
+    ///
+    /// **A FOURTH BROWSE BUTTON, remembered the same way the other three are.** Bader's
+    /// decision. The forms are the client's documents, so they are browsed for rather than
+    /// shipped, exactly as the workbook templates are, and for the same reason: nothing of the
+    /// client's goes into this repository.
+    ///
+    /// **No folder set is a NOTE and never a refusal.** The workbooks are written and the PDFs
+    /// are not, and the pane says so before the press.
+    /// </summary>
+    internal static class FormsFolder
+    {
+        public const string PointerFileName = "kpi-forms-folder.txt";
+
+        private static readonly RememberedFolder Pointer = new RememberedFolder(PointerFileName);
+
+        public static string Read()
+        {
+            return Pointer.Read();
+        }
+
+        public static bool Remember(string folder)
+        {
+            return Pointer.Remember(folder);
+        }
+    }
 }
