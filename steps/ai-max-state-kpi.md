@@ -57,6 +57,13 @@ first failed `StreetsNamesH8ForTheAreaAndItsOtherCellsAreUnmoved` with `Expected
 "H7"`, naming what was broken. The second reddened what it aimed at and found the fixture gap in
 item 3 as well.
 
+Pull request 122, merged into main as `194a57f`. **The runner ran 28 hook cases and 1732 tests
+against the pull request head `776bdeb`, 0 failed and 0 skipped. Locally the same 28 and 1732 ran
+after the last file was written, 912 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run over street plots is what
 writes an area into H8 and what answers the note's question by counting 78 plots.
 

@@ -146,6 +146,14 @@ ALSO showed the gap in section 3 above, which is the only reason that gap was fo
 Both files were copied out before the break and `diff -q` against the copy after restoring them,
 so the suite that produced 1732 is over the real code and not over a half restored file.
 
+### The merge
+
+Pull request 122, merged into main as `194a57f`, through the API with the commit title and the
+commit message both passed on the call. **The runner ran 28 hook cases and 1732 tests against the
+pull request head `776bdeb`, 0 failed and 0 skipped.** The merged tree is byte for byte the branch
+head and the message off main carries neither a co-author credit line nor a generated-by footer,
+which is the one thing the squash button on github.com would have added.
+
 ### Still open, unchanged by this round
 
 The 44 audit findings. A row written into an empty one carries no family, no genus and no native
