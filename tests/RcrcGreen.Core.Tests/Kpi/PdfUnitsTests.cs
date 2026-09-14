@@ -239,6 +239,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                     one.Value == PdfValue.TotalShrubs ? one.Y - 20.4 : one.Y))
                 .ToList();
 
+            fields.AddRange(Header());
+
             PdfFormCheck check = PdfFormCheck.Of(form, fields, string.Empty);
 
             Assert.False(check.Matched);
@@ -262,10 +264,27 @@ namespace RcrcGreen.Core.Tests.Kpi
                 .Select(one => new PdfFieldRead(one.FieldName, one.Note, 1, one.X + 0.4, one.Y - 0.4))
                 .ToList();
 
+            fields.AddRange(Header());
+
             PdfFormCheck check = PdfFormCheck.Of(form, fields, string.Empty);
 
             Assert.True(check.Matched, check.Why);
             Assert.Equal(0.5, PdfFormCheck.Tolerance);
+        }
+
+        /// <summary>
+        /// The client's own header, which every one of their three forms carries and the check
+        /// now requires. The field names are the fixture's own: the tool finds all three by the
+        /// value the template holds, because the real names are measured nowhere here.
+        /// </summary>
+        private static IEnumerable<PdfFieldRead> Header()
+        {
+            return new[]
+            {
+                new PdfFieldRead("Project name", PdfForms.ProjectName, 900, 60.0, 700.0, "Tx"),
+                new PdfFieldRead("Consultant", PdfForms.ConsultantName, 901, 60.0, 690.0, "Tx"),
+                new PdfFieldRead("Contract reference", PdfForms.ContractReference, 902, 60.0, 680.0, "Tx")
+            };
         }
     }
 }

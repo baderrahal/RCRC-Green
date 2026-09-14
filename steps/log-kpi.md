@@ -4,6 +4,161 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, eighty first pass. Three faults off the 19:52 run
+
+**1928 tests, 1108 of them KPI, 12 added, against the 1916 main carries** at `484251e`, 28 hook
+cases unchanged, build zero warnings. **No audit finding is closed, renumbered or reordered: read
+off the three files, 63 numbered findings, 19 carrying a FIXED mark, 44 open.**
+
+What landed the round before and is on the record: no instruction text in any field on any of the
+seven PDFs checked, the canopy in Total Green cover with MO-100001 going 0.000105 to 0.000525
+square kilometres, and every plot getting its own block, 156 of them.
+
+### 1. The emptying took the client's own header with it
+
+All seven output PDFs read Project name empty, Consultant empty and Contract reference empty. The
+rule the round before shipped did exactly what it says and it was one field too wide: those three
+are TYPED DEFAULTS rather than notes for whoever fills the form by hand.
+
+**Project name and Consultant are left alone. Their default is a value.** Bader's answer, and they
+are the only two fields in that state. Every other text field is still written or emptied, so a
+box the tool has no source for still looks like a box nobody has filled.
+
+**Nothing tries to tell a note from a value by reading the text.** The three are held as data,
+`PdfForms.HeaderValues`, spelt as the files carry them.
+
+**They are found by the VALUE, because no field name for them is measured anywhere in this
+repository and none can be**, since no client PDF enters it. What makes that safe is
+`PdfFormCheck` refusing a form that does not carry all three: a client who changes their header
+gets a form this tool writes NOTHING into, rather than one whose header it clears or whose
+reference box it writes a plot number into having lost track of which box that is.
+
+**Contract reference is written, per plot, from PRX_Plot_NH.** Bader's decision. A plot with no
+PRX_Plot_NH gets the box EMPTIED with its own reason rather than left holding the template's, which
+would hand the client another project's reference under this plot's name. A form holding no
+contract reference field at all is a different fact and is named apart.
+
+Every field is in one of THREE states now rather than two, and the test that walks every field of a
+built form refuses any field in none of them.
+
+### 2. Both parks lost both computed numbers, and it is neither of the two cell checks
+
+**The round message asked which of the two guards added last round it is. It is neither, and both
+were measured rather than argued about.** A parks shaped fixture was built, the green cover label
+at C9 over `D9 = F9+F11+H11` and no percentage label at all, and both were asked:
+
+```
+GreenCoverCell    Agrees, cell D9, formula F9+F11+H11, canopy cell F9
+PercentageCell    NothingToCheck, and Usable
+```
+
+So `SummaryCellCheck.NothingToCheck` does tell an absence from a drift, which is what this round
+was asked to check, and `TheParksShapeIsFoundAndThePercentageHasNothingToCheck` says so.
+
+**And neither could blank BOTH fields anyway.** Read off `PdfFill` line by line there are three
+gates: `WhyNothingCanBeComputed` reaches both, `GreenCoverCell.Usable` reaches the green cover
+alone and `PercentageCell.Usable` the percentage alone. `GreenCover.Total` always computes and
+`GreenCover.Percentage` refuses only on an area of nought, so nothing below the gates blanks both
+either.
+
+**So it is `WhyNothingCanBeComputed`, which is two things: the workbook was not written, or the
+canopy guard found a drift. WHICH OF THE TWO CANNOT BE DETERMINED FROM THIS REPOSITORY**, and it
+is not guessed at here. The 19:52 report already says which, per plot, on the field's own line.
+Reading it out of 82,048 lines is the thing item 3 is about, and the glance line below is the
+answer to that.
+
+**What changed under the parks is the canopy guard's SUBJECT rather than its rule.** Until the
+eightieth pass `CanopyArea.From` returned only rows this tool wrote, so a plot whose species all
+matched gave it no rows and it answered nothing to check. It returns the matched rows now, so the
+guard reads the client's own rows for the first time, holding each against the formula text
+measured on one row of one template.
+
+**The exact text rule is KEPT and deliberately not loosened.** Accepting any formula that reads
+the row's own diameter cell, the way the green cover cell is checked, would be wrong: a sum of
+three cells is the same sum however it is written, and a canopy formula reading the same diameter
+and computing it differently gives a different number from the one this tool works out. A number
+that is not the workbook's own is what the guard exists to stop, and loosening it to make the
+parks fill would have been a fix for a fault nobody has measured.
+
+**What is added is the record of whose row drifted.** `CanopyRow.TheClientsRow` travels from
+`match.Added` and the guard's line reads `a row this run wrote in` or `a row the client's list
+already held`. The first is the tool writing a row the workbook cannot compute, the #VALUE! fault
+that took four rounds to kill. The second is the client's file computing its canopy another way,
+which is a question for the team. One sentence covered both.
+
+**What the parks templates' own canopy formula reads is UNKNOWN here.** The next run answers it,
+because the guard prints every formula on the row it refused.
+
+**And the two numbers are counted at the top of the report now.** `RunAtAGlance.Computed` says how
+many forms got each and, for the ones that did not, ONE LINE PER REASON with its count and its
+plots, never one per plot. The two are counted together because they fail together, past four
+plots the count stands for the rest, and a field a form does not ask for is counted neither way.
+
+### 3. The report is 82,048 lines and 42,570 are one section
+
+**All three rules the round before asked for landed**, and the section grew eight times over
+anyway. They governed the FORMULAS AT RISK list and that list is now filtered, counted and grouped.
+The section's other two lists were untouched, and the per plot fix multiplied every one of them by
+156. The one that carried it is `FORMULAS READING A ROW THIS RUN WROTE INTO`, 321 lines on a
+single plot of the 18:15 run, which over 156 plots is 50,000 lines, against the 42,570 measured.
+
+**The same rule governs that list now.** `FormulaRepeats.Reading` says it once per shape with its
+span and its count. Two things are deliberately no part of the shape. A cell named twice in one
+formula is ONE read, because `IF(ISBLANK(J4)," ",ROUND(PI()*(J4/2)^2,0))` names J4 twice and the
+line printed it twice. A shared formula and its master are ONE shape, because that is how Excel
+stores a filled down column rather than anything about the formula, and keying on it split every
+column into two lines. Measured on a four row fixture: 10 formulas, 4 lines.
+
+**And the file opens with what is in it.** `ReportSections.Of` reads the report's own headings and
+counts the lines under each, and `WHAT IS IN THIS FILE` prints one row per section, widest first,
+with the lines, the blocks and what one block costs. **It is the instrument rather than the cut:**
+it decides nothing, leaves nothing out and names no section, so a section added or renamed appears
+in it with no change on that side. The counts add up to the body's own line count, the opening
+above the first heading counted as its own row.
+
+**What the 19:52 file's other sections came to is UNKNOWN and is not estimated here.** The split
+was in no report file and a number reasoned out would be a guess. The next run prints it, and the
+cut after this one is made on those numbers.
+
+### One thing corrected in the round message, and it is the only one
+
+The round message said the fault is one of the two cell checks. It is not, and the measurement is
+above. Everything else the message states was confirmed rather than corrected.
+
+### Three break watches, one per fault
+
+```
+1  IsTheClientsHeader always false    TheClientsHeaderSurvivesAndTheContractReferenceIsThePlotsOwn
+                                      RED: Expected "Neighborhood Landscape Design - Zone #2", Actual ""
+2  Whose always says the run's row    ADriftOnTheClientsOwnRowIsNamedAsTheClientsRow
+                                      RED: Expected "a row the client's list alrea...", Actual "a row this run wrote in"
+2  the reason keyed on the plot too   TheGlanceCountsTheTwoComputedNumbersAndSaysWhyOnceRatherThanPerPlot
+                                      RED: Expected "1 reason under this l...", Actual "2 reasons under this ..."
+3  the shape keyed on the real text   TheFormulasReadingAWrittenRowAreSaidOncePerShapeAndNotOncePerCell
+                                      RED: Expected 4, Actual 10
+3  the opening not counted            EverySectionIsCountedAndTheyAddUpToTheFile
+                                      RED: Expected 10, Actual 8
+```
+
+Every one names what was broken. All five files restored byte for byte, checked with `diff -q`,
+and the suite green at 1928 after.
+
+### Still open, and not guessed at in code
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every number is off the seven 19:52 output
+PDFs and the two report files. **The two computed numbers have still never been held against a
+workbook Excel has recalculated.**
+
+- **Which of the two things blanked the parks.** The 19:52 report answers it and nobody has read
+  that line out of it. The next run puts it at the top in one line
+- **What the parks templates' canopy formula reads**, if the guard is what fired. UNKNOWN here and
+  answerable only off the client's files or the next run's report
+- **What the other sections of the report come to.** Printed by the next run and not estimated
+- **A species written into an empty row still carries no family, no genus and no native flag**,
+  unchanged
+
+---
+
 ## 2026-09-14, eightieth pass. Five faults off the 18:15 run
 
 **Pull request 132, merged into main as `cc85143`.** The runner ran 28 hook cases and 1916 tests

@@ -673,7 +673,8 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<ScannedSchedule> printedSchedules = null,
             int softscapeTotalRow = 0,
             IEnumerable<PrintedGroup> printedGroups = null,
-            string uid2 = null)
+            string uid2 = null,
+            string plotNh = null)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
             if (softscapeRowsPassedOver < 0) throw new ArgumentOutOfRangeException("softscapeRowsPassedOver");
@@ -681,6 +682,7 @@ namespace RcrcGreen.Core.Kpi
 
             PlotId = plotId;
             Uid2 = (uid2 ?? string.Empty).Trim();
+            PlotNh = (plotNh ?? string.Empty).Trim();
             PrintedSchedules = Held(printedSchedules);
             SoftscapeTotalRow = softscapeTotalRow;
             PrintedGroups = Held(printedGroups);
@@ -748,9 +750,14 @@ namespace RcrcGreen.Core.Kpi
             // plot's first sheet, which is a sentence about the model and was about this method.
             // A default that reads as a deliberate empty is how a whole link in a chain goes
             // missing without a word, which this file already carries a rule about.
+            // **IT USED TO DROP Uid2 AND IT MUST NOT DROP PlotNh EITHER.** Every argument of this
+            // rebuild is named on purpose: a default that reads as a deliberate empty is how a
+            // whole link in a chain goes missing without a word, which this method has paid for
+            // once already.
             return new PlotReading(PlotId, Component, Reference, SoftscapeSchedules, Species, ShrubsAndLawnSchedules,
                 Subtotals, Regions, ReadSeconds, RegionPick.ByHand(typeName), Notes, ReadRefusals, SoftscapeTotalRead,
-                SoftscapeTotal, SoftscapeRowsPassedOver, PrintedSchedules, SoftscapeTotalRow, PrintedGroups, Uid2);
+                SoftscapeTotal, SoftscapeRowsPassedOver, PrintedSchedules, SoftscapeTotalRow, PrintedGroups,
+                Uid2, PlotNh);
         }
 
         public string PlotId { get; }
@@ -768,6 +775,14 @@ namespace RcrcGreen.Core.Kpi
         /// of one picker is the shape this repository keeps paying for.
         /// </summary>
         public string Uid2 { get; }
+
+        /// <summary>
+        /// PRX_Plot_NH off this plot's first sheet, which reads GP.NH.Z2.052-DES042 on the
+        /// measured model. **It is the PDF's contract reference**, Bader's decision of 14
+        /// September, written per plot where the old rule left the client's own default. Empty
+        /// where the plot's sheet carries none, and the field is then left unwritten and named.
+        /// </summary>
+        public string PlotNh { get; }
 
         /// <summary>
         /// The name of every schedule filtered on this plot whose name holds SOFTSCAPE. One is

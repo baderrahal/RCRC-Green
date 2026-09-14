@@ -326,7 +326,8 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.True(agreeing.Agrees, agreeing.Why);
             Assert.Equal(
-                "Tree List - Proposed L7 = IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0))",
+                "Tree List - Proposed L7 = IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)), "
+                + "a row this run wrote in",
                 Assert.Single(agreeing.Read));
 
             ArithmeticCheck drifted = WorkbookArithmetic.Canopy(Formulas("K"), canopy, columns);
@@ -335,7 +336,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(drifted.Agrees);
             Assert.Equal(
                 "the workbook's canopy column is not the one this tool works out. "
-                + "Tree List - Proposed row 7: no cell on it carries "
+                + "Tree List - Proposed row 7, a row this run wrote in: no cell on it carries "
                 + "IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)). The row holds "
                 + "L7 = IF(ISBLANK(K7),\" \",ROUND(PI()*(K7/2)^2,0)), M7 = IF(ISBLANK(B7),\" \",L7*B7).",
                 drifted.Why);
@@ -346,6 +347,41 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Equal(drifted.Why, Field(plan, PdfValue.TotalAreasToBeGreened).Why);
             Assert.Equal(drifted.Why, Field(plan, PdfValue.PercentageCanopy).Why);
+        }
+
+        /// <summary>
+        /// **THE SAME DRIFT ON THE CLIENT'S OWN ROW SAYS SO IN THOSE WORDS.** Until the
+        /// eightieth pass this guard only ever saw rows the tool wrote, whose shape the tool put
+        /// there, so a drift was always the tool writing a row the workbook cannot compute. It
+        /// sees matched rows now, and a drift on one of those is the client's file computing its
+        /// canopy another way, which is a question for the team rather than a bug. The two need
+        /// different answers and one sentence covered both.
+        /// </summary>
+        [Fact]
+        public void ADriftOnTheClientsOwnRowIsNamedAsTheClientsRow()
+        {
+            CanopyTotal canopy = CanopyArea.Of(new[]
+            {
+                new CanopyRow(Proposed, 7, "BAUHINIA PURPUREA", 19, 5.0, true)
+            });
+
+            var columns = new Dictionary<string, string> { { Proposed, "J" } };
+
+            ArithmeticCheck agreeing = WorkbookArithmetic.Canopy(Formulas(null), canopy, columns);
+
+            Assert.Equal(
+                "Tree List - Proposed L7 = IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)), "
+                + "a row the client's list already held",
+                Assert.Single(agreeing.Read));
+
+            ArithmeticCheck drifted = WorkbookArithmetic.Canopy(Formulas("K"), canopy, columns);
+
+            Assert.Equal(
+                "the workbook's canopy column is not the one this tool works out. "
+                + "Tree List - Proposed row 7, a row the client's list already held: "
+                + "no cell on it carries IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)). The row holds "
+                + "L7 = IF(ISBLANK(K7),\" \",ROUND(PI()*(K7/2)^2,0)), M7 = IF(ISBLANK(B7),\" \",L7*B7).",
+                drifted.Why);
         }
 
         /// <summary>

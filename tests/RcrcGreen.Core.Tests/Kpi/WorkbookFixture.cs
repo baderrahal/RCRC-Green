@@ -285,7 +285,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             string alsoReads = null,
             bool withGreenCoverLabel = false,
             bool withPercentageLabel = false,
-            string greenCoverFormula = null)
+            string greenCoverFormula = null,
+            bool parksShape = false)
         {
             string path = Path.Combine(folder, fileName);
 
@@ -348,7 +349,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<row r=\"3\"><c r=\"D3\" t=\"inlineStr\"><is><t>&lt;Component&gt;</t></is></c></row>"
                     + "<row r=\"7\"><c r=\"H7\"><v>0</v></c></row>"
                     + "<row r=\"8\">"
-                    + (withGreenCoverLabel
+                    + (withGreenCoverLabel && !parksShape
                         // **WRITTEN OUT BY HAND, LEADING SPACE AND ALL**, measured by Bader on
                         // all seven templates on 14 September. A fixture that wrote the tool's
                         // own constant into the cell would be a fixture of a sheet the client
@@ -356,9 +357,23 @@ namespace RcrcGreen.Core.Tests.Kpi
                         // xml:space is what Excel writes on a cell whose text has an edge space.
                         ? "<c r=\"C8\" t=\"inlineStr\"><is><t xml:space=\"preserve\"> Total Green cover (m\u00B2)</t></is></c>"
                         : string.Empty)
-                    + "<c r=\"D8\"><f>" + (greenCoverFormula ?? "F8+F10+H10") + "</f><v>0</v></c><c r=\"F8\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
-                    + "<row r=\"9\"><c r=\"D9\"><f>D8/H7</f><v>0</v></c><c r=\"H9\"><f>H8/Area</f><v>0</v></c></row>"
-                    + "<row r=\"10\"><c r=\"F10\"><v>0</v></c><c r=\"H10\"><v>0</v></c></row>"
+                    + (parksShape ? string.Empty : "<c r=\"D8\"><f>" + (greenCoverFormula ?? "F8+F10+H10") + "</f><v>0</v></c>")
+                    + "<c r=\"F8\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
+
+                    // **THE TWO PARK TEMPLATES PUT THE GREEN COVER A ROW LOWER**, D9 off C9 with
+                    // F9+F11+H11, against D8 off C8 with F8+F10+H10 on the other four and on
+                    // STREETS. Measured by Bader on all seven. The parks map names F11 and H11
+                    // for the planting and the lawn, which is the other half of the same shift.
+                    + (parksShape
+                        ? "<row r=\"9\">"
+                            + (withGreenCoverLabel
+                                ? "<c r=\"C9\" t=\"inlineStr\"><is><t xml:space=\"preserve\"> Total Green cover (m\u00B2)</t></is></c>"
+                                : string.Empty)
+                            + "<c r=\"D9\"><f>" + (greenCoverFormula ?? "F9+F11+H11") + "</f><v>0</v></c>"
+                            + "<c r=\"F9\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
+                            + "<row r=\"11\"><c r=\"F11\"><v>0</v></c><c r=\"H11\"><v>0</v></c></row>"
+                        : "<row r=\"9\"><c r=\"D9\"><f>D8/H7</f><v>0</v></c><c r=\"H9\"><f>H8/Area</f><v>0</v></c></row>"
+                            + "<row r=\"10\"><c r=\"F10\"><v>0</v></c><c r=\"H10\"><v>0</v></c></row>")
                     + "<row r=\"31\">"
                     + (withPercentageLabel
                         // Written out by hand too. **This one carries NO leading space**, which

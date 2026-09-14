@@ -45,6 +45,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             fields.Add(PdfFixture.Field("Sidewalk", "REVIT / the sidewalk length, by hand"));
             fields.Add(PdfFixture.TickBox("Schematic Design", "Yes"));
+            fields.AddRange(PdfFixture.ClientHeader());
 
             return PdfFixture.Form(_folder, fileName, fields);
         }
@@ -126,23 +127,35 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Every field of the form, one by one, in one of three states. **Written or emptied, and
-        /// nothing else but a field that is not text.**
+        /// Every field of the form, one by one, in one of THREE states: **written, emptied, or
+        /// left as the template has it.** The third is the four tick boxes and the Reset button,
+        /// which are not text, and the client's own project name and consultant, whose defaults
+        /// are values rather than notes.
         /// </summary>
         [Fact]
-        public void EveryTextFieldOfTheFormIsWrittenOrEmptiedAndNoOtherStateExists()
+        public void EveryFieldOfTheFormIsInOneOfTheThreeStatesAndNoOther()
         {
             string output = Path.Combine(_folder, "out4.pdf");
-            PdfOutcome outcome = PdfChecklist.Write(RoadsForm("all.pdf"), output, RoadPlan());
+            PdfOutcome outcome = PdfChecklist.Write(
+                RoadsForm("all.pdf"), output, RoadPlan(), "GP.NH.Z2.052-DES042");
 
             string refusal;
             IReadOnlyList<PdfFieldRead> back = PdfFormFile.Fields(File.ReadAllBytes(output), out refusal);
 
             var written = new HashSet<string>(outcome.Landed.Select(one => one.FieldName), StringComparer.Ordinal);
             var emptied = new HashSet<string>(outcome.Emptied.Select(one => one.FieldName), StringComparer.Ordinal);
+            var leftAlone = new HashSet<string>(
+                new[] { "Project name", "Consultant", "Schematic Design" }, StringComparer.Ordinal);
 
             foreach (PdfFieldRead field in back)
             {
+                if (leftAlone.Contains(field.Name))
+                {
+                    Assert.False(emptied.Contains(field.Name), field.Name + " must be left alone");
+                    Assert.False(written.Contains(field.Name), field.Name + " must be left alone");
+                    continue;
+                }
+
                 if (!field.IsText)
                 {
                     Assert.False(emptied.Contains(field.Name), field.Name + " is not text and must be left alone");
@@ -156,13 +169,64 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             // Counted by hand off the Roads table. Fourteen fields the tool names, and this plot
             // writes seven of them: the UID, the report date, the road width, the length and the
-            // three tree counts. The other seven are emptied, Total areas to be greened and the
-            // irrigation demand and the three shrub areas and the ground cover and the lawn,
-            // and Sidewalk makes eight, which the tool names nowhere. Seven plus eight is the
-            // fifteen text fields this form holds.
-            Assert.Equal(7, outcome.Landed.Count);
+            // three tree counts. The contract reference makes eight written. The other seven of
+            // the fourteen are emptied, Total areas to be greened and the irrigation demand and
+            // the three shrub areas and the ground cover and the lawn, and Sidewalk makes eight
+            // emptied, which the tool names nowhere. Eight plus eight plus the two left alone is
+            // the eighteen text fields this form holds.
+            Assert.Equal(8, outcome.Landed.Count);
             Assert.Equal(8, outcome.Emptied.Count);
-            Assert.Equal(15, back.Count(one => one.IsText));
+            Assert.Equal(18, back.Count(one => one.IsText));
+        }
+
+        /// <summary>
+        /// **THE CLIENT'S OWN PROJECT NAME AND CONSULTANT COME BACK UNTOUCHED**, and the contract
+        /// reference reads this plot's PRX_Plot_NH. The 19:52 run cleared all three on 150 PDFs,
+        /// because the rule said clear every default and could not tell an instruction from a
+        /// value.
+        /// </summary>
+        [Fact]
+        public void TheClientsHeaderSurvivesAndTheContractReferenceIsThePlotsOwn()
+        {
+            string output = Path.Combine(_folder, "header.pdf");
+            PdfChecklist.Write(RoadsForm("head.pdf"), output, RoadPlan(), "GP.NH.Z2.052-DES042");
+
+            string refusal;
+            IReadOnlyList<PdfFieldRead> back = PdfFormFile.Fields(File.ReadAllBytes(output), out refusal);
+
+            Assert.Equal(
+                "Neighborhood Landscape Design - Zone #2",
+                back.Single(one => one.Name == "Project name").Value);
+
+            Assert.Equal("SAPL", back.Single(one => one.Name == "Consultant").Value);
+            Assert.Equal(
+                "GP.NH.Z2.052-DES042",
+                back.Single(one => one.Name == "Contract reference").Value);
+        }
+
+        /// <summary>
+        /// **A plot carrying no PRX_Plot_NH writes nothing there and is named**, the same as any
+        /// other unwritten field, rather than leaving the template's own reference standing or
+        /// carrying another plot's.
+        /// </summary>
+        [Fact]
+        public void APlotWithNoPlotNhLeavesTheContractReferenceUnwrittenAndNamesIt()
+        {
+            string output = Path.Combine(_folder, "nonh.pdf");
+            PdfOutcome outcome = PdfChecklist.Write(
+                RoadsForm("nonh-form.pdf"), output, RoadPlan(), string.Empty);
+
+            PdfLandedField left = outcome.Emptied.Single(one => one.Value == PdfValue.ContractReference);
+
+            Assert.Equal(PdfChecklist.NoPlotNh, left.Why);
+            Assert.Contains("PRX_Plot_NH", left.Why);
+
+            string refusal;
+            IReadOnlyList<PdfFieldRead> back = PdfFormFile.Fields(File.ReadAllBytes(output), out refusal);
+
+            // And the box is EMPTIED rather than left holding the template's own reference,
+            // because the template's is not this plot's.
+            Assert.Equal(string.Empty, back.Single(one => one.Name == "Contract reference").Value);
         }
     }
 }

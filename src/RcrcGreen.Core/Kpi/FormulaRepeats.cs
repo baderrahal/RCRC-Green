@@ -114,6 +114,72 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// **The same rule over the formulas that merely READ a row this run wrote into.** They
+        /// are not at risk and they are the record of what the run's own cells feed, and one line
+        /// per cell is what made the section unreadable: the 19:52 report carried 42,570 lines
+        /// under one heading, 52 percent of the file, and 321 of them were this list on a single
+        /// plot of the 18:15 run, the same three column formulas filled down a tree list.
+        ///
+        /// **ONE FORMULA FILLED DOWN A COLUMN IS ONE FINDING**, which is the rule
+        /// <see cref="Of"/> already follows, applied where it was not. The shape is the sheet,
+        /// the formula with every digit run replaced and the cells it reads with the same
+        /// replacement, so L21 reading J21 and L22 reading J22 are one shape and a formula
+        /// reading a different column is another.
+        /// </summary>
+        public static IReadOnlyList<RepeatedFormula> Reading(IEnumerable<FormulaCell> formulas)
+        {
+            var order = new List<string>();
+            var byShape = new Dictionary<string, List<FormulaCell>>(StringComparer.Ordinal);
+
+            foreach (FormulaCell one in (formulas ?? Enumerable.Empty<FormulaCell>()))
+            {
+                if (one == null) continue;
+
+                string shape = one.SheetName + Apart + Numbers.Replace(one.Text ?? string.Empty, "#")
+                    + Apart + Numbers.Replace(Reads(one), "#");
+
+                List<FormulaCell> held;
+                if (!byShape.TryGetValue(shape, out held))
+                {
+                    held = new List<FormulaCell>();
+                    byShape[shape] = held;
+                    order.Add(shape);
+                }
+
+                held.Add(one);
+            }
+
+            return order
+                .Select(shape => byShape[shape])
+                .Select(held => new RepeatedFormula(
+                    held[0].SheetName, held[0].Cell, held[0].Text,
+                    "reads " + Reads(held[0]),
+                    held.Select(one => one.Cell)))
+                .ToList();
+        }
+
+        /// <summary>
+        /// What one formula reads, each cell once.
+        ///
+        /// **A cell named twice in one formula is read twice and is one read.**
+        /// `IF(ISBLANK(J4)," ",ROUND(PI()*(J4/2)^2,0))` names J4 twice, so the line printed it
+        /// twice, in the one section this round exists to make shorter.
+        ///
+        /// **A SHARED FORMULA AND ITS MASTER ARE ONE SHAPE.** Excel stores one formula filled
+        /// down a column as a master carrying the text and copies carrying an index, and keying
+        /// on that difference split every column into two lines: the master on its own and the
+        /// rest. It is how the file stores the formula rather than anything about the formula, so
+        /// it is no part of the shape, and the printed text is the master's because the master is
+        /// the first of the group.
+        /// </summary>
+        private static string Reads(FormulaCell formula)
+        {
+            return string.Join(", ", formula.ReadsWritten
+                .Distinct(StringComparer.Ordinal)
+                .ToArray());
+        }
+
+        /// <summary>
         /// Those same formulas, one entry per shape rather than one per row, in the order the
         /// first of each was found.
         /// </summary>

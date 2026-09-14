@@ -57,7 +57,14 @@ namespace RcrcGreen.Core.Kpi
         /// because the client's default value in it is their own note to whoever fills the form
         /// by hand, and a note printed in a box reads as an answer.
         /// </summary>
-        NotOne
+        NotOne,
+
+        /// <summary>
+        /// PRX_Plot_NH, written per plot into the box the client's template carries their
+        /// contract reference in. **It has no entry in the field table** because that field's
+        /// name is measured nowhere here, so it is found by the value the template holds.
+        /// </summary>
+        ContractReference
     }
 
     /// <summary>
@@ -197,14 +204,50 @@ namespace RcrcGreen.Core.Kpi
         public const string RoadType = "Road";
 
         /// <summary>
-        /// What the three typed fields hold already, so the check can say the file still carries
-        /// them. **The tool writes none of these**: the client typed them and they are right.
+        /// **THE CLIENT'S OWN HEADER, AND IT IS A VALUE RATHER THAN A NOTE.** Three typed
+        /// defaults the forms carry on every project, measured off all three files on 14
+        /// September and confirmed on the client's own filled examples, which keep them.
+        ///
+        /// **THE ROUND THAT CLEARED EVERY DEFAULT TOOK THESE WITH IT.** The 19:52 run sent 150
+        /// PDFs out with no project name, no consultant and no contract reference, because the
+        /// rule said clear every field the tool does not fill and could not tell an instruction
+        /// from a value.
+        ///
+        /// **THEY ARE NAMED HERE AS DATA AND NOTHING READS THEIR TEXT TO CLASSIFY THEM.** A
+        /// field is one of the three when its value in the CLIENT'S OWN TEMPLATE is exactly one
+        /// of these, compared whole, and that is the only route: the field NAMES of the three
+        /// are measured nowhere in this repository, and no client PDF may enter it to measure
+        /// them from. Matching on the measured value is safe because
+        /// <see cref="PdfFormCheck"/> refuses a form that does not carry all three, so a form
+        /// whose header has changed writes nothing at all rather than writing into the wrong box.
         /// </summary>
         public const string ProjectName = "Neighborhood Landscape Design - Zone #2";
 
         public const string ConsultantName = "SAPL";
 
+        /// <summary>
+        /// **THIS ONE IS WRITTEN NOW, PER PLOT, FROM PRX_Plot_NH.** Bader's decision, 14
+        /// September: that parameter reads GP.NH.Z2.052-DES042 on this model, it is on every
+        /// plot's first sheet, and the tool already reads all four plot parameters. So it stops
+        /// being a template default and becomes a value the tool writes, like the UID beside it.
+        /// A plot carrying no PRX_Plot_NH writes nothing there and is named.
+        /// </summary>
         public const string ContractReference = "GP.NH.Z2.052-DES042";
+
+        /// <summary>
+        /// The two the tool LEAVES ALONE. **They are the only two fields in that state that are
+        /// text**, the four stage tick boxes and the Reset button being the others and not text
+        /// at all.
+        /// </summary>
+        public static readonly IReadOnlyList<string> HeaderValuesLeftAlone =
+            new[] { ProjectName, ConsultantName };
+
+        /// <summary>
+        /// Every value of the client's own header, the two left alone and the one now written.
+        /// A form missing any of them is a form this tool does not know.
+        /// </summary>
+        public static readonly IReadOnlyList<string> HeaderValues =
+            new[] { ProjectName, ConsultantName, ContractReference };
 
         private const string TreesExisting =
             "REVIT SHEET/REVIT COPONENTS LINK /SOFTSCAPE SCHEDULE/ENTER EACH EXISTING TREE QUANTITY";

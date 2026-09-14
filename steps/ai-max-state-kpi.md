@@ -1,5 +1,60 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty first pass, three faults off the 19:52 run. **1928 tests, 1108 of them KPI,
+12 added, against the 1916 main carries** at `484251e`, 28 hook cases unchanged, build zero
+warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**1. THE EMPTYING TOOK THE CLIENT'S OWN HEADER WITH IT.** All seven PDFs read Project name,
+Consultant and Contract reference empty. Those three are TYPED DEFAULTS rather than notes.
+**Project name and Consultant are left alone, and they are the only two fields in that state.**
+Nothing tries to tell a note from a value by reading the text: the three are held as data,
+`PdfForms.HeaderValues`. **They are found by the VALUE, because no field name for them is measured
+anywhere here and none can be**, and what makes that safe is `PdfFormCheck` refusing a form that
+does not carry all three, so a changed header writes NOTHING rather than clearing the wrong box.
+**Contract reference is written per plot from PRX_Plot_NH**, Bader's decision, and a plot with none
+gets the box emptied with its own reason rather than left holding another project's. Every field is
+in one of three states now, and the test refuses any field in none of them.
+
+**2. IT IS NEITHER OF THE TWO CELL CHECKS, AND THAT IS MEASURED.** A parks shaped fixture was built
+and both were asked: `GreenCoverCell` Agrees at D9 with the canopy learnt as F9, `PercentageCell`
+NothingToCheck and Usable. **So `NothingToCheck` does tell an absence from a drift.** And neither
+could blank BOTH fields anyway: read off `PdfFill`, only `WhyNothingCanBeComputed` reaches both, and
+it is two things, **the workbook not written or the canopy guard, and WHICH OF THE TWO CANNOT BE
+DETERMINED FROM THIS REPOSITORY.** It is not guessed at. What changed under the parks is the canopy
+guard's SUBJECT: it reads the client's own rows for the first time since the eightieth pass. **The
+exact text rule is KEPT and deliberately not loosened**, because a canopy formula reading the same
+diameter and computing it differently gives a number that is not the workbook's. What is added is
+`CanopyRow.TheClientsRow`, so the guard says whose row drifted, and the glance counts the two
+numbers with ONE LINE PER REASON.
+
+**3. THE REPORT WAS 82,048 LINES AND 42,570 WERE ONE SECTION.** All three rules the round before
+asked for landed and they governed the risks list alone, while the per plot fix multiplied the
+section's other two lists by 156. `FORMULAS READING A ROW THIS RUN WROTE INTO` carried it, 321
+lines on one plot. **The same rule governs it now**, one line per shape, a cell named twice in one
+formula being one read and a shared formula and its master being one shape. **And the file opens
+with WHAT IS IN THIS FILE**, every section counted off the text the run just wrote, lines, blocks
+and cost per block. **It is the instrument rather than the cut**, and the next cut is made on its
+numbers.
+
+**ONE CORRECTION TO THE ROUND MESSAGE, AND THE ONLY ONE.** It said the fault is one of the two cell
+checks. It is not. Everything else it states was confirmed.
+
+Three break watches, five tests red, one per break: the header cleared, the client's row named as
+the run's, the reason counted per plot, the shapes ungrouped and the opening uncounted. Every one
+names what was broken. All five files restored byte for byte, checked with `diff -q`, and the suite
+green at 1928 after.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every number is off the seven 19:52 output
+PDFs and the two report files. **The two computed numbers have still never been held against a
+workbook Excel has recalculated.**
+
+**Open and not guessed at:** which of the two things blanked the parks, which the 19:52 report
+already answers and the next run puts in one line at the top; what the parks templates' canopy
+formula reads; and what the report's other sections come to, which the next run prints.
+
 Phase: 9, ship. Eightieth pass, five faults off the 18:15 run. **1916 tests, 1096 of them KPI, 14
 added, against the 1902 main carries** at `d266374`, which is also this branch's point, 28 hook
 cases unchanged, build zero warnings.

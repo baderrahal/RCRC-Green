@@ -165,6 +165,24 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// **The client's own header, which every one of their three forms carries.** The two the
+        /// tool leaves alone and the one it now writes its PRX_Plot_NH into, each holding the
+        /// value measured off their files on 14 September. The field NAMES here are the
+        /// fixture's own, because the real ones are measured nowhere in this repository and no
+        /// client PDF may enter it: the tool finds all three by their value, which is exactly
+        /// what this proves.
+        /// </summary>
+        public static IEnumerable<FixtureField> ClientHeader()
+        {
+            return new[]
+            {
+                Field("Project name", "Neighborhood Landscape Design - Zone #2", 60.0, 700.0),
+                Field("Consultant", "SAPL", 60.0, 690.0),
+                Field("Contract reference", "GP.NH.Z2.052-DES042", 60.0, 680.0)
+            };
+        }
+
+        /// <summary>
         /// A stage tick box, built as a button so the emptying rule meets the thing it must
         /// leave alone rather than a text field pretending to be one.
         /// </summary>
