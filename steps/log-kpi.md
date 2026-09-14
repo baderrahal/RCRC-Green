@@ -6,6 +6,12 @@ Newest entry first.
 
 ## 2026-09-14, seventy seventh pass. Two numbers computed, and every unit named
 
+**Pull request 126, merged into main as `5fca585`.** The runner ran 28 hook cases and 1879 tests
+against the pull request head `9cabd2d`, 0 failed and 0 skipped. The merge went through the API
+with the title and the message both passed on the call, the commit came back off main carrying
+neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte
+the branch head, checked with a diff that named no file.
+
 **1879 tests, 1059 of them KPI, 58 added, against the 1821 main carries** at `e1d8848`, which is
 also this branch's point, 28 hook cases unchanged, build zero warnings. **No audit finding is
 closed, renumbered or reordered: read off the three files, 63 numbered findings, 19 carrying a
