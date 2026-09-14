@@ -349,14 +349,22 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<row r=\"7\"><c r=\"H7\"><v>0</v></c></row>"
                     + "<row r=\"8\">"
                     + (withGreenCoverLabel
-                        ? "<c r=\"C8\" t=\"inlineStr\"><is><t>" + ComputedPlaces.GreenCoverLabel + "</t></is></c>"
+                        // **WRITTEN OUT BY HAND, LEADING SPACE AND ALL**, measured by Bader on
+                        // all seven templates on 14 September. A fixture that wrote the tool's
+                        // own constant into the cell would be a fixture of a sheet the client
+                        // does not have, and it would go green over a lookup that finds nothing.
+                        // xml:space is what Excel writes on a cell whose text has an edge space.
+                        ? "<c r=\"C8\" t=\"inlineStr\"><is><t xml:space=\"preserve\"> Total Green cover (m\u00B2)</t></is></c>"
                         : string.Empty)
                     + "<c r=\"D8\"><f>" + (greenCoverFormula ?? "F8+F10+H10") + "</f><v>0</v></c><c r=\"F8\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
                     + "<row r=\"9\"><c r=\"D9\"><f>D8/H7</f><v>0</v></c><c r=\"H9\"><f>H8/Area</f><v>0</v></c></row>"
                     + "<row r=\"10\"><c r=\"F10\"><v>0</v></c><c r=\"H10\"><v>0</v></c></row>"
                     + "<row r=\"31\">"
                     + (withPercentageLabel
-                        ? "<c r=\"C31\" t=\"inlineStr\"><is><t>" + ComputedPlaces.PercentageLabel + "</t></is></c>"
+                        // Written out by hand too. **This one carries NO leading space**, which
+                        // is what makes the pair worth having: one label with an edge space and
+                        // one without, on the same sheet, through the same lookup.
+                        ? "<c r=\"C31\" t=\"inlineStr\"><is><t>% of Total area covered by canopy</t></is></c>"
                         : string.Empty)
                     + (withPercentageLabel
                         ? "<c r=\"E31\" t=\"str\"><f>IF(Area&lt;1,\" \",F8/Area)</f><v> </v></c>"

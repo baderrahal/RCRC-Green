@@ -1358,168 +1358,156 @@ own formulas and a value written into one would destroy them. A test says so in 
 four, which is what was measured. The report prints the cell the label chose on every run, so a
 template whose label reads anything else is one line rather than a silence.
 
+### A label is what the file holds, and one rule compares every one of them
+
+**MEASURED BY BADER ON ALL SEVEN TEMPLATES, 14 September.** The green cover label carries a
+LEADING SPACE on every one of them, and the client's PDF note writes it without, which is where
+the tool's copy came from:
+
+```
+EXISTING PARKS   C9   ' Total Green cover (m2)'
+FUTURE PARKS     C9   ' Total Green cover (m2)'
+HEALTHCARE       C8   ' Total Green cover (m2)'
+MOSQUES          C8   ' Total Green cover (m2)'
+PARKING          C8   ' Total Green cover (m2)'
+SCHOOLS          C8   ' Total Green cover (m2)'
+STREETS          C9   ' Total Green cover (m2)'
+
+HEALTHCARE, MOSQUES, PARKING, SCHOOLS   C31  '% of Total area covered by canopy'
+STREETS                                 C32  '% of Total area covered by canopy'
+```
+
+The superscript two is what the cells really hold. It is written flat here because this file is
+read as plain text and the constant carries the real character.
+
+**THE LOOKUP WAS ALREADY FINDING IT, AND NOTHING SAID SO.** Measured by taking the trim out: the
+cell's text was trimmed where it was read, so the leading space came off before the comparison and
+the field was landing. Without that trim the lookup came back with `no cell on <Mosques> reads
+Total Green cover (m2)` and five cases reddened. **A rule living in a bare `Trim()` that nothing
+names, covering ONE SIDE of a two sided comparison, is a rule nobody can check**, and a label
+constant carrying a stray space would still have failed with no sign of why.
+
+`LabelText.Same` is that rule now, in one place, asked by every whole label lookup in this tool.
+**Edge whitespace off BOTH sides, without case, and the inside untouched.** A double space between
+words is a different label and must not match, because `LOD /  HARDSCAPE SCHEDULES` really carries
+two, and a comparison that collapsed runs would answer for a name no file holds.
+
+**EVERY WHOLE LABEL THIS TOOL LOOKS UP, CHECKED ONE BY ONE.** Eleven, and only one of them carries
+an edge space:
+
+```
+REF :           already right, no edge space, and it was landing
+Date:           already right, no edge space, and it was landing
+Prepared By:    already right, no edge space, and it was landing, twice over, because the
+                position cell is two columns right of the same label
+Character       already right, no edge space
+Context         already right, no edge space
+Total Green cover (m2)          THE ONE WITH A LEADING SPACE, now spelt as the file holds it
+% of Total area covered by canopy   no edge space, right as it stood
+ID_UID *        the street reference header, already right, and it trimmed one side only
+ES_QUANTITY     the same
+QUANTITY UNIT   the same
+ROAD_WIDTH      the same
+```
+
+All eleven go through the one rule now, so a label that grows a space on the next issue costs
+nothing. **The four street reference columns were the second one sided comparison**, trimming the
+file's heading and comparing it against the name as written, and they were found by looking rather
+than by failing.
+
+**One lookup is a different question and is left alone.** `ScheduleColumns.Holding` asks
+`KpiNames.Holds`, which splits a heading into runs of letters and looks for a word at the front of
+one, so edge whitespace cannot reach it at all. It answers whether a heading HOLDS a word rather
+than whether it IS a label, and it is recorded here as checked and already immune.
+
+**And the fixtures were written out by hand.** The fixture used to write the tool's own constant
+into the cell, which is a fixture of a sheet the client does not have and is exactly how a test
+goes green over a lookup that finds nothing. It writes ` Total Green cover (m2)` with
+`xml:space="preserve"`, the way Excel stores a cell whose text has an edge space, and
+`% of Total area covered by canopy` with none, so one label with a space and one without go
+through the same lookup on the same sheet.
+
 ### Every unit on all three forms, one by one
 
-**A UNIT THAT MATCHES BY LUCK READS THE SAME AS ONE NOBODY CHECKED**, so every field carries the
-unit the form's own unit column prints, the report prints it beside every written value, and a
-test writes the whole table out by hand. Two conversions happen and forty do not.
+**READ OFF THE PAGE BY POSITION RATHER THAN OFF A NOTE, 14 September.** A unit that matches by luck
+reads the same as one nobody checked, so every field carries the unit the form's own unit column
+prints, the report prints it beside every written value, and a test writes the whole table out by
+hand.
+
+**FOUR CONVERSIONS. Every other field is written in the unit it was read in.**
 
 ```
-field                     form asks   source gives              conversion
-Uid, ProjectType          text        a parameter value         none
-ReportDate                a date      today                     none, printed dd/MM/yyyy
-Area                      m2          m2, converted once by     none
-                                      AreaUnits at the Revit
-                                      boundary
-Row            roads      m           m, the reference file's   NONE, and it is checked: the
-                                      ES ROAD_WIDTH             page prints m beside this box
-Length         roads      km          m, the reference file's   DIVIDE BY 1000, for the PDF
-                                      ES_QUANTITY               alone
-TotalAreasToBeGreened     km2         m2, computed above        DIVIDE BY 1,000,000
-PercentageCanopy  parks   %           a ratio                   TIMES 100, and NO percent sign,
-                                                                because the form prints one
-IrrigationWaterDemand     m3 a day    nothing is read yet       nothing is written
-ExistingTrees,            a count     a schedule subtotal       none
-ProposedTrees,
-TotalTrees
-ExistingShrubs,           m2          a phase row's area        none
-ProposedShrubs,
-TotalShrubs,
-GroundCover, Lawn                     ground cover is not printed apart, so nothing is written
+field                             forms          form asks   source gives   conversion
+Row                               Roads          m           m              none
+Length                            Roads          km          m              DIVIDE BY 1000
+Area                              Parks, Open    m2          m2             none
+Total areas to be greened         all three      km2         m2             DIVIDE BY 1,000,000
+Percentage canopy                 Parks          %           a ratio        TIMES 100
+Irrigation water demand           all three      m3/day      l/day          DIVIDE BY 1000
+Existing, Proposed, TOTAL Trees   all three      count       a count        none
+Existing, Proposed, TOTAL Shrubs  all three      m2          m2             none
+Ground Cover, Lawn                all three      m2          m2             none
 ```
+
+**THE FOURTH CONVERSION IS UNREACHABLE AND IS RECORDED ANYWAY.** Nothing reads a water demand off
+any schedule, so the field is blank on every run, and its reason names the unit and the division
+for the day the read is built. The other three are live.
+
+**The three fields carrying no measured quantity have no unit printed beside them on any form**,
+the UID, the project type and the report date, so the tool records what the value IS, text and a
+date, rather than inventing one.
+
+**THE REPORT PRINTS THE UNIT THE FORM ASKS FOR, NEVER THE UNIT THE SOURCE GAVE.** They differ on
+four fields, and printing the source's would make a converted value look unconverted. Checked at
+the line: the fill is handed `wanted.Unit` off the form's own field, so it was already the form's,
+and a test pins it now. 330.66 metres lands as 0.33066 with `km` beside it, and the road width in
+the box above reads `m` and converts nothing, so the two are told apart by their unit rather than
+by which number looks bigger.
 
 **The road length is metres into a box printed km.** The workbook's own Streets Total Length (m)
-cell takes the metres unchanged, measured on ST-100130 reading 174, **so the division is for the
-PDF alone and the Excel is left exactly as it was.** A row in any unit but m never reaches the
+cell takes the metres unchanged, measured on ST-100130 reading 174, so the division is for the PDF
+alone and the Excel is left exactly as it was. A row in any unit but m never reaches the
 conversion: `StreetReferenceFile.For` already refuses it, naming the plot, the row and what the
-unit said, and the PDF field is left blank carrying that reason. Checked rather than assumed.
+unit said, and the PDF field is left blank carrying that reason.
 
-**The percentage is a ratio times a hundred with no sign**, checked against the client's own
-filled ANH-006-NP-100002: an area of 771, 0.000550 square kilometres greened and a percentage of
-71. Eleven trees eight metres across are 550 square metres, which is 0.00055 square kilometres
-exactly as their form has it, and 550 over 771 is 0.7134, which their form prints as 71.
+**The percentage is a ratio times a hundred with no sign**, checked against the client's own filled
+ANH-006-NP-100002: an area of 771, 0.000550 square kilometres greened and a percentage of 71.
 
 **The Roads form's Total areas to be greened is filled from ITS OWN note**, which names the canopy
 cell where the other two name Total Green cover. Each form gets what its own file says, the working
 says which of the two the number is, and which the client means stays an open question.
 
-### The form is checked on every run and a form that has moved is left alone
+### The units of the fields nobody fills, on record
 
-**THE TOOL MUST NOT TRUST THE FIELD NAMES.** On the open spaces form, which five of the nine
-prefixes use, the UID is a field called `undefined_4.1`, the lawn area is `0_2`, the ground
-cover is `0` and the total trees is `Proposed Trees.1`. Bader has asked the client to fix it and
-they have not.
-
-So `PdfFormCheck` runs before a byte is written, on every plot, over the field names AND the
-note sitting in each. **Where either has moved it writes NOTHING and names what moved**, with
-what the file holds beside what the tool knows. Writing a lawn area into a box called `0_2` that
-has become something else is exactly the silent wrong number this tool exists to prevent.
-
-Only the fields this tool FILLS are checked. The client's own sidewalks and toilets can move
-freely, because nothing here writes into them.
-
-**Which file in the browsed folder is which form is decided by the fields it holds and never by
-its name**, through the same check, so a renamed form still works and a file named like a form
-and shaped like something else does not.
-
-### Fill the form, never rebuild the page, and that is a measurement
-
-**PDFsharp 6.2.2 was evaluated and rejected.** It is MIT, it ships netstandard2.0 so net48 can
-consume it, and it carries `PdfAcroForm`, `PdfTextField` and `PdfCheckBoxField`. Opened on the
-client's own Parks form it read all 42 fields and then threw on the first one touched:
+**A FIELD WITH NO NOTE IS NOT FILLED** and that is unchanged. These are recorded for the day the
+client annotates one, so nobody has to measure the page again, and they are read off the page by
+position like every unit above.
 
 ```
-No appropriate font found for family name 'Courier New'.
-Implement IFontResolver and assign to 'GlobalFontSettings.FontResolver'
+Roads   Sidewalk, Median, Sidemedian, Empty areas   NO UNIT PRINTED AT ALL
+        Water tanks                                 nr
+
+Parks   the two people counts                       nr
+        Cycling paths, Pedestrian paths             lm
+        Toilets, Kiosk, Play grounds, Fitness area,
+        Muga sport field, Running track             Area (m2)
+        Water tanks                                 nr
+
+Open    Length, Cycling paths, Pedestrian paths,
+        Maintenance road                            km
+        Toilets, Kiosk, Exhibition spaces,
+        parking provided                            nr
+        Seating areas, play areas                   m2
+        Bridges, Catwalk                            Lenght (m)
+        Water tanks                                 nr
 ```
 
-because setting a value makes it REGENERATE the field's appearance stream. **Regenerating the
-appearance is redrawing what the client drew**, in whatever font the machine resolves, which is
-the one thing this round forbids. Every other library found is commercial and per seat: iText 7
-is AGPL or paid, and IronPDF, Aspose, Syncfusion, DevExpress, Apryse and DynamicPDF all require
-a paid licence, which the twenty person rule rules out.
-
-**So there is no package, and the file work is the workbook's own rule applied to a PDF.**
-`PdfFormFile` copies the client's bytes whole and appends an incremental update: the changed
-field objects, a cross reference section and a trailer pointing back at the one the file already
-had. **Every byte of the client's file is still there, in order, untouched by construction**, and
-a test asserts the source bytes are the first bytes of the answer.
-
-**It works because these files hold no object streams.** Measured on all three: zero `/ObjStm`,
-no encryption, so every field dictionary is a plain top level object. A form that arrives with
-object streams is refused by name rather than half written.
-
-**The stale appearance is dropped and NeedAppearances is set**, so the viewer draws the new
-value off the field's own default appearance, which the client set. Keeping the old appearance
-beside a new value shows the client's note on screen over the number underneath it, and a stale
-word that looks like an answer is the worst thing this tool can put in a file.
-
-**A field is read by its FULL name, built through the parent chain**, because on the open spaces
-form the lawn area's own title is `0_2` and the total trees is titled `1` under a parent titled
-`Proposed Trees`. A title on its own names nothing.
-
-Measured on the client's three files: Parks 2,121,502 bytes in and 2,123,241 out, open spaces
-937,743 and 939,292, roads 1,926,881 and 1,928,708. Every field count unchanged, the Reset
-button and the tick boxes untouched, and the written values read back through a second reader.
-
-**AFTER WRITING, THE FIELDS ARE READ BACK OFF THE OUTPUT**, and the report prints what landed
-rather than what was sent, the same rule every written cell of the workbook already follows.
-
-### The shrubs split by phase, which the workbook has never wanted
-
-The PDF wants Existing Shrubs and Proposed Shrubs apart where the main sheet's F11 is one
-number. **The phase rows are already read**: a group prints one subtotal per phase and then the
-group total, which is the shape the 0928 run measured, and `GroupSubtotal.Phases` has carried
-them since.
-
-**IT IS NOT A SECOND RULE BESIDE THE ONE FOR TREES.** `ShrubsByPhase` sorts each phase row by
-`CountedGroups.SheetFor`, the same method that decides which tree list a species goes on, so
-Street Design counts as Proposed on STREETS and is left out everywhere else without a word of
-that rule being written twice. FM-05's shrubs print Proposed 361 and Street Design 459 with a
-group total of 820: on MOSQUES the proposed shrubs are 361 and on STREETS they are 820.
-
-**TOTAL SHRUBS IS EXISTING PLUS PROPOSED, on all three forms, and never the group total row**,
-which holds every phase the schedule printed.
-
-A group that printed no phase row at all splits into nothing and says so, because its one row is
-the whole group and nothing on it says which phase that is. A plot whose schedule printed no
-shrubs group leaves all three fields blank and names it: **an absence is not a nought.**
-
-### Four fields are left blank on every run, each named, each a question for Bader
-
-- **Ground Cover.** The schedule prints SHRUBS & GROUND COVER as one group over one set of rows,
-  on every scan this project has taken. **Nothing prints ground cover on its own, so nothing is
-  derived**: splitting one printed number in two would be a number nobody measured
-- **Total areas to be greened** and **Percentage Total area covered by canopy.** Both are cells
-  the WORKBOOK computes, and the patcher drops the cached result of every formula cell on
-  purpose so Excel recalculates rather than opening on stale zeros. **So the number is not in
-  the file this run wrote**, and reading it back reads an empty cell. Computing it here would be
-  working the client's own formula out again, which this tool never does
-- **Irrigation water demand.** The shrubs and lawn schedule prints L/DAY as its last column and
-  nothing in this tool has ever read it. There is no number to write and adding that read is a
-  round of its own
-
-**A PLOT WHOSE WORKBOOK WAS NOT WRITTEN STILL GETS ITS PDF**, Bader's decision, with the fields
-that read the workbook named as not written and everything that comes from Revit still going in.
-
-### Where the forms live
-
-**A FOURTH BROWSE BUTTON**, beside the templates folder, the output root and the street
-reference file, remembered in `kpi-forms-folder.txt` beside the installed assembly through the
-same `RememberedFolder` the other three use. Bader's decision. The forms are the client's
-documents, so they are browsed for rather than shipped.
-
-**No folder set is a NOTE and never a refusal.** The workbooks are written, the PDFs are not,
-and the pane says so before the press rather than 102 times afterwards.
-
-**Which file is which form is decided once per press** and held, because deciding it means
-opening and scanning a PDF and 78 street plots would otherwise open one file 78 times. Cleared
-at the start of every press, so a corrected form dropped into the folder between two presses is
-seen on the second.
-
-**NO CLIENT PDF ENTERS THIS REPOSITORY.** The forms carry the client's branding, the project
-name, the consultant and a real contract reference, and this repository is public, so `*.pdf`
-is ignored beside `*.xlsx` and every test builds its own small AcroForm in the temp folder.
+**CYCLING PATHS AND PEDESTRIAN PATHS ARE lm ON THE PARKS FORM AND km ON THE OPEN SPACES FORM.** The
+same row name, two units, on two forms this one tool fills. Nothing writes them today so it costs
+nothing now, and it would cost a thousandfold error in a client document the day somebody adds a
+note to one of them and reads the other form's unit. **The Bridges and Catwalk row spells Lenght**,
+which is the client's spelling and is written here as it is, the same rule the model's
+PRX_Furniture Lenght already follows.
 
 ## Matching a species is plain or it is nothing
 

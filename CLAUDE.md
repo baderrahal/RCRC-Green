@@ -78,6 +78,14 @@ cell 0 and the count off the last number, then a named row off cell 0, then a sp
 cell 0. The first column is the image and an existing species prints with none, so every one of
 them was invisible on a plot whose rows all carry photos. The two rules files point here.
 
+## A label is what the file holds, not what a note calls it
+
+A cell found by its label is found by the text THAT CELL carries. All seven KPI templates hold
+` Total Green cover (m²)` with a leading space and the client's note writes it without, which is
+where the tool's copy came from. Edge whitespace comes off both sides of every whole label
+comparison, through one rule, and **the inside is never touched**, because `LOD /  HARDSCAPE
+SCHEDULES` really carries two spaces. The KPI rules file holds the measurement.
+
 ## Project facts
 
 These come from the team and from real models. They are not guesses.

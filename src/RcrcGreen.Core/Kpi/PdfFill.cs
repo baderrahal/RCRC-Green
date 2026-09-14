@@ -210,9 +210,17 @@ namespace RcrcGreen.Core.Kpi
         /// **The tool has never read a water demand column off any schedule.** The shrubs and
         /// lawn schedule prints L/DAY as its last column and nothing reads it, so there is no
         /// number to write. Adding that read is a round of its own.
+        ///
+        /// **The unit and the conversion are recorded here for the day it is.** The form asks
+        /// m³/day and the schedule prints litres a day, measured on 14 September, so the read
+        /// that lands this number divides by a thousand. It is the fourth conversion on these
+        /// forms and the one nothing reaches, and the reason says so where a person sees it
+        /// rather than in a constant nobody prints.
         /// </summary>
         public const string WaterDemandIsNotReadYet =
-            "no water demand is read off any schedule yet, so there is nothing to write";
+            "no water demand is read off any schedule yet, so there is nothing to write. The form "
+            + "asks m³/day and the schedule prints litres a day, so the read that lands this "
+            + "number divides by 1000";
 
         public const string NoRegionChosen =
             "no filled region was chosen for this plot, so it has no intervention area";
