@@ -6,6 +6,12 @@ Newest entry first.
 
 ## 2026-09-14, eightieth pass. Five faults off the 18:15 run
 
+**Pull request 132, merged into main as `cc85143`.** The runner ran 28 hook cases and 1916 tests
+against the pull request head `f8e6644`, 0 failed and 0 skipped. The merge went through the API
+with the title and the message both passed on the call, the commit came back off main carrying
+neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte
+the branch head, checked with a diff that named no file.
+
 **1916 tests, 1096 of them KPI, 14 added, against the 1902 main carries** at `d266374`, which is
 also this branch's point, 28 hook cases unchanged, build zero warnings. **No audit finding is
 closed, renumbered or reordered: read off the three files, 63 numbered findings, 19 carrying a
