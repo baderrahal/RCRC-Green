@@ -123,6 +123,10 @@ Fourteen call sites of `PlotWorkbookPath.For` gained the template argument, each
 its own component really means rather than a convenient one, and the GOVERMENT BUILDING case
 passes null because no template placed that plot. Nothing else moved.
 
+### The merge
+
+Pull request 121, merged into main as `de49858`. **The runner ran 28 hook cases and 1729 tests against the pull request head, 0 failed and 0 skipped. Locally the same 28 and 1729 ran at `de49858`, 909 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
+
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run is what shows the five park
 plots writing workbooks and what names the four #DIV/0! cells by sheet and by cell.
 
