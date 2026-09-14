@@ -58,6 +58,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         public const string OutOfScope = "RCRC_OUT OF SCOPE (PRESENTATION)";
 
         /// <summary>
+        /// A type no model has shown, for the pair the client's note does NOT settle.
+        ///
+        /// **Since Bader's decision of 14 September a pair holding the note's type chooses
+        /// itself**, so a test that wants the old refusal has to build a pair without it. This
+        /// is not a name from a model and is not a rule, it is a stand in for whatever a future
+        /// model calls its other regions.
+        /// </summary>
+        public const string NotTheNote = "RCRC_SOMETHING NOBODY HAS MEASURED";
+
+        /// <summary>
         /// The groups a MOSQUES checklist counts, which are the two its tree list sheets are
         /// named for. A group the workbook has no sheet for, Street Design on FM-05, is left out.
         /// </summary>
@@ -227,7 +237,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] shrubsAndLawnSchedules = null,
             ScannedSchedule[] printedSchedules = null,
             int softscapeTotalRow = 0,
-            PrintedGroup[] printedGroups = null)
+            PrintedGroup[] printedGroups = null,
+            string uid2 = null)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
 
@@ -235,7 +246,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             // to take held[0] whatever it held and however many there were, which is not what
             // the running tool does, so every test built on it was built on a choice that
             // could not happen.
-            string chosen = RegionChoice.For(held, chosenRegion);
+            RegionPick chosen = RegionChoice.Pick(held, chosenRegion);
 
             // A plot read has one schedule of each kind unless a test names otherwise, and the
             // names are the model's own shape.
@@ -257,7 +268,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 rowsPassedOver,
                 printedSchedules,
                 softscapeTotalRow,
-                printedGroups);
+                printedGroups,
+                uid2);
         }
 
         public static string SoftscapeName(string plot)

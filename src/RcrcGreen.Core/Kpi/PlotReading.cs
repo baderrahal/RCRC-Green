@@ -664,7 +664,7 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<GroupSubtotal> subtotals,
             IEnumerable<RegionArea> regions,
             double readSeconds,
-            string chosenRegionTypeName = null,
+            RegionPick chosenRegion = null,
             IEnumerable<string> notes = null,
             IEnumerable<string> readRefusals = null,
             bool softscapeTotalRead = false,
@@ -713,7 +713,7 @@ namespace RcrcGreen.Core.Kpi
             }
 
             Regions = Held(regions);
-            ChosenRegionTypeName = chosenRegionTypeName ?? string.Empty;
+            ChosenRegionPick = chosenRegion ?? RegionPick.Nothing;
             Notes = Held(notes);
         }
 
@@ -742,9 +742,15 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public PlotReading WithChosenRegion(string typeName)
         {
+            // **IT USED TO DROP Uid2, AND THE UID2 IS WHAT NAMES THE FOLDER AND THE FILE.** The
+            // argument sits last and defaults to null, so a reading carried through a person's
+            // pick came back with none and was refused with no PRX_Plot_UID2 was read off this
+            // plot's first sheet, which is a sentence about the model and was about this method.
+            // A default that reads as a deliberate empty is how a whole link in a chain goes
+            // missing without a word, which this file already carries a rule about.
             return new PlotReading(PlotId, Component, Reference, SoftscapeSchedules, Species, ShrubsAndLawnSchedules,
-                Subtotals, Regions, ReadSeconds, typeName, Notes, ReadRefusals, SoftscapeTotalRead, SoftscapeTotal,
-                SoftscapeRowsPassedOver, PrintedSchedules, SoftscapeTotalRow, PrintedGroups);
+                Subtotals, Regions, ReadSeconds, RegionPick.ByHand(typeName), Notes, ReadRefusals, SoftscapeTotalRead,
+                SoftscapeTotal, SoftscapeRowsPassedOver, PrintedSchedules, SoftscapeTotalRow, PrintedGroups, Uid2);
         }
 
         public string PlotId { get; }
@@ -805,7 +811,16 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public IReadOnlyList<RegionArea> Regions { get; }
 
-        public string ChosenRegionTypeName { get; }
+        /// <summary>
+        /// The region this plot's area came off and HOW it was chosen, as one record, so the
+        /// type and the route cannot drift apart. The route is set where the choice is made.
+        /// </summary>
+        public RegionPick ChosenRegionPick { get; }
+
+        public string ChosenRegionTypeName
+        {
+            get { return ChosenRegionPick.TypeName; }
+        }
 
         /// <summary>
         /// How long this plot took to read, its schedules and its filled regions together.

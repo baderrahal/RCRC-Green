@@ -4,6 +4,137 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy fifth pass. The client's note decides a tie, and a reason reaches the file
+
+**1763 tests, 943 of them KPI, 16 added, against the 1747 main carries** at the branch point
+`9fbcea4`, measured by running the suite at that commit, 28 hook cases unchanged, build zero
+warnings. **No audit finding is closed, renumbered or reordered: read off the three files, 63
+numbered findings, 19 carrying a FIXED mark, 44 open.**
+
+### What the 14:29 run settled, and both are closed by a count
+
+**THE NOTE HOLDS.** NG05, 156 plots, 102 workbooks:
+
+```
+of 156 plots wanting an area
+  98   took it off RCRC_OUT OF SCOPE (PRESENTATION), the type the client's note names
+   0   took it off a type the note does not name
+  58   chose no region at all
+```
+
+**My 9 September reading of NS-19 and NS-06 was wrong.** They carry BOTH regions and one column
+was read. The open question that has been in this log since the seventy third pass is closed,
+and it is closed by the region count that pass added for exactly this, which is a measurement
+rather than an argument.
+
+**NO #DIV/0! ANYWHERE IN THE PRESS**, so none of them divides by a cell this run wrote either.
+The two the 09:18 run left unexplained are not in this model's output. That question is closed
+too, by the count the seventy fourth pass added. **Both questions were answered by the two lines
+put at the top of the report a round before**, which is the whole case for having put them there.
+
+### 1. The note's type decides when two regions hold an area
+
+**51 of 78 street plots wrote nothing on that run**, every one because two regions held an area
+and the tool asked which, and every one of the 51 offered the note's type as one of its two. 51
+questions, 51 clicks, and a press again after each one.
+
+**Bader's decision, 14 September.** `RegionChoice.Pick` in order: a person's pick wins, one
+region holding an area answers itself whatever it is called, and more than one with the note's
+type among them takes the note's type. **The question stays where the note's type is not among
+them**, and so does the note's type held by two at once, which no model has shown and which the
+note cannot separate either. The unchosen reason says which of the two it was, because they need
+different answers from a person.
+
+**RCRC_CADASTRAL LIMIT is written nowhere in the tool.** The type name lives in
+`RegionChoice.TheNoteNames` and in nothing else. The test fixture carries a third name,
+`RCRC_SOMETHING NOBODY HAS MEASURED`, because a test that wants the old refusal now has to build
+a pair without the note's type in it, and four existing cases were moved onto it by hand rather
+than deleted.
+
+**`WhyUnchosen` ASKS `Pick` RATHER THAN DECIDING AGAIN**, and that was not optional. Two rules
+for one question is the fault this repo keeps paying for and it bit inside the same hour: the
+first version left `WhyUnchosen` deciding for itself and `APairTheNoteSettlesHasNoUnchosenReason`
+went red, which is a pick that chooses beside a reason still printing a question.
+
+**THE REPORT SAYS WHO CHOSE.** `RegionPick` carries the type and the route as ONE record, set
+where the choice is made, and `PlotReading.ChosenRegionPick` holds it. One new column in the
+region table, `how it was chosen`, four values: nothing chosen, chosen by hand on the pane, the
+only region holding an area, and more than one held an area and this is the type the client's
+note names. **A count of picks the note made and a count a person made are two different facts
+about a run**, and a column printing only the type name says neither.
+
+**And the pick used to DROP the plot's UID2.** `PlotReading.WithChosenRegion` rebuilt the
+reading with every argument but the last, which defaults to null, so a plot answered after a
+refusal came back with no `PRX_Plot_UID2` and was refused a second time with `no PRX_Plot_UID2
+was read off this plot's first sheet`. **That is a sentence about the model and it was about
+that method.** Found while reading the pick path for this item, fixed, and pinned by a test that
+also builds the path off the carried value. A default that reads as a deliberate empty is how a
+whole link in a chain goes missing without a word, which this tool has paid for once already
+with the three the team types.
+
+### 2. A reason that points at a screen is not a reason
+
+The report said this on **102 rows of 7,083 lines**, and the reason itself appeared NOWHERE in
+the file.
+
+**SEVEN PLACES PRODUCE A REFUSAL THAT CAN REACH THE FILE. TWO WROTE A POINTER**, and both
+through one method:
+
+```
+the plot row, PlotOutcome.Why                        POINTED, fixed
+the template row, CreateWords.SomePlotsWroteNothing  POINTED through the same method, fixed
+a plot no route placed, TemplateSplit's own Why      already right
+a plot whose path refused, PlotWorkbookPath.Why      already right, the EP-05 line
+a template whose split refused, TemplateSplit        already right
+the patch's own refusal                              already right, said in full both ways
+the glance's streets area, RunAtAGlance              already right, it asks the method above
+```
+
+So five of the seven were already right and the two that were not were one method seen twice.
+`CreateWords.WhyNothingWasWritten` takes where the answer is going as its only new argument:
+**the file gets every reason written out and the PANE keeps the count and the pointer**, where
+the reasons really are in red directly above the button and where the 0928 run printed the same
+four lines twice on one screen. One method, so the two cannot come apart anywhere else.
+
+**Where a refusal genuinely has several reasons the file holds ALL of them**, with a test over a
+run carrying two, because a report short of the second reads exactly like a plot that had one.
+
+**NOTHING WENT RED WHEN I MADE THIS CHANGE**, which is the finding inside the finding: no test
+anywhere pinned what the file carried. `ReasonInTheFileTests` is seven cases now, and one of
+them pins the pane's pointer so the fix cannot travel too far the other way.
+
+### The three break watches, and what each reddened
+
+**Break 1, the note stops settling a pair.** **7 red**, led by
+`TwoRegionsHoldingAnAreaTakeTheOneTheNoteNames` with `Expected: "RCRC_OUT OF SCOPE
+(PRESENTATION)" / Actual: ""`, and reaching the reconciliation and the streets cases behind it.
+
+**Break 2, the file writes a pointer again.** **3 red**,
+`ThePlotsOwnReasonIsWrittenIntoTheFileRatherThanPointedAt` failing on
+`Assert.DoesNotContain` finding `shown in full above the Create button`.
+
+**Break 3, the pick drops the UID2 again.** **1 red**, `AChoiceKeepsThePlotsUid2...` with
+`Expected: "ANH-007-MO-100019" / Actual: ""`.
+
+All three files were copied out first and `diff -q` against the copy after restoring.
+
+### OPEN, and it is Bader's call because it is not this task's file
+
+**`CLAUDE.md` line 209 still carries the corrected claim**, that NS-19 and NS-06 hold their area
+on cadastral and that the type name cannot decide it. It is the repo wide file rather than KPI
+territory, so this round did not touch it. `.claude/rules/kpi-rules.md` and `RegionChoice` both
+carry the count that corrects it. **Two records of one fact, knowingly left standing for one
+round**, which is the shape this repo pays for, so it wants a round of its own or a word from
+Bader.
+
+### Still open, unchanged by this round
+
+The 44 audit findings. A row written into an empty one carrying no family, no genus and no
+native flag. A matched species whose height or diameter in Revit differs from the client's row.
+The GOVERMENT BUILDING folder. Whether rows edited in the pane should outlive it.
+
+---
+
 ## 2026-09-14, seventy fourth pass. Three lines at the top, so a run can be checked at a glance
 
 **1747 tests, 927 of them KPI, 15 added, against the 1732 main carries** at the branch point

@@ -257,9 +257,9 @@ It is STREETS alone because STREETS is the template whose cell changed.
 top so the two counts the team asks for are the first two rows. **RCRC_CADASTRAL LIMIT is
 deliberately NOT written in beside it**: a rule naming two types would count a model's third
 type under nothing, and this tool has paid for a name standing in for a fact before. A plot that
-chose no region is counted apart from every type, because two regions holding an area is a
-question waiting on a person and none holding one is a plot with nothing to read, and neither is
-a disagreement with the note.
+chose no region is counted apart from every type, because none holding one is a plot with
+nothing to read and more than one holding one is a question the note could not settle, and
+neither is a disagreement with the note.
 
 **THE DIVISION'S KIND AND ITS DIVISOR TRAVEL ON THE FINDING.** `FormulaAtRisk.IsDivideByZero`
 and `DivisorThisRunWrote` are properties set where the risk is built. **A signal that travels in
@@ -276,30 +276,114 @@ nobody filled in. Three is how many questions there are rather than how many of 
 run found, and a constant sitting where a count goes is a number that reads as a measurement.
 A test says so and checks the heading below it still counts.
 
-## The client's note names one region type and at least two street plots disagree
+## The client's note holds, and it decides where two regions hold an area
 
-Their note for the area cell names `RCRC_OUT OF SCOPE (PRESENTATION)`. **NOTHING CHOOSES ON IT.**
+**THE 14:29 RUN SETTLED IT BY COUNTING**, NG05, 156 plots, 102 workbooks:
 
-Measured on 9 September: DM-11, DM-12 and DM-13 carry their area on OUT OF SCOPE with cadastral
-at 0, and **NS-19 and NS-06 carry it the other way round, on CADASTRAL LIMIT with out of scope
-at 0. NS plots are street plots.** So the note is right about some plots and wrong about others,
-which is the rule this file already carries: which of a plot's two regions holds the area varies
-by plot and the type name cannot decide it.
+```
+of 156 plots wanting an area
+  98   took it off RCRC_OUT OF SCOPE (PRESENTATION), the type the note names
+   0   took it off a type the note does not name
+  58   chose no region at all
+```
 
-The rule is unchanged. Narrow to the plot's own regions, take the one holding a non-zero area,
-and where more than one does, ask. `RegionChoice.TheNoteNames` is the note's type held as data
-and read by nothing that chooses.
+**So the note holds on every plot that chose.** The 9 September reading that NS-19 and NS-06
+carry their area on CADASTRAL LIMIT **was wrong**: those plots carry BOTH, and one column was
+read. That open question is closed, by a count rather than by an argument, which is what the
+run's own region table was added for.
 
-**THE REPORT SAYS, PER PLOT, WHICH TYPE THE AREA CAME OFF AND WHETHER IT WAS THE ONE THE NOTE
-NAMES.** One column, `the type the note names` or `NOT the type the note names` or `nothing
-chosen`, beside the plot's real answer. A run over 78 street plots then tells the team whether
-the note holds, **which is a measurement rather than an argument**, and it is an open question in
-`steps/log-kpi.md` until such a run exists.
+### Bader's decision, 14 September: where more than one holds an area, take the note's type
 
-**A FIXTURE WHOSE NAMES ARE NOT THE MODEL'S CANNOT CATCH A RULE ABOUT NAMES.** `RegionChoiceTests`
-read `CADASTRAL LIMIT` and `OUT OF SCOPE (PRESENTATION)` without the `RCRC_` prefix the model
-really carries, so a break that settled two regions on the type the note names left all eight of
-its cases GREEN. They are the model's own names now and two cases go red against that break.
+**51 of 78 street plots wrote nothing on that run, every one of them because two regions held an
+area and the tool asked which.** 51 questions on the pane, 51 clicks, and a run that has to be
+pressed again after each one. Every one of the 51 offered the note's type as one of its two:
+
+```
+NS-02  CADASTRAL LIMIT 3982   OUT OF SCOPE 4295
+NS-03  CADASTRAL LIMIT 6750   OUT OF SCOPE 7648
+NS-04  OUT OF SCOPE 12289     CADASTRAL LIMIT 10754
+```
+
+`RegionChoice.Pick` is the whole rule, in order. **A person's pick wins**, because it is an
+answer and everything below is the tool working one out. **One region holding an area answers
+itself**, whatever it is called, and the note decides nothing there. **More than one, with the
+note's type among them, takes the note's type.**
+
+**THE QUESTION STAYS WHERE THE NOTE'S TYPE IS NOT AMONG THEM**, because that is still something
+the data cannot settle. So does the note's type held by TWO of them at once, which no model has
+shown and which the note cannot separate either, and the unchosen reason says which of the two
+cases it was because they need different answers from a person.
+
+**THE TYPE NAME LIVES IN ONE PLACE, `RegionChoice.TheNoteNames`, and nothing else holds a hard
+coded type. RCRC_CADASTRAL LIMIT is written nowhere in the tool.** The test fixture carries a
+third name, `RCRC_SOMETHING NOBODY HAS MEASURED`, for the pair the note does not settle, because
+a test that wants the old refusal has to build a pair without the note's type in it.
+
+**`WhyUnchosen` ASKS `Pick` RATHER THAN DECIDING AGAIN.** Two rules for one question is the
+fault this repo keeps paying for and it would have bitten here immediately: the pick would
+choose and the reason would still print a question, which is a report at war with the workbook
+beside it.
+
+### The report says WHO chose, and a route is not a type name
+
+`RegionPick` carries the type and the route as one record, set where the choice is made, and
+`PlotReading.ChosenRegionPick` holds it so the two cannot drift. Four routes, one column in the
+region table, `how it was chosen`:
+
+```
+nothing chosen
+chosen by hand on the pane
+the only region holding an area
+more than one held an area and this is the type the client's note names
+```
+
+**A count of picks the note made and a count a person made are two different facts about a
+run**, and a column printing only the type name says neither. The column beside it still says
+whether the type was the one the note names, which is what the count above was read off.
+
+**THE PICK USED TO DROP THE PLOT'S UID2.** `PlotReading.WithChosenRegion` rebuilt the reading
+with every argument but the last, which defaults to null, so a plot answered after a refusal
+came back with no `PRX_Plot_UID2` and was refused a second time with `no PRX_Plot_UID2 was read
+off this plot's first sheet`. That is a sentence about the model and it was about that method.
+**A default that reads as a deliberate empty is how a whole link in a chain goes missing without
+a word**, which this file already carries once, about the three the team types.
+
+## A reason that points at a screen is not a reason
+
+The 14:29 report said this on **102 rows of 7,083 lines**:
+
+```
+NS-02 | STREETS | STREETS | ANH-007-ST-100050 |
+  Nothing was written. 1 reason, shown in full above the Create button.
+```
+
+The plot, the template, the folder and the UID2 were all there, and then it pointed at a pane
+nobody has open. **The reason itself appeared NOWHERE in the file.** Two lines down a plot
+refused by its own path read `no PRX_Plot_UID2 was read off this plot's first sheet, and the
+folder and the file are both named after it`, which is what a record looks like.
+
+**A REPORT THAT CANNOT BE READ WITHOUT THE PANE BESIDE IT IS NOT A RECORD.**
+
+**Seven places produce a refusal that can reach the file. TWO wrote a pointer**, and both
+through one method, `CreateWords.WhyNothingWasWritten`:
+
+```
+the plot row, PlotOutcome.Why                        POINTED, fixed
+the template row, CreateWords.SomePlotsWroteNothing  POINTED through the same method, fixed
+a plot no route placed, TemplateSplit's own Why      already right
+a plot whose path refused, PlotWorkbookPath.Why      already right, the EP-05 line
+a template whose split refused, TemplateSplit        already right
+the patch's own refusal                              already right, said in full both ways
+the glance's streets area, RunAtAGlance              already right, it asks the method above
+```
+
+**The count and the pointer belong on the PANE and nowhere else**, where the reasons really are
+in red directly above the button, and the 0928 run printed the same four lines twice on one
+screen. `CreateWords.Wrote` still says it. **One method answers both**, with where the answer
+goes as its only argument, so the two cannot come apart anywhere else.
+
+**Where a refusal genuinely has several reasons the file holds ALL of them.** A report short of
+the second reads exactly like a plot that had one.
 
 ## Read every rule off the template, never off the notes copy
 
@@ -589,7 +673,7 @@ existing and 13 proposed on DM-12, and merging on the name would put 14 in one t
 MM-04 both read 12182.05561411 in the 00 link. Either they are the same size or one region is
 counted twice, and a double count nobody sees is the worst thing this tool can produce, so a
 person confirms before anything is written. More than one region holding an area on one plot
-refuses the same way, because which of a plot's two regions carries it varies by plot.
+refuses the same way **where the client's note names none of them**, under the section above.
 
 ## Every plot chosen is accounted for on the way out
 
@@ -1642,6 +1726,12 @@ holding a FORMULA is never judged either**: the patcher drops every cached value
 so a formula cell in the output holds no number at all and reading that absence as a nought
 would call every computed divisor an error.
 
+**THE 14:29 RUN ANSWERED IT AND THE ANSWER IS NONE.** 156 plots, 102 workbooks, and the
+formula check found **no #DIV/0! anywhere in the press**, so none of them divides by a cell this
+run wrote either. The two the 09:18 run left unexplained are not in this model's output and the
+open question is closed by that count. The check stays, because it is what answers the same
+question on the next run without anybody opening Excel.
+
 **IT IS REPORTED AND NEVER REFUSED ON, DELIBERATELY.** A plot with no trees really has no
 average, so the divide by zero is the client's own arithmetic over a real number, and deleting a
 correct workbook over it is worse than printing a line. The reason says whether THIS RUN wrote
@@ -2199,8 +2289,9 @@ here. What each one turned out to be:
 
 1. Is PRX_Component the component the workbook wants. **Yes**, and it is the asset type
 2. Which of the four plot parameters is the workbook's Ref. **PRX_Plot_ID**
-3. Which filled region type is the plot's intervention area. **Neither. It varies by plot**,
-   so the question was wrongly put and no type name can answer it
+3. Which filled region type is the plot's intervention area. **The one the client's note
+   names**, settled by the 14:29 run, 98 plots off it and none off anything else. One region
+   holding an area still answers itself whatever it is called, so the type decides only a tie
 4. Are the two group headings in SHRUBS & LAWN the same on every plot. **STILL OPEN**
 5. Does an Existing group ever appear in SOFTSCAPE SCHEDULE. **Yes**, DM-12 has one
 

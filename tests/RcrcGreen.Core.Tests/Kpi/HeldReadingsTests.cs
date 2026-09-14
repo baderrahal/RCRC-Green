@@ -29,7 +29,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 regions: new[]
                 {
                     CreateFixture.Region(CreateFixture.Cadastral, 900.0),
-                    CreateFixture.Region(CreateFixture.OutOfScope, 250.0)
+                    CreateFixture.Region(CreateFixture.NotTheNote, 250.0)
                 },
                 chosenRegion: string.Empty,
                 readSeconds: 15.2);
@@ -59,6 +59,58 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(15.2, chosen.ReadSeconds);
             Assert.Single(chosen.Species);
             Assert.Equal(new[] { "NS-19-(600) SOFTSCAPE SCHEDULE" }, chosen.SoftscapeSchedules);
+        }
+
+        /// <summary>
+        /// **THE PICK USED TO DROP THE PLOT'S UID2, AND THE UID2 IS WHAT NAMES THE FOLDER AND
+        /// THE FILE.** `WithChosenRegion` rebuilt the reading with every argument but the last,
+        /// which defaults to null, so a plot answered after a refusal came back with none and was
+        /// refused a second time with `no PRX_Plot_UID2 was read off this plot's first sheet`.
+        /// That is a sentence about the model and it was about this method.
+        ///
+        /// A default that reads as a deliberate empty is how a whole link in a chain goes
+        /// missing without a word, which this tool has already paid for once with the three the
+        /// team types.
+        /// </summary>
+        [Fact]
+        public void AChoiceKeepsThePlotsUid2SoTheFolderAndTheFileStillHaveANameTests()
+        {
+            PlotReading reading = CreateFixture.Plot(
+                "NS-19",
+                regions: new[]
+                {
+                    CreateFixture.Region(CreateFixture.Cadastral, 900.0),
+                    CreateFixture.Region(CreateFixture.NotTheNote, 250.0)
+                },
+                chosenRegion: string.Empty,
+                uid2: "ANH-007-MO-100019");
+
+            Assert.Equal("ANH-007-MO-100019", reading.Uid2);
+
+            PlotReading chosen = Assert.Single(
+                HeldReadings.Applied(new[] { reading }, plot => CreateFixture.Cadastral));
+
+            Assert.Equal("ANH-007-MO-100019", chosen.Uid2);
+
+            // And the path built from it is usable, which is the thing the plot was refused on.
+            PlotWorkbookPath where = PlotWorkbookPath.For(
+                @"C:\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", chosen.Uid2);
+
+            Assert.True(where.Ok, where.Why);
+        }
+
+        /// <summary>
+        /// A person's pick is recorded as a person's pick, so the report can tell it from the
+        /// one the client's note made.
+        /// </summary>
+        [Fact]
+        public void AChoiceIsRecordedAsChosenByHand()
+        {
+            PlotReading chosen = Assert.Single(
+                HeldReadings.Applied(new[] { TwoRegions() }, plot => CreateFixture.Cadastral));
+
+            Assert.Equal(RegionRoute.ChosenByHand, chosen.ChosenRegionPick.Route);
+            Assert.Equal("chosen by hand on the pane", chosen.ChosenRegionPick.InWords);
         }
 
         [Fact]

@@ -495,8 +495,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// And two regions holding an area ask on STREETS the same way, because which of a
-        /// plot's two regions carries it varies by plot and the type name cannot settle it.
+        /// And two regions holding an area ask on STREETS the same way they ask on MOSQUES,
+        /// **where the client's note names neither of them**. Which of those carries the area
+        /// varies by plot and the type name cannot settle it.
         /// </summary>
         [Fact]
         public void OnStreetsTwoRegionsHoldingAnAreaAskTheSameWayAsOnMosques()
@@ -506,12 +507,33 @@ namespace RcrcGreen.Core.Tests.Kpi
                 regions: new[]
                 {
                     CreateFixture.Region(CreateFixture.Cadastral, 900.0),
-                    CreateFixture.Region(CreateFixture.OutOfScope, 250.0)
+                    CreateFixture.Region(CreateFixture.NotTheNote, 250.0)
                 },
                 chosenRegion: string.Empty);
 
             Assert.False(Reconciliation.Of(new[] { "NS-19" }, new[] { reading }, null, false, KpiTemplates.Streets).AddsUp);
             Assert.False(Reconciliation.Of(new[] { "NS-19" }, new[] { reading }, null, false, KpiTemplates.Mosques).AddsUp);
+        }
+
+        /// <summary>
+        /// **And a pair holding the note's type asks on NEITHER, which is the whole of Bader's
+        /// decision.** The 14:29 run refused 51 of 78 street plots on this one question.
+        /// </summary>
+        [Fact]
+        public void OnStreetsAPairHoldingTheNotesTypeAsksNothingOnEitherTemplate()
+        {
+            PlotReading reading = CreateFixture.Plot(
+                "NS-03",
+                regions: new[]
+                {
+                    CreateFixture.Region(CreateFixture.Cadastral, 6750.0),
+                    CreateFixture.Region(CreateFixture.OutOfScope, 7648.0)
+                },
+                chosenRegion: string.Empty);
+
+            Assert.True(Reconciliation.Of(new[] { "NS-03" }, new[] { reading }, null, false, KpiTemplates.Streets).AddsUp);
+            Assert.True(Reconciliation.Of(new[] { "NS-03" }, new[] { reading }, null, false, KpiTemplates.Mosques).AddsUp);
+            Assert.Equal(CreateFixture.OutOfScope, reading.ChosenRegionTypeName);
         }
 
         /// <summary>
@@ -583,14 +605,23 @@ namespace RcrcGreen.Core.Tests.Kpi
             string report = KpiCreateReport.Write(run, new DateTime(2026, 9, 14, 9, 18, 0));
 
             Assert.Contains(
-                "  plot | chosen type | against the client's note | raw square feet | "
-                + "written square metres | as the model prints it | offered",
+                "  plot | chosen type | how it was chosen | against the client's note | "
+                + "raw square feet | written square metres | as the model prints it | offered",
                 report);
-            Assert.Contains("  NS-19 | RCRC_CADASTRAL LIMIT | NOT the type the note names | ", report);
-            Assert.Contains("  ST-05 | RCRC_OUT OF SCOPE (PRESENTATION) | the type the note names | ", report);
+
+            // **Both plots hold ONE region each**, so both took the route that needs no note at
+            // all, and the note column still says whether the type happened to be the note's.
+            Assert.Contains(
+                "  NS-19 | RCRC_CADASTRAL LIMIT | the only region holding an area | "
+                + "NOT the type the note names | ",
+                report);
+            Assert.Contains(
+                "  ST-05 | RCRC_OUT OF SCOPE (PRESENTATION) | the only region holding an area | "
+                + "the type the note names | ",
+                report);
             Assert.Contains(
                 "  The client's note for the area cell names RCRC_OUT OF SCOPE (PRESENTATION). "
-                + "Nothing here chooses on that name:",
+                + "One region holding an area still decides",
                 report);
         }
 
