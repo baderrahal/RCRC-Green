@@ -1,5 +1,48 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy eighth pass, the other two formulas measured and guarded. **1886 tests,
+1066 of them KPI, 7 added, against the 1879 main carries** at `2c698c7`, which is also this
+branch's point, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**THE OPEN QUESTION THE ROUND BEFORE LEFT IS CLOSED, BY THE MEASUREMENT IT ASKED FOR.** Bader
+measured both cells on all seven templates. Total Green cover is canopy plus planting plus lawn,
+`D9 = F9+F11+H11` on EXISTING PARKS, FUTURE PARKS and STREETS and `D8 = F8+F10+H10` on the other
+four. The canopy percentage is canopy over area, `IF(Area<1," ",F8/Area)`. Refusing to build the
+guard on one example was right and the log entry that asked the question is marked closed in place.
+
+**THE CLIENT'S NOTE IS WRONG ABOUT WHERE THE PERCENTAGE IS, WHICH IS THE SECOND SUCH NOTE.** It
+names the cell right of `Total area covered by canopy` and no template carries that label in
+section 1. It is in section 3 under `% of Total area covered by canopy`, and its value sits TWO
+columns right rather than one. The first was the TOTAL Shrubs tooltip last round.
+
+**THE ONE FORM THAT ASKS FOR THE PERCENTAGE IS FED BY THE TWO TEMPLATES THAT DO NOT CARRY IT.** The
+Parks PDF is the only form with the field and EXISTING PARKS and FUTURE PARKS have no such cell, so
+the check answers nothing to check on every run today. **The number is still computed and written**,
+off the canopy and the area, and the report says the workbook has no cell to hold it against. An
+absence is not a drift, told apart by `SummaryCellCheck.NothingToCheck` rather than by reading the
+reason.
+
+**NO LETTER FINDS EITHER CELL.** `ComputedPlaces` holds the two labels and the distance right of
+each, read through the same `LabelledPlaces` lookup every other labelled cell uses, and it sits
+BESIDE `LabelledPlaces.All` rather than inside it, so nothing can ever write a value into a cell
+holding the client's own formula. `GreenCoverCell` requires three single cells including the map's
+planting and lawn cells, and **the third IS the canopy cell, learnt rather than written in** and
+carried to `PercentageCell`, which requires that cell and the map's area cell. The defined name
+`Area` is resolved and checked through the new `FormulaCell.SingleCellsRead`, so no formula text is
+matched anywhere.
+
+Two break watches, each reddening the case that names what it broke: 1 and 2 red. Both restored
+byte for byte, checked with `diff -q`, and the suite green at 1886 after.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and neither check has run against a real
+client template. Both are proven against a workbook the tests build in the MOSQUES shape. **The
+first real run is what confirms the green cover label text**, because the report prints the cell it
+chose. **The two computed numbers have still never been held against a workbook Excel has
+recalculated**, which stands from last round.
+
 Phase: 9, ship. Seventy seventh pass, two numbers computed and every unit named. **1879 tests,
 1059 of them KPI, 58 added, against the 1821 main carries** at `e1d8848`, which is also this
 branch's point, 28 hook cases unchanged, build zero warnings.

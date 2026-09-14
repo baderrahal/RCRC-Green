@@ -274,7 +274,7 @@ namespace RcrcGreen.Core.Kpi
 
         public static LabelledPlace Of(string name)
         {
-            return All.FirstOrDefault(
+            return All.Concat(ComputedPlaces.All).FirstOrDefault(
                 one => string.Equals(one.Name, name, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -327,7 +327,19 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static LabelledCells In(string path, KpiTemplate template)
         {
+            return In(path, template, All);
+        }
+
+        /// <summary>
+        /// The same read over a given table of places. **`ComputedPlaces` is read this way and
+        /// is NEVER written**, because those two cells hold the client's own formulas and the
+        /// tool only ever reads them to check its own arithmetic against them. Keeping them out
+        /// of <see cref="All"/> is what stops a plan from ever putting a value into one.
+        /// </summary>
+        public static LabelledCells In(string path, KpiTemplate template, IReadOnlyList<LabelledPlace> places)
+        {
             if (template == null) throw new ArgumentNullException("template");
+            if (places == null) throw new ArgumentNullException("places");
             if (string.IsNullOrWhiteSpace(path)) return LabelledCells.NotRead;
 
             try
@@ -349,7 +361,7 @@ namespace RcrcGreen.Core.Kpi
                     XDocument sheet = WorkbookPackage.Read(zip, part);
                     if (sheet == null) return LabelledCells.Refused("the main sheet could not be read");
 
-                    return Off(template.MainSheetName, sheet, WorkbookPackage.SharedStrings(zip));
+                    return Off(template.MainSheetName, sheet, WorkbookPackage.SharedStrings(zip), places);
                 }
             }
             catch (IOException failed)
@@ -368,6 +380,12 @@ namespace RcrcGreen.Core.Kpi
 
         internal static LabelledCells Off(string sheetName, XDocument sheet, List<string> shared)
         {
+            return Off(sheetName, sheet, shared, All);
+        }
+
+        internal static LabelledCells Off(
+            string sheetName, XDocument sheet, List<string> shared, IReadOnlyList<LabelledPlace> places)
+        {
             var texts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (XElement cell in WorkbookPackage.Cells(sheet))
@@ -384,14 +402,14 @@ namespace RcrcGreen.Core.Kpi
             // A place that names its own label is looked for over the whole sheet. An ANCHORED
             // place waits, because the row it is allowed to look on is not known until the
             // place it is anchored to has been found.
-            foreach (LabelledPlace place in All)
+            foreach (LabelledPlace place in places)
             {
                 if (place.IsAnchored) continue;
 
                 found[place.Name] = Looking(place, texts, sheetName, null, string.Empty);
             }
 
-            foreach (LabelledPlace place in All)
+            foreach (LabelledPlace place in places)
             {
                 if (!place.IsAnchored) continue;
 
@@ -407,7 +425,7 @@ namespace RcrcGreen.Core.Kpi
                     place, texts, sheetName, CellRef.Parse(anchor.LabelCell).Row, anchor.Label);
             }
 
-            return LabelledCells.Holding(sheetName, All.Select(one => found[one.Name]).ToList());
+            return LabelledCells.Holding(sheetName, places.Select(one => found[one.Name]).ToList());
         }
 
         /// <summary>

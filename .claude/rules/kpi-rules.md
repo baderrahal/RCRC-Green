@@ -1293,13 +1293,70 @@ the data is not a signal. A run that wrote no tree row has no canopy and no cano
 green cover is the planting and the lawn and it is written. A workbook whose formulas were never
 read computes nothing at all.
 
-**AND WHAT IS NOT CHECKED IS SAID RATHER THAN GUESSED AT.** The workbook's own Total Green cover
-cell and its canopy percentage cell carry formulas of their own, and **the text of neither is
-measured anywhere in this repository, on any of the seven templates.** The one thing near it is H9
-reading `H8/Area` on EXISTING PARKS, one template, which is the shape this repo has paid for
-taking as a rule five times over. So nothing looks for either cell, the report says
-`WorkbookArithmetic.NotCheckedAgainstTheWorkbook` beside the two numbers, and what to measure is
-an open question in the log: the formula text of both cells on all seven templates.
+### The other two formulas, measured on all seven and guarded now
+
+**The round before could not build this and refused to build it on one example. Bader measured
+both on all seven templates on 14 September, and the open question is closed.**
+
+```
+TOTAL GREEN COVER, the same shape on all seven in two row layouts
+  EXISTING PARKS, FUTURE PARKS, STREETS    D9 = F9+F11+H11
+  HEALTHCARE, MOSQUES, PARKING, SCHOOLS    D8 = F8+F10+H10
+
+PERCENTAGE CANOPY, in SECTION 3 and not section 1
+  HEALTHCARE, MOSQUES, PARKING, SCHOOLS    label C31, value E31 = IF(Area<1," ",F8/Area)
+  STREETS                                  label C32, value E32 = IF(Area<1," ",F9/Area)
+  EXISTING PARKS and FUTURE PARKS          NO SUCH LABEL AT ALL
+```
+
+Canopy plus planting plus lawn, and canopy over area, which is what this tool already computes.
+**The two row layouts are exactly why neither cell is a letter**, the lesson row 7 and row 5 both
+taught: a map putting the green cover at D8 because four templates out of seven do would read the
+wrong row on the other three. `ComputedPlaces` is the table, two labels, and it is read through the
+same `LabelledPlaces` lookup every other labelled cell uses.
+
+**THE CLIENT'S NOTE IS WRONG ABOUT WHERE THE PERCENTAGE IS.** It says the cell to the right of
+`Total area covered by canopy`. **There is no such label in section 1 on any template.** The cell
+is in section 3, labelled `% of Total area covered by canopy`, and its value sits TWO columns right
+of the label rather than one, the cell one to the right being empty on all five that carry it.
+**That is the second note on these forms measured to be wrong about its own subject**, after the
+TOTAL Shrubs tooltip, and it is why the note is checked and never used to decide anything.
+
+**AND THE ONE FORM THAT ASKS FOR THE PERCENTAGE IS FED BY THE TWO TEMPLATES THAT DO NOT CARRY IT.**
+Percentage Total area covered by canopy is on the Parks PDF alone, which EP and FP plots reach, and
+EXISTING PARKS and FUTURE PARKS have no such cell. So the percentage check answers nothing to check
+on every run the tool makes today. **That is a fact about the client's files rather than a fault to
+fix: the tool still computes and writes the number**, because it holds the canopy and the area, and
+the report says the workbook has no cell to hold it against. The check is built because it is right
+and because it fires the day a park template grows the cell or another form grows the field.
+
+### How the two cells are checked, with no letter anywhere
+
+**`WorkbookArithmetic.GreenCoverCell` reads the cell the label chose and holds it against the three
+cells this tool adds.** It must read exactly three single cells, and the template's own map must
+name two of them, the planting cell and the lawn cell. **The third IS the canopy cell**, learnt
+from the formula rather than written in, and carried to the percentage check so the two can never
+name two different canopies. Any other shape blanks the field and names the cell and its formula.
+
+**`WorkbookArithmetic.PercentageCell` holds its cell against that canopy cell and the map's own
+area cell.** It must read exactly those two. `IF(Area<1," ",F8/Area)` reads F8 and whatever the
+defined name `Area` points at, through `FormulaCell.SingleCellsRead`, **so the defined name is
+checked as well as the cell** and no formula text is matched anywhere.
+
+**A LABEL NAMED NOWHERE IS A REFUSAL FOR THE GREEN COVER AND NOTHING TO CHECK FOR THE PERCENTAGE**,
+and the two are different because the measurement is different. All seven carry the green cover
+label, so a template missing it is a template this tool does not know, and it writes nothing and
+says which sheet it looked on. Two of the seven carry no percentage label at all, so an absence
+there is the ordinary case and **an absence is not a drift**.
+
+**THE TWO PLACES ARE READ ONLY AND ARE NOT IN THE TABLE THE PLAN WRITES FROM.** `ComputedPlaces`
+sits beside `LabelledPlaces.All` rather than inside it, because those two cells hold the client's
+own formulas and a value written into one would destroy them. A test says so in those words.
+
+**The label text for the green cover comes from the client's own PDF note**, `Total Green cover
+(m²)`, and is confirmed by where it lands: one column right is D9 on three templates and D8 on
+four, which is what was measured. The report prints the cell the label chose on every run, so a
+template whose label reads anything else is one line rather than a silence.
 
 ### Every unit on all three forms, one by one
 

@@ -72,13 +72,23 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PdfPlan
     {
-        public PdfPlan(string plotId, PdfForm form, IEnumerable<PdfFieldFill> fields, string why)
+        public PdfPlan(
+            string plotId, PdfForm form, IEnumerable<PdfFieldFill> fields, string why,
+            IEnumerable<string> whatWasChecked = null)
         {
             PlotId = plotId ?? string.Empty;
             Form = form;
             Fields = (fields ?? Enumerable.Empty<PdfFieldFill>()).ToList();
             Why = why ?? string.Empty;
+            WhatWasChecked = (whatWasChecked ?? Enumerable.Empty<string>()).ToList();
         }
+
+        /// <summary>
+        /// What the two computed numbers were held against in the workbook, one line each, so the
+        /// report says which cell was read and what its formula says rather than leaving a
+        /// computed number standing on nothing.
+        /// </summary>
+        public IReadOnlyList<string> WhatWasChecked { get; }
 
         public static PdfPlan NoForm(string plotId, string why)
         {
@@ -129,13 +139,19 @@ namespace RcrcGreen.Core.Kpi
             double plantingSquareMetres,
             double lawnSquareMetres,
             double areaSquareMetres,
-            ArithmeticCheck arithmetic)
+            ArithmeticCheck arithmetic,
+            SummaryCellCheck greenCoverCell = null,
+            SummaryCellCheck percentageCell = null)
         {
             Canopy = canopy ?? CanopyTotal.Nothing;
             PlantingSquareMetres = plantingSquareMetres;
             LawnSquareMetres = lawnSquareMetres;
             AreaSquareMetres = areaSquareMetres;
             Arithmetic = arithmetic ?? ArithmeticCheck.NotChecked(WorkbookArithmetic.NoWorkbookRead);
+            GreenCoverCell = greenCoverCell ?? SummaryCellCheck.NotChecked(
+                ComputedPlaces.GreenCoverName, WorkbookArithmetic.NoWorkbookRead);
+            PercentageCell = percentageCell ?? SummaryCellCheck.NotChecked(
+                ComputedPlaces.PercentageName, WorkbookArithmetic.NoWorkbookRead);
         }
 
         /// <summary>Nothing was written, so there is nothing to compute from.</summary>
@@ -158,6 +174,21 @@ namespace RcrcGreen.Core.Kpi
         /// **A column that has drifted blanks both computed fields**, because both rest on it.
         /// </summary>
         public ArithmeticCheck Arithmetic { get; }
+
+        /// <summary>
+        /// Whether the workbook's own Total Green cover cell is still the sum this tool works
+        /// out, found by its label and read off the file. **A cell that has drifted blanks the
+        /// field**, because the number the PDF carries would then not be the number the workbook
+        /// beside it computes.
+        /// </summary>
+        public SummaryCellCheck GreenCoverCell { get; }
+
+        /// <summary>
+        /// The same for the canopy percentage cell. **The two parks templates carry no such cell
+        /// and the Parks PDF is the one form that asks for it**, so this answers nothing to check
+        /// on every run today, the number is still written, and the report says so.
+        /// </summary>
+        public SummaryCellCheck PercentageCell { get; }
     }
 
     public static class PdfFill
@@ -233,7 +264,11 @@ namespace RcrcGreen.Core.Kpi
                 fields.Add(One(wanted, form, reading, counted, street, today, workbookWritten, workbook, shrubs, lawn));
             }
 
-            return new PdfPlan(reading.PlotId, form, fields, string.Empty);
+            return new PdfPlan(reading.PlotId, form, fields, string.Empty, new[]
+            {
+                workbook.GreenCoverCell.InWords,
+                workbook.PercentageCell.InWords
+            });
         }
 
         private static PdfFieldFill One(
@@ -384,6 +419,16 @@ namespace RcrcGreen.Core.Kpi
             string stopped = WhyNothingCanBeComputed(workbookWritten, workbook);
             if (stopped.Length > 0) return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, stopped);
 
+            // **The workbook's own Total Green cover cell is held against this tool's sum**, and
+            // a cell that has drifted blanks the field on every form. Roads writes the canopy
+            // alone rather than the sum, and it is gated the same way on purpose: a green cover
+            // cell that has moved says the workbook's arithmetic moved under the tool, and a
+            // field written through that is a number nobody can check.
+            if (workbookWritten && !workbook.GreenCoverCell.Usable)
+            {
+                return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, workbook.GreenCoverCell.Why);
+            }
+
             bool canopyAlone = ReferenceEquals(form, PdfForms.Roads);
 
             ComputedValue found = canopyAlone
@@ -411,6 +456,14 @@ namespace RcrcGreen.Core.Kpi
         {
             string stopped = WhyNothingCanBeComputed(workbookWritten, workbook);
             if (stopped.Length > 0) return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, stopped);
+
+            // **A template with no canopy percentage cell has nothing to check**, which is both
+            // templates this form is ever fed by, so the number goes in and the report says the
+            // workbook holds no cell for it. Only a cell that is there and has drifted blanks it.
+            if (workbookWritten && !workbook.PercentageCell.Usable)
+            {
+                return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, workbook.PercentageCell.Why);
+            }
 
             ComputedValue found = GreenCover.Percentage(workbook.Canopy, workbook.AreaSquareMetres);
             if (!found.Computed) return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, found.Why);
