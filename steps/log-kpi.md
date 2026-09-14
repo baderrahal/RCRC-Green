@@ -94,6 +94,13 @@ and the report cases behind it. `DivideByZeroTests` stayed green, which is secti
 All three files were copied out first and `diff -q` against the copy after restoring, so the
 suite that produced 1747 is over the real code.
 
+### The merge
+
+Pull request 123, merged into main as `b65cfad`, through the API with the commit title and the
+commit message both passed on the call. **The runner ran 28 hook cases and 1747 tests against the
+pull request head `8cf8204`, 0 failed and 0 skipped.** The merged tree is byte for byte the branch
+head and the message off main carries neither a co-author credit line nor a generated-by footer.
+
 ### Still open, unchanged by this round
 
 The 44 audit findings. The client's note against NS-19 and NS-06, which is what the region count

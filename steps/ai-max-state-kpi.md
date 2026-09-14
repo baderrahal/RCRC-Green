@@ -48,6 +48,13 @@ reading a sample report, pinned by a test that also checks the heading below it 
 Three break watches, 1 red, 3 red and 1 red, each naming what it broke, all restored and proved
 byte for byte with `diff -q`.
 
+Pull request 123, merged into main as `b65cfad`. **The runner ran 28 hook cases and 1747 tests
+against the pull request head `8cf8204`, 0 failed and 0 skipped. Locally the same 28 and 1747 ran
+after the last file was written, 927 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next street run is what fills these
 three lines with real numbers, and the region count is what answers the client's note against
 NS-19 and NS-06.
