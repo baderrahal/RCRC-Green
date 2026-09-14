@@ -111,16 +111,59 @@ namespace RcrcGreen.Core.Kpi
                 }
             }
 
-            return report.ToString();
+            // **THE CONTENTS ARE COUNTED OFF THE BODY THAT WAS JUST WRITTEN**, so they are a
+            // measurement of this file rather than a claim about it, and they go above it.
+            string body = report.ToString();
+            var contents = new StringBuilder();
+            TheContents(contents, body);
+
+            return contents + body;
+        }
+
+        public const string ContentsHeading = "WHAT IS IN THIS FILE";
+
+        /// <summary>
+        /// Every section of the body, how many lines it came to, how many blocks it is spread
+        /// over and what one block of it costs.
+        ///
+        /// **A REPORT NOBODY CAN OPEN IS NOT A RECORD.** The 18:15 run wrote 10,708 lines over
+        /// seven plot blocks. The 19:52 run wrote 82,048 over 156, and 42,570 of them were one
+        /// section, which is 52 percent of the file. Nothing in either file said which section
+        /// cost what, so the round that cut it had to work it out by scrolling.
+        ///
+        /// **THE NEXT CUT IS MADE ON NUMBERS.** This is the instrument rather than the cut: it
+        /// decides nothing, leaves out nothing and names no section, and a section added or
+        /// renamed appears in it with no change here.
+        /// </summary>
+        private static void TheContents(StringBuilder report, string body)
+        {
+            IReadOnlyList<ReportSection> sections = ReportSections.Of(body);
+
+            Heading(report, ContentsHeading, sections.Count,
+                "every section of the body below, counted off the text this run just wrote, widest first");
+
+            Line(report, "    lines |  blocks |    each | section");
+            foreach (ReportSection one in sections) Line(report, "  " + ReportSections.InWords(one));
+
+            Line(report, "  " + ReportSections.LinesIn(body)
+                + " lines in the body below. This block is above them and is not in the counts.");
+            Line(report, "  A section printed once per plot has one block per plot, so its own "
+                + "size is the third column.");
+            Line(report, string.Empty);
         }
 
         public const string GlanceHeading = "THIS RUN AT A GLANCE";
 
         /// <summary>
-        /// **THREE QUESTIONS THIS PRESS ANSWERS, EACH IN ONE LINE AND A SHORT LIST.** They were
-        /// all answerable before and all three were spread over hundreds of lines: the streets
-        /// area over one block per plot, the region type over one row per plot, and the
-        /// divisions over one per template formula section.
+        /// **THE QUESTIONS THIS PRESS ANSWERS, EACH IN ONE LINE AND A SHORT LIST.** They were
+        /// all answerable before and all of them were spread over hundreds of lines: the streets
+        /// area over one block per plot, the region type over one row per plot, the divisions
+        /// over one per template formula section, and the two computed numbers over one blank
+        /// field's reason per plot.
+        ///
+        /// **THE SUBTITLE USED TO SAY THREE AND FOUR WERE PRINTED.** The PDFs were added under
+        /// it and the word was left, which is a constant standing in for a count in the one
+        /// section built so nobody has to count. It names none now.
         ///
         /// It is the FIRST section of the file, above the run's own accounting, because these
         /// are what a person opens the report to check. **Nothing here is a second record of
@@ -137,7 +180,7 @@ namespace RcrcGreen.Core.Kpi
             // questions there are, and a constant in the place a count goes is a number that
             // reads as a measurement.
             Line(report, "== " + GlanceHeading + " ==");
-            Line(report, "the three questions this press answers, each in one line, with the "
+            Line(report, "the questions this press answers, each in one line, with the "
                 + "detail left where it is");
 
             Line(report, "  " + glance.StreetsArea.InWords);
@@ -166,6 +209,17 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  " + glance.Pdfs.InWords);
             foreach (string one in glance.Pdfs.WithNoPdf) Line(report, "    " + one);
             foreach (string one in glance.Pdfs.FormsThatDidNotMatch) Line(report, "    " + one);
+
+            // **THE 19:52 RUN IS WHY THIS LINE EXISTS.** Both parks templates wrote neither
+            // computed number on any of their plots, the reason was on each of those plots'
+            // fields, and nobody could see it without reading 82,048 lines. The reasons are
+            // counted and said once here and the detail stays under each plot.
+            Line(report, string.Empty);
+            Line(report, "  " + glance.Computed.InWords);
+            Line(report, "    " + glance.Computed.Greened.InWords);
+            foreach (BlankedFor one in glance.Computed.Greened.Blanked) Line(report, "      " + one.InWords);
+            Line(report, "    " + glance.Computed.Percentage.InWords);
+            foreach (BlankedFor one in glance.Computed.Percentage.Blanked) Line(report, "      " + one.InWords);
 
             Line(report, string.Empty);
         }
@@ -992,13 +1046,22 @@ namespace RcrcGreen.Core.Kpi
                 foreach (string blank in one.BlankInputs) Line(report, "      " + blank);
             }
 
+            // **ONE FORMULA FILLED DOWN A COLUMN IS ONE FINDING HERE TOO.** This list was one
+            // line per cell, 321 of them on one plot of the 18:15 run, and the per plot fix
+            // multiplied it by 156. It is the same three column tree list formulas repeating,
+            // and the rule that already governs the risks above governs it now.
+            IReadOnlyList<RepeatedFormula> reading = FormulaRepeats.Reading(check.ReadingWrittenRows);
+
             Line(report, string.Empty);
-            Line(report, "  FORMULAS READING A ROW THIS RUN WROTE INTO, " + check.ReadingWrittenRows.Count);
-            Line(report, "  sheet | cell | reads | formula");
-            foreach (FormulaCell one in check.ReadingWrittenRows)
+            Line(report, "  FORMULAS READING A ROW THIS RUN WROTE INTO, " + check.ReadingWrittenRows.Count
+                + " over " + reading.Count + (reading.Count == 1 ? " shape" : " shapes") + ", said once per shape");
+            Line(report, "  sheet | cells | formula | reads");
+            foreach (RepeatedFormula one in reading)
             {
-                Line(report, "  " + Join(one.SheetName, one.Cell, string.Join(", ", one.ReadsWritten.ToArray()),
-                    one.Text + (one.SharedWith.Length == 0 ? string.Empty : " (shared with " + one.SharedWith + ")")));
+                Line(report, "  " + Join(one.SheetName, one.Where, one.Text,
+                    one.Reason + (one.Repeats
+                        ? "   THE SAME SHAPE ON " + one.Cells.Count + " CELLS, said once"
+                        : string.Empty)));
             }
 
             Line(report, string.Empty);

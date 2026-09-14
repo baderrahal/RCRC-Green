@@ -18,11 +18,20 @@ namespace RcrcGreen.Core.Kpi
     /// field of every form this tool writes is either WRITTEN or EMPTIED, including every field
     /// the tool has no source for and never names.
     ///
-    /// **The only fields left as the template has them are the ones that are not text**, which
-    /// is the four stage tick boxes and the Reset button, and they are left because of what they
-    /// ARE rather than because anybody listed their names. A field whose kind cannot be read at
-    /// all is left alone too, for the same reason: this tool does not clear what it cannot
-    /// classify.
+    /// **Two kinds of field are left as the template has them.**
+    ///
+    /// The ones that are not text, which is the four stage tick boxes and the Reset button, left
+    /// because of what they ARE rather than because anybody listed their names. A field whose
+    /// kind cannot be read at all is left alone too, for the same reason: this tool does not
+    /// clear what it cannot classify.
+    ///
+    /// **AND THE CLIENT'S OWN HEADER**, the project name and the consultant, whose defaults are
+    /// VALUES rather than notes. The 19:52 run cleared both on all 150, because the rule said
+    /// clear every default and could not tell an instruction from a value. They are named in
+    /// <see cref="PdfForms.HeaderValuesLeftAlone"/> as data, found by the exact value the
+    /// CLIENT'S OWN TEMPLATE carries, and nothing reads their text to classify them. A form that
+    /// does not carry all three header values never reaches here, because
+    /// <see cref="PdfFormCheck"/> refuses it.
     /// </summary>
     public static class PdfEmptying
     {
@@ -60,11 +69,41 @@ namespace RcrcGreen.Core.Kpi
             {
                 if (field == null || !field.IsText) continue;
                 if (named.Contains(field.Name)) continue;
+                if (IsTheClientsHeader(field)) continue;
 
                 clearing.Add(PdfFieldFill.Blank(PdfValue.NotOne, field.Name, NoSourceForIt));
             }
 
             return clearing;
+        }
+
+        /// <summary>
+        /// Whether this field holds the client's own project name or consultant, compared whole
+        /// against the values measured off their three forms. **The contract reference is not in
+        /// that list**: it is written from PRX_Plot_NH now, so it is a value the tool fills
+        /// rather than one it steps around.
+        /// </summary>
+        public static bool IsTheClientsHeader(PdfFieldRead field)
+        {
+            if (field == null) return false;
+
+            return PdfForms.HeaderValuesLeftAlone.Any(
+                one => string.Equals((field.Value ?? string.Empty).Trim(), one, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// The field holding the client's own contract reference in their template, which is the
+        /// box this run writes the plot's PRX_Plot_NH into. **Found by that value because the
+        /// field's NAME is measured nowhere in this repository**, and no client PDF may enter it
+        /// to measure one from. Null where the file holds no such field, which the form check
+        /// refuses before anything is written.
+        /// </summary>
+        public static PdfFieldRead TheContractReference(IEnumerable<PdfFieldRead> inTheFile)
+        {
+            return (inTheFile ?? Enumerable.Empty<PdfFieldRead>()).FirstOrDefault(
+                one => one != null && one.IsText
+                    && string.Equals(
+                        (one.Value ?? string.Empty).Trim(), PdfForms.ContractReference, StringComparison.Ordinal));
         }
     }
 }

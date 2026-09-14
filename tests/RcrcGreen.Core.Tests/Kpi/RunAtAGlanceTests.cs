@@ -400,13 +400,17 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains(glance.Divisions.InWords, report);
             Assert.Contains("DM-13 | <Mosques> D9 | divides by a cell THIS RUN WROTE", report);
 
+            // **THE HEADING LINE, NOT THE NAME.** The contents block above the body names every
+            // section, widest first, so the bare name is now in the file twice and the first of
+            // the two is in an order the sizes decide. The position being checked is the
+            // heading's own, so the marker around it is what is looked for.
             Assert.True(
-                report.IndexOf(KpiCreateReport.GlanceHeading, StringComparison.Ordinal)
-                    < report.IndexOf("THIS RUN, ACROSS EVERY TEMPLATE", StringComparison.Ordinal),
+                report.IndexOf("== " + KpiCreateReport.GlanceHeading + " ==", StringComparison.Ordinal)
+                    < report.IndexOf("== THIS RUN, ACROSS EVERY TEMPLATE (", StringComparison.Ordinal),
                 "the glance must be above the run's own accounting");
 
             Assert.True(
-                report.IndexOf(KpiCreateReport.GlanceHeading, StringComparison.Ordinal)
+                report.IndexOf("== " + KpiCreateReport.GlanceHeading + " ==", StringComparison.Ordinal)
                     < report.IndexOf("TEMPLATE: ", StringComparison.Ordinal),
                 "the glance must be above every per template block");
         }

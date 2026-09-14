@@ -10,13 +10,36 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class CanopyRow
     {
-        public CanopyRow(string sheetName, int rowNumber, string botanicalName, int count, double diameterMetres)
+        public CanopyRow(
+            string sheetName, int rowNumber, string botanicalName, int count, double diameterMetres,
+            bool theClientsRow = false)
         {
             SheetName = sheetName ?? string.Empty;
             RowNumber = rowNumber;
             BotanicalName = botanicalName ?? string.Empty;
             Count = count;
             DiameterMetres = diameterMetres;
+            TheClientsRow = theClientsRow;
+        }
+
+        /// <summary>
+        /// True where the species MATCHED a row the client's own list already held, false where
+        /// this run wrote the row into an empty one.
+        ///
+        /// **RECORD WHERE A VALUE CAME FROM AS YOU USE IT.** The canopy guard holds every row's
+        /// formula against the text measured on the MOSQUES template's own row 21, and until the
+        /// eightieth pass it only ever saw rows this tool wrote, whose shape this tool put there.
+        /// It sees the client's own rows now. A drift on a row the tool wrote is the tool writing
+        /// a row the workbook cannot compute, which is the #VALUE! fault that took four rounds to
+        /// kill. A drift on a row the client already held is the client's file computing its
+        /// canopy another way, which is a question for the team and not a bug. **The two need
+        /// different answers and the message could not tell them apart.**
+        /// </summary>
+        public bool TheClientsRow { get; }
+
+        public string Whose
+        {
+            get { return TheClientsRow ? "a row the client's list already held" : "a row this run wrote in"; }
         }
 
         public string SheetName { get; }
@@ -134,7 +157,8 @@ namespace RcrcGreen.Core.Kpi
 
                 rows.Add(new CanopyRow(
                     match.SheetName, match.Row, match.Species.BotanicalName, match.Species.Quantity,
-                    match.Added ? FromTheRun(match) : OffTheWorkbook(match)));
+                    match.Added ? FromTheRun(match) : OffTheWorkbook(match),
+                    !match.Added));
             }
 
             return Of(rows);

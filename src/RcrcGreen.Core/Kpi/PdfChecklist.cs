@@ -43,7 +43,43 @@ namespace RcrcGreen.Core.Kpi
         /// Fill one plot's form. The form file is read, checked, filled and read back, and
         /// everything the report prints comes off that read back.
         /// </summary>
+        public const string NoPlotNh =
+            "this plot's sheet carries no " + KpiNames.PlotNh
+            + ", so the contract reference box is left unwritten rather than carrying another "
+            + "plot's reference or the template's own";
+
+        public const string NoContractReferenceField =
+            "this form holds no field carrying the client's own contract reference, so there is "
+            + "nowhere to write it";
+
+        /// <summary>
+        /// The plot's PRX_Plot_NH, into the box the client's template carries their contract
+        /// reference in. **A plot with none writes nothing there and is named**, the same as any
+        /// other unwritten field.
+        /// </summary>
+        private static PdfFieldFill ContractReference(PdfFieldRead field, string plotNh)
+        {
+            if (field == null)
+            {
+                return PdfFieldFill.Blank(
+                    PdfValue.ContractReference, "the contract reference", NoContractReferenceField);
+            }
+
+            return string.IsNullOrWhiteSpace(plotNh)
+                ? PdfFieldFill.Blank(PdfValue.ContractReference, field.Name, NoPlotNh)
+                : PdfFieldFill.Writing(PdfValue.ContractReference, field.Name, plotNh.Trim(), "text");
+        }
+
         public static PdfOutcome Write(string formPath, string outputPath, PdfPlan plan)
+        {
+            return Write(formPath, outputPath, plan, string.Empty);
+        }
+
+        /// <summary>
+        /// One plot's PDF. <paramref name="plotNh"/> is that plot's PRX_Plot_NH, which goes into
+        /// the contract reference box.
+        /// </summary>
+        public static PdfOutcome Write(string formPath, string outputPath, PdfPlan plan, string plotNh)
         {
             if (plan == null) throw new ArgumentNullException("plan");
 
@@ -81,11 +117,32 @@ namespace RcrcGreen.Core.Kpi
                 .Select(one => new KeyValuePair<string, string>(one.FieldName, one.Text))
                 .ToList();
 
+            // **THE CONTRACT REFERENCE IS WRITTEN FROM PRX_Plot_NH, PER PLOT.** Bader's decision
+            // of 14 September. It is found by the value the client's template carries, because
+            // its field name is measured nowhere here, and the form check has already refused a
+            // file that does not carry that value.
+            PdfFieldRead contract = PdfEmptying.TheContractReference(fields);
+            PdfFieldFill reference = ContractReference(contract, plotNh);
+            if (reference != null && reference.Written)
+            {
+                values.Add(new KeyValuePair<string, string>(reference.FieldName, reference.Text));
+            }
+
             // **EVERY TEXT FIELD IS WRITTEN OR EMPTIED.** What the client's template holds in a
             // field nobody filled is their own note to a person filling it by hand, and a note
             // printed in a box reads as an answer. The tick boxes and the Reset button are not
-            // text, so they are left exactly as they are.
-            IReadOnlyList<PdfFieldFill> emptied = PdfEmptying.For(plan, fields);
+            // text, so they are left exactly as they are, and so are the client's own project
+            // name and consultant, whose defaults are values rather than notes.
+            var emptied = PdfEmptying.For(plan, fields)
+                .Where(one => contract == null || !string.Equals(one.FieldName, contract.Name, StringComparison.Ordinal))
+                .ToList();
+
+            // **A PLOT WITH NO PRX_Plot_NH GETS THE BOX EMPTIED, NOT LEFT.** The template's own
+            // reference is not this plot's, so leaving it standing would hand the client another
+            // project's number under this plot's name. It is emptied with its own reason rather
+            // than the general one.
+            if (contract != null && reference != null && !reference.Written) emptied.Add(reference);
+
             values.AddRange(emptied.Select(
                 one => new KeyValuePair<string, string>(one.FieldName, string.Empty)));
 
@@ -127,6 +184,16 @@ namespace RcrcGreen.Core.Kpi
                     one.Unit, one.Working));
             }
 
+            if (reference != null && reference.Written)
+            {
+                PdfFieldRead landedReference = back.FirstOrDefault(
+                    held => string.Equals(held.Name, reference.FieldName, StringComparison.Ordinal));
+
+                landed.Add(new PdfLandedField(
+                    reference.Value, reference.FieldName, reference.Text,
+                    landedReference == null ? string.Empty : landedReference.Value, "text", string.Empty));
+            }
+
             // **What landed in an emptied field is read back too**, off the same second read, so
             // a box the tool meant to clear and did not is visible rather than assumed.
             var cleared = new List<PdfLandedField>();
@@ -140,8 +207,13 @@ namespace RcrcGreen.Core.Kpi
                     found == null ? string.Empty : found.Value, string.Empty, string.Empty, one.Why));
             }
 
+            // A form holding no contract reference field at all is a different fact from a plot
+            // with no PRX_Plot_NH, and it is named among the blanks rather than emptied.
+            var blank = plan.Blank.ToList();
+            if (contract == null && reference != null && !reference.Written) blank.Add(reference);
+
             return PdfOutcome.Wrote(
-                plan.PlotId, plan.Form, outputPath, check, landed, plan.Blank, plan.WhatWasChecked,
+                plan.PlotId, plan.Form, outputPath, check, landed, blank, plan.WhatWasChecked,
                 cleared);
         }
 

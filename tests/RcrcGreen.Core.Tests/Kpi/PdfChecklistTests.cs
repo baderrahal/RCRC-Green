@@ -37,6 +37,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                     one.X, one.Y))
                 .ToList();
 
+            fields.AddRange(PdfFixture.ClientHeader());
+
             return PdfFixture.Form(_folder, fileName, fields);
         }
 
@@ -233,6 +235,131 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("field | unit | what was sent | what landed", report);
             Assert.Contains("left blank | why", report);
             Assert.Contains(PdfFill.GroundCoverIsNotPrintedApart, report);
+        }
+
+        private string ParksForm(string fileName = "parks.pdf")
+        {
+            var fields = PdfForms.Parks.Fields
+                .Select(one => PdfFixture.Field(one.FieldName, one.Note, one.X, one.Y))
+                .ToList();
+
+            fields.AddRange(PdfFixture.ClientHeader());
+
+            return PdfFixture.Form(_folder, fileName, fields);
+        }
+
+        private PdfPlan ParkPlan(string plotId, string uid2, PdfWorkbookNumbers numbers)
+        {
+            return PdfFill.Of(
+                CreateFixture.Plot(plotId, component: "EXISTING PARK", uid2: uid2),
+                CountedGroups.Of(KpiTemplates.ExistingParks),
+                null,
+                Today,
+                true,
+                numbers);
+        }
+
+        /// <summary>
+        /// **THE 19:52 RUN IS WHY.** Every EXISTING PARKS and FUTURE PARKS form wrote neither
+        /// computed number while the other five templates wrote both, and the reason was in the
+        /// file once per plot among 82,048 lines. One guard blanks both, so the two are counted
+        /// together, and **the reason is said once with its plots named** rather than once per
+        /// plot, which is the thing this section exists to save.
+        /// </summary>
+        [Fact]
+        public void TheGlanceCountsTheTwoComputedNumbersAndSaysWhyOnceRatherThanPerPlot()
+        {
+            var canopy = new CanopyTotal(
+                new[] { new CanopyRow("Tree List - Proposed", 21, "ALBIZIA LEBBECK", 3, 8.0) }, null);
+
+            var computes = new PdfWorkbookNumbers(
+                canopy, 410.0, 60.0, 771.0, ArithmeticCheck.Agreeing(null),
+                SummaryCellCheck.Agreeing(ComputedPlaces.GreenCoverName, "D9", "F9+F11+H11", "F9"),
+                SummaryCellCheck.WithNothingToCheck(
+                    ComputedPlaces.PercentageName, WorkbookArithmetic.TheWorkbookHasNoPercentageCell));
+
+            string form = ParksForm();
+
+            PdfOutcome filled = PdfChecklist.Write(
+                form, Path.Combine(_folder, "one.pdf"), ParkPlan("EP-01", "ANH-007-NP-100001", computes));
+            PdfOutcome first = PdfChecklist.Write(
+                form, Path.Combine(_folder, "two.pdf"),
+                ParkPlan("EP-02", "ANH-007-NP-100002", PdfWorkbookNumbers.None));
+            PdfOutcome second = PdfChecklist.Write(
+                form, Path.Combine(_folder, "three.pdf"),
+                ParkPlan("EP-03", "ANH-007-NP-100003", PdfWorkbookNumbers.None));
+
+            PlotWorkbookPath where = PlotWorkbookPath.For(
+                Path.Combine(_folder, "root"), KpiTemplates.ExistingParks,
+                "EXISTING PARK", "ANH-007-NP-100001");
+
+            var set = new KpiCreateRunSet(
+                "RCRC_NG05",
+                new TemplateSplit(new List<TemplateShare>(), new List<PlotTemplate>(), new List<PlotTemplate>()),
+                new List<KpiCreateRun>(),
+                new List<TemplateOutcome>(),
+                null,
+                new[]
+                {
+                    PlotOutcome.Wrote("EP-01", KpiTemplates.ExistingParks, where).WithPdf(filled),
+                    PlotOutcome.Wrote("EP-02", KpiTemplates.ExistingParks, where).WithPdf(first),
+                    PlotOutcome.Wrote("EP-03", KpiTemplates.ExistingParks, where).WithPdf(second)
+                });
+
+            ComputedGlance glance = RunAtAGlance.Of(set).Computed;
+
+            // Canopy 50 a tree over 3 trees is 150, plus planting 410 plus lawn 60 is 620.
+            Assert.Equal("0.00062", filled.Landed
+                .Single(one => one.Value == PdfValue.TotalAreasToBeGreened).Landed);
+
+            Assert.Equal(1, glance.Greened.Written);
+            Assert.Equal(2, glance.Greened.NotWritten);
+            Assert.Equal(3, glance.Greened.Plots);
+            Assert.Equal(
+                "Total Green cover: 1 of 3 forms got it and 2 did not. 1 reason under this line.",
+                glance.Greened.InWords);
+
+            // **ONE LINE FOR TWO PLOTS**, the reason said once with both named.
+            Assert.Equal(
+                "2 plots, EP-02, EP-03: " + WorkbookArithmetic.NoWorkbookRead,
+                Assert.Single(glance.Greened.Blanked).InWords);
+
+            Assert.Equal(1, glance.Percentage.Written);
+            Assert.Equal(
+                "Percentage canopy: 1 of 3 forms got it and 2 did not. 1 reason under this line.",
+                glance.Percentage.InWords);
+
+            string report = KpiCreateReport.WriteAll(set, new DateTime(2026, 9, 14, 19, 52, 0));
+
+            Assert.Contains(glance.InWords, report);
+            Assert.Contains("    " + glance.Greened.InWords, report);
+            Assert.Contains("      2 plots, EP-02, EP-03: " + WorkbookArithmetic.NoWorkbookRead, report);
+            Assert.Contains("    " + glance.Percentage.InWords, report);
+        }
+
+        /// <summary>
+        /// Past four plots the count stands for the rest, so a reason that fired on 78 street
+        /// plots is still one line. Four is what fits a line, the same number
+        /// <see cref="CreateWords.TemplateRow"/> names outright.
+        /// </summary>
+        [Fact]
+        public void AReasonThatFiredOnManyPlotsNamesFourAndCountsTheRest()
+        {
+            var blanked = new BlankedFor(
+                "no workbook was read", new[] { "ST-01", "ST-02", "ST-03", "ST-04", "ST-05", "ST-06" });
+
+            Assert.Equal(
+                "6 plots, ST-01, ST-02, ST-03, ST-04 and 2 more: no workbook was read",
+                blanked.InWords);
+
+            Assert.Equal(
+                "4 plots, ST-01, ST-02, ST-03, ST-04: no workbook was read",
+                new BlankedFor("no workbook was read",
+                    new[] { "ST-01", "ST-02", "ST-03", "ST-04" }).InWords);
+
+            Assert.Equal(
+                "1 plot, ST-01: no workbook was read",
+                new BlankedFor("no workbook was read", new[] { "ST-01" }).InWords);
         }
     }
 }

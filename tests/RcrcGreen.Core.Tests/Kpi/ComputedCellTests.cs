@@ -79,6 +79,35 @@ namespace RcrcGreen.Core.Tests.Kpi
             return new Built(outcome, LabelledPlaces.In(template, KpiTemplates.Mosques, ComputedPlaces.All));
         }
 
+        /// <summary>
+        /// The parks shape: D9 off C9 with F9+F11+H11, and no percentage label at all.
+        /// </summary>
+        private Built BuildParks()
+        {
+            string template = WorkbookFixture.Computing(
+                _folder,
+                new WorkbookFixture.TreeRow[0],
+                new[] { new WorkbookFixture.TreeRow(4, "Albizia lebbeck", "15", "8") },
+                fileName: "PARKS.xlsx",
+                withGreenCoverLabel: true,
+                withPercentageLabel: false,
+                parksShape: true);
+
+            PatchOutcome outcome = WorkbookPatcher.Patch(
+                template, Path.Combine(_folder, "filled-parks.xlsx"),
+                new[]
+                {
+                    CellWrite.Number(Main, "H7", 62023),
+                    CellWrite.Text(Proposed, "D7", "BAUHINIA PURPUREA"),
+                    CellWrite.Number(Proposed, "B7", 19),
+                    CellWrite.Number(Proposed, "I7", 6),
+                    CellWrite.Number(Proposed, "J7", 5)
+                },
+                KpiTemplates.Mosques.Cells.Select(cell => new WorkbookCell(Main, cell.Cell)).ToArray());
+
+            return new Built(outcome, LabelledPlaces.In(template, KpiTemplates.Mosques, ComputedPlaces.All));
+        }
+
         private sealed class Built
         {
             public Built(PatchOutcome outcome, LabelledCells computed)
@@ -102,6 +131,42 @@ namespace RcrcGreen.Core.Tests.Kpi
                 return WorkbookArithmetic.PercentageCell(
                     Outcome.Formulas, Main, Computed.For(ComputedPlaces.PercentageName), canopyCell, "H7");
             }
+
+            /// <summary>The parks map: planting F11, lawn H11, area D8.</summary>
+            public SummaryCellCheck GreenCoverParks()
+            {
+                return WorkbookArithmetic.GreenCoverCell(
+                    Outcome.Formulas, Main, Computed.For(ComputedPlaces.GreenCoverName), "F11", "H11");
+            }
+
+            public SummaryCellCheck PercentageParks(string canopyCell)
+            {
+                return WorkbookArithmetic.PercentageCell(
+                    Outcome.Formulas, Main, Computed.For(ComputedPlaces.PercentageName), canopyCell, "D8");
+            }
+        }
+
+        /// <summary>
+        /// **BOTH PARK TEMPLATES, WHICH IS WHERE THE 19:52 RUN LOST BOTH FIELDS.** Their green
+        /// cover is D9 off a label at C9 with F9+F11+H11, and they carry NO percentage label at
+        /// all. Measured by Bader on all seven.
+        /// </summary>
+        [Fact]
+        public void TheParksShapeIsFoundAndThePercentageHasNothingToCheck()
+        {
+            Built built = BuildParks();
+
+            SummaryCellCheck cover = built.GreenCoverParks();
+
+            Assert.True(cover.Agrees, cover.Why);
+            Assert.Equal("D9", cover.Cell);
+            Assert.Equal("F9+F11+H11", cover.Formula);
+            Assert.Equal("F9", cover.CanopyCell);
+
+            SummaryCellCheck percentage = built.PercentageParks(cover.CanopyCell);
+
+            Assert.True(percentage.NothingToCheck);
+            Assert.True(percentage.Usable);
         }
 
         /// <summary>

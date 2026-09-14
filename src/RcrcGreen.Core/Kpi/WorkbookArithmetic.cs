@@ -222,9 +222,8 @@ namespace RcrcGreen.Core.Kpi
                 if (diameterColumns == null || !diameterColumns.TryGetValue(row.SheetName, out column)
                     || string.IsNullOrWhiteSpace(column))
                 {
-                    differ.Add(row.SheetName + " row " + row.RowNumber.ToString(CultureInfo.InvariantCulture)
-                        + ": no diameter column was chosen for this sheet, so the canopy formula "
-                        + "it should carry cannot be worked out");
+                    differ.Add(Of(row) + ": no diameter column was chosen for this sheet, so the "
+                        + "canopy formula it should carry cannot be worked out");
                     continue;
                 }
 
@@ -239,12 +238,12 @@ namespace RcrcGreen.Core.Kpi
 
                 if (found != null)
                 {
-                    read.Add(found.SheetName + " " + found.Cell + " = " + found.Text);
+                    read.Add(found.SheetName + " " + found.Cell + " = " + found.Text
+                        + ", " + row.Whose);
                     continue;
                 }
 
-                differ.Add(row.SheetName + " row " + row.RowNumber.ToString(CultureInfo.InvariantCulture)
-                    + ": no cell on it carries " + wanted + ". "
+                differ.Add(Of(row) + ": no cell on it carries " + wanted + ". "
                     + (onTheRow.Count == 0
                         ? "The row holds no formula at all."
                         : "The row holds " + string.Join(", ",
@@ -256,6 +255,18 @@ namespace RcrcGreen.Core.Kpi
                 : ArithmeticCheck.Differing(
                     "the workbook's canopy column is not the one this tool works out. "
                     + string.Join(" ", differ.ToArray()), read);
+        }
+
+        /// <summary>
+        /// A row named with WHOSE row it is. **A drift on a row this run wrote is the tool
+        /// writing a row the workbook cannot compute. A drift on a row the client's list already
+        /// held is the client's file computing its canopy another way.** The two need different
+        /// answers, and until this line the message said the same thing about both.
+        /// </summary>
+        private static string Of(CanopyRow row)
+        {
+            return row.SheetName + " row " + row.RowNumber.ToString(CultureInfo.InvariantCulture)
+                + ", " + row.Whose;
         }
 
         public const string NoGreenCoverLabel =

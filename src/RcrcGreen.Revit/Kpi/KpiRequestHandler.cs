@@ -768,7 +768,7 @@ namespace RcrcGreen.Revit.Kpi
                 return PdfOutcome.WroteNothing(held.PlotId, plan.Form, why, null);
             }
 
-            return PdfChecklist.Write(formPath, PdfChecklist.Beside(where), plan);
+            return PdfChecklist.Write(formPath, PdfChecklist.Beside(where), plan, held.PlotNh);
         }
 
         /// <summary>

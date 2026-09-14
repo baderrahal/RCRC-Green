@@ -147,6 +147,18 @@ namespace RcrcGreen.Core.Kpi
                 }
             }
 
+            // **THE CLIENT'S OWN HEADER HAS TO BE THERE.** The three typed defaults are how the
+            // tool finds the two it leaves alone and the one it writes into, because their field
+            // names are measured nowhere here. A form missing one is a form this tool does not
+            // know, so it writes nothing rather than clearing a header it could not recognise.
+            foreach (string value in PdfForms.HeaderValues)
+            {
+                if (held.Any(one => one.IsText && Same(one.Value, value))) continue;
+
+                missing.Add("no field holds the client's own " + Shown(value)
+                    + ", which is how this tool finds the header it must not clear");
+            }
+
             return new PdfFormCheck(form, true, string.Empty, held.Count, missing, differing, moved);
         }
 

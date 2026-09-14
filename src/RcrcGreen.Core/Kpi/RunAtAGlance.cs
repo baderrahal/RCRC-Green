@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -265,8 +266,138 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
-    /// The three questions one press answers, counted once over every template so each can be
-    /// read in one look instead of out of hundreds of lines.
+    /// One reason a computed number was not written, with every plot it happened to.
+    ///
+    /// **A COUNT WITH NOBODY NAMED SENDS A PERSON BACK THROUGH THE FILE**, and one line per plot
+    /// over 150 plots is the thing this section exists to save. So the reason is said once with
+    /// its count and the first few plots named.
+    /// </summary>
+    public sealed class BlankedFor
+    {
+        public BlankedFor(string why, IEnumerable<string> plots)
+        {
+            Why = why ?? string.Empty;
+            Plots = (plots ?? Enumerable.Empty<string>()).ToList();
+        }
+
+        /// <summary>How many plots are named outright before the count stands for the rest.</summary>
+        public const int Named = 4;
+
+        public string Why { get; }
+
+        public IReadOnlyList<string> Plots { get; }
+
+        public string InWords
+        {
+            get
+            {
+                return Plots.Count.ToString(CultureInfo.InvariantCulture)
+                    + (Plots.Count == 1 ? " plot" : " plots") + ", " + Which + ": " + Why;
+            }
+        }
+
+        private string Which
+        {
+            get
+            {
+                if (Plots.Count <= Named) return string.Join(", ", Plots.ToArray());
+
+                return string.Join(", ", Plots.Take(Named).ToArray())
+                    + " and " + (Plots.Count - Named).ToString(CultureInfo.InvariantCulture) + " more";
+            }
+        }
+    }
+
+    /// <summary>
+    /// One of the two numbers the tool COMPUTES, how many plots got it and why the rest did not.
+    /// </summary>
+    public sealed class ComputedFieldCount
+    {
+        public ComputedFieldCount(string name, int written, IEnumerable<BlankedFor> blanked)
+        {
+            Name = name ?? string.Empty;
+            Written = written;
+            Blanked = (blanked ?? Enumerable.Empty<BlankedFor>()).ToList();
+        }
+
+        public string Name { get; }
+
+        public int Written { get; }
+
+        /// <summary>One entry per reason, never one per plot.</summary>
+        public IReadOnlyList<BlankedFor> Blanked { get; }
+
+        public int NotWritten
+        {
+            get { return Blanked.Sum(one => one.Plots.Count); }
+        }
+
+        public int Plots
+        {
+            get { return Written + NotWritten; }
+        }
+
+        public string InWords
+        {
+            get
+            {
+                if (Plots == 0)
+                {
+                    return Name + ": no form in this press asks for it, so nothing was computed "
+                        + "and nothing about it was refused.";
+                }
+
+                return Name + ": " + Written + " of " + Plots
+                    + (Plots == 1 ? " form" : " forms") + " got it and " + NotWritten + " did not."
+                    + (Blanked.Count == 0
+                        ? string.Empty
+                        : " " + Blanked.Count + (Blanked.Count == 1 ? " reason" : " reasons")
+                            + " under this line.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// The two numbers no schedule printed, counted over the whole press.
+    ///
+    /// **THE 19:52 RUN IS WHY.** Both parks templates wrote neither number on any of their plots
+    /// while the other five wrote both, and the reason was in the report, once per plot, among
+    /// 82,048 lines. Every route that blanks them is already recorded on the field itself, so
+    /// nothing new is decided here: the reasons are counted and said once, and the detail stays
+    /// in each plot's own block.
+    ///
+    /// **THEY ARE COUNTED TOGETHER BECAUSE THEY FAIL TOGETHER.** Both rest on the canopy, so one
+    /// guard blanks both and two more blank one each, and a glance showing one of them would
+    /// have read as a single field's problem.
+    /// </summary>
+    public sealed class ComputedGlance
+    {
+        public ComputedGlance(ComputedFieldCount greened, ComputedFieldCount percentage)
+        {
+            Greened = greened ?? new ComputedFieldCount(ComputedPlaces.GreenCoverName, 0, null);
+            Percentage = percentage ?? new ComputedFieldCount(ComputedPlaces.PercentageName, 0, null);
+        }
+
+        public static readonly ComputedGlance NonePlanned = new ComputedGlance(null, null);
+
+        public ComputedFieldCount Greened { get; }
+
+        public ComputedFieldCount Percentage { get; }
+
+        public string InWords
+        {
+            get
+            {
+                return "THE TWO COMPUTED NUMBERS: the workbook computes both and the patcher "
+                    + "drops its cached results, so the tool works them out and shows its "
+                    + "working. Each is counted over the forms that ask for it.";
+            }
+        }
+    }
+
+    /// <summary>
+    /// The questions one press answers, counted once over every template so each can be read
+    /// in one look instead of out of hundreds of lines.
     ///
     /// **Every count here comes off the OUTCOME, never off the plan**, which is the shape this
     /// repo settled on after a report named four views as created and as not created in one
@@ -276,15 +407,23 @@ namespace RcrcGreen.Core.Kpi
     public sealed class RunGlance
     {
         public RunGlance(
-            AreaCellGlance streetsArea, RegionGlance regions, DivisionGlance divisions, PdfGlance pdfs = null)
+            AreaCellGlance streetsArea, RegionGlance regions, DivisionGlance divisions,
+            PdfGlance pdfs = null, ComputedGlance computed = null)
         {
             StreetsArea = streetsArea ?? AreaCellGlance.NoStreetPlots;
             Regions = regions ?? RegionGlance.NoAreaRead;
             Divisions = divisions ?? DivisionGlance.NoneFound;
             Pdfs = pdfs ?? PdfGlance.NonePlanned;
+            Computed = computed ?? ComputedGlance.NonePlanned;
         }
 
         public PdfGlance Pdfs { get; }
+
+        /// <summary>
+        /// The two numbers no schedule printed. **Every EXISTING PARKS and FUTURE PARKS form of
+        /// the 19:52 run wrote neither, and the file said why once per plot and never once.**
+        /// </summary>
+        public ComputedGlance Computed { get; }
 
         public AreaCellGlance StreetsArea { get; }
 
@@ -299,7 +438,59 @@ namespace RcrcGreen.Core.Kpi
         {
             if (set == null) throw new ArgumentNullException("set");
 
-            return new RunGlance(StreetsArea(set), Regions(set), Divisions(set), Pdfs(set));
+            return new RunGlance(
+                StreetsArea(set), Regions(set), Divisions(set), Pdfs(set), Computed(set));
+        }
+
+        /// <summary>
+        /// The two computed numbers, counted off what each PDF really wrote and each blanked
+        /// field's own recorded reason.
+        ///
+        /// **A FIELD THE FORM DOES NOT ASK FOR IS NOT COUNTED EITHER WAY.** Only the Parks form
+        /// names the percentage, so counting the other two forms' plots as not having written it
+        /// would read as 111 failures. A form is in a field's count when the run recorded the
+        /// field on it, written or blank, and nothing here holds a list of which form asks for
+        /// what.
+        /// </summary>
+        private static ComputedGlance Computed(KpiCreateRunSet set)
+        {
+            return new ComputedGlance(
+                OneComputed(set, PdfValue.TotalAreasToBeGreened, ComputedPlaces.GreenCoverName),
+                OneComputed(set, PdfValue.PercentageCanopy, ComputedPlaces.PercentageName));
+        }
+
+        private static ComputedFieldCount OneComputed(KpiCreateRunSet set, PdfValue value, string name)
+        {
+            int written = 0;
+            var order = new List<string>();
+            var plots = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+            foreach (PlotOutcome one in set.PlotOutcomes)
+            {
+                if (one.Pdf == null || !one.Pdf.Written) continue;
+
+                if (one.Pdf.Landed.Any(field => field.Value == value))
+                {
+                    written = written + 1;
+                    continue;
+                }
+
+                PdfFieldFill blank = one.Pdf.Blank.FirstOrDefault(field => field.Value == value);
+                if (blank == null) continue;
+
+                List<string> held;
+                if (!plots.TryGetValue(blank.Why, out held))
+                {
+                    held = new List<string>();
+                    plots[blank.Why] = held;
+                    order.Add(blank.Why);
+                }
+
+                held.Add(one.PlotId);
+            }
+
+            return new ComputedFieldCount(
+                name, written, order.Select(why => new BlankedFor(why, plots[why])));
         }
 
         /// <summary>
