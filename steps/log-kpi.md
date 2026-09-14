@@ -6,6 +6,12 @@ Newest entry first.
 
 ## 2026-09-14, seventy ninth pass. One rule for every label, and every unit off the page
 
+**Pull request 130, merged into main as `b8bf73e`.** The runner ran 28 hook cases and 1902 tests
+against the pull request head `27832dd`, 0 failed and 0 skipped. The merge went through the API
+with the title and the message both passed on the call, the commit came back off main carrying
+neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte
+the branch head, checked with a diff that named no file.
+
 **1902 tests, 1082 of them KPI, 16 added, against the 1886 main carries** at `d609559`, which is
 also this branch's point, 28 hook cases unchanged, build zero warnings. **No audit finding is
 closed, renumbered or reordered: read off the three files, 63 numbered findings, 19 carrying a

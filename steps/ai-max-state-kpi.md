@@ -49,6 +49,13 @@ measurements off the client's own seven templates and three forms, and the looku
 workbooks the tests build carrying the measured label text. **The two computed numbers have still
 never been held against a workbook Excel has recalculated.**
 
+Pull request 130, merged into main as `b8bf73e`. **The runner ran 28 hook cases and 1902 tests
+against the pull request head `27832dd`, 0 failed and 0 skipped. Locally the same 28 and 1902 ran
+after the last file was written, 1082 of the tests KPI.** The merge went through the API with the
+title and the message both passed on the call, the commit came back off main carrying neither a
+co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch
+head, checked with a diff that named no file.
+
 Phase: 9, ship. Seventy eighth pass, the other two formulas measured and guarded. **1886 tests,
 1066 of them KPI, 7 added, against the 1879 main carries** at `2c698c7`, which is also this
 branch's point, 28 hook cases unchanged, build zero warnings.
