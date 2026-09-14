@@ -40,6 +40,7 @@ reviewer first case, which is the only thing standing between the preparer's row
 constant 5, since every template measured so far has its preparer on row 5. Two existing tests
 changed by hand, each because the truth under it moved.
 
+Pull request 120, merged into main as `8abcf4a`. **The runner ran 28 hook cases and 1706 tests against the pull request head, 0 failed and 0 skipped. Locally the same 28 and 1706 ran at `8abcf4a`, 886 of the tests KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run is what shows a date reaching
 E5 on a real template, and a run says so plainly either way.
 
