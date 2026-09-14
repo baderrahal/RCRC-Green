@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -13,11 +14,12 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class LabelledPlace
     {
-        internal LabelledPlace(string name, string label, int stepsRight)
+        internal LabelledPlace(string name, string label, int stepsRight, string onTheRowOf = null)
         {
             Name = name;
             Label = label;
             StepsRight = stepsRight;
+            OnTheRowOf = onTheRowOf ?? string.Empty;
         }
 
         /// <summary>
@@ -39,6 +41,29 @@ namespace RcrcGreen.Core.Kpi
         /// That is recorded as a distance because it is one, rather than dressed up as a label.
         /// </summary>
         public int StepsRight { get; }
+
+        /// <summary>
+        /// The place whose label's ROW this one is looked for on, or empty when the label is
+        /// looked for over the whole sheet.
+        ///
+        /// **`Date:` is on every template TWICE**, measured on all seven on 14 September: once
+        /// beside `Prepared By:` on row 5 and once beside `Reviewed By:` on row 28, or row 29 on
+        /// the two park templates and STREETS. Two blocks of the same shape, one word apart. So
+        /// the label alone cannot say which cell is meant, the whole sheet search refused it on
+        /// all seven, and no date was written anywhere.
+        ///
+        /// The preparer's label is the only thing that differs, so the date is found THROUGH the
+        /// preparer's block: `Prepared By:` is looked for over the whole sheet, and `Date:` is
+        /// then looked for on that label's own row and nowhere else. A sheet whose reviewer block
+        /// comes first is answered the same way, because the row is chosen by the label rather
+        /// than by its position.
+        /// </summary>
+        public string OnTheRowOf { get; }
+
+        public bool IsAnchored
+        {
+            get { return OnTheRowOf.Length > 0; }
+        }
     }
 
     /// <summary>
@@ -235,7 +260,12 @@ namespace RcrcGreen.Core.Kpi
         public static readonly IReadOnlyList<LabelledPlace> All = new[]
         {
             new LabelledPlace(ReferenceName, ReferenceLabel, 1),
-            new LabelledPlace(DateName, DateLabel, 1),
+
+            // **On the preparer's row and nowhere else.** Every template carries Date: twice,
+            // once beside Prepared By: and once beside Reviewed By: in a second block of the
+            // same shape further down. See LabelledPlace.OnTheRowOf.
+            new LabelledPlace(DateName, DateLabel, 1, PreparedByName),
+
             new LabelledPlace(PreparedByName, PreparedByLabel, 1),
             new LabelledPlace(PositionName, PreparedByLabel, 2),
             new LabelledPlace(FixedCells.CharacterLabel, FixedCells.CharacterLabel, 1),
@@ -250,15 +280,45 @@ namespace RcrcGreen.Core.Kpi
 
         public static string NoLabel(string label, string sheetName)
         {
-            return "no cell on " + sheetName + " reads " + label
+            return NoLabel(label, sheetName, string.Empty);
+        }
+
+        public static string NoLabel(string label, string sheetName, string onlyOn)
+        {
+            return "no cell on " + sheetName + onlyOn + " reads " + label
                 + ", so nothing is written and no cell is guessed at";
         }
 
         public static string TwiceOn(string label, string sheetName, IEnumerable<string> cells)
         {
-            return label + " is on " + sheetName + " at "
+            return TwiceOn(label, sheetName, string.Empty, cells);
+        }
+
+        public static string TwiceOn(string label, string sheetName, string onlyOn, IEnumerable<string> cells)
+        {
+            return label + " is on " + sheetName + onlyOn + " at "
                 + string.Join(" and ", (cells ?? Enumerable.Empty<string>()).ToArray())
                 + ", and nothing says which is meant";
+        }
+
+        /// <summary>
+        /// Which row an anchored place was allowed to look on, said in the reason so a person
+        /// can check the answer against the sheet rather than taking the row on trust.
+        /// </summary>
+        public static string OnlyOn(int row, string anchorLabel)
+        {
+            return " row " + row.ToString(CultureInfo.InvariantCulture)
+                + ", the row " + anchorLabel + " sits on,";
+        }
+
+        /// <summary>
+        /// An anchored place whose anchor was not found has no row to look on, and it carries
+        /// the anchor's own reason rather than a second wording of it.
+        /// </summary>
+        public static string NoRowToLookOn(string label, LabelledCell anchor)
+        {
+            return "there is no row to look for " + label + " on, because "
+                + anchor.Label + " was not found: " + anchor.Why;
         }
 
         /// <summary>
@@ -319,40 +379,80 @@ namespace RcrcGreen.Core.Kpi
                 texts[reference.Value] = (WorkbookPackage.TextOf(cell, shared) ?? string.Empty).Trim();
             }
 
-            var found = new List<LabelledCell>();
+            var found = new Dictionary<string, LabelledCell>(StringComparer.OrdinalIgnoreCase);
+
+            // A place that names its own label is looked for over the whole sheet. An ANCHORED
+            // place waits, because the row it is allowed to look on is not known until the
+            // place it is anchored to has been found.
             foreach (LabelledPlace place in All)
             {
-                string[] at = texts
-                    .Where(one => string.Equals(one.Value, place.Label, StringComparison.OrdinalIgnoreCase))
-                    .Select(one => one.Key)
-                    .OrderBy(one => CellRef.Parse(one).Row)
-                    .ThenBy(one => CellRef.Parse(one).ColumnNumber)
-                    .ToArray();
+                if (place.IsAnchored) continue;
 
-                if (at.Length == 0)
-                {
-                    found.Add(LabelledCell.NotFound(place.Name, place.Label, NoLabel(place.Label, sheetName)));
-                    continue;
-                }
-
-                if (at.Length > 1)
-                {
-                    // Both places under one label refuse together, because the label they share
-                    // is the thing that cannot be resolved.
-                    found.Add(LabelledCell.NotFound(place.Name, place.Label, TwiceOn(place.Label, sheetName, at)));
-                    continue;
-                }
-
-                CellRef where = CellRef.Parse(at[0]);
-                string valueCell = RightOf(where, place.StepsRight);
-
-                string holds;
-                found.Add(LabelledCell.At(
-                    place.Name, place.Label, at[0], valueCell,
-                    texts.TryGetValue(valueCell, out holds) ? holds : string.Empty));
+                found[place.Name] = Looking(place, texts, sheetName, null, string.Empty);
             }
 
-            return LabelledCells.Holding(sheetName, found);
+            foreach (LabelledPlace place in All)
+            {
+                if (!place.IsAnchored) continue;
+
+                LabelledCell anchor = found[place.OnTheRowOf];
+                if (!anchor.Found)
+                {
+                    found[place.Name] = LabelledCell.NotFound(
+                        place.Name, place.Label, NoRowToLookOn(place.Label, anchor));
+                    continue;
+                }
+
+                found[place.Name] = Looking(
+                    place, texts, sheetName, CellRef.Parse(anchor.LabelCell).Row, anchor.Label);
+            }
+
+            return LabelledCells.Holding(sheetName, All.Select(one => found[one.Name]).ToList());
+        }
+
+        /// <summary>
+        /// One place, over the whole sheet when <paramref name="onlyRow"/> is null and over that
+        /// row alone when it is not. Nothing found and more than one found are both refusals,
+        /// and each says which of the two it was and where it looked.
+        /// </summary>
+        private static LabelledCell Looking(
+            LabelledPlace place,
+            Dictionary<string, string> texts,
+            string sheetName,
+            int? onlyRow,
+            string anchorLabel)
+        {
+            string onlyOn = onlyRow == null ? string.Empty : OnlyOn(onlyRow.Value, anchorLabel);
+
+            string[] at = texts
+                .Where(one => string.Equals(one.Value, place.Label, StringComparison.OrdinalIgnoreCase))
+                .Where(one => onlyRow == null || CellRef.Parse(one.Key).Row == onlyRow.Value)
+                .Select(one => one.Key)
+                .OrderBy(one => CellRef.Parse(one).Row)
+                .ThenBy(one => CellRef.Parse(one).ColumnNumber)
+                .ToArray();
+
+            if (at.Length == 0)
+            {
+                return LabelledCell.NotFound(
+                    place.Name, place.Label, NoLabel(place.Label, sheetName, onlyOn));
+            }
+
+            if (at.Length > 1)
+            {
+                // Two places under one label refuse together, because the label they share is
+                // the thing that cannot be resolved.
+                return LabelledCell.NotFound(
+                    place.Name, place.Label, TwiceOn(place.Label, sheetName, onlyOn, at));
+            }
+
+            CellRef where = CellRef.Parse(at[0]);
+            string valueCell = RightOf(where, place.StepsRight);
+
+            string holds;
+            return LabelledCell.At(
+                place.Name, place.Label, at[0], valueCell,
+                texts.TryGetValue(valueCell, out holds) ? holds : string.Empty);
         }
 
         /// <summary>

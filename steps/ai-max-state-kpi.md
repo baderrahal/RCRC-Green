@@ -1,5 +1,48 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Seventy first pass, Bader's answer to the open question and the live fault his
+answer turned up. **1706 tests, 886 of them KPI, 6 added, against the 1700 main carries** at the
+branch point `bfbab7f`, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none. That count is
+read off the files and off nothing else, which is Bader's instruction after four round messages
+carried a number that did not reconcile.
+
+**THE UNKNOWN IS CLOSED. No label names the position cell**, measured on all seven: the only
+cells whose text names a position hold `<Position>` itself, the placeholder this run replaces.
+The distance of two from `Prepared By:` stays, and a test says nothing in the table looks for
+the word.
+
+**AND THE ANSWER TURNED UP A FAULT THE ROUND BEFORE SHIPPED.** `Date:` is on every template
+TWICE, beside `Prepared By:` on row 5 and beside `Reviewed By:` on row 28, or row 29 on the two
+parks and STREETS. **The found twice guard was firing, on all seven, unscoped**, measured before
+anything changed: `Date: is on <Mosques> at D5 and D28, and nothing says which is meant`. So the
+merged tool would have written **no date into any workbook**. The guard read correct and the
+TABLE was wrong. **A guard firing on data nobody built is a guard nobody has seen fire**: my
+fixtures carried row 5 alone, so the seven way theory meant to be the check ran against a sheet
+the client does not have.
+
+**The date is found through the preparer's block now.** `LabelledPlace.OnTheRowOf` names the
+place whose label's ROW this one may look on, resolved in a second pass. **The row is chosen by
+the label and never by being first or by a number**, so a sheet whose reviewer block comes first
+is answered with the preparer's row. An anchor that cannot be found gives no row to look on and
+says so without repeating the anchor's words, the guard still fires inside that row with both
+reasons naming which row and why, anchoring is one level deep with a test, and `REF :` stays
+looking over the whole sheet because the second block carries none.
+
+**Both seven way theories now build the reviewer block too**, at 28 or 29 as measured, and each
+asserts nothing at all lands in it.
+
+Two break watches, 21 and 1 red, both restored byte for byte. The first is the merged fault and
+its red message is that fault word for word. **The second reddened exactly one test**, the
+reviewer first case, which is the only thing standing between the preparer's row and the
+constant 5, since every template measured so far has its preparer on row 5. Two existing tests
+changed by hand, each because the truth under it moved.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run is what shows a date reaching
+E5 on a real template, and a run says so plainly either way.
+
 Phase: 9, ship. Seventieth pass, findings 50 and 53 off the third audit plus two things Bader's
 own measurement turned up. **1700 tests, 880 of them KPI, 27 added, against the 1673 main
 carries** at the branch point `86b322f`, 28 hook cases unchanged, build zero warnings.

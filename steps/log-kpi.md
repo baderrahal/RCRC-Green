@@ -4,6 +4,125 @@ Newest entry first.
 
 ---
 
+## 2026-09-14, seventy first pass. The date is on every template twice, and the guard was firing
+
+Bader's answer to the question the round before left open, and one thing his answer turned up
+that is a fault the round before shipped. **1706 tests, 886 of them KPI, 28 hook cases**, against
+the 1700 main carries at the branch point `bfbab7f`. Build zero warnings.
+
+### The UNKNOWN is closed: no label names the position cell
+
+Measured on all seven. **The only cells whose text names a position hold `<Position>` itself**,
+which is the placeholder this run replaces and not a label. Nothing names it on row 5 or
+anywhere else.
+
+So the distance of two from `Prepared By:` stays, and writing it as a distance and saying so out
+loud was the right call rather than a shortcut. A test now says nothing in the table looks for
+the word Position, and says what the placeholder in H5 decides, which is nothing.
+
+### And the answer turned up a live fault, shipped last round
+
+**`Date:` is on every template TWICE.** Measured on all seven:
+
+```
+row  5   D5  Date:   E5 the date   F5  Prepared By:   G5 a name   H5 a position
+row 28   D28 Date:   E28 the date  F28 Reviewed By:   G28 a name  H28 a position
+```
+
+at row 28 on HEALTHCARE, MOSQUES, PARKING and SCHOOLS, and at **row 29** on EXISTING PARKS,
+FUTURE PARKS and STREETS. Two blocks of the same shape, one word apart. A letter map would have
+been wrong there too, which is the row 7 lesson a third time.
+
+**THE GUARD WAS FIRING, ON ALL SEVEN, AND IT WAS NOT SCOPED TO ANYTHING.** The question was
+whether it fires or never sees the second cell. Measured before anything was changed, by
+building a sheet with both blocks and running the real lookup:
+
+```
+Date found=False  why=Date: is on <Mosques> at D5 and D28, and nothing says which is meant
+Reference found=True  C5     PreparedBy found=True  G5     Position found=True  H5
+```
+
+**So the merged tool would have written NO DATE INTO ANY WORKBOOK**, and the report would have
+named D5 and D28 under CELLS NOT WRITTEN on every template. The guard did exactly what it says.
+**The TABLE was wrong**: it said the label alone identifies the cell, and on a real sheet it does
+not. That is worth writing down as its own shape, because the guard reading correct is what made
+the fault invisible to every test I wrote: **a guard firing on data nobody built is a guard
+nobody has seen fire.** My fixtures carried row 5 alone, so the seven way theory that was meant
+to be the check was run against a sheet the client does not have.
+
+### The date is found through the preparer's block
+
+`Prepared By:` against `Reviewed By:` is the only thing that separates the two blocks, which is
+what Bader read off the measurement and it is the answer. `LabelledPlace.OnTheRowOf` names the
+place whose label's ROW this one may look on: `Prepared By:` is looked for over the whole sheet,
+and `Date:` is then looked for on that label's own row and nowhere else. Two passes in
+`LabelledPlaces.Off`, the places naming their own label first and the anchored one after.
+
+**The row is chosen by the LABEL and never by being first or by a number.** A sheet whose
+reviewer block sits above the preparer's is answered with the preparer's row, and that is the
+test that tells this rule apart from one that takes the topmost `Date:` or the constant 5.
+
+Four things beside it, all tested.
+
+**An anchor that cannot be found gives no row to look on.** A sheet naming no `Prepared By:`, or
+naming it twice, writes no date either, and the reason says that rather than repeating the
+anchor's words: `there is no row to look for Date: on, because Prepared By: was not found`, then
+the anchor's own reason. **The date going with the person and the position is the anchor working
+rather than a side effect**: a sheet where nothing can say which block is the preparer's cannot
+say which row the date sits on either.
+
+**The guard still fires inside the row it may look on**, and both its reasons name that row and
+why it was that row, `no cell on <Mosques> row 5, the row Prepared By: sits on, reads Date:` and
+the same shape for two of them. A row a person cannot check against the sheet by eye would be a
+second unreadable rule.
+
+**One level of anchoring, on purpose**, with a test that every anchor names a place that exists
+and is not itself anchored.
+
+**`REF :` is left looking over the whole sheet**, because the second block starts at column D
+and carries no reference. If a template ever holds it twice the guard says so and writes
+nothing, which is the right answer and not a silent one.
+
+### The seven way theories now run against the real sheet
+
+Both of them build each template's row 5 AND its own reviewer block, at 28 or 29 as measured, so
+the check that the lookup lands on C5, E5, G5 and H5 is made against a sheet shaped like the one
+the team fills. Each also asserts that **nothing at all lands in the reviewer's block**, because
+a date landing at E28 would be a wrong number in a client file that nobody reading the preparer's
+row would ever see.
+
+### Break watches
+
+Two, both restored byte for byte and checked with a diff against its backup.
+
+- **The date looked for over the whole sheet again**, which is the merged fault. 21 red, and the
+  message on `TheDateIsFoundOnThePreparersRowAndNeverTheReviewers` is the fault word for word:
+  `Date: is on <Mosques> at D5 and D28, and nothing says which is meant`
+- **The anchored row taken as the constant 5** rather than the row the anchor sits on. **Exactly
+  one red**, `WhenTheReviewerBlockComesFirstTheDateStillFollowsThePreparer`, which is the one
+  test whose whole job is telling those two apart. Every template measured so far has its
+  preparer on row 5, so a constant passes all seven and that single case is what stops it
+
+### Two existing tests changed by hand, each because the truth under it moved
+
+`APreparedByLabelOnTheSheetTwiceRefusesThePersonAndThePosition` is now
+`...ThePersonThePositionAndTheDate` and asserts the no row reason. And the skip list in
+`ATemplateNamingNeitherLabelWritesNothingAndSaysSo` no longer holds the date among the `no cell
+on` reasons, because the date's own reason is the anchor's, which the test now asserts
+separately rather than letting it fall out of a filter.
+
+### The count
+
+**Read off the three audit files at these lines: 63 numbered findings, 19 carrying a FIXED mark,
+44 open.** This round closes none, renumbers none and reorders none. It is a fault off a
+measurement rather than an audit entry, so it is written here.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** The next run is what shows the date
+reaching E5 on a real template, and a run says so plainly either way: a date the lookup cannot
+place is named with the row it looked on and why it was that row.
+
+---
+
 ## 2026-09-14, seventieth pass. Row 5 goes to the label lookup, and what its cells already hold
 
 Findings 50 and 53 off the third audit, and two things Bader's own measurement turned up that

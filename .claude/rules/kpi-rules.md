@@ -198,20 +198,75 @@ anything and no workbook is damaged. The letters were right on all seven BY LUCK
 would have been right on two templates out of three, and the next template set is what a letter
 cannot survive. What really differs between the two sets is what those cells HOLD.
 
-`LabelledPlaces` is the one table now, six entries, each a name, a label and how many columns
-right of the label its cell sits. `LabelledPlaces.In` opens the template's own main sheet once
-when Create is pressed and finds all six in one pass. A test rebuilds each template's own row 5
-and checks the lookup lands on C5, E5, G5 and H5 on all seven, and a second one checks the four
-values really reach those cells through the plan.
+`LabelledPlaces` is the one table now, six entries, each a name, a label, how many columns right
+of the label its cell sits, and which place's row it may look on. `LabelledPlaces.In` opens the
+template's own main sheet once when Create is pressed and finds all six in two passes, the
+places that name their own label first and the anchored one after. A test rebuilds each
+template's own row 5 AND its reviewer block and checks the lookup lands on C5, E5, G5 and H5 on
+all seven, and a second one checks the four values really reach those cells through the plan and
+that nothing at all lands in the reviewer's block.
 
-**NO LABEL NAMES THE POSITION CELL, AND THAT IS THIS ROUND'S OWN FINDING.** Three labels sit on
-row 5 and they reach three of the four cells. H5 is one further along than the person's name,
-under the same Prepared By, which both park templates confirm by already holding a position
-there. It is written as a DISTANCE of two from that label, said out loud in the code, in the
-report and here, because a distance dressed up as a label would be the one thing in this lookup
-nobody could see. Whether the real sheets name it somewhere else is UNKNOWN and is for the team.
+**NO LABEL NAMES THE POSITION CELL, AND THAT IS MEASURED RATHER THAN ASSUMED.** Three labels sit
+on row 5 and they reach three of the four cells. H5 is one further along than the person's name,
+under the same Prepared By. Bader then looked over all seven for anything naming it: **the only
+cells whose text names a position hold `<Position>` itself, which is the placeholder this run
+replaces and not a label.** Nothing names it on row 5 or anywhere else. So the DISTANCE of two
+stays, and it is said out loud in the code, in the report and here, because a distance dressed
+up as a label would be the one thing in this lookup nobody could see. The UNKNOWN the round
+before left open is closed by that measurement.
+
 Two places under one label also refuse together when the sheet carries that label twice, because
 the thing that cannot be resolved is the label they share.
+
+### The date is on every template TWICE, and the guard was firing on all seven
+
+**Measured on all seven on 14 September, and it is a fault the round before shipped.** Every
+template carries a SECOND block of the same shape as row 5, one word apart:
+
+```
+row  5   D5  Date:   E5 the date   F5  Prepared By:   G5 a name   H5 a position
+row 28   D28 Date:   E28 the date  F28 Reviewed By:   G28 a name  H28 a position
+```
+
+at row 28 on HEALTHCARE, MOSQUES, PARKING and SCHOOLS, and at ROW 29 on EXISTING PARKS, FUTURE
+PARKS and STREETS. **A letter map would have been wrong there too**, which is the same lesson
+row 7 already taught.
+
+**The found twice guard was firing, on all seven, and it was not scoped to anything.** Measured
+by building a sheet with both blocks and running the real lookup: `Date:` came back not found
+with `Date: is on <Mosques> at D5 and D28, and nothing says which is meant`, so **the date would
+have been written into NO workbook at all** and the report would have named both cells under
+CELLS NOT WRITTEN. The guard did exactly what it says. The TABLE was wrong, because it said the
+label alone identifies the cell and on a real sheet it does not.
+
+**So the date is found THROUGH the preparer's block.** `Prepared By:` against `Reviewed By:` is
+the only thing that separates the two, so `LabelledPlace.OnTheRowOf` names the place whose
+label's ROW this one may look on: `Prepared By:` is looked for over the whole sheet and `Date:`
+is then looked for on that label's own row and nowhere else. The row is chosen by the LABEL and
+never by being first or by a number, so a sheet whose reviewer block sits above the preparer's
+is answered with the preparer's row, and a test says so in those words.
+
+Four things follow, all tested.
+
+**A row taken as a constant is the fault again.** Hard coding row 5 passes every template
+measured so far and fails the reviewer first case, which is the one test carrying that rule.
+
+**An anchor that cannot be found gives no row to look on**, so a sheet naming no `Prepared By:`,
+or naming it twice, writes no date either and the reason says exactly that rather than repeating
+the anchor's words: `there is no row to look for Date: on, because Prepared By: was not found`,
+then the anchor's own reason.
+
+**The guard still fires inside the row it may look on**, and both its reasons name that row and
+why it was that row: `no cell on <Mosques> row 5, the row Prepared By: sits on, reads Date:` and
+`Date: is on <Mosques> row 5, the row Prepared By: sits on, at A5 and D5`. A row a person cannot
+check against the sheet would be a second unreadable rule.
+
+**One level of anchoring, on purpose.** An anchor must name a place that exists and is not
+itself anchored, with a test, because a chain of rows is not something anybody can check by eye.
+
+**`REF :` is measured as appearing ONCE and is left looking over the whole sheet.** The second
+block starts at D, so it carries no reference. If a template ever holds it twice the guard says
+so and writes nothing, which is the right answer and not a silent one.
 
 **THE LABELS ARE SPELT EXACTLY AS THE CELLS READ**, the space before the colon in `REF :`
 included, and the match is whole, without case and with edge whitespace off. A template whose

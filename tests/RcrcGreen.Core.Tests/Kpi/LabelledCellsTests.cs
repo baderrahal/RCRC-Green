@@ -261,9 +261,18 @@ namespace RcrcGreen.Core.Tests.Kpi
                 null, null, null, StreetReferenceAnswer.Nothing("not a street run"), found);
 
             Assert.Equal(
-                new[] { "Date", "Prepared by", "Position", "Reference", "Character", "Context" },
+                new[] { "Prepared by", "Position", "Reference", "Character", "Context" },
                 plan.Skipped
                     .Where(one => one.Why.StartsWith("no cell on", StringComparison.Ordinal))
+                    .Select(one => one.What).ToArray());
+
+            // **The date is not in that list and must not be.** It is looked for on the
+            // preparer's own row, so a sheet naming no Prepared By: gives it no row to look on,
+            // and its reason says that rather than saying no cell reads Date:.
+            Assert.Equal(
+                new[] { "Date" },
+                plan.Skipped
+                    .Where(one => one.Why.StartsWith("there is no row to look for", StringComparison.Ordinal))
                     .Select(one => one.What).ToArray());
         }
 

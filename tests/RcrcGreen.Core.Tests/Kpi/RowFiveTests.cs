@@ -27,6 +27,18 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// wrote by never overwrote anything and no workbook is damaged. The letters were right on
     /// all seven BY LUCK, and what differs between the two sets is what those cells HOLD.
     ///
+    /// **EVERY TEMPLATE CARRIES A SECOND BLOCK OF THE SAME SHAPE**, measured on all seven:
+    ///
+    /// <code>
+    /// row  5   D5  Date:    E5  the date   F5  Prepared By:   G5  a name   H5  a position
+    /// row 28   D28 Date:    E28 the date   F28 Reviewed By:   G28 a name   H28 a position
+    /// </code>
+    ///
+    /// at row 28 on HEALTHCARE, MOSQUES, PARKING and SCHOOLS, and at row 29 on EXISTING PARKS,
+    /// FUTURE PARKS and STREETS. One word apart. So `Date:` is on every template TWICE and the
+    /// preparer's own label is the only thing that separates the two blocks, which is why the
+    /// date is looked for on the preparer's row rather than over the sheet.
+    ///
     /// No client workbook enters this public repository, so row 5 is rebuilt here from the cells
     /// Bader named, the way the row 7 layouts already are.
     /// </summary>
@@ -68,6 +80,21 @@ namespace RcrcGreen.Core.Tests.Kpi
                 { "D5", "Date:" }, { "E5", string.Empty },
                 { "F5", "Prepared By:" }, { "G5", string.Empty }, { "H5", " Architect Engineer" }
             };
+        }
+
+        /// <summary>
+        /// The second block every template carries, the same shape one word apart. Row 28 on
+        /// HEALTHCARE, MOSQUES, PARKING and SCHOOLS, row 29 on the two parks and STREETS.
+        /// </summary>
+        private static Dictionary<string, string> AndTheReviewerBlock(
+            Dictionary<string, string> sheet, int row)
+        {
+            sheet["D" + row] = "Date:";
+            sheet["E" + row] = "<Date>";
+            sheet["F" + row] = "Reviewed By:";
+            sheet["G" + row] = "<Name>";
+            sheet["H" + row] = "<Position>";
+            return sheet;
         }
 
         /// <summary>
@@ -174,18 +201,21 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// the measurement says and that is a finding rather than a thing to work around.
         /// </summary>
         [Theory]
-        [InlineData("EXISTING PARKS", "<Park Name>", true)]
-        [InlineData("FUTURE PARKS", "<Park Name>", true)]
-        [InlineData("HEALTHCARE", "<Healthcare>", false)]
-        [InlineData("MOSQUES", "<Mosques>", false)]
-        [InlineData("PARKING", "<Parking Plots>", false)]
-        [InlineData("SCHOOLS", "<Schools>", false)]
-        [InlineData("STREETS", "<Streets>", false)]
-        public void TheLabelsLandOnC5E5G5AndH5OnAllSeven(string name, string sheetName, bool parks)
+        [InlineData("EXISTING PARKS", "<Park Name>", true, 29)]
+        [InlineData("FUTURE PARKS", "<Park Name>", true, 29)]
+        [InlineData("HEALTHCARE", "<Healthcare>", false, 28)]
+        [InlineData("MOSQUES", "<Mosques>", false, 28)]
+        [InlineData("PARKING", "<Parking Plots>", false, 28)]
+        [InlineData("SCHOOLS", "<Schools>", false, 28)]
+        [InlineData("STREETS", "<Streets>", false, 29)]
+        public void TheLabelsLandOnC5E5G5AndH5OnAllSeven(
+            string name, string sheetName, bool parks, int reviewerRow)
         {
             KpiTemplate template = KpiTemplates.All.Single(one => one.Name == name);
             string path = LabelFixture.Create(
-                _folder, sheetName, parks ? BothParks() : FiveOfThem(), name + ".xlsx");
+                _folder, sheetName,
+                AndTheReviewerBlock(parks ? BothParks() : FiveOfThem(), reviewerRow),
+                name + ".xlsx");
 
             LabelledCells found = LabelledPlaces.In(path, template);
 
@@ -204,6 +234,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.All(
                 new[] { "Reference", "Date", "Prepared by", "Position" },
                 one => Assert.True(found.For(one).Found, one + " was not found on " + sheetName));
+
+            // **Nothing lands in the reviewer's block.** Its Date: is the second one on the
+            // sheet and the whole reason the date is looked for on the preparer's row.
+            Assert.DoesNotContain(found.All, one => one.LabelCell == "D" + reviewerRow);
+            Assert.DoesNotContain(found.All, one => one.ValueCell == "E" + reviewerRow);
         }
 
         /// <summary>
@@ -212,18 +247,21 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// than against the read alone.
         /// </summary>
         [Theory]
-        [InlineData("EXISTING PARKS", "<Park Name>", true)]
-        [InlineData("FUTURE PARKS", "<Park Name>", true)]
-        [InlineData("HEALTHCARE", "<Healthcare>", false)]
-        [InlineData("MOSQUES", "<Mosques>", false)]
-        [InlineData("PARKING", "<Parking Plots>", false)]
-        [InlineData("SCHOOLS", "<Schools>", false)]
-        [InlineData("STREETS", "<Streets>", false)]
-        public void ThePlanWritesTheFourValuesIntoThoseFourCellsOnAllSeven(string name, string sheetName, bool parks)
+        [InlineData("EXISTING PARKS", "<Park Name>", true, 29)]
+        [InlineData("FUTURE PARKS", "<Park Name>", true, 29)]
+        [InlineData("HEALTHCARE", "<Healthcare>", false, 28)]
+        [InlineData("MOSQUES", "<Mosques>", false, 28)]
+        [InlineData("PARKING", "<Parking Plots>", false, 28)]
+        [InlineData("SCHOOLS", "<Schools>", false, 28)]
+        [InlineData("STREETS", "<Streets>", false, 29)]
+        public void ThePlanWritesTheFourValuesIntoThoseFourCellsOnAllSeven(
+            string name, string sheetName, bool parks, int reviewerRow)
         {
             KpiTemplate template = KpiTemplates.All.Single(one => one.Name == name);
             string path = LabelFixture.Create(
-                _folder, sheetName, parks ? BothParks() : FiveOfThem(), name + "-plan.xlsx");
+                _folder, sheetName,
+                AndTheReviewerBlock(parks ? BothParks() : FiveOfThem(), reviewerRow),
+                name + "-plan.xlsx");
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 template,
@@ -238,6 +276,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("2026-09-14", Stored(plan, "E5"));
             Assert.Equal("B RAHAL", Stored(plan, "G5"));
             Assert.Equal("BIM COORDINATOR", Stored(plan, "H5"));
+
+            // **The reviewer's block is never written into.** A date landing there would be a
+            // wrong number in a client file that nobody reading the preparer's row would see.
+            Assert.DoesNotContain(plan.Writes, one => one.Cell.ToString() == "E" + reviewerRow);
+            Assert.DoesNotContain(plan.Writes, one => one.Cell.ToString() == "G" + reviewerRow);
+            Assert.DoesNotContain(plan.Writes, one => one.Cell.ToString() == "H" + reviewerRow);
         }
 
         private static string Stored(KpiCreatePlan plan, string cell)
@@ -245,6 +289,144 @@ namespace RcrcGreen.Core.Tests.Kpi
             CellWrite found = plan.Writes.SingleOrDefault(one => one.Cell.ToString() == cell);
             Assert.True(found != null, "no write landed on " + cell);
             return found.Stored;
+        }
+
+        /// <summary>
+        /// **THE FAULT THIS ROUND FOUND, WRITTEN AS A TEST.** `Date:` is on every template twice
+        /// and the seventieth pass looked for it over the whole sheet, so the found twice guard
+        /// fired on all seven and NO DATE WAS WRITTEN ANYWHERE. It is looked for on the row the
+        /// preparer's own label sits on now, and this is the case that was red.
+        /// </summary>
+        [Fact]
+        public void TheDateIsFoundOnThePreparersRowAndNeverTheReviewers()
+        {
+            string path = LabelFixture.Create(
+                _folder, "<Mosques>", AndTheReviewerBlock(FiveOfThem(), 28), "two-blocks.xlsx");
+
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Mosques);
+
+            LabelledCell date = found.For("Date");
+            Assert.True(date.Found, date.Why);
+            Assert.Equal("D5", date.LabelCell);
+            Assert.Equal("E5", date.ValueCell);
+
+            // The other three are unmoved, so the anchor did not cost anything else.
+            Assert.Equal("C5", found.For("Reference").ValueCell);
+            Assert.Equal("G5", found.For("Prepared by").ValueCell);
+            Assert.Equal("H5", found.For("Position").ValueCell);
+        }
+
+        /// <summary>
+        /// **The row is chosen by the preparer's label and never by being first.** A sheet whose
+        /// reviewer block sits above the preparer's answers with the preparer's row, which is
+        /// what tells this rule apart from one that takes the topmost Date:.
+        /// </summary>
+        [Fact]
+        public void WhenTheReviewerBlockComesFirstTheDateStillFollowsThePreparer()
+        {
+            string path = LabelFixture.Create(
+                _folder, "<Mosques>",
+                new Dictionary<string, string>
+                {
+                    { "D5", "Date:" }, { "E5", "<Date>" },
+                    { "F5", "Reviewed By:" }, { "G5", "<Name>" }, { "H5", "<Position>" },
+                    { "B28", "REF :" }, { "C28", "<UID>" },
+                    { "D28", "Date:" }, { "E28", "<Date>" },
+                    { "F28", "Prepared By:" }, { "G28", "<Name>" }, { "H28", "<Position>" }
+                },
+                "reviewer-first.xlsx");
+
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Mosques);
+
+            Assert.Equal("D28", found.For("Date").LabelCell);
+            Assert.Equal("E28", found.For("Date").ValueCell);
+            Assert.Equal("G28", found.For("Prepared by").ValueCell);
+            Assert.Equal("H28", found.For("Position").ValueCell);
+        }
+
+        /// <summary>
+        /// The found twice guard still fires inside the row it is allowed to look on, and its
+        /// reason says which row that was and why, so a person can check the answer against the
+        /// sheet rather than taking the row on trust.
+        /// </summary>
+        [Fact]
+        public void TwoDateLabelsOnThePreparersOwnRowRefuseAndNameBoth()
+        {
+            Dictionary<string, string> twice = AndTheReviewerBlock(FiveOfThem(), 28);
+            twice["A5"] = "Date:";
+
+            string path = LabelFixture.Create(_folder, "<Mosques>", twice, "date-twice-row-5.xlsx");
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Mosques);
+
+            Assert.False(found.For("Date").Found);
+            Assert.Equal(
+                "Date: is on <Mosques> row 5, the row Prepared By: sits on, at A5 and D5, "
+                + "and nothing says which is meant",
+                found.For("Date").Why);
+        }
+
+        /// <summary>
+        /// A preparer's row carrying no Date: at all says so, naming the row it looked on, and
+        /// never reaches down to the reviewer's copy.
+        /// </summary>
+        [Fact]
+        public void APreparersRowWithNoDateLabelSaysWhichRowItLookedOn()
+        {
+            Dictionary<string, string> missing = AndTheReviewerBlock(FiveOfThem(), 28);
+            missing.Remove("D5");
+
+            string path = LabelFixture.Create(_folder, "<Mosques>", missing, "no-date-row-5.xlsx");
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Mosques);
+
+            Assert.False(found.For("Date").Found);
+            Assert.Equal(
+                "no cell on <Mosques> row 5, the row Prepared By: sits on, reads Date:, "
+                + "so nothing is written and no cell is guessed at",
+                found.For("Date").Why);
+        }
+
+        /// <summary>
+        /// **Every anchor names a place that exists and is not itself anchored.** One level, on
+        /// purpose: a chain of rows would be a rule nobody can check against a sheet by eye.
+        /// </summary>
+        [Fact]
+        public void EveryAnchorNamesAPlaceThatIsNotItselfAnchored()
+        {
+            Assert.Equal(
+                new[] { "Date" },
+                LabelledPlaces.All.Where(one => one.IsAnchored).Select(one => one.Name).ToArray());
+
+            foreach (LabelledPlace place in LabelledPlaces.All.Where(one => one.IsAnchored))
+            {
+                LabelledPlace anchor = LabelledPlaces.Of(place.OnTheRowOf);
+                Assert.True(anchor != null, place.Name + " is anchored to a place that is not in the table");
+                Assert.False(anchor.IsAnchored, place.Name + " is anchored to a place that is itself anchored");
+            }
+        }
+
+        /// <summary>
+        /// **MEASURED ON ALL SEVEN: NO LABEL NAMES THE POSITION CELL.** The only cells whose
+        /// text names a position hold the placeholder being replaced, not a label, so the
+        /// distance of two from Prepared By: stays and nothing anywhere looks for the word.
+        /// This is what closes the UNKNOWN the seventieth pass left open.
+        /// </summary>
+        [Fact]
+        public void NothingLooksForTheWordPositionAndThePlaceholderIsNotALabel()
+        {
+            Assert.DoesNotContain(
+                LabelledPlaces.All,
+                one => one.Label.IndexOf("Position", StringComparison.OrdinalIgnoreCase) >= 0);
+
+            string path = LabelFixture.Create(
+                _folder, "<Mosques>", AndTheReviewerBlock(FiveOfThem(), 28), "placeholder.xlsx");
+
+            LabelledCells found = LabelledPlaces.In(path, KpiTemplates.Mosques);
+
+            // H5 and H28 both hold <Position>. The one this run writes is chosen by the distance
+            // from the preparer's label, and the placeholder in it decides nothing.
+            Assert.Equal("H5", found.For("Position").ValueCell);
+            Assert.Equal("Prepared By:", found.For("Position").Label);
+            Assert.Equal("<Position>", found.For("Position").Holds);
         }
 
         /// <summary>
@@ -290,9 +472,14 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// <summary>
         /// One label naming two places means both refuse together when the sheet carries it
         /// twice, because the thing that cannot be resolved is the label they share.
+        ///
+        /// **The date goes with them**, and that is the anchor working rather than a side
+        /// effect: a sheet where nothing can say which block is the preparer's cannot say which
+        /// row the date sits on either, and the reason says exactly that rather than repeating
+        /// the anchor's own words.
         /// </summary>
         [Fact]
-        public void APreparedByLabelOnTheSheetTwiceRefusesThePersonAndThePosition()
+        public void APreparedByLabelOnTheSheetTwiceRefusesThePersonThePositionAndTheDate()
         {
             Dictionary<string, string> twice = FiveOfThem();
             twice["F9"] = "Prepared By:";
@@ -306,9 +493,14 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "Prepared By: is on <Mosques> at F5 and F9, and nothing says which is meant",
                 found.For("Position").Why);
 
-            // The other two labels are unaffected, so one bad label does not cost the rest.
+            Assert.False(found.For("Date").Found);
+            Assert.Equal(
+                "there is no row to look for Date: on, because Prepared By: was not found: "
+                + "Prepared By: is on <Mosques> at F5 and F9, and nothing says which is meant",
+                found.For("Date").Why);
+
+            // The reference names its own label, so one bad label does not cost it.
             Assert.Equal("C5", found.For("Reference").ValueCell);
-            Assert.Equal("E5", found.For("Date").ValueCell);
         }
 
         /// <summary>
