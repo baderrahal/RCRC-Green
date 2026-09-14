@@ -227,6 +227,55 @@ else changed, because `KpiTemplate.TakesNoArea` reads the MAP and every path tha
 asks that one thing. **H8 is hard coded nowhere.** The letters on these sheets have moved before
 and row 7 proved it, so the cell is taken off the template the same way every other value is.
 
+## Three lines at the top of the report, so a run can be checked at a glance
+
+**All three were answerable before this and all three were spread over hundreds of lines.** The
+streets area sat in one block per plot, the region type in one row per plot, and the divisions
+in one formula section per template. On a run of 156 plots that is a person reading a 2,000 line
+file to count. `RunAtAGlance.Of` counts them once over every template and `THIS RUN AT A GLANCE`
+is the FIRST section of the file, above the run's own accounting and above every per template
+block. **Each is one line and a short list, and the detail stays exactly where it was.**
+
+```
+THE STREETS AREA    how many street plots got a value in the area cell, how many did not,
+                    and the ones that did not NAMED with the reason their own run recorded
+THE REGION TYPE     how many plots took their area off each filled region type, the type the
+                    client's note names first, and how many chose no region at all
+THE DIVISIONS       how many #DIV/0! the formula check found, and of those how many divide
+                    by a cell THIS RUN WROTE
+```
+
+**THE STREETS AREA IS COUNTED OFF THE OUTCOME AND OFF THE MAP.** A street plot got a value when
+the template's own area cell landed in the output holding something, read back off the file, so
+nothing here names H8 and nothing reads what the fill set out to write. A cell that landed
+holding nothing did not get a value. A press with no street plot in it says so rather than
+counting nought of nought, because no street plot is not the same as every street plot failing.
+It is STREETS alone because STREETS is the template whose cell changed.
+
+**THE REGION TYPES ARE COUNTED AS THE RUN FOUND THEM AND NO SECOND TYPE NAME IS IN THE CODE.**
+`RegionChoice.TheNoteNames` is held because it is the note being checked, and it sorts to the
+top so the two counts the team asks for are the first two rows. **RCRC_CADASTRAL LIMIT is
+deliberately NOT written in beside it**: a rule naming two types would count a model's third
+type under nothing, and this tool has paid for a name standing in for a fact before. A plot that
+chose no region is counted apart from every type, because two regions holding an area is a
+question waiting on a person and none holding one is a plot with nothing to read, and neither is
+a disagreement with the note.
+
+**THE DIVISION'S KIND AND ITS DIVISOR TRAVEL ON THE FINDING.** `FormulaAtRisk.IsDivideByZero`
+and `DivisorThisRunWrote` are properties set where the risk is built. **A signal that travels in
+the data is not a signal**, which this repo has already paid for once: a reason reported by
+printing a marker word into the message it described, and the commit carrying that fix refused
+by its own message. A counter searching `Reason` for `#DIV/0!` would count a reason that merely
+talks about a division. Measured: breaking the two properties at the construction site reddens
+three of the new cases and leaves every one of `DivideByZeroTests` GREEN, because those assert
+the sentence.
+
+**The glance heading is the one heading in this report carrying no count.** Every other one
+prints how many rows sit under it, so a section that found nothing reads differently from one
+nobody filled in. Three is how many questions there are rather than how many of anything this
+run found, and a constant sitting where a count goes is a number that reads as a measurement.
+A test says so and checks the heading below it still counts.
+
 ## The client's note names one region type and at least two street plots disagree
 
 Their note for the area cell names `RCRC_OUT OF SCOPE (PRESENTATION)`. **NOTHING CHOOSES ON IT.**

@@ -61,6 +61,7 @@ namespace RcrcGreen.Core.Kpi
                 + "sections are below under its name.");
             Line(report, string.Empty);
 
+            TheGlance(report, set);
             TheRunAccounting(report, set);
             TheSplit(report, set);
 
@@ -89,6 +90,57 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return report.ToString();
+        }
+
+        public const string GlanceHeading = "THIS RUN AT A GLANCE";
+
+        /// <summary>
+        /// **THREE QUESTIONS THIS PRESS ANSWERS, EACH IN ONE LINE AND A SHORT LIST.** They were
+        /// all answerable before and all three were spread over hundreds of lines: the streets
+        /// area over one block per plot, the region type over one row per plot, and the
+        /// divisions over one per template formula section.
+        ///
+        /// It is the FIRST section of the file, above the run's own accounting, because these
+        /// are what a person opens the report to check. **Nothing here is a second record of
+        /// anything**: every number is counted by <see cref="RunAtAGlance"/> off the same runs
+        /// the sections below print from, and the detail stays where it is.
+        /// </summary>
+        private static void TheGlance(StringBuilder report, KpiCreateRunSet set)
+        {
+            RunGlance glance = RunAtAGlance.Of(set);
+
+            // **THE ONLY HEADING HERE THAT CARRIES NO COUNT.** Every other one prints how many
+            // rows are under it, so a section that found nothing reads differently from one
+            // nobody filled in. Three is not a count of anything this run found, it is how many
+            // questions there are, and a constant in the place a count goes is a number that
+            // reads as a measurement.
+            Line(report, "== " + GlanceHeading + " ==");
+            Line(report, "the three questions this press answers, each in one line, with the "
+                + "detail left where it is");
+
+            Line(report, "  " + glance.StreetsArea.InWords);
+            foreach (string one in glance.StreetsArea.Without) Line(report, "    " + one);
+
+            Line(report, string.Empty);
+            Line(report, "  " + glance.Regions.InWords);
+            Line(report, "    type | plots | against the client's note");
+            foreach (RegionTypeCount one in glance.Regions.Types)
+            {
+                Line(report, "    " + Join(
+                    one.TypeName,
+                    one.Plots.ToString(CultureInfo.InvariantCulture),
+                    RegionChoice.AgainstTheNote(one.TypeName)));
+            }
+
+            Line(report, string.Empty);
+            Line(report, "  " + glance.Divisions.InWords);
+            if (glance.Divisions.Found > 0)
+            {
+                Line(report, "    plot | sheet and cell | which cell it divides by");
+                foreach (string one in glance.Divisions.Where) Line(report, "    " + one);
+            }
+
+            Line(report, string.Empty);
         }
 
         /// <summary>

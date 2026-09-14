@@ -27,8 +27,10 @@ namespace RcrcGreen.Core.Kpi
         Lawn,
 
         /// <summary>
-        /// D8 on STREETS, off ROAD_WIDTH in the reference file. H8 is this times the length and
-        /// the workbook computes it, so nothing writes there.
+        /// D8 on STREETS, off ROAD_WIDTH in the reference file. **H8 used to be this times the
+        /// length and the workbook computed it. The client emptied H8**, so the area is written
+        /// there off the 00 link like every other template's, and three cells on that one row
+        /// now come from three sources.
         /// </summary>
         StreetsRoadWidth,
 
