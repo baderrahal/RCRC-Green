@@ -49,6 +49,12 @@ pane's screenshot and the code as it stands.
 holds a plot named `-` and whether a plot's shape should be checked on the way in, and the route
 beside each unticked plot, which needs the list and the component off one read.
 
+**Pull request 136, merged into main as `bafb39c`.** The runner ran 28 hook cases and 1934
+tests against the pull request head `15e097a`, 0 failed and 0 skipped. The merge went through
+the API with the title and the message both passed on the call, the commit came back off main
+carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte
+for byte the branch head, checked with a diff that named no file.
+
 Phase: 9, ship. Eighty first pass, three faults off the 19:52 run. **1928 tests, 1108 of them KPI,
 12 added, against the 1916 main carries** at `484251e`, 28 hook cases unchanged, build zero
 warnings.
