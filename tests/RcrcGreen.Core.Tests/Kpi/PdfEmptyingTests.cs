@@ -89,7 +89,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             PdfLandedField ground = outcome.Emptied.Single(one => one.FieldName == "Ground Cover");
 
             Assert.Equal(string.Empty, ground.Landed);
-            Assert.Equal(PdfFill.GroundCoverIsNotPrintedApart, ground.Why);
+
+            // **GROUND COVER IS WRITTEN NOW WHERE THE GROUP WAS READ.** This plan's reading holds
+            // no shrubs and lawn group at all, so the box is blank because the group is absent
+            // rather than because the tool refuses to split one.
+            Assert.Equal(
+                "this plot's shrubs and lawn schedule printed no " + KpiMerge.ShrubsHeading + " group",
+                ground.Why);
         }
 
         /// <summary>

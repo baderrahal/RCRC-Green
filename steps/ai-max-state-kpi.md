@@ -1,5 +1,55 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty sixth pass, ground cover out of the shrubs box. **1990 tests, 1170 of
+them KPI, 26 added, against the 1964 main carries** at `8367b30`, 28 hook cases unchanged, build
+zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES: 63 numbered findings, 19 carrying a FIXED mark, 44
+OPEN.** This round closes none, renumbers none and reorders none.
+
+**Item 1, the irrigation water demand, was built in the eighty fifth pass and is on main at
+`8367b30`.** Checked point by point against the brief this round rather than assumed, including
+the read back, which every written PDF field already goes through with no special case. Nothing
+needed doing again and nothing was rebuilt.
+
+**Item 2 is the round.** The SHRUBS & GROUND COVER group holds two kinds and only the species
+name says which. DM-14's group is `GROUND COVER: CARISSA MACROCAPA` 270 plus
+`GROUND COVER: LAMPRANTHUS AUREUS` 198, the printed group total of 468, every species ground
+cover and none shrubs, and all 468 went into Proposed Shrubs with Ground Cover blank. DM-11 is
+the opposite end, two `SHRUBS:` species adding to 70.
+
+`SpeciesPrefix` and `GroundCoverSplit` are the rule: the text before the FIRST colon, matched
+whole and without case. `SHRUBS:` to the shrubs figures, `GROUND COVER:` to the ground cover
+one, **anything else placed NOWHERE and named** with its plot, row, area and what its prefix
+read. **The two plus everything unplaced must equal the group total the schedule printed or NONE
+of the four boxes is written.**
+
+**The shrubs figures come off species rows now and not off phase rows**, which is the fault: a
+phase row holds both kinds added together. Existing against proposed is still
+`CountedGroups.SheetFor`. The GRASS group is untouched, 35 on DM-11 and 175 on DM-14, pinned.
+
+**`PdfFill.GroundCoverIsNotPrintedApart` is deleted**, the second reason rather than the first:
+the shape it recorded is gone, because the two ARE printed apart on every species row.
+
+**UNKNOWN and written down**: how many plots are all ground cover, all shrubs or mixed. The
+05:49 report is under `reports/` and nothing there is committed, and 143, 107 and 55 are counts
+of NAMES rather than of plots. `SHRUBS AGAINST GROUND COVER, PER PLOT` answers it on the next
+run.
+
+Three break watches, one per rule, 2 then 3 then 1 red of 1990, each naming what was broken in
+its own message. All restored byte for byte, md5 `bc824e791d0a099a611531944d930a8e` and
+`68acb06b8e5f09ac4eab1d5f32b591b5`.
+
+Eight existing tests moved when the group gained its species rows. Six pass unchanged, two had
+their subject reversed and were rewritten rather than deleted. None was weakened.
+
+Files: `Core/Kpi/GroundCover.cs` new, `ScheduleRows.cs`, `PlotReading.cs`, `ShrubsByPhase.cs`,
+`PdfFill.cs`, `KpiCreateReport.cs`, `Revit/Kpi/KpiRequestHandler.cs`, `kpi-rules.md`, and the
+tests `GroundCoverSplitTests.cs` new plus `PdfFillTests.cs`, `PdfUnitsTests.cs`,
+`PdfEmptyingTests.cs`, `PdfChecklistTests.cs` and `WaterDemandTests.cs`.
+
+---
+
 Phase: 9, ship. Eighty fifth pass, the irrigation water demand off both schedules' TOTAL rows.
 **1964 tests, 1144 of them KPI, 25 added, against the 1939 main carries** at `dbae2e6`, 28 hook
 cases unchanged, build zero warnings.

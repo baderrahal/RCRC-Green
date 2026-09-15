@@ -26,7 +26,8 @@ namespace RcrcGreen.Core.Kpi
             double existingSquareMetres,
             double proposedSquareMetres,
             IEnumerable<string> phasesLeftOut,
-            IEnumerable<string> phasesWithNoSheet)
+            IEnumerable<string> phasesWithNoSheet,
+            GroundCoverSplit byPrefix = null)
         {
             Heading = heading ?? string.Empty;
             GroupFound = groupFound;
@@ -34,10 +35,18 @@ namespace RcrcGreen.Core.Kpi
             ProposedSquareMetres = proposedSquareMetres;
             PhasesLeftOut = (phasesLeftOut ?? Enumerable.Empty<string>()).ToList();
             PhasesWithNoSheet = (phasesWithNoSheet ?? Enumerable.Empty<string>()).ToList();
+            ByPrefix = byPrefix ?? GroundCoverSplit.NoGroup;
         }
 
         public static readonly PhaseSplit NoGroup =
             new PhaseSplit(string.Empty, false, 0.0, 0.0, null, null);
+
+        /// <summary>
+        /// **THE SAME GROUP SPLIT AGAIN, BY THE PREFIX ITS SPECIES NAMES CARRY.** The phase rows
+        /// above answer existing against proposed and say nothing about shrubs against ground
+        /// cover, which is the other half of the same group and the other box on the same form.
+        /// </summary>
+        public GroundCoverSplit ByPrefix { get; }
 
         public string Heading { get; }
 
@@ -81,13 +90,19 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>
         /// The shrubs group of one plot, split by phase.
         /// </summary>
-        public static PhaseSplit Of(PlotReading reading, string heading, CountedGroups counted)
+        public static PhaseSplit Of(PlotReading reading, string heading, CountedGroups counted, ProjectUnit areaUnit = null)
         {
             if (counted == null) throw new ArgumentNullException("counted");
             if (reading == null) return PhaseSplit.NoGroup;
 
             GroupSubtotal group = reading.SubtotalHeaded(heading);
             if (group == null) return PhaseSplit.NoGroup;
+
+            // **THE PREFIX SPLIT IS WORKED OUT HERE SO THE FORM ASKS ONE PLACE.** The shrubs
+            // figures the PDF writes come off it and not off the phase rows below, because a
+            // phase row holds shrubs and ground cover added together and the form wants them
+            // apart.
+            GroundCoverSplit byPrefix = GroundCoverSplit.Of(reading.PlotId, group, counted, areaUnit);
 
             double existing = 0.0;
             double proposed = 0.0;
@@ -124,10 +139,14 @@ namespace RcrcGreen.Core.Kpi
             if (group.Phases.Count == 0)
             {
                 return new PhaseSplit(group.Heading, true, 0.0, 0.0, null,
-                    new[] { "the group printed no phase row, so nothing says which phase its area is" });
+                    new[] { "the group printed no phase row, so nothing says which phase its area is" },
+                    byPrefix);
             }
 
-            return new PhaseSplit(group.Heading, true, existing, proposed, leftOut, noSheet);
+            // **THE PHASE SUMS ARE KEPT AND THEY ARE NOT WHAT THE FORM IS GIVEN.** They are the
+            // group's whole area per phase, shrubs and ground cover together, which is what the
+            // report holds them against so a split that loses an area is visible.
+            return new PhaseSplit(group.Heading, true, existing, proposed, leftOut, noSheet, byPrefix);
         }
     }
 }

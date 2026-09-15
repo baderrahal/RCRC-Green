@@ -176,7 +176,12 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             WaterDemandRead read = WaterDemandRead.From(schedule);
 
-            Assert.False(read.Read);
+            Assert.False(
+                read.Read,
+                "the schedule printed no TOTAL row and the reader produced "
+                + WaterDemand.Litres(read.LitresADay) + " anyway, off row " + read.TotalRow
+                + ". Take the total means take the total, and 468 plus 684 is a number this tool "
+                + "worked out rather than one the schedule printed.");
             Assert.Equal(0.0, read.LitresADay);
             Assert.Equal(WaterDemandRead.NoTotalRow, read.Why);
             Assert.Contains("NOT added", read.Why);

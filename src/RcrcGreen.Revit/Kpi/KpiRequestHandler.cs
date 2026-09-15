@@ -650,7 +650,8 @@ namespace RcrcGreen.Revit.Kpi
             PdfOutcome pdf = ThePdf(
                 held, counted, street, where, run.Wrote, folderMade,
                 WorkbookNumbers(
-                    pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn, computed));
+                    pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn, computed),
+                areaUnit);
 
             if (run.Wrote)
             {
@@ -747,9 +748,14 @@ namespace RcrcGreen.Revit.Kpi
             PlotWorkbookPath where,
             bool workbookWritten,
             bool folderMade,
-            PdfWorkbookNumbers numbers)
+            PdfWorkbookNumbers numbers,
+            ProjectUnit areaUnit)
         {
-            PdfPlan plan = PdfFill.Of(held, counted, street, DateTime.Today, workbookWritten, numbers);
+            // **THE AREA UNIT GOES IN because the prefix split is held against a printed row.**
+            // The species rows are added and checked against the group total the schedule
+            // printed, and every printed area is already rounded, so the check earns the same
+            // room per row the phase rows already earn rather than a constant written here.
+            PdfPlan plan = PdfFill.Of(held, counted, street, DateTime.Today, workbookWritten, numbers, areaUnit);
 
             if (!plan.Wanted) return PdfOutcome.WroteNothing(held.PlotId, plan.Form, plan.Why, null);
 

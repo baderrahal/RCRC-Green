@@ -4,6 +4,161 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty sixth pass. Ground cover out of the shrubs box, and item 1 already shipped
+
+**1990 tests, 1170 of them KPI, 26 added, against the 1964 main carries** at `8367b30`, 28 hook
+cases unchanged, build zero warnings. **The audit findings stay open, not renumbered, not
+reordered: 63 numbered, 19 carrying a FIXED mark, 44 open.**
+
+### Item 1, the irrigation water demand, was built last round and is on main
+
+**It is `8367b30`, the eighty fifth pass, and nothing about it needed doing again.** Checked
+point by point against the brief rather than assumed:
+
+```
+both schedules' own TOTAL rows, added, divided by 1000    WaterDemandRead.From    YES
+the L/DAY heading matched WHOLE, none and more than one   ScheduleColumns.Reading YES
+   both refused with the headings printed
+never the species rows added up                           NoTotalRow              YES
+all three forms                                           PdfForms.All            YES
+a missing schedule or an unreadable total writes nothing  PlotWaterDemand.Why     YES
+   and is named with which half
+the value read back off the output                        PdfChecklist:176        YES, every
+   written field goes through the same read back                     field, no special case
+the report says the FORM's unit                           WaterDemand.CubicMetresUnit YES
+the groups left out of the tree lists, per plot,          THE IRRIGATION WATER    YES
+   with their subtotals                                   DEMAND, PER PLOT
+```
+
+**The Open Spaces field name is still what was measured off that file on 14 September**, and it
+still cannot be re-measured here because no client PDF may enter this repository. `PdfFormCheck`
+is what protects it: a form not carrying every field the table names writes NOTHING.
+
+**DM-11's softscape L/DAY total is still UNKNOWN**, for the same reason as last round, the 1548
+scan being under `reports/`. The 432 and 908 are two totals and the schedule has one: if they
+are the two group totals the TOTAL row reads 1340, that is what the tool takes, and the report
+prints the row it read so the first run settles it without argument.
+
+One break was watched again to prove the rule still holds, under the break watches below.
+
+### Item 2, ground cover was in the shrubs box
+
+**DM-14 is the plot that shows it.** Its SHRUBS & GROUND COVER group holds
+`GROUND COVER: CARISSA MACROCAPA` 270 and `GROUND COVER: LAMPRANTHUS AUREUS` 198, adding to the
+printed group total of 468, and **every species in it is ground cover and none is shrubs**. All
+468 went into Proposed Shrubs and Ground Cover was left blank. DM-11 is the opposite end, two
+`SHRUBS:` species adding to 70.
+
+**Only one of the two readings adds up.** Putting the group total into Ground Cover as well
+would give DM-11 Ground Cover 70 beside Proposed Shrubs 70, the same area in two boxes of one
+form. The prefix split gives each box its own species and the two add to the group total.
+
+`SpeciesPrefix` and `GroundCoverSplit` are the rule. The prefix is the text before the FIRST
+colon, matched whole and without case through `LabelText.Same`, the same rule every label lookup
+here already asks. A species with no prefix, or a prefix that is neither of the two, goes
+NOWHERE and is named with its plot, its row, its area and what its prefix read.
+
+**The two figures plus everything placed nowhere must equal the group total the schedule
+printed, or NONE of the four boxes is written.** Writing three and blanking one would leave a
+form whose own numbers disagree with the schedule behind it. The room is the phase rows' own,
+half the project's area rounding step per row summed, which is why the area unit is handed into
+`PdfFill.Of` rather than a tolerance being written in the new file.
+
+**The shrubs figures come off SPECIES ROWS now and not off PHASE ROWS**, which is the whole
+fault: a phase row holds shrubs and ground cover added together. Existing against proposed is
+still `CountedGroups.SheetFor`, the same method the tree lists ask, so nothing about that rule
+is written twice.
+
+**The GRASS group is untouched.** DM-11's lawn is still 35 and DM-14's still 175, both pinned.
+
+### One thing deleted, and it is the second reason rather than the first
+
+**`PdfFill.GroundCoverIsNotPrintedApart` is gone.** It read that the schedule prints the group as
+one and nothing prints ground cover on its own, so it is not derived. **The shape it recorded is
+gone rather than its last caller**: every species row in that group begins `SHRUBS:` or
+`GROUND COVER:`, so the two ARE printed apart and the number is read rather than derived. A
+constant recording a claim the data disproves is worse than no constant, which is what
+`OutputName.Suggested` bought this project.
+
+### The check, written out by hand and both plots pinned
+
+```
+DM-11   group total 70    shrubs 70    ground cover 0      its shrubs figure does not move
+DM-14   group total 468   shrubs 0     ground cover 468    468 out of shrubs, 468 into cover
+```
+
+`OnDm11TheWholeGroupIsShrubsAndItsFigureDoesNotMove` and
+`OnDm14TheWholeGroupIsGroundCoverAndTheShrubsBoxGoesToNought` build both schedules as the model
+prints them, eleven columns and all, and run the real reader over them.
+`TheTwoPlotsFillOppositeBoxesOnTheForm` then checks the numbers reach the form's own boxes,
+which is the thing a client reads.
+
+### How big is it, and the honest gap
+
+**UNKNOWN from this repository, and here is exactly why.** The brief's own measurement off the
+05:49 report is 143 species names beginning `SHRUBS:`, 107 beginning `GROUND COVER:` and 55
+beginning `GRASS:` over 156 plots. **That is a count of NAMES and the question is a count of
+PLOTS**, and the report it came off is under `reports/`, where nothing is ever committed, so it
+cannot be turned into one here. Nothing in this repository holds a per plot species list.
+
+What can be said from the two numbers without inventing anything: 107 ground cover names over
+156 plots means ground cover is not a rare case, and **every workbook and form written so far
+has the two in one box.**
+
+`SHRUBS AGAINST GROUND COVER, PER PLOT` is the answer rather than a guess. It prints one row per
+plot with both figures, what was placed nowhere, the group total and whether it adds up, so the
+next run says how many plots are all one kind and how many are mixed without anybody counting.
+
+### The break watches, three of them, one per rule
+
+```
+BREAK 1  a species that is not ground cover falls into shrubs, the old rule
+   2 red of 1990
+   AnUnprefixedSpeciesGoesNowhereAndIsNamed        Expected: 36   Actual: 45
+   APrefixThatIsNeitherIsAlsoPlacedNowhereAndNamedWithWhatItRead
+
+BREAK 2  ground cover species go to the shrubs box, the fault exactly as it ships
+   3 red of 1990
+   OnDm14TheWholeGroupIsGroundCoverAndTheShrubsBoxGoesToNought  Expected: 468  Actual: 0
+   TheTwoPlotsFillOppositeBoxesOnTheForm                        Expected: "468" Actual: "0"
+   TheReportPrintsTheSplitPerPlotAndNamesWhatItCouldNotPlace
+
+BREAK 3  item 1: no TOTAL row falls back to adding the species rows
+   1 red of 1990
+   AScheduleThatPrintsNoTotalRowIsNamedAndItsSpeciesRowsAreNotAddedUp
+     the schedule printed no TOTAL row and the reader produced 2304 L/day anyway, off row 1.
+     Take the total means take the total, and 468 plus 684 is a number this tool worked out
+     rather than one the schedule printed.
+```
+
+**Break 1's first red names the fault by its numbers**: the unprefixed 9 m2 swallowed into the
+shrubs box turns 36 into 45. **Break 2's names the plot and the box**: DM-14's ground cover goes
+from 468 to 0, which is the wrong box this round exists to empty. **Break 3's assertion was
+strengthened first**, because a bare `Assert.False` reads `Expected: False, Actual: True` and
+says nothing about what broke.
+
+All three restored byte for byte and checked with diff and md5,
+`bc824e791d0a099a611531944d930a8e` for `GroundCover.cs` and `68acb06b8e5f09ac4eab1d5f32b591b5`
+for `WaterDemand.cs`, and rerun green at 1990.
+
+### Eight tests moved and none of them was weakened
+
+Giving the shrubs group its species rows moved eight cases that built a group out of phase
+subtotals alone. **Six now pass unchanged** because each phase carries one `SHRUBS:` species
+holding its whole area, which is what those cases always meant. **Two had their subject
+reversed and are rewritten rather than deleted**: `GroundCoverIsLeftBlankAndNamedRatherThanDerived`
+is now `GroundCoverTakesTheGroundCoverSpeciesAndNoughtWhereThereAreNone`, and the two asserting
+the old constant now assert the absence of the group instead, which is the honest sentence for a
+plot whose schedule printed none.
+
+### Open question for the team
+
+**If the split disagrees with the group total on a real plot the tool STOPS**, writes none of the
+four boxes and names the plot and all three numbers. That is deliberate and it is a question for
+Bader and the client rather than one this tool settles.
+
+---
+
 ## 2026-09-15, eighty fifth pass. The irrigation water demand, off both schedules' TOTAL rows
 
 **The last PDF field with a real source that nothing read.** **1964 tests, 1144 of them KPI, 25
