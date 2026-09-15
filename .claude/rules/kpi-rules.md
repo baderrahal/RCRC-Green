@@ -1164,10 +1164,10 @@ form. The prefix split gives each box its own species and the two add to the gro
 - **`SHRUBS:` species go to the shrubs figures, `GROUND COVER:` species to the ground cover one**
 - **A species with NO prefix, or a prefix that is neither of the two, goes NOWHERE and is NAMED**
   with its plot, its row, its area and what its prefix read. Nothing is guessed into either box
-- **The two written figures plus everything placed nowhere MUST EQUAL the group total the
-  schedule printed.** Where they do not the split refuses, naming all three numbers, and NONE of
-  the four boxes is written, because writing three and blanking one leaves a form whose own
-  numbers disagree with the schedule behind it
+- **THE TWO WRITTEN FIGURES ALONE MUST EQUAL THE GROUP TOTAL. Anything the tool COULD NOT READ
+  is a DISAGREEMENT and never a term of that sum.** Where they do not add up the split refuses,
+  naming the numbers, and NONE of the four boxes is written, because writing three and blanking
+  one leaves a form whose own numbers disagree with the schedule behind it
 - **The GRASS group is untouched.** Its species carry `GRASS:`, it reaches lawn through its own
   heading, and nothing in the split reads it
 
@@ -1191,13 +1191,86 @@ prints ground cover on its own, so it is not derived. The SHAPE it recorded is g
 its last caller: the two ARE printed apart, on every species row, and the number is read rather
 than derived.
 
+### The wording that put placed-nowhere inside the equation, and what it cost
+
+**Measured on the 08:38 run. The check said every one of these adds up while every box was
+written short.**
+
+```
+plot  | existing | proposed | ground cover | placed nowhere | group total | adds up
+EP-01 |    0     |    0     |      0       |    411 m²      |    411      |  YES
+EP-09 |    0     |    0     |      0       |      3 m²      |      3      |  YES
+EP-14 |    0     |    0     |      0       |     78 m²      |     78      |  YES
+HF-01 |    0     |    0     |     52 m²    |    231 m²      |    283      |  YES
+```
+
+**HF-01's PDF read Existing Shrubs 231, Proposed 52 and TOTAL 283 on the 18:15 run. It read 0,
+0, 0 with Ground Cover 52 on the 08:38 one. EP-01 lost all 411.**
+
+**The fault was the rule as first written down**, which put the unplaced area INSIDE the
+equation. With it there the sum always closes, so the refusal can never fire and all four boxes
+are written with a number that is short. **A check that cannot fail is not a check.**
+
+**The rule now: what would be WRITTEN, plus what this template deliberately LEAVES OUT, must
+equal the group total.** Anything the tool could not read refuses the plot on its own, before
+any arithmetic, and the rounding room applies to the sum and never to an unplaced species: a
+species nobody could place is not a rounding difference however small its area.
+
+### Two kinds of placed nowhere, and only one of them refuses
+
+**This is where the round's own wording is departed from, and here is the reason.**
+
+```
+COULD NOT BE READ    a prefix that is neither of the two, no prefix at all, or no phase row
+                     so nothing says existing or proposed. REFUSES the plot. The tool does
+                     not know what the area IS
+LEFT OUT BY THIS     a SHRUBS: species under a phase no tree list sheet is named for, which
+TEMPLATE             is Street Design on a mosque plot. A TERM of the sum and NOT a refusal
+```
+
+**Refusing over Street Design would reverse a decision rather than catch a fault.** Bader
+decided it is somebody else's scope, the phase rows have left it out and named it since that
+decision, and FM-05 alone carries 459 m² of it. Taken literally, the fix would have written
+nothing on every mosque plot that has one, which is a new fault of the opposite kind. The tool
+knows exactly what a Street Design species is. It does not know what an unread prefix is. **Only
+the second is an area nobody can account for.**
+
+### What the section prints, and why the names go first
+
+`SHRUBS AGAINST GROUND COVER, PER PLOT` opens with **THE SPECIES NO PREFIX PLACED, BY NAME**:
+every distinct name the rule could not place, grouped by the prefix each read, with how many
+rows and how much area carry it.
+
+**It is at the top because it is the question rather than the detail.** `GRASS:`, `SHRUBS:` and
+`GROUND COVER:` are the three prefixes ever measured. **If a run's unplaced rows all read one
+prefix nobody has seen, the answer is a line in a table and not a refusal**, and that is the
+team's call once they can see the name. If they read a dozen different things it is a naming job
+in the model. The two look identical in a count and different in a list.
+
+The per plot row then carries both kinds apart, **what the four boxes WOULD have read**, and the
+group total, so the size of every loss is on the page: HF-01 would have read 52 against 283.
+
+### What those species are called is UNKNOWN from this repository
+
+**The 08:38 report is under `reports/` and nothing there is ever committed**, and nothing else
+here holds a per plot species list. So the names cannot be read from this repository at all and
+the section above is the answer rather than a guess.
+
+**One thing the round message's own numbers DO settle, by deduction rather than by
+measurement.** HF-01 read Existing Shrubs 231 and Proposed 52 under the phase rule, so its
+EXISTING phase subtotal was 231 and that phase IS one a tree list sheet is named for on
+HEALTHCARE. A `SHRUBS:` species under it would therefore have landed in the existing figure. It
+did not. **So HF-01's 231 is unplaced because of its PREFIX and not because of its phase.** What
+that prefix READS is still unknown, and the names block is what will say.
+
 ### What is UNKNOWN and how the next run answers it
 
 **How many plots are all ground cover, all shrubs, or mixed is UNKNOWN from this repository.**
 The 05:49 report is under `reports/` and nothing there is ever committed, so only the species
 name counts above survive, and a name count is not a plot count. `SHRUBS AGAINST GROUND COVER,
 PER PLOT` prints one row per plot with both figures and the group total, so the next run answers
-it without anybody counting by hand.
+it without anybody counting by hand. **The 08:38 run says 131 plots print the section and at
+least four hold a species the prefix rule cannot place.**
 
 **If the split disagrees with the group total on a real plot the tool STOPS rather than
 choosing**, and the report names the plot and all three numbers. That is a question for Bader

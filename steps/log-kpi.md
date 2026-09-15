@@ -4,6 +4,138 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty seventh pass. The check that could never fire, and the names first
+
+**2000 tests, 1180 of them KPI, 10 added, against the 1990 main carries** at `9ab922a`, 28 hook
+cases unchanged, build zero warnings. **The audit findings stay open, not renumbered, not
+reordered: 63 numbered, 19 carrying a FIXED mark, 44 open.**
+
+### First, and before the fix: what those species are called
+
+**UNKNOWN from this repository, and there is no way round it.** The 08:38 report is under
+`reports/` and nothing there is ever committed, and nothing else here holds a per plot species
+list. **So the names block is built rather than the names reported**, and the next run prints
+them.
+
+**One thing the round message's own numbers DO settle, by deduction.** HF-01 read Existing
+Shrubs 231 and Proposed 52 under the phase rule, so its EXISTING phase subtotal was 231, and
+Existing IS a phase a tree list sheet is named for on HEALTHCARE. A `SHRUBS:` species under it
+would have landed in the existing figure. It did not. **So HF-01's 231 is unplaced because of
+its PREFIX and not because of its phase.** What that prefix reads is still unknown.
+
+**THE SPECIES NO PREFIX PLACED, BY NAME** now opens the section: every distinct name, grouped by
+the prefix each read, with how many rows and how much area carry it.
+
+```
+  THE SPECIES NO PREFIX PLACED, BY NAME (2 prefixes)
+  the prefix each read | distinct names | rows | area | the names
+  CLIMBERS | 1 | 2 | 350 m² | CLIMBERS: BOUGAINVILLEA GLABRA x2
+  PALMS | 1 | 1 | 61 m² | PALMS: PHOENIX DACTYLIFERA x1
+```
+
+**It is at the TOP because it is the question rather than the detail.** One unseen prefix over
+every unplaced row is a line in a table and the team's call. A dozen different things is a
+naming job in the model. **The two look identical in a count and different in a list.**
+
+### The fault, and the wording that caused it was the round message's own
+
+**Placed-nowhere sat INSIDE the equation, so the sum always closed and the refusal could never
+fire.** Four plots wrote every box short with the column reading YES:
+
+```
+plot  | existing | proposed | ground cover | placed nowhere | group total | adds up
+EP-01 |    0     |    0     |      0       |    411 m²      |    411      |  YES
+EP-09 |    0     |    0     |      0       |      3 m²      |      3      |  YES
+EP-14 |    0     |    0     |      0       |     78 m²      |     78      |  YES
+HF-01 |    0     |    0     |     52 m²    |    231 m²      |    283      |  YES
+```
+
+HF-01 went from Existing Shrubs 231, Proposed 52 and TOTAL 283 on the 18:15 run to nought,
+nought and nought. **A check that cannot fail is not a check.**
+
+**The rule now: what would be WRITTEN, plus what this template deliberately LEAVES OUT, equals
+the group total.** Anything unreadable refuses the plot on its own, before any arithmetic. The
+rounding room applies to the sum and never to an unplaced species, because a species nobody
+could place is not a rounding difference however small its area.
+
+### Where the round's wording is departed from, and the reason
+
+**There are two kinds of placed nowhere and only one of them may refuse.**
+
+```
+COULD NOT BE READ    a prefix that is neither of the two, no prefix at all, or no phase row.
+                     REFUSES the plot. The tool does not know what the area IS
+LEFT OUT BY THIS     a SHRUBS: species under a phase no tree list sheet is named for, which
+TEMPLATE             is Street Design on a mosque plot. A TERM of the sum, NOT a refusal
+```
+
+**Taken literally the fix would have written nothing on every mosque plot with a Street Design
+group**, and FM-05 alone carries 459 m² of it. That is a decision Bader already made, the phase
+rows have left it out and named it since, and reversing it would be a new fault of the opposite
+kind rather than a fix. `APhaseTheTemplateLeavesOutIsInNeitherNumber` going green again under the
+new rule is what caught it: it reddened on the first cut and the first cut was wrong.
+
+**The two travel in separate lists and the report prints them in separate columns**, COULD NOT
+BE READ and left out by this template, so the distinction is on the page rather than in anyone's
+head.
+
+### The check, written out by hand
+
+The four that must now refuse, each asserting the group total, what the four boxes would have
+read, and that nothing is written:
+
+```
+EP-01   would have read 0 m²    lost 411    group total 411
+EP-09   would have read 0 m²    lost   3    group total   3
+EP-14   would have read 0 m²    lost  78    group total  78
+HF-01   would have read 52 m²   lost 231    group total 283
+```
+
+The three that must NOT move, every number as the round message gave it:
+
+```
+FP-16      proposed 335   ground cover   0   group total  335
+FP-22      proposed 427   ground cover 1114  group total 1541
+NP-100002  proposed 248   ground cover  652  group total  900
+```
+
+`HfOneWritesNoneOfItsFourBoxesAndTheFormSaysWhy` then checks all four PDF boxes on HF-01 are
+blank and each carries `231 m² is unaccounted for of the 283 m²`.
+
+### The break watch
+
+**Broken: the unreadable refusal switched off AND the unplaced area put back inside the
+equation**, which is the fault exactly as the 08:38 run measured it.
+
+```
+6 red of 2000
+  TheFourPlotsThatLostTheirAreaNowRefuseAndNothingIsWritten, all four cases:
+    HF-01 lost 231 m² and the check still said it adds up. The four boxes would have been
+    written reading 52 m² against a group total of 283 m². An area placed nowhere is a
+    disagreement and never a term of the sum.
+    EP-01 lost 411 m² ... would have been written reading 0 m² against a group total of 411 m².
+  AnUnprefixedSpeciesGoesNowhereAndIsNamed
+  HfOneWritesNoneOfItsFourBoxesAndTheFormSaysWhy
+```
+
+**Each red names the plot, the area lost and the number the box would have carried**, which is
+the whole fault in one sentence. Restored byte for byte, checked with diff and md5
+`ce641093a192f53beb01fad56cbd1f90`, and rerun green at 2000.
+
+### What worked, on the record
+
+The water demand is on every PDF: **2.1 on ANH-007-MO-100001, 48.752 on ANH-007-NP-100002 and
+2.252 on ANH-007-ST-100003**, and the split is right on every plot where every species carries a
+known prefix. Neither was touched this round.
+
+### Open question for the team
+
+**Whether the unplaced prefix is a fifth kind rather than a fault.** The next run's names block
+answers it, and if it reads one unseen prefix across the run the answer is one line in
+`SpeciesPrefix` rather than a refusal. That is Bader's call once he can see the name.
+
+---
+
 ## 2026-09-15, eighty sixth pass. Ground cover out of the shrubs box, and item 1 already shipped
 
 **1990 tests, 1170 of them KPI, 26 added, against the 1964 main carries** at `8367b30`, 28 hook
