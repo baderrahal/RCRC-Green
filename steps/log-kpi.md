@@ -4,6 +4,103 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty ninth pass. The run sheet corrected before the first run
+
+**No code and no test.** `steps/2026-09-15-kpi-fixes.md` only, plus this entry and the state
+entry the commit hooks require. **2042 tests, 1222 of them KPI, unchanged**, 28 hook cases
+unchanged, build zero warnings. **80 audit findings numbered, 20 FIXED, 60 open**, unchanged and
+not recounted.
+
+**NOTHING HERE WAS RUN IN REVIT.**
+
+### The step the sheet was missing, and it would have cost the whole run
+
+**A PLOT ONLY GOES INTO A WORKBOOK WHOSE ROW IS TICKED AND WHOSE TEMPLATE IS SETTLED.** `Settled()`
+at `src/RcrcGreen.Revit/Kpi/KpiPanel.cs:1304` drops every other row and the split at `:1296` runs
+over what it hands back, so **a ticked plot belonging to no ticked row is written nowhere**. The
+sheet went from Read this model straight to Tick the list and never said to tick the seven workbook
+rows, and those ticks live in the pane with nothing writing them down, so closing Revit loses
+them. A run made to the sheet as it stood would have ticked 154 plots and written nothing.
+
+It is step 12 now, between Read this model and Tick the list, and it says to settle a row still
+asking which of the two park templates it is, because an unsettled row arms nothing.
+
+**AND TICK THE LIST HAS TO BE THE LAST TICK ACTION.** Ticking a template row ticks every plot that
+belongs to it and unticking one takes them off, at `KpiPanel.cs:1248`, both of them moving the
+plot ticks Tick the list has just set. The step says so, and says to press it again if a workbook
+row is touched afterwards.
+
+Every step and every reference to a step number is renumbered. The checks went from four to five.
+
+### The five plots were not a measurement and they are gone
+
+The sheet said DM-21, NS-16, NS-20, ST-23 and ST-24 are in the model and not among the 154.
+**Nothing in this repository shows that.** Counted rather than argued: `DM-21` appears here only in
+a Drawing Sheet test fixture, `tests/RcrcGreen.Core.Tests/PlotSelectionTests.cs:11` and `:34`,
+which is a list written for a test rather than anything read off a model, and NS-16, NS-20, ST-23
+and ST-24 appear nowhere in the repository at all. They came out of the round message and the
+eighty eighth pass passed them through as fact.
+
+The sheet says UNKNOWN until the run now, and says IN THE MODEL AND NOT ON THE LIST names whichever
+plots really are, because that block is read off the model's own plot list at the press.
+
+### A fifth check, on the Parks form
+
+**THE PARKS ROWS SIT ABOUT HALF AS FAR APART AS THE OTHER FORMS' DO.** Measured off
+`src/RcrcGreen.Core/Kpi/PdfForms.cs:276` to `:278`: the three tree rows are at y 611.3, 601.0 and
+590.6, which is 10.3 and 10.4 apart. The open spaces form's same three rows, `:310` to `:312`, are
+at 449.2, 428.9 and 408.9, about twice that.
+
+The height rule takes 2 pt off the top and 2 pt off the bottom, so a Parks box as tall as the gap
+to its neighbour leaves about 6.3 pt, barely over the 6 pt floor, and any shorter box lands on it.
+**So some Parks vegetation numbers may be named held at 6 while they still sit inside their box.**
+The check is to open one EP or FP plot's PDF, read those numbers and send that plot's own lines
+under THE TEXT SIZES back.
+
+**WHAT THOSE BOXES ARE REALLY THAT TALL IS UNKNOWN HERE.** The row positions are measured and in
+this repository. The heights are not, because no client PDF is in it and none ever will be, so a
+height written down here would be a guess. The check is what measures them.
+
+### One list of what to send back
+
+The sheet ends with it, in one message: THE TEXT SIZES and every box line under it, THE PLOT LIST's
+three counts and every row reading NO with its reason, the whole dash rows block, and screenshots
+of the four PDFs. And the standing rule beside it, that none of those files goes into this
+repository.
+
+### Open, logged and not fixed
+
+**1. A CRASH CAN LEAVE A WORKBOOK ON DISK WHILE THE REPORT SAYS NO.** `GuardedWrite`'s catch at
+`src/RcrcGreen.Revit/Kpi/KpiRequestHandler.cs:608` records the plot at `:615` as
+`PlotOutcome.WroteNothing(..., false, refusal)`, where the `false` is the folder, while its own
+docstring at `:578` says what is already on disk stays there and the folder count still counts the
+folder that was made. Those two disagree. And there really can be something on disk:
+`WorkbookPatcher` copies the template to the output path at
+`src/RcrcGreen.Core/Kpi/WorkbookPatcher.cs:79` and opens the zip to patch it at `:86`, so a throw
+between them leaves a whole unpatched copy and a throw inside them a half patched one. The PDF is
+written after the run is counted, `KpiRequestHandler.cs:706` to `:720`. `THE PLOT LIST` reads the
+plot outcomes at `src/RcrcGreen.Core/Kpi/KpiCreateReport.cs:202`, so it prints NO for a plot whose
+folder holds a file. **Which of the two is wrong is not decided here.** Not fixed this round.
+
+**2. THE HEIGHT RULE HOLDS THE PARKS VEGETATION BOXES NEAR 6 PT**, as measured above off
+`PdfForms.cs:276` to `:278`. Whether that is a real fault or a form whose boxes genuinely are that
+small is UNKNOWN until the run, and check 19 is what answers it. Not fixed this round.
+
+**3. FONT WIDTHS ARE READ ONLY FROM A `/DR` AND A `/Font` WRITTEN INLINE.** `FontsIn` calls
+`Nested(acroForm, "/DR")` at `src/RcrcGreen.Core/Kpi/PdfFormFile.cs:327` and
+`Nested(resources, "/Font")` at `:330`, and `Nested` at `:406` finds the key and then the next
+`<<` in the same object. **A form writing either as an indirect reference is not followed**: the
+read comes back empty, or it reads whatever dictionary happens to come next in that object, and
+either way every width is UNKNOWN and every value keeps the client's own size. A font OBJECT given
+as a reference IS followed, so this is about the two dictionaries alone. **No test covers that
+shape.** Not fixed this round.
+
+### Files
+
+`steps/2026-09-15-kpi-fixes.md`, this file and `steps/ai-max-state-kpi.md`. Nothing else.
+
+---
+
 ## 2026-09-15, eighty eighth pass. Four fixes, and the plot list the team sent
 
 **Merged to main as `088d6d3`**, pull request 144, squashed with both message fields passed on the
