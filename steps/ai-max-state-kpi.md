@@ -1,7 +1,8 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Eighty ninth pass, the run sheet corrected before Bader's first run. **No code
-and no test**: `steps/2026-09-15-kpi-fixes.md`, the log and this file. **2042 tests, 1222 of them
+Phase: 9, ship. Eighty ninth pass, the run sheet corrected before Bader's first run. **Merged to
+main as `346dddb`**, pull request 146, the squash message set on the merge call and off main byte
+for byte with no co-author line and no generated-by footer. **No code and no test**: `steps/2026-09-15-kpi-fixes.md`, the log and this file. **2042 tests, 1222 of them
 KPI, unchanged**, 28 hook cases unchanged, build zero warnings. **80 audit findings, 20 FIXED, 60
 open**, unchanged and not recounted.
 
