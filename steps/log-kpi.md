@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-15, eighty ninth pass. The run sheet corrected before the first run
 
+**Merged to main as `346dddb`**, pull request 146, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 **No code and no test.** `steps/2026-09-15-kpi-fixes.md` only, plus this entry and the state
 entry the commit hooks require. **2042 tests, 1222 of them KPI, unchanged**, 28 hook cases
 unchanged, build zero warnings. **80 audit findings numbered, 20 FIXED, 60 open**, unchanged and
