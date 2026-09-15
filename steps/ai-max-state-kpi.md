@@ -1,5 +1,45 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty ninth pass, the run sheet corrected before Bader's first run. **No code
+and no test**: `steps/2026-09-15-kpi-fixes.md`, the log and this file. **2042 tests, 1222 of them
+KPI, unchanged**, 28 hook cases unchanged, build zero warnings. **80 audit findings, 20 FIXED, 60
+open**, unchanged and not recounted.
+
+**THE MISSING STEP WOULD HAVE COST THE WHOLE RUN.** A plot goes only into a workbook whose row is
+ticked and whose template is settled, `Settled()` at `KpiPanel.cs:1304` read by the split at
+`:1296`, and the sheet never said to tick the seven workbook rows. Those ticks live in the pane
+and closing Revit loses them. It is step 12 now, between Read this model and Tick the list, and it
+settles an unsettled park row too.
+
+**TICK THE LIST IS THE LAST TICK ACTION**, because a template row press moves the plot ticks in
+both directions, `KpiPanel.cs:1248`. Every step and every reference renumbered, four checks to
+five.
+
+**THE FIVE PLOTS WERE NOT A MEASUREMENT.** DM-21, NS-16, NS-20, ST-23 and ST-24 were named as in
+the model and nothing here shows it: `DM-21` is in a Drawing Sheet test fixture,
+`PlotSelectionTests.cs:11` and `:34`, and the other four are nowhere. The sheet says UNKNOWN until
+the run and points at IN THE MODEL AND NOT ON THE LIST.
+
+**A FIFTH CHECK, ON THE PARKS FORM.** Its tree rows are 10.3 and 10.4 apart, `PdfForms.cs:276` to
+`:278`, against about 20 on open spaces, `:310` to `:312`. The height rule takes 4 pt off, so those
+numbers land near the 6 pt floor and some may read held at 6 while still fitting. **The box heights
+are UNKNOWN here** and the check is what measures them.
+
+**The sheet ends with one list of what Bader sends back in one message**, and the rule that none
+of it enters this public repository.
+
+**THREE OPEN ITEMS LOGGED AND NOT FIXED**, each at file and line: the write guard recording a
+crash as no folder at `KpiRequestHandler.cs:608` to `:615` against its own comment at `:578`, with
+a copy already on disk from `WorkbookPatcher.cs:79` and `:86` and the PDF written after the count
+at `:706` to `:720`, while `THE PLOT LIST` reads the outcomes at `KpiCreateReport.cs:202`. The
+Parks boxes near 6 pt. And font widths read only from an inline `/DR` and `/Font`,
+`PdfFormFile.cs:327`, `:330` and `:406`, with no test over a form that writes either as a
+reference.
+
+**NOTHING HERE WAS RUN IN REVIT.**
+
+---
+
 Phase: 9, ship. Eighty eighth pass, four fixes in one round. **Merged to main as `088d6d3`**,
 pull request 144, the squash message set on the merge call and off main byte for byte with no
 co-author line and no generated-by footer. **2042 tests, 1222 of them KPI, 42 added, against the
