@@ -197,9 +197,15 @@ namespace RcrcGreen.Core.Kpi
             foreach (PlotListFault one in list.Repeated) Line(report, "    " + one.InWords);
 
             Line(report, string.Empty);
-            Line(report, "  plot | in the model | ticked | workbook | PDF | why not");
+            Line(report, "  plot | in the model | ticked | workbook | PDF | trees not written | why not");
 
             var byPlot = set.PlotOutcomes.ToList();
+
+            // **THE TREES THAT REACHED NO ROW, PER PLOT.** Counted off the runs' own matches, so
+            // the column and the refusal that produced it are one record. On the 13:32 run FP-17,
+            // FP-20, FP-21 and FP-23 all read YES and YES here with 67 trees between them written
+            // nowhere and not a word about it in the row.
+            IReadOnlyList<PlotTreesNotWritten> lost = TreesNotWritten.Of(set);
             int workbooks = 0;
             int pdfs = 0;
 
@@ -216,13 +222,16 @@ namespace RcrcGreen.Core.Kpi
                 if (written) workbooks++;
                 if (pdf) pdfs++;
 
+                string trees = TreesNotWritten.For(lost, held);
+
                 Line(report, "  " + Join(
                     held,
                     set.Plots == null ? "NOT READ" : (inTheModel ? "YES" : "NO"),
                     outcome == null ? "NO" : "YES",
                     written ? "YES" : "NO",
                     pdf ? "YES" : "NO",
-                    WhyNotOnTheList(outcome, inTheModel, set.Plots != null)));
+                    trees.Length == 0 ? "none" : trees,
+                    WhyNotOnTheList(outcome, inTheModel, set.Plots != null, ReadingFor(set, held))));
             }
 
             IReadOnlyList<string> missing = TickingTheList.NotOnTheList(set.Plots, list);
@@ -240,10 +249,38 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// This plot's reading as the press made it, or null where no run read it.
+        /// </summary>
+        private static PlotReading ReadingFor(KpiCreateRunSet set, string plotId)
+        {
+            return set.Runs
+                .Where(one => one != null)
+                .SelectMany(one => one.Readings)
+                .FirstOrDefault(one => one != null
+                    && string.Equals(one.PlotId, plotId, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// **A PLOT ON NO SOFTSCAPE SCHEDULE SAYS SO EVEN THOUGH BOTH FILES WERE WRITTEN.**
+        /// Bader's decision of 15 September. FM-07 is on a sheet and on no schedule, and on the
+        /// 13:32 run its row read YES and YES with an empty last column while its PDF carried
+        /// Existing Trees 0, Proposed Trees 0, TOTAL trees 0 and Total areas to be greened 0
+        /// against 57 trees the model's own KPI% schedules list for it. A row with nothing in
+        /// its last column is the row of a plot that came out right.
+        /// </summary>
+        public static string NoSoftscapeOnTheList(PlotReading reading)
+        {
+            if (reading == null || reading.SoftscapeRead) return string.Empty;
+
+            return "both files were written and " + PdfFill.NoSoftscapeRead(reading);
+        }
+
+        /// <summary>
         /// Why a listed plot came out with nothing, **off the run's own recorded reason** and
         /// never worked out again here.
         /// </summary>
-        private static string WhyNotOnTheList(PlotOutcome outcome, bool inTheModel, bool plotsRead)
+        private static string WhyNotOnTheList(
+            PlotOutcome outcome, bool inTheModel, bool plotsRead, PlotReading reading)
         {
             if (outcome == null)
             {
@@ -256,7 +293,9 @@ namespace RcrcGreen.Core.Kpi
 
             if (outcome.Pdf == null) return "the workbook was written and no PDF was planned";
 
-            return outcome.Pdf.Written ? string.Empty : outcome.Pdf.Refusal;
+            if (!outcome.Pdf.Written) return outcome.Pdf.Refusal;
+
+            return NoSoftscapeOnTheList(reading);
         }
 
         public const string PlotListHeading = "EVERY PLOT THE TOOL OFFERED";
@@ -343,7 +382,7 @@ namespace RcrcGreen.Core.Kpi
 
             Line(report, string.Empty);
             Line(report, "  " + glance.Regions.InWords);
-            Line(report, "    type | plots | against the client's note");
+            Line(report, "    type | plots | against the area cell's note");
             foreach (RegionTypeCount one in glance.Regions.Types)
             {
                 Line(report, "    " + Join(
@@ -364,6 +403,19 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  " + glance.Pdfs.InWords);
             foreach (string one in glance.Pdfs.WithNoPdf) Line(report, "    " + one);
             foreach (string one in glance.Pdfs.FormsThatDidNotMatch) Line(report, "    " + one);
+
+            // **THE 13:32 RUN IS WHY THIS LINE EXISTS.** FP-17 lost 36 trees, FP-21 25, FP-20 5
+            // and FP-23 1, each to a refusal recorded under its own plot, and THE PLOT LIST read
+            // YES and YES for all four while the glance said nothing at all. 67 trees left the
+            // building and the file's first two sections were silent about it.
+            IReadOnlyList<PlotTreesNotWritten> lost = TreesNotWritten.Of(set);
+
+            Line(report, string.Empty);
+            Line(report, "  " + TreesNotWritten.InWords(lost));
+            foreach (PlotTreesNotWritten one in lost)
+            {
+                Line(report, "    " + one.PlotId + ": " + one.InWords);
+            }
 
             // **THE 19:52 RUN IS WHY THIS LINE EXISTS.** Both parks templates wrote neither
             // computed number on any of their plots, the reason was on each of those plots'
@@ -795,8 +847,8 @@ namespace RcrcGreen.Core.Kpi
 
             Heading(report, PdfHeading, held.Count,
                 "the form is keyed on the plot prefix, the file is named after the same "
-                + KpiNames.PlotUid2 + " as the workbook, and the client's own bytes are copied "
-                + "whole with the values appended after them");
+                + KpiNames.PlotUid2 + " as the workbook, and the form file's own bytes are "
+                + "copied whole with the values appended after them");
 
             if (held.Count == 0)
             {
@@ -1634,7 +1686,7 @@ namespace RcrcGreen.Core.Kpi
                 ? new List<MeasureDifference>()
                 : run.Plan.Differences;
             Heading(report, "MATCHED SPECIES WHOSE HEIGHT OR DIAMETER IN REVIT DIFFERS FROM THE ROW'S", differences.Count,
-                "named and CHANGED NOTHING, the client's row keeps its own number");
+                "named and CHANGED NOTHING, the workbook's row keeps its own number");
 
             // How many of the matches disagree, so the size of it is visible without counting.
             // The 1707 run read 22 of its matches differing, nearly every one.
@@ -1711,7 +1763,7 @@ namespace RcrcGreen.Core.Kpi
             {
                 Line(report, "  A written row carries the botanical name, the count, and the height and the canopy");
                 Line(report, "  diameter the schedule printed beside it, into the columns the sheet's header row names,");
-                Line(report, "  and NOTHING ELSE. Family, genus, native and every code column are the client's data,");
+                Line(report, "  and NOTHING ELSE. Family, genus, native and every code column come from no model,");
                 Line(report, "  so they stay empty and any KPI that needs one still cannot see this species.");
             }
 
@@ -1901,7 +1953,7 @@ namespace RcrcGreen.Core.Kpi
         private static void TheRegions(StringBuilder report, KpiCreateRun run)
         {
             Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF, AND WHAT IT READ");
-            Line(report, "  plot | chosen type | how it was chosen | against the client's note | "
+            Line(report, "  plot | chosen type | how it was chosen | against the area cell's note | "
                 + "raw square feet | written square metres | as the model prints it | offered");
             foreach (PlotReading reading in run.Readings)
             {
@@ -1925,7 +1977,7 @@ namespace RcrcGreen.Core.Kpi
             // column is what separates a choice the client's note made from one a person made
             // on the pane, because the two carry different weight and a type name alone says
             // neither.
-            Line(report, "  The client's note for the area cell names "
+            Line(report, "  " + RegionChoice.TheNote + " names "
                 + RegionChoice.TheNoteNames + ". One region holding an area still decides");
             Line(report, "  by itself whatever it is called. Where MORE THAN ONE holds an area "
                 + "and the note's type is");

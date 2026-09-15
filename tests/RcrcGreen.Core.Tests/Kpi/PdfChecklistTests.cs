@@ -83,6 +83,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// <summary>
         /// The fields left blank travel with the outcome, each with its reason, so the report
         /// can name them per plot.
+        ///
+        /// **GROUND COVER LEFT THIS TEST BY BADER'S DECISION OF 15 SEPTEMBER**, which reversed
+        /// its subject rather than the test being bent to pass: this plot's shrubs and lawn
+        /// schedule was read, so a group it does not print is a nought and not a blank. The
+        /// second half below is the case that is still a blank, a plot holding no such schedule
+        /// at all, so the field is still covered by a test that names a reason.
         /// </summary>
         [Fact]
         public void TheFieldsLeftBlankTravelWithTheirReasons()
@@ -90,7 +96,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             PdfOutcome outcome = PdfChecklist.Write(
                 RoadsForm(), Path.Combine(_folder, "out.pdf"), RoadPlan());
 
-            Assert.Contains(outcome.Blank, one => one.Value == PdfValue.GroundCover);
+            Assert.DoesNotContain(outcome.Blank, one => one.Value == PdfValue.GroundCover);
             Assert.Contains(outcome.Blank, one => one.Value == PdfValue.TotalAreasToBeGreened);
             Assert.Contains(outcome.Blank, one => one.Value == PdfValue.IrrigationWaterDemand);
 
@@ -98,6 +104,24 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 Assert.False(string.IsNullOrWhiteSpace(one.Why), one.FieldName + " was left blank with no reason");
             }
+
+            PdfOutcome none = PdfChecklist.Write(
+                RoadsForm("noschedule.pdf"),
+                Path.Combine(_folder, "noschedule-out.pdf"),
+                PdfFill.Of(
+                    CreateFixture.Plot(
+                        "ST-05", component: "STREET 30m ROW", uid2: "ANH-007-ST-100210",
+                        shrubsAndLawnRead: false),
+                    CountedGroups.Of(KpiTemplates.Streets),
+                    StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
+                    Today,
+                    true,
+                    PdfWorkbookNumbers.None));
+
+            Assert.Equal(
+                "this plot holds no shrubs and lawn schedule, so nothing was read and this box "
+                + "is left empty rather than written 0",
+                none.Blank.Single(one => one.Value == PdfValue.GroundCover).Why);
         }
 
         /// <summary>
@@ -222,9 +246,18 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(1, glance.Written);
             Assert.Single(glance.WithNoPdf);
             Assert.Single(glance.FormsThatDidNotMatch);
+
+            // **FIVE BOXES ON ONE PLOT**, counted by hand off the Roads table: Existing Shrubs,
+            // Proposed Shrubs, TOTAL Shrubs, Ground Cover and Lawn. ST-05's reading holds a
+            // shrubs and lawn schedule and no group off it, so all five are the nought Bader
+            // decided on 15 September. ST-06's form did not match, so it wrote nothing and
+            // counts nothing.
+            Assert.Equal(5, glance.NoughtBoxes);
+            Assert.Equal(new[] { "ST-05" }, glance.NoughtPlots);
             Assert.Equal(
                 "THE PDFS: 1 PDF was written, 1 of the plots that got a workbook got no PDF, and "
-                + "1 form did not match what this tool knows.",
+                + "1 form did not match what this tool knows. 5 boxes were written 0 on 1 plot "
+                + "whose shrubs and lawn schedule was read and printed no such group.",
                 glance.InWords);
 
             string report = KpiCreateReport.WriteAll(set, new DateTime(2026, 9, 14, 14, 29, 0));
@@ -235,11 +268,14 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("field | unit | what was sent | what landed", report);
             Assert.Contains("left blank | why", report);
 
-            // **A PLOT WHOSE SCHEDULE PRINTED NO SHRUBS GROUP LEAVES ALL FOUR OF ITS BOXES
-            // BLANK**, with the absence named. Ground cover used to be blank on every plot in
-            // the run, on the claim that the schedule never prints it apart.
+            // **A PLOT WHOSE SCHEDULE WAS READ AND PRINTED NO SHRUBS GROUP WRITES ALL FOUR OF
+            // ITS BOXES 0**, with the working beside them. Bader's decision of 15 September
+            // reversed this from the blank it asserted before, off a run where 15 plots left all
+            // four blank. The working is what tells a 0 the tool wrote from a 0 a schedule
+            // printed, so it is the thing the report has to carry.
             Assert.Contains(
-                "this plot's shrubs and lawn schedule printed no " + KpiMerge.ShrubsHeading + " group",
+                "the shrubs and lawn schedule was read and printed no " + KpiMerge.ShrubsHeading
+                + " group, so this plot has none and the box is written 0",
                 report);
         }
 

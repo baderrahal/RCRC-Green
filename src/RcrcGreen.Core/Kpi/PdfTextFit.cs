@@ -180,12 +180,17 @@ namespace RcrcGreen.Core.Kpi
     ///
     /// <code>
     /// across  = the box width less 2 pt each side
-    /// down    = the box height less 2 pt top and bottom
+    /// down    = the box height less 1 pt top and 1 pt bottom
     /// em      = the text measured in the font the /DA names
     /// wanted  = the smaller of across / em and down, rounded DOWN to 0.1 pt
-    /// ceiling = the client's own size, or 10 pt where their /DA gives nought
+    /// ceiling = the size the form's /DA gives, or 10 pt where it gives nought
     /// floor   = 6 pt
     /// </code>
+    ///
+    /// **THE HEIGHT MARGIN IS HALF THE SIDE ONE, measured on the 13:32 run.** 271 values came out
+    /// held at 6, every one on `Projects Basic Data - Parks`, whose value boxes are 9.72 pt tall.
+    /// At 2 pt top and bottom that box left 5.72 pt, under the floor, so its height held every
+    /// value whatever the text said. See <see cref="HeightMargin"/>.
     ///
     /// **ROUNDED DOWN AND NEVER TO NEAREST.** A tenth of a point rounded up is a tenth of a point
     /// of text outside the box, which is the whole fault this exists to end.
@@ -197,8 +202,31 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public static class PdfTextFit
     {
-        /// <summary>The margin taken off each side of the box before anything is fitted.</summary>
+        /// <summary>
+        /// The margin taken off the LEFT and the RIGHT of the box before the text is measured
+        /// across it.
+        /// </summary>
         public const double Margin = 2.0;
+
+        /// <summary>
+        /// The margin taken off the TOP and the BOTTOM, which is HALF the side one.
+        ///
+        /// **MEASURED ON THE 13:32 RUN OVER 154 PLOTS.** 271 values came out held at 6, every one
+        /// of them on `Projects Basic Data - Parks`, whose boxes are 41.52 by 9.72 pt for a value,
+        /// 41.734 by 9.61 for a shrub and 167.346 by 9.818 for a header. `Projects Basic Data -
+        /// Open spaces` is 46.6 by 19.4 and `Projects Basic Data - Roads` 46.8 by 17.0, and both
+        /// came out at 10.
+        ///
+        /// **2 pt top and bottom left a 9.72 pt box 5.72 pt of height**, under the 6 pt floor, so
+        /// every Parks value was held at the floor by its HEIGHT whatever its text said. At 1 pt
+        /// the same box leaves 7.72 and `3977.16` comes out at 7.7.
+        ///
+        /// **THE SIDE MARGIN IS NOT TOUCHED.** A value running past the left or the right edge is
+        /// the fault this rule was built for, and the height never showed one: a glyph is drawn
+        /// from its baseline and a box has leading of its own, so a point above and below is room
+        /// the width does not have.
+        /// </summary>
+        public const double HeightMargin = 1.0;
 
         /// <summary>**Never below this.** Smaller than this is not readable on a printed form.</summary>
         public const double Smallest = 6.0;
@@ -221,7 +249,7 @@ namespace RcrcGreen.Core.Kpi
         {
             switch (outcome)
             {
-                case PdfFitOutcome.KeptTheClientsSize: return "kept the client's size";
+                case PdfFitOutcome.KeptTheClientsSize: return "kept the size its /DA sets";
                 case PdfFitOutcome.Shrunk: return "shrunk";
                 case PdfFitOutcome.CappedAtTen: return "capped at 10";
                 case PdfFitOutcome.HeldAtSix: return "held at 6";
@@ -254,7 +282,7 @@ namespace RcrcGreen.Core.Kpi
                     fieldName, text, PdfFitOutcome.WidthsUnknown, client, client, held,
                     widths == null ? da.FontResource : widths.BaseFont,
                     "the font " + (widths == null ? da.FontResource : widths.BaseFont) + " could "
-                    + "not be measured, so the value is written at the client's own size. "
+                    + "not be measured, so the value is written at the size its /DA sets. "
                     + (widths == null ? StandardFonts.NotOneOfTheFourteen : widths.Why));
             }
 
@@ -264,7 +292,7 @@ namespace RcrcGreen.Core.Kpi
                 return new PdfFieldFit(
                     fieldName, text, PdfFitOutcome.WidthsUnknown, client, client, held, widths.BaseFont,
                     "the font " + widths.BaseFont + " has no width for '" + widths.FirstUnmeasurable(text)
-                    + "', so the value is written at the client's own size");
+                    + "', so the value is written at the size its /DA sets");
             }
 
             if (!held.Read)
@@ -276,7 +304,7 @@ namespace RcrcGreen.Core.Kpi
 
             double ceiling = da.IsAuto ? AutoCeiling : client;
             double across = held.Width - (Margin * 2.0);
-            double down = held.Height - (Margin * 2.0);
+            double down = held.Height - (HeightMargin * 2.0);
 
             // Empty text and a text of no width both fit any box, so the ceiling stands.
             double byWidth = ems <= 0.0 ? ceiling : across / ems;
@@ -285,11 +313,26 @@ namespace RcrcGreen.Core.Kpi
 
             if (wanted < Smallest)
             {
+                // **WHICH OF THE TWO HELD IT, and RUNS OVER only where the text really does.**
+                // 271 values of the 13:32 run were held at 6 and every one of them was held by
+                // its box HEIGHT, while the line said it runs over, which is a sentence about
+                // the width. A reader cannot act on a reason that names the wrong side.
+                bool byTheWidth = byWidth <= down;
+                bool over = ems > 0.0 && (ems * Smallest) > across;
+
                 return new PdfFieldFit(
                     fieldName, text, PdfFitOutcome.HeldAtSix, size, client, held, widths.BaseFont,
-                    "'" + text + "' needs " + Number(wanted) + " pt to fit a box "
-                    + held.InWords + ", which is below the " + Number(Smallest)
-                    + " pt floor, so it is written at " + Number(size) + " pt and runs over");
+                    "'" + text + "' needs " + Number(wanted) + " pt to fit a box " + held.InWords
+                    + ", held by its " + (byTheWidth ? "WIDTH" : "HEIGHT")
+                    + ", which is below the " + Number(Smallest) + " pt floor, so it is written at "
+                    + Number(size) + " pt"
+                    + (over
+                        ? " and runs over, because at " + Number(Smallest) + " pt the text is "
+                            + Number(ems * Smallest) + " pt wide against " + Number(across)
+                            + " pt of box"
+                        : " and still sits inside the box across, because at " + Number(Smallest)
+                            + " pt the text is " + Number(ems * Smallest) + " pt wide against "
+                            + Number(across) + " pt of box"));
             }
 
             if (size >= ceiling)

@@ -22,7 +22,7 @@ namespace RcrcGreen.Core.Kpi
 
         public const string NoFormFolder =
             "no forms folder is set, so no PDF was written. Browse to the folder holding the "
-            + "client's Projects Basic Data forms and press Create again";
+            + "Projects Basic Data forms and press Create again";
 
         public const string NoFormFile =
             "the forms folder holds no file this tool recognises as ";
@@ -49,8 +49,8 @@ namespace RcrcGreen.Core.Kpi
             + "plot's reference or the template's own";
 
         public const string NoContractReferenceField =
-            "this form holds no field carrying the client's own contract reference, so there is "
-            + "nowhere to write it";
+            "this form holds no field carrying the contract reference the form prints, so there "
+            + "is nowhere to write it";
 
         /// <summary>
         /// The plot's PRX_Plot_NH, into the box the client's template carries their contract
@@ -182,7 +182,7 @@ namespace RcrcGreen.Core.Kpi
 
                 landed.Add(new PdfLandedField(
                     one.Value, one.FieldName, one.Text, found == null ? string.Empty : found.Value,
-                    one.Unit, one.Working));
+                    one.Unit, one.Working, null, one.NoughtForAnAbsentGroup));
             }
 
             if (reference != null && reference.Written)

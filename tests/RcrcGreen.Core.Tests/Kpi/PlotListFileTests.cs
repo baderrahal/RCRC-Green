@@ -267,15 +267,22 @@ namespace RcrcGreen.Core.Tests.Kpi
             string report = KpiCreateReport.WriteAll(set, new DateTime(2026, 9, 15, 5, 49, 0));
 
             Assert.Contains("== " + KpiCreateReport.TeamsListHeading + " (3) ==", report);
-            Assert.Contains("plot | in the model | ticked | workbook | PDF | why not", report);
 
-            // The file's order: DM-12 first, DM-11 second, XX-99 last.
-            Assert.Contains("DM-12 | YES | YES | YES | NO |", report);
+            // **THE TREES NOT WRITTEN COLUMN IS NEW**, Bader's decision of 15 September, because
+            // FP-17, FP-20, FP-21 and FP-23 read YES and YES on the 13:32 run with 67 trees
+            // between them written nowhere.
             Assert.Contains(
-                "DM-11 | YES | YES | NO | NO | no PRX_Plot_UID2 was read off this plot's first sheet",
+                "plot | in the model | ticked | workbook | PDF | trees not written | why not",
+                report);
+
+            // The file's order: DM-12 first, DM-11 second, XX-99 last. This press made no run,
+            // so no plot lost a tree and every row reads none.
+            Assert.Contains("DM-12 | YES | YES | YES | NO | none |", report);
+            Assert.Contains(
+                "DM-11 | YES | YES | NO | NO | none | no PRX_Plot_UID2 was read off this plot's first sheet",
                 report);
             Assert.Contains(
-                "XX-99 | NO | NO | NO | NO | the model does not name this plot, so it could not be ticked",
+                "XX-99 | NO | NO | NO | NO | none | the model does not name this plot, so it could not be ticked",
                 report);
 
             Assert.Contains("IN THE MODEL AND NOT ON THE LIST, 1", report);

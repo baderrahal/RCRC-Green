@@ -112,17 +112,83 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **THE HEIGHT BOUNDS IT TOO.** A box 200 pt wide and 11 pt tall leaves 7 pt down once
-        /// 2 pt comes off the top and the bottom, and `12` is 1.112 em, which would fit 176 pt
+        /// **THE HEIGHT BOUNDS IT TOO.** A box 200 pt wide and 9 pt tall leaves 7 pt down once
+        /// 1 pt comes off the top and the bottom, and `12` is 1.112 em, which would fit 178 pt
         /// across. The smaller of the two wins.
         /// </summary>
         [Fact]
         public void AShortBoxBoundsTheSizeByItsHeight()
         {
-            PdfFieldFit fit = Fit("12", 200.0, 11.0, "/Helv 0 Tf 0 g");
+            PdfFieldFit fit = Fit("12", 200.0, 9.0, "/Helv 0 Tf 0 g");
 
             Assert.Equal(PdfFitOutcome.Shrunk, fit.Outcome);
             Assert.Equal(7.0, fit.Size);
+        }
+
+        /// <summary>
+        /// **THE PARKS VALUE BOX, MEASURED ON THE 13:32 RUN OVER 154 PLOTS.** 271 values came out
+        /// held at 6, every one of them on `Projects Basic Data - Parks`, whose value boxes are
+        /// 41.52 by 9.72 pt.
+        ///
+        /// Written out by hand: `3977.16` is six digits at 556 and one full stop at 278, which is
+        /// 3,614 thousandths, so 3.614 em. 41.52 less 2 pt each side is 37.52 across, and 37.52
+        /// over 3.614 is 10.38. 9.72 less 1 pt top and bottom is 7.72 down. The smaller is 7.72
+        /// and rounded DOWN to a tenth that is 7.7.
+        ///
+        /// **At 2 pt top and bottom that box left 5.72 pt**, under the 6 pt floor, so its height
+        /// held every Parks value at the floor whatever the text said.
+        /// </summary>
+        [Fact]
+        public void TheParksValueBoxComesOutAtSevenPointSeven()
+        {
+            PdfFieldFit fit = Fit("3977.16", 41.52, 9.72, "/Helv 0 Tf 0 g");
+
+            // **THE FAILURE NAMES THE FIELD AND THE BOX.** A bare Expected 7.7 against Actual 6
+            // says a number moved and not which box on which form is still at the floor.
+            Assert.True(
+                Math.Abs(fit.Size - 7.7) < 0.0001,
+                fit.FieldName + ", holding '" + fit.Text + "' in a Projects Basic Data - Parks "
+                + "value box " + fit.Box.InWords + ", came out at " + fit.Size + " pt and "
+                + PdfTextFit.Words(fit.Outcome) + ". 41.52 less 2 pt each side is 37.52, over "
+                + "3.614 em is 10.38, and 9.72 less 1 pt top and bottom is 7.72, so the height "
+                + "wins and it is written at 7.7.");
+
+            Assert.Equal(PdfFitOutcome.Shrunk, fit.Outcome);
+        }
+
+        /// <summary>
+        /// **THE SAME VALUE IN AN OPEN SPACES BOX IS CAPPED AT 10.** Those boxes are 46.6 by 19.4
+        /// pt, measured on the same run, and every one of their values came out at 10. 46.6 less
+        /// 2 pt each side is 42.6 across, over 3.614 em is 11.78, and 19.4 less 1 pt top and
+        /// bottom is 17.4, so 11.78 wins and the auto ceiling of 10 holds it.
+        /// </summary>
+        [Fact]
+        public void TheSameValueInAnOpenSpacesBoxIsCappedAtTen()
+        {
+            PdfFieldFit fit = Fit("3977.16", 46.6, 19.4, "/Helv 0 Tf 0 g");
+
+            Assert.Equal(PdfFitOutcome.CappedAtTen, fit.Outcome);
+            Assert.Equal(10.0, fit.Size);
+        }
+
+        /// <summary>
+        /// **A VALUE HELD AT 6 SAYS WHICH SIDE HELD IT, and RUNS OVER only where it really
+        /// does.** Every one of the 271 held at 6 on the 13:32 run was held by its HEIGHT, while
+        /// the line said it runs over, which is a sentence about the width.
+        ///
+        /// A box 200 pt wide and 7 pt tall leaves 5 pt down, under the floor, and `12` at 6 pt is
+        /// 6.672 pt wide against 196 pt of box, so it fits across with room to spare.
+        /// </summary>
+        [Fact]
+        public void AValueHeldByItsHeightSaysSoAndDoesNotSayItRunsOver()
+        {
+            PdfFieldFit fit = Fit("12", 200.0, 7.0, "/Helv 0 Tf 0 g");
+
+            Assert.Equal(PdfFitOutcome.HeldAtSix, fit.Outcome);
+            Assert.Equal(6.0, fit.Size);
+            Assert.Contains("held by its HEIGHT", fit.Why);
+            Assert.DoesNotContain("runs over", fit.Why);
+            Assert.Contains("still sits inside the box across", fit.Why);
         }
 
         /// <summary>
@@ -139,6 +205,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(6.0, fit.Size);
             Assert.Contains("2797.64", fit.Why);
             Assert.Contains("20 pt across and 14 pt tall", fit.Why);
+
+            // Held by the WIDTH here, and at 6 pt the text is 21.684 pt against 16 pt of box, so
+            // it really does run over.
+            Assert.Contains("held by its WIDTH", fit.Why);
             Assert.Contains("runs over", fit.Why);
         }
 
@@ -430,9 +500,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(1, glance.Count(PdfFitOutcome.NoDefaultAppearance));
 
             Assert.Contains(
-                "THE TEXT SIZES: 5 values were written, 1 at the client's own size, 1 shrunk to "
-                + "fit, 1 capped at 10 where the client's /DA gives nought, 1 held at 6 and "
-                + "running over, 0 with the font's widths UNKNOWN, and 1 with no /DA to change.",
+                "THE TEXT SIZES: 5 values were written, 1 at the size their own /DA sets, 1 "
+                + "shrunk to fit, 1 capped at 10 where the field's /DA gives nought, 1 held at 6 "
+                + "and running over, 0 with the font's widths UNKNOWN, and 1 with no /DA to change.",
                 glance.InWords);
 
             // Two named: the one held at 6, which runs over, and the one with no /DA at all.

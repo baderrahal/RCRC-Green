@@ -199,7 +199,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(0, glance.Regions.NothingChosen);
             Assert.Equal(
                 "THE REGION TYPE: of 5 plots wanting an area, 3 took it off "
-                + "RCRC_OUT OF SCOPE (PRESENTATION), which is the type the client's note names, "
+                + "RCRC_OUT OF SCOPE (PRESENTATION), which is the type the area cell's own note, "
+                + "REVIT 00 LINK / ID FILLED REGION RCRC_OUT OF SCOPE (PRESENTATION) / "
+                + "PRX_Intervention Area, names, "
                 + "2 off a type it does not name, and 0 chose no region at all.",
                 glance.Regions.InWords);
         }
@@ -326,7 +328,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 glance.Divisions.InWords);
             Assert.Equal(new[]
             {
-                "DM-12 | <Mosques> D9 | divides by a client cell",
+                "DM-12 | <Mosques> D9 | divides by a cell the template already held",
                 "DM-13 | <Mosques> D9 | divides by a cell THIS RUN WROTE"
             }, glance.Divisions.Where.ToArray());
         }

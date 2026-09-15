@@ -27,13 +27,16 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class WaterDemandRead
     {
-        private WaterDemandRead(string scheduleName, bool read, double litresADay, int totalRow, string why)
+        private WaterDemandRead(
+            string scheduleName, bool read, double litresADay, int totalRow, string why,
+            bool nothingScheduled = false)
         {
             ScheduleName = (scheduleName ?? string.Empty).Trim();
             Read = read;
             LitresADay = litresADay;
             TotalRow = totalRow;
             Why = (why ?? string.Empty).Trim();
+            NothingScheduled = nothingScheduled;
         }
 
         /// <summary>The schedule this half came off, empty when the plot holds none of its kind.</summary>
@@ -46,9 +49,18 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// The row number the total was taken off, counting the heading row as row 1, so a
-        /// person can open the schedule and look at the same row this read.
+        /// person can open the schedule and look at the same row this read. **Nought on a
+        /// schedule that printed no body rows**, which has no TOTAL row to name.
         /// </summary>
         public int TotalRow { get; }
+
+        /// <summary>
+        /// Whether this half was read off a schedule that printed its heading row and nothing
+        /// under it. **The 0 it carries came from the schedule holding nothing, not from a TOTAL
+        /// row printing 0**, and a report that could not tell the two apart would be reporting a
+        /// number it cannot point at a row for.
+        /// </summary>
+        public bool NothingScheduled { get; }
 
         public string Why { get; }
 
@@ -81,6 +93,27 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// **A SCHEDULE THAT PRINTED ITS HEADING ROW AND NOTHING UNDER IT IS NOUGHT FOR ITS
+        /// HALF.** Bader's decision of 15 September, off the 13:32 run: MM-01, MM-06, MM-07 and
+        /// NS-23 wrote no Irrigation water demand at all with both halves empty, and MM-08,
+        /// NS-28 and NS-38 with the shrubs and lawn half empty. A schedule holding nothing has
+        /// nothing to irrigate, so the whole box was blank on a plot the other half of which was
+        /// read perfectly well.
+        ///
+        /// **A SCHEDULE WITH BODY ROWS AND NO TOTAL ROW STILL REFUSES**, which is the rule one
+        /// method down and is untouched. Rows with no total is a schedule whose total nobody
+        /// printed, and adding the rows up here would be the sum this class exists not to make.
+        /// </summary>
+        public static WaterDemandRead NothingToTotal(string scheduleName)
+        {
+            return new WaterDemandRead(scheduleName, true, 0.0, 0, NoBodyRows, true);
+        }
+
+        public const string NoBodyRows =
+            "it prints its heading row and no rows under it, so this plot schedules nothing of "
+            + "that kind and its half of the demand is 0";
+
+        /// <summary>
         /// The whole rule, over the rows exactly as the schedule printed them.
         /// </summary>
         public static WaterDemandRead From(ScannedSchedule schedule)
@@ -110,6 +143,20 @@ namespace RcrcGreen.Core.Kpi
             }
 
             string heading = LabelText.Trimmed(headings[column]);
+
+            // **NOTHING UNDER THE HEADING ROW IS A NOUGHT, and it is asked AFTER the column has
+            // been found on purpose.** A heading row that does not name the L/DAY column is a
+            // schedule this reader cannot read, and answering 0 for it would be the fall back to
+            // a position that this repository forbids everywhere else. So an empty schedule of
+            // the right shape counts 0 and an empty schedule of an unknown shape still refuses.
+            // The alternative, counting 0 before looking at the heading row at all, is recorded
+            // in the log as the choice not taken.
+            //
+            // One row means the heading row and nothing under it, counted rather than inferred
+            // from the loop below falling through, because falling through is also what a
+            // schedule full of species with no TOTAL row does and those two are different
+            // answers.
+            if (rows.Count == 1) return NothingToTotal(name);
 
             for (int index = 1; index < rows.Count; index++)
             {
@@ -150,6 +197,10 @@ namespace RcrcGreen.Core.Kpi
                 {
                     return (ScheduleName.Length == 0 ? "no schedule" : ScheduleName) + ": " + Why;
                 }
+
+                // **A NOUGHT WITH NO ROW BEHIND IT SAYS SO.** Printing `0 L/day off its TOTAL
+                // row, row 0` would name a row the schedule does not have.
+                if (NothingScheduled) return ScheduleName + ": " + Why;
 
                 return ScheduleName + ": " + WaterDemand.Litres(LitresADay) + " off its TOTAL row, row "
                     + TotalRow.ToString(CultureInfo.InvariantCulture);

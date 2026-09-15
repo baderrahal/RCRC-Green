@@ -87,8 +87,12 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Equal(OutOfScope, pick.TypeName);
             Assert.Equal(RegionRoute.TheTypeTheNoteNames, pick.Route);
+            // **THE NOTE IS NAMED RATHER THAN WHOSE IT IS**, Bader's decision of 15 September:
+            // the team reading the report does not know which client is meant.
             Assert.Equal(
-                "more than one held an area and this is the type the client's note names",
+                "more than one held an area and this is the type the area cell's own note, "
+                + "REVIT 00 LINK / ID FILLED REGION RCRC_OUT OF SCOPE (PRESENTATION) / "
+                + "PRX_Intervention Area, names",
                 pick.InWords);
             Assert.True(pick.WasChosen, plot + " still chose nothing");
         }
@@ -228,7 +232,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "2 filled regions hold an area, RCRC_OUT OF SCOPE (PRESENTATION) and "
                 + "RCRC_OUT OF SCOPE (PRESENTATION), and 2 of them are "
-                + "RCRC_OUT OF SCOPE (PRESENTATION), so the client's note cannot say which",
+                + "RCRC_OUT OF SCOPE (PRESENTATION), so the area cell's own note, REVIT 00 LINK "
+                + "/ ID FILLED REGION RCRC_OUT OF SCOPE (PRESENTATION) / PRX_Intervention Area, "
+                + "cannot say which",
                 RegionChoice.WhyUnchosen(
                     new[] { Region(OutOfScope, 900.0), Region(OutOfScope, 250.0) }));
 

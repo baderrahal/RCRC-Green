@@ -40,8 +40,8 @@ namespace RcrcGreen.Core.Kpi
         /// holds is the client's own note to a person filling the form by hand.
         /// </summary>
         public const string NoSourceForIt =
-            "this tool has no source for this field, so whatever the template holds in it is the "
-            + "client's own note to whoever fills the form by hand";
+            "this tool has no source for this field, so whatever the template holds in it is a "
+            + "note to whoever fills the form by hand";
 
         /// <summary>
         /// Every field this plan will clear, the ones it names and leaves blank first, in the

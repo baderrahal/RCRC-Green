@@ -1,5 +1,60 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninetieth pass, the 154 plot press of 15 September at 13:32 read back, seven
+decisions of Bader's. **2070 tests, 1250 of them KPI**, up from 2042 and 1222, 28 hook cases,
+build zero warnings. **80 audit findings, 20 FIXED, 60 open**, counted per file off all four and
+nothing closed, renumbered or reordered.
+
+**THE REPORT IS NOT IN THIS REPOSITORY AND MUST NOT BE.** Every measurement below is copied out
+of it. **NOTHING HERE WAS RUN IN REVIT**, and item 7's wiring cannot be run from this session at
+all.
+
+**A READ SCHEDULE WITH NO SUCH GROUP IS A NOUGHT, AN ABSENT ONE IS STILL BLANK.** 81 plots lost
+their Lawn box and 15 lost all four shrub boxes. `PdfFill.NoGroupIsNought` and the flag
+`NoughtForAnAbsentGroup`, which is what the glance counts, never the words, because item 6
+rewrote every printed line in the same round. `KpiMerge.Subtotalled` writes the workbook's Lawn
+and Planting cells 0 the same way. `WaterDemandRead.NothingToTotal` counts a schedule printing its
+heading row and no body rows as 0, which is MM-01, MM-06, MM-07, NS-23, MM-08, NS-28 and NS-38.
+Body rows and no TOTAL row still refuses. The nought is asked AFTER the L/DAY column is found, on
+purpose, and the other order is recorded in the log as the choice not taken.
+
+**A PLOT WITH NO SOFTSCAPE SCHEDULE IS NOT A ZERO.** FM-07 read 0, 0, 0 and 0 against 57 trees in
+the model. Four boxes blank through `PdfFill.NoSoftscapeRead`, and THE PLOT LIST's why not column
+says the same through `KpiCreateReport.NoSoftscapeOnTheList` even though both files were written.
+
+**THE PARKS BOXES ARE 9.72 PT TALL.** 271 values held at 6, all on Parks.
+`PdfTextFit.HeightMargin` is 1 pt top and bottom, the width stays 2. 3977.16 in 41.52 by 9.72
+gives 7.7, worked by hand. A held value says whether its WIDTH or its HEIGHT held it and says it
+runs over only when it really does.
+
+**NEVER WRITE A NEW SPECIES INTO A ROW WITH NO CANOPY FORMULA.** FP-23 lost its Total areas to be
+greened to row 85 of FUTURE PARKS Tree List - Proposed. `SpeciesList.UsableEmptyRows`,
+`WorkbookArithmetic.IsTheCanopyFormula` asked by the guard and the reader alike, and the rows read
+through `WorkbookFormulas.Of` so a shared formula is seen on all eighty rows and not on its master
+alone. A sheet with no diameter column is not checked at all and `CanopyRowsRead` says so.
+
+**TREES WRITTEN NOWHERE SHOW AT THE TOP.** 67 of them on four plots read YES and YES with nothing
+said. `TreesNotWritten` counts them off the runs' own matches, THE PLOT LIST gains a trees not
+written column and the glance gains THE TREES WRITTEN NOWHERE.
+`SpeciesMatching.OnMoreThanOneRow` names the file, the sheet and both cells, D22 and D84. The tool
+still does not choose between two rows.
+
+**NO PRINTED LINE SAYS CLIENT.** 26 strings held it and none does. `RegionChoice.TheNote` is the
+one record of the note itself. The canopy guard names the file, the sheet, the row, every formula
+on it, every typed cell, and the one cell that would have carried the canopy, off the sheet's own
+other rows. **What M85 is, is UNKNOWN and is not printed**, because nothing records that column's
+formula.
+
+**THE CRASH ROW.** `PlotCrash`, `CreateStep` and `CrashFile` in Core with five tests.
+`PlotWriteTrail` in `KpiRequestHandler` records the step as it is reached, the folder flag reads
+the disk, and nothing is deleted.
+
+Six break watches, each watched red and restored byte for byte with md5. `steps/2026-09-15-kpi-rerun.md` is the sheet for the rerun: the fixes synced and a fresh detached
+copy first, 23 steps, the seven workbook rows ticked before Tick the list, six checks one to a
+step, and what remains.
+
+---
+
 Phase: 9, ship. Eighty ninth pass, the run sheet corrected before Bader's first run. **Merged to
 main as `346dddb`**, pull request 146, the squash message set on the merge call and off main byte
 for byte with no co-author line and no generated-by footer. **No code and no test**: `steps/2026-09-15-kpi-fixes.md`, the log and this file. **2042 tests, 1222 of them

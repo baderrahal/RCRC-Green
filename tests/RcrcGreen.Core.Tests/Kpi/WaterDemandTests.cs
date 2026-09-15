@@ -188,6 +188,87 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// **A SCHEDULE THAT PRINTS ITS HEADING ROW AND NOTHING UNDER IT IS NOUGHT FOR ITS
+        /// HALF.** Bader's decision of 15 September, off the 13:32 run where MM-01, MM-06,
+        /// MM-07 and NS-23 wrote no Irrigation water demand at all. A schedule holding nothing
+        /// has nothing to irrigate, and the blank it produced was the whole box on plots whose
+        /// other half read perfectly well.
+        /// </summary>
+        [Fact]
+        public void AScheduleThatPrintsItsHeadingRowAndNothingUnderItCountsNought()
+        {
+            ScannedSchedule schedule = CreateFixture.Softscape("MM-01", SoftscapeHeadings);
+
+            WaterDemandRead read = WaterDemandRead.From(schedule);
+
+            Assert.True(read.Read, read.Why);
+            Assert.Equal(0.0, read.LitresADay);
+            Assert.True(read.NothingScheduled);
+
+            // **NO ROW IS NAMED, because the schedule has none**, and printing row 0 would send
+            // somebody to a row that is not there.
+            Assert.Equal(0, read.TotalRow);
+            Assert.Equal(
+                "it prints its heading row and no rows under it, so this plot schedules nothing "
+                + "of that kind and its half of the demand is 0",
+                read.Why);
+            Assert.Equal(
+                "MM-01-(600) SOFTSCAPE SCHEDULE: it prints its heading row and no rows under it, "
+                + "so this plot schedules nothing of that kind and its half of the demand is 0",
+                read.InWords);
+        }
+
+        /// <summary>
+        /// **AND AN EMPTY SCHEDULE WHOSE HEADING ROW DOES NOT NAME THE COLUMN STILL REFUSES.**
+        /// The nought is asked after the column has been found, so a schedule this reader cannot
+        /// read is refused rather than answered 0, which would be the fall back to a position
+        /// that every other reader in this repository is forbidden.
+        /// </summary>
+        [Fact]
+        public void AnEmptyScheduleWithNoLitresColumnRefusesRatherThanCountingNought()
+        {
+            ScannedSchedule schedule = CreateFixture.Softscape(
+                "MM-01", new[] { "IMAGE", "BOTANICAL NAME", "COUNT (n)" });
+
+            WaterDemandRead read = WaterDemandRead.From(schedule);
+
+            Assert.False(read.Read);
+            Assert.False(read.NothingScheduled);
+            Assert.Contains("L/DAY", read.Why);
+        }
+
+        /// <summary>
+        /// **THE HALF THAT WAS READ REACHES THE FORM.** 1340 litres a day off the softscape
+        /// TOTAL row beside a shrubs and lawn schedule holding nothing is 1340 litres, which is
+        /// 1.34 cubic metres a day. Written out by hand: 1340 divided by a thousand.
+        /// </summary>
+        [Fact]
+        public void AnEmptyHalfBesideARealTotalStillWritesTheDemand()
+        {
+            PlotWaterDemand demand = WaterDemand.Of(
+                WaterDemandRead.Of("MM-08-(600) SOFTSCAPE SCHEDULE", 1340.0, 14),
+                WaterDemandRead.NothingToTotal("MM-08-(600) SHRUBS AND LAWN SCHEDULE"));
+
+            Assert.True(demand.BothRead);
+            Assert.Equal(1340.0, demand.LitresADay);
+            Assert.Equal(1.34, demand.CubicMetresADay);
+            Assert.Equal(string.Empty, demand.Why);
+
+            PdfPlan plan = PdfFill.Of(
+                CreateFixture.Plot("MM-08", component: "STREET 30m ROW", uid2: "ANH-007-MM-100113", water: demand),
+                CountedGroups.Of(KpiTemplates.Streets),
+                CreateFixture.NoStreetFile,
+                new DateTime(2026, 9, 15),
+                true,
+                PdfWorkbookNumbers.None);
+
+            PdfFieldFill field = plan.Fields.Single(one => one.Value == PdfValue.IrrigationWaterDemand);
+
+            Assert.True(field.Written, field.Why);
+            Assert.Equal("1.34", field.Text);
+        }
+
+        /// <summary>
         /// A TOTAL row whose L/DAY cell is not a number refuses with the row, the heading and
         /// what the cell held.
         /// </summary>

@@ -307,6 +307,30 @@ namespace RcrcGreen.Core.Kpi
     /// the canopy total to the KPI row. Nine errors that survive a full recalculation, because
     /// a recalculation cannot fix a space times a number. The cache checks all passed.
     /// </summary>
+    /// <summary>
+    /// One cell holding a value that nothing computes: somebody typed it.
+    ///
+    /// **A ROW WITH A NUMBER TYPED WHERE A FORMULA BELONGS LOOKS EXACTLY LIKE A ROW THAT
+    /// COMPUTES.** The canopy guard names these beside the formulas now, because saying only
+    /// that no cell on a row carries the canopy formula leaves a person opening the workbook to
+    /// find out what the row does carry.
+    /// </summary>
+    public sealed class TypedCell
+    {
+        public TypedCell(string sheetName, string cell, string text)
+        {
+            SheetName = sheetName ?? string.Empty;
+            Cell = cell ?? string.Empty;
+            Text = text ?? string.Empty;
+        }
+
+        public string SheetName { get; }
+
+        public string Cell { get; }
+
+        public string Text { get; }
+    }
+
     public sealed class FormulaCheck
     {
         internal FormulaCheck(
@@ -317,8 +341,10 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<ComputedFrom> computesFrom,
             IEnumerable<FunctionUse> functionsExcelMayNotHave,
             string refusal,
-            IEnumerable<FormulaCell> allFormulas = null)
+            IEnumerable<FormulaCell> allFormulas = null,
+            IEnumerable<TypedCell> typedCells = null)
         {
+            TypedCells = (typedCells ?? Enumerable.Empty<TypedCell>()).ToList();
             WasChecked = wasChecked;
             FormulaCount = formulaCount;
             AllFormulas = (allFormulas ?? Enumerable.Empty<FormulaCell>()).ToList();
@@ -345,6 +371,12 @@ namespace RcrcGreen.Core.Kpi
         /// <see cref="ReadingWrittenRows"/>. Checking it needs every formula.
         /// </summary>
         public IReadOnlyList<FormulaCell> AllFormulas { get; }
+
+        /// <summary>
+        /// Every cell holding a value with no formula behind it, over every sheet. **What the
+        /// canopy guard names beside the formulas on a row that carries no canopy formula.**
+        /// </summary>
+        public IReadOnlyList<TypedCell> TypedCells { get; }
 
         /// <summary>
         /// Every formula whose text reads a cell on a row this run wrote into.
@@ -456,8 +488,15 @@ namespace RcrcGreen.Core.Kpi
                 .ThenBy(one => one.Name, StringComparer.Ordinal)
                 .ToList();
 
+            List<TypedCell> typed = states
+                .SelectMany(sheet => sheet.Value
+                    .Where(one => one.Value.HasValue && !one.Value.HasFormula)
+                    .Select(one => new TypedCell(sheet.Key, one.Key, one.Value.Text)))
+                .ToList();
+
             return new FormulaCheck(
-                true, formulas.Count, readingWritten, atRisk, computed, functions, Refusal(atRisk), formulas);
+                true, formulas.Count, readingWritten, atRisk, computed, functions, Refusal(atRisk),
+                formulas, typed);
         }
 
         private static Dictionary<string, string> DefinedNames(ZipArchive zip, string workbookPart)
@@ -477,6 +516,28 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return names;
+        }
+
+        /// <summary>
+        /// Every formula one sheet part holds, read the same way the whole check reads them, so
+        /// a caller that needs one sheet's formulas cannot read them a second way. **A SHARED
+        /// FORMULA IS EXPANDED**: the master carries the text and every dependent cell carries
+        /// an index, so a reader that took the text alone would see a formula on one row of a
+        /// column and none on the eighty rows under it.
+        ///
+        /// The defined names of the workbook are not resolved here, because they change only
+        /// what a formula READS and never its text, and the text is what a caller of this
+        /// compares.
+        /// </summary>
+        public static IReadOnlyList<FormulaCell> Of(string sheetName, XDocument part)
+        {
+            if (part == null || part.Root == null) return new List<FormulaCell>();
+
+            return FormulasIn(
+                sheetName ?? string.Empty,
+                part,
+                new Dictionary<string, CellState>(StringComparer.Ordinal),
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)).ToList();
         }
 
         private static IEnumerable<FormulaCell> FormulasIn(
