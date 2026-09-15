@@ -4,6 +4,75 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty fourth pass. The fourth audit of the KPI tool, a firm's review
+
+**This round writes no code.** It reads the project the way a software firm reads a codebase
+before taking it over, over eight areas worked one at a time, and writes
+`steps/audit-kpi-4.md`. **1939 tests, 1119 of them KPI, against the 1939 main carries** at
+`f2e2f42`, 28 hook cases, build zero warnings, all unchanged because nothing was built.
+
+**The three earlier audits stand untouched: 63 numbered findings, 19 carrying a FIXED mark, 44
+open**, derived by walking the files rather than off a note. None is closed, renumbered or
+reordered, and none is reported again. Seventeen new findings, 64 to 80: one BLOCKS, three
+WRONG, ten COSTLY, three TIDY, with nine dropped for having no cost to the user.
+
+### What the audit found that was not known
+
+**The client's project name, their consultant and a real contract reference are constants in a
+public repository**, `PdfForms.cs:224`, `:226` and `:235`, against `.gitignore:46-49`, which
+names those exact three facts as the reason no client PDF may enter. The rule they serve is
+sound and the strings do not have to be here to serve it.
+
+**A throw while reading a schedule's plot filter comes back as an empty string**, and an empty
+string means the schedule belongs to no plot, so a plot's trees go missing and nothing records
+it. **The per plot WRITE loop has no guard**, so a throw at plot 100 of 156 ends the press with
+99 workbooks already written and no report at all. **Three of the five .xlsx readers do not
+catch `XmlException`** and the two that do are the two that write.
+
+**`CLAUDE.md` holds the string PDF zero times** and the tool fills a client AcroForm for every
+plot out of 2,149 lines. **`ReportPlaces` sits in Drawing Sheet's folder and is called by three
+tasks**, which is `territory.md`'s own worked example, unmoved.
+
+### Two things measured in a copy of the tip, never here
+
+Adding an eighth template reddens **8 of 1939**, and after filling in what those name, **10
+more**, each naming the next table. Adding a field to a PDF form reddens **2**, both counts, and
+neither is the missing case in `PdfFill.One`. **The template tables are held level by the gate
+and the PDF fields are not**, and the pattern that would catch it is already in this repository
+twice on the Drawing Sheet side.
+
+### The debt answer, as numbers
+
+```
+                    Core/Kpi  test files  KPI src lines  KPI tests  tests per 100 lines
+audit 1  92dd36c         57          24         12,575        429                 3.41
+audit 2  82d95f4         59          26         12,987        459                 3.53
+audit 3  f3fe456         78          57         21,887        853                 3.90
+today    f2e2f42         96          76         28,401       1119                 3.94
+```
+
+**The code is not accumulating debt faster than it clears it.** Source +126 per cent, tests +161
+per cent, open findings per 1,000 lines flat at 2.31, 3.62, 1.46, 1.55. **The backlog is: 63
+opened against 19 closed, and 6 rounds of 42 since the first audit closed anything.** Six of the
+44 open are marked PASSED BY against code that no longer exists, so the honest number is 38 open
+and 6 unresolvable.
+
+### What was checked and is clean
+
+Secret scan over the WHOLE history: 1,942 distinct blobs, 78,220,014 bytes, 1,941 text blobs
+scanned against thirteen patterns. **Zero credentials, ever**, and the only emails are
+example.invalid placeholders. **No `.xlsx` and no `.pdf` has ever been committed**, over 203
+commits. Core names no Revit type, proved four ways including off the built assembly, which
+lists `netstandard` and nothing else. Every crossing between Kpi and Shared runs one way.
+
+### Open question for the team
+
+Whether the three header values leave the repository for a file beside the installed assembly.
+It trades a rule measured off the client's own files for a file the team has to keep, and it is
+Bader's call rather than this round's.
+
+---
+
 ## 2026-09-15, eighty third pass. The held off list, in step and on screen
 
 **Pull request 138, merged into main as `2775999`.** The runner ran 28 hook cases and 1939
