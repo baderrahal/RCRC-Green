@@ -78,7 +78,13 @@ namespace RcrcGreen.Core.Tests.Kpi
                 one => one.FieldName == "Irrigation water demand");
 
             Assert.Equal(string.Empty, water.Landed);
-            Assert.Contains("no water demand is read off any schedule yet", water.Why);
+
+            // **THE BLANK NAMES BOTH HALVES.** This plan's reading holds neither schedule, so
+            // both are named: a reason short of the second reads like a plot with one thing
+            // wrong with it.
+            Assert.Contains("no irrigation water demand could be read", water.Why);
+            Assert.Contains("softscape, no schedule of that kind was read on this plot", water.Why);
+            Assert.Contains("shrubs and lawn, no schedule of that kind was read on this plot", water.Why);
 
             PdfLandedField ground = outcome.Emptied.Single(one => one.FieldName == "Ground Cover");
 

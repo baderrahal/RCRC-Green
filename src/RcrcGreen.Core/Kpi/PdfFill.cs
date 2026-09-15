@@ -207,20 +207,19 @@ namespace RcrcGreen.Core.Kpi
             + "cover on its own, so it is not derived";
 
         /// <summary>
-        /// **The tool has never read a water demand column off any schedule.** The shrubs and
-        /// lawn schedule prints L/DAY as its last column and nothing reads it, so there is no
-        /// number to write. Adding that read is a round of its own.
+        /// **IT IS READ NOW, off both schedules' own TOTAL rows.** Bader, 15 September: take the
+        /// total of all, add the two, divide by a thousand. The read is
+        /// <see cref="WaterDemandRead.From"/> and this is only what the blank says when it could
+        /// not be done.
         ///
-        /// **The unit and the conversion are recorded here for the day it is.** The form asks
-        /// m³/day and the schedule prints litres a day, measured on 14 September, so the read
-        /// that lands this number divides by a thousand. It is the fourth conversion on these
-        /// forms and the one nothing reaches, and the reason says so where a person sees it
-        /// rather than in a constant nobody prints.
+        /// **The form asks m³/day and both schedules print litres a day**, measured on 14
+        /// September, so the division happens for the PDF alone. The sentence keeps both units in
+        /// it because a blank that named only one would leave a person guessing which end failed.
         /// </summary>
-        public const string WaterDemandIsNotReadYet =
-            "no water demand is read off any schedule yet, so there is nothing to write. The form "
-            + "asks m³/day and the schedule prints litres a day, so the read that lands this "
-            + "number divides by 1000";
+        public const string WaterDemandNotRead =
+            "no irrigation water demand could be read. Both schedules' L/DAY TOTAL rows are "
+            + "needed, added and divided by 1000, because the form asks m³/day and the "
+            + "schedules print litres a day";
 
         public const string NoRegionChosen =
             "no filled region was chosen for this plot, so it has no intervention area";
@@ -338,7 +337,18 @@ namespace RcrcGreen.Core.Kpi
                     return Percentage(wanted, workbookWritten, workbook, unit);
 
                 case PdfValue.IrrigationWaterDemand:
-                    return PdfFieldFill.Blank(wanted.Value, name, WaterDemandIsNotReadYet);
+                    // **BOTH SCHEDULES OR NOTHING**, and the reason names which half failed.
+                    // The value is the two TOTAL rows added and divided by a thousand, worked
+                    // out once on the reading so the report and the form cannot print two
+                    // different numbers.
+                    //
+                    // **IT PRINTS FINE AND NOT TO TWO PLACES.** Dividing litres by a thousand is
+                    // what makes it small, the same way square metres divided by a million make
+                    // the green cover small: 2492 L/day is 2.492 and two places would send 2.49
+                    // to the client, which is two litres a day thrown away on every plot.
+                    return reading.Water.BothRead
+                        ? PdfFieldFill.Writing(wanted.Value, name, Fine(reading.Water.CubicMetresADay), unit)
+                        : PdfFieldFill.Blank(wanted.Value, name, WaterDemandNotRead + ". " + reading.Water.Why);
 
                 case PdfValue.ExistingTrees:
                     return Trees(wanted, reading, counted, KpiTemplates.ExistingTreesSheet);

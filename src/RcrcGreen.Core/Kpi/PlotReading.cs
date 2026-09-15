@@ -674,7 +674,8 @@ namespace RcrcGreen.Core.Kpi
             int softscapeTotalRow = 0,
             IEnumerable<PrintedGroup> printedGroups = null,
             string uid2 = null,
-            string plotNh = null)
+            string plotNh = null,
+            PlotWaterDemand water = null)
         {
             if (plotId == null) throw new ArgumentNullException("plotId");
             if (softscapeRowsPassedOver < 0) throw new ArgumentOutOfRangeException("softscapeRowsPassedOver");
@@ -683,6 +684,7 @@ namespace RcrcGreen.Core.Kpi
             PlotId = plotId;
             Uid2 = (uid2 ?? string.Empty).Trim();
             PlotNh = (plotNh ?? string.Empty).Trim();
+            Water = water ?? PlotWaterDemand.NotRead;
             PrintedSchedules = Held(printedSchedules);
             SoftscapeTotalRow = softscapeTotalRow;
             PrintedGroups = Held(printedGroups);
@@ -757,10 +759,18 @@ namespace RcrcGreen.Core.Kpi
             return new PlotReading(PlotId, Component, Reference, SoftscapeSchedules, Species, ShrubsAndLawnSchedules,
                 Subtotals, Regions, ReadSeconds, RegionPick.ByHand(typeName), Notes, ReadRefusals, SoftscapeTotalRead,
                 SoftscapeTotal, SoftscapeRowsPassedOver, PrintedSchedules, SoftscapeTotalRow, PrintedGroups,
-                Uid2, PlotNh);
+                Uid2, PlotNh, Water);
         }
 
         public string PlotId { get; }
+
+        /// <summary>
+        /// This plot's irrigation water demand, both schedules' L/DAY totals and what the form
+        /// asks for. Never null: a plot nothing read holds
+        /// <see cref="PlotWaterDemand.NotRead"/>, which names both halves as unread rather than
+        /// reading as nought.
+        /// </summary>
+        public PlotWaterDemand Water { get; }
 
         public string Component { get; }
 

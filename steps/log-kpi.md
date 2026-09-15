@@ -4,6 +4,109 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty fifth pass. The irrigation water demand, off both schedules' TOTAL rows
+
+**The last PDF field with a real source that nothing read.** **1964 tests, 1144 of them KPI, 25
+added, against the 1939 main carries** at `dbae2e6`, 28 hook cases unchanged, build zero
+warnings. **The audit findings stay open, not renumbered, not reordered: 63 numbered, 19 carrying
+a FIXED mark, 44 open.**
+
+### What it does
+
+Per plot, out of both schedules, the L/DAY column, **TAKE THE TOTAL OF ALL**, add the two, divide
+by a thousand. `WaterDemandRead.From` is the whole rule, `PlotWaterDemand` holds both halves and
+the sum, and `PlotReading.Water` carries it from the read to the fill and to the report.
+
+**Nothing adds the species rows up anywhere.** Bader said take the total, and a sum this tool
+worked out is a different number from one the schedule printed. A schedule with no TOTAL row
+writes nothing for that half and is named, with the species rows sitting right there untouched.
+
+### The column, and why it is matched whole
+
+**Three columns of the softscape schedule hold the word WATER and only one reads L/DAY**, with
+`WATER DEMAND` and `WATER L/TREE/DAY` beside it and `WATER L/SQM/DAY` on the other schedule. So
+`ScheduleColumns.Reading` matches the WHOLE heading through `LabelText.Same`, the rule every
+whole-label lookup here already asks, and **none and more than one are both refusals with the
+headings printed**. This is the two DIAMETER headings again, which cost a round.
+
+The TOTAL row is found by its first cell, read off `SoftscapeRows.TotalMark` so the two cannot
+part. That is the row's shape rather than a value read by position, which is the same ground
+`IsStructureRow` already stands on.
+
+### Two things reported and not decided
+
+**a. The TOTAL includes every group and the tree lists do not.** A mosque plot's Street Design
+group is out of scope for the tree lists by Bader's decision and its water is inside the TOTAL.
+The number written is the total he specified and nothing subtracts anything, and
+`THE IRRIGATION WATER DEMAND, PER PLOT` carries a column naming every group that plot left out
+with that group's own subtotal, beside the demand that counts it. The difference is on the page.
+
+**b. A schedule with no TOTAL row.** **UNKNOWN whether any real one prints none**: every schedule
+shape measured so far prints one, the 1548 scan is not in this repository, and the reader's own
+refusal is what will say so on the first run. It writes nothing for that half and names it.
+
+### One thing changed that the round did not name
+
+**It prints FINE rather than to two places.** `PdfFill.Number` rounds to two decimals and every
+other whole-unit field goes through it. Dividing litres by a thousand makes this one small: 2492
+L/day is 2.492 and two places would send **2.49** to the client, two litres a day thrown away on
+every plot of a hundred and fifty. It goes through the same `Fine` the green cover and the road
+length already use, and `Fine`'s own docstring already carries the reason.
+
+### The Open Spaces field name
+
+`PdfForms.OpenSpaces` names it `Irrigation water demand`, which is the name measured off that
+file on 14 September. **I cannot re-measure it here and never will be able to**, because no
+client PDF may enter this repository. That form does name five of its fields badly, `undefined_4.0`,
+`Proposed Trees.1`, `0` and `0_2`, which is why nothing on it is taken from what a field is
+called on the other two. **What protects it is `PdfFormCheck`**: a form not carrying every field
+the table names writes NOTHING rather than writing into the wrong box, so a wrong name here is a
+blank field and a named refusal rather than a number in a client's document.
+
+### What DM-11 will read, and the check Bader asked for
+
+He measured DM-11's shrubs and lawn schedule printing **L/DAY totals of 432 and 908**.
+
+**432 and 908 are two totals and the schedule has one.** If they are the two GROUP totals, GRASS
+and SHRUBS & GROUND COVER, then the schedule's own TOTAL row reads **1340** and 1340 is what the
+tool takes: never 432, never 908 and never the species rows added.
+`OnDm11TheScheduleTotalIsTakenAndNeitherGroupTotalIs` pins that over a schedule built to that
+shape, asserting 1340 and asserting it is neither of the two. If the TOTAL row itself reads one
+of them, the tool takes that one. **The report prints the ROW each total came off, so the first
+run settles which reading is right rather than this round assuming one.**
+
+**DM-11's softscape L/DAY total is UNKNOWN from here**, because the 1548 scan is not in this
+repository. The field comes to `(softscape + shrubs) / 1000`. On the 1340 reading a softscape
+total of 1152 gives **2.492**, and `BothTotalsAddedAndDividedByAThousandGiveWhatTheFormAsksFor`
+writes 1152, 1340, 2492 and 2.492 out by hand.
+
+### The break watch
+
+**Broken: `ScheduleColumns.Reading` made to take the FIRST of two matching headings** rather than
+refusing, which is the exact fault the round warns about.
+
+```
+2 red of 1964
+  TwoColumnsReadingLitresADayRefuseAndNameBoth
+    two columns read L/DAY and the reader took one of them anyway, 1152 L/day off row 2.
+    More than one is a refusal and never the first.
+  MoreThanOneMatchingHeadingComesBackAsMinusTwo
+    Expected: -2   Actual: 0
+```
+
+**The first red names what was broken in its own message rather than in its name alone**, which
+is why the assertion carries one: `Assert.False(read.Read)` reads `Expected: False, Actual: True`
+and says nothing. Restored byte for byte, checked with md5 `096037650ddefaf26bf40f276df9b697`
+and with diff, and rerun green at 1964.
+
+### Open question for the team
+
+Whether the water demand should count the groups the tree lists leave out. It does today, because
+that is what TAKE THE TOTAL means, and the report names every such group and its subtotal per
+plot so Bader can see the difference and say.
+
+---
+
 ## 2026-09-15, eighty fourth pass. The fourth audit of the KPI tool, a firm's review
 
 **This round writes no code.** It reads the project the way a software firm reads a codebase

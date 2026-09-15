@@ -238,7 +238,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             ScannedSchedule[] printedSchedules = null,
             int softscapeTotalRow = 0,
             PrintedGroup[] printedGroups = null,
-            string uid2 = null)
+            string uid2 = null,
+            PlotWaterDemand water = null)
         {
             RegionArea[] held = regions ?? new[] { Region(OutOfScope, 1000.0) };
 
@@ -269,7 +270,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                 printedSchedules,
                 softscapeTotalRow,
                 printedGroups,
-                uid2);
+                uid2,
+                null,
+                water);
         }
 
         public static string SoftscapeName(string plot)
