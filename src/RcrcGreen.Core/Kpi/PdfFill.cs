@@ -202,9 +202,13 @@ namespace RcrcGreen.Core.Kpi
         /// on every scan this project has taken. Nothing is derived from it: splitting one
         /// printed number into two would be a number nobody measured.
         /// </summary>
-        public const string GroundCoverIsNotPrintedApart =
-            "the schedule prints SHRUBS & GROUND COVER as one group and nothing prints ground "
-            + "cover on its own, so it is not derived";
+        // **GroundCoverIsNotPrintedApart IS DELETED and this is the second reason a thing gets
+        // deleted rather than the first.** It read that the schedule prints the group as one and
+        // nothing prints ground cover on its own, so it is not derived. The SHAPE it recorded is
+        // gone, not its last caller: every species row in that group begins SHRUBS: or GROUND
+        // COVER:, measured over 156 plots, so the two are printed apart and the number is read
+        // rather than derived. A constant recording a claim the data disproves is worse than no
+        // constant, which is what OutputName.Suggested bought this project.
 
         /// <summary>
         /// **IT IS READ NOW, off both schedules' own TOTAL rows.** Bader, 15 September: take the
@@ -252,7 +256,8 @@ namespace RcrcGreen.Core.Kpi
             StreetReferenceAnswer street,
             DateTime today,
             bool workbookWritten,
-            PdfWorkbookNumbers workbook)
+            PdfWorkbookNumbers workbook,
+            ProjectUnit areaUnit = null)
         {
             if (reading == null) throw new ArgumentNullException("reading");
             if (counted == null) throw new ArgumentNullException("counted");
@@ -261,7 +266,7 @@ namespace RcrcGreen.Core.Kpi
             PdfForm form = PdfForms.ForPlot(reading.PlotId);
             if (form == null) return PdfPlan.NoForm(reading.PlotId, PdfForms.NoFormFor(reading.PlotId));
 
-            PhaseSplit shrubs = ShrubsByPhase.Of(reading, KpiMerge.ShrubsHeading, counted);
+            PhaseSplit shrubs = ShrubsByPhase.Of(reading, KpiMerge.ShrubsHeading, counted, areaUnit);
             GroupSubtotal lawn = reading.SubtotalHeaded(KpiMerge.LawnHeading);
 
             var fields = new List<PdfFieldFill>();
@@ -362,14 +367,13 @@ namespace RcrcGreen.Core.Kpi
                         + Counted(reading, counted, KpiTemplates.ProposedTreesSheet)), unit);
 
                 case PdfValue.ExistingShrubs:
-                    return shrubs.GroupFound
-                        ? PdfFieldFill.Writing(wanted.Value, name, Number(shrubs.ExistingSquareMetres), unit)
-                        : PdfFieldFill.Blank(wanted.Value, name, NoGroup(KpiMerge.ShrubsHeading));
+                    // **THE SHRUBS SPECIES OF THE EXISTING PHASES, not the phase rows.** A phase
+                    // row holds shrubs and ground cover added together, and DM-14's holds 468 of
+                    // which none is shrubs.
+                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.ExistingShrubsSquareMetres, unit);
 
                 case PdfValue.ProposedShrubs:
-                    return shrubs.GroupFound
-                        ? PdfFieldFill.Writing(wanted.Value, name, Number(shrubs.ProposedSquareMetres), unit)
-                        : PdfFieldFill.Blank(wanted.Value, name, NoGroup(KpiMerge.ShrubsHeading));
+                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.ProposedShrubsSquareMetres, unit);
 
                 case PdfValue.TotalShrubs:
                     // **Existing plus proposed, on all three forms.** Never the group total row,
@@ -380,12 +384,13 @@ namespace RcrcGreen.Core.Kpi
                     // TOTAL Shrubs Area, so a tool matching by note would put the existing area
                     // into a box printed TOTAL in a client document. Bader confirmed with the
                     // client on 14 September that all three forms mean the sum of the two above.
-                    return shrubs.GroupFound
-                        ? PdfFieldFill.Writing(wanted.Value, name, Number(shrubs.TotalSquareMetres), unit)
-                        : PdfFieldFill.Blank(wanted.Value, name, NoGroup(KpiMerge.ShrubsHeading));
+                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.TotalShrubsSquareMetres, unit);
 
                 case PdfValue.GroundCover:
-                    return PdfFieldFill.Blank(wanted.Value, name, GroundCoverIsNotPrintedApart);
+                    // **IT IS PRINTED APART, BY THE PREFIX ITS SPECIES CARRY.** The group is
+                    // SHRUBS AND GROUND COVER and every species name in it begins SHRUBS: or
+                    // GROUND COVER:, measured over 156 plots on the 05:49 run.
+                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.GroundCoverSquareMetres, unit);
 
                 case PdfValue.Lawn:
                     return lawn == null
@@ -524,6 +529,30 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return found;
+        }
+
+        /// <summary>
+        /// One of the four figures the shrubs and ground cover group feeds, with the two ways it
+        /// can write nothing said once rather than four times.
+        ///
+        /// **A SPLIT THAT DOES NOT ADD UP WRITES NO FIGURE AT ALL**, and all four boxes carry the
+        /// same refusal, because writing three of them and blanking one would leave a form whose
+        /// own numbers disagree with the schedule behind it.
+        /// </summary>
+        private static PdfFieldFill Shrubs(
+            PdfFormField wanted, string name, PhaseSplit shrubs, double value, string unit)
+        {
+            if (!shrubs.GroupFound)
+            {
+                return PdfFieldFill.Blank(wanted.Value, name, NoGroup(KpiMerge.ShrubsHeading));
+            }
+
+            if (!shrubs.ByPrefix.AddsUp)
+            {
+                return PdfFieldFill.Blank(wanted.Value, name, shrubs.ByPrefix.Refusal);
+            }
+
+            return PdfFieldFill.Writing(wanted.Value, name, Number(value), unit);
         }
 
         private static string NoGroup(string heading)

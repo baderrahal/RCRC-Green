@@ -66,6 +66,7 @@ namespace RcrcGreen.Core.Kpi
             TheRunAccounting(report, set);
             TheSplit(report, set);
             TheWaterDemand(report, set);
+            TheShrubsAndGroundCover(report, set);
 
             // **EVERY PLOT GETS ITS OWN BLOCK.** It used to take the FIRST run of each
             // template and print that one, so the 18:15 run over 156 plots carried detail for
@@ -375,6 +376,88 @@ namespace RcrcGreen.Core.Kpi
         /// **Everything here is read back off the file that was written**, never off the plan,
         /// which is the rule every written cell of the workbook already follows.
         /// </summary>
+        public const string GroundCoverHeading = "SHRUBS AGAINST GROUND COVER, PER PLOT";
+
+        /// <summary>
+        /// The one group the form asks for in two boxes, split by the prefix its species names
+        /// carry, with the group total the schedule printed beside it.
+        ///
+        /// **THE TOOL WROTE THE WHOLE GROUP INTO PROPOSED SHRUBS AND LEFT GROUND COVER BLANK**,
+        /// and on DM-14 every species of that group is `GROUND COVER:` and none is `SHRUBS:`, so
+        /// 468 m2 went into the wrong box of a client document. This section is what makes the
+        /// split checkable against the schedule rather than trusted.
+        ///
+        /// **EVERY SPECIES THE SPLIT COULD PLACE IN NEITHER BOX IS NAMED**, with its plot, its
+        /// row, its area and what its prefix read. Nothing is guessed into either figure, and
+        /// the group total is what catches a species nobody noticed.
+        /// </summary>
+        private static void TheShrubsAndGroundCover(StringBuilder report, KpiCreateRunSet set)
+        {
+            var rows = set.Runs
+                .SelectMany(one => one.Readings.Select(reading => new
+                {
+                    Reading = reading,
+                    Split = ShrubsByPhase.Of(reading, KpiMerge.ShrubsHeading, CountedGroups.Of(one.Template), one.AreaUnit)
+                }))
+                .Where(one => one.Reading != null && one.Split.GroupFound)
+                .ToList();
+
+            Heading(report, GroundCoverHeading, rows.Count,
+                "the group is " + KpiMerge.ShrubsHeading + " and it holds both. The prefix each "
+                + "species name carries before its colon decides the box, and the two plus "
+                + "anything placed nowhere must equal the group total the schedule printed");
+
+            if (rows.Count == 0)
+            {
+                Line(report, "  No plot of this press printed that group.");
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  plot | existing shrubs | proposed shrubs | ground cover | placed nowhere "
+                + "| group total printed | adds up");
+
+            foreach (var one in rows)
+            {
+                GroundCoverSplit split = one.Split.ByPrefix;
+
+                Line(report, "  " + Join(
+                    one.Reading.PlotId,
+                    GroundCoverSplit.Area(split.ExistingShrubsSquareMetres),
+                    GroundCoverSplit.Area(split.ProposedShrubsSquareMetres),
+                    GroundCoverSplit.Area(split.GroundCoverSquareMetres),
+                    split.Unplaced.Count == 0 ? "none" : GroundCoverSplit.Area(split.UnplacedSquareMetres),
+                    split.GroupTotalPrinted ? GroundCoverSplit.Area(split.GroupTotal) : "none printed",
+                    split.AddsUp ? "YES" : "NO, NOTHING WAS WRITTEN"));
+            }
+
+            var unplaced = rows.SelectMany(one => one.Split.ByPrefix.Unplaced).ToList();
+            if (unplaced.Count > 0)
+            {
+                Line(report, string.Empty);
+                Line(report, "  " + Count(unplaced.Count, "species row")
+                    + " reached neither box and NOTHING was guessed for any of them:");
+                foreach (UnplacedSpecies species in unplaced)
+                {
+                    Line(report, "    " + species.InWords);
+                }
+            }
+
+            var refused = rows.Where(one => !one.Split.ByPrefix.AddsUp).ToList();
+            if (refused.Count > 0)
+            {
+                Line(report, string.Empty);
+                Line(report, "  " + Count(refused.Count, "plot")
+                    + " wrote none of the four shrub and ground cover boxes, each with why:");
+                foreach (var one in refused)
+                {
+                    Line(report, "    " + Join(one.Reading.PlotId, one.Split.ByPrefix.Refusal));
+                }
+            }
+
+            Line(report, string.Empty);
+        }
+
         public const string WaterHeading = "THE IRRIGATION WATER DEMAND, PER PLOT";
 
         /// <summary>

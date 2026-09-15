@@ -518,7 +518,12 @@ namespace RcrcGreen.Core.Kpi
             var found = new List<GroupSubtotal>();
             string heading = null;
             var subtotals = new List<SubtotalRow>();
-            var species = new List<double>();
+
+            // **THE SPECIES NAME IS KEPT, not only its area.** The group is called SHRUBS AND
+            // GROUND COVER and holds both, and the prefix the schedule prints on each species is
+            // the only thing in the schedule that says which. DM-14's group is every species
+            // GROUND COVER and none SHRUBS, and its 468 went into Proposed Shrubs.
+            var species = new List<ShrubSpecies>();
             string phase = null;
             int phaseRow = 0;
 
@@ -541,7 +546,7 @@ namespace RcrcGreen.Core.Kpi
                     Close(found, heading, subtotals, species, counted, areaUnit);
                     heading = text;
                     subtotals = new List<SubtotalRow>();
-                    species = new List<double>();
+                    species = new List<ShrubSpecies>();
                     phase = null;
                     continue;
                 }
@@ -574,7 +579,8 @@ namespace RcrcGreen.Core.Kpi
 
                 if (named)
                 {
-                    species.Add(area.Value);
+                    species.Add(new ShrubSpecies(
+                        ScheduleColumns.At(row, nameColumn), area.Value, phase, index + 1));
                     continue;
                 }
 
@@ -628,11 +634,11 @@ namespace RcrcGreen.Core.Kpi
         /// others are left out and named, and the group total row is the check on both.
         /// </summary>
         private static void Close(
-            List<GroupSubtotal> found, string heading, List<SubtotalRow> subtotals, List<double> species, CountedGroups counted, ProjectUnit areaUnit)
+            List<GroupSubtotal> found, string heading, List<SubtotalRow> subtotals, List<ShrubSpecies> species, CountedGroups counted, ProjectUnit areaUnit)
         {
             if (heading == null || subtotals.Count == 0) return;
 
-            double sum = species.Count == 0 ? double.NaN : species.Sum();
+            double sum = species.Count == 0 ? double.NaN : species.Sum(one => one.SquareMetres);
             List<SubtotalRow> phased = subtotals.Where(one => one.Phase != null).ToList();
             List<SubtotalRow> unphased = subtotals.Where(one => one.Phase == null).ToList();
 
@@ -646,7 +652,7 @@ namespace RcrcGreen.Core.Kpi
                 found.Add(new GroupSubtotal(
                     heading, last.SquareMetres, last.ItemCount, subtotals.Count, sum, plainRefusal,
                     last.RowNumber, subtotals.Select(one => one.RowNumber), null,
-                    subtotals.Count > 1, last.SquareMetres, last.ItemCount, plainNote));
+                    subtotals.Count > 1, last.SquareMetres, last.ItemCount, plainNote, species));
                 return;
             }
 
@@ -675,7 +681,8 @@ namespace RcrcGreen.Core.Kpi
                 groupTotal != null,
                 groupTotal == null ? 0.0 : groupTotal.SquareMetres,
                 groupTotal == null ? 0 : groupTotal.ItemCount,
-                note));
+                note,
+                species));
         }
 
         /// <summary>

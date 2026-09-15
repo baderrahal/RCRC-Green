@@ -28,6 +28,11 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// <summary>
         /// A mosque plot's shrubs group with an existing phase and a proposed one, off the shape
         /// the 0928 run measured: a subtotal per phase, then the group total.
+        ///
+        /// **EVERY PHASE CARRIES ONE SHRUBS: SPECIES HOLDING ITS WHOLE AREA**, which is what
+        /// these cases have always meant and what a real schedule prints. The figures the form
+        /// takes come off the species rows now, because the group holds shrubs and ground cover
+        /// together and only the species name says which.
         /// </summary>
         private static GroupSubtotal Shrubs(params PhaseSubtotal[] phases)
         {
@@ -35,7 +40,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             return new GroupSubtotal(
                 KpiMerge.ShrubsHeading, taken, 0, phases.Length + 1, double.NaN, null, 0, null,
-                phases, true, phases.Sum(one => one.SquareMetres), 0);
+                phases, true, phases.Sum(one => one.SquareMetres), 0, null,
+                phases.Select((one, at) => new ShrubSpecies(
+                    "SHRUBS: SPECIES " + (at + 1), one.SquareMetres, one.Name, at + 2)));
         }
 
         private static PhaseSubtotal Phase(string name, double squareMetres, bool counted = true)
@@ -175,21 +182,23 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **GROUND COVER IS NOT PRINTED APART FROM SHRUBS, so nothing is written and it is
-        /// named.** The schedule prints SHRUBS & GROUND COVER as one group over one set of rows,
-        /// measured on every scan this project has taken. Splitting one printed number into two
-        /// would be a number nobody measured.
+        /// **GROUND COVER IS PRINTED APART, BY THE PREFIX ITS SPECIES CARRY.** It used to be left
+        /// blank on the reasoning that the schedule prints one group over one set of rows. It
+        /// does, and every species row in that group begins `SHRUBS:` or `GROUND COVER:`, so the
+        /// two ARE printed apart and the number was never derived from anything.
+        ///
+        /// A group of shrubs alone gives ground cover nought, which is a measurement here rather
+        /// than an absence: the group was read, its species were read, and none of them is
+        /// ground cover.
         /// </summary>
         [Fact]
-        public void GroundCoverIsLeftBlankAndNamedRatherThanDerived()
+        public void GroundCoverTakesTheGroundCoverSpeciesAndNoughtWhereThereAreNone()
         {
             PdfPlan plan = Plan(Plot("DM-16",
                 Shrubs(Phase(CreateFixture.Existing, 30.0), Phase(CreateFixture.Proposed, 54.0))));
 
-            Assert.Equal(
-                "the schedule prints SHRUBS & GROUND COVER as one group and nothing prints ground "
-                + "cover on its own, so it is not derived",
-                Blank(plan, PdfValue.GroundCover));
+            Assert.Equal("0", Wrote(plan, PdfValue.GroundCover));
+            Assert.Equal("84", Wrote(plan, PdfValue.TotalShrubs));
         }
 
         /// <summary>

@@ -1119,6 +1119,90 @@ written, the numbers are right, and the note says where the model needs correcti
 schedules, never species, because on a run of 78 plots a long list is not read. The report
 keeps the full detail with the counts and the areas left out.
 
+## The shrubs group holds two kinds and the species name says which
+
+**GROUND COVER WAS IN THE SHRUBS BOX ON EVERY WORKBOOK AND FORM WRITTEN SO FAR.** The
+instruction was to read the SHRUBS & GROUND COVER group's total area off the shrubs and lawn
+schedule, and the group holds two kinds.
+
+**Measured on the 05:49 report, over 156 plots:** 143 species names begin `SHRUBS:`, 107 begin
+`GROUND COVER:`, 55 begin `GRASS:`. So the prefix is data the schedule already prints.
+
+**Two plots, read off the schedules on screen, and they are opposite ends.**
+
+```
+DM-11  GRASS                  Proposed  GRASS: PENNISETUM SETACEUM          35 m2
+                              group total                                   35
+       SHRUBS & GROUND COVER  Proposed  SHRUBS: BOUGAINVILLEA GLABRA        36 m2
+                                        SHRUBS: CARISSA MACROCARPA          34 m2
+                              group total                                   70
+       TOTAL                                                               105
+
+DM-14  GRASS                  Proposed  GRASS: STENOTAPHRUM SECUNDATUM     175 m2
+                              group total                                  175
+       SHRUBS & GROUND COVER  Proposed  GROUND COVER: CARISSA MACROCAPA    270 m2
+                                        GROUND COVER: LAMPRANTHUS AUREUS   198 m2
+                              group total                                  468
+       TOTAL                                                               643
+```
+
+**EVERY SPECIES IN DM-14'S GROUP IS GROUND COVER AND NONE IS SHRUBS.** 270 plus 198 is 468, the
+group total, and all 468 went into Proposed Shrubs with Ground Cover left blank. That is the
+wrong box on a real plot rather than a hypothetical.
+
+**ONLY ONE OF THE TWO READINGS ADDS UP.** Writing the group total into Ground Cover as well
+would give DM-11 Ground Cover 70 beside Proposed Shrubs 70, the same area in two boxes of one
+form. The prefix split gives each box its own species and the two add to the group total.
+
+### The rule
+
+`SpeciesPrefix` and `GroundCoverSplit` are the whole of it.
+
+- **The prefix is the text before the FIRST colon**, edge whitespace off, matched without case
+  through `LabelText.Same`, the same whole-label rule every lookup in this tool asks. The inside
+  is untouched, so `GROUND  COVER:` with two spaces is not `GROUND COVER:`
+- **`SHRUBS:` species go to the shrubs figures, `GROUND COVER:` species to the ground cover one**
+- **A species with NO prefix, or a prefix that is neither of the two, goes NOWHERE and is NAMED**
+  with its plot, its row, its area and what its prefix read. Nothing is guessed into either box
+- **The two written figures plus everything placed nowhere MUST EQUAL the group total the
+  schedule printed.** Where they do not the split refuses, naming all three numbers, and NONE of
+  the four boxes is written, because writing three and blanking one leaves a form whose own
+  numbers disagree with the schedule behind it
+- **The GRASS group is untouched.** Its species carry `GRASS:`, it reaches lawn through its own
+  heading, and nothing in the split reads it
+
+**THE SHRUBS FIGURES COME OFF SPECIES ROWS NOW AND NOT OFF PHASE ROWS.** A phase row holds
+shrubs and ground cover added together, which is the whole fault. Existing against proposed is
+still decided by `CountedGroups.SheetFor`, the same method the tree lists ask, so a species
+under a phase no tree list is named for is placed nowhere and named the same way a phase row
+already is.
+
+**A GROUP WITH NO SPECIES ROW CANNOT BE SPLIT** and says so rather than writing nought into both
+boxes. So can a group the schedule printed no total for: the check is simply not run there.
+
+**The room the check allows is the phase rows' own**, half the project's area rounding step for
+each row summed, read off the project units and never a constant, because every printed area is
+already rounded and a sum of rounded numbers need not equal a rounded sum. That is why the area
+unit is handed into `PdfFill.Of` rather than a tolerance being written here.
+
+**`PdfFill.GroundCoverIsNotPrintedApart` is DELETED**, and it is the second reason a thing gets
+deleted rather than the first. It read that the schedule prints the group as one and nothing
+prints ground cover on its own, so it is not derived. The SHAPE it recorded is gone rather than
+its last caller: the two ARE printed apart, on every species row, and the number is read rather
+than derived.
+
+### What is UNKNOWN and how the next run answers it
+
+**How many plots are all ground cover, all shrubs, or mixed is UNKNOWN from this repository.**
+The 05:49 report is under `reports/` and nothing there is ever committed, so only the species
+name counts above survive, and a name count is not a plot count. `SHRUBS AGAINST GROUND COVER,
+PER PLOT` prints one row per plot with both figures and the group total, so the next run answers
+it without anybody counting by hand.
+
+**If the split disagrees with the group total on a real plot the tool STOPS rather than
+choosing**, and the report names the plot and all three numbers. That is a question for Bader
+and the client and not this tool's to settle.
+
 ## The irrigation water demand is both schedules' own TOTAL rows, added
 
 **The last field on these forms with a real source that nothing read.** Bader specified it on 15

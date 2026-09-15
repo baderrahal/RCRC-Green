@@ -539,7 +539,8 @@ namespace RcrcGreen.Core.Kpi
             bool groupTotalPrinted = false,
             double groupTotalSquareMetres = 0.0,
             int groupTotalItemCount = 0,
-            string roundingNote = null)
+            string roundingNote = null,
+            IEnumerable<ShrubSpecies> species = null)
         {
             if (heading == null) throw new ArgumentNullException("heading");
             if (repeats < 0) throw new ArgumentOutOfRangeException("repeats");
@@ -558,7 +559,16 @@ namespace RcrcGreen.Core.Kpi
             GroupTotalSquareMetres = groupTotalPrinted ? groupTotalSquareMetres : 0.0;
             GroupTotalItemCount = groupTotalPrinted ? groupTotalItemCount : 0;
             RoundingNote = roundingNote ?? string.Empty;
+            Species = (species ?? Enumerable.Empty<ShrubSpecies>()).Where(one => one != null).ToList();
         }
+
+        /// <summary>
+        /// Every species row this group printed, with its name, its area and the phase it sat
+        /// under. **The NAME is what says which box the area belongs in**, because the group is
+        /// called SHRUBS and GROUND COVER and holds both, and the prefix the schedule prints on
+        /// each species is the only thing in it that tells them apart.
+        /// </summary>
+        public IReadOnlyList<ShrubSpecies> Species { get; }
 
         /// <summary>
         /// The rows above the group total add to within the project's own rounding of it, with

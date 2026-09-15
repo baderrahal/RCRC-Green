@@ -234,7 +234,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("ST-05 | Projects Basic Data - Roads", report);
             Assert.Contains("field | unit | what was sent | what landed", report);
             Assert.Contains("left blank | why", report);
-            Assert.Contains(PdfFill.GroundCoverIsNotPrintedApart, report);
+
+            // **A PLOT WHOSE SCHEDULE PRINTED NO SHRUBS GROUP LEAVES ALL FOUR OF ITS BOXES
+            // BLANK**, with the absence named. Ground cover used to be blank on every plot in
+            // the run, on the claim that the schedule never prints it apart.
+            Assert.Contains(
+                "this plot's shrubs and lawn schedule printed no " + KpiMerge.ShrubsHeading + " group",
+                report);
         }
 
         private string ParksForm(string fileName = "parks.pdf")

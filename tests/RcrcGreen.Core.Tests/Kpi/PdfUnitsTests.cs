@@ -24,9 +24,17 @@ namespace RcrcGreen.Core.Tests.Kpi
     {
         private static readonly DateTime Today = new DateTime(2026, 9, 14);
 
+        /// <summary>
+        /// Each phase carries one `SHRUBS:` species holding its whole area, because the figures
+        /// the form takes come off the species rows and not off the phase rows: the group holds
+        /// shrubs and ground cover together and only the species name says which.
+        /// </summary>
         private static GroupSubtotal Shrubs(params PhaseSubtotal[] phases)
         {
-            return new GroupSubtotal(KpiMerge.ShrubsHeading, 0.0, 0, phases: phases);
+            return new GroupSubtotal(
+                KpiMerge.ShrubsHeading, 0.0, 0, phases: phases,
+                species: phases.Select((one, at) => new ShrubSpecies(
+                    "SHRUBS: SPECIES " + (at + 1), one.SquareMetres, one.Name, at + 2)));
         }
 
         private static PhaseSubtotal Phase(string name, double squareMetres)
