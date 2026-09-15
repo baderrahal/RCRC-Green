@@ -404,18 +404,107 @@ namespace RcrcGreen.Core.Kpi
     /// file. The area cell counts as written when it landed in the output file and holds
     /// something, read back off the file rather than taken from what the fill set out to write.
     /// </summary>
+    /// <summary>
+    /// **HOW BIG EVERY WRITTEN VALUE CAME OUT, counted once for the whole press.**
+    ///
+    /// Measured on ANH-007-MO-100011: 2797.6 cut off at the edge of its box, 0.0008 cut off, and
+    /// tree counts drawn taller than the boxes holding them. The size of every value is now a
+    /// decision this tool makes and a decision it has to account for.
+    ///
+    /// **ONE COUNT PER OUTCOME AND A LINE PER BOX ONLY WHERE SOMEBODY HAS TO ACT.** Held at 6
+    /// means the text runs over anyway and the box has to be looked at. Widths UNKNOWN and no /DA
+    /// mean the tool could not decide at all and wrote the client's own size. A value that fits,
+    /// or one shrunk to fit, needs no line over 150 plots.
+    /// </summary>
+    public sealed class TextFitGlance
+    {
+        public TextFitGlance(IEnumerable<PdfFieldFit> fits)
+        {
+            Fits = (fits ?? Enumerable.Empty<PdfFieldFit>()).ToList();
+        }
+
+        public static readonly TextFitGlance NonePlanned = new TextFitGlance(null);
+
+        public IReadOnlyList<PdfFieldFit> Fits { get; }
+
+        public int Count(PdfFitOutcome outcome)
+        {
+            return Fits.Count(one => one.Outcome == outcome);
+        }
+
+        /// <summary>
+        /// Every box a person has to look at: the text that does not fit at the floor, and the
+        /// field whose font this tool could not measure. **Named one by one and never counted
+        /// alone**, because a count says a size is wrong somewhere and a line says which box.
+        /// </summary>
+        public IReadOnlyList<PdfFieldFit> Named
+        {
+            get
+            {
+                return Fits
+                    .Where(one => one.Outcome == PdfFitOutcome.HeldAtSix
+                        || one.Outcome == PdfFitOutcome.WidthsUnknown
+                        || one.Outcome == PdfFitOutcome.NoDefaultAppearance)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Every field whose size did not land, read back off the written file. **A size the tool
+        /// meant to set and did not is a box still cut off**, so it is counted apart from the
+        /// ones it never tried to set.
+        /// </summary>
+        public IReadOnlyList<PdfFieldFit> DidNotLand
+        {
+            get { return Fits.Where(one => !one.SizeLanded).ToList(); }
+        }
+
+        public string InWords
+        {
+            get
+            {
+                if (Fits.Count == 0)
+                {
+                    return "THE TEXT SIZES: no PDF field was written in this press, so no size "
+                        + "was fitted to a box.";
+                }
+
+                return "THE TEXT SIZES: " + Fits.Count
+                    + (Fits.Count == 1 ? " value was written, " : " values were written, ")
+                    + Count(PdfFitOutcome.KeptTheClientsSize) + " at the client's own size, "
+                    + Count(PdfFitOutcome.Shrunk) + " shrunk to fit, "
+                    + Count(PdfFitOutcome.CappedAtTen) + " capped at "
+                    + PdfTextFit.AutoCeiling.ToString("0.###", CultureInfo.InvariantCulture)
+                    + " where the client's /DA gives nought, "
+                    + Count(PdfFitOutcome.HeldAtSix) + " held at "
+                    + PdfTextFit.Smallest.ToString("0.###", CultureInfo.InvariantCulture)
+                    + " and running over, " + Count(PdfFitOutcome.WidthsUnknown)
+                    + " with the font's widths UNKNOWN, and "
+                    + Count(PdfFitOutcome.NoDefaultAppearance) + " with no /DA to change."
+                    + (DidNotLand.Count == 0
+                        ? string.Empty
+                        : " " + DidNotLand.Count + " of the sizes this run set did NOT land in "
+                            + "the written file, which is a bug in the tool.");
+            }
+        }
+    }
+
     public sealed class RunGlance
     {
         public RunGlance(
             AreaCellGlance streetsArea, RegionGlance regions, DivisionGlance divisions,
-            PdfGlance pdfs = null, ComputedGlance computed = null)
+            PdfGlance pdfs = null, ComputedGlance computed = null, TextFitGlance textSizes = null)
         {
             StreetsArea = streetsArea ?? AreaCellGlance.NoStreetPlots;
             Regions = regions ?? RegionGlance.NoAreaRead;
             Divisions = divisions ?? DivisionGlance.NoneFound;
             Pdfs = pdfs ?? PdfGlance.NonePlanned;
             Computed = computed ?? ComputedGlance.NonePlanned;
+            TextSizes = textSizes ?? TextFitGlance.NonePlanned;
         }
+
+        /// <summary>How big every written value came out, and how many did not fit.</summary>
+        public TextFitGlance TextSizes { get; }
 
         public PdfGlance Pdfs { get; }
 
@@ -439,7 +528,18 @@ namespace RcrcGreen.Core.Kpi
             if (set == null) throw new ArgumentNullException("set");
 
             return new RunGlance(
-                StreetsArea(set), Regions(set), Divisions(set), Pdfs(set), Computed(set));
+                StreetsArea(set), Regions(set), Divisions(set), Pdfs(set), Computed(set),
+                TextSizes(set));
+        }
+
+        /// <summary>
+        /// Every size this press fitted, over every PDF it wrote.
+        /// </summary>
+        private static TextFitGlance TextSizes(KpiCreateRunSet set)
+        {
+            return new TextFitGlance(set.PlotOutcomes
+                .Where(one => one.Pdf != null && one.Pdf.Written)
+                .SelectMany(one => one.Pdf.Fitted));
         }
 
         /// <summary>

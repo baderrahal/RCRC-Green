@@ -146,7 +146,8 @@ namespace RcrcGreen.Core.Kpi
             values.AddRange(emptied.Select(
                 one => new KeyValuePair<string, string>(one.FieldName, string.Empty)));
 
-            byte[] filled = PdfFormFile.Filled(file, values, out refusal);
+            IReadOnlyList<PdfFieldFit> fits;
+            byte[] filled = PdfFormFile.Filled(file, values, out fits, out refusal);
             if (filled == null)
             {
                 return PdfOutcome.WroteNothing(plan.PlotId, plan.Form,
@@ -207,6 +208,17 @@ namespace RcrcGreen.Core.Kpi
                     found == null ? string.Empty : found.Value, string.Empty, string.Empty, one.Why));
             }
 
+            // **AND THE SIZE IS READ BACK OFF THE OUTPUT TOO**, so a /DA this run meant to shrink
+            // and did not is visible rather than assumed, the same rule the values already
+            // follow. Nothing here compares what was sent against itself.
+            foreach (PdfFieldFit one in fits)
+            {
+                PdfFieldRead found = back.FirstOrDefault(
+                    held => string.Equals(held.Name, one.FieldName, StringComparison.Ordinal));
+
+                one.With(found == null || !found.DefaultAppearance.Read ? -1.0 : found.DefaultAppearance.Size);
+            }
+
             // A form holding no contract reference field at all is a different fact from a plot
             // with no PRX_Plot_NH, and it is named among the blanks rather than emptied.
             var blank = plan.Blank.ToList();
@@ -214,7 +226,7 @@ namespace RcrcGreen.Core.Kpi
 
             return PdfOutcome.Wrote(
                 plan.PlotId, plan.Form, outputPath, check, landed, blank, plan.WhatWasChecked,
-                cleared);
+                cleared, fits);
         }
 
         /// <summary>

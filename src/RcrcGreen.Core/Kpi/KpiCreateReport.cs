@@ -61,6 +61,7 @@ namespace RcrcGreen.Core.Kpi
                 + "sections are below under its name.");
             Line(report, string.Empty);
 
+            TheTeamsList(report, set);
             ThePlotList(report, set);
             TheGlance(report, set);
             TheRunAccounting(report, set);
@@ -153,6 +154,109 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  A section printed once per plot has one block per plot, so its own "
                 + "size is the third column.");
             Line(report, string.Empty);
+        }
+
+        public const string TeamsListHeading = "THE PLOT LIST";
+
+        /// <summary>
+        /// **THE TEAM SENT 154 PLOTS TO EXPORT AND WANTS EVERY ONE EXPORTED WITH NONE SKIPPED.**
+        /// This is their own list, in their own order, with what happened to each.
+        ///
+        /// **NOTHING ON THE LIST DROPS OUT WITHOUT A LINE.** A plot the model does not name, a
+        /// plot that went into no workbook, a plot whose PDF was not written: each is a row with
+        /// its reason rather than an absence somebody has to notice.
+        ///
+        /// It sits beside <see cref="ThePlotList"/>, which is every plot the TOOL offered. The
+        /// two are different questions and they are printed apart: one is the model's list and
+        /// this is the team's, and where they disagree that is the answer rather than a fault.
+        ///
+        /// **A press with no plot list file set prints nothing at all**, because a section about
+        /// a file nobody chose is one the team reads past on every other press.
+        /// </summary>
+        private static void TheTeamsList(StringBuilder report, KpiCreateRunSet set)
+        {
+            PlotListRead list = set.PlotList;
+            if (list == null || !list.Set) return;
+
+            Heading(report, TeamsListHeading, list.Plots.Count,
+                "the team's own plot list file, in its own order, with what this press did with "
+                + "each of its plots");
+
+            Line(report, "  file: " + list.Path);
+
+            if (!list.Read)
+            {
+                Line(report, "  " + list.Why);
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  " + list.InWords);
+
+            foreach (PlotListFault one in list.NotPlots) Line(report, "    " + one.InWords);
+            foreach (PlotListFault one in list.Repeated) Line(report, "    " + one.InWords);
+
+            Line(report, string.Empty);
+            Line(report, "  plot | in the model | ticked | workbook | PDF | why not");
+
+            var byPlot = set.PlotOutcomes.ToList();
+            int workbooks = 0;
+            int pdfs = 0;
+
+            foreach (string plotId in list.Plots)
+            {
+                string held = plotId;
+                PlotOutcome outcome = byPlot.FirstOrDefault(
+                    one => string.Equals(one.PlotId, held, StringComparison.Ordinal));
+
+                bool inTheModel = set.Plots != null && set.Plots.Holds(held);
+                bool written = outcome != null && outcome.Written;
+                bool pdf = outcome != null && outcome.Pdf != null && outcome.Pdf.Written;
+
+                if (written) workbooks++;
+                if (pdf) pdfs++;
+
+                Line(report, "  " + Join(
+                    held,
+                    set.Plots == null ? "NOT READ" : (inTheModel ? "YES" : "NO"),
+                    outcome == null ? "NO" : "YES",
+                    written ? "YES" : "NO",
+                    pdf ? "YES" : "NO",
+                    WhyNotOnTheList(outcome, inTheModel, set.Plots != null)));
+            }
+
+            IReadOnlyList<string> missing = TickingTheList.NotOnTheList(set.Plots, list);
+
+            Line(report, string.Empty);
+            Line(report, "  IN THE MODEL AND NOT ON THE LIST, " + missing.Count
+                + ". Whether any of these should have been on it is for the team.");
+            foreach (string one in missing) Line(report, "    " + one);
+
+            Line(report, string.Empty);
+            Line(report, "  listed: " + list.Plots.Count);
+            Line(report, "  workbooks written: " + workbooks);
+            Line(report, "  PDFs written: " + pdfs);
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// Why a listed plot came out with nothing, **off the run's own recorded reason** and
+        /// never worked out again here.
+        /// </summary>
+        private static string WhyNotOnTheList(PlotOutcome outcome, bool inTheModel, bool plotsRead)
+        {
+            if (outcome == null)
+            {
+                return plotsRead && !inTheModel
+                    ? "the model does not name this plot, so it could not be ticked"
+                    : "it was not ticked for this press";
+            }
+
+            if (!outcome.Written) return outcome.Why;
+
+            if (outcome.Pdf == null) return "the workbook was written and no PDF was planned";
+
+            return outcome.Pdf.Written ? string.Empty : outcome.Pdf.Refusal;
         }
 
         public const string PlotListHeading = "EVERY PLOT THE TOOL OFFERED";
@@ -271,6 +375,24 @@ namespace RcrcGreen.Core.Kpi
             foreach (BlankedFor one in glance.Computed.Greened.Blanked) Line(report, "      " + one.InWords);
             Line(report, "    " + glance.Computed.Percentage.InWords);
             foreach (BlankedFor one in glance.Computed.Percentage.Blanked) Line(report, "      " + one.InWords);
+
+            // **ANH-007-MO-100011 IS WHY THIS LINE EXISTS.** Its Area read 2797.6 cut off at the
+            // box edge and its tree counts were drawn taller than their boxes. How big a value
+            // was written is this tool's decision now, so it is counted here, and only the boxes
+            // somebody has to look at are named one by one.
+            Line(report, string.Empty);
+            Line(report, "  " + glance.TextSizes.InWords);
+            foreach (PdfFieldFit one in glance.TextSizes.Named) Line(report, "    " + one.InWords);
+            foreach (PdfFieldFit one in glance.TextSizes.DidNotLand)
+            {
+                Line(report, "    " + one.FieldName + ": this run wrote "
+                    + one.Size.ToString("0.###", CultureInfo.InvariantCulture)
+                    + " pt into its /DA and the written file reads "
+                    + (one.LandedRead
+                        ? one.Landed.ToString("0.###", CultureInfo.InvariantCulture) + " pt"
+                        : "no /DA at all")
+                    + ". That is a bug in the tool.");
+            }
 
             Line(report, string.Empty);
         }
@@ -422,6 +544,11 @@ namespace RcrcGreen.Core.Kpi
             // table and a naming mess is a different job, and only the names tell them apart.
             TheUnplacedNames(report, unplaced);
 
+            // **A ROW WITH NO NAME THAT REACHED A CLIENT'S BOX IS NAMED HERE.** It sits beside
+            // the names above because they are the same question asked twice: what the tool did
+            // with a species it could not read off its name.
+            TheDashRows(report, rows.SelectMany(one => one.Split.ByPrefix.DashRows).ToList());
+
             Line(report, "  plot | existing shrubs | proposed shrubs | ground cover | COULD NOT BE READ "
                 + "| left out by this template | the four boxes would have read | group total printed "
                 + "| adds up");
@@ -565,6 +692,40 @@ namespace RcrcGreen.Core.Kpi
         /// can see the name. If they read a dozen different things, it is a naming job in the
         /// model. **The two look identical in a count and different in a list.**
         /// </summary>
+        public const string DashRowsHeading = "  THE ROWS WHOSE BOTANICAL NAME IS A DASH, COUNTED AS SHRUBS";
+
+        /// <summary>
+        /// **EVERY DASH ROW, WITH THE BOX IT WENT INTO.** Bader's decision of 15 September counts
+        /// a row whose botanical name is a single dash as SHRUBS and sends it by its phase, and
+        /// 44 rows across the model carry one.
+        ///
+        /// **A row with no name reaching a client's box is exactly what this tool refuses
+        /// everywhere else**, so it is allowed only on the record: the plot, the row, the phase,
+        /// the area and the box. A person can open the schedule at that row and see what the
+        /// tool counted.
+        /// </summary>
+        private static void TheDashRows(StringBuilder report, IReadOnlyList<DashRow> dashRows)
+        {
+            if (dashRows.Count == 0) return;
+
+            Line(report, DashRowsHeading + " (" + dashRows.Count
+                + (dashRows.Count == 1 ? " row, " : " rows, ")
+                + GroundCoverSplit.Area(dashRows.Sum(one => one.SquareMetres)) + ")");
+            Line(report, "  plot | row | phase | area | the box it went into");
+
+            foreach (DashRow one in dashRows)
+            {
+                Line(report, "  " + Join(
+                    one.PlotId,
+                    one.RowNumber.ToString(CultureInfo.InvariantCulture),
+                    one.Phase.Length == 0 ? "under no phase row" : one.Phase,
+                    GroundCoverSplit.Area(one.SquareMetres),
+                    one.Box));
+            }
+
+            Line(report, string.Empty);
+        }
+
         private static void TheUnplacedNames(StringBuilder report, IReadOnlyList<UnplacedSpecies> unplaced)
         {
             if (unplaced.Count == 0) return;

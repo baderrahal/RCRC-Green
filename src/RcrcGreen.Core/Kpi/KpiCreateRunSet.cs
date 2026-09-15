@@ -224,9 +224,12 @@ namespace RcrcGreen.Core.Kpi
             RunTiming timing = null,
             IReadOnlyList<PlotOutcome> plotOutcomes = null,
             StreetReferenceFile streets = null,
-            PlotsInTheModel plots = null)
+            PlotsInTheModel plots = null,
+            PlotListRead plotList = null)
         {
             if (split == null) throw new ArgumentNullException("split");
+
+            PlotList = plotList ?? PlotListRead.NotSet;
 
             DocumentTitle = documentTitle ?? string.Empty;
             Split = split;
@@ -248,6 +251,17 @@ namespace RcrcGreen.Core.Kpi
         /// The list is what the ticks were made against, so the report carries it.
         /// </summary>
         public PlotsInTheModel Plots { get; }
+
+        /// <summary>
+        /// The team's own plot list file as it was read at the press, or
+        /// <see cref="PlotListRead.NotSet"/> where none was set.
+        ///
+        /// **THE TEAM SENT 154 PLOTS AND WANTS EVERY ONE EXPORTED WITH NONE SKIPPED**, so the
+        /// report reads down their own list in their own order and says what happened to each.
+        /// A list that goes in longer than it comes out is the failure this section exists to
+        /// catch, the same reason the reconciliation exists one level down.
+        /// </summary>
+        public PlotListRead PlotList { get; }
 
         /// <summary>
         /// Every plot the model names and every plot that was ticked, each with which of the two

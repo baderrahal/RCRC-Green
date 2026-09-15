@@ -416,7 +416,8 @@ namespace RcrcGreen.Revit.Kpi
             var set = new KpiCreateRunSet(
                 document.Title, split, runs, outcomes,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
-                plotOutcomes, streets, KpiPlotReader.Plots(document));
+                plotOutcomes, streets, KpiPlotReader.Plots(document),
+                PlotListFile.In(PlotListFileSetting.Read()));
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
@@ -524,9 +525,17 @@ namespace RcrcGreen.Revit.Kpi
             var wrote = new List<string>();
             var why = new List<string>();
 
+            // **EVERY PLOT'S WRITE IS GUARDED, audit 4 finding 66.** `GuardedRead` put a guard
+            // round each plot's READ and this is a different loop, added when a workbook became
+            // one plot, and it had none. A throw on plot 100 of 154 unwound out of `Create` to
+            // `Run`'s catches, which say Revit refused that with no plot named and write NO
+            // REPORT AT ALL, leaving 99 workbooks and 99 PDFs in the client's folder tree and no
+            // record of which plots those were. The run carries on now, the plot is named with
+            // the exception's type and message, and the report is written either way, which is
+            // the same shape `GuardedRead` already uses.
             foreach (PlotReading one in readings)
             {
-                OnePlot(
+                GuardedWrite(
                     document, asked, pick, counted, one, location, existing, proposed, labels, computed,
                     areaUnit, source, reading.Elapsed.TotalSeconds, root, streets,
                     runs, plotOutcomes, wrote, why);
@@ -552,6 +561,58 @@ namespace RcrcGreen.Revit.Kpi
                 outcomes.Add(TemplateOutcome.WroteSome(
                     pick.Template, share.Plots, wrote.Count, where,
                     CreateWords.SomePlotsWroteNothing(wrote.Count, share.Plots.Count, why)));
+            }
+        }
+
+        /// <summary>
+        /// One plot's write, under a guard of its own.
+        ///
+        /// **A THROW ON ONE PLOT NAMES THE PLOT AND THE RUN CARRIES ON**, the same rule
+        /// <see cref="GuardedRead"/> already follows for the read half, and for the same reason:
+        /// twenty minutes that end with a report naming the bad plot are worth something and
+        /// twenty minutes that end with one sentence are not. Every exception type is caught on
+        /// purpose, because a partial report that names the bad plot is the point.
+        ///
+        /// **What is already on disk when it throws stays on disk**, so the plot's row says the
+        /// write threw rather than claiming nothing was written, and the folder count beside it
+        /// still counts the folder that was made.
+        /// </summary>
+        private void GuardedWrite(
+            Document document,
+            KpiCreateAsk asked,
+            TemplatePick pick,
+            CountedGroups counted,
+            PlotReading held,
+            string location,
+            SpeciesList existing,
+            SpeciesList proposed,
+            LabelledCells labels,
+            LabelledCells computed,
+            ProjectUnit areaUnit,
+            ReadingsSource source,
+            double readSeconds,
+            string root,
+            StreetReferenceFile streets,
+            List<KpiCreateRun> runs,
+            List<PlotOutcome> plotOutcomes,
+            List<string> wrote,
+            List<string> why)
+        {
+            try
+            {
+                OnePlot(
+                    document, asked, pick, counted, held, location, existing, proposed, labels,
+                    computed, areaUnit, source, readSeconds, root, streets,
+                    runs, plotOutcomes, wrote, why);
+            }
+            catch (Exception failed)
+            {
+                string refusal = "the write threw and nothing more was written for this plot. "
+                    + failed.GetType().Name + ": " + failed.Message;
+
+                why.Add(held.PlotId + ": " + refusal);
+                plotOutcomes.Add(PlotOutcome.WroteNothing(
+                    held.PlotId, pick.Template, PlotWorkbookPath.Refused(refusal), false, refusal));
             }
         }
 

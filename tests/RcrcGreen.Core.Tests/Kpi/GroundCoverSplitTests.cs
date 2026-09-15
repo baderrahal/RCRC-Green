@@ -378,67 +378,198 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **THE FOUR PLOTS THE 08:38 RUN LOST, AND THEY MUST NOW REFUSE.** Every one of them read
-        /// adds up YES while every box was written short, because the unplaced area sat inside
-        /// the equation and the sum always closed.
+        /// **THE FOUR PLOTS THE 08:38 RUN LOST, AND WHAT THEY REALLY CARRY IS A DASH.** Bader's
+        /// record: 44 schedule rows across the model hold a botanical name of a single dash, and
+        /// these four are the plots that came out blank because of them. A dash row counts as
+        /// SHRUBS and goes by its phase, so all four write again.
         ///
-        /// HF-01 is the one with both halves: 52 m² of ground cover it could read and 231 m²
-        /// it could not, against a group total of 283. On the 18:15 run its PDF read Existing
-        /// Shrubs 231, Proposed 52 and TOTAL 283. **It must write nothing at all now**, and the
-        /// report must say the four boxes would have read 52.
+        /// **WHICH PHASE EP-01, EP-09 AND EP-14 CARRY THEIR DASH ROWS UNDER IS UNKNOWN FROM THIS
+        /// REPOSITORY.** The 08:38 report is under `reports/` and nothing there is ever
+        /// committed, so only the sum is pinned here and not which of the two shrubs boxes took
+        /// it. HF-01's split is known and has its own test below.
         /// </summary>
         [Theory]
         [InlineData("EP-01", 0.0, 411.0, 411.0)]
         [InlineData("EP-09", 0.0, 3.0, 3.0)]
         [InlineData("EP-14", 0.0, 78.0, 78.0)]
         [InlineData("HF-01", 52.0, 231.0, 283.0)]
-        public void TheFourPlotsThatLostTheirAreaNowRefuseAndNothingIsWritten(
-            string plotId, double cover, double lost, double groupTotal)
+        public void TheFourPlotsThatLostTheirAreaWriteTheirDashRowsAsShrubs(
+            string plotId, double cover, double dashed, double groupTotal)
         {
             GroundCoverSplit split = GroundCoverSplit.Of(
-                plotId, Losing(cover, lost, groupTotal), CreateFixture.Counted, ProjectUnit.Unknown);
+                plotId, Dashed(plotId, cover, dashed, groupTotal), CreateFixture.Counted, ProjectUnit.Unknown);
 
-            Assert.False(
+            Assert.True(
                 split.AddsUp,
-                plotId + " lost " + GroundCoverSplit.Area(split.UnplacedSquareMetres)
-                + " and the check still said it adds up. The four boxes would have been written "
-                + "reading " + GroundCoverSplit.Area(split.WouldHaveWrittenSquareMetres)
-                + " against a group total of " + GroundCoverSplit.Area(split.GroupTotal)
-                + ". An area placed nowhere is a disagreement and never a term of the sum.");
-            Assert.Equal(groupTotal, split.GroupTotal);
-            Assert.Equal(cover, split.WouldHaveWrittenSquareMetres);
-            Assert.Equal(lost, split.UnplacedSquareMetres);
-            Assert.Empty(split.OutOfScope);
+                plotId + " refused with " + GroundCoverSplit.Area(split.UnplacedSquareMetres)
+                + " placed nowhere. A row whose botanical name is a dash counts as "
+                + SpeciesPrefix.Shrubs + " by Bader's decision of 15 September, so this plot "
+                + "writes " + GroundCoverSplit.Area(split.WouldHaveWrittenSquareMetres)
+                + " against a group total of " + GroundCoverSplit.Area(split.GroupTotal) + ".");
 
-            Assert.Contains("NOTHING was written into any of the four", split.Refusal);
-            Assert.Contains("is unaccounted for of the ", split.Refusal);
-            Assert.Contains("the four boxes would have read ", split.Refusal);
+            Assert.Equal(groupTotal, split.GroupTotal);
+            Assert.Equal(groupTotal, split.WouldHaveWrittenSquareMetres);
+            Assert.Equal(dashed, split.TotalShrubsSquareMetres);
+            Assert.Equal(cover, split.GroundCoverSquareMetres);
+            Assert.Empty(split.Unplaced);
+            Assert.Empty(split.OutOfScope);
+            Assert.Equal(string.Empty, split.Refusal);
         }
 
         /// <summary>
-        /// **AND NONE OF THE FOUR BOXES IS WRITTEN ON HF-01**, which is what the PDF showed going
-        /// from 231, 52 and 283 to nought, nought and nought without a word.
+        /// **HF-01 IS THE ONE PLOT WHOSE SPLIT IS KNOWN**, off Bader's screenshot of
+        /// ANH-007-HF-100002 and the 18:15 run's own numbers: a group total of 283, 52 m² of
+        /// GROUND COVER under Proposed and 231 m² of dash rows under Existing.
+        ///
+        /// It reads Existing Shrubs 231, Proposed Shrubs 0, TOTAL Shrubs 231 and Ground Cover
+        /// 52, and 231 plus 52 is 283, the group total the schedule printed.
         /// </summary>
         [Fact]
-        public void HfOneWritesNoneOfItsFourBoxesAndTheFormSaysWhy()
+        public void HfOneReadsTwoThirtyOneExistingAndFiftyTwoGroundCover()
+        {
+            GroundCoverSplit split = GroundCoverSplit.Of(
+                "HF-01", HfOne(), CountedGroups.Of(KpiTemplates.Healthcare), ProjectUnit.Unknown);
+
+            Assert.Equal(231.0, split.ExistingShrubsSquareMetres);
+            Assert.Equal(0.0, split.ProposedShrubsSquareMetres);
+            Assert.Equal(231.0, split.TotalShrubsSquareMetres);
+            Assert.Equal(52.0, split.GroundCoverSquareMetres);
+            Assert.Equal(283.0, split.GroupTotal);
+            Assert.True(split.AddsUp, split.Refusal);
+
+            DashRow row = Assert.Single(split.DashRows);
+            Assert.Equal("HF-01", row.PlotId);
+            Assert.Equal(231.0, row.SquareMetres);
+            Assert.Equal(5, row.RowNumber);
+            Assert.Equal(CreateFixture.Existing, row.Phase);
+            Assert.Equal(GroundCoverSplit.ExistingShrubsBox, row.Box);
+        }
+
+        /// <summary>
+        /// **AND THE FOUR BOXES OF HF-01'S FORM CARRY THOSE NUMBERS**, which is what the PDF
+        /// showed as 231, 52 and 283 on the 18:15 run and as four blanks on the 08:38 one.
+        /// </summary>
+        [Fact]
+        public void HfOneWritesItsFourBoxesOffTheDashRows()
         {
             PdfPlan plan = PdfFill.Of(
-                CreateFixture.Plot("HF-01", uid2: "ANH-008-MO-100006",
-                    subtotals: new[] { Losing(52.0, 231.0, 283.0) }),
+                CreateFixture.Plot("HF-01", uid2: "ANH-008-MO-100006", subtotals: new[] { HfOne() }),
                 CountedGroups.Of(KpiTemplates.Healthcare), null,
                 new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None, ProjectUnit.Unknown);
 
-            foreach (PdfValue value in new[]
-            {
-                PdfValue.ExistingShrubs, PdfValue.ProposedShrubs, PdfValue.TotalShrubs, PdfValue.GroundCover
-            })
-            {
-                PdfFieldFill field = plan.Fields.Single(one => one.Value == value);
+            Assert.Equal("231", Written(plan, PdfValue.ExistingShrubs));
+            Assert.Equal("0", Written(plan, PdfValue.ProposedShrubs));
+            Assert.Equal("231", Written(plan, PdfValue.TotalShrubs));
+            Assert.Equal("52", Written(plan, PdfValue.GroundCover));
+        }
 
-                Assert.False(field.Written, value + " was written while 231 m² was unaccounted for");
-                Assert.Contains("could not be placed in either box", field.Why);
-                Assert.Contains("231 m² is unaccounted for of the 283 m²", field.Why);
-            }
+        private static string Written(PdfPlan plan, PdfValue value)
+        {
+            PdfFieldFill field = plan.Fields.Single(one => one.Value == value);
+
+            Assert.True(field.Written, value + " was not written. " + field.Why);
+            return field.Text;
+        }
+
+        /// <summary>
+        /// **A DASH ROW UNDER NO PHASE ROW STILL REFUSES.** Counting it as SHRUBS says what kind
+        /// it is and says nothing about whether it is existing or proposed, and those are two
+        /// different gaps.
+        /// </summary>
+        [Fact]
+        public void ADashRowUnderNoPhaseRowStillRefuses()
+        {
+            var group = new GroupSubtotal(
+                KpiMerge.ShrubsHeading, 40.0, 0, 1, double.NaN, null, 0, null,
+                new PhaseSubtotal[0], true, 40.0, 0, null,
+                new[] { new ShrubSpecies("-", 40.0, string.Empty, 4) });
+
+            GroundCoverSplit split = GroundCoverSplit.Of(
+                "DM-31", group, CreateFixture.Counted, ProjectUnit.Unknown);
+
+            Assert.False(split.AddsUp, "a dash under no phase row was placed in a box");
+            Assert.Equal(40.0, split.UnplacedSquareMetres);
+            Assert.Equal(0.0, split.TotalShrubsSquareMetres);
+
+            DashRow row = Assert.Single(split.DashRows);
+            Assert.Equal(GroundCoverSplit.NoBoxNoPhase, row.Box);
+            Assert.Equal(string.Empty, row.Phase);
+        }
+
+        /// <summary>
+        /// **A DASH ROW UNDER A PHASE THIS TEMPLATE LEAVES OUT STAYS OUT, exactly as a
+        /// `SHRUBS:` row does.** Street Design on a mosque plot is somebody else's scope by
+        /// Bader's decision of 10 September and the dash rule does not reach past it.
+        /// </summary>
+        [Fact]
+        public void ADashRowUnderAPhaseThisTemplateLeavesOutIsStillLeftOut()
+        {
+            var group = new GroupSubtotal(
+                KpiMerge.ShrubsHeading, 361.0, 0, 3, double.NaN, null, 0, null,
+                new[]
+                {
+                    new PhaseSubtotal(CreateFixture.Proposed, 3, 361.0, 0, true, string.Empty),
+                    new PhaseSubtotal("Street Design", 5, 459.0, 0, false, CountedGroups.LeftOut)
+                },
+                true, 820.0, 0, null,
+                new[]
+                {
+                    new ShrubSpecies("SHRUBS: BOUGAINVILLEA GLABRA", 361.0, CreateFixture.Proposed, 4),
+                    new ShrubSpecies("-", 459.0, "Street Design", 6)
+                });
+
+            GroundCoverSplit split = GroundCoverSplit.Of("FM-05", group, CreateFixture.Counted, ProjectUnit.Unknown);
+
+            Assert.True(split.AddsUp, split.Refusal);
+            Assert.Equal(361.0, split.ProposedShrubsSquareMetres);
+            Assert.Equal(459.0, split.OutOfScopeSquareMetres);
+            Assert.Empty(split.Unplaced);
+
+            DashRow row = Assert.Single(split.DashRows);
+            Assert.Equal(GroundCoverSplit.NoBoxLeftOut, row.Box);
+            Assert.Equal("Street Design", row.Phase);
+        }
+
+        /// <summary>
+        /// **A DASH INSIDE A NAME IS NOT A DASH ROW.** The rule is the whole cell once its edges
+        /// are off, so `ACACIA / VACHELLIA FARNESIANA` and a hyphenated cultivar are untouched
+        /// and still refuse if nothing prefixes them.
+        /// </summary>
+        [Fact]
+        public void ADashInsideANameIsNotADashRow()
+        {
+            Assert.True(SpeciesPrefix.IsDash("-"));
+            Assert.True(SpeciesPrefix.IsDash("  -  "));
+            Assert.False(SpeciesPrefix.IsDash("--"));
+            Assert.False(SpeciesPrefix.IsDash("- 1"));
+            Assert.False(SpeciesPrefix.IsDash("ACACIA / VACHELLIA FARNESIANA"));
+            Assert.False(SpeciesPrefix.IsDash("CARISSA MACROCARPA - GRANDIFLORA"));
+            Assert.False(SpeciesPrefix.IsDash(string.Empty));
+            Assert.False(SpeciesPrefix.IsDash(null));
+
+            Assert.True(SpeciesPrefix.CountsAsShrubs("SHRUBS: CARISSA MACROCARPA"));
+            Assert.True(SpeciesPrefix.CountsAsShrubs("-"));
+            Assert.False(SpeciesPrefix.CountsAsShrubs("GROUND COVER: LAMPRANTHUS AUREUS"));
+            Assert.False(SpeciesPrefix.CountsAsShrubs("LANTANA CAMARA"));
+        }
+
+        /// <summary>
+        /// **A REAL UNKNOWN PREFIX STILL REFUSES, AND ONLY THE DASH IS THE EXCEPTION.** The same
+        /// HF-01 shape with the dash replaced by a name whose prefix reads something nobody has
+        /// measured writes none of the four boxes, exactly as it did before this round.
+        /// </summary>
+        [Fact]
+        public void ARealUnknownPrefixStillRefusesAndNothingIsWritten()
+        {
+            GroundCoverSplit split = GroundCoverSplit.Of(
+                "HF-01", Losing(52.0, 231.0, 283.0), CreateFixture.Counted, ProjectUnit.Unknown);
+
+            Assert.False(split.AddsUp, "UNKNOWN PREFIX SPECIES was placed in a box");
+            Assert.Equal(231.0, split.UnplacedSquareMetres);
+            Assert.Empty(split.DashRows);
+            Assert.Contains("NOTHING was written into any of the four", split.Refusal);
+            Assert.Contains("is unaccounted for of the ", split.Refusal);
+            Assert.Contains("the four boxes would have read ", split.Refusal);
         }
 
         /// <summary>
@@ -555,6 +686,46 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// The same shape with the unreadable row replaced by the dash the model really prints.
+        /// The phase is Proposed, which both templates count, because which phase EP-01, EP-09
+        /// and EP-14 carry theirs under is UNKNOWN here and the test pins only the sum.
+        /// </summary>
+        private static GroupSubtotal Dashed(string plotId, double cover, double dashed, double groupTotal)
+        {
+            if (string.Equals(plotId, "HF-01", StringComparison.Ordinal)) return HfOne();
+
+            var species = new List<ShrubSpecies>();
+            if (cover > 0.0) species.Add(new ShrubSpecies("GROUND COVER: CARISSA MACROCAPA", cover, CreateFixture.Proposed, 4));
+            species.Add(new ShrubSpecies(SpeciesPrefix.Dash, dashed, CreateFixture.Proposed, 5));
+
+            return new GroupSubtotal(
+                KpiMerge.ShrubsHeading, groupTotal, 0, 2, double.NaN, null, 0, null,
+                new[] { new PhaseSubtotal(CreateFixture.Proposed, 3, groupTotal, 0, true, string.Empty) },
+                true, groupTotal, 0, null, species);
+        }
+
+        /// <summary>
+        /// HF-01 as Bader measured it: 52 m² of GROUND COVER under Proposed and 231 m² of dash
+        /// rows under Existing, against a printed group total of 283.
+        /// </summary>
+        private static GroupSubtotal HfOne()
+        {
+            return new GroupSubtotal(
+                KpiMerge.ShrubsHeading, 283.0, 0, 2, double.NaN, null, 0, null,
+                new[]
+                {
+                    new PhaseSubtotal(CreateFixture.Existing, 3, 231.0, 0, true, string.Empty),
+                    new PhaseSubtotal(CreateFixture.Proposed, 6, 52.0, 0, true, string.Empty)
+                },
+                true, 283.0, 0, null,
+                new[]
+                {
+                    new ShrubSpecies(" - ", 231.0, CreateFixture.Existing, 5),
+                    new ShrubSpecies("GROUND COVER: CARISSA MACROCAPA", 52.0, CreateFixture.Proposed, 7)
+                });
+        }
+
+        /// <summary>
         /// One group every species of which the prefix rule places, so nothing about it moves.
         /// </summary>
         private static GroupSubtotal Clean(double shrubs, double cover, double groupTotal)
@@ -589,6 +760,37 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             return CreateFixture.Plot(
                 plotId, uid2: "ANH-008-MO-100006", subtotals: read.Subtotals.ToArray());
+        }
+
+        /// <summary>
+        /// **EVERY DASH ROW IS NAMED IN THE REPORT WITH THE BOX IT WENT INTO.** A row with no
+        /// botanical name reaching a client's box is allowed by one decision and only on the
+        /// record, so a person can open the schedule at that row and see what was counted.
+        ///
+        /// The schedule here prints one dash row of 231 m² under Existing and one GROUND COVER
+        /// species of 52 m² under Proposed, adding to the printed group total of 283.
+        /// </summary>
+        [Fact]
+        public void TheReportNamesEveryDashRowWithItsPhaseAndItsBox()
+        {
+            ScannedSchedule schedule = CreateFixture.ShrubsAndLawn(
+                "FM-01",
+                Headings,
+                Structure(KpiMerge.ShrubsHeading),
+                Structure("Existing"),
+                Species("-", "231 m²", "44"),
+                Subtotal("231 m²", "44"),
+                Structure("Proposed"),
+                Species("GROUND COVER: CARISSA MACROCAPA", "52 m²", "12"),
+                Subtotal("52 m²", "12"),
+                Subtotal("283 m²", "56"));
+
+            string report = Report(schedule);
+
+            Assert.Contains(KpiCreateReport.DashRowsHeading + " (1 row, 231 m²)", report);
+            Assert.Contains("plot | row | phase | area | the box it went into", report);
+            Assert.Contains("FM-01 | 4 | Existing | 231 m² | Existing Shrubs", report);
+            Assert.Contains("FM-01 | 231 m² | 0 m² | 52 m² | none | none | 283 m² | 283 m² | YES", report);
         }
 
         private static string Report(params ScannedSchedule[] schedules)

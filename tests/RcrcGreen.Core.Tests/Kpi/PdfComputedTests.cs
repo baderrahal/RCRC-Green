@@ -288,14 +288,17 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **The Roads form's note names the CANOPY cell where the other two name Total Green
-        /// cover**, for a field all three call Total areas to be greened. Each form is filled
-        /// from its own note and the working says which of the two the number is, so a person
-        /// reading three forms side by side is not left to guess. Which the client means is an
-        /// open question.
+        /// **THE ROADS FORM TAKES TOTAL GREEN COVER, THE SAME AS THE OTHER TWO.** Bader's
+        /// decision of 15 September. The Roads note names the canopy cell and the other two name
+        /// Total Green cover, and the client meant one number on all three. The note is still
+        /// held exactly as the file carries it, because the form check compares notes, and it no
+        /// longer decides the value.
+        ///
+        /// **This expectation changed because of that decision and not to make a test pass.** It
+        /// read 0.00055 on roads before, which was the canopy alone.
         /// </summary>
         [Fact]
-        public void TheRoadsFormIsFilledFromItsOwnNoteAndSaysSo()
+        public void EveryFormTakesTotalGreenCoverAndRoadsNoLongerTakesTheCanopyAlone()
         {
             CanopyTotal canopy = CanopyArea.Of(new[] { new CanopyRow(Proposed, 4, "ALBIZIA LEBBECK", 11, 8.0) });
             var numbers = new PdfWorkbookNumbers(
@@ -305,10 +308,44 @@ namespace RcrcGreen.Core.Tests.Kpi
             PdfFieldFill roads = Field(Plan("ST-05", KpiTemplates.Streets, numbers), PdfValue.TotalAreasToBeGreened);
             PdfFieldFill parks = Field(Plan("EP-05", KpiTemplates.ExistingParks, numbers), PdfValue.TotalAreasToBeGreened);
 
-            // 550 alone against 550 plus 410 plus 60.
-            Assert.Equal("0.00055", roads.Text);
+            // 550 plus 410 plus 60 is 1020, and 1020 over a million is 0.00102, on both.
+            Assert.Equal("0.00102", roads.Text);
             Assert.Equal("0.00102", parks.Text);
-            Assert.Contains(PdfFill.RoadsNamesTheCanopyCell, roads.Working);
+            Assert.Equal(roads.Text, parks.Text);
+        }
+
+        /// <summary>
+        /// **ANH-007-ST-100308, measured off Bader's own screenshot on 15 September.** Canopy
+        /// Area 984, Planting 69, Lawn Area empty, Total Green cover 1,053. The streets template
+        /// computes D9 = F9+F11+H11, which is that sum, so the Roads PDF and the workbook beside
+        /// it carry one number.
+        ///
+        /// The canopy is written out as the workbook's own column computes it, per row and
+        /// rounded inside: 8 metres across is ROUND(PI*(8/2)^2,0) which is 50, times 18 trees is
+        /// 900, and 6 metres across is 28, times 3 trees is 84. 900 plus 84 is 984.
+        /// </summary>
+        [Fact]
+        public void TheStreetPlotReadsTotalGreenCoverAndNotTheCanopy()
+        {
+            CanopyTotal canopy = CanopyArea.Of(new[]
+            {
+                new CanopyRow(Proposed, 4, "ALBIZIA LEBBECK", 18, 8.0),
+                new CanopyRow(Proposed, 5, "CASSIA GLAUCA", 3, 6.0)
+            });
+
+            Assert.Equal(984.0, canopy.SquareMetres);
+
+            var numbers = new PdfWorkbookNumbers(
+                canopy, 69.0, 0.0, 12182.0, ArithmeticCheck.Agreeing(null),
+                GreenCoverAgrees(), PercentageHasNoCell());
+
+            PdfFieldFill roads = Field(
+                Plan("ST-08", KpiTemplates.Streets, numbers), PdfValue.TotalAreasToBeGreened);
+
+            // 984 plus 69 plus 0 is 1053, and 1053 over a million is 0.001053.
+            Assert.Equal("0.001053", roads.Text);
+            Assert.Equal("km²", roads.Unit);
+            Assert.True(roads.Written);
         }
 
         /// <summary>

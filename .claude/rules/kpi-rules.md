@@ -144,6 +144,61 @@ on every other press.
 **The line names no parameter.** `PRX_COMPONENT` is the workbook's note and is in no model, and
 a test over these lines refuses it the same way the template block's test does.
 
+## The team's plot list file, and every plot on it is accounted for
+
+**THE TEAM SENT 154 PLOTS TO EXPORT AND WANTS EVERY ONE EXPORTED WITH NONE SKIPPED.** The pane
+takes a plot list file, browsed for and remembered through its own pointer beside the installed
+assembly, the same way the templates folder, the output root and the street reference file are.
+
+**THE FILE NEVER ENTERS THIS REPOSITORY.** It is the client's own list of which plots are in
+scope, this repository is public, and only the POINTER lives beside the assembly. Every test
+writes its own into the temp folder, the same rule the workbooks and the PDFs already follow.
+
+`PlotListFile` and `PlotListRead` hold the read. Six rules, all tested.
+
+- **Plain text, one plot per line**, edge whitespace off each line, blank lines skipped
+- **The file's order is kept** and never sorted, because the report reads down it beside the
+  team's own copy
+- **A line that is not a plot identifier is NAMED with its line number** and never becomes one.
+  `dm-11` is told apart from text that was never a plot, through the Shared `FailsOnlyOnCase`,
+  because the two need different answers, and **nothing changes its case**
+- **A plot listed twice is NAMED with both line numbers** and counted once. A list of 154 holding
+  one plot twice is a list of 153 and somebody has to know which
+- **Plots are compared the way the pane's own plot list compares them**, `StringComparer.Ordinal`,
+  which is what `PlotTicks` and `PlotsInTheModel.Holds` use. A second comparison here would be two
+  rules for one question
+- **A file that cannot be read is a REFUSAL with its reason, never an empty list**, because an
+  empty list and a file nobody could open tick exactly the same nothing
+
+**TICK THE LIST SITS BESIDE SELECT ALL AND CLEAR AND BEHAVES THE SAME WAY.** It REPLACES every
+tick with exactly the listed plots the model names and FORGETS every hand choice, because a
+person pressing it is saying these are the plots and a per plot choice left standing behind it is
+a record that disagrees with what is on screen. `TickingTheList` in Core is the whole rule and
+the button only presses it.
+
+**A LISTED PLOT THE MODEL DOES NOT NAME CANNOT BE TICKED AND IS NAMED.** Nothing here invents a
+plot, which is the rule in `CLAUDE.md`.
+
+**NOTHING ON THE LIST DROPS OUT WITHOUT A LINE, BEFORE THE PRESS.** Above Create: each listed
+plot the model does not name, each plot listed twice, each line that is not a plot, and each
+listed plot the press would put into no workbook or no PDF. The last of those asks
+`PlotsPerTemplate.For` and `PdfForms.ForPlot`, which are the two rules that really decide it,
+rather than a third written beside the button. **A list with nothing wrong with it says one line
+and no more**, its own count, because a line about nothing is one the team reads past on every
+other press.
+
+**`THE PLOT LIST` OPENS THE REPORT, beside `EVERY PLOT THE TOOL OFFERED`.** They are different
+questions and they are printed apart: that one is the MODEL's list and this is the TEAM's, and
+where they disagree that is the answer rather than a fault. One row per listed plot in the file's
+order, saying whether it is in the model, whether it was ticked, whether a workbook was written,
+whether a PDF was written and why not, then the model's plots that are not on the list, then
+three counts: listed, workbooks written, PDFs written. **A press with no plot list file set
+prints no such section at all.**
+
+**Rows edited in the pane live only until the pane goes**, and the file is read afresh at every
+draw and at the press, so the pane holds no copy of it, which is the rule this file already
+carries.
+
 ## The street reference file fills the two cells STREETS types by hand
 
 `StreetReferenceFile` reads the team's Scope_Validation workbook, browsed for and remembered
@@ -721,6 +776,14 @@ the plot reading with the schedule's name, prints in red above Create, and print
 report, among the reasons and under the plot. A refused read used to come back as a list of
 nothing, which read as a plot whose schedule listed no species.
 
+**A throw on one plot's WRITE names the plot too, audit 4 finding 66.** `GuardedRead` guarded the
+READ half and the per plot WRITE loop, added when a workbook became one plot, had no equivalent,
+so a throw on plot 100 of 154 unwound out of `Create` to `Run`'s catches, which say Revit refused
+that with no plot named and **write no report at all**, leaving 99 workbooks and 99 PDFs in the
+client's folder tree with no record of which plots those were. `GuardedWrite` wraps the `OnePlot`
+call, records a `PlotOutcome.WroteNothing` carrying the exception's type and message, and the run
+carries on and the report is written either way.
+
 **A throw on one plot names the plot and the run carries on.** The loop over the ticked plots
 read each one under no guard of its own, so a throw on plot 60 of 78 fell to the run's catches,
 which said Revit would not do that now with no plot named and wrote no report, and the two
@@ -1163,7 +1226,8 @@ form. The prefix split gives each box its own species and the two add to the gro
   is untouched, so `GROUND  COVER:` with two spaces is not `GROUND COVER:`
 - **`SHRUBS:` species go to the shrubs figures, `GROUND COVER:` species to the ground cover one**
 - **A species with NO prefix, or a prefix that is neither of the two, goes NOWHERE and is NAMED**
-  with its plot, its row, its area and what its prefix read. Nothing is guessed into either box
+  with its plot, its row, its area and what its prefix read. Nothing is guessed into either box,
+  and the one exception is the dash under its own section below
 - **THE TWO WRITTEN FIGURES ALONE MUST EQUAL THE GROUP TOTAL. Anything the tool COULD NOT READ
   is a DISAGREEMENT and never a term of that sum.** Where they do not add up the split refuses,
   naming the numbers, and NONE of the four boxes is written, because writing three and blanking
@@ -1190,6 +1254,54 @@ deleted rather than the first. It read that the schedule prints the group as one
 prints ground cover on its own, so it is not derived. The SHAPE it recorded is gone rather than
 its last caller: the two ARE printed apart, on every species row, and the number is read rather
 than derived.
+
+### A BOTANICAL NAME THAT IS A SINGLE DASH COUNTS AS SHRUBS, BY ITS PHASE
+
+**Bader's decision, 15 September, and it is a decision rather than a measurement of the rule.**
+His own record: **44 schedule rows across the model carry a botanical name of a dash**, and four
+plots came out blank because of them, EP-01, EP-09, EP-14 and HF-01, which are the four the
+section above made refuse. His screenshot of ANH-007-HF-100002 shows Existing Shrubs, Proposed
+Shrubs, TOTAL Shrubs and Ground Cover all empty.
+
+A dash row counts as `SHRUBS` and then goes by its phase like any `SHRUBS:` species. An existing
+phase goes to Existing Shrubs, a proposed phase to Proposed Shrubs, a phase the template leaves
+out stays out as it did, and **a dash row under no phase row still refuses**, because nothing
+says whether it is existing or proposed and that is a different gap from not knowing its kind.
+
+**ONLY THE DASH, and it is the WHOLE cell once the edges are off.** A name with no colon that is
+not a dash, and a prefix that is neither `SHRUBS` nor `GROUND COVER`, refuse exactly as they did.
+`ACACIA / VACHELLIA FARNESIANA` and `CARISSA MACROCARPA - GRANDIFLORA` carry a dash INSIDE and
+are untouched. `SpeciesPrefix.CountsAsShrubs` is the one method both halves of the rule ask, so
+the dash cannot be added in one place and forgotten in another.
+
+HF-01 written out by hand, which is the one plot whose split is known: a group total of 283, 52
+under Proposed as `GROUND COVER:` and 231 under Existing as dash rows.
+
+```
+Existing Shrubs  231      Proposed Shrubs  0      TOTAL Shrubs  231      Ground Cover  52
+231 plus 52 is 283, the group total the schedule printed
+```
+
+**Which phase EP-01, EP-09 and EP-14 carry their dash rows under is UNKNOWN from this
+repository.** The 08:38 report is under `reports/` and nothing there is ever committed, so the
+tests pin only that those three add up and write, and not which of the two shrubs boxes took the
+area. The next run answers it, because every dash row is named with its phase.
+
+**EVERY DASH ROW IS ON THE RECORD, WITH THE BOX IT WENT INTO.** A row with no botanical name
+reaching a client's box is what this tool refuses everywhere else, so it is allowed only in
+writing: `THE ROWS WHOSE BOTANICAL NAME IS A DASH, COUNTED AS SHRUBS` sits beside
+`THE SPECIES NO PREFIX PLACED, BY NAME` with the plot, the row, the phase, the area and the box,
+which is Existing Shrubs, Proposed Shrubs, no box because this template leaves its phase out, or
+no box because it sits under no phase row and the plot refuses.
+
+**A DASH CAN ALSO REACH THE TREE LISTS AND NOTHING THERE CHANGED.** Traced rather than assumed.
+`ScheduleRows.cs:329` reads the botanical name off the column the heading row names and `:330`
+tests it for whitespace, so a dash is a species row in the softscape schedule too. It merges
+through `KpiMerge.Species`, reaches `SpeciesMatching.Against` at `:317`, matches no name in the
+workbook's list and no alias, and falls to `WrittenInto` at `:333`, which asks the canopy
+diameter at `:434` and answers `NotSized` where the model prints none. **So a dash tree takes an
+empty row carrying the name `-` and its count, or is named as unsized.** That is what it does
+today and this round changed none of it.
 
 ### The wording that put placed-nowhere inside the equation, and what it cost
 
@@ -1424,8 +1536,9 @@ All three were measured off the files, and the file is the record.
   both name Total Green cover divided by 1,000,000, and roads names
   `excel the cell on the right of "Total area covered by canopy "` for a field all three call
   the same thing. **It is held here exactly as the file has it** so the check does not refuse
-  the form over the client's own copy and paste, and which the client means is an open question
-  in `steps/log-kpi.md`
+  the form over the client's own copy and paste. **Which the client means is no longer an open
+  question**: Bader decided on 15 September that all three take Total Green cover, under its own
+  section below, and the note is a record of what the file says rather than what decides a value
 
 ### The position is the THIRD record, and it is the one a person reads
 
@@ -1710,9 +1823,114 @@ unit said, and the PDF field is left blank carrying that reason.
 **The percentage is a ratio times a hundred with no sign**, checked against the client's own filled
 ANH-006-NP-100002: an area of 771, 0.000550 square kilometres greened and a percentage of 71.
 
-**The Roads form's Total areas to be greened is filled from ITS OWN note**, which names the canopy
-cell where the other two name Total Green cover. Each form gets what its own file says, the working
-says which of the two the number is, and which the client means stays an open question.
+**The Roads form's Total areas to be greened takes Total Green cover, the same as the other two.**
+It used to take the canopy alone, off its own note. That is the section below.
+
+### ALL THREE FORMS TAKE TOTAL GREEN COVER, AND THE OPEN QUESTION IS CLOSED
+
+**Bader's decision, 15 September.** The Roads note names the canopy cell and the other two name
+Total Green cover, for a field all three call Total areas to be greened, and **the client meant
+one number on all three**. So `PdfFill.Greened` has one path now and `PdfForms.Roads` is not
+asked which form it is.
+
+**THE STREETS TEMPLATE ALREADY AGREED.** `ComputedPlaces` holds its D9 = F9+F11+H11, canopy plus
+planting plus lawn, which is exactly what `GreenCover.Total` computes. So the Roads PDF and the
+workbook filed beside it carried two different numbers for one quantity until this round, and now
+they carry one.
+
+Measured off Bader's screenshot of ANH-007-ST-100308:
+
+```
+Canopy Area          984
+Planting              69
+Lawn Area          empty
+Total Green cover  1,053      the PDF reads 0.001053, and not 0.000984
+```
+
+**THE NOTE IS KEPT EXACTLY AS THE FILE HOLDS IT**, spaces and all, because `PdfFormCheck`
+compares notes and a tidied one would refuse the form. What changed is that nothing reads it to
+choose a cell. `PdfFill.RoadsNamesTheCanopyCell` is DELETED, and it is the second reason a thing
+gets deleted rather than the first: the SHAPE it recorded is gone rather than its last caller,
+because there is no longer a form filled from a different cell for it to describe.
+
+**THE CANOPY GUARD AND THE GREEN COVER CELL CHECK ARE UNCHANGED ON ALL THREE FORMS.** A plot with
+a tree on rows 85, 92 or 99 still writes nothing into this box, because those rows carry no canopy
+formula in the client's own file. That is Bader's decision of 15 September under the section above
+and it stands.
+
+### HOW BIG EVERY VALUE IS WRITTEN, SO IT STAYS INSIDE THE CLIENT'S OWN BOX
+
+**Measured on ANH-007-MO-100011**, a DAILY MOSQUE plot on the Open spaces form: Area showed
+2797.6 cut off at the edge of its box, Total areas to be greened showed 0.0008 cut off, and the
+tree and shrub counts were drawn taller than the boxes holding them.
+
+**NOTHING IN THIS TOOL READ OR WROTE A `/DA` BEFORE THIS ROUND.** `PdfFormFile.WithValue` drops
+each field's `/AP` and the AcroForm gets `/NeedAppearances true`, so the viewer redraws the value
+using the field's OWN default appearance, which nothing here had ever looked at. And the
+rectangle read took only the first two numbers of `/Rect`, which is the position the form check
+compares, so the box's SIZE was thrown away on the way past.
+
+The rule, for every text field the tool writes a value into:
+
+```
+across  = the box width less 2 pt each side
+down    = the box height less 2 pt top and bottom
+em      = the text measured in the font the /DA names
+wanted  = the smaller of across / em and down, rounded DOWN to 0.1 pt
+ceiling = the client's own size, or 10 pt where their /DA gives nought
+floor   = 6 pt
+```
+
+Worked out by hand, which is the case the test holds: **`2797.64` in Helvetica is six digits at
+556 and a full stop at 278, so 3.614 em. A box 30 pt wide and 14 pt tall leaves 26 pt across, 26
+over 3.614 is 7.1948, and it is written as 7.1.**
+
+**ROUNDED DOWN AND NEVER TO THE NEAREST**, because a tenth of a point rounded up is a tenth of a
+point of text outside the box.
+
+**THE VALUE IS NEVER TOUCHED.** Nothing rounds, cuts or reformats a number to make it fit. The
+text stays exactly what `PdfFill` decided, and only the size inside the field's own `/DA` moves,
+in the appended object. The client's font name and their colour operators go through untouched,
+`NeedAppearances` stays, and no appearance stream is written.
+
+**THE `/DA` IS INHERITED THE WAY THE FIELD KIND ALREADY IS**, the field's own, then its parents',
+then the AcroForm's. Where a field inherits one, the inherited string is written onto that field
+with the one number changed, because a size is per field and an inherited one cannot be moved for
+one field without moving it for every field that shares it.
+
+**A WIDTH IS READ OR IT IS UNKNOWN AND IT IS NEVER GUESSED.** Two sources, in order: the font
+object's own `/Widths` array off the AcroForm's `/DR /Font`, and the published metrics of the
+standard fourteen where it carries none. **A font that answers neither way writes the value at
+the client's size unchanged and is named with its field.** So is one character with no width: a
+sum short of a term is a narrower string than the real one, which would shrink the text too
+little and leave it running over with the report saying it fits.
+
+**NO NEAR MISS IS IN THE STANDARD FOURTEEN TABLE.** Arial is metric compatible with Helvetica and
+Courier New with Courier, and neither is written in. Such a font must carry its own `/Widths` in
+the file, which is where a Courier New field's widths really are. **THE TABLE IS THE PUBLISHED
+CORE FONT METRICS HELD AS DATA and it is not measured in this repository**, because no AFM file
+is here and none will be. What a width being wrong can cost is bounded on purpose: the value is
+never changed, the size is never raised above the client's own, and a width out by a few
+thousandths moves a size by a tenth of a point.
+
+**THE READ BACK CHECKS THE SIZE LANDED**, off the written file, the same rule every written cell
+of the workbook already follows, and a size this run set that did not land is counted as a bug in
+the tool rather than as a field it never tried to set.
+
+**SIX OUTCOMES, COUNTED ONCE AT THE TOP.** The round message named five and an absent `/DA` is
+the sixth, because a font nobody could measure and a field with no size to change are different
+facts. `THE TEXT SIZES` in the glance counts kept the client's size, shrunk, capped at 10, held
+at 6, widths UNKNOWN and no `/DA`. **A LINE PER BOX ONLY FOR THE THREE SOMEBODY HAS TO ACT ON**,
+held at 6, widths UNKNOWN and no `/DA`, because over 150 plots a line per field is two thousand
+lines nobody reads and a count alone says a size is wrong somewhere without saying which box.
+
+**THE CEILING WINS OVER THE FLOOR WHERE THE TWO DISAGREE**, which is a client `/DA` naming a size
+below 6. **Whether any field carries one is UNKNOWN**, because no client PDF is in this
+repository, and the outcome says the text did not fit at the floor either way so the box is
+named.
+
+**EMPTYING A FIELD FITS NOTHING.** There is no text to fit, so the client's own size is left
+exactly as it was.
 
 ### Every field is WRITTEN or EMPTIED, and the tick boxes are the only third case
 

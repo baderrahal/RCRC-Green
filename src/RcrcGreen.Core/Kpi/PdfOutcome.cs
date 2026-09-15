@@ -72,8 +72,10 @@ namespace RcrcGreen.Core.Kpi
         private PdfOutcome(
             string plotId, PdfForm form, bool written, string path, string refusal,
             PdfFormCheck check, IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank,
-            IEnumerable<string> whatWasChecked, IEnumerable<PdfLandedField> emptied)
+            IEnumerable<string> whatWasChecked, IEnumerable<PdfLandedField> emptied,
+            IEnumerable<PdfFieldFit> fitted)
         {
+            Fitted = (fitted ?? Enumerable.Empty<PdfFieldFit>()).ToList();
             Emptied = (emptied ?? Enumerable.Empty<PdfLandedField>()).ToList();
             PlotId = plotId ?? string.Empty;
             Form = form;
@@ -103,19 +105,29 @@ namespace RcrcGreen.Core.Kpi
             get { return Emptied.Where(one => one.Landed.Length > 0); }
         }
 
+        /// <summary>
+        /// **What size every written value came out at, and why.** A text field whose value is
+        /// drawn bigger than the box the client drew is a number cut off in a client document,
+        /// which is what ANH-007-MO-100011 showed, so the size is a decision on the record
+        /// beside the value.
+        /// </summary>
+        public IReadOnlyList<PdfFieldFit> Fitted { get; }
+
         public static PdfOutcome Wrote(
             string plotId, PdfForm form, string path, PdfFormCheck check,
             IEnumerable<PdfLandedField> landed, IEnumerable<PdfFieldFill> blank,
             IEnumerable<string> whatWasChecked = null,
-            IEnumerable<PdfLandedField> emptied = null)
+            IEnumerable<PdfLandedField> emptied = null,
+            IEnumerable<PdfFieldFit> fitted = null)
         {
             return new PdfOutcome(
-                plotId, form, true, path, string.Empty, check, landed, blank, whatWasChecked, emptied);
+                plotId, form, true, path, string.Empty, check, landed, blank, whatWasChecked,
+                emptied, fitted);
         }
 
         public static PdfOutcome WroteNothing(string plotId, PdfForm form, string why, PdfFormCheck check)
         {
-            return new PdfOutcome(plotId, form, false, string.Empty, why, check, null, null, null, null);
+            return new PdfOutcome(plotId, form, false, string.Empty, why, check, null, null, null, null, null);
         }
 
         public string PlotId { get; }
