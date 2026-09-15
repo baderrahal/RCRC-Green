@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-15, ninetieth pass. The 154 plot press read back, seven decisions
 
+**Merged to main as `4411821`**, pull request 148, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 **2070 tests, 1250 of them KPI**, up from 2042 and 1222, 28 hook cases, build zero warnings.
 **80 audit findings, 20 FIXED, 60 open**, counted off the four files and nothing closed,
 renumbered or reordered. Bader ran the 154 plot press on NG05 on 15 September at 13:32 and 146

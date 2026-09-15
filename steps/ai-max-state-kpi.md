@@ -1,7 +1,9 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Ninetieth pass, the 154 plot press of 15 September at 13:32 read back, seven
-decisions of Bader's. **2070 tests, 1250 of them KPI**, up from 2042 and 1222, 28 hook cases,
+decisions of Bader's. **Merged to main as `4411821`**, pull request 148, the squash message set on
+the merge call and off main byte for byte with no co-author line and no generated-by footer.
+**2070 tests, 1250 of them KPI**, up from 2042 and 1222, 28 hook cases,
 build zero warnings. **80 audit findings, 20 FIXED, 60 open**, counted per file off all four and
 nothing closed, renumbered or reordered.
 
