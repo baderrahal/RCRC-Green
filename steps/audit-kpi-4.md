@@ -138,6 +138,13 @@ top of the list first.**
     run is the run the team makes | A try around the `OnePlot` call recording a
     `PlotOutcome.WroteNothing`, which is the shape `GuardedRead` already uses
 
+    FIXED, in the eighty eighth pass. `GuardedWrite` in `KpiRequestHandler` wraps the `OnePlot`
+    call and catches every exception type on purpose, the same as `GuardedRead` beside it. The
+    plot goes into `plotOutcomes` as a `PlotOutcome.WroteNothing` carrying the exception's type
+    and message, the reason joins the template row's own list, the run carries on to the rest and
+    the report is written either way. `PlotReadThrewTests` covers the read half and nothing here
+    can be run in Revit, so the write half is not observed there.
+
 67. WIRING | `src/RcrcGreen.Core/Kpi/SpeciesList.cs:354-365`,
     `src/RcrcGreen.Core/Kpi/LabelledCells.cs:367-378` and
     `src/RcrcGreen.Core/Kpi/StreetReference.cs:307-318`, against

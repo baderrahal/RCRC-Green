@@ -28,14 +28,27 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         public sealed class FixtureField
         {
-            public FixtureField(string name, string note, double x, double y, bool aTickBox = false)
+            public FixtureField(
+                string name, string note, double x, double y, bool aTickBox = false,
+                double width = 10.0, double height = 10.0, string defaultAppearance = null)
             {
                 Name = name;
                 Note = note;
                 X = x;
                 Y = y;
                 IsATickBox = aTickBox;
+                Width = width;
+                Height = height;
+                DefaultAppearance = defaultAppearance ?? "/Helv 0 Tf 0 g";
             }
+
+            /// <summary>The box's own size, which is what the text has to fit inside.</summary>
+            public double Width { get; }
+
+            public double Height { get; }
+
+            /// <summary>The field's own /DA, so a case can give the client a real size.</summary>
+            public string DefaultAppearance { get; }
 
             /// <summary>Built as /FT/Btn rather than /FT/Tx, which is what a stage box is.</summary>
             public bool IsATickBox { get; }
@@ -89,7 +102,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     objects.Add(at + " 0 obj\n<</FT/Tx/T(Numbers)/Kids[" + (at + 1) + " 0 R]>>\nendobj\n");
                     objects.Add((at + 1) + " 0 obj\n<</Parent " + at + " 0 R/T(0)/V"
                         + Literal(one.Note) + "/Type/Annot/Subtype/Widget/Rect" + Rectangle(one) + "/P 4 0 R"
-                        + "/DA(/Helv 0 Tf 0 g)>>\nendobj\n");
+                        + "/DA" + Literal(one.DefaultAppearance) + ">>\nendobj\n");
                     at = at + 2;
                     continue;
                 }
@@ -105,27 +118,37 @@ namespace RcrcGreen.Core.Tests.Kpi
                 {
                     objects.Add(at + " 0 obj\n<</Type/Annot/Subtype/Widget/FT/Btn/T" + Literal(one.Name)
                         + "/V" + Literal(one.Note)
-                        + "/DA(/Helv 0 Tf 0 g)/Rect" + Rectangle(one) + "/P 4 0 R>>\nendobj\n");
+                        + "/DA" + Literal(one.DefaultAppearance) + "/Rect" + Rectangle(one)
+                        + "/P 4 0 R>>\nendobj\n");
                     at = at + 1;
                     continue;
                 }
 
                 objects.Add(at + " 0 obj\n<</Type/Annot/Subtype/Widget/FT/Tx/T" + Literal(one.Name)
                     + "/V" + Literal(one.Note) + appearance
-                    + "/DA(/Helv 0 Tf 0 g)/Rect" + Rectangle(one) + "/P 4 0 R>>\nendobj\n");
+                    + "/DA" + Literal(one.DefaultAppearance) + "/Rect" + Rectangle(one)
+                    + "/P 4 0 R>>\nendobj\n");
                 at = at + 1;
             }
+
+            // **THE FONT THE /DA NAMES IS A RESOURCE, and the AcroForm's own /DR is where the
+            // name is resolved.** A fixture with no /DR would leave every width unknown, which
+            // is a path the real files do not take, so it carries one.
+            int fontNumber = at;
+            at = at + 1;
 
             var built = new List<string>
             {
                 "1 0 obj\n<</Type/Catalog/Pages 2 0 R/AcroForm 3 0 R>>\nendobj\n",
                 "2 0 obj\n<</Type/Pages/Kids[4 0 R]/Count 1>>\nendobj\n",
-                "3 0 obj\n<</Fields[" + string.Join(" ", references.ToArray()) + "]/DA(/Helv 0 Tf 0 g)>>\nendobj\n",
+                "3 0 obj\n<</Fields[" + string.Join(" ", references.ToArray())
+                    + "]/DA(/Helv 0 Tf 0 g)/DR<</Font<</Helv " + fontNumber + " 0 R>>>>>>\nendobj\n",
                 "4 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Annots["
                     + annotations.ToString().Trim() + "]>>\nendobj\n",
                 "5 0 obj\n<</Type/XObject/Subtype/Form/BBox[0 0 10 10]/Length 0>>\nstream\n\nendstream\nendobj\n"
             };
             built.AddRange(objects);
+            built.Add(fontNumber + " 0 obj\n<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>\nendobj\n");
 
             var file = new StringBuilder("%PDF-1.7\n");
             var offsets = new Dictionary<int, int>();
@@ -194,7 +217,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static string Rectangle(FixtureField one)
         {
             return "[" + Number(one.X) + " " + Number(one.Y) + " "
-                + Number(one.X + 10.0) + " " + Number(one.Y + 10.0) + "]";
+                + Number(one.X + one.Width) + " " + Number(one.Y + one.Height) + "]";
+        }
+
+        /// <summary>
+        /// A field with a box of its own size, for the cases about how big the text comes out.
+        /// </summary>
+        public static FixtureField Sized(
+            string name, string note, double width, double height, string defaultAppearance = null)
+        {
+            return new FixtureField(name, note, 0.0, 0.0, false, width, height, defaultAppearance);
         }
 
         private static string Number(double value)

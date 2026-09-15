@@ -1,5 +1,52 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty eighth pass, four fixes in one round. **2042 tests, 1222 of them KPI, 42
+added, against the 2000 main carries** at `64fb57d`, 28 hook cases unchanged, build zero warnings.
+
+**THE COUNT, WALKED OFF ALL FOUR AUDIT FILES: 80 numbered, 20 carrying a FIXED mark, 60 OPEN**, as
+29 with 8, 20 with 9, 14 with 2 and 17 with 1. The three entries before this counted three files
+and said 63 and 44, leaving out audit 4's findings 64 to 80. This round closes, renumbers and
+reorders nothing except marking **66 FIXED**.
+
+**1. The text was too big for the PDF boxes.** Nothing had ever read or written a `/DA` and the
+rectangle read took two of its four numbers. `PdfTextFit`, `PdfFontWidths` and `StandardFonts` are
+new: the size is the largest that fits the box less 2 pt each way, rounded DOWN to 0.1, never above
+the client's own or above 10 on their auto, never below 6. The value is never touched. Widths come
+off the font's own `/Widths` or the published standard fourteen, and **no near miss is in that
+table**. Six outcomes counted in the glance, a box named only for held at 6, widths UNKNOWN and no
+`/DA`. `2797.64` in a 30 by 14 box is 7.1.
+
+**2. Streets takes Total Green cover.** Bader's decision, the open question closed,
+`RoadsNamesTheCanopyCell` deleted as the second reason a thing gets deleted. ANH-007-ST-100308
+reads **0.001053** and not 0.000984. The roads test moved from 0.00055 to 0.00102 **because of the
+decision and not to make it pass**. The canopy guard and rows 85, 92 and 99 are unchanged.
+
+**3. The plot list file.** 154 plots, one a line, **and the file never enters this repository**.
+`PlotListFile` and `TickingTheList` in Core, one shared browsed line in the pane closing finding
+77's remedy without marking it, a Tick the list button that replaces every tick and forgets every
+hand choice, named lines above Create for everything that would drop out, and `THE PLOT LIST`
+opening the report with three counts. **Audit 4 finding 66 fixed with it**: `GuardedWrite` round
+the per plot write loop, so a throw on plot 100 of 154 names the plot and the report is still
+written.
+
+**4. A dash botanical name counts as SHRUBS, by its phase.** 44 such rows across the model. HF-01
+reads Existing 231, Proposed 0, TOTAL 231 and Ground Cover 52 against a group total of 283. Only
+the dash, the whole cell once trimmed, and a dash under no phase row still refuses. Every dash row
+is named with its plot, row, phase, area and box.
+
+**UNKNOWN and written down:** which phase EP-01, EP-09 and EP-14 carry their dash rows under, what
+fonts the client's forms use, whether any client `/DA` is below 6, and whether the standard
+fourteen tables are right to the thousandth. All four are answered by the next run's own report.
+
+**NOTHING HERE WAS RUN IN REVIT.** `steps/2026-09-15-kpi-fixes.md` is Bader's run sheet, eighteen
+numbered steps and four checks.
+
+Break watches, all four restored byte for byte: `c80ef410381ff49c46bccd31759e0fef`,
+`6fab9b37501c2911a0b82f4133a185d6`, `773fecb415d9abde50f1c7153cbb7a2d`,
+`715a77de61330fcc94defbe4283731cd`.
+
+---
+
 Phase: 9, ship. Eighty seventh pass, the check that could never fire. **2000 tests, 1180 of them
 KPI, 10 added, against the 1990 main carries** at `9ab922a`, 28 hook cases unchanged, build zero
 warnings.

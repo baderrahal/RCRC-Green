@@ -334,8 +334,10 @@ namespace RcrcGreen.Core.Kpi
                 // **THIS NOTE NAMES THE CANOPY CELL AND THE OTHER TWO FORMS NAME TOTAL GREEN
                 // COVER**, for a field all three call Total areas to be greened. It is recorded
                 // here exactly as the file holds it, so the check does not refuse the form over
-                // the client's own copy and paste, and the disagreement is an open question in
-                // the log rather than a number chosen quietly.
+                // the client's own copy and paste. **It no longer decides the value.** Bader
+                // decided on 15 September that all three forms take Total Green cover over a
+                // million, so the note is a record of what the file says and nothing reads it to
+                // choose a cell.
                 new PdfFormField(PdfValue.TotalAreasToBeGreened, "Total areas to be greened",
                     "excel the cell on the right of  \"Total area covered by canopy \"", 191.9, 503.2, "km²"),
 

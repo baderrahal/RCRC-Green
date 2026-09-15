@@ -4,6 +4,241 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty eighth pass. Four fixes, and the plot list the team sent
+
+**2042 tests, 1222 of them KPI, 42 added, against the 2000 main carries** at `64fb57d`, 28 hook
+cases unchanged, build zero warnings.
+
+**THE AUDIT COUNT, WALKED OFF ALL FOUR FILES THIS ROUND RATHER THAN OFF A NOTE.** The state file
+and the last three log entries said 63 numbered and 44 open, which counted three files and left
+out audit 4's findings 64 to 80. From this entry on it is four files:
+
+```
+steps/audit-kpi.md     29 numbered   8 FIXED    1 to 29
+steps/audit-kpi-2.md   20 numbered   9 FIXED   30 to 49
+steps/audit-kpi-3.md   14 numbered   2 FIXED   50 to 63
+steps/audit-kpi-4.md   17 numbered   1 FIXED   64 to 80
+TOTAL                  80 numbered  20 FIXED   60 OPEN
+```
+
+Contiguous 1 to 80 with no gap and no repeat. **Nothing was closed, renumbered or reordered
+except marking 66 FIXED**, and the old entries are left alone.
+
+**NOTHING HERE WAS RUN IN REVIT.** Every number below is off a test, off a file in this repository
+or off a measurement Bader made. `steps/2026-09-15-kpi-fixes.md` is the run sheet.
+
+### 1. The text was too big for the PDF boxes
+
+**Measured by Bader on ANH-007-MO-100011**, a DAILY MOSQUE plot on the Open spaces form: Area
+showed 2797.6 cut off at the box edge, Total areas to be greened showed 0.0008 cut off, and the
+tree and shrub counts were drawn taller than their boxes.
+
+**NOTHING IN THIS TOOL HAD EVER READ OR WRITTEN A `/DA`.** `PdfFormFile.WithValue` drops each
+field's `/AP` and the AcroForm gets `/NeedAppearances true`, so the viewer redraws the value in
+the field's OWN default appearance, which nothing looked at. And the rectangle read took the first
+two numbers of `/Rect`, the position the form check compares, so the box's SIZE went past
+unnoticed.
+
+`PdfTextFit`, `PdfFontWidths` and `StandardFonts` are new. The rule:
+
+```
+across  = the box width less 2 pt each side
+down    = the box height less 2 pt top and bottom
+em      = the text measured in the font the /DA names
+wanted  = the smaller of across / em and down, rounded DOWN to 0.1 pt
+ceiling = the client's own size, or 10 pt where their /DA gives nought
+floor   = 6 pt
+```
+
+**The hand worked case, which is the test:** `2797.64` in Helvetica is six digits at 556 and a
+full stop at 278, so 3.614 em. A box 30 pt wide and 14 pt tall leaves 26 pt across, 26 over 3.614
+is 7.1948, **written as 7.1**.
+
+**THE VALUE IS NEVER TOUCHED.** Only the size inside the field's own `/DA` moves, in the appended
+object. The client's font name and colour go through untouched, NeedAppearances stays, and no
+appearance stream is written. Where a field inherits its `/DA`, the inherited string is written
+onto that field with the one number changed, because a size is per field.
+
+**A WIDTH IS READ OR IT IS UNKNOWN AND NEVER GUESSED.** The font object's own `/Widths` off the
+AcroForm's `/DR /Font` first, then the published metrics of the standard fourteen. **No near miss
+is in that table**: Arial and Courier New are metric compatible with Helvetica and Courier and
+neither is written in, because a name standing in for a measurement is the fault this repository
+keeps paying for. **The standard fourteen tables are held as DATA and are not measured in this
+repository**, since no AFM file is here, and that is written down rather than left to be assumed.
+What a wrong width can cost is bounded on purpose: the value never changes, the size is never
+raised above the client's own, and a width out by a few thousandths moves a size by a tenth of a
+point. The read back off the written file is what says which size landed.
+
+**SIX OUTCOMES AND THE BRIEF NAMED FIVE.** An absent `/DA` is the sixth, counted apart, because a
+font nobody could measure and a field with no size to change are different facts. `THE TEXT SIZES`
+in the glance counts all six and names a box only for held at 6, widths UNKNOWN and no `/DA`.
+
+Break watch: the width bound taken out so the size comes back unchanged reddened 4 of 2042, and
+the 7.1 case read `Area, holding '2797.64' in a box 30 pt across and 14 pt tall, came out at 10 pt
+and capped at 10.` Restored byte for byte, md5 `c80ef410381ff49c46bccd31759e0fef`.
+
+### 2. Streets, Total areas to be greened
+
+**Bader's decision of 15 September, and it closes the open question.** The Roads note names the
+canopy cell where the other two name Total Green cover, and the client meant one number on all
+three. `PdfFill.Greened` has one path now and is not asked which form it is.
+`PdfFill.RoadsNamesTheCanopyCell` is DELETED, and it is the second reason a thing gets deleted
+rather than the first: the shape it recorded is gone, not its last caller.
+
+**The streets template already agreed.** `ComputedPlaces` holds its `D9 = F9+F11+H11`, which is
+exactly what `GreenCover.Total` computes, so the Roads PDF and the workbook filed beside it
+carried two numbers for one quantity until now.
+
+Hand check off Bader's screenshot of ANH-007-ST-100308: canopy 984, planting 69, lawn empty, Total
+Green cover 1,053, and the PDF reads **0.001053** and not 0.000984.
+
+**`TheRoadsFormIsFilledFromItsOwnNoteAndSaysSo` asserted 0.00055 and now asserts 0.00102**, which
+is 550 plus 410 plus 60. **It changed because of the decision and not to make a test pass**, and
+the test is renamed to say what it now pins.
+
+**The note at `PdfForms.cs` is kept exactly as the file holds it**, spaces and all, because
+`PdfFormCheck` compares notes. **The canopy guard and the Total Green cover cell check are
+unchanged on all three forms**: a plot with a tree on rows 85, 92 or 99 still writes nothing here,
+which is Bader's decision of 15 September and stands.
+
+Break watch: the canopy only branch put back reddened 4 of 2042, and the 984 case read
+`Expected: "0.001053" Actual: "0.000984"`. Restored byte for byte, md5
+`6fab9b37501c2911a0b82f4133a185d6`.
+
+### 3. The plot list file, and audit 4 finding 66 with it
+
+**The team sent 154 plots to export and wants every one exported with none skipped.**
+
+`PlotListFile`, `PlotListRead` and `TickingTheList` are new in Core. **THE FILE NEVER ENTERS THIS
+REPOSITORY**: only the pointer, `kpi-plot-list.txt` beside the installed assembly, and every test
+writes its own list into the temp folder.
+
+Six rules: one plot a line, edge whitespace off, blanks skipped, the file's order kept, a line
+that is not a plot named with its line number, a plot listed twice named with both and counted
+once, compared with `StringComparer.Ordinal` because that is what `PlotTicks` and
+`PlotsInTheModel.Holds` use, and a file that cannot be read refusing with its reason rather than
+reading as an empty list.
+
+**Tick the list sits beside Select all and Clear and behaves the same way**: it REPLACES every
+tick and FORGETS every hand choice, because a person pressing it is saying these are the plots.
+
+**Nothing on the list drops out without a line above Create**: a listed plot the model does not
+name, a plot listed twice, a line that is not a plot, and a listed plot the press would put into
+no workbook or no PDF. That last one asks `PlotsPerTemplate.For` and `PdfForms.ForPlot`, which are
+the two rules that really decide it, rather than a third written beside the button.
+
+**`THE PLOT LIST` opens the report**, beside `EVERY PLOT THE TOOL OFFERED`. They are different
+questions printed apart: that one is the MODEL's list and this is the TEAM's. One row per listed
+plot in the file's order with in the model, ticked, workbook, PDF and why not, then the model's
+plots not on the list, then three counts.
+
+**The browse line is ONE method now, audit 4 finding 77's own remedy.** It was written out four
+times and the copies had drifted: one warned when the chosen folder was the templates folder, one
+warned when a remembered file had gone, and one did neither. All four go through `BrowsedLine` and
+each keeps its own lines under it. **Finding 77 is NOT marked FIXED**, because this round was told
+to mark 66 and nothing else, and it is named here for Bader to mark.
+
+**AUDIT 4 FINDING 66 IS FIXED.** `GuardedWrite` wraps the `OnePlot` call. The per plot WRITE loop
+was added when a workbook became one plot and had no guard, so a throw on plot 100 of 154 unwound
+to `Run`'s catches, which say Revit refused that with no plot named and **write no report at
+all**, leaving 99 workbooks and 99 PDFs in the client's folder tree with no record of which plots
+those were. The plot is named with the exception's type and message now, the run carries on, and
+the report is written either way.
+
+The worked example, every value by hand: a list reading HF-01, then NS-41 with spaces round it,
+then a blank line, then NS-41, then XX-99, then the words not a plot. Against a model naming
+HF-01, NS-41 and EP-05 it ticks HF-01 and NS-41, names NS-41 on lines 2 and 4, names XX-99 as not
+in the model, names line 6 as not a plot, and names EP-05 as in the model and not on the list.
+
+Break watch: the reader made to drop the last plot line reddened 4 of 2042, and
+`TheFilesOrderIsKept` read `Expected: ["ST-09", "EP-01", "DM-11", "NS-02"] Actual: ["ST-09",
+"EP-01", "DM-11"]`. Restored byte for byte, md5 `773fecb415d9abde50f1c7153cbb7a2d`.
+
+### 4. A dash row counts as shrubs, by its phase
+
+**Bader's decision of 15 September, off his own record: 44 schedule rows across the model carry a
+botanical name of a dash**, and four plots came out blank because of them, EP-01, EP-09, EP-14 and
+HF-01, which are the four the eighty seventh pass made refuse. His screenshot of
+ANH-007-HF-100002 shows all four shrub boxes empty.
+
+A dash row counts as `SHRUBS` and goes by its phase like any `SHRUBS:` species.
+`SpeciesPrefix.CountsAsShrubs` is the one method both halves of the rule ask, so the dash cannot
+be added in one place and forgotten in another.
+
+**ONLY THE DASH, and it is the WHOLE cell once the edges are off.** A name with no colon that is
+not a dash, and a prefix that is neither, refuse exactly as they did:
+`AnUnprefixedSpeciesGoesNowhereAndIsNamed` is green and unchanged, and
+`ARealUnknownPrefixStillRefusesAndNothingIsWritten` keeps the old refusal on the old fixture. A
+dash INSIDE a name is untouched, `ACACIA / VACHELLIA FARNESIANA` and
+`CARISSA MACROCARPA - GRANDIFLORA` included. A dash row under a phase the template leaves out
+stays out, and **a dash row under no phase row still refuses**, because nothing says whether it is
+existing or proposed and that is a different gap from not knowing its kind.
+
+HF-01 by hand, the one plot whose split is known: group total 283, GROUND COVER 52 under Proposed,
+dash rows 231 under Existing.
+
+```
+Existing Shrubs  231      Proposed Shrubs  0      TOTAL Shrubs  231      Ground Cover  52
+231 plus 52 is 283
+```
+
+**The `Losing` fixture's unplaced row was `UNKNOWN PREFIX SPECIES` under Proposed, which is not
+the model's value.** HF-01 is rebuilt as a dash under Existing and `Losing` is kept for the one
+test that a real unknown prefix still refuses.
+
+**WHICH PHASE EP-01, EP-09 AND EP-14 CARRY THEIRS UNDER IS UNKNOWN FROM THIS REPOSITORY.** The
+08:38 report is under `reports/` and nothing there is ever committed, so those three pin only that
+they add up and write, and not which of the two shrubs boxes took the area. The new dash rows
+block answers it on the next run.
+
+The plots that split cleanly do not move, checked: FP-16 335, FP-22 427 and 1114 against 1541, and
+NP-100002 248 and 652 against 900.
+
+**EVERY DASH ROW IS ON THE RECORD.** `THE ROWS WHOSE BOTANICAL NAME IS A DASH, COUNTED AS SHRUBS`
+sits beside `THE SPECIES NO PREFIX PLACED, BY NAME` with the plot, the row, the phase, the area
+and the box, which is Existing Shrubs, Proposed Shrubs, no box because the template leaves its
+phase out, or no box because it sits under no phase row and the plot refuses.
+
+**A DASH CAN ALSO REACH THE TREE LISTS AND NOTHING THERE CHANGED.** Traced rather than assumed.
+`ScheduleRows.cs:329` reads the botanical name off the column the heading row names and `:330`
+tests it for whitespace, so a dash is a species row in the softscape schedule too. It merges
+through `KpiMerge.Species`, reaches `SpeciesMatching.Against` at `:317`, matches no name in the
+workbook's list and no alias, and falls to `WrittenInto` at `:333`, which asks the canopy diameter
+at `:434` and answers `NotSized` where the model prints none. **So a dash tree takes an empty row
+carrying the name `-` and its count, or is named as unsized.** Unchanged this round.
+
+Break watch: the dash rule taken out of `CountsAsShrubs` reddened 10 of 2042, and
+`HfOneWritesItsFourBoxesOffTheDashRows` read `ExistingShrubs was not written. 1 species row could
+not be placed in either box ... 231 m² is unaccounted for of the 283 m²`. Restored byte for byte,
+md5 `715a77de61330fcc94defbe4283731cd`.
+
+### What is UNKNOWN and what would settle it
+
+- **Which phase EP-01, EP-09 and EP-14 carry their dash rows under.** The dash rows block on the
+  next run settles it.
+- **What fonts the client's forms really use.** No client PDF is in this repository. The widths
+  UNKNOWN count in the glance names any font this tool cannot measure, on the next run.
+- **Whether any client field carries a `/DA` size below 6.** None is measured here. The ceiling
+  wins over the floor where they disagree and the box is named either way.
+- **Whether the standard fourteen width tables are right to the thousandth.** They are the
+  published core font metrics held as data and no AFM file is in this repository. The read back
+  says which size landed and the value is never changed, so the cost of a wrong width is a size out
+  by a tenth of a point.
+- **Whether DM-21, NS-16, NS-20, ST-23 and ST-24 belong on the team's list.** IN THE MODEL AND NOT
+  ON THE LIST names them on the next run and it is the team's call.
+
+### Files
+
+Core: `PdfTextFit.cs`, `PdfFontWidths.cs`, `PlotListFile.cs`, `TickingTheList.cs` new, and
+`PdfFormFile.cs`, `PdfFill.cs`, `PdfForms.cs`, `PdfChecklist.cs`, `PdfOutcome.cs`,
+`RunAtAGlance.cs`, `GroundCover.cs`, `KpiCreateReport.cs`, `KpiCreateRunSet.cs`, `CreateWords.cs`.
+Revit: `KpiPanel.cs`, `KpiRequestHandler.cs`, `RememberedFolder.cs`. Tests:
+`PdfTextFitTests.cs` and `PlotListFileTests.cs` new, and `PdfComputedTests.cs`,
+`GroundCoverSplitTests.cs`, `PdfFixture.cs`. Plus `.claude/rules/kpi-rules.md`,
+`steps/audit-kpi-4.md` and `steps/2026-09-15-kpi-fixes.md`.
+
+---
+
 ## 2026-09-15, eighty seventh pass. The check that could never fire, and the names first
 
 **2000 tests, 1180 of them KPI, 10 added, against the 1990 main carries** at `9ab922a`, 28 hook

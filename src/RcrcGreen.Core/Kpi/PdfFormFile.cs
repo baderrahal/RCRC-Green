@@ -15,7 +15,7 @@ namespace RcrcGreen.Core.Kpi
     {
         public PdfFieldRead(
             string name, string value, int objectNumber, double x = 0.0, double y = 0.0,
-            string fieldType = null)
+            string fieldType = null, PdfTextBox box = null, string defaultAppearance = null)
         {
             Name = name ?? string.Empty;
             Value = value ?? string.Empty;
@@ -23,7 +23,22 @@ namespace RcrcGreen.Core.Kpi
             X = x;
             Y = y;
             FieldType = fieldType ?? string.Empty;
+            Box = box ?? PdfTextBox.NotRead;
+            DefaultAppearance = PdfDefaultAppearance.Of(defaultAppearance);
         }
+
+        /// <summary>
+        /// The field's box, ALL FOUR numbers of its own `/Rect`. **The read used to take the
+        /// first two**, which is the position the form check compares, and threw the size away,
+        /// so nothing could tell whether a value fitted the box it was going into.
+        /// </summary>
+        public PdfTextBox Box { get; }
+
+        /// <summary>
+        /// The field's default appearance, its own where it states one and the one it inherits
+        /// where it does not, which is the font and the size the viewer draws the value in.
+        /// </summary>
+        public PdfDefaultAppearance DefaultAppearance { get; }
 
         /// <summary>
         /// The field's own kind as the file states it, `Tx` for text, `Btn` for a tick box or a
@@ -111,7 +126,29 @@ namespace RcrcGreen.Core.Kpi
             new Regex(@"/V\s*<[0-9A-Fa-f\s]*>", RegexOptions.CultureInvariant);
 
         private static readonly Regex Rectangle = new Regex(
-            @"/Rect\s*\[\s*(-?[0-9.]+)\s+(-?[0-9.]+)", RegexOptions.CultureInvariant);
+            @"/Rect\s*\[\s*(-?[0-9.]+)\s+(-?[0-9.]+)\s+(-?[0-9.]+)\s+(-?[0-9.]+)",
+            RegexOptions.CultureInvariant);
+
+        private static readonly Regex DefaultAppearanceLiteral =
+            new Regex(@"/DA\s*\((?<text>(?:[^()\\]|\\.)*)\)", RegexOptions.CultureInvariant);
+
+        private static readonly Regex ResourceEntry = new Regex(
+            @"/(?<name>[^\s/\[\]<>(){}%]+)\s+(?<object>\d+)\s+\d+\s+R", RegexOptions.CultureInvariant);
+
+        private static readonly Regex BaseFontName = new Regex(
+            @"/BaseFont\s*/(?<name>[^\s/\[\]<>(){}%]+)", RegexOptions.CultureInvariant);
+
+        private static readonly Regex FontSubtype = new Regex(
+            @"/Subtype\s*/(?<name>[A-Za-z0-9]+)", RegexOptions.CultureInvariant);
+
+        private static readonly Regex FirstCharacter = new Regex(
+            @"/FirstChar\s+(\d+)", RegexOptions.CultureInvariant);
+
+        private static readonly Regex WidthsInline = new Regex(
+            @"/Widths\s*\[(?<numbers>[^\]]*)\]", RegexOptions.CultureInvariant);
+
+        private static readonly Regex WidthsElsewhere = new Regex(
+            @"/Widths\s+(\d+)\s+\d+\s+R", RegexOptions.CultureInvariant);
 
         private static readonly Regex FieldKind =
             new Regex(@"/FT\s*/([A-Za-z]+)", RegexOptions.CultureInvariant);
@@ -175,11 +212,15 @@ namespace RcrcGreen.Core.Kpi
             var titles = new Dictionary<int, string>();
             var parents = new Dictionary<int, int>();
             var kinds = new Dictionary<int, string>();
+            var appearances = new Dictionary<int, string>();
 
             foreach (KeyValuePair<int, string> one in bodies)
             {
                 Match kind = FieldKind.Match(one.Value);
                 if (kind.Success) kinds[one.Key] = kind.Groups[1].Value;
+
+                Match appearance = DefaultAppearanceLiteral.Match(one.Value);
+                if (appearance.Success) appearances[one.Key] = Unescaped(appearance.Groups["text"].Value);
 
                 Match title = FieldTitle.Match(one.Value);
                 if (!title.Success) continue;
@@ -190,6 +231,10 @@ namespace RcrcGreen.Core.Kpi
                 if (parent.Success) parents[one.Key] = Number(parent.Groups[1].Value);
             }
 
+            int acroFormNumber = Number(AcroFormReference.Match(text).Groups[1].Value);
+            string formAppearance;
+            if (!appearances.TryGetValue(acroFormNumber, out formAppearance)) formAppearance = string.Empty;
+
             var found = new List<PdfFieldRead>();
             foreach (KeyValuePair<int, string> one in titles)
             {
@@ -199,7 +244,9 @@ namespace RcrcGreen.Core.Kpi
                     FullName(one.Key, titles, parents), ValueOf(bodies[one.Key]), one.Key,
                     where.Success ? Rounded(where.Groups[1].Value) : 0.0,
                     where.Success ? Rounded(where.Groups[2].Value) : 0.0,
-                    KindOf(one.Key, kinds, parents)));
+                    KindOf(one.Key, kinds, parents),
+                    BoxOf(where),
+                    AppearanceOf(one.Key, appearances, parents, formAppearance)));
             }
 
             return found.OrderBy(one => one.Name, StringComparer.Ordinal).ToList();
@@ -230,12 +277,185 @@ namespace RcrcGreen.Core.Kpi
             return string.Empty;
         }
 
+        private static PdfTextBox BoxOf(Match rectangle)
+        {
+            if (!rectangle.Success) return PdfTextBox.NotRead;
+
+            return new PdfTextBox(
+                Measured(rectangle.Groups[1].Value), Measured(rectangle.Groups[2].Value),
+                Measured(rectangle.Groups[3].Value), Measured(rectangle.Groups[4].Value));
+        }
+
+        /// <summary>
+        /// A field's `/DA`, its own where it states one, then its parents', then the AcroForm's,
+        /// **which is the same inheritance <see cref="KindOf"/> already walks for the kind**. An
+        /// AcroForm is defined that way and a field that states none is not a field with no
+        /// appearance.
+        /// </summary>
+        private static string AppearanceOf(
+            int number, Dictionary<int, string> appearances, Dictionary<int, int> parents, string form)
+        {
+            var seen = new HashSet<int>();
+            int at = number;
+
+            while (seen.Add(at))
+            {
+                string held;
+                if (appearances.TryGetValue(at, out held)) return held;
+
+                int up;
+                if (!parents.TryGetValue(at, out up)) return form;
+
+                at = up;
+            }
+
+            return form;
+        }
+
+        /// <summary>
+        /// Every font the AcroForm's `/DR /Font` names, by the resource name a `/DA` uses, with
+        /// its widths read off the font object where it carries them and off the published
+        /// metrics of the standard fourteen where it does not.
+        ///
+        /// **A FONT THAT ANSWERS NEITHER WAY IS NAMED AND MEASURES NOTHING.** Never a guess.
+        /// </summary>
+        private static Dictionary<string, PdfFontWidths> FontsIn(
+            string acroForm, Dictionary<int, string> bodies)
+        {
+            var found = new Dictionary<string, PdfFontWidths>(StringComparer.Ordinal);
+
+            string resources = Nested(acroForm, "/DR");
+            if (resources.Length == 0) return found;
+
+            string fonts = Nested(resources, "/Font");
+            if (fonts.Length == 0) return found;
+
+            foreach (Match one in ResourceEntry.Matches(fonts))
+            {
+                string name = one.Groups["name"].Value;
+                int number = Number(one.Groups["object"].Value);
+
+                string body;
+                found[name] = bodies.TryGetValue(number, out body)
+                    ? WidthsOf(body, bodies)
+                    : PdfFontWidths.NotRead(name, "its font object " + number + " is not in this file");
+            }
+
+            return found;
+        }
+
+        private static PdfFontWidths WidthsOf(string body, Dictionary<int, string> bodies)
+        {
+            Match named = BaseFontName.Match(body);
+            string baseFont = named.Success ? named.Groups["name"].Value : string.Empty;
+
+            Match subtype = FontSubtype.Match(body);
+            if (subtype.Success && string.Equals(subtype.Groups["name"].Value, "Type0", StringComparison.Ordinal))
+            {
+                return PdfFontWidths.NotRead(baseFont,
+                    "it is a Type0 font, whose widths are in its descendant rather than in a "
+                    + "/Widths array, and this tool does not read those");
+            }
+
+            string numbers = string.Empty;
+            Match inline = WidthsInline.Match(body);
+            if (inline.Success)
+            {
+                numbers = inline.Groups["numbers"].Value;
+            }
+            else
+            {
+                Match elsewhere = WidthsElsewhere.Match(body);
+                string array;
+                if (elsewhere.Success && bodies.TryGetValue(Number(elsewhere.Groups[1].Value), out array))
+                {
+                    int opens = array.IndexOf('[');
+                    int closes = array.LastIndexOf(']');
+                    if (opens >= 0 && closes > opens) numbers = array.Substring(opens + 1, closes - opens - 1);
+                }
+            }
+
+            if (numbers.Trim().Length == 0) return StandardFonts.For(baseFont);
+
+            Match first = FirstCharacter.Match(body);
+            int from = first.Success ? Number(first.Groups[1].Value) : 0;
+
+            var widths = new Dictionary<int, int>();
+            int code = from;
+            foreach (string one in numbers.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                double width;
+                if (double.TryParse(one, NumberStyles.Float, CultureInfo.InvariantCulture, out width))
+                {
+                    widths[code] = (int)Math.Round(width);
+                }
+
+                code++;
+            }
+
+            return widths.Count == 0
+                ? StandardFonts.For(baseFont)
+                : PdfFontWidths.Of(StandardFonts.Named(baseFont), widths);
+        }
+
+        /// <summary>
+        /// The dictionary the named key points at, read by counting `&lt;&lt;` and `&gt;&gt;`
+        /// rather than by a pattern, because these dictionaries nest and a pattern that stops at
+        /// the first close reads half of one.
+        /// </summary>
+        private static string Nested(string body, string key)
+        {
+            int at = body.IndexOf(key, StringComparison.Ordinal);
+            if (at < 0) return string.Empty;
+
+            int opens = body.IndexOf("<<", at, StringComparison.Ordinal);
+            if (opens < 0) return string.Empty;
+
+            int depth = 0;
+            int index = opens;
+            while (index < body.Length - 1)
+            {
+                if (body[index] == '<' && body[index + 1] == '<')
+                {
+                    depth++;
+                    index = index + 2;
+                    continue;
+                }
+
+                if (body[index] == '>' && body[index + 1] == '>')
+                {
+                    depth--;
+                    index = index + 2;
+                    if (depth == 0) return body.Substring(opens + 2, index - 2 - opens - 2);
+                    continue;
+                }
+
+                index++;
+            }
+
+            return string.Empty;
+        }
+
         /// <summary>
         /// The file with the named fields filled, as new bytes. The source bytes are the first
         /// bytes of the answer, unchanged, and everything this writes is appended after them.
         /// </summary>
         public static byte[] Filled(byte[] file, IEnumerable<KeyValuePair<string, string>> values, out string refusal)
         {
+            IReadOnlyList<PdfFieldFit> fits;
+            return Filled(file, values, out fits, out refusal);
+        }
+
+        /// <summary>
+        /// The same, with what every written field's size came to.
+        /// </summary>
+        public static byte[] Filled(
+            byte[] file, IEnumerable<KeyValuePair<string, string>> values,
+            out IReadOnlyList<PdfFieldFit> fits, out string refusal)
+        {
+            var measured = new List<PdfFieldFit>();
+            fits = measured;
+
             IReadOnlyList<PdfFieldRead> fields = Fields(file, out refusal);
             if (refusal.Length > 0) return null;
 
@@ -244,6 +464,15 @@ namespace RcrcGreen.Core.Kpi
             string text = Latin(file);
             Dictionary<int, string> bodies = Bodies(text);
             var changed = new Dictionary<int, string>();
+
+            int acroForm = Number(AcroFormReference.Match(text).Groups[1].Value);
+            if (!bodies.ContainsKey(acroForm))
+            {
+                refusal = "the AcroForm object " + acroForm + " is not in this file";
+                return null;
+            }
+
+            Dictionary<string, PdfFontWidths> fonts = FontsIn(bodies[acroForm], bodies);
 
             foreach (KeyValuePair<string, string> one in wanted)
             {
@@ -256,14 +485,22 @@ namespace RcrcGreen.Core.Kpi
                     return null;
                 }
 
-                changed[field.ObjectNumber] = WithValue(bodies[field.ObjectNumber], one.Value);
-            }
+                string body = WithValue(bodies[field.ObjectNumber], one.Value);
 
-            int acroForm = Number(AcroFormReference.Match(text).Groups[1].Value);
-            if (!bodies.ContainsKey(acroForm))
-            {
-                refusal = "the AcroForm object " + acroForm + " is not in this file";
-                return null;
+                // **THE SIZE IS FITTED FOR A VALUE AND NOT FOR A BLANK.** Emptying a field puts
+                // no text in it, so there is nothing to fit and the client's own size is left
+                // exactly as it was.
+                if (field.IsText && !string.IsNullOrEmpty(one.Value))
+                {
+                    PdfFieldFit fit = PdfTextFit.Of(
+                        field.Name, one.Value, field.Box, field.DefaultAppearance,
+                        WidthsFor(field.DefaultAppearance, fonts));
+
+                    measured.Add(fit);
+                    if (fit.Writes) body = WithAppearance(body, field.DefaultAppearance, fit.Size);
+                }
+
+                changed[field.ObjectNumber] = body;
             }
 
             if (!changed.ContainsKey(acroForm)) changed[acroForm] = bodies[acroForm];
@@ -347,6 +584,40 @@ namespace RcrcGreen.Core.Kpi
 
             int closes = without.LastIndexOf(">>", StringComparison.Ordinal);
             return closes < 0 ? without : without.Substring(0, closes) + written + without.Substring(closes);
+        }
+
+        private static PdfFontWidths WidthsFor(
+            PdfDefaultAppearance appearance, Dictionary<string, PdfFontWidths> fonts)
+        {
+            if (appearance == null || !appearance.Read) return null;
+
+            PdfFontWidths found;
+            return fonts.TryGetValue(appearance.FontResource, out found)
+                ? found
+                : PdfFontWidths.NotRead(appearance.FontResource,
+                    "the AcroForm's /DR /Font names no " + appearance.FontResource
+                    + ", so there is no font object to read widths off");
+        }
+
+        /// <summary>
+        /// The field dictionary carrying the client's own appearance with ONE NUMBER changed.
+        ///
+        /// **Their font name and their colour go through untouched**, and where the field
+        /// inherits its appearance rather than stating one, the inherited string is written onto
+        /// the field with the same one number changed. A size is per field and an inherited one
+        /// cannot be moved for one field without moving it for every field that shares it.
+        /// </summary>
+        private static string WithAppearance(string body, PdfDefaultAppearance appearance, double size)
+        {
+            string written = "/DA" + Written(appearance.WithSize(size));
+
+            if (DefaultAppearanceLiteral.IsMatch(body))
+            {
+                return DefaultAppearanceLiteral.Replace(body, written, 1);
+            }
+
+            int closes = body.LastIndexOf(">>", StringComparison.Ordinal);
+            return closes < 0 ? body : body.Substring(0, closes) + written + body.Substring(closes);
         }
 
         private static string WithNeedAppearances(string body)
@@ -468,6 +739,18 @@ namespace RcrcGreen.Core.Kpi
         private static double Rounded(string text)
         {
             return Math.Round(double.Parse(text, CultureInfo.InvariantCulture), 1);
+        }
+
+        /// <summary>
+        /// A rectangle's own number, unrounded, because a width is measured against the text
+        /// rather than compared against another measurement.
+        /// </summary>
+        private static double Measured(string text)
+        {
+            double found;
+            return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out found)
+                ? found
+                : 0.0;
         }
 
         private static int Number(string text)

@@ -163,6 +163,35 @@ namespace RcrcGreen.Revit.Kpi
     }
 
     /// <summary>
+    /// The team's own plot list file, browsed for and remembered beside the installed assembly
+    /// the same way the street reference file is.
+    ///
+    /// **THE FILE NEVER ENTERS THE REPOSITORY.** It is the client's list of which plots are in
+    /// scope, this repository is public, and only the POINTER lives beside the assembly.
+    /// </summary>
+    internal static class PlotListFileSetting
+    {
+        public const string PointerFileName = "kpi-plot-list.txt";
+
+        private static readonly RememberedFile Pointer = new RememberedFile(PointerFileName);
+
+        public static string Read()
+        {
+            return Pointer.Read();
+        }
+
+        public static string ReadRaw()
+        {
+            return Pointer.ReadRaw();
+        }
+
+        public static bool Remember(string file)
+        {
+            return Pointer.Remember(file);
+        }
+    }
+
+    /// <summary>
     /// Where the filled workbooks are written.
     ///
     /// **It used to be the model's own folder and that was the fault.** Writing beside the Revit

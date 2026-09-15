@@ -588,35 +588,11 @@ namespace RcrcGreen.Revit.Kpi
         {
             string folder = OutputFolder.Read();
 
-            var line = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
-            var browse = new Button
-            {
-                Content = PaneLabel.Escaped("Browse"),
-                Padding = PanelMetrics.CellPad,
-                Margin = PanelMetrics.Gap,
-                ToolTip = "Point at the folder the filled workbooks should be written to. "
-                    + "It is remembered beside the installed add-in."
-            };
-            browse.Click += (sender, e) => BrowseForTheOutputFolder();
-            DockPanel.SetDock(browse, Dock.Right);
-
-            var caption = new TextBlock
-            {
-                Text = "Output folder",
-                Width = PanelMetrics.WideLabelWidth,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            DockPanel.SetDock(caption, Dock.Left);
-
-            line.Children.Add(browse);
-            line.Children.Add(caption);
-            line.Children.Add(new TextBlock
-            {
-                Text = folder.Length == 0 ? "No folder set" : folder,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-            _templates.Children.Add(line);
+            _templates.Children.Add(BrowsedLine(
+                "Output folder", folder, "No folder set",
+                "Point at the folder the filled workbooks should be written to. "
+                    + "It is remembered beside the installed add-in.",
+                BrowseForTheOutputFolder));
 
             // Said before Create is pressed rather than after. The per file guard refuses the
             // press that would write over a template, and this is what stops the user reaching
@@ -636,6 +612,7 @@ namespace RcrcGreen.Revit.Kpi
             _templates.Children.Add(Faint(CreateWords.WhereTheWorkbooksGo(folder)));
 
             TheStreetReferenceFile();
+            ThePlotListFile();
             TheFormsFolder();
         }
 
@@ -650,36 +627,12 @@ namespace RcrcGreen.Revit.Kpi
         {
             string folder = FormsFolder.Read();
 
-            var line = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
-            var browse = new Button
-            {
-                Content = PaneLabel.Escaped("Browse"),
-                Padding = PanelMetrics.CellPad,
-                Margin = PanelMetrics.Gap,
-                ToolTip = "Point at the folder holding the client's three Projects Basic Data "
-                    + "forms. Each plot gets one PDF beside its workbook, on the form its plot "
-                    + "prefix names. It is remembered beside the installed add-in."
-            };
-            browse.Click += (sender, e) => BrowseForTheFormsFolder();
-            DockPanel.SetDock(browse, Dock.Right);
-
-            var caption = new TextBlock
-            {
-                Text = "Forms folder",
-                Width = PanelMetrics.WideLabelWidth,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            DockPanel.SetDock(caption, Dock.Left);
-
-            line.Children.Add(browse);
-            line.Children.Add(caption);
-            line.Children.Add(new TextBlock
-            {
-                Text = folder.Length == 0 ? "No folder set" : folder,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-            _templates.Children.Add(line);
+            _templates.Children.Add(BrowsedLine(
+                "Forms folder", folder, "No folder set",
+                "Point at the folder holding the client's three Projects Basic Data forms. Each "
+                    + "plot gets one PDF beside its workbook, on the form its plot prefix names. "
+                    + "It is remembered beside the installed add-in.",
+                BrowseForTheFormsFolder));
 
             _templates.Children.Add(folder.Length == 0
                 ? Noted(TemplateWords.FormsFolder(folder))
@@ -720,36 +673,12 @@ namespace RcrcGreen.Revit.Kpi
             string file = StreetReferenceFileSetting.Read();
             string remembered = StreetReferenceFileSetting.ReadRaw();
 
-            var line = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
-            var browse = new Button
-            {
-                Content = PaneLabel.Escaped("Browse"),
-                Padding = PanelMetrics.CellPad,
-                Margin = PanelMetrics.Gap,
-                ToolTip = "Point at the team's Scope_Validation workbook. It fills the road "
-                    + "width and the total length on STREETS plots, matched on "
-                    + KpiNames.PlotUid2 + ". It is remembered beside the installed add-in."
-            };
-            browse.Click += (sender, e) => BrowseForTheStreetReferenceFile();
-            DockPanel.SetDock(browse, Dock.Right);
-
-            var caption = new TextBlock
-            {
-                Text = "Street reference",
-                Width = PanelMetrics.WideLabelWidth,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            DockPanel.SetDock(caption, Dock.Left);
-
-            line.Children.Add(browse);
-            line.Children.Add(caption);
-            line.Children.Add(new TextBlock
-            {
-                Text = file.Length == 0 ? "No file set" : file,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-            _templates.Children.Add(line);
+            _templates.Children.Add(BrowsedLine(
+                "Street reference", file, "No file set",
+                "Point at the team's Scope_Validation workbook. It fills the road width and the "
+                    + "total length on STREETS plots, matched on " + KpiNames.PlotUid2
+                    + ". It is remembered beside the installed add-in.",
+                BrowseForTheStreetReferenceFile));
 
             // A remembered file that has gone reads as none set unless this says otherwise, and
             // a person would go looking for a Browse they had already pressed.
@@ -760,6 +689,68 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             _templates.Children.Add(Faint(StreetReferenceFile.In(file).InWords));
+        }
+
+        /// <summary>
+        /// **THE TEAM SENT 154 PLOTS TO EXPORT AND WANTS EVERY ONE EXPORTED WITH NONE SKIPPED.**
+        /// This points at their own list, one plot per line, and Tick the list in the plot block
+        /// below presses it onto the ticks.
+        ///
+        /// **THE FILE NEVER ENTERS THE REPOSITORY**, only the pointer beside the installed
+        /// assembly, the same as the street reference file.
+        ///
+        /// **It is a note and never a refusal.** A press with none set ticks plots the way it
+        /// always did, so this greys nothing out.
+        /// </summary>
+        private void ThePlotListFile()
+        {
+            string file = PlotListFileSetting.Read();
+            string remembered = PlotListFileSetting.ReadRaw();
+
+            _templates.Children.Add(BrowsedLine(
+                "Plot list", file, "No file set",
+                "Point at the team's plot list, a plain text file with one plot per line. Tick "
+                    + "the list, under the plots below, replaces every tick with exactly the "
+                    + "plots it names. It is remembered beside the installed add-in.",
+                BrowseForThePlotListFile));
+
+            // A remembered file that has gone reads as none set unless this says otherwise, the
+            // same line the street reference file already carries.
+            if (file.Length == 0 && remembered.Length > 0)
+            {
+                _templates.Children.Add(Warned(
+                    "The remembered plot list file is not there any more: " + remembered));
+            }
+
+            PlotListRead read = PlotListFile.In(file);
+            if (!read.Set) return;
+
+            _templates.Children.Add(read.Read
+                ? Faint(TickingTheList.Heading + " " + read.InWords)
+                : Warned(TickingTheList.Heading + " " + read.Why));
+        }
+
+        private void BrowseForThePlotListFile()
+        {
+            using (var picking = new System.Windows.Forms.OpenFileDialog())
+            {
+                picking.Title = "The team's plot list, one plot per line";
+                picking.Filter = "Text file (*.txt)|*.txt|Every file (*.*)|*.*";
+                picking.CheckFileExists = true;
+
+                string already = PlotListFileSetting.Read();
+                if (already.Length > 0) picking.FileName = already;
+
+                if (picking.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                if (!PlotListFileSetting.Remember(picking.FileName))
+                {
+                    Say("The file could not be remembered. " + PlotListFileSetting.PointerFileName
+                        + " beside the installed add-in refused the write.");
+                }
+
+                RedrawTemplates();
+            }
         }
 
         private void BrowseForTheStreetReferenceFile()
@@ -839,6 +830,31 @@ namespace RcrcGreen.Revit.Kpi
             none.Click += (sender, e) => TickedByHand(_ticks.None(), _byHand.Forgotten());
             buttons.Children.Add(all);
             buttons.Children.Add(none);
+
+            // **TICK THE LIST REPLACES EVERY TICK AND FORGETS EVERY HAND CHOICE**, exactly as
+            // Select all and Clear beside it do, because a person pressing it is saying these are
+            // the plots. The rule is TickingTheList in Core, where the tests reach the copy that
+            // runs, and this button only presses it.
+            PlotListRead sent = PlotListFile.In(PlotListFileSetting.Read());
+            if (sent.Set)
+            {
+                var listed = new Button
+                {
+                    Content = PaneLabel.Escaped(CreateWords.TickTheList),
+                    Padding = PanelMetrics.CellPad,
+                    Margin = PanelMetrics.Gap,
+                    IsEnabled = sent.Read,
+                    ToolTip = sent.Read
+                        ? "Replace every tick with exactly the plots the plot list file names, "
+                            + "and forget every plot ticked or unticked by hand."
+                        : sent.Why
+                };
+                listed.Click += (sender, e) => TickedByHand(
+                    TickingTheList.Ticked(_ticks, PlotListFile.In(PlotListFileSetting.Read())),
+                    _byHand.Forgotten());
+                buttons.Children.Add(listed);
+            }
+
             _templates.Children.Add(buttons);
 
             _templates.Children.Add(new TextBlock
@@ -1018,6 +1034,21 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(noComponent[at].Contains("WRITTEN NOWHERE")
                     ? Warned("   " + noComponent[at])
                     : Noted(noComponent[at]));
+            }
+
+            // **NOTHING ON THE TEAM'S LIST DROPS OUT WITHOUT A LINE.** They sent 154 plots to
+            // export and want every one exported, so a listed plot the model does not name, a
+            // plot listed twice, a line that is not a plot and a listed plot the press would put
+            // into no workbook or no PDF are each named HERE, before the press, rather than found
+            // in a report twenty minutes later. The rule is TickingTheList in Core.
+            foreach (string line in TickingTheList.Lines(
+                PlotListFile.In(PlotListFileSetting.Read()),
+                _facts == null ? null : _facts.Plots,
+                ComponentOn))
+            {
+                _templates.Children.Add(line.StartsWith("  ", StringComparison.Ordinal)
+                    ? Warned(line)
+                    : Noted(line));
             }
 
             // After the press, each row says what happened to it. Never one line for the run
@@ -1469,6 +1500,51 @@ namespace RcrcGreen.Revit.Kpi
                 Foreground = _theme.Warning,
                 Margin = PanelMetrics.Row
             };
+        }
+
+        /// <summary>
+        /// **ONE CAPTIONED BROWSE LINE, used by all four things this pane is pointed at.** The
+        /// output folder, the forms folder, the street reference file and the team's plot list
+        /// file. It was written out four times, audit 4 finding 77, and the copies had already
+        /// drifted: one warned when the chosen folder was the templates folder, one warned when a
+        /// remembered file had gone, and one did neither, so a forms folder that had been moved
+        /// read exactly like one nobody had ever chosen.
+        ///
+        /// **What goes UNDER the line stays each caller's own**, because those really are
+        /// different facts about different things. What is the same is the shape.
+        /// </summary>
+        private UIElement BrowsedLine(
+            string caption, string value, string whenEmpty, string tooltip, Action browse)
+        {
+            var line = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
+            var button = new Button
+            {
+                Content = PaneLabel.Escaped("Browse"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Gap,
+                ToolTip = tooltip
+            };
+            button.Click += (sender, e) => browse();
+            DockPanel.SetDock(button, Dock.Right);
+
+            var label = new TextBlock
+            {
+                Text = caption,
+                Width = PanelMetrics.WideLabelWidth,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(label, Dock.Left);
+
+            line.Children.Add(button);
+            line.Children.Add(label);
+            line.Children.Add(new TextBlock
+            {
+                Text = string.IsNullOrEmpty(value) ? whenEmpty : value,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            return line;
         }
 
         private UIElement Boxed(string caption, TextBox box)

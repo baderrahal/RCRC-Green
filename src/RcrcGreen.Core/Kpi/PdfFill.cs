@@ -231,18 +231,6 @@ namespace RcrcGreen.Core.Kpi
         public const string NotAStreetPlot = "this form takes no road width or length";
 
         /// <summary>
-        /// **The Roads form's note names a DIFFERENT CELL from the other two forms' for a field
-        /// all three call Total areas to be greened.** Parks and open spaces name the cell beside
-        /// Total Green cover and roads names the one beside Total area covered by canopy. Each
-        /// form is filled from its OWN note, which is what the file says, and the report names
-        /// which of the two the number is so a person reading three forms side by side is not
-        /// left to guess. Which the client means is an open question in `steps/log-kpi.md`.
-        /// </summary>
-        public const string RoadsNamesTheCanopyCell =
-            "this form's note names the canopy cell where the other two name Total Green cover, "
-            + "so what is written here is the canopy";
-
-        /// <summary>
         /// One plot's plan. Every value comes off the reading, the street reference answer and
         /// the workbook that was already written, and nothing is worked out twice.
         ///
@@ -336,7 +324,7 @@ namespace RcrcGreen.Core.Kpi
                     return Length(wanted, street, unit);
 
                 case PdfValue.TotalAreasToBeGreened:
-                    return Greened(wanted, form, workbookWritten, workbook, unit);
+                    return Greened(wanted, workbookWritten, workbook, unit);
 
                 case PdfValue.PercentageCanopy:
                     return Percentage(wanted, workbookWritten, workbook, unit);
@@ -432,33 +420,39 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>
         /// Total areas to be greened, in square kilometres.
         ///
-        /// **COMPUTED, NOT READ.** Parks and open spaces name the cell beside Total Green cover,
-        /// which is the canopy plus the planting plus the lawn, and roads names the canopy cell
-        /// on its own. Each form gets what its own note names.
+        /// **COMPUTED, NOT READ.** It is the canopy plus the planting plus the lawn, divided by
+        /// a million, **on all three forms**.
+        ///
+        /// **BADER'S DECISION, 15 September, and it closes the open question.** The Roads form's
+        /// own note names the canopy cell where the other two name Total Green cover, and the
+        /// client meant the same number on all three. The note is still held exactly as the file
+        /// carries it, because <see cref="PdfFormCheck"/> compares notes and a tidied one would
+        /// refuse the form, and it is no longer what decides the value. The streets template
+        /// computes D9 = F9+F11+H11, which is that same sum, so the form and the workbook beside
+        /// it now agree.
+        ///
+        /// Measured off ANH-007-ST-100308: canopy 984, planting 69, lawn empty, Total Green
+        /// cover 1,053. The field reads 0.001053 and not 0.000984.
         /// </summary>
         private static PdfFieldFill Greened(
-            PdfFormField wanted, PdfForm form, bool workbookWritten, PdfWorkbookNumbers workbook, string unit)
+            PdfFormField wanted, bool workbookWritten, PdfWorkbookNumbers workbook, string unit)
         {
             string stopped = WhyNothingCanBeComputed(workbookWritten, workbook);
             if (stopped.Length > 0) return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, stopped);
 
             // **The workbook's own Total Green cover cell is held against this tool's sum**, and
-            // a cell that has drifted blanks the field on every form. Roads writes the canopy
-            // alone rather than the sum, and it is gated the same way on purpose: a green cover
-            // cell that has moved says the workbook's arithmetic moved under the tool, and a
-            // field written through that is a number nobody can check.
+            // a cell that has drifted blanks the field on every form, roads included: a green
+            // cover cell that has moved says the workbook's arithmetic moved under the tool, and
+            // a field written through that is a number nobody can check. The canopy guard above
+            // is unchanged too, so a form whose plot has a tree on rows 85, 92 or 99 still writes
+            // nothing here, which is Bader's decision of 15 September and stands.
             if (workbookWritten && !workbook.GreenCoverCell.Usable)
             {
                 return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, workbook.GreenCoverCell.Why);
             }
 
-            bool canopyAlone = ReferenceEquals(form, PdfForms.Roads);
-
-            ComputedValue found = canopyAlone
-                ? ComputedValue.Of(workbook.Canopy.SquareMetres,
-                    "canopy " + Number(workbook.Canopy.SquareMetres) + " square metres. "
-                    + RoadsNamesTheCanopyCell)
-                : GreenCover.Total(workbook.Canopy, workbook.PlantingSquareMetres, workbook.LawnSquareMetres);
+            ComputedValue found = GreenCover.Total(
+                workbook.Canopy, workbook.PlantingSquareMetres, workbook.LawnSquareMetres);
 
             if (!found.Computed) return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, found.Why);
 

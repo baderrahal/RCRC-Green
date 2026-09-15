@@ -64,6 +64,13 @@ namespace RcrcGreen.Core.Kpi
         public const string Clear = "Clear";
 
         /// <summary>
+        /// **The team's own plot list, pressed onto the ticks.** It sits beside Select all and
+        /// Clear and it behaves the same way: it REPLACES every tick and it FORGETS every hand
+        /// choice, because a person pressing it is saying these are the plots.
+        /// </summary>
+        public const string TickTheList = "Tick the list";
+
+        /// <summary>
         /// The press that reads the plots. **Nothing heavy runs without one.** It is the only
         /// control on this pane that starts a read apart from Create, which reads what it needs
         /// itself, and it exists because the read that used to start on its own held the model

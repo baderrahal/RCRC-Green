@@ -43,11 +43,24 @@ namespace RcrcGreen.Core.Kpi
     /// `GROUND COVER:` and 55 begin `GRASS:`. So the prefix is data the schedule already prints
     /// and nothing here infers a kind from anything else.
     ///
-    /// **IT IS NEVER GUESSED.** A name carrying no colon, or a prefix that is neither of the two,
-    /// goes into NEITHER figure and is named with its plot, its row and what its prefix read.
-    /// Putting it in one is how an area lands in a box nobody measured, and the group total is
-    /// the check that catches it: the two figures plus everything unplaced must equal what the
-    /// schedule printed.
+    /// **IT IS NEVER GUESSED, AND THERE IS ONE NAME THAT IS NOT A GUESS.** A name carrying no
+    /// colon, or a prefix that is neither of the two, goes into NEITHER figure and is named with
+    /// its plot, its row and what its prefix read. Putting it in one is how an area lands in a
+    /// box nobody measured.
+    ///
+    /// **THE EXCEPTION IS A BOTANICAL NAME THAT IS A SINGLE DASH ONCE TRIMMED**, which counts as
+    /// <see cref="Shrubs"/> and then goes by its phase like any `SHRUBS:` species. Bader's
+    /// decision of 15 September, off his own record: **44 schedule rows across the model carry a
+    /// botanical name of a dash**, and four plots came out blank because of them, EP-01, EP-09,
+    /// EP-14 and HF-01, which are the four the eighty seventh pass made refuse. His screenshot of
+    /// ANH-007-HF-100002 shows Existing Shrubs, Proposed Shrubs, TOTAL Shrubs and Ground Cover
+    /// all empty.
+    ///
+    /// **ONLY THE DASH.** A name with no colon that is not a dash, and a prefix that is neither
+    /// `SHRUBS` nor `GROUND COVER`, refuses exactly as it did. A dash row under a phase the
+    /// template leaves out stays out as it did, and a dash row under NO phase row still refuses,
+    /// because nothing says whether it is existing or proposed and that is a different gap from
+    /// not knowing what kind it is.
     /// </summary>
     public static class SpeciesPrefix
     {
@@ -76,6 +89,28 @@ namespace RcrcGreen.Core.Kpi
         public static bool IsGroundCover(string botanicalName)
         {
             return LabelText.Same(Of(botanicalName), GroundCover);
+        }
+
+        /// <summary>
+        /// The mark a schedule prints where a species has no botanical name, measured on 44 rows
+        /// across the model. It is the WHOLE cell once the edges are off, never a dash inside a
+        /// name, so `ACACIA / VACHELLIA FARNESIANA` and `SHRUBS: X - Y` are untouched.
+        /// </summary>
+        public const string Dash = "-";
+
+        public static bool IsDash(string botanicalName)
+        {
+            return string.Equals(LabelText.Trimmed(botanicalName), Dash, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// **What reaches the two shrubs figures**, which is a `SHRUBS:` name or a dash. The two
+        /// are asked through one method so the dash rule cannot be added in one place and
+        /// forgotten in another, which is the shape this repository keeps paying for.
+        /// </summary>
+        public static bool CountsAsShrubs(string botanicalName)
+        {
+            return IsShrubs(botanicalName) || IsDash(botanicalName);
         }
 
         /// <summary>
@@ -150,6 +185,49 @@ namespace RcrcGreen.Core.Kpi
     /// rounding earns, which is the rule the phase rows are already checked by rather than a
     /// second one written here. Outside it the split refuses and names all three numbers.
     /// </summary>
+    /// <summary>
+    /// One row whose botanical name is a single dash, counted as SHRUBS and placed by its phase.
+    ///
+    /// **EVERY ONE OF THEM IS ON THE RECORD.** A row with no name that reaches a client's box is
+    /// exactly the kind of quiet placement this tool refuses everywhere else, so it is allowed
+    /// only because Bader decided it and only with its plot, its row, its phase, its area and the
+    /// box it went into printed beside the species no prefix placed.
+    /// </summary>
+    public sealed class DashRow
+    {
+        public DashRow(string plotId, double squareMetres, int rowNumber, string phase, string box)
+        {
+            PlotId = (plotId ?? string.Empty).Trim();
+            SquareMetres = squareMetres;
+            RowNumber = rowNumber;
+            Phase = (phase ?? string.Empty).Trim();
+            Box = (box ?? string.Empty).Trim();
+        }
+
+        public string PlotId { get; }
+
+        public double SquareMetres { get; }
+
+        /// <summary>The printed row, counting the heading row as row 1.</summary>
+        public int RowNumber { get; }
+
+        /// <summary>Empty where the row sits under no phase row, which still refuses.</summary>
+        public string Phase { get; }
+
+        /// <summary>Which of the four boxes took it, or why none did.</summary>
+        public string Box { get; }
+
+        public string InWords
+        {
+            get
+            {
+                return PlotId + " row " + RowNumber.ToString(CultureInfo.InvariantCulture) + ", "
+                    + (Phase.Length == 0 ? "under no phase row" : Phase) + ", "
+                    + GroundCoverSplit.Area(SquareMetres) + ", " + Box;
+            }
+        }
+    }
+
     public sealed class GroundCoverSplit
     {
         private GroundCoverSplit(
@@ -161,7 +239,8 @@ namespace RcrcGreen.Core.Kpi
             bool groupTotalPrinted,
             double groupTotal,
             string refusal,
-            bool speciesRead)
+            bool speciesRead,
+            IEnumerable<DashRow> dashRows = null)
         {
             ExistingShrubsSquareMetres = existingShrubs;
             ProposedShrubsSquareMetres = proposedShrubs;
@@ -172,7 +251,14 @@ namespace RcrcGreen.Core.Kpi
             GroupTotal = groupTotal;
             Refusal = (refusal ?? string.Empty).Trim();
             SpeciesRead = speciesRead;
+            DashRows = (dashRows ?? Enumerable.Empty<DashRow>()).ToList();
         }
+
+        /// <summary>
+        /// Every row whose botanical name was a single dash, with the box it reached. Empty on
+        /// every plot whose species are all named, which is most of them.
+        /// </summary>
+        public IReadOnlyList<DashRow> DashRows { get; }
 
         public static readonly GroundCoverSplit NoGroup =
             new GroundCoverSplit(0.0, 0.0, 0.0, null, null, false, 0.0, string.Empty, false);
@@ -275,6 +361,7 @@ namespace RcrcGreen.Core.Kpi
             double cover = 0.0;
             var unplaced = new List<UnplacedSpecies>();
             var outOfScope = new List<UnplacedSpecies>();
+            var dashRows = new List<DashRow>();
 
             foreach (ShrubSpecies species in group.Species)
             {
@@ -284,7 +371,10 @@ namespace RcrcGreen.Core.Kpi
                     continue;
                 }
 
-                if (!SpeciesPrefix.IsShrubs(species.BotanicalName))
+                // **A DASH IS A SHRUB, AND IT IS THE ONLY NAME THIS RULE READS AS ONE.** Bader's
+                // decision of 15 September, off 44 such rows across the model. Every other
+                // unprefixed name still refuses, so the rule is one literal and not a loosening.
+                if (!SpeciesPrefix.CountsAsShrubs(species.BotanicalName))
                 {
                     unplaced.Add(new UnplacedSpecies(
                         plotId, species.BotanicalName, species.SquareMetres, species.RowNumber,
@@ -292,18 +382,22 @@ namespace RcrcGreen.Core.Kpi
                     continue;
                 }
 
+                bool dash = SpeciesPrefix.IsDash(species.BotanicalName);
                 string sheet = counted.SheetFor(species.Phase);
 
                 if (LabelText.Same(sheet, KpiTemplates.ExistingTreesSheet))
                 {
                     existing = existing + species.SquareMetres;
+                    if (dash) dashRows.Add(Dashed(plotId, species, ExistingShrubsBox));
                 }
                 else if (LabelText.Same(sheet, KpiTemplates.ProposedTreesSheet))
                 {
                     proposed = proposed + species.SquareMetres;
+                    if (dash) dashRows.Add(Dashed(plotId, species, ProposedShrubsBox));
                 }
                 else if (species.Phase.Length == 0)
                 {
+                    if (dash) dashRows.Add(Dashed(plotId, species, NoBoxNoPhase));
                     // Nothing says which phase it is, so it cannot be READ into either box. That
                     // is an area unaccounted for and it refuses.
                     unplaced.Add(new UnplacedSpecies(
@@ -320,6 +414,8 @@ namespace RcrcGreen.Core.Kpi
                         plotId, species.BotanicalName, species.SquareMetres, species.RowNumber,
                         "its phase " + species.Phase + " is one no tree list sheet is named for, "
                         + "so this template leaves it out"));
+
+                    if (dash) dashRows.Add(Dashed(plotId, species, NoBoxLeftOut));
                 }
             }
 
@@ -332,7 +428,22 @@ namespace RcrcGreen.Core.Kpi
 
             return new GroundCoverSplit(
                 existing, proposed, cover, unplaced, outOfScope,
-                group.GroupTotalPrinted, group.GroupTotalSquareMetres, refusal, group.Species.Count > 0);
+                group.GroupTotalPrinted, group.GroupTotalSquareMetres, refusal,
+                group.Species.Count > 0, dashRows);
+        }
+
+        /// <summary>The four answers a dash row can come to, spelt once.</summary>
+        public const string ExistingShrubsBox = "Existing Shrubs";
+
+        public const string ProposedShrubsBox = "Proposed Shrubs";
+
+        public const string NoBoxLeftOut = "no box, this template leaves its phase out";
+
+        public const string NoBoxNoPhase = "no box, it sits under no phase row, so the plot refuses";
+
+        private static DashRow Dashed(string plotId, ShrubSpecies species, string box)
+        {
+            return new DashRow(plotId, species.SquareMetres, species.RowNumber, species.Phase, box);
         }
 
         /// <summary>
