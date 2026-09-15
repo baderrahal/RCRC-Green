@@ -1,5 +1,51 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty fourth pass, the fourth audit of the KPI tool, a software firm's review.
+**1939 tests, 1119 of them KPI, 0 added, against the 1939 main carries** at `f2e2f42`, 28 hook
+cases unchanged, build zero warnings. **This round writes no code and changes no test**, so the
+counts are unchanged by construction and are stated either way.
+
+**THE COUNT, READ OFF THE THREE EARLIER AUDIT FILES: 63 numbered findings, 19 carrying a FIXED
+mark, 44 OPEN.** Derived by walking the files rather than off a note: 29 numbered with 8 FIXED,
+20 with 9, 14 with 2. This round closes none, renumbers none and reorders none, and adds
+seventeen of its own, 64 to 80, in `steps/audit-kpi-4.md`.
+
+What it is: the project read the way a firm reads a codebase before taking it over, over eight
+areas worked one at a time. The maintainer's test, duplication measured, what happens when it
+breaks, dependencies and their licences, secrets and what leaves the building, whether the debt
+is growing, the boundaries, and what has never run.
+
+**THE FIRM'S VERDICT, in one line: take it on, at a price.** Zero third party runtime
+dependencies, Core carrying no Revit reference proved four ways, and data tables the gate holds
+level. Against that: 88 catch blocks of which twenty answer a failure with a value that reads
+like an answer, a per plot write loop with no guard, and the client's project name, consultant
+and contract reference sitting as constants in a public repository against the ignore file's own
+stated reason.
+
+**The debt answer, as numbers rather than an impression.** Since the first audit the KPI source
+has grown 126 per cent and its tests 161, so tests per 100 source lines went 3.41, 3.53, 3.90,
+3.94. Open findings per 1,000 source lines went 2.31, 3.62, 1.46, 1.55, which is flat. **The
+code is not accumulating debt faster than it clears it. The BACKLOG is: 63 opened against 19
+closed, and 6 rounds of 42 since the first audit did any closing.**
+
+Two measurements were made by changing a copy of the tip in the session scratchpad and never
+this repository. Adding an eighth template reddens 8 of 1939 and then 10 more, each naming the
+next table by name. Adding a field to a PDF form reddens 2, both counts, and neither is the
+missing fill case.
+
+Verified against Microsoft's own support page this session: **.NET 8 is in Maintenance and ends
+10 November 2026**, which is 56 days, and the gate and the test project both pin 8.0.
+
+Secret scan over the WHOLE history and not the tip: 1,942 distinct blobs, 78,220,014 bytes,
+1,941 text blobs decoded and scanned against thirteen patterns. **Zero credentials, ever.** The
+only three email addresses are example.invalid placeholders. Client specific facts at the tip:
+**5,044 occurrences across 243 of 490 tracked files**, counted with twelve patterns.
+
+Files: `steps/audit-kpi-4.md` written, this file and `steps/log-kpi.md` appended. No source
+file, no test, no rules file and no hook was touched.
+
+---
+
 Phase: 9, ship. Eighty third pass, the held off list in step and on screen. **1939 tests, 1119 of
 them KPI, 5 added, against the 1934 main carries** at `a3d9896`, 28 hook cases unchanged, build
 zero warnings.
