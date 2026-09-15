@@ -409,10 +409,14 @@ namespace RcrcGreen.Revit.Kpi
                     left.PlotId, left.Template, PlotWorkbookPath.Refused(left.Why), false, left.Why));
             }
 
+            // **THE PLOT LIST IS READ OFF THE LIVE DOCUMENT AT THE PRESS**, not taken off the
+            // pane, because the report is a record of the model rather than of what a pane was
+            // holding. It is the same read the plots button makes, one pass over the sheets and
+            // one over the schedules, under a second on NG05.
             var set = new KpiCreateRunSet(
                 document.Title, split, runs, outcomes,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
-                plotOutcomes, streets);
+                plotOutcomes, streets, KpiPlotReader.Plots(document));
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
