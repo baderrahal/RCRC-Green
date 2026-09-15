@@ -10,7 +10,9 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PdfFieldFill
     {
-        private PdfFieldFill(PdfValue value, string fieldName, string text, string why, string unit, string working)
+        private PdfFieldFill(
+            PdfValue value, string fieldName, string text, string why, string unit, string working,
+            bool noughtForAnAbsentGroup = false)
         {
             Value = value;
             FieldName = fieldName ?? string.Empty;
@@ -18,12 +20,34 @@ namespace RcrcGreen.Core.Kpi
             Why = why ?? string.Empty;
             Unit = unit ?? string.Empty;
             Working = working ?? string.Empty;
+            NoughtForAnAbsentGroup = noughtForAnAbsentGroup;
         }
 
         public static PdfFieldFill Writing(PdfValue value, string fieldName, string text, string unit = null, string working = null)
         {
             return new PdfFieldFill(value, fieldName, text, string.Empty, unit, working);
         }
+
+        /// <summary>
+        /// A 0 written because the plot's shrubs and lawn schedule was read and printed no such
+        /// group. **The flag is what the glance counts**, rather than the working being searched
+        /// for a phrase: a signal that travels in the printed words is not a signal, which this
+        /// repository has already paid for once, and the words themselves are rewritten in this
+        /// same round.
+        /// </summary>
+        public static PdfFieldFill WritingNoughtForAnAbsentGroup(
+            PdfValue value, string fieldName, string text, string unit, string working)
+        {
+            return new PdfFieldFill(value, fieldName, text, string.Empty, unit, working, true);
+        }
+
+        /// <summary>
+        /// Whether this 0 came from a read schedule holding no such group rather than from a
+        /// group whose subtotal really is nought. **Bader's decision of 15 September turned 96
+        /// blank boxes into noughts, so how many of the run's numbers are that nought is the one
+        /// thing the glance has to say about it.**
+        /// </summary>
+        public bool NoughtForAnAbsentGroup { get; }
 
         public static PdfFieldFill Blank(PdfValue value, string fieldName, string why)
         {
@@ -324,7 +348,7 @@ namespace RcrcGreen.Core.Kpi
                     return Length(wanted, street, unit);
 
                 case PdfValue.TotalAreasToBeGreened:
-                    return Greened(wanted, workbookWritten, workbook, unit);
+                    return Greened(wanted, reading, workbookWritten, workbook, unit);
 
                 case PdfValue.PercentageCanopy:
                     return Percentage(wanted, workbookWritten, workbook, unit);
@@ -350,18 +374,20 @@ namespace RcrcGreen.Core.Kpi
                     return Trees(wanted, reading, counted, KpiTemplates.ProposedTreesSheet);
 
                 case PdfValue.TotalTrees:
-                    return PdfFieldFill.Writing(wanted.Value, name, Whole(
-                        Counted(reading, counted, KpiTemplates.ExistingTreesSheet)
-                        + Counted(reading, counted, KpiTemplates.ProposedTreesSheet)), unit);
+                    return reading.SoftscapeRead
+                        ? PdfFieldFill.Writing(wanted.Value, name, Whole(
+                            Counted(reading, counted, KpiTemplates.ExistingTreesSheet)
+                            + Counted(reading, counted, KpiTemplates.ProposedTreesSheet)), unit)
+                        : PdfFieldFill.Blank(wanted.Value, name, NoSoftscapeRead(reading));
 
                 case PdfValue.ExistingShrubs:
                     // **THE SHRUBS SPECIES OF THE EXISTING PHASES, not the phase rows.** A phase
                     // row holds shrubs and ground cover added together, and DM-14's holds 468 of
                     // which none is shrubs.
-                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.ExistingShrubsSquareMetres, unit);
+                    return Shrubs(wanted, name, reading, shrubs, shrubs.ByPrefix.ExistingShrubsSquareMetres, unit);
 
                 case PdfValue.ProposedShrubs:
-                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.ProposedShrubsSquareMetres, unit);
+                    return Shrubs(wanted, name, reading, shrubs, shrubs.ByPrefix.ProposedShrubsSquareMetres, unit);
 
                 case PdfValue.TotalShrubs:
                     // **Existing plus proposed, on all three forms.** Never the group total row,
@@ -372,18 +398,32 @@ namespace RcrcGreen.Core.Kpi
                     // TOTAL Shrubs Area, so a tool matching by note would put the existing area
                     // into a box printed TOTAL in a client document. Bader confirmed with the
                     // client on 14 September that all three forms mean the sum of the two above.
-                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.TotalShrubsSquareMetres, unit);
+                    return Shrubs(wanted, name, reading, shrubs, shrubs.ByPrefix.TotalShrubsSquareMetres, unit);
 
                 case PdfValue.GroundCover:
                     // **IT IS PRINTED APART, BY THE PREFIX ITS SPECIES CARRY.** The group is
                     // SHRUBS AND GROUND COVER and every species name in it begins SHRUBS: or
                     // GROUND COVER:, measured over 156 plots on the 05:49 run.
-                    return Shrubs(wanted, name, shrubs, shrubs.ByPrefix.GroundCoverSquareMetres, unit);
+                    return Shrubs(wanted, name, reading, shrubs, shrubs.ByPrefix.GroundCoverSquareMetres, unit);
 
                 case PdfValue.Lawn:
-                    return lawn == null
-                        ? PdfFieldFill.Blank(wanted.Value, name, NoGroup(KpiMerge.LawnHeading))
-                        : PdfFieldFill.Writing(wanted.Value, name, Number(lawn.SquareMetres), unit);
+                    // **A SCHEDULE THAT WAS READ AND PRINTS NO SUCH GROUP IS A NOUGHT**, Bader's
+                    // decision of 15 September, off a run where 81 plots left this box blank
+                    // saying the schedule printed no GRASS group. A plot with that schedule read
+                    // and no GRASS group in it HAS no lawn, and a blank box on a form reads as a
+                    // number nobody filled in.
+                    //
+                    // **A PLOT WITH NO SUCH SCHEDULE AT ALL IS STILL BLANK**, because that is an
+                    // absence and not a measurement, which is the rule one line down.
+                    if (lawn != null)
+                    {
+                        return PdfFieldFill.Writing(wanted.Value, name, Number(lawn.SquareMetres), unit);
+                    }
+
+                    return reading.ShrubsAndLawnRead
+                        ? PdfFieldFill.WritingNoughtForAnAbsentGroup(
+                            wanted.Value, name, Number(0.0), unit, NoGroupIsNought(KpiMerge.LawnHeading))
+                        : PdfFieldFill.Blank(wanted.Value, name, NoScheduleRead(reading));
 
                 default:
                     return PdfFieldFill.Blank(wanted.Value, name,
@@ -435,8 +475,18 @@ namespace RcrcGreen.Core.Kpi
         /// cover 1,053. The field reads 0.001053 and not 0.000984.
         /// </summary>
         private static PdfFieldFill Greened(
-            PdfFormField wanted, bool workbookWritten, PdfWorkbookNumbers workbook, string unit)
+            PdfFormField wanted, PlotReading reading, bool workbookWritten,
+            PdfWorkbookNumbers workbook, string unit)
         {
+            // **THE CANOPY IS COUNTED OFF THE TREE ROWS, so no softscape schedule means no
+            // canopy, and a green cover computed without one is short by however many trees the
+            // plot really holds.** FM-07 wrote 0 here on the 13:32 run against 57 trees in the
+            // model. It is left empty and named for the same reason its three tree boxes are.
+            if (!reading.SoftscapeRead)
+            {
+                return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, NoSoftscapeRead(reading));
+            }
+
             string stopped = WhyNothingCanBeComputed(workbookWritten, workbook);
             if (stopped.Length > 0) return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, stopped);
 
@@ -502,6 +552,15 @@ namespace RcrcGreen.Core.Kpi
         private static PdfFieldFill Trees(
             PdfFormField wanted, PlotReading reading, CountedGroups counted, string sheet)
         {
+            // **A PLOT WITH NO SOFTSCAPE SCHEDULE HAS NO COUNT, AND NO COUNT IS NOT NOUGHT.**
+            // `Counted` walks the printed groups, and a plot that printed none adds nothing up
+            // to 0, which reads on the form exactly like a plot with no trees in it. FM-07 went
+            // to the team reading 0, 0 and 0 with 57 trees in the model.
+            if (!reading.SoftscapeRead)
+            {
+                return PdfFieldFill.Blank(wanted.Value, wanted.FieldName, NoSoftscapeRead(reading));
+            }
+
             return PdfFieldFill.Writing(
                 wanted.Value, wanted.FieldName, Whole(Counted(reading, counted, sheet)), wanted.Unit);
         }
@@ -534,11 +593,18 @@ namespace RcrcGreen.Core.Kpi
         /// own numbers disagree with the schedule behind it.
         /// </summary>
         private static PdfFieldFill Shrubs(
-            PdfFormField wanted, string name, PhaseSplit shrubs, double value, string unit)
+            PdfFormField wanted, string name, PlotReading reading, PhaseSplit shrubs, double value, string unit)
         {
             if (!shrubs.GroupFound)
             {
-                return PdfFieldFill.Blank(wanted.Value, name, NoGroup(KpiMerge.ShrubsHeading));
+                // **READ AND NO SUCH GROUP IS A NOUGHT, no schedule at all is a blank.** 15 plots
+                // of the 13:32 run left all four of these blank saying the schedule printed no
+                // SHRUBS & GROUND COVER group, and a plot whose schedule was read and holds none
+                // has no shrubs and no ground cover.
+                return reading.ShrubsAndLawnRead
+                    ? PdfFieldFill.WritingNoughtForAnAbsentGroup(
+                        wanted.Value, name, Number(0.0), unit, NoGroupIsNought(KpiMerge.ShrubsHeading))
+                    : PdfFieldFill.Blank(wanted.Value, name, NoScheduleRead(reading));
             }
 
             if (!shrubs.ByPrefix.AddsUp)
@@ -549,9 +615,49 @@ namespace RcrcGreen.Core.Kpi
             return PdfFieldFill.Writing(wanted.Value, name, Number(value), unit);
         }
 
-        private static string NoGroup(string heading)
+        /// <summary>
+        /// **A GROUP A READ SCHEDULE DOES NOT PRINT IS A NOUGHT AND SAYS SO.** Bader's decision
+        /// of 15 September. The working travels with the value so a nought on a form can be told
+        /// from a nought the schedule printed.
+        /// </summary>
+        public static string NoGroupIsNought(string heading)
         {
-            return "this plot's shrubs and lawn schedule printed no " + heading + " group";
+            return "the shrubs and lawn schedule was read and printed no " + heading
+                + " group, so this plot has none and the box is written 0";
+        }
+
+        /// <summary>
+        /// **NO SCHEDULE OF THAT KIND IS AN ABSENCE AND NEVER A NOUGHT.** Nothing was read, so
+        /// nothing says the plot has none, and a 0 on a form is a measurement a person would act
+        /// on. The names of every schedule found are said, because two of a kind and none of a
+        /// kind are different sentences about different models.
+        /// </summary>
+        public static string NoScheduleRead(PlotReading reading)
+        {
+            return reading.MoreThanOneShrubsAndLawn
+                ? "this plot holds " + reading.ShrubsAndLawnSchedules.Count
+                    + " shrubs and lawn schedules, " + string.Join(", ", reading.ShrubsAndLawnSchedules.ToArray())
+                    + ", and nothing says which is the real one, so none was read and this box is "
+                    + "left empty rather than written 0"
+                : "this plot holds no shrubs and lawn schedule, so nothing was read and this box "
+                    + "is left empty rather than written 0";
+        }
+
+        /// <summary>
+        /// **NO SOFTSCAPE SCHEDULE MEANS THE TREE COUNTS ARE UNKNOWN, NOT NOUGHT.** Measured on
+        /// the 13:32 run: FM-07 is on a sheet and on no schedule, its PDF read Existing Trees 0,
+        /// Proposed Trees 0 and TOTAL trees 0, and the model's own KPI% schedules list 57 trees
+        /// for it. Three noughts went to the team as a measurement of a plot nothing had read.
+        /// </summary>
+        public static string NoSoftscapeRead(PlotReading reading)
+        {
+            return reading.MoreThanOneSoftscape
+                ? "this plot holds " + reading.SoftscapeSchedules.Count + " softscape schedules, "
+                    + string.Join(", ", reading.SoftscapeSchedules.ToArray())
+                    + ", and nothing says which is the real one, so no tree was counted and this "
+                    + "box is left empty rather than written 0"
+                : "this plot holds no softscape schedule, so no tree was counted and this box is "
+                    + "left empty rather than written 0";
         }
 
         private static string Number(double value)

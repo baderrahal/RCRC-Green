@@ -86,16 +86,19 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("softscape, no schedule of that kind was read on this plot", water.Why);
             Assert.Contains("shrubs and lawn, no schedule of that kind was read on this plot", water.Why);
 
-            PdfLandedField ground = outcome.Emptied.Single(one => one.FieldName == "Ground Cover");
+            // **GROUND COVER IS NO LONGER ONE OF THE EMPTIED**, which is Bader's decision of 15
+            // September reversing this half of the test rather than the test being bent to pass.
+            // This plan's plot HOLDS a shrubs and lawn schedule and it printed no SHRUBS &
+            // GROUND COVER group, so the plot has none and the box is written 0.
+            Assert.DoesNotContain(outcome.Emptied, one => one.FieldName == "Ground Cover");
 
-            Assert.Equal(string.Empty, ground.Landed);
+            PdfLandedField ground = outcome.Landed.Single(one => one.FieldName == "Ground Cover");
 
-            // **GROUND COVER IS WRITTEN NOW WHERE THE GROUP WAS READ.** This plan's reading holds
-            // no shrubs and lawn group at all, so the box is blank because the group is absent
-            // rather than because the tool refuses to split one.
+            Assert.Equal("0", ground.Landed);
             Assert.Equal(
-                "this plot's shrubs and lawn schedule printed no " + KpiMerge.ShrubsHeading + " group",
-                ground.Why);
+                "the shrubs and lawn schedule was read and printed no "
+                + KpiMerge.ShrubsHeading + " group, so this plot has none and the box is written 0",
+                ground.Working);
         }
 
         /// <summary>
@@ -180,14 +183,18 @@ namespace RcrcGreen.Core.Tests.Kpi
             }
 
             // Counted by hand off the Roads table. Fourteen fields the tool names, and this plot
-            // writes seven of them: the UID, the report date, the road width, the length and the
-            // three tree counts. The contract reference makes eight written. The other seven of
-            // the fourteen are emptied, Total areas to be greened and the irrigation demand and
-            // the three shrub areas and the ground cover and the lawn, and Sidewalk makes eight
-            // emptied, which the tool names nowhere. Eight plus eight plus the two left alone is
-            // the eighteen text fields this form holds.
-            Assert.Equal(8, outcome.Landed.Count);
-            Assert.Equal(8, outcome.Emptied.Count);
+            // writes twelve of them: the UID, the report date, the road width, the length, the
+            // three tree counts, the three shrub areas, the ground cover and the lawn. The
+            // contract reference makes thirteen written. **Five of those twelve were emptied
+            // until Bader's decision of 15 September**, which is the reversal this round makes:
+            // this plot's shrubs and lawn schedule WAS read and printed neither group, so the
+            // four shrub boxes and the lawn are written 0 rather than left blank. The two still
+            // emptied of the fourteen are Total areas to be greened, whose workbook was not
+            // written, and the irrigation demand, whose plot holds no water reading, and
+            // Sidewalk makes three emptied, which the tool names nowhere. Thirteen plus three
+            // plus the two left alone is the eighteen text fields this form holds.
+            Assert.Equal(13, outcome.Landed.Count);
+            Assert.Equal(3, outcome.Emptied.Count);
             Assert.Equal(18, back.Count(one => one.IsText));
         }
 

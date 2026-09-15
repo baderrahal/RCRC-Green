@@ -284,7 +284,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Contains(
                 "== MATCHED SPECIES WHOSE HEIGHT OR DIAMETER IN REVIT DIFFERS FROM THE ROW'S (3) ==\r\n"
-                + "named and CHANGED NOTHING, the client's row keeps its own number\r\n"
+                + "named and CHANGED NOTHING, the workbook's row keeps its own number\r\n"
                 + "  2 of 3 matched species differ in a height, a diameter or both, and nothing was changed on any row\r\n",
                 report);
         }

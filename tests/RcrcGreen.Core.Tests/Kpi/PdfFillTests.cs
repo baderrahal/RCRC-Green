@@ -165,18 +165,151 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// A plot whose schedule printed no shrubs group at all leaves all three fields blank and
-        /// names it. **An absence is not a nought.**
+        /// **A SCHEDULE THAT WAS READ AND PRINTS NO SHRUBS GROUP WRITES NOUGHT IN ALL FOUR.**
+        /// Bader's decision of 15 September, off the 13:32 run where 15 plots left all four of
+        /// these blank saying the schedule printed no SHRUBS & GROUND COVER group.
+        ///
+        /// **THE SUBJECT OF THIS TEST IS REVERSED BY THAT DECISION.** It read the absence of a
+        /// group as an absence of a measurement. A schedule that was READ and holds no such
+        /// group is a plot that has none, and a blank box on a form reads as a number nobody
+        /// filled in.
         /// </summary>
         [Fact]
-        public void APlotWithNoShrubsGroupLeavesAllThreeBlankAndNamesIt()
+        public void AReadScheduleWithNoShrubsGroupWritesNoughtInAllFour()
         {
             PdfPlan plan = Plan(Plot("DM-16"));
 
-            foreach (PdfValue value in new[] { PdfValue.ExistingShrubs, PdfValue.ProposedShrubs, PdfValue.TotalShrubs })
+            foreach (PdfValue value in new[]
+            {
+                PdfValue.ExistingShrubs, PdfValue.ProposedShrubs, PdfValue.TotalShrubs, PdfValue.GroundCover
+            })
+            {
+                Assert.Equal("0", Wrote(plan, value));
+
+                Assert.Equal(
+                    "the shrubs and lawn schedule was read and printed no SHRUBS & GROUND COVER "
+                    + "group, so this plot has none and the box is written 0",
+                    plan.Fields.Single(one => one.Value == value).Working);
+            }
+        }
+
+        /// <summary>
+        /// **AND A PLOT WITH NO SUCH SCHEDULE AT ALL IS STILL BLANK.** Nothing was read, so
+        /// nothing says the plot has none, and a 0 on a form is a measurement a person acts on.
+        /// </summary>
+        [Fact]
+        public void APlotWithNoShrubsAndLawnScheduleLeavesTheFourBlankAndNamesIt()
+        {
+            PdfPlan plan = Plan(CreateFixture.Plot(
+                "DM-16", shrubsAndLawnRead: false, uid2: "ANH-008-MO-100006"));
+
+            foreach (PdfValue value in new[]
+            {
+                PdfValue.ExistingShrubs, PdfValue.ProposedShrubs, PdfValue.TotalShrubs, PdfValue.GroundCover
+            })
             {
                 Assert.Equal(
-                    "this plot's shrubs and lawn schedule printed no SHRUBS & GROUND COVER group",
+                    "this plot holds no shrubs and lawn schedule, so nothing was read and this "
+                    + "box is left empty rather than written 0",
+                    Blank(plan, value));
+            }
+        }
+
+        /// <summary>
+        /// **A READ SCHEDULE WITH NO GRASS GROUP WRITES THE LAWN BOX 0.** 81 plots of the 13:32
+        /// run left it blank saying the schedule printed no GRASS group.
+        /// </summary>
+        [Fact]
+        public void AReadScheduleWithNoGrassGroupWritesTheLawnBoxNought()
+        {
+            PdfPlan plan = Plan(Plot("DM-16"));
+            PdfFieldFill lawn = plan.Fields.Single(one => one.Value == PdfValue.Lawn);
+
+            // **THE PLOT IS IN THE MESSAGE**, because a failure reading `expected 0, got empty`
+            // says nothing about which plot went out with a blank Lawn box.
+            Assert.True(
+                lawn.Written,
+                "DM-16's shrubs and lawn schedule was read and printed no GRASS group, and the "
+                + "Lawn box was left blank rather than written 0. The blank said: " + lawn.Why);
+
+            Assert.Equal("0", Wrote(plan, PdfValue.Lawn));
+            Assert.Equal(
+                "the shrubs and lawn schedule was read and printed no GRASS group, so this plot "
+                + "has none and the box is written 0",
+                lawn.Working);
+            Assert.True(lawn.NoughtForAnAbsentGroup);
+        }
+
+        /// <summary>
+        /// **AND A PLOT WITH NO SUCH SCHEDULE LEAVES THE LAWN BOX BLANK.**
+        /// </summary>
+        [Fact]
+        public void APlotWithNoShrubsAndLawnScheduleLeavesTheLawnBoxBlank()
+        {
+            PdfPlan plan = Plan(CreateFixture.Plot(
+                "DM-16", shrubsAndLawnRead: false, uid2: "ANH-008-MO-100006"));
+
+            Assert.Equal(
+                "this plot holds no shrubs and lawn schedule, so nothing was read and this box "
+                + "is left empty rather than written 0",
+                Blank(plan, PdfValue.Lawn));
+        }
+
+        /// <summary>
+        /// **TWO SCHEDULES OF A KIND IS A DIFFERENT SENTENCE FROM NONE**, and it names them, so a
+        /// person is not sent looking for a schedule that is there twice.
+        /// </summary>
+        [Fact]
+        public void TwoShrubsAndLawnSchedulesSaySoRatherThanSayingThereIsNone()
+        {
+            PdfPlan plan = Plan(CreateFixture.Plot(
+                "DM-16", uid2: "ANH-008-MO-100006",
+                shrubsAndLawnSchedules: new[]
+                {
+                    "DM-16-(600) SHRUBS AND LAWN SCHEDULE",
+                    "DM-16-(600) SHRUBS AND LAWN SCHEDULE copy 1"
+                }));
+
+            string why = Blank(plan, PdfValue.Lawn);
+
+            Assert.Contains("this plot holds 2 shrubs and lawn schedules", why);
+            Assert.Contains("DM-16-(600) SHRUBS AND LAWN SCHEDULE copy 1", why);
+            Assert.Contains("left empty rather than written 0", why);
+        }
+
+        /// <summary>
+        /// **A PLOT WITH NO SOFTSCAPE SCHEDULE LEAVES ITS THREE TREE BOXES BLANK AND NAMES WHY.**
+        /// Measured on the 13:32 run: FM-07 is on a sheet and on no schedule, its PDF read
+        /// Existing Trees 0, Proposed Trees 0 and TOTAL trees 0, and the model's own KPI%
+        /// schedules list 57 trees for it. Three noughts went to the team as a measurement of a
+        /// plot nothing had read.
+        /// </summary>
+        [Fact]
+        public void APlotWithNoSoftscapeScheduleLeavesTheTreeBoxesBlankAndNamesWhy()
+        {
+            PdfPlan plan = Plan(CreateFixture.Plot(
+                "FM-07", softscapeRead: false, uid2: "ANH-008-MO-100006"));
+
+            foreach (PdfValue value in new[]
+            {
+                PdfValue.ExistingTrees, PdfValue.ProposedTrees, PdfValue.TotalTrees,
+                PdfValue.TotalAreasToBeGreened
+            })
+            {
+                PdfFieldFill field = plan.Fields.Single(one => one.Value == value);
+
+                // **THE PLOT IS IN THE MESSAGE**, because a failure reading `expected a reason,
+                // got 0` says nothing about which plot went out with three noughts.
+                Assert.False(
+                    field.Written,
+                    "FM-07 holds no softscape schedule and " + value + " was written '"
+                    + field.Text + "'. Nothing counted a tree on this plot and the model's own "
+                    + "KPI% schedules list 57 for it, so a nought here is a measurement nobody "
+                    + "made.");
+
+                Assert.Equal(
+                    "this plot holds no softscape schedule, so no tree was counted and this box "
+                    + "is left empty rather than written 0",
                     Blank(plan, value));
             }
         }

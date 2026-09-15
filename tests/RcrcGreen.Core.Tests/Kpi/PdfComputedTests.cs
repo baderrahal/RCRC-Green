@@ -374,8 +374,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "the workbook's canopy column is not the one this tool works out. "
                 + "Tree List - Proposed row 7, a row this run wrote in: no cell on it carries "
-                + "IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)). The row holds "
-                + "L7 = IF(ISBLANK(K7),\" \",ROUND(PI()*(K7/2)^2,0)), M7 = IF(ISBLANK(B7),\" \",L7*B7).",
+                + "IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)). No row of Tree List - Proposed "
+                + "carries the canopy formula anywhere, so nothing says which column it "
+                + "belongs in on this one. The row holds "
+                + "L7 = IF(ISBLANK(K7),\" \",ROUND(PI()*(K7/2)^2,0)), M7 = IF(ISBLANK(B7),\" \",L7*B7)"
+                + ", B7 holds 19 and no formula, D7 holds BAUHINIA PURPUREA and no formula, "
+                + "I7 holds 6 and no formula, J7 holds 5 and no formula, K7 holds 5 and no "
+                + "formula, and every other cell of it is empty.",
                 drifted.Why);
 
             PdfPlan plan = Plan("EP-05", KpiTemplates.ExistingParks,
@@ -408,16 +413,21 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Equal(
                 "Tree List - Proposed L7 = IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)), "
-                + "a row the client's list already held",
+                + "a row the template's own list already held",
                 Assert.Single(agreeing.Read));
 
             ArithmeticCheck drifted = WorkbookArithmetic.Canopy(Formulas("K"), canopy, columns);
 
             Assert.Equal(
                 "the workbook's canopy column is not the one this tool works out. "
-                + "Tree List - Proposed row 7, a row the client's list already held: "
-                + "no cell on it carries IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)). The row holds "
-                + "L7 = IF(ISBLANK(K7),\" \",ROUND(PI()*(K7/2)^2,0)), M7 = IF(ISBLANK(B7),\" \",L7*B7).",
+                + "Tree List - Proposed row 7, a row the template's own list already held: "
+                + "no cell on it carries IF(ISBLANK(J7),\" \",ROUND(PI()*(J7/2)^2,0)). No row of Tree List - Proposed "
+                + "carries the canopy formula anywhere, so nothing says which column it "
+                + "belongs in on this one. The row holds "
+                + "L7 = IF(ISBLANK(K7),\" \",ROUND(PI()*(K7/2)^2,0)), M7 = IF(ISBLANK(B7),\" \",L7*B7)"
+                + ", B7 holds 19 and no formula, D7 holds BAUHINIA PURPUREA and no formula, "
+                + "I7 holds 6 and no formula, J7 holds 5 and no formula, K7 holds 5 and no "
+                + "formula, and every other cell of it is empty.",
                 drifted.Why);
         }
 

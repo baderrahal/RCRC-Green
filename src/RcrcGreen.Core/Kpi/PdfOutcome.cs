@@ -11,8 +11,10 @@ namespace RcrcGreen.Core.Kpi
     {
         public PdfLandedField(
             PdfValue value, string fieldName, string sent, string landed,
-            string unit = null, string working = null, string why = null)
+            string unit = null, string working = null, string why = null,
+            bool noughtForAnAbsentGroup = false)
         {
+            NoughtForAnAbsentGroup = noughtForAnAbsentGroup;
             Why = why ?? string.Empty;
             Value = value;
             Unit = unit ?? string.Empty;
@@ -50,6 +52,13 @@ namespace RcrcGreen.Core.Kpi
         /// than an oversight. Empty on a field this run wrote a value into.
         /// </summary>
         public string Why { get; }
+
+        /// <summary>
+        /// Whether this field was written 0 because the plot's shrubs and lawn schedule was read
+        /// and printed no such group. **Carried rather than read back out of the working**, so
+        /// the glance counts a decision and not a phrase.
+        /// </summary>
+        public bool NoughtForAnAbsentGroup { get; }
 
         public string Sent { get; }
 

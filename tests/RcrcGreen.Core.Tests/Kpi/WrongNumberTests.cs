@@ -605,7 +605,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             string report = KpiCreateReport.Write(run, new DateTime(2026, 9, 14, 9, 18, 0));
 
             Assert.Contains(
-                "  plot | chosen type | how it was chosen | against the client's note | "
+                "  plot | chosen type | how it was chosen | against the area cell's note | "
                 + "raw square feet | written square metres | as the model prints it | offered",
                 report);
 
@@ -620,8 +620,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "the type the note names | ",
                 report);
             Assert.Contains(
-                "  The client's note for the area cell names RCRC_OUT OF SCOPE (PRESENTATION). "
-                + "One region holding an area still decides",
+                "  the area cell's own note, REVIT 00 LINK / ID FILLED REGION "
+                + "RCRC_OUT OF SCOPE (PRESENTATION) / PRX_Intervention Area, names "
+                + "RCRC_OUT OF SCOPE (PRESENTATION). One region holding an area still decides",
                 report);
         }
 

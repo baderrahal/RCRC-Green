@@ -28,7 +28,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = LinesOf(CreateFixture.Run());
 
             Assert.Contains(
-                "  plot | chosen type | how it was chosen | against the client's note | "
+                "  plot | chosen type | how it was chosen | against the area cell's note | "
                 + "raw square feet | written square metres | as the model prints it | offered",
                 lines);
 

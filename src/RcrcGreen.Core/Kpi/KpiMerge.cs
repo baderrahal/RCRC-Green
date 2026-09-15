@@ -572,9 +572,22 @@ namespace RcrcGreen.Core.Kpi
             foreach (PlotReading reading in Held(readings))
             {
                 GroupSubtotal subtotal = reading.SubtotalHeaded(heading);
-                if (subtotal == null) continue;
+                if (subtotal != null)
+                {
+                    perPlot.Add(new PlotNumber(reading.PlotId, subtotal.SquareMetres));
+                    continue;
+                }
 
-                perPlot.Add(new PlotNumber(reading.PlotId, subtotal.SquareMetres));
+                // **A SHRUBS AND LAWN SCHEDULE THAT WAS READ AND PRINTED NO SUCH GROUP IS A
+                // NOUGHT**, Bader's decision of 15 September. Both headings this method is ever
+                // asked for come off that one schedule, so one flag answers for both. On the
+                // 13:32 run 81 plots left the workbook's Lawn cell unwritten and 15 left its
+                // Planting cell unwritten, each reported as NOT FOUND, on plots whose schedule
+                // had been read from end to end and holds no such group.
+                //
+                // **A PLOT WITH NO SUCH SCHEDULE IS STILL LEFT OUT**, because nothing read it
+                // and an absence is not a measurement.
+                if (reading.ShrubsAndLawnRead) perPlot.Add(new PlotNumber(reading.PlotId, 0.0));
             }
 
             return Totalled.Adding(perPlot);

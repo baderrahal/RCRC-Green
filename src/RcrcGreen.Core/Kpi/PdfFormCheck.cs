@@ -155,7 +155,7 @@ namespace RcrcGreen.Core.Kpi
             {
                 if (held.Any(one => one.IsText && Same(one.Value, value))) continue;
 
-                missing.Add("no field holds the client's own " + Shown(value)
+                missing.Add("no field holds " + Shown(value)
                     + ", which is how this tool finds the header it must not clear");
             }
 

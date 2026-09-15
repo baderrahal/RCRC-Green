@@ -185,6 +185,37 @@ namespace RcrcGreen.Core.Kpi
             "the workbook holds this name on more than one row, so nothing can say which";
 
         /// <summary>
+        /// **THE SAME REFUSAL WITH THE FILE, THE SHEET AND EVERY CELL HOLDING THE NAME.**
+        /// Measured on the 13:32 run: FP-17 36, FP-21 25 and FP-20 5 AZADIRACHTA INDICA all
+        /// went nowhere on this, and the line said only that there was more than one row, so
+        /// nobody could open the template at the rows and fix it. The cells are column D, which
+        /// is where the list's names live.
+        /// </summary>
+        public static string OnMoreThanOneRow(
+            SpeciesList list, string sheetName, IEnumerable<SpeciesListRow> holding)
+        {
+            string[] cells = (holding ?? Enumerable.Empty<SpeciesListRow>())
+                .OrderBy(one => one.Row)
+                .Select(one => KpiTemplates.BotanicalColumn
+                    + one.Row.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .ToArray();
+
+            return MoreThanOneRow + " and the count was not written: "
+                + (list == null ? sheetName : list.Where(sheetName))
+                + " holds it in " + AllOf(cells);
+        }
+
+        /// <summary>D22 and D84, or D4, D5 and D6.</summary>
+        private static string AllOf(string[] cells)
+        {
+            if (cells.Length == 0) return "no cell";
+            if (cells.Length == 1) return cells[0];
+
+            return string.Join(", ", cells.Take(cells.Length - 1).ToArray())
+                + " and " + cells[cells.Length - 1];
+        }
+
+        /// <summary>
         /// Said when the sheet's list is full. Written rather than assumed: what fits goes in
         /// and the rest are named, because a quantity dropped in silence is the fault this whole
         /// section exists to prevent.
@@ -337,7 +368,7 @@ namespace RcrcGreen.Core.Kpi
                 if (holding.Count > 1)
                 {
                     found.Add(new SpeciesMatch(species, sheet.SheetName, 0, holding[0].BotanicalName,
-                        MoreThanOneRow));
+                        OnMoreThanOneRow(list, sheet.SheetName, holding), false, false, list));
                     continue;
                 }
 
@@ -434,16 +465,26 @@ namespace RcrcGreen.Core.Kpi
                 return new SpeciesMatch(species, sheetName, 0, string.Empty, NotSized(species), false, false, list);
             }
 
+            // **ONLY AN EMPTY ROW THE WORKBOOK CAN COMPUTE A CANOPY OFF.** Bader's decision of
+            // 15 September: FUTURE PARKS Tree List - Proposed row 85 holds C85, M85 and O85 and
+            // no canopy formula, and CONOCARPUS LANCIFOLIUS went into it on FP-23, which is what
+            // blanked that plot's Total areas to be greened and its canopy percentage. The next
+            // usable row the total reaches is taken instead, and where none is usable nothing is
+            // written and every row checked is named.
             Queue<int> rows;
             if (!free.TryGetValue(sheetName, out rows))
             {
-                rows = new Queue<int>(list.EmptyRows);
+                rows = new Queue<int>(list.UsableEmptyRows);
                 free[sheetName] = rows;
             }
 
             if (rows.Count == 0)
             {
-                return new SpeciesMatch(species, sheetName, 0, string.Empty, NoEmptyRowLeft, false, false, list);
+                return new SpeciesMatch(species, sheetName, 0, string.Empty,
+                    list.UsableEmptyRows.Count == 0 && list.EmptyRows.Count > 0
+                        ? list.NoUsableEmptyRow(sheetName, list.DiameterColumn)
+                        : NoEmptyRowLeft,
+                    false, false, list);
             }
 
             return new SpeciesMatch(species, sheetName, rows.Dequeue(), string.Empty, WrittenIn, true, false, list);

@@ -194,6 +194,20 @@ namespace RcrcGreen.Core.Kpi
             return "IF(ISBLANK(" + cell + "),\" \",ROUND(PI()*(" + cell + "/2)^2,0))";
         }
 
+        /// <summary>
+        /// Whether one formula IS the canopy formula for its own row. **One rule, asked by the
+        /// guard that checks a written row and by the reader that decides whether an empty row
+        /// may be written into at all.** Two copies of this comparison would be two answers to
+        /// one question, which is the shape this repository has paid for eight times.
+        /// </summary>
+        public static bool IsTheCanopyFormula(string text, string diameterColumn, int row)
+        {
+            if (string.IsNullOrWhiteSpace(diameterColumn) || row < 1) return false;
+
+            return string.Equals(
+                Bare(text), Bare(CanopyColumn(diameterColumn, row)), StringComparison.OrdinalIgnoreCase);
+        }
+
         public const string NoWorkbookRead =
             "no workbook was read, so the canopy column could not be checked";
 
@@ -208,7 +222,8 @@ namespace RcrcGreen.Core.Kpi
         /// number that reads as complete and is wrong.
         /// </summary>
         public static ArithmeticCheck Canopy(
-            FormulaCheck formulas, CanopyTotal canopy, IDictionary<string, string> diameterColumns)
+            FormulaCheck formulas, CanopyTotal canopy, IDictionary<string, string> diameterColumns,
+            string workbookName = null)
         {
             if (formulas == null || !formulas.WasChecked) return ArithmeticCheck.NotChecked(NoWorkbookRead);
             if (canopy == null || canopy.Rows.Count == 0) return ArithmeticCheck.WithNothingToCheck(NoRowsWritten);
@@ -222,8 +237,8 @@ namespace RcrcGreen.Core.Kpi
                 if (diameterColumns == null || !diameterColumns.TryGetValue(row.SheetName, out column)
                     || string.IsNullOrWhiteSpace(column))
                 {
-                    differ.Add(Of(row) + ": no diameter column was chosen for this sheet, so the "
-                        + "canopy formula it should carry cannot be worked out");
+                    differ.Add(Of(row, workbookName) + ": no diameter column was chosen for this "
+                        + "sheet, so the canopy formula it should carry cannot be worked out");
                     continue;
                 }
 
@@ -234,7 +249,7 @@ namespace RcrcGreen.Core.Kpi
                     && RowOf(one.Cell) == row.RowNumber).ToList();
 
                 FormulaCell found = onTheRow.FirstOrDefault(
-                    one => string.Equals(Bare(one.Text), Bare(wanted), StringComparison.OrdinalIgnoreCase));
+                    one => IsTheCanopyFormula(one.Text, column, row.RowNumber));
 
                 if (found != null)
                 {
@@ -243,11 +258,15 @@ namespace RcrcGreen.Core.Kpi
                     continue;
                 }
 
-                differ.Add(Of(row) + ": no cell on it carries " + wanted + ". "
-                    + (onTheRow.Count == 0
-                        ? "The row holds no formula at all."
-                        : "The row holds " + string.Join(", ",
-                            onTheRow.Select(one => one.Cell + " = " + one.Text).ToArray()) + "."));
+                // **THE ROW'S OWN CELLS ARE NAMED, formulas and typed values alike.** Saying
+                // only that no cell carries the canopy formula leaves a person opening the
+                // workbook to find out what the row does carry, which is the whole question.
+                List<TypedCell> typed = formulas.TypedCells.Where(one =>
+                    string.Equals(one.SheetName, row.SheetName, StringComparison.OrdinalIgnoreCase)
+                    && RowOf(one.Cell) == row.RowNumber).ToList();
+
+                differ.Add(Of(row, workbookName) + ": no cell on it carries " + wanted + ". "
+                    + TheCanopyCell(formulas, column, row, typed) + " " + Holding(onTheRow, typed));
             }
 
             return differ.Count == 0
@@ -263,10 +282,41 @@ namespace RcrcGreen.Core.Kpi
         /// held is the client's file computing its canopy another way.** The two need different
         /// answers, and until this line the message said the same thing about both.
         /// </summary>
-        private static string Of(CanopyRow row)
+        /// <summary>
+        /// **THE FILE, THE SHEET AND THE ROW**, so a line about a row names the thing the team
+        /// has to open rather than whose file it is.
+        /// </summary>
+        private static string Of(CanopyRow row, string workbookName)
         {
-            return row.SheetName + " row " + row.RowNumber.ToString(CultureInfo.InvariantCulture)
+            string file = (workbookName ?? string.Empty).Trim();
+
+            return (file.Length == 0 ? string.Empty : file + ", ")
+                + row.SheetName + " row " + row.RowNumber.ToString(CultureInfo.InvariantCulture)
                 + ", " + row.Whose;
+        }
+
+        /// <summary>
+        /// What the row really holds, cell by cell: the formulas with their text, the cells
+        /// somebody typed a value into with no formula behind them, and the plain statement that
+        /// everything else on the row is empty. A cell absent from the sheet's own data is
+        /// empty, so that last clause is a reading and not a guess.
+        /// </summary>
+        private static string Holding(IEnumerable<FormulaCell> onTheRow, IEnumerable<TypedCell> typed)
+        {
+            var said = new List<string>();
+
+            said.AddRange((onTheRow ?? Enumerable.Empty<FormulaCell>())
+                .OrderBy(one => ColumnOf(one.Cell))
+                .Select(one => one.Cell + " = " + one.Text));
+
+            said.AddRange((typed ?? Enumerable.Empty<TypedCell>())
+                .OrderBy(one => ColumnOf(one.Cell))
+                .Select(one => one.Cell + " holds " + one.Text + " and no formula"));
+
+            return said.Count == 0
+                ? "Every cell of the row is empty."
+                : "The row holds " + string.Join(", ", said.ToArray())
+                    + ", and every other cell of it is empty.";
         }
 
         public const string NoGreenCoverLabel =
@@ -432,6 +482,71 @@ namespace RcrcGreen.Core.Kpi
         /// it spaced read as one text. The one string literal in it is a single space on both
         /// sides of the comparison, so it comes out of both alike.
         /// </summary>
+        /// <summary>
+        /// **THE ONE CELL THAT WOULD HAVE CARRIED THE CANOPY, NAMED.** Which column that is, is
+        /// read off the sheet's OWN other rows: the column a canopy formula really sits in
+        /// somewhere on this sheet. So the line says L85 is empty, or L85 holds 50 and no
+        /// formula, rather than leaving a person to work out which cell is missing.
+        ///
+        /// **WHERE NO ROW OF THE SHEET CARRIES ONE, NOTHING IS NAMED AND THAT IS SAID.** A
+        /// column guessed from a letter would be the fall back to a position this repository
+        /// forbids everywhere else.
+        ///
+        /// The cell right of it, which multiplies the canopy by the count, is NOT named. The
+        /// tool holds no record of that column's formula, so naming it would be a rule nobody
+        /// measured. It is an open question in the log.
+        /// </summary>
+        private static string TheCanopyCell(
+            FormulaCheck formulas, string diameterColumn, CanopyRow row, IEnumerable<TypedCell> typed)
+        {
+            string column = CanopyColumnOf(formulas, diameterColumn, row.SheetName);
+            if (column.Length == 0)
+            {
+                return "No row of " + row.SheetName + " carries the canopy formula anywhere, so "
+                    + "nothing says which column it belongs in on this one.";
+            }
+
+            string cell = column + row.RowNumber.ToString(CultureInfo.InvariantCulture);
+            TypedCell holding = (typed ?? Enumerable.Empty<TypedCell>())
+                .FirstOrDefault(one => string.Equals(one.Cell, cell, StringComparison.OrdinalIgnoreCase));
+
+            return "On " + row.SheetName + " the canopy formula sits in column " + column + ", and "
+                + (holding == null
+                    ? cell + " is empty."
+                    : cell + " holds " + holding.Text + " and no formula.");
+        }
+
+        /// <summary>
+        /// The column a canopy formula really sits in on this sheet, off any row that carries
+        /// one, or empty where no row does.
+        /// </summary>
+        private static string CanopyColumnOf(FormulaCheck formulas, string diameterColumn, string sheetName)
+        {
+            foreach (FormulaCell one in formulas.AllFormulas)
+            {
+                if (!string.Equals(one.SheetName, sheetName, StringComparison.OrdinalIgnoreCase)) continue;
+
+                CellRef where = CellRef.TryParse(one.Cell);
+                if (where == null) continue;
+                if (!IsTheCanopyFormula(one.Text, diameterColumn, where.Row)) continue;
+
+                return where.Column.ToUpperInvariant();
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// The cell's column as a number, so a row's cells are named left to right rather than
+        /// in whatever order the sheet's own data happens to hold them.
+        /// </summary>
+        private static int ColumnOf(string cell)
+        {
+            CellRef where = CellRef.TryParse(cell);
+
+            return where == null ? int.MaxValue : where.ColumnNumber;
+        }
+
         private static string Bare(string text)
         {
             return new string((text ?? string.Empty).Where(one => !char.IsWhiteSpace(one)).ToArray());

@@ -440,7 +440,7 @@ namespace RcrcGreen.Revit.Kpi
                 Content = PaneLabel.Escaped("Browse"),
                 Padding = PanelMetrics.CellPad,
                 Margin = PanelMetrics.Gap,
-                ToolTip = "Point at the folder holding the client's GRP KPI Checklist templates. "
+                ToolTip = "Point at the folder holding the GRP KPI Checklist template workbooks. "
                     + "It is remembered beside the installed add-in."
             };
             browse.Click += (sender, e) => BrowseForTheFolder();
@@ -629,7 +629,7 @@ namespace RcrcGreen.Revit.Kpi
 
             _templates.Children.Add(BrowsedLine(
                 "Forms folder", folder, "No folder set",
-                "Point at the folder holding the client's three Projects Basic Data forms. Each "
+                "Point at the folder holding the three Projects Basic Data forms. Each "
                     + "plot gets one PDF beside its workbook, on the form its plot prefix names. "
                     + "It is remembered beside the installed add-in.",
                 BrowseForTheFormsFolder));
@@ -643,7 +643,7 @@ namespace RcrcGreen.Revit.Kpi
         {
             using (var picking = new System.Windows.Forms.FolderBrowserDialog())
             {
-                picking.Description = "The folder holding the client's Projects Basic Data forms";
+                picking.Description = "The folder holding the Projects Basic Data forms";
 
                 string already = FormsFolder.Read();
                 if (already.Length > 0) picking.SelectedPath = already;

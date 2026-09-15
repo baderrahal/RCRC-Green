@@ -28,6 +28,68 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(lawn.Adds);
         }
 
+        /// <summary>
+        /// **A READ SCHEDULE THAT PRINTED NO SUCH GROUP GIVES THE WORKBOOK CELL 0.** Bader's
+        /// decision of 15 September. On the 13:32 run 81 plots left the workbook's Lawn cell
+        /// unwritten and 15 left its Planting cell unwritten, each reported as NOT FOUND, on
+        /// plots whose shrubs and lawn schedule had been read from end to end. A cell nobody
+        /// wrote reads as a number nobody has worked out yet.
+        /// </summary>
+        [Fact]
+        public void APlotWhoseReadScheduleHoldsNeitherGroupCountsNoughtForBoth()
+        {
+            PlotReading plot = CreateFixture.Plot("MM-08", subtotals: new GroupSubtotal[0]);
+
+            Totalled shrubs = KpiMerge.Shrubs(new[] { plot });
+            Totalled lawn = KpiMerge.Lawn(new[] { plot });
+
+            Assert.Equal(0.0, shrubs.Total);
+            Assert.Equal(0.0, lawn.Total);
+
+            // **THE PLOT IS IN THE WORKING**, which is what tells the cell apart from the one
+            // this run had nothing at all to say about: an empty PerPlot is what the plan
+            // refuses to write from.
+            Assert.Equal(new[] { "MM-08" }, shrubs.PerPlot.Select(one => one.PlotId));
+            Assert.Equal(new[] { "MM-08" }, lawn.PerPlot.Select(one => one.PlotId));
+        }
+
+        /// <summary>
+        /// **AND A PLOT WITH NO SUCH SCHEDULE AT ALL IS STILL LEFT OUT.** Nothing read it, so
+        /// nothing says it holds none, and the cell stays unwritten with its reason rather than
+        /// carrying a 0 a person would act on.
+        /// </summary>
+        [Fact]
+        public void APlotWithNoShrubsAndLawnScheduleIsLeftOutOfBothTotals()
+        {
+            PlotReading plot = CreateFixture.Plot(
+                "FM-07", subtotals: new GroupSubtotal[0], shrubsAndLawnRead: false);
+
+            Assert.Empty(KpiMerge.Shrubs(new[] { plot }).PerPlot);
+            Assert.Empty(KpiMerge.Lawn(new[] { plot }).PerPlot);
+        }
+
+        /// <summary>
+        /// One plot holding a group and one holding none add to the one plot's number, with
+        /// both plots in the working. 30 plus 0 is 30, written out by hand.
+        /// </summary>
+        [Fact]
+        public void APlotHoldingNoGroupAddsNoughtBesideOneThatHoldsOne()
+        {
+            var plots = new[]
+            {
+                CreateFixture.Plot("DM-16", subtotals: new[]
+                {
+                    CreateFixture.Subtotal(KpiMerge.ShrubsHeading, 30.0, 20)
+                }),
+                CreateFixture.Plot("MM-08", subtotals: new GroupSubtotal[0])
+            };
+
+            Totalled shrubs = KpiMerge.Shrubs(plots);
+
+            Assert.Equal(30.0, shrubs.Total);
+            Assert.Equal(new[] { "DM-16", "MM-08" }, shrubs.PerPlot.Select(one => one.PlotId));
+        }
+
         [Fact]
         public void TwoPlotsAddTheirShrubsAndTheirLawnSeparately()
         {

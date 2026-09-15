@@ -573,9 +573,19 @@ namespace RcrcGreen.Revit.Kpi
         /// twenty minutes that end with one sentence are not. Every exception type is caught on
         /// purpose, because a partial report that names the bad plot is the point.
         ///
-        /// **What is already on disk when it throws stays on disk**, so the plot's row says the
-        /// write threw rather than claiming nothing was written, and the folder count beside it
-        /// still counts the folder that was made.
+        /// **What is already on disk when it throws stays on disk**, and the row NAMES IT.
+        /// Bader's decision of 15 September: nothing is deleted after a crash, the row says
+        /// which step threw and which of the plot's own files the disk really holds, and the
+        /// folder flag is read off the disk rather than handed in as false. A run over 154 plots
+        /// that throws on one leaves that plot's folder made and perhaps a half written workbook
+        /// beside it, and deleting them would destroy the only evidence about what went wrong.
+        ///
+        /// The step is taken off <see cref="PlotWriteTrail"/>, which <see cref="OnePlot"/> moves
+        /// on as it reaches each one, so the row says where the write really got to rather than
+        /// working it out backwards from what is on disk.
+        ///
+        /// **NOTHING HERE HAS BEEN RUN IN REVIT.** The words and the row are Core's and have
+        /// tests. This wiring has not, and cannot be, from this session.
         /// </summary>
         private void GuardedWrite(
             Document document,
@@ -598,21 +608,86 @@ namespace RcrcGreen.Revit.Kpi
             List<string> wrote,
             List<string> why)
         {
+            var trail = new PlotWriteTrail();
+
             try
             {
                 OnePlot(
                     document, asked, pick, counted, held, location, existing, proposed, labels,
                     computed, areaUnit, source, readSeconds, root, streets,
-                    runs, plotOutcomes, wrote, why);
+                    runs, plotOutcomes, wrote, why, trail);
             }
             catch (Exception failed)
             {
-                string refusal = "the write threw and nothing more was written for this plot. "
-                    + failed.GetType().Name + ": " + failed.Message;
+                string refusal = PlotCrash.Row(
+                    trail.Step, failed.GetType().Name, failed.Message, trail.OnDisk());
 
                 why.Add(held.PlotId + ": " + refusal);
+
+                // **THE FOLDER FLAG IS THE DISK'S ANSWER.** It was handed false here whatever
+                // was on disk, so a press that made the folder and threw a step later counted
+                // one folder fewer than the tree really holds.
                 plotOutcomes.Add(PlotOutcome.WroteNothing(
-                    held.PlotId, pick.Template, PlotWorkbookPath.Refused(refusal), false, refusal));
+                    held.PlotId, pick.Template,
+                    trail.Where ?? PlotWorkbookPath.Refused(refusal),
+                    trail.FolderExists(),
+                    refusal));
+            }
+        }
+
+        /// <summary>
+        /// Where one plot's write got to, and the paths it was going to use, recorded AS THEY
+        /// ARE REACHED. A step worked out afterwards from what is on disk is a guess, and this
+        /// repository has paid for that shape before.
+        ///
+        /// It lives in the Revit project because only this side touches the disk. Everything it
+        /// is printed through is Core's and has tests.
+        /// </summary>
+        private sealed class PlotWriteTrail
+        {
+            public CreateStep Step { get; private set; } = CreateStep.BeforeAnythingWasWritten;
+
+            public PlotWorkbookPath Where { get; private set; }
+
+            public string PdfPath { get; private set; } = string.Empty;
+
+            public void Reached(CreateStep step)
+            {
+                Step = step ?? Step;
+            }
+
+            public void Filing(PlotWorkbookPath where)
+            {
+                Where = where;
+            }
+
+            public void WritingThePdf(string path)
+            {
+                PdfPath = path ?? string.Empty;
+                Step = CreateStep.ThePdf;
+            }
+
+            public bool FolderExists()
+            {
+                return Where != null && Where.FolderPath.Length > 0 && Directory.Exists(Where.FolderPath);
+            }
+
+            /// <summary>
+            /// Every file of this plot's own, with whether the disk holds it, read at the moment
+            /// the row is built rather than remembered from earlier.
+            /// </summary>
+            public IReadOnlyList<CrashFile> OnDisk()
+            {
+                var found = new List<CrashFile>();
+                if (Where == null || !Where.Ok) return found;
+
+                found.Add(new CrashFile("the folder", Where.FolderPath, Directory.Exists(Where.FolderPath)));
+                found.Add(new CrashFile("the workbook", Where.FilePath, File.Exists(Where.FilePath)));
+
+                string pdf = PdfPath.Length > 0 ? PdfPath : PdfChecklist.Beside(Where);
+                if (pdf.Length > 0) found.Add(new CrashFile("the PDF", pdf, File.Exists(pdf)));
+
+                return found;
             }
         }
 
@@ -644,7 +719,8 @@ namespace RcrcGreen.Revit.Kpi
             List<KpiCreateRun> runs,
             List<PlotOutcome> plotOutcomes,
             List<string> wrote,
-            List<string> why)
+            List<string> why,
+            PlotWriteTrail trail)
         {
             var readings = new List<PlotReading> { held };
             var mine = new[] { held.PlotId };
@@ -667,6 +743,7 @@ namespace RcrcGreen.Revit.Kpi
             // is passed for the one case that has no component at all, where its own folder is
             // the only thing that can file the plot.
             PlotWorkbookPath where = PlotWorkbookPath.For(root, pick.Template, component.Value, held.Uid2);
+            trail.Filing(where);
 
             // Only STREETS asks the reference file, and it is asked per plot on this plot's own
             // UID2 rather than on whatever the user picked under Reference.
@@ -686,12 +763,24 @@ namespace RcrcGreen.Revit.Kpi
 
             if (reconciliation.AddsUp && where.Ok)
             {
+                trail.Reached(CreateStep.TheFolder);
                 folderMade = MadeTheFolder(where, out string folderRefusal);
                 if (!folderMade) outcome = PatchOutcome.Refused(folderRefusal);
                 else
                 {
+                    // **THE COPY AND THE PATCH ARE TWO STEPS AND THE ROW TELLS THEM APART.** The
+                    // patcher copies the template over the output and then opens the copy for
+                    // update, so a throw before the file exists is the copy and one after it is
+                    // the patch. The step moves on the file's own existence, read here rather
+                    // than inferred in the catch.
+                    trail.Reached(CreateStep.TheWorkbookCopy);
                     outcome = Patched(
-                        pick.TemplatePath, where.FilePath, plan.Writes, plan.ComputesFrom, Progressed);
+                        pick.TemplatePath, where.FilePath, plan.Writes, plan.ComputesFrom,
+                        said =>
+                        {
+                            if (File.Exists(where.FilePath)) trail.Reached(CreateStep.TheWorkbookPatch);
+                            Progressed?.Invoke(said);
+                        });
                 }
             }
 
@@ -708,6 +797,8 @@ namespace RcrcGreen.Revit.Kpi
             // **THE EXCEL IS WRITTEN FIRST AND THE PDF SECOND**, because two of the PDF's fields
             // read cells out of the workbook this run has just written. The ordering is a rule
             // and this is the line that keeps it.
+            trail.WritingThePdf(PdfChecklist.Beside(where));
+
             PdfOutcome pdf = ThePdf(
                 held, counted, street, where, run.Wrote, folderMade,
                 WorkbookNumbers(
@@ -736,6 +827,18 @@ namespace RcrcGreen.Revit.Kpi
         /// formula check is the output's own, read back after the patch, and it is what says
         /// whether the workbook still computes the canopy the way this tool does.
         /// </summary>
+        /// <summary>
+        /// The template file the tree lists were read out of, for a line about one of its rows.
+        /// **The team fixes the template**, so that is the file a row's line has to name, and
+        /// both lists came out of the same one.
+        /// </summary>
+        private static string TemplateFileName(SpeciesList existing, SpeciesList proposed)
+        {
+            if (existing != null && existing.FileName.Length > 0) return existing.FileName;
+
+            return proposed == null ? string.Empty : proposed.FileName;
+        }
+
         private static PdfWorkbookNumbers WorkbookNumbers(
             KpiTemplate template,
             KpiCreatePlan plan,
@@ -775,7 +878,7 @@ namespace RcrcGreen.Revit.Kpi
 
             return new PdfWorkbookNumbers(
                 canopy, shrubs.Total, lawn.Total, area.Total,
-                WorkbookArithmetic.Canopy(outcome.Formulas, canopy, columns),
+                WorkbookArithmetic.Canopy(outcome.Formulas, canopy, columns, TemplateFileName(existing, proposed)),
                 greenCover, percentage);
         }
 

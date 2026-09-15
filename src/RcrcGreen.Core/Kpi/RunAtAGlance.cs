@@ -154,7 +154,7 @@ namespace RcrcGreen.Core.Kpi
                 return "THE REGION TYPE: of " + Plots
                     + (Plots == 1 ? " plot" : " plots") + " wanting an area, "
                     + OffTheTypeTheNoteNames + " took it off " + RegionChoice.TheNoteNames
-                    + ", which is the type the client's note names, "
+                    + ", which is the type " + RegionChoice.TheNote + " names, "
                     + OffATypeTheNoteDoesNotName + " off a type it does not name, and "
                     + NothingChosen + " chose no region at all.";
             }
@@ -205,7 +205,8 @@ namespace RcrcGreen.Core.Kpi
                     + (Found == 1 ? " #DIV/0! was found" : " #DIV/0! were found")
                     + " and " + ByACellThisRunWrote + " of them divide by a cell THIS RUN WROTE."
                     + (ByACellThisRunWrote == 0
-                        ? " The rest divide by a client cell, which is their arithmetic over a "
+                        ? " The rest divide by a cell the template already held, which is its "
+                            + "own arithmetic over a "
                             + "real number and not this tool's doing."
                         : " A division by a cell this run wrote is this tool's doing.");
             }
@@ -222,14 +223,29 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PdfGlance
     {
-        public PdfGlance(int written, IEnumerable<string> withNoPdf, IEnumerable<string> formsThatDidNotMatch)
+        public PdfGlance(
+            int written, IEnumerable<string> withNoPdf, IEnumerable<string> formsThatDidNotMatch,
+            int noughtBoxes = 0, IEnumerable<string> noughtPlots = null)
         {
             Written = written;
             WithNoPdf = (withNoPdf ?? Enumerable.Empty<string>()).ToList();
             FormsThatDidNotMatch = (formsThatDidNotMatch ?? Enumerable.Empty<string>()).ToList();
+            NoughtBoxes = noughtBoxes;
+            NoughtPlots = (noughtPlots ?? Enumerable.Empty<string>()).ToList();
         }
 
         public static readonly PdfGlance NonePlanned = new PdfGlance(0, null, null);
+
+        /// <summary>
+        /// How many boxes this press wrote 0 into because the plot's shrubs and lawn schedule
+        /// was read and printed no such group. **Bader's decision of 15 September turned those
+        /// blanks into noughts**, and a number the tool decided rather than read is one the run
+        /// has to count out loud.
+        /// </summary>
+        public int NoughtBoxes { get; }
+
+        /// <summary>The plots those boxes are on, each named once however many of its boxes.</summary>
+        public IReadOnlyList<string> NoughtPlots { get; }
 
         public int Written { get; }
 
@@ -260,7 +276,24 @@ namespace RcrcGreen.Core.Kpi
                     + WithNoPdf.Count + " of the plots that got a workbook got no PDF, and "
                     + FormsThatDidNotMatch.Count
                     + (FormsThatDidNotMatch.Count == 1 ? " form did not match" : " forms did not match")
-                    + " what this tool knows.";
+                    + " what this tool knows." + Noughts;
+            }
+        }
+
+        /// <summary>
+        /// The one sentence about the noughts, left off a press that wrote none so a run with
+        /// nothing to say about them does not carry a nought count of 0.
+        /// </summary>
+        private string Noughts
+        {
+            get
+            {
+                if (NoughtBoxes == 0) return string.Empty;
+
+                return " " + NoughtBoxes + (NoughtBoxes == 1 ? " box was" : " boxes were")
+                    + " written 0 on " + NoughtPlots.Count
+                    + (NoughtPlots.Count == 1 ? " plot" : " plots")
+                    + " whose shrubs and lawn schedule was read and printed no such group.";
             }
         }
     }
@@ -471,11 +504,11 @@ namespace RcrcGreen.Core.Kpi
 
                 return "THE TEXT SIZES: " + Fits.Count
                     + (Fits.Count == 1 ? " value was written, " : " values were written, ")
-                    + Count(PdfFitOutcome.KeptTheClientsSize) + " at the client's own size, "
+                    + Count(PdfFitOutcome.KeptTheClientsSize) + " at the size their own /DA sets, "
                     + Count(PdfFitOutcome.Shrunk) + " shrunk to fit, "
                     + Count(PdfFitOutcome.CappedAtTen) + " capped at "
                     + PdfTextFit.AutoCeiling.ToString("0.###", CultureInfo.InvariantCulture)
-                    + " where the client's /DA gives nought, "
+                    + " where the field's /DA gives nought, "
                     + Count(PdfFitOutcome.HeldAtSix) + " held at "
                     + PdfTextFit.Smallest.ToString("0.###", CultureInfo.InvariantCulture)
                     + " and running over, " + Count(PdfFitOutcome.WidthsUnknown)
@@ -603,6 +636,9 @@ namespace RcrcGreen.Core.Kpi
             var without = new List<string>();
             var forms = new List<string>();
             var named = new HashSet<string>(StringComparer.Ordinal);
+            int noughtBoxes = 0;
+            var noughtPlots = new List<string>();
+            var noughtNamed = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (PlotOutcome one in set.PlotOutcomes)
             {
@@ -611,13 +647,22 @@ namespace RcrcGreen.Core.Kpi
                 if (one.Pdf.Written) written = written + 1;
                 else if (one.Written) without.Add(one.PlotId + ": " + one.Pdf.Refusal);
 
+                // **COUNTED OFF THE FLAG EACH FIELD CARRIES**, never off the words its working
+                // prints, so the count cannot part from the decision when the words are rewritten.
+                int noughts = one.Pdf.Landed.Count(field => field.NoughtForAnAbsentGroup);
+                if (noughts > 0)
+                {
+                    noughtBoxes = noughtBoxes + noughts;
+                    if (noughtNamed.Add(one.PlotId)) noughtPlots.Add(one.PlotId);
+                }
+
                 if (!one.Pdf.FormDidNotMatch) continue;
 
                 string form = one.Pdf.FormName.Length == 0 ? "(no form)" : one.Pdf.FormName;
                 if (named.Add(form)) forms.Add(form + ": " + one.Pdf.Check.Why);
             }
 
-            return new PdfGlance(written, without, forms);
+            return new PdfGlance(written, without, forms, noughtBoxes, noughtPlots);
         }
 
         /// <summary>
@@ -766,7 +811,7 @@ namespace RcrcGreen.Core.Kpi
                     where.Add(plot + " | " + risk.Where + " | "
                         + (risk.DivisorThisRunWrote
                             ? "divides by a cell THIS RUN WROTE"
-                            : "divides by a client cell"));
+                            : "divides by a cell the template already held"));
                 }
             }
 

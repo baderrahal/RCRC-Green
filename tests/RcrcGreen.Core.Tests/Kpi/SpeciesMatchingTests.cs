@@ -79,6 +79,11 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// <summary>
         /// A name the workbook holds on more than one row cannot be placed either, because
         /// nothing says which of them the quantity belongs on.
+        ///
+        /// **THE SHEET AND EVERY CELL HOLDING IT ARE IN THE LINE NOW**, Bader's decision of 15
+        /// September. On the 13:32 run FP-17 36, FP-21 25 and FP-20 5 AZADIRACHTA INDICA were
+        /// all written nowhere on this refusal, and the line said only that there was more than
+        /// one row, so nobody could open the template at the rows and fix it.
         /// </summary>
         [Fact]
         public void ANameTheWorkbookHoldsTwiceIsReportedRatherThanPlacedOnTheFirst()
@@ -88,7 +93,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "Unknown Tree", "Unknown Tree"));
 
             Assert.False(match.Matched);
-            Assert.Equal(SpeciesMatching.MoreThanOneRow, match.Why);
+            Assert.Equal(
+                "the workbook holds this name on more than one row, so nothing can say which and "
+                + "the count was not written: Tree List - Existing holds it in D4 and D5",
+                match.Why);
         }
 
         /// <summary>

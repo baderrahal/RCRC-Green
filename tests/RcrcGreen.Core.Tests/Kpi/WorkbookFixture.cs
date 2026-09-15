@@ -286,7 +286,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             bool withGreenCoverLabel = false,
             bool withPercentageLabel = false,
             string greenCoverFormula = null,
-            bool parksShape = false)
+            bool parksShape = false,
+            int[] withoutCanopy = null)
         {
             string path = Path.Combine(folder, fileName);
 
@@ -392,9 +393,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "</worksheet>");
 
                 Add(zip, "xl/worksheets/sheet2.xml", TreeSheetComputing(existing, heightHeading, diameterHeading, heightColumn, diameterColumn,
-                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads));
+                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy));
                 Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn,
-                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads));
+                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy));
             }
 
             return path;
@@ -410,8 +411,14 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static string TreeSheetComputing(
             TreeRow[] named, string heightHeading, string diameterHeading, string heightColumn, string diameterColumn,
-            string secondDiameterHeading = null, string secondDiameterColumn = "K", string canopyReads = null, string alsoReads = null)
+            string secondDiameterHeading = null, string secondDiameterColumn = "K", string canopyReads = null,
+            string alsoReads = null, int[] withoutCanopy = null)
         {
+            // **A ROW WITH NO CANOPY FORMULA, the shape FUTURE PARKS row 85 really has.**
+            // Somebody added rows and copied some columns without the canopy pair beside them,
+            // so the sheet computes no canopy from a count written there. Row 4 is the shared
+            // formula's master and cannot be the one left out.
+            var noCanopy = new HashSet<int>(withoutCanopy ?? new int[0]);
             var byRow = new Dictionary<int, TreeRow>();
             foreach (TreeRow one in named ?? new TreeRow[0]) byRow[one.Row] = one;
 
@@ -444,9 +451,11 @@ namespace RcrcGreen.Core.Tests.Kpi
 
                 // Shared from row 4, the way Excel stores one formula filled down a column: the
                 // master carries the text and the ref, the rest carry the index alone.
-                string canopy = row == 4
-                    ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L9\" si=\"0\">IF(ISBLANK(" + reads + "4),\" \",ROUND(PI()*(" + reads + "4/2)^2,0))</f><v> </v></c>"
-                    : "<c r=\"L" + row + "\" t=\"str\"><f t=\"shared\" si=\"0\"/><v> </v></c>";
+                string canopy = noCanopy.Contains(row) && row != 4
+                    ? string.Empty
+                    : row == 4
+                        ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L9\" si=\"0\">IF(ISBLANK(" + reads + "4),\" \",ROUND(PI()*(" + reads + "4/2)^2,0))</f><v> </v></c>"
+                        : "<c r=\"L" + row + "\" t=\"str\"><f t=\"shared\" si=\"0\"/><v> </v></c>";
                 string area = row == 4
                     ? "<c r=\"M4\" t=\"str\"><f t=\"shared\" ref=\"M4:M9\" si=\"1\">IF(ISBLANK(B4),\" \",L4*B4)</f><v> </v></c>"
                     : "<c r=\"M" + row + "\" t=\"str\"><f t=\"shared\" si=\"1\"/><v> </v></c>";

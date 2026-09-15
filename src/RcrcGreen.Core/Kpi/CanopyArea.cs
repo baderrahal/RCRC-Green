@@ -39,7 +39,7 @@ namespace RcrcGreen.Core.Kpi
 
         public string Whose
         {
-            get { return TheClientsRow ? "a row the client's list already held" : "a row this run wrote in"; }
+            get { return TheClientsRow ? "a row the template's own list already held" : "a row this run wrote in"; }
         }
 
         public string SheetName { get; }

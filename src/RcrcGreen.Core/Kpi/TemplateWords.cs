@@ -60,11 +60,11 @@ namespace RcrcGreen.Core.Kpi
             if (string.IsNullOrWhiteSpace(formsFolder))
             {
                 return "Note. No forms folder is set, so the workbooks are written and no PDF is. "
-                    + "Browse to the folder holding the client's three Projects Basic Data forms.";
+                    + "Browse to the folder holding the three Projects Basic Data forms.";
             }
 
             return "One PDF per plot beside its workbook, filled from " + formsFolder
-                + ". The form is keyed on the plot prefix, the client's own bytes are copied "
+                + ". The form is keyed on the plot prefix, the form file's own bytes are copied "
                 + "whole, and a form whose fields have moved is left alone and named.";
         }
 

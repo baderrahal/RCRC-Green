@@ -4,6 +4,195 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, ninetieth pass. The 154 plot press read back, seven decisions
+
+**2070 tests, 1250 of them KPI**, up from 2042 and 1222, 28 hook cases, build zero warnings.
+**80 audit findings, 20 FIXED, 60 open**, counted off the four files and nothing closed,
+renumbered or reordered. Bader ran the 154 plot press on NG05 on 15 September at 13:32 and 146
+workbooks and 146 PDFs were written. **The report is not in this repository and must not be**, so
+every measurement below is copied out of it.
+
+**NOTHING HERE WAS RUN IN REVIT.** Item 7's Revit wiring in `KpiRequestHandler` cannot be run
+from this session at all, and it is said again beside the tests that cover its Core half.
+
+### A read schedule with no such group writes 0, and an absent schedule still does not
+
+The press left the PDF Lawn box blank on **81 plots** saying the schedule printed no GRASS group,
+and the four shrub boxes blank on **15 plots** saying it printed no SHRUBS & GROUND COVER group,
+with CELLS NOT WRITTEN naming both. Bader's decision: a schedule that was READ and prints no such
+group means the plot has none, so the box is a 0.
+
+`PdfFill.NoGroupIsNought` is the working that travels with it and `PdfFieldFill.NoughtForAnAbsentGroup`
+is the flag. **The flag is what the glance counts, never the words**, because a signal that
+travels in the printed text is not a signal and this repository has already paid for that once,
+and because item 6 rewrote every printed line in the same round.
+
+**AN ABSENCE IS NOT A MEASUREMENT.** A plot holding no shrubs and lawn schedule at all leaves the
+five boxes blank through `PdfFill.NoScheduleRead`, which names the schedules found where there is
+more than one, so two of a kind and none of a kind are different sentences.
+
+The workbook half is `KpiMerge.Subtotalled`: a plot whose read schedule holds no group now
+contributes 0 rather than being skipped, so the Lawn and the Planting cells are written where
+they used to be reported NOT FOUND. A plot with no schedule is still left out of `PerPlot`
+entirely, which is what `KpiCreatePlan.Number` refuses to write from.
+
+The water demand half is `WaterDemandRead.NothingToTotal`: a schedule printing its heading row
+and **no rows under it** counts 0. MM-01, MM-06, MM-07 and NS-23 wrote no Irrigation water demand
+at all with both halves empty, and MM-08, NS-28 and NS-38 with the shrubs and lawn half empty.
+**A schedule with body rows and no TOTAL row still refuses**, unchanged.
+
+**THE NOUGHT IS ASKED AFTER THE COLUMN HAS BEEN FOUND, on purpose.** A heading row that does not
+name L/DAY is a schedule this reader cannot read, and answering 0 for it would be the fall back
+to a position this repository forbids everywhere else. Counting 0 before looking at the heading
+row at all is the choice not taken, and it is recorded here as one.
+
+Break watch: the blank was put back for a missing GRASS group.
+`AReadScheduleWithNoGrassGroupWritesTheLawnBoxNought` went red reading **DM-16's shrubs and lawn
+schedule was read and printed no GRASS group, and the Lawn box was left blank rather than
+written 0**. Restored, md5 `0e789af1aacfa742902e3f456dc58bb8`.
+
+### A plot with no schedule is not a zero
+
+FM-07 is on a sheet and on no schedule. Its PDF read Existing Trees 0, Proposed Trees 0, TOTAL
+trees 0 and Total areas to be greened 0, and the model's own KPI% schedules list **57 trees** for
+it. Four noughts went to the team as a measurement of a plot nothing had read.
+
+`PdfFill.NoSoftscapeRead` is the reason and all four boxes are blank now. `Greened` refuses first
+too, because the canopy is counted off the tree rows and a green cover computed without one is
+short by however many trees the plot holds.
+
+**THE PLOT LIST ROW SAYS THE SAME**, through `KpiCreateReport.NoSoftscapeOnTheList`, even though
+both files were written. A row reading YES and YES with an empty last column is the row of a plot
+that came out right, and FM-07's was one of those.
+
+Break watch: the counts were let fall back to 0.
+`APlotWithNoSoftscapeScheduleLeavesTheTreeBoxesBlankAndNamesWhy` went red reading **FM-07 holds
+no softscape schedule and ExistingTrees was written '0'**. Restored, md5 unchanged.
+
+### The Parks boxes are 9.72 pt tall, so the height margin is 1 pt
+
+**271 values were held at 6**, every one of them on `Projects Basic Data - Parks`. The boxes are
+41.52 by 9.72 pt for a value, 41.734 by 9.61 for a shrub box and 167.346 by 9.818 for a header.
+Open spaces is 46.6 by 19.4 and roads 46.8 by 17.0, both at 10.
+
+`PdfTextFit.HeightMargin` is 1.0 and `Margin` stays 2.0 for the width. A value held at 6 says
+whether its **WIDTH** or its **HEIGHT** held it, and **runs over is printed only when the text is
+wider than the box at 6 pt**, which is what 271 of those lines were wrongly claiming.
+
+Worked by hand: 3977.16 in Helvetica is six digits at 556 and a full stop at 278, 3.614 em.
+41.52 less 4 is 37.52 across, 37.52 over 3.614 is 10.38. 9.72 less 2 is 7.72 down. The smaller is
+7.72, floored to **7.7**. The same value in 46.6 by 19.4 gives 10, and 2797.64 in 30 by 14 gives
+7.1 unchanged.
+
+`AShortBoxBoundsTheSizeByItsHeight` was corrected by hand from an 11 pt tall box to a 9 pt one,
+so its stated 7.0 arithmetic is still true. The expected number was not changed.
+
+### Never write a new species into a row with no canopy formula
+
+On FP-23 the run wrote CONOCARPUS LANCIFOLIUS, 2 trees, into
+`GRP_-_KPI_Checklist_-_DD_FUTURE PARKS.xlsx`, Tree List - Proposed, **D85 and B85**. That row
+holds C85, M85 and O85 and no L85, so the canopy guard blanked FP-23's Total areas to be greened
+and its canopy percentage. The guard was right.
+
+`SpeciesList.UsableEmptyRows` is the fix: an empty row the total reaches AND whose own cells carry
+the canopy formula. `SpeciesMatching.WrittenInto` queues those, so row 85 is stepped over and row
+86 is taken. Where none is usable the species is not written and `SpeciesList.NoUsableEmptyRow`
+names the file, the sheet and every empty row it checked.
+
+**ONE RULE FOR THE GUARD AND FOR THE READER.** `WorkbookArithmetic.IsTheCanopyFormula` is the
+comparison, asked by the guard that checks a row this run wrote and by the reader that decides
+whether an empty row may be written into. Two copies of it would be two answers to one question.
+
+**A SHARED FORMULA IS EXPANDED.** Excel stores a column of one formula as text on the master and
+an index on every cell under it, so `SpeciesList` reads the canopy rows through
+`WorkbookFormulas.Of`, the same reader the whole check uses. A reader taking the text alone would
+have seen the canopy on row 4 and on none of the eighty rows below it.
+
+**A SHEET NAMING NO DIAMETER COLUMN IS NOT CHECKED AT ALL**, and `CanopyRowsRead` says so. There
+is no formula to look for, and calling every row unusable would refuse every write on a shape
+nobody has measured.
+
+Break watch: `list.EmptyRows` was put back in place of `UsableEmptyRows`.
+`ANewSpeciesSkipsTheEmptyRowWithNoCanopyFormulaAndTakesTheNextOne` went red reading **CONOCARPUS
+LANCIFOLIUS landed on row 85**. Restored, md5 `95fcec677cced1e366d6ef49322a0e1b`.
+
+### Trees written nowhere show at the top
+
+FP-17 36, FP-21 25 and FP-20 5 AZADIRACHTA INDICA, and FP-23 1 tree named UNKNOWN, all written
+nowhere. **THE PLOT LIST read YES and YES for all four and the glance said nothing.** 67 trees
+left the building in rows that read exactly like the rows of a plot with nothing wrong with it.
+
+`TreesNotWritten` counts them off the runs' own matches, so the count and the refusal that
+produced it are one record. THE PLOT LIST has a **trees not written** column, reading
+`36 AZADIRACHTA INDICA`, and the glance carries one line, **THE TREES WRITTEN NOWHERE**, which
+says so even when nothing was lost.
+
+`SpeciesMatching.OnMoreThanOneRow` names the file, the sheet and every cell holding the name,
+`D22 and D84`, so somebody can open the template at the rows. **The tool still does not choose
+between two rows** and will not.
+
+Break watch: the column was dropped from the row. `ThePlotListRowAndTheGlanceBothNameWhatWasLost`
+went red naming FP-17's row. Restored, md5 `202b9aabe864162c0d5457ead5b9227f`.
+
+### No printed line says client
+
+Bader: the team reading the report does not know which client is meant. **26 printed strings held
+the word and none does now**, across `PdfEmptying`, `RunAtAGlance`, `PdfChecklist`,
+`TemplateWords`, `CanopyArea`, `RegionChoice`, `PdfTextFit`, `KpiCreateReport`, `PdfFormCheck`
+and `KpiPanel`. Each names the thing instead: the folder, the form file, the template's own list,
+the field's own `/DA`.
+
+`RegionChoice.TheNote` is the one record of the note itself, `the area cell's own note, REVIT 00
+LINK / ID FILLED REGION RCRC_OUT OF SCOPE (PRESENTATION) / PRX_Intervention Area`, and every line
+that used to say the client's note now prints that.
+
+**THE CANOPY GUARD LINE NAMES THE CELL.** It carries the workbook file name, the sheet, the row,
+every formula on the row with its text, every cell somebody typed a value into with no formula
+behind it, and the one cell that would have carried the canopy: `L85 is empty`, or `L85 holds 50
+and no formula`. Which column that is, is read off the sheet's OWN other rows, never off a
+letter. `FormulaCheck.TypedCells` is the new reading behind it.
+
+**WHAT M85 IS, IS UNKNOWN AND IS NOT PRINTED.** Nothing in this tool records what the canopy area
+column's formula is, so naming that cell would be a rule nobody measured. It is a question for
+Bader and one row's M cell settles it.
+
+Break watch: the old sentence was put back. `TheGuardNamesTheFileTheSheetTheRowAndTheCanopyCell`
+went red on the missing file name. Restored, md5 `9621e488579eb5402fe57c8df59cb7d5`.
+
+### The crash row
+
+Bader's decision: after a crash the tool leaves every file where it is and the plot's row names
+them. `PlotCrash.Row` is the words, `CreateStep` the step and `CrashFile` one file with its path
+and whether the disk really holds it, read at the moment the row is built.
+
+**THE FOLDER FLAG READS THE DISK.** It was handed `false` in the catch whatever was on disk, so a
+press that made the folder and threw a step later counted one folder fewer than the tree really
+holds. `PlotWriteTrail` in `KpiRequestHandler` records the step AS IT IS REACHED rather than
+working it out backwards, and the copy and the patch are told apart by the output file's own
+existence, read at the patcher's own progress call. **Nothing is deleted.**
+
+**THE REVIT HALF HAS NOT BEEN RUN AND CANNOT BE RUN FROM HERE.** Its Core half has five tests.
+
+### Open questions for Bader
+
+1. **What the canopy area column's formula is** is UNKNOWN. One row's M cell makes the guard line
+   name that cell too.
+2. **The FUTURE PARKS duplicate row** is the team's fix and THE PLOT LIST is how it is watched.
+3. **Rows 85 to 101** are still dead rows on the templates. The tool steps past them now instead
+   of writing into them, which is better and is not a fix.
+
+### What was not changed
+
+The `/DR` and `/Font` inline open item stays logged, the press measured every font and came back
+with 0 widths UNKNOWN. The component and prefix refusal on MM-09 to MM-15 and FP-27 stays. No
+audit finding was closed, renumbered or reordered.
+
+`steps/2026-09-15-kpi-rerun.md` is the sheet for the rerun, 23 steps, the fixes synced and a
+fresh detached copy taken first, the seven workbook rows ticked before Tick the list, and six
+checks one to a step.
+
+---
+
 ## 2026-09-15, eighty ninth pass. The run sheet corrected before the first run
 
 **Merged to main as `346dddb`**, pull request 146, squashed with both message fields passed on the

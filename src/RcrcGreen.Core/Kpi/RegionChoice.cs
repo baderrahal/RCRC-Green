@@ -96,7 +96,8 @@ namespace RcrcGreen.Core.Kpi
                     case RegionRoute.ChosenByHand: return "chosen by hand on the pane";
                     case RegionRoute.TheOnlyOneHoldingAnArea: return "the only region holding an area";
                     case RegionRoute.TheTypeTheNoteNames:
-                        return "more than one held an area and this is the type the client's note names";
+                        return "more than one held an area and this is the type "
+                            + RegionChoice.TheNote + " names";
                     default: return "nothing chosen";
                 }
             }
@@ -168,6 +169,17 @@ namespace RcrcGreen.Core.Kpi
         public const string TheNoteNames = "RCRC_OUT OF SCOPE (PRESENTATION)";
 
         /// <summary>
+        /// **THE NOTE ITSELF, SO A PRINTED LINE NAMES IT RATHER THAN WHOSE IT IS.** Bader, 15
+        /// September: the team reading the report does not know which client is meant. The note
+        /// sits beside the area cell on the reissued STREETS template and reads
+        /// `REVIT 00 LINK / ID FILLED REGION "RCRC_OUT OF SCOPE (PRESENTATION)" /
+        /// PRX_Intervention Area`, so that is what every line about it says.
+        /// </summary>
+        public const string TheNote =
+            "the area cell's own note, REVIT 00 LINK / ID FILLED REGION " + TheNoteNames
+            + " / PRX_Intervention Area,";
+
+        /// <summary>
         /// The type an area really came off, held against the type the client's note names, for
         /// one column of one row of the report.
         /// </summary>
@@ -212,7 +224,7 @@ namespace RcrcGreen.Core.Kpi
 
                 return named > 1
                     ? Count(holding.Count) + " hold an area, " + names + ", and " + named
-                        + " of them are " + TheNoteNames + ", so the client's note cannot say which"
+                        + " of them are " + TheNoteNames + ", so " + TheNote + " cannot say which"
                     : Count(holding.Count) + " hold an area, " + names + ", none of them "
                         + TheNoteNames + ", and the type name cannot say which is the plot's";
             }
