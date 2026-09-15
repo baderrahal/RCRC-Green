@@ -1,5 +1,68 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty third pass, the held off list in step and on screen. **1939 tests, 1119 of
+them KPI, 5 added, against the 1934 main carries** at `a3d9896`, 28 hook cases unchanged, build
+zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**ONE FAULT, THREE ROUTES.** Nothing kept the hand choices and the real ticks in step, and nothing
+ever printed them. `HandTicks` is the one record, holding BOTH directions rather than a bare set
+of the plots taken off, and `KpiPanel.TickedByHand` moves the ticks and the record together so
+nothing sets one without the other.
+
+**1. UNTICKED WAS NOT SYMMETRIC WITH TICKED.** `Ticked` took the held off list and `Unticked` took
+nothing, so a hand untick survived a row tick and a hand tick did not survive a row untick.
+`Unticked` takes the record now and keeps the plots put on by hand, so unticking a row undoes
+exactly what ticking it did and ticking it again restores the same state, pinned in both
+directions at once.
+
+**2. SELECT ALL AND CLEAR BOTH FORGET EVERY HAND CHOICE.** I agree about Select all, and **the
+same argument carries Clear**, which the round message did not ask about: both replace every tick,
+so a choice left standing behind either disagrees with the screen and the next row press acts on
+the disagreement. One rule rather than two and no path disagrees with another.
+
+**3. SomeOfThem BUILT THE SENTENCE AND NOTHING CALLED IT**, its only references two lines of its
+own test file. It is on the workbook row now, as a NOTE, and a row where every plot is going in
+gets no line. **The pane counts nothing**: `TickingATemplate.RowLine` hands back the sentence off
+the split's own rule, which is also what made item 3 testable in Core.
+
+**HOW MANY OTHER MEMBERS BUILD A LINE THE PANE NEVER SHOWS: SIX, AND THREE ARE LINES.** Counted
+over every public member of `Core/Kpi` returning a string or a list of strings, held against every
+reference in `src`, doc comments left out: **245 members, 6 with no reference at all**, every one
+tested green. `KpiPaneWords.ModelNamed`, `CreateWords.SuggestedName` and `RegionChoice.WhyUnchosen`
+are lines, `ComponentTemplates.ValuesFor` and `PlotPrefixes.PrefixesFor` are lists, and
+`WorkbookPatcher.ReadBack` is a file read. **`WhyUnchosen` is the one worth acting on**, because
+its docstring says it exists so the report does not print an empty cell and the report prints the
+empty cell, and it is NOT acted on this round because it was not asked for.
+
+**THE OPEN QUESTION: NOT QUITE ENOUGH, AND ONE THING IS MISSING.** Items 1 to 3 close the hand
+route. The two the split decides are known at tick time through `PlotsPerTemplate.For`, whose `Why`
+is already the sentence. **What is missing is the component for a plot NOBODY TICKED**: the
+correction recorded last round reaches it through `set.Runs` for ticked plots only, and an unticked
+plot is never read and has no reading, which is exactly the plot the column exists to explain. It
+needs the component read beside the plot list off ONE read at the press, one argument and one read.
+**Not built, as asked.**
+
+Three break watches, one test red each: `Unticked` ignoring the record, `Forgotten` handing back
+itself, and the row counting what could go rather than what is going. Every one names what was
+broken. Both files restored byte for byte, checked with `diff -q`, and the suite green at 1939
+after.
+
+**RECORDED BESIDE `PlotOrigins`: A SECTION THAT COVERS WHAT WENT IN CANNOT TELL YOU WHAT DID NOT.**
+The premise of the round before was wrong, its evidence was a silence every section of that report
+would produce for an unticked plot, PLOTS TICKED THAT WENT INTO NO WORKBOOK reading 0 is correct by
+construction, and the two nines were a coincidence.
+
+**FOR BADER, UNVERIFIED.** Two workbook rows can settle as the same template if two files in the
+folder are both recognised as STREETS, and unticking one then strips every street plot while the
+other stays ticked. I have not measured that two files can be recognised the same way. The state is
+visible now either way, because the still ticked row says 0 of its 78.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every line of it is off the code and the two
+verifier reports, and the row line has never been seen on a screen.
+
 Phase: 9, ship. Eighty second pass, where MM-09 to MM-15 come from and the rows with no canopy.
 **1934 tests, 1114 of them KPI, 6 added, against the 1928 main carries** at `ea7ae2e`, 28 hook
 cases unchanged, build zero warnings.

@@ -67,12 +67,13 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void UntickingATemplateTakesItsOwnPlotsOffAndLeavesTheRest()
         {
             PlotTicks both = TickingATemplate.Ticked(
-                TickingATemplate.Ticked(Nothing(), KpiTemplates.Mosques, OnTheSheets, null),
-                KpiTemplates.Streets, OnTheSheets, null);
+                TickingATemplate.Ticked(Nothing(), KpiTemplates.Mosques, OnTheSheets, HandTicks.None),
+                KpiTemplates.Streets, OnTheSheets, HandTicks.None);
 
             Assert.Equal(new[] { "DM-12", "DM-14", "FM-05", "ST-05" }, both.Ticked.ToArray());
 
-            PlotTicks after = TickingATemplate.Unticked(both, KpiTemplates.Mosques, OnTheSheets);
+            PlotTicks after = TickingATemplate.Unticked(
+                both, KpiTemplates.Mosques, OnTheSheets, HandTicks.None);
 
             Assert.Equal(new[] { "ST-05" }, after.Ticked.ToArray());
         }
@@ -85,7 +86,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void APlotUntickedByHandStaysUntickedWhenItsTemplateIsTicked()
         {
             PlotTicks after = TickingATemplate.Ticked(
-                Nothing(), KpiTemplates.Mosques, OnTheSheets, new[] { "DM-14" });
+                Nothing(), KpiTemplates.Mosques, OnTheSheets, HandTicks.None.TakenOff("DM-14"));
 
             Assert.Equal(new[] { "DM-12", "FM-05" }, after.Ticked.ToArray());
         }
@@ -98,7 +99,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheRowCountsWhatWillGoInRatherThanWhatItCouldTake()
         {
             PlotTicks after = TickingATemplate.Ticked(
-                Nothing(), KpiTemplates.Mosques, OnTheSheets, new[] { "DM-14" });
+                Nothing(), KpiTemplates.Mosques, OnTheSheets, HandTicks.None.TakenOff("DM-14"));
 
             TemplateSplit split = PlotsPerTemplate.Split(
                 after.Ticked, OnTheSheets, new[] { KpiTemplates.Mosques });

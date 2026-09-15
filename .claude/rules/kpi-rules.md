@@ -933,10 +933,11 @@ by the prefix could then land in no workbook at all and the row's count would be
 nothing else agreed with. A test ticks MOSQUES on a plot whose component says SCHOOL and its
 prefix says MOSQUES, and the plot is NOT ticked, because neither route places it.
 
-**A plot ticked or unticked by hand wins.** Ticking a template is a starting point rather than
-a lock, so a plot taken off by hand stays off and the row then says 19 rather than 20. The pane
-holds that list and clears it when the model changes, because another model's DM-14 is not this
-one's. **The count on the row is what will actually go in**, which needs nothing new: the row
+**A plot ticked or unticked by hand wins, IN BOTH DIRECTIONS.** Ticking a template is a starting
+point rather than a lock, so a plot taken off by hand stays off and the row then says 19 rather
+than 20, and a plot put on by hand stays on when the row is unticked. The pane holds one
+`HandTicks` and forgets it when the model changes, because another model's DM-14 is not this
+one's, and when Select all or Clear is pressed, under the section further down. **The count on the row is what will actually go in**, which needs nothing new: the row
 reads its count off the split of the TICKED plots, so a hand untick moves it.
 
 **A template with no plots at all still ticks and still says it will write nothing**, exactly
@@ -1888,7 +1889,7 @@ that row's template. Six routes leave a plot unticked with every row ticked:
    answer in its place, so NEITHER places it
 2  its component and its prefix name different templates, so NEITHER places it
 3  no component and a prefix the table does not hold, which is the plot named "-"
-4  held off by hand, KpiPanel._heldOff
+4  held off by hand, the pane's own HandTicks
 5  the ticking call did not run for that row, a file caught between the two park templates
 6  its template has no recognised file in the templates folder, so it has no row to tick
 ```
@@ -1927,6 +1928,103 @@ beside the plot list, and the component the pane holds was read at a different m
 this section reads at the press, so printing a route off the two together would be a route worked
 out from two records of one fact. **The two travelling from ONE read is a round of its own** and is
 in `steps/log-kpi.md` as the next line.
+
+### THE HAND CHOICES ARE ONE RECORD NOW, AND NOTHING MOVES THE TICKS WITHOUT IT
+
+**THREE ROUTES HAD COME APART, AND THEY ARE ONE FAULT: nothing kept the held off list in step
+with the real ticks, and nothing ever printed it.** All three were found by the verifiers of the
+eighty second pass rather than by a run, which is why none of them had a measurement behind it.
+
+**IT WAS A BARE SET OF THE PLOTS TAKEN OFF.** `HandTicks` replaces it, holding BOTH directions, a
+plot taken off or put on by hand and never both, immutable the way `PlotTicks` already is.
+
+```
+a hand untick of one plot      TakenOff    and it drops any standing put on for that plot
+a hand tick of one plot        PutOn       and it drops any standing taken off
+ticking a template row         Ticked      skips the plots taken off by hand
+unticking a template row       Unticked    KEEPS the plots put on by hand
+Select all                     Forgotten   every hand choice goes
+Clear                          Forgotten   every hand choice goes
+the model changes              Forgotten   another model's DM-14 is not this one's
+```
+
+**1. UNTICKING A ROW WAS NOT SYMMETRIC WITH TICKING IT.** `Ticked` took the held off list and
+`Unticked` took nothing, so a hand UNTICK survived a row tick and a hand TICK did not survive a
+row untick. A person who picked three mosque plots by hand, then ticked the MOSQUES row for the
+rest, then changed their mind about the row, lost their three with nothing said. **Unticking a
+row undoes exactly what ticking it did now**, and ticking the row again restores the same state,
+which is what symmetric means here and what a test writes out in both directions at once.
+
+**2. SELECT ALL AND CLEAR BOTH FORGET EVERY HAND CHOICE.** Bader proposed it for Select all, on
+the ground that pressing it is a person saying they want everything, **and the same argument
+carries Clear, which is the half that was not asked about.** Both replace every tick, so a per
+plot choice left standing behind either is a record that disagrees with what is on screen, and
+the next row press acts on the disagreement: a plot unticked by hand once and brought back by
+Select all was dropped again the moment any template row was ticked. **A record that disagrees
+with the screen is worse than no record**, because the pane looks right.
+
+**AND ONE PLACE SETS BOTH.** `KpiPanel.TickedByHand` moves the ticks and the record together and
+nothing sets one without the other, which is the whole of the fault stated as a rule.
+
+**3. THE LINE THAT WOULD HAVE ANSWERED ALL OF IT WAS BUILT AND SHOWN NOWHERE.**
+`TickingATemplate.SomeOfThem` returns
+`MOSQUES: 2 of the 3 plots that belong to it, the rest unticked by hand.` and its only references
+were two lines of its own test file. **Green, and it had never reached a screen.** It is on the
+workbook row now, under the tick box, as a NOTE rather than a refusal, and a row where every plot
+is going in gets no line at all because a line about nothing is one the team reads past on every
+other press.
+
+**THE PANE COUNTS NOTHING.** `TickingATemplate.RowLine` takes the template, the ticks and the
+component reader and hands back the sentence, so the two counts come off the split's own rule
+rather than off a loop beside the control that draws them.
+
+**IT IS THE LINE THE EIGHTY SECOND PASS SPENT A ROUND LOOKING FOR.** That round asked a 57,143
+line report why MM-09 to MM-15 were unticked. This answers the held off half of that question on
+the row a person is looking at when they press, and it has existed the whole time.
+
+### SIX MEMBERS IN Core/Kpi HAVE NO CALLER IN src, AND THREE OF THEM BUILD A LINE
+
+**Counted rather than guessed at.** Every public member of `Core/Kpi` returning a string or a list
+of strings was held against every reference in `src` outside its own declaration, doc comments
+left out. **245 such members, and SIX have no reference at all.** Every one of the six is tested
+green, which is exactly the shape `SomeOfThem` had.
+
+```
+KpiPaneWords.ModelNamed        a line       the model's name or the words for none
+CreateWords.SuggestedName      a line       the name a box offered, and THE BOX IS DELETED
+RegionChoice.WhyUnchosen       a line       why no region was chosen, for the report's own column
+ComponentTemplates.ValuesFor   a list       its docstring says the report and the pane say it
+PlotPrefixes.PrefixesFor       a list       DELIBERATELY KEPT and already recorded as uncalled
+WorkbookPatcher.ReadBack       not a line   a cell read off a written file
+```
+
+**`WhyUnchosen` is the one worth acting on and it is not acted on this round.** Its own docstring
+says it exists "for a report that would otherwise print an empty cell and leave somebody guessing
+which of the two cases it was", and the report never calls it, so **the report prints the empty
+cell.** That is named here and in `steps/log-kpi.md` rather than fixed, because it was not what
+this round was asked for.
+
+**`SuggestedName` is the name box's, and the box is gone.** The shape it served no longer exists,
+which is the second of the two reasons this repo deletes a thing, and it is named rather than
+deleted for the same reason.
+
+### A SECTION THAT COVERS WHAT WENT IN CANNOT TELL YOU WHAT DID NOT
+
+**Recorded beside `PlotOrigins` because the next person reading a report will make the same
+mistake.** The eighty second pass began from a premise that was wrong, and the way it was wrong is
+worth more than the answer.
+
+**The premise:** MM-09 to MM-15 are in the list and not in the model. **They are in the model**, on
+a sheet AND on a schedule, which is why they are in neither disagreement line.
+
+**The evidence was that they appear nowhere in a 57,143 line report. That is not evidence.** Every
+section of that report is over the TICKED plots, and those seven were not ticked. **PLOTS TICKED
+THAT WENT INTO NO WORKBOOK reading 0 is correct by construction**, because `Unplaced` is built
+from the ticked list alone, and it was read as a fact about the model.
+
+**And the two nines were a coincidence.** Nine named across the two disagreement lines, nine
+plots unticked, and they are different nines: one is about which of two reads found a plot and the
+other about whether the split placed it.
 
 ### WHAT IS IN THIS FILE, COUNTED OFF THE FILE
 

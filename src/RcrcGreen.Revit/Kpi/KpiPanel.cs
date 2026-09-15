@@ -99,7 +99,7 @@ namespace RcrcGreen.Revit.Kpi
 
         // Which plots the user took off by hand. Ticking a template is a starting point rather
         // than a lock, so a plot held off here stays off when its template is ticked.
-        private readonly HashSet<string> _heldOff = new HashSet<string>(StringComparer.Ordinal);
+        private HandTicks _byHand = HandTicks.None;
 
         // The window a press of Create shows while it runs. Opened on this thread before the
         // external event is raised and closed when the run's last answer comes back, never
@@ -324,10 +324,9 @@ namespace RcrcGreen.Revit.Kpi
                     _facts = null;
                     _scannedTitle = null;
 
-                    // The hand list is a set of plot identifiers, and another model's DM-14 is
-                    // not this one's. Holding it across would take a plot off a model nobody
-                    // had touched.
-                    _heldOff.Clear();
+                    // The hand record is plot identifiers, and another model's DM-14 is not this
+                    // one's. Holding it across would take a plot off a model nobody had touched.
+                    _byHand = _byHand.Forgotten();
                 }
 
                 TheHeader();
@@ -504,6 +503,13 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(box);
 
                 WorkbookTick tick = TickFor(which);
+
+                // **THE LINE THAT SAYS WHY A PLOT OF THIS TEMPLATE IS NOT GOING IN.** It was
+                // built and shown nowhere for every round since it was written, and the whole
+                // of the eighty second pass went by asking a 57,143 line report the question
+                // this answers on the row a person is looking at when they press.
+                if (tick != null && tick.SettledAs != null) _templates.Children.Add(HeldOffOn(tick));
+
                 if (tick == null || tick.SettledAs != null) continue;
 
                 // Ticked and still waiting on which of the two park templates it is. Nothing
@@ -823,9 +829,14 @@ namespace RcrcGreen.Revit.Kpi
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
             var all = new Button { Content = PaneLabel.Escaped(CreateWords.SelectAll), Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
-            all.Click += (sender, e) => Ticked(_ticks.All());
+            // **SELECT ALL AND CLEAR BOTH FORGET EVERY HAND CHOICE.** They replace every tick,
+            // so a per plot choice left standing behind them is a record that disagrees with
+            // what is on screen, and the next template row tick acts on the disagreement. A
+            // person pressing Select all is saying they want everything and a person pressing
+            // Clear is starting over.
+            all.Click += (sender, e) => TickedByHand(_ticks.All(), _byHand.Forgotten());
             var none = new Button { Content = PaneLabel.Escaped(CreateWords.Clear), Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
-            none.Click += (sender, e) => Ticked(_ticks.None());
+            none.Click += (sender, e) => TickedByHand(_ticks.None(), _byHand.Forgotten());
             buttons.Children.Add(all);
             buttons.Children.Add(none);
             _templates.Children.Add(buttons);
@@ -849,13 +860,12 @@ namespace RcrcGreen.Revit.Kpi
                 };
                 box.Click += (sender, e) =>
                 {
-                    // **A PLOT TICKED OR UNTICKED BY HAND WINS.** Ticking a template is a
-                    // starting point rather than a lock, so this is remembered and a later
-                    // template tick leaves it alone.
-                    if (_ticks.IsTicked(which)) _heldOff.Add(which);
-                    else _heldOff.Remove(which);
-
-                    Ticked(_ticks.Toggled(which));
+                    // **A PLOT TICKED OR UNTICKED BY HAND WINS, IN BOTH DIRECTIONS.** Ticking a
+                    // template is a starting point rather than a lock, so the choice is
+                    // remembered and a later row press leaves it alone whichever way it went.
+                    TickedByHand(
+                        _ticks.Toggled(which),
+                        _ticks.IsTicked(which) ? _byHand.TakenOff(which) : _byHand.PutOn(which));
                 };
                 list.Children.Add(box);
             }
@@ -1134,6 +1144,18 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
+        /// The ticks and the hand record moved together. **Nothing sets one without the other**,
+        /// which is the whole of the fault the eighty third pass came out of: three paths moved
+        /// the ticks and left the record standing, and a record that disagrees with the screen is
+        /// worse than no record.
+        /// </summary>
+        private void TickedByHand(PlotTicks next, HandTicks byHand)
+        {
+            _byHand = byHand ?? HandTicks.None;
+            Ticked(next);
+        }
+
+        /// <summary>
         /// Anything that could move a number throws away the last run and the confirmation
         /// with it, so a confirmed pair of areas never carries over onto a different set of
         /// plots and a refusal never sits under a choice that has since changed.
@@ -1201,7 +1223,26 @@ namespace RcrcGreen.Revit.Kpi
         {
             if (tick.SettledAs == null || _facts == null) return;
 
-            _ticks = TickingATemplate.Ticked(_ticks, tick.SettledAs, ComponentOn, _heldOff);
+            _ticks = TickingATemplate.Ticked(_ticks, tick.SettledAs, ComponentOn, _byHand);
+        }
+
+        /// <summary>
+        /// The row's own line about the plots of this template that are not going in, or nothing
+        /// at all where every one of them is.
+        ///
+        /// **A LINE ABOUT NOTHING IS ONE THE TEAM READS PAST ON EVERY OTHER PRESS**, so
+        /// <see cref="TickingATemplate.SomeOfThem"/> answers with an empty string where the
+        /// count is whole and this adds no control for it. It is a NOTE rather than a refusal:
+        /// the run goes through and the workbook is written, and what the line says is that
+        /// fewer plots are going in than belong to the template.
+        /// </summary>
+        private UIElement HeldOffOn(WorkbookTick tick)
+        {
+            string line = TickingATemplate.RowLine(tick.SettledAs, _ticks, ComponentOn);
+
+            return line.Length == 0
+                ? (UIElement)new StackPanel { Margin = PanelMetrics.Nothing }
+                : Noted("   " + line);
         }
 
         /// <summary>
@@ -1264,7 +1305,8 @@ namespace RcrcGreen.Revit.Kpi
                 // now, so the two halves of one choice move together.
                 if (already.SettledAs != null)
                 {
-                    _ticks = TickingATemplate.Unticked(_ticks, already.SettledAs, ComponentOn);
+                    _ticks = TickingATemplate.Unticked(
+                        _ticks, already.SettledAs, ComponentOn, _byHand);
                 }
             }
             else
