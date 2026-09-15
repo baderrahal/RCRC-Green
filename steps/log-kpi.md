@@ -6,6 +6,12 @@ Newest entry first.
 
 ## 2026-09-15, eighty third pass. The held off list, in step and on screen
 
+**Pull request 138, merged into main as `2775999`.** The runner ran 28 hook cases and 1939
+tests against the pull request head `7800ce8`, 0 failed and 0 skipped. The merge went through
+the API with the title and the message both passed on the call, the commit came back off main
+carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte
+for byte the branch head, checked with a diff that named no file.
+
 **1939 tests, 1119 of them KPI, 5 added, against the 1934 main carries** at `a3d9896`, 28 hook
 cases unchanged, build zero warnings. **No audit finding is closed, renumbered or reordered: read
 off the three files, 63 numbered findings, 19 carrying a FIXED mark, 44 open.**

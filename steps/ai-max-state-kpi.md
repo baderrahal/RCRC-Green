@@ -63,6 +63,12 @@ visible now either way, because the still ticked row says 0 of its 78.
 **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every line of it is off the code and the two
 verifier reports, and the row line has never been seen on a screen.
 
+**Pull request 138, merged into main as `2775999`.** The runner ran 28 hook cases and 1939
+tests against the pull request head `7800ce8`, 0 failed and 0 skipped. The merge went through
+the API with the title and the message both passed on the call, the commit came back off main
+carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte
+for byte the branch head, checked with a diff that named no file.
+
 Phase: 9, ship. Eighty second pass, where MM-09 to MM-15 come from and the rows with no canopy.
 **1934 tests, 1114 of them KPI, 6 added, against the 1928 main carries** at `ea7ae2e`, 28 hook
 cases unchanged, build zero warnings.
