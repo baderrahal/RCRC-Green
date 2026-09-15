@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-15, eighty eighth pass. Four fixes, and the plot list the team sent
 
+**Merged to main as `088d6d3`**, pull request 144, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 **2042 tests, 1222 of them KPI, 42 added, against the 2000 main carries** at `64fb57d`, 28 hook
 cases unchanged, build zero warnings.
 

@@ -1,7 +1,9 @@
 # ai-max state, KPI
 
-Phase: 9, ship. Eighty eighth pass, four fixes in one round. **2042 tests, 1222 of them KPI, 42
-added, against the 2000 main carries** at `64fb57d`, 28 hook cases unchanged, build zero warnings.
+Phase: 9, ship. Eighty eighth pass, four fixes in one round. **Merged to main as `088d6d3`**,
+pull request 144, the squash message set on the merge call and off main byte for byte with no
+co-author line and no generated-by footer. **2042 tests, 1222 of them KPI, 42 added, against the
+2000 main carries** at `64fb57d`, 28 hook cases unchanged, build zero warnings.
 
 **THE COUNT, WALKED OFF ALL FOUR AUDIT FILES: 80 numbered, 20 carrying a FIXED mark, 60 OPEN**, as
 29 with 8, 20 with 9, 14 with 2 and 17 with 1. The three entries before this counted three files
