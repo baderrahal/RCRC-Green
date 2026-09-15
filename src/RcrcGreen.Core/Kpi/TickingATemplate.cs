@@ -27,6 +27,14 @@ namespace RcrcGreen.Core.Kpi
     /// than a lock, so a plot the user took off by hand stays off when the template it belongs
     /// to is ticked, and the row then says 19 of its 20 plots rather than 20. The hand list is
     /// what the pane holds and this reads it.
+    ///
+    /// **THE TWO PRESSES ARE SYMMETRIC NOW, AND THEY WERE NOT.** <see cref="Ticked"/> took the
+    /// hand list and <see cref="Unticked"/> did not, so unticking a row removed every plot of
+    /// that template including ones the person had ticked by hand, and nothing recorded it.
+    /// Unticking a row undoes exactly what ticking it did: it skips the plots put on by hand the
+    /// way ticking skips the plots taken off by hand, so ticking the row again restores the same
+    /// state. Both read one <see cref="HandTicks"/>, which is the one record of what a person
+    /// chose.
     /// </summary>
     public static class TickingATemplate
     {
@@ -56,17 +64,16 @@ namespace RcrcGreen.Core.Kpi
             PlotTicks ticks,
             KpiTemplate template,
             Func<string, string> componentOf,
-            IEnumerable<string> heldOffByHand)
+            HandTicks byHand)
         {
             if (ticks == null) throw new ArgumentNullException("ticks");
 
-            var off = new HashSet<string>(
-                heldOffByHand ?? Enumerable.Empty<string>(), StringComparer.Ordinal);
+            HandTicks hand = byHand ?? HandTicks.None;
 
             PlotTicks next = ticks;
             foreach (string plotId in PlotsOf(template, ticks.Plots.All, componentOf))
             {
-                if (off.Contains(plotId)) continue;
+                if (hand.IsOff(plotId)) continue;
                 next = next.With(plotId);
             }
 
@@ -74,17 +81,27 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// The ticks after a template row is unticked: its plots come off and every other row's
-        /// stay. A plot that belongs to no other ticked template simply goes.
+        /// The ticks after a template row is unticked: its plots come off, every other row's
+        /// stay, and **a plot the person put on by hand stays on**. A plot that belongs to no
+        /// other ticked template and that nobody picked simply goes.
+        ///
+        /// **THAT LAST CLAUSE IS THE FIX.** It took no hand list at all, so a person who ticked
+        /// three mosque plots by hand, then ticked the MOSQUES row for the rest, then changed
+        /// their mind and unticked the row, lost their three with nothing said. A hand untick
+        /// survived a row tick and a hand tick did not survive a row untick, which is the
+        /// asymmetry this pair is named for.
         /// </summary>
         public static PlotTicks Unticked(
-            PlotTicks ticks, KpiTemplate template, Func<string, string> componentOf)
+            PlotTicks ticks, KpiTemplate template, Func<string, string> componentOf, HandTicks byHand)
         {
             if (ticks == null) throw new ArgumentNullException("ticks");
+
+            HandTicks hand = byHand ?? HandTicks.None;
 
             PlotTicks next = ticks;
             foreach (string plotId in PlotsOf(template, ticks.Plots.All, componentOf))
             {
+                if (hand.IsOn(plotId)) continue;
                 next = next.Without(plotId);
             }
 
@@ -95,7 +112,33 @@ namespace RcrcGreen.Core.Kpi
         /// What a row says about how many of its plots are really going in, for a template whose
         /// plots the user has edited by hand. **The count is what will actually go in, never how
         /// many the template could take.**
+        ///
+        /// **IT BUILT THIS SENTENCE AND NOTHING SHOWED IT.** Its only references were two lines
+        /// of its own test file, so it was green and had never reached a screen, for every round
+        /// since it was written. It is the line that answers why a plot of a ticked template is
+        /// not going in, on the row a person is looking at when they press, and the whole of the
+        /// eighty second pass went by asking that question of a report instead. **A description
+        /// of the tool is not the tool**, and a method tested and never called is that shape with
+        /// a green tick on it.
         /// </summary>
+        /// <summary>
+        /// The line one ticked row shows, counted off the ticks and the model's own plot list.
+        ///
+        /// **THE PANE COUNTS NOTHING.** The row needs how many of a template's plots are going
+        /// in and how many belong to it, and both come off the split's own rule, so working them
+        /// out beside the control that draws them would be a second record of the row's count.
+        /// It is here with the sentence, and the pane's whole share of it is one call.
+        /// </summary>
+        public static string RowLine(
+            KpiTemplate template, PlotTicks ticks, Func<string, string> componentOf)
+        {
+            if (ticks == null) return string.Empty;
+
+            IReadOnlyList<string> belong = PlotsOf(template, ticks.Plots.All, componentOf);
+
+            return SomeOfThem(template, belong.Count(one => ticks.IsTicked(one)), belong.Count);
+        }
+
         public static string SomeOfThem(KpiTemplate template, int going, int couldGo)
         {
             if (template == null) throw new ArgumentNullException("template");

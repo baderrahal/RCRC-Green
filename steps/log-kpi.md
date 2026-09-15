@@ -4,6 +4,148 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty third pass. The held off list, in step and on screen
+
+**1939 tests, 1119 of them KPI, 5 added, against the 1934 main carries** at `a3d9896`, 28 hook
+cases unchanged, build zero warnings. **No audit finding is closed, renumbered or reordered: read
+off the three files, 63 numbered findings, 19 carrying a FIXED mark, 44 open.**
+
+All three items came out of the eighty second pass's own verifiers rather than off a run, and
+they are one fault: **nothing kept the hand choices and the real ticks in step, and nothing ever
+printed them.**
+
+### The one record
+
+`HandTicks` replaces the bare set of plots taken off. It holds BOTH directions, a plot taken off
+or put on by hand and never both, immutable the way `PlotTicks` already is, and
+`KpiPanel.TickedByHand` moves the ticks and the record together so nothing sets one without the
+other.
+
+### 1. Unticked was not symmetric with Ticked
+
+`Ticked` took the held off list and `Unticked` took nothing. So **a hand untick survived a row
+tick and a hand tick did not survive a row untick.** A person who picked three mosque plots by
+hand, ticked the MOSQUES row for the rest, then changed their mind about the row, lost their three
+with nothing said.
+
+`Unticked` takes the record now and keeps the plots put on by hand, so unticking a row undoes
+exactly what ticking it did and ticking it again restores the same state. A test writes both
+directions out at once: DM-12 put on by hand and DM-14 taken off, tick the row, untick it, and the
+ticks are back where they started.
+
+### 2. Select all and Clear, decided once
+
+**I agree about Select all and the same argument carries Clear**, which is the half the round
+message did not ask about. Both replace every tick, so a per plot choice left standing behind
+either is a record that disagrees with what is on screen, and the next row press acts on the
+disagreement. **Clear leaving the record standing would mean Clear then tick MOSQUES silently
+drops DM-14**, which is the same invisible drop as the Select all route one press later. Both
+forget every hand choice, so there is one rule rather than two and no path disagrees with another.
+
+The test writes out what it did before as well as what it does now, so the fault is on the record
+beside the fix: carrying the old record past Select all drops DM-14 on the very next row press.
+
+### 3. SomeOfThem builds the sentence and nothing called it
+
+Its only references were `TickingATemplateTests.cs:112` and `:116`. **Green, and it had never
+reached a screen.** It is on the workbook row now, under the tick box, as a NOTE rather than a
+refusal, and a row where every plot is going in gets no line because a line about nothing is one
+the team reads past on every other press.
+
+**The pane counts nothing.** `TickingATemplate.RowLine` takes the template, the ticks and the
+component reader and hands back the sentence, so the two counts come off the split's own rule
+rather than off a loop beside the control that draws them. That is also what made item 3 testable
+in Core at all.
+
+**It is the line the round before spent itself looking for.** That round asked a 57,143 line report
+why MM-09 to MM-15 were unticked, and this answers the held off half of it on the row a person is
+looking at when they press.
+
+### How many other members build a line the pane never shows: SIX, and three of them are lines
+
+**Counted rather than guessed at.** Every public member of `Core/Kpi` returning a string or a list
+of strings, held against every reference in `src` outside its own declaration, doc comments left
+out. **245 such members. SIX have no reference at all**, and every one of the six is tested green.
+
+```
+KpiPaneWords.ModelNamed        a line       the model's name or the words for none
+CreateWords.SuggestedName      a line       the name a box offered, and THE BOX IS DELETED
+RegionChoice.WhyUnchosen       a line       why no region was chosen, for the report's own column
+ComponentTemplates.ValuesFor   a list       its docstring says the report and the pane say it
+PlotPrefixes.PrefixesFor       a list       DELIBERATELY KEPT and already recorded as uncalled
+WorkbookPatcher.ReadBack       not a line   a cell read off a written file
+```
+
+**`WhyUnchosen` is the one worth acting on, and it is not acted on this round** because it was not
+what was asked for. Its own docstring says it exists "for a report that would otherwise print an
+empty cell and leave somebody guessing which of the two cases it was", and nothing calls it, so
+**the report prints the empty cell.** `SuggestedName` is the deleted name box's and its shape is
+gone with the box. `PrefixesFor` is the one already recorded as deliberately kept.
+
+### The open question beside it: is that enough for a route beside every unticked plot
+
+**Not quite, and one thing is still missing.** Items 1 to 3 close the hand route: a plot unticked
+by hand is visible on its row now and the record cannot drift, so an unticked plot is no longer
+one of three unexplained cases. What is left is the two the split decides, the component not in
+the table and the component disagreeing with the prefix, **and the tool does know both at tick
+time** through `PlotsPerTemplate.For`, whose `Why` is already the sentence.
+
+**What is missing is the component for a plot nobody ticked.** The correction recorded last round
+stands: `set.Runs` to `Readings` to `PlotReading.Component` reaches the component with no new
+argument, and it reaches it **for ticked plots only**, because an unticked plot is never read and
+has no reading at all. The plots the column exists to explain are exactly the ones that route
+cannot reach.
+
+**So it needs the component per plot read beside the plot list, off ONE read at the press**, the
+way `PlotOrigins` already reads the list off the live document. That is one read and one argument
+and it is a round of its own. **Not built this round**, as asked.
+
+### Three break watches, one test red each
+
+```
+1  Unticked ignores the hand record      UntickingARowKeepsAPlotThePersonPutOnByHand
+                                         RED: Expected ["DM-12"], Actual []
+2  Forgotten hands back itself           SelectAllAndClearForgetEveryHandChoice
+                                         RED: Expected Count = 0, Actual Count = 2,
+                                         Off = ["DM-14"], On = ["DM-12"]
+3  the row counts what could go          TheRowSaysHowManyOfItsPlotsAreGoingInAndSaysNothing...
+                                         RED: Expected "MOSQUES: 2 of the 3 plots...", Actual ""
+```
+
+Every one names what was broken. Both files restored byte for byte, checked with `diff -q`, and
+the suite green at 1939 after.
+
+### What the correction settled, recorded beside PlotOrigins
+
+**A SECTION THAT COVERS WHAT WENT IN CANNOT TELL YOU WHAT DID NOT.** The premise of the round
+before was that MM-09 to MM-15 are in the list and not in the model. They are in the model, on a
+sheet AND on a schedule, which is why they are in neither disagreement line. The evidence was that
+they appear nowhere in a 57,143 line report, and **that is not evidence**: every section of that
+report is over the ticked plots. PLOTS TICKED THAT WENT INTO NO WORKBOOK reading 0 is correct by
+construction and was read as a fact about the model. And the two nines were a coincidence.
+
+### For Bader, not a fault to fix, and UNVERIFIED
+
+**Two workbook rows can settle as the same template**, if two files in the templates folder are
+both recognised as STREETS, and unticking one then takes every street plot off while the other
+stays ticked. **I have not measured that two files can be recognised the same way**, so it is
+written here as unverified. What did change is that the state is now visible: the still ticked row
+reads `STREETS: 0 of the 78 plots that belong to it, the rest unticked by hand.`
+
+### Still open, and not guessed at
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every line of it is off the code and the two
+verifier reports. The row line has never been seen on a screen.
+
+- **The route beside each unticked plot**, which needs the plot list and the component off one read
+- **`WhyUnchosen` printing the reason it was written for**, so the region column stops printing an
+  empty cell
+- **Which of the three routes leaves MM-09 to MM-15 unticked**, now one of two rather than three,
+  because the hand route shows itself on the row
+- **A species written into an empty row still carries no family, no genus and no native flag**
+
+---
+
 ## 2026-09-15, eighty second pass. Where MM-09 to MM-15 come from, and the rows with no canopy
 
 **Pull request 136, merged into main as `bafb39c`.** The runner ran 28 hook cases and 1934
