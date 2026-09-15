@@ -6,6 +6,12 @@ Newest entry first.
 
 ## 2026-09-15, eighty second pass. Where MM-09 to MM-15 come from, and the rows with no canopy
 
+**Pull request 136, merged into main as `bafb39c`.** The runner ran 28 hook cases and 1934
+tests against the pull request head `15e097a`, 0 failed and 0 skipped. The merge went through
+the API with the title and the message both passed on the call, the commit came back off main
+carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte
+for byte the branch head, checked with a diff that named no file.
+
 **1934 tests, 1114 of them KPI, 6 added, against the 1928 main carries** at `ea7ae2e`, 28 hook
 cases unchanged, build zero warnings. **No audit finding is closed, renumbered or reordered: read
 off the three files, 63 numbered findings, 19 carrying a FIXED mark, 44 open.**
