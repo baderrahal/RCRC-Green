@@ -157,6 +157,7 @@ namespace RcrcGreen.Core.Kpi
             double proposedShrubs,
             double groundCover,
             IEnumerable<UnplacedSpecies> unplaced,
+            IEnumerable<UnplacedSpecies> outOfScope,
             bool groupTotalPrinted,
             double groupTotal,
             string refusal,
@@ -166,6 +167,7 @@ namespace RcrcGreen.Core.Kpi
             ProposedShrubsSquareMetres = proposedShrubs;
             GroundCoverSquareMetres = groundCover;
             Unplaced = (unplaced ?? Enumerable.Empty<UnplacedSpecies>()).ToList();
+            OutOfScope = (outOfScope ?? Enumerable.Empty<UnplacedSpecies>()).ToList();
             GroupTotalPrinted = groupTotalPrinted;
             GroupTotal = groupTotal;
             Refusal = (refusal ?? string.Empty).Trim();
@@ -173,7 +175,7 @@ namespace RcrcGreen.Core.Kpi
         }
 
         public static readonly GroundCoverSplit NoGroup =
-            new GroundCoverSplit(0.0, 0.0, 0.0, null, false, 0.0, string.Empty, false);
+            new GroundCoverSplit(0.0, 0.0, 0.0, null, null, false, 0.0, string.Empty, false);
 
         public double ExistingShrubsSquareMetres { get; }
 
@@ -191,7 +193,32 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public double GroundCoverSquareMetres { get; }
 
+        /// <summary>
+        /// **Species this tool could not READ into either box**, because their prefix is neither
+        /// of the two or they carry none, or because nothing said which phase they are. Every
+        /// one of these REFUSES the plot: an area the tool cannot account for is not a number to
+        /// leave out quietly.
+        /// </summary>
         public IReadOnlyList<UnplacedSpecies> Unplaced { get; }
+
+        /// <summary>
+        /// **Species the tool read perfectly well and the TEMPLATE leaves out**, which today is
+        /// a `SHRUBS:` species under a phase no tree list sheet is named for, Street Design on a
+        /// mosque plot being the measured one.
+        ///
+        /// **THESE ARE NOT A REFUSAL AND THE DIFFERENCE IS THE POINT.** Bader decided Street
+        /// Design is somebody else's scope and does not belong on this plot's checklist, and the
+        /// phase rows have left it out and named it since that decision. Refusing the plot over
+        /// it would reverse a decision rather than catch a fault, and FM-05 alone carries 459 m2
+        /// of it. So it is a TERM of the sum below, named beside the figures, and what the tool
+        /// could not read is what refuses.
+        /// </summary>
+        public IReadOnlyList<UnplacedSpecies> OutOfScope { get; }
+
+        public double OutOfScopeSquareMetres
+        {
+            get { return OutOfScope.Sum(one => one.SquareMetres); }
+        }
 
         public bool GroupTotalPrinted { get; }
 
@@ -221,6 +248,17 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// **What the four boxes WOULD have read**, which on a refused plot is the size of the
+        /// loss beside the group total rather than a number anybody writes. HF-01 would have
+        /// read 52 m2 against a group total of 283, so 231 is what the form would have been
+        /// short by if the refusal had not fired.
+        /// </summary>
+        public double WouldHaveWrittenSquareMetres
+        {
+            get { return ExistingShrubsSquareMetres + ProposedShrubsSquareMetres + GroundCoverSquareMetres; }
+        }
+
+        /// <summary>
         /// One group split. <paramref name="counted"/> decides which phase is existing and which
         /// is proposed, through the same <see cref="CountedGroups.SheetFor"/> the tree lists ask,
         /// so Street Design counts as proposed on STREETS and is left out elsewhere without that
@@ -236,6 +274,7 @@ namespace RcrcGreen.Core.Kpi
             double proposed = 0.0;
             double cover = 0.0;
             var unplaced = new List<UnplacedSpecies>();
+            var outOfScope = new List<UnplacedSpecies>();
 
             foreach (ShrubSpecies species in group.Species)
             {
@@ -263,43 +302,81 @@ namespace RcrcGreen.Core.Kpi
                 {
                     proposed = proposed + species.SquareMetres;
                 }
-                else
+                else if (species.Phase.Length == 0)
                 {
-                    // A SHRUBS species under a phase neither tree list is named for, Street
-                    // Design on a mosque plot among them. It is in neither figure and named, the
-                    // same answer the phase rows already give, and it still counts towards the
-                    // group total so the check below stays honest.
+                    // Nothing says which phase it is, so it cannot be READ into either box. That
+                    // is an area unaccounted for and it refuses.
                     unplaced.Add(new UnplacedSpecies(
                         plotId, species.BotanicalName, species.SquareMetres, species.RowNumber,
-                        species.Phase.Length == 0
-                            ? "it sits under no phase row, so nothing says whether it is existing or proposed"
-                            : "its phase " + species.Phase + " is one no tree list sheet is named for"));
+                        "it sits under no phase row, so nothing says whether it is existing or proposed"));
+                }
+                else
+                {
+                    // **READ AND DELIBERATELY LEFT OUT, which is not the same as unreadable.**
+                    // Street Design on a mosque plot: the tool knows exactly what it is and the
+                    // template does not take it. It is a term of the sum rather than a refusal,
+                    // the same answer the phase rows have given since that decision.
+                    outOfScope.Add(new UnplacedSpecies(
+                        plotId, species.BotanicalName, species.SquareMetres, species.RowNumber,
+                        "its phase " + species.Phase + " is one no tree list sheet is named for, "
+                        + "so this template leaves it out"));
                 }
             }
 
-            double placed = existing + proposed + cover + unplaced.Sum(one => one.SquareMetres);
-            string refusal = Disagreeing(group, placed, existing, proposed, cover, unplaced.Count, areaUnit);
+            // **WHAT WOULD BE WRITTEN, AND NOTHING ELSE.** Anything placed nowhere is a
+            // DISAGREEMENT and never a term of this sum. Adding it in is the fault the 08:38 run
+            // measured: EP-01's whole 411 m2 was unplaced, the equation still closed, the check
+            // said YES and all four boxes were written reading nought.
+            double written = existing + proposed + cover;
+            string refusal = Disagreeing(group, written, existing, proposed, cover, unplaced, outOfScope, areaUnit);
 
             return new GroundCoverSplit(
-                existing, proposed, cover, unplaced,
+                existing, proposed, cover, unplaced, outOfScope,
                 group.GroupTotalPrinted, group.GroupTotalSquareMetres, refusal, group.Species.Count > 0);
         }
 
         /// <summary>
-        /// The split against the row the schedule printed. **The room is the one the phase rows
-        /// already earn**, half the project's area rounding step for each row summed, read off
-        /// the project units and never a constant, because every printed area is already rounded
-        /// and a sum of rounded numbers need not equal a rounded sum.
+        /// The split against the row the schedule printed.
+        ///
+        /// **A SPECIES PLACED NOWHERE REFUSES THE PLOT ON ITS OWN, whatever the arithmetic
+        /// says.** This is the fault the 08:38 run measured and the wording that caused it was
+        /// the round message's own: with the unplaced area inside the equation the sum ALWAYS
+        /// closes, so the check read YES on EP-01, EP-09, EP-14 and HF-01 while every one of
+        /// their four boxes was written short. EP-01 lost all 411 m2 and HF-01 went from 231,
+        /// 52 and 283 on the 18:15 run to nought, nought and nought.
+        ///
+        /// **The room is the one the phase rows already earn**, half the project's area rounding
+        /// step for each row summed, read off the project units and never a constant, because
+        /// every printed area is already rounded and a sum of rounded numbers need not equal a
+        /// rounded sum. It applies to the arithmetic and never to an unplaced species: a species
+        /// nobody could place is not a rounding difference however small its area.
         /// </summary>
         private static string Disagreeing(
             GroupSubtotal group,
-            double placed,
+            double written,
             double existing,
             double proposed,
             double cover,
-            int unplaced,
+            List<UnplacedSpecies> unplaced,
+            List<UnplacedSpecies> outOfScope,
             ProjectUnit areaUnit)
         {
+            // **FIRST, AND WITHOUT LOOKING AT ANY NUMBER.** A species this tool could not place
+            // is an area it cannot account for, so nothing is written for the plot and every one
+            // of them is named. It fires where the schedule printed no group total too, which is
+            // the case the arithmetic below cannot see at all.
+            if (unplaced.Count > 0)
+            {
+                return Count(unplaced.Count, "species row") + " could not be placed in either box, so "
+                    + "NOTHING was written into any of the four. " + Area(UnplacedIn(unplaced))
+                    + " is unaccounted for"
+                    + (group.GroupTotalPrinted
+                        ? " of the " + Area(group.GroupTotalSquareMetres) + " the schedule printed"
+                        : string.Empty)
+                    + ", and the four boxes would have read " + Area(written) + ". Each one: "
+                    + string.Join("; ", unplaced.Select(one => one.InWords).ToArray()) + ".";
+            }
+
             if (!group.GroupTotalPrinted) return string.Empty;
 
             int summed = group.Species.Count;
@@ -310,10 +387,15 @@ namespace RcrcGreen.Core.Kpi
                     + " of it is " + SpeciesPrefix.Shrubs + " and how much is " + SpeciesPrefix.GroundCover + ".";
             }
 
+            // **WHAT IS ACCOUNTED FOR: what would be written, plus what the template deliberately
+            // leaves out.** Nothing else is a term. The area the tool could not read has already
+            // refused above, so it never reaches this sum and can never close it.
             double total = group.GroupTotalSquareMetres;
-            double off = Math.Abs(total - placed);
+            double accounted = written + outOfScope.Sum(one => one.SquareMetres);
+            double off = Math.Abs(total - accounted);
             double relative = Totalled.Tolerance * Math.Max(1.0, Math.Abs(total));
             if (off <= relative) return string.Empty;
+
 
             double step = areaUnit == null ? double.NaN : areaUnit.Accuracy;
             bool stepRead = !double.IsNaN(step) && step > 0.0;
@@ -327,12 +409,25 @@ namespace RcrcGreen.Core.Kpi
                 : ", and the project's area rounding step was not read, so no rounding room was allowed";
 
             return "the split does not add up to the group total the schedule printed. "
-                + SpeciesPrefix.Shrubs + " " + Area(existing + proposed) + ", "
-                + SpeciesPrefix.GroundCover + " " + Area(cover) + " and "
-                + unplaced + (unplaced == 1 ? " species" : " species")
-                + " placed nowhere add to " + Area(placed)
-                + " against its printed group total of " + Area(total)
+                + SpeciesPrefix.Shrubs + " " + Area(existing + proposed) + " and "
+                + SpeciesPrefix.GroundCover + " " + Area(cover)
+                + " are what would be written, adding to " + Area(written)
+                + (outOfScope.Count == 0
+                    ? string.Empty
+                    : ", and " + Area(UnplacedIn(outOfScope)) + " this template leaves out, "
+                        + Area(accounted) + " in all")
+                + ", against its printed group total of " + Area(total)
                 + ", off by " + Area(off) + room + ".";
+        }
+
+        private static double UnplacedIn(IEnumerable<UnplacedSpecies> unplaced)
+        {
+            return unplaced.Sum(one => one.SquareMetres);
+        }
+
+        private static string Count(int howMany, string thing)
+        {
+            return howMany + " " + thing + (howMany == 1 ? string.Empty : "s");
         }
 
         /// <summary>

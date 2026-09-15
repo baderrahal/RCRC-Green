@@ -201,9 +201,18 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "SHRUBS or GROUND COVER",
                 one.Why);
 
-            // 36 plus 9 is 45, the group total, so the split still adds up and the boxes are
-            // written. The nine is in neither of them and is on the page.
-            Assert.True(split.AddsUp, split.Refusal);
+            // **36 plus 9 is 45, the group total, AND THE PLOT STILL REFUSES.** That closing sum
+            // is the fault the 08:38 run measured: with the unplaced area inside the equation the
+            // check can never fire, so four plots wrote every box short and the column read YES.
+            // Nine square metres this tool could not read is nine it cannot account for.
+            Assert.False(split.AddsUp);
+            Assert.Equal(36.0, split.WouldHaveWrittenSquareMetres);
+            Assert.Equal(
+                "1 species row could not be placed in either box, so NOTHING was written into any "
+                + "of the four. 9 m² is unaccounted for of the 45 m² the schedule printed, "
+                + "and the four boxes would have read 36 m². Each one: FM-05 row 5, "
+                + "LANTANA CAMARA, 9 m²: " + one.Why + ".",
+                split.Refusal);
             Assert.Equal("FM-05 row 5, LANTANA CAMARA, 9 m²: " + one.Why, one.InWords);
         }
 
@@ -256,9 +265,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.False(split.AddsUp);
             Assert.Equal(
-                "the split does not add up to the group total the schedule printed. SHRUBS 70 m², "
-                + "GROUND COVER 0 m² and 0 species placed nowhere add to 70 m² against its "
-                + "printed group total of 100 m², off by 30 m², and the project's area "
+                "the split does not add up to the group total the schedule printed. SHRUBS 70 m² "
+                + "and GROUND COVER 0 m² are what would be written, adding to 70 m², against "
+                + "its printed group total of 100 m², off by 30 m², and the project's area "
                 + "rounding step was not read, so no rounding room was allowed.",
                 split.Refusal);
         }
@@ -360,8 +369,204 @@ namespace RcrcGreen.Core.Tests.Kpi
             string report = Report(Dm11(), Dm14());
 
             Assert.Contains("== " + KpiCreateReport.GroundCoverHeading + " (2) ==", report);
-            Assert.Contains("DM-11 | 0 m² | 70 m² | 0 m² | none | 70 m² | YES", report);
-            Assert.Contains("DM-14 | 0 m² | 0 m² | 468 m² | none | 468 m² | YES", report);
+            Assert.Contains(
+                "DM-11 | 0 m² | 70 m² | 0 m² | none | none | 70 m² | 70 m² | YES",
+                report);
+            Assert.Contains(
+                "DM-14 | 0 m² | 0 m² | 468 m² | none | none | 468 m² | 468 m² | YES",
+                report);
+        }
+
+        /// <summary>
+        /// **THE FOUR PLOTS THE 08:38 RUN LOST, AND THEY MUST NOW REFUSE.** Every one of them read
+        /// adds up YES while every box was written short, because the unplaced area sat inside
+        /// the equation and the sum always closed.
+        ///
+        /// HF-01 is the one with both halves: 52 m² of ground cover it could read and 231 m²
+        /// it could not, against a group total of 283. On the 18:15 run its PDF read Existing
+        /// Shrubs 231, Proposed 52 and TOTAL 283. **It must write nothing at all now**, and the
+        /// report must say the four boxes would have read 52.
+        /// </summary>
+        [Theory]
+        [InlineData("EP-01", 0.0, 411.0, 411.0)]
+        [InlineData("EP-09", 0.0, 3.0, 3.0)]
+        [InlineData("EP-14", 0.0, 78.0, 78.0)]
+        [InlineData("HF-01", 52.0, 231.0, 283.0)]
+        public void TheFourPlotsThatLostTheirAreaNowRefuseAndNothingIsWritten(
+            string plotId, double cover, double lost, double groupTotal)
+        {
+            GroundCoverSplit split = GroundCoverSplit.Of(
+                plotId, Losing(cover, lost, groupTotal), CreateFixture.Counted, ProjectUnit.Unknown);
+
+            Assert.False(
+                split.AddsUp,
+                plotId + " lost " + GroundCoverSplit.Area(split.UnplacedSquareMetres)
+                + " and the check still said it adds up. The four boxes would have been written "
+                + "reading " + GroundCoverSplit.Area(split.WouldHaveWrittenSquareMetres)
+                + " against a group total of " + GroundCoverSplit.Area(split.GroupTotal)
+                + ". An area placed nowhere is a disagreement and never a term of the sum.");
+            Assert.Equal(groupTotal, split.GroupTotal);
+            Assert.Equal(cover, split.WouldHaveWrittenSquareMetres);
+            Assert.Equal(lost, split.UnplacedSquareMetres);
+            Assert.Empty(split.OutOfScope);
+
+            Assert.Contains("NOTHING was written into any of the four", split.Refusal);
+            Assert.Contains("is unaccounted for of the ", split.Refusal);
+            Assert.Contains("the four boxes would have read ", split.Refusal);
+        }
+
+        /// <summary>
+        /// **AND NONE OF THE FOUR BOXES IS WRITTEN ON HF-01**, which is what the PDF showed going
+        /// from 231, 52 and 283 to nought, nought and nought without a word.
+        /// </summary>
+        [Fact]
+        public void HfOneWritesNoneOfItsFourBoxesAndTheFormSaysWhy()
+        {
+            PdfPlan plan = PdfFill.Of(
+                CreateFixture.Plot("HF-01", uid2: "ANH-008-MO-100006",
+                    subtotals: new[] { Losing(52.0, 231.0, 283.0) }),
+                CountedGroups.Of(KpiTemplates.Healthcare), null,
+                new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None, ProjectUnit.Unknown);
+
+            foreach (PdfValue value in new[]
+            {
+                PdfValue.ExistingShrubs, PdfValue.ProposedShrubs, PdfValue.TotalShrubs, PdfValue.GroundCover
+            })
+            {
+                PdfFieldFill field = plan.Fields.Single(one => one.Value == value);
+
+                Assert.False(field.Written, value + " was written while 231 m² was unaccounted for");
+                Assert.Contains("could not be placed in either box", field.Why);
+                Assert.Contains("231 m² is unaccounted for of the 283 m²", field.Why);
+            }
+        }
+
+        /// <summary>
+        /// **THE PLOTS THAT SPLIT CLEANLY MUST NOT MOVE.** FP-16 reads 335 proposed with nothing
+        /// unplaced. FP-22 reads 427 and 1114 against a group total of 1541. NP-100002 reads 248
+        /// plus 652 against 900, which is what it read as ONE figure before the split.
+        /// </summary>
+        [Theory]
+        [InlineData("FP-16", 335.0, 0.0, 335.0)]
+        [InlineData("FP-22", 427.0, 1114.0, 1541.0)]
+        [InlineData("NP-100002", 248.0, 652.0, 900.0)]
+        public void ThePlotsThatSplitCleanlyDoNotMove(
+            string plotId, double shrubs, double cover, double groupTotal)
+        {
+            GroundCoverSplit split = GroundCoverSplit.Of(
+                plotId, Clean(shrubs, cover, groupTotal), CreateFixture.Counted, ProjectUnit.Unknown);
+
+            Assert.True(split.AddsUp, split.Refusal);
+            Assert.Equal(shrubs, split.ProposedShrubsSquareMetres);
+            Assert.Equal(shrubs, split.TotalShrubsSquareMetres);
+            Assert.Equal(cover, split.GroundCoverSquareMetres);
+            Assert.Equal(groupTotal, split.GroupTotal);
+            Assert.Equal(groupTotal, split.WouldHaveWrittenSquareMetres);
+            Assert.Empty(split.Unplaced);
+        }
+
+        /// <summary>
+        /// **A SPECIES THE TEMPLATE DELIBERATELY LEAVES OUT IS NOT A SPECIES THE TOOL COULD NOT
+        /// READ, and only the second refuses.** Street Design on a mosque plot is somebody else's
+        /// scope by decision and the phase rows have left it out and named it since that
+        /// decision. Refusing the plot over it would reverse a decision rather than catch a
+        /// fault, and FM-05 alone carries 459 m² of it.
+        ///
+        /// Here the group is 361 of proposed shrubs and 459 of Street Design shrubs, adding to
+        /// the printed group total of 820, and the boxes are written with 361.
+        /// </summary>
+        [Fact]
+        public void APhaseThisTemplateLeavesOutIsATermAndNotARefusal()
+        {
+            var group = new GroupSubtotal(
+                KpiMerge.ShrubsHeading, 361.0, 0, 3, double.NaN, null, 0, null,
+                new[]
+                {
+                    new PhaseSubtotal(CreateFixture.Proposed, 3, 361.0, 0, true, string.Empty),
+                    new PhaseSubtotal("Street Design", 5, 459.0, 0, false, CountedGroups.LeftOut)
+                },
+                true, 820.0, 0, null,
+                new[]
+                {
+                    new ShrubSpecies("SHRUBS: BOUGAINVILLEA GLABRA", 361.0, CreateFixture.Proposed, 4),
+                    new ShrubSpecies("SHRUBS: CARISSA MACROCARPA", 459.0, "Street Design", 6)
+                });
+
+            GroundCoverSplit split = GroundCoverSplit.Of("FM-05", group, CreateFixture.Counted, ProjectUnit.Unknown);
+
+            Assert.True(split.AddsUp, split.Refusal);
+            Assert.Equal(361.0, split.ProposedShrubsSquareMetres);
+            Assert.Equal(361.0, split.WouldHaveWrittenSquareMetres);
+            Assert.Empty(split.Unplaced);
+
+            UnplacedSpecies left = Assert.Single(split.OutOfScope);
+            Assert.Equal(459.0, left.SquareMetres);
+            Assert.Equal(
+                "its phase Street Design is one no tree list sheet is named for, so this template "
+                + "leaves it out",
+                left.Why);
+        }
+
+        /// <summary>
+        /// **THE DISTINCT NAMES GO AT THE TOP OF THE SECTION, GROUPED BY THE PREFIX EACH READ.**
+        /// A fifth prefix is a line in a table and a naming mess is a different job, and the two
+        /// look identical in a count and different in a list.
+        /// </summary>
+        [Fact]
+        public void TheReportNamesEveryDistinctUnplacedSpeciesWithACountAtTheTop()
+        {
+            ScannedSchedule schedule = CreateFixture.ShrubsAndLawn(
+                "EP-01",
+                Headings,
+                Structure(KpiMerge.ShrubsHeading),
+                Structure("Proposed"),
+                Species("CLIMBERS: BOUGAINVILLEA GLABRA", "200 m²", "20"),
+                Species("CLIMBERS: BOUGAINVILLEA GLABRA", "150 m²", "15"),
+                Species("PALMS: PHOENIX DACTYLIFERA", "61 m²", "6"),
+                Subtotal("411 m²", "41"),
+                Subtotal("411 m²", "41"));
+
+            string report = Report(schedule);
+
+            Assert.Contains(KpiCreateReport.UnplacedNamesHeading + " (2 prefixes)", report);
+            Assert.Contains("the prefix each read | distinct names | rows | area | the names", report);
+            Assert.Contains(
+                "CLIMBERS | 1 | 2 | 350 m² | CLIMBERS: BOUGAINVILLEA GLABRA x2",
+                report);
+            Assert.Contains(
+                "PALMS | 1 | 1 | 61 m² | PALMS: PHOENIX DACTYLIFERA x1",
+                report);
+        }
+
+        /// <summary>
+        /// One group whose species the prefix rule cannot place, built to the shape the 08:38 run
+        /// measured: some the tool could read and some it could not, against a printed total.
+        /// </summary>
+        private static GroupSubtotal Losing(double cover, double lost, double groupTotal)
+        {
+            var species = new List<ShrubSpecies>();
+            if (cover > 0.0) species.Add(new ShrubSpecies("GROUND COVER: CARISSA MACROCAPA", cover, CreateFixture.Proposed, 4));
+            species.Add(new ShrubSpecies("UNKNOWN PREFIX SPECIES", lost, CreateFixture.Proposed, 5));
+
+            return new GroupSubtotal(
+                KpiMerge.ShrubsHeading, groupTotal, 0, 2, double.NaN, null, 0, null,
+                new[] { new PhaseSubtotal(CreateFixture.Proposed, 3, groupTotal, 0, true, string.Empty) },
+                true, groupTotal, 0, null, species);
+        }
+
+        /// <summary>
+        /// One group every species of which the prefix rule places, so nothing about it moves.
+        /// </summary>
+        private static GroupSubtotal Clean(double shrubs, double cover, double groupTotal)
+        {
+            var species = new List<ShrubSpecies>();
+            if (shrubs > 0.0) species.Add(new ShrubSpecies("SHRUBS: BOUGAINVILLEA GLABRA", shrubs, CreateFixture.Proposed, 4));
+            if (cover > 0.0) species.Add(new ShrubSpecies("GROUND COVER: LAMPRANTHUS AUREUS", cover, CreateFixture.Proposed, 5));
+
+            return new GroupSubtotal(
+                KpiMerge.ShrubsHeading, groupTotal, 0, 2, double.NaN, null, 0, null,
+                new[] { new PhaseSubtotal(CreateFixture.Proposed, 3, groupTotal, 0, true, string.Empty) },
+                true, groupTotal, 0, null, species);
         }
 
         private static string Wrote(string plotId, ScannedSchedule schedule, PdfValue value)

@@ -414,8 +414,17 @@ namespace RcrcGreen.Core.Kpi
                 return;
             }
 
-            Line(report, "  plot | existing shrubs | proposed shrubs | ground cover | placed nowhere "
-                + "| group total printed | adds up");
+            var unplaced = rows.SelectMany(one => one.Split.ByPrefix.Unplaced).ToList();
+
+            // **THE NAMES FIRST, BECAUSE THE NAMES ARE THE QUESTION.** Four plots of the 08:38
+            // run lost their whole group to species the prefix rule could not place, and nothing
+            // in that file said what those species were CALLED. A fifth prefix is a line in a
+            // table and a naming mess is a different job, and only the names tell them apart.
+            TheUnplacedNames(report, unplaced);
+
+            Line(report, "  plot | existing shrubs | proposed shrubs | ground cover | COULD NOT BE READ "
+                + "| left out by this template | the four boxes would have read | group total printed "
+                + "| adds up");
 
             foreach (var one in rows)
             {
@@ -427,17 +436,36 @@ namespace RcrcGreen.Core.Kpi
                     GroundCoverSplit.Area(split.ProposedShrubsSquareMetres),
                     GroundCoverSplit.Area(split.GroundCoverSquareMetres),
                     split.Unplaced.Count == 0 ? "none" : GroundCoverSplit.Area(split.UnplacedSquareMetres),
+                    split.OutOfScope.Count == 0 ? "none" : GroundCoverSplit.Area(split.OutOfScopeSquareMetres),
+                    GroundCoverSplit.Area(split.WouldHaveWrittenSquareMetres),
                     split.GroupTotalPrinted ? GroundCoverSplit.Area(split.GroupTotal) : "none printed",
                     split.AddsUp ? "YES" : "NO, NOTHING WAS WRITTEN"));
             }
 
-            var unplaced = rows.SelectMany(one => one.Split.ByPrefix.Unplaced).ToList();
             if (unplaced.Count > 0)
             {
                 Line(report, string.Empty);
                 Line(report, "  " + Count(unplaced.Count, "species row")
-                    + " reached neither box and NOTHING was guessed for any of them:");
+                    + " COULD NOT BE READ into either box, and every plot holding one wrote NOTHING "
+                    + "into any of its four boxes. Nothing was guessed for any of them:");
                 foreach (UnplacedSpecies species in unplaced)
+                {
+                    Line(report, "    " + species.InWords);
+                }
+            }
+
+            // **READ AND DELIBERATELY LEFT OUT IS A DIFFERENT LIST AND NOT A REFUSAL.** Street
+            // Design on a mosque plot is somebody else's scope by decision, so its area is a term
+            // of the sum rather than an area nobody can account for. Keeping the two apart is
+            // what stops the fix for a silent loss becoming a refusal on every plot that has one.
+            var left = rows.SelectMany(one => one.Split.ByPrefix.OutOfScope).ToList();
+            if (left.Count > 0)
+            {
+                Line(report, string.Empty);
+                Line(report, "  " + Count(left.Count, "species row")
+                    + " was read and left out because this template does not take its phase. "
+                    + "That is a decision rather than a fault, so the boxes are still written:");
+                foreach (UnplacedSpecies species in left)
                 {
                     Line(report, "    " + species.InWords);
                 }
@@ -519,6 +547,53 @@ namespace RcrcGreen.Core.Kpi
                 {
                     Line(report, "    " + Join(reading.PlotId, reading.Water.Why));
                 }
+            }
+
+            Line(report, string.Empty);
+        }
+
+        public const string UnplacedNamesHeading = "  THE SPECIES NO PREFIX PLACED, BY NAME";
+
+        /// <summary>
+        /// **EVERY DISTINCT NAME THE PREFIX RULE COULD NOT PLACE, WITH HOW MANY ROWS AND HOW MUCH
+        /// AREA CARRY IT, GROUPED BY THE PREFIX EACH READ.**
+        ///
+        /// **It goes at the TOP of the section because it is the question rather than the
+        /// detail.** `GRASS:`, `SHRUBS:` and `GROUND COVER:` are the three prefixes ever
+        /// measured. If a run's unplaced rows all read one prefix nobody has seen, the answer is
+        /// a line in a table and not a refusal, and that is the team's call to make once they
+        /// can see the name. If they read a dozen different things, it is a naming job in the
+        /// model. **The two look identical in a count and different in a list.**
+        /// </summary>
+        private static void TheUnplacedNames(StringBuilder report, IReadOnlyList<UnplacedSpecies> unplaced)
+        {
+            if (unplaced.Count == 0) return;
+
+            var byPrefix = unplaced
+                .GroupBy(one => SpeciesPrefix.Of(one.BotanicalName), StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(one => one.Count())
+                .ToList();
+
+            Line(report, UnplacedNamesHeading + " (" + byPrefix.Count
+                + (byPrefix.Count == 1 ? " prefix)" : " prefixes)"));
+            Line(report, "  the prefix each read | distinct names | rows | area | the names");
+
+            foreach (var prefix in byPrefix)
+            {
+                var names = prefix
+                    .GroupBy(one => one.BotanicalName, StringComparer.OrdinalIgnoreCase)
+                    .OrderByDescending(one => one.Count())
+                    .ThenBy(one => one.Key, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                Line(report, "  " + Join(
+                    prefix.Key.Length == 0 ? "(no colon in the name)" : prefix.Key,
+                    names.Count.ToString(CultureInfo.InvariantCulture),
+                    prefix.Count().ToString(CultureInfo.InvariantCulture),
+                    GroundCoverSplit.Area(prefix.Sum(one => one.SquareMetres)),
+                    string.Join(", ", names
+                        .Select(one => one.Key + " x" + one.Count())
+                        .ToArray())));
             }
 
             Line(report, string.Empty);

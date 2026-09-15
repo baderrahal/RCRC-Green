@@ -1,5 +1,45 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty seventh pass, the check that could never fire. **2000 tests, 1180 of them
+KPI, 10 added, against the 1990 main carries** at `9ab922a`, 28 hook cases unchanged, build zero
+warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES: 63 numbered findings, 19 carrying a FIXED mark, 44
+OPEN.** This round closes none, renumbers none and reorders none.
+
+**The fault, measured on the 08:38 run: placed-nowhere sat INSIDE the equation**, so the sum
+always closed, the refusal could never fire, and EP-01, EP-09, EP-14 and HF-01 wrote every box
+short with the column reading YES. EP-01 lost all 411 m² and HF-01 went from 231, 52 and 283
+to nought, nought and nought. **The wording that caused it was the round message's own.**
+
+**The rule now: what would be WRITTEN plus what this template deliberately LEAVES OUT equals the
+group total.** Anything unreadable refuses the plot on its own, before any arithmetic.
+
+**TWO KINDS OF PLACED NOWHERE and only one refuses.** Unreadable, a prefix that is neither or
+none at all or no phase row, REFUSES. Left out by this template, a `SHRUBS:` species under a
+phase no tree list is named for, is a TERM and not a refusal. **Taken literally the fix would
+have written nothing on every mosque plot with a Street Design group**, 459 m² on FM-05 alone,
+reversing a decision rather than catching a fault. The two travel in separate lists and print in
+separate columns.
+
+**THE SPECIES NO PREFIX PLACED, BY NAME now opens the section**, every distinct name grouped by
+the prefix each read with rows and area, because one unseen prefix is a line in a table and a
+dozen different things is a naming job, and a count cannot tell them apart.
+
+**UNKNOWN and written down: what those species are called.** The 08:38 report is under
+`reports/` and nothing there is committed. One thing the numbers DO settle by deduction: HF-01's
+231 is unplaced because of its PREFIX and not its phase, since Existing is a counted phase on
+HEALTHCARE and a `SHRUBS:` species under it would have landed in the existing figure.
+
+Break watch: the refusal switched off and the unplaced area put back inside the equation reddens
+6 of 2000, each naming the plot, the area lost and what the box would have carried. Restored
+byte for byte, md5 `ce641093a192f53beb01fad56cbd1f90`.
+
+Files: `Core/Kpi/GroundCover.cs`, `KpiCreateReport.cs`, `kpi-rules.md`, and the tests
+`GroundCoverSplitTests.cs`.
+
+---
+
 Phase: 9, ship. Eighty sixth pass, ground cover out of the shrubs box. **1990 tests, 1170 of
 them KPI, 26 added, against the 1964 main carries** at `8367b30`, 28 hook cases unchanged, build
 zero warnings.
