@@ -61,6 +61,7 @@ namespace RcrcGreen.Core.Kpi
                 + "sections are below under its name.");
             Line(report, string.Empty);
 
+            ThePlotList(report, set);
             TheGlance(report, set);
             TheRunAccounting(report, set);
             TheSplit(report, set);
@@ -149,6 +150,54 @@ namespace RcrcGreen.Core.Kpi
                 + " lines in the body below. This block is above them and is not in the counts.");
             Line(report, "  A section printed once per plot has one block per plot, so its own "
                 + "size is the third column.");
+            Line(report, string.Empty);
+        }
+
+        public const string PlotListHeading = "EVERY PLOT THE TOOL OFFERED";
+
+        /// <summary>
+        /// Every plot the model names, where each came from and whether it was ticked.
+        ///
+        /// **A PLOT THE TOOL OFFERS THAT THE MODEL DOES NOT HOLD IS A PLOT SOMEBODY WILL TICK**,
+        /// and until this section nothing in the file named a plot that was not ticked. The 05:49
+        /// run listed 165 and ticked 156, and MM-09 to MM-15 sat unticked and appeared nowhere in
+        /// 57,143 lines, so seven plots could be argued about for a round with no record to read.
+        ///
+        /// It is the FIRST section of the body, above the glance, because it is the list every
+        /// other number in the file is a subset of.
+        /// </summary>
+        private static void ThePlotList(StringBuilder report, KpiCreateRunSet set)
+        {
+            PlotOriginList origins = set.Origins;
+
+            Heading(report, PlotListHeading, origins.Listed,
+                "every plot the model names and every plot that was ticked, read off the live "
+                + "document when Create was pressed");
+
+            if (!origins.Counts)
+            {
+                Line(report, "  " + PlotOriginWords.NothingRead);
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  " + origins.InWords);
+            Line(report, "  " + origins.WhatTheTwoLinesCount);
+            Line(report, "  every plot is in exactly one source row and one tick state   "
+                + (origins.AddsUp ? "YES" : "NO, WHICH IS A BUG IN THIS TOOL"));
+
+            // **The plots nobody ticked are the ones nothing else in this file says a word
+            // about.** The ticked ones have a block each below, so they are listed here for the
+            // count and named up there for the detail.
+            Line(report, string.Empty);
+            Line(report, "  NOT TICKED, " + origins.NotTicked
+                + ". Nothing else in this file mentions these plots.");
+            foreach (PlotOrigin one in origins.NotTickedRows) Line(report, "    " + one.InWords);
+
+            Line(report, string.Empty);
+            Line(report, "  plot | where it came from | ticked");
+            foreach (PlotOrigin one in origins.Rows) Line(report, "  " + one.InWords);
+
             Line(report, string.Empty);
         }
 

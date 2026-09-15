@@ -4,6 +4,125 @@ Newest entry first.
 
 ---
 
+## 2026-09-15, eighty second pass. Where MM-09 to MM-15 come from, and the rows with no canopy
+
+**1934 tests, 1114 of them KPI, 6 added, against the 1928 main carries** at `ea7ae2e`, 28 hook
+cases unchanged, build zero warnings. **No audit finding is closed, renumbered or reordered: read
+off the three files, 63 numbered findings, 19 carrying a FIXED mark, 44 open.**
+
+### 1. They are in the model, and the round message's reading of the silence was wrong
+
+**THE PREMISE WAS THAT THEY ARE IN THE LIST AND NOT IN THE MODEL. THEY ARE IN THE MODEL, ON A
+SHEET AND ON A SCHEDULE BOTH.** All three places were checked and the third was checked first.
+
+**Nothing derives a plot name.** There is ONE production construction of the KPI plot list from a
+document, `KpiPlotReader.Plots`, and it is `PlotsInTheModel.Of(OnSheets, OnSchedules)`. The sheets
+half adds `PRX_Plot_ID` as printed and the schedules half adds the filter's own string, and the
+only transformation on a plot string in that chain is `Trim()`. **Every plot identifier builder in
+this repository is Drawing Sheet's**, `PlotTickList.Generated` among them, which really does build
+`prefix + "-" + number.ToString("00")` in a loop over a range and is exactly the shape the round
+message suspected. Checked by name: **no file under `Core/Kpi` or `Revit/Kpi` mentions
+`PlotTickList`, `PlotRange`, `PlotRegistry` or `PlotSelection`**, and the only formatted number in
+those folders is a report column width, a report row number and a PDF cross reference offset. The
+plot named `-` is a reading too, off a schedule filter holding a dash, because nothing checks a
+plot against the two letters, dash, digits shape on the way into this list.
+
+**The two disagreement lines count the plots named by exactly ONE source**, so a plot named by
+BOTH is in neither of them. MM-09 to MM-15 being in neither line is what PLACES them: they are in
+the intersection, on a sheet and on a schedule. Both of the first two places the round message
+named are true of them at once, and being in both is exactly what made them invisible.
+
+**The two nines are different nines.** Nine named across the two lines, nine unticked, and nothing
+has ever made those agree: one is about which of two reads found a plot, the other about whether
+`PlotsPerTemplate.For` placed it in a ticked template. The run proves it, because seven of the nine
+unticked are in neither line and the park plots the lines do name are placed by their prefix and
+are ticked.
+
+**And the silence was not evidence.** Every section of the create report is over the ticked plots.
+THE SPLIT and PLOTS TICKED THAT WENT INTO NO WORKBOOK both run off `TemplateSplit`, which is built
+from the ticked list alone, so `Unplaced` cannot hold a plot nobody ticked and its 0 is correct and
+says nothing. `KpiCreateRunSet` did not carry the model's plot list at all.
+
+**Why they are unticked is six routes and it is one of three.** With every row ticked a plot goes
+unticked when its component is not one of the eleven, when its component and its prefix disagree,
+when it has neither, when it was held off by hand, when the ticking call did not run for that row,
+or when its template has no recognised file. STREETS wrote its 78 plots, so its row was ticked and
+settled, which rules out the third, fifth and sixth and leaves **the first two and the fourth**.
+Being on a sheet does not narrow it further: the first two need a component on that sheet and the
+fourth needs nothing, and a plot whose sheet holds no component falls to the prefix and is ticked.
+**WHICH OF THE THREE IT IS CANNOT BE DETERMINED FROM THIS REPOSITORY** and is not guessed at. Worth
+knowing beside it: `ValuePerPlot` reads the component off the plot's FIRST sheet by sheet number and
+no other, so a plot whose sheets disagree is placed off one of them with nothing recorded, and
+nobody has measured whether any plot's sheets disagree.
+
+**What was added is the section the round asked for.** `PlotOrigins` prints one row per plot at the
+top of the report, above the glance: the plot, which of the two reads named it, and whether it was
+ticked. The list is read off the LIVE DOCUMENT at the press and the ticked half is counted off
+`PlotOutcomes`. A plot that was ticked and that the read does not name is its own row reading NAMED
+BY NEITHER SOURCE and the line says it is a bug rather than a state. The counts add up four source
+states and two tick states against the row count, printed as YES or as a bug, and one sentence says
+what the pane's two lines count so nobody holds nine against nine again.
+
+**WHAT IT STILL DOES NOT SAY IS WHY A PLOT WENT UNTICKED**, and that is deliberate. The route needs
+the component per plot, which the pane read at a different moment from the list this section reads
+at the press, so a route worked out from the two together would be one answer off two records of
+one fact. **The plot list and the component per plot travelling from ONE read is the next line and
+a round of its own.**
+
+### 2. Rows 85, 92 and 99, recorded and nothing changed
+
+**52 of 150 forms got no Total Green cover on the 05:49 run**, and the glance line the round before
+added named the reason outright: rows 85, 92 and 99 of the client's tree lists carry the numbering
+column and no canopy formula. A tree on one of those rows contributes no canopy in the client's own
+workbook whoever fills it. **Refusing was right, the exact text rule stays, and nothing in the tool
+changed.** It is in `kpi-rules.md` with the three rows, the count and the guard's own printed line,
+and Bader is taking it to the client.
+
+**One thing the printed line says that nobody asked about.** `O85 = IF(ISBLANK(B85)," ",N85*B85)`
+is the shape MOSQUES row 21 carries at `M21 = IF(ISBLANK(B21)," ",L21*B21)`, two columns right, so
+on that sheet the canopy per tree sits at N and the area at O. The guard never cared, because the
+only letter in the text it looks for is the DIAMETER column and that comes off the heading row.
+Whether the whole sheet uses N and O or only the added rows do is UNKNOWN from one row.
+
+### Three break watches, one test red each
+
+```
+1  the two sources swapped in PlotOrigins.Of    EveryPlotOfferedIsARowWithWhereItCameFrom...
+                                                RED: EP-05 read "on a sheet and on no schedule"
+                                                where it is on a schedule and on no sheet
+2  a ticked plot the read does not name dropped APlotTickedThatNeitherSourceNamesIsARowSayingSo
+                                                RED: "MM-09 | NAMED BY NEITHER SOURCE | ticked"
+                                                gone from the rows
+3  the section moved below the glance           TheReportOpensWithEveryPlotTheToolOffered...
+                                                RED: the plot list must be above the glance
+```
+
+Every one names what was broken. Both files restored byte for byte, checked with `diff -q`, and the
+suite green at 1934 after.
+
+### For Bader, not a fault to fix this round
+
+**Select all and Clear do not touch the held off list.** `_heldOff` is added to and removed from by
+the per plot tick box alone and cleared only when the model changes, so a plot unticked by hand
+once, then brought back by Select all, is dropped again the next time any template row is ticked or
+re-ticked. Nothing on the pane ever prints that list. Found while enumerating the six routes and
+left alone, because it is not what this round was asked for.
+
+### Still open, and not guessed at
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every number is off the 05:49 report, the
+pane's screenshot and the code as it stands.
+
+- **Which of the three routes leaves MM-09 to MM-15 unticked.** One line of the next run's report
+  beside one look at those sheets' `PRX_Component` settles it
+- **Why the plot list holds a plot named `-`.** The schedule filter holds a dash and nothing checks
+  a plot's shape on the way in. Whether it should be checked is the team's question, because the
+  tool has never invented a plot and refusing one the model really holds is a different rule
+- **The route beside each unticked plot**, which needs the list and the component off one read
+- **A species written into an empty row still carries no family, no genus and no native flag**
+
+---
+
 ## 2026-09-14, eighty first pass. Three faults off the 19:52 run
 
 **Pull request 134, merged into main as `8b90fe0`.** The runner ran 28 hook cases and 1928

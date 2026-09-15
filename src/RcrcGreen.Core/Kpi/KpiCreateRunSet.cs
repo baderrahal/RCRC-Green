@@ -223,7 +223,8 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<TemplateOutcome> outcomes,
             RunTiming timing = null,
             IReadOnlyList<PlotOutcome> plotOutcomes = null,
-            StreetReferenceFile streets = null)
+            StreetReferenceFile streets = null,
+            PlotsInTheModel plots = null)
         {
             if (split == null) throw new ArgumentNullException("split");
 
@@ -234,6 +235,33 @@ namespace RcrcGreen.Core.Kpi
             Timing = timing ?? RunTiming.NotTimed;
             PlotOutcomes = plotOutcomes ?? new List<PlotOutcome>();
             Streets = streets ?? StreetReferenceFile.NotSet;
+            Plots = plots;
+        }
+
+        /// <summary>
+        /// Every plot the model names, read off the live document when Create was pressed, or
+        /// null where nothing read it.
+        ///
+        /// **THE TICKED PLOTS WERE THE ONLY PLOTS THE REPORT HAD EVER SEEN.** Every section of
+        /// the file is over <see cref="PlotOutcomes"/> or over the split, and both of those are
+        /// the TICKED list, so a plot offered and not ticked appeared nowhere in 57,143 lines.
+        /// The list is what the ticks were made against, so the report carries it.
+        /// </summary>
+        public PlotsInTheModel Plots { get; }
+
+        /// <summary>
+        /// Every plot the model names and every plot that was ticked, each with which of the two
+        /// reads named it and whether it was ticked. **The ticked half is counted off the
+        /// OUTCOMES**, which is what really happened, rather than off anything the pane planned.
+        /// </summary>
+        public PlotOriginList Origins
+        {
+            get
+            {
+                return Plots == null
+                    ? PlotOriginList.NothingRead
+                    : PlotOrigins.Of(Plots, PlotOutcomes.Select(one => one.PlotId));
+            }
         }
 
         /// <summary>

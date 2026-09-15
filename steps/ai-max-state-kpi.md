@@ -1,5 +1,54 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty second pass, where MM-09 to MM-15 come from and the rows with no canopy.
+**1934 tests, 1114 of them KPI, 6 added, against the 1928 main carries** at `ea7ae2e`, 28 hook
+cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES AT THESE LINES: 63 numbered findings, 19 carrying a
+FIXED mark, 44 OPEN.** This round closes none, renumbers none and reorders none.
+
+**1. THE PREMISE WAS THAT THEY ARE IN THE LIST AND NOT IN THE MODEL. THEY ARE IN THE MODEL.** All
+three places checked, the third first. **Nothing derives a plot name**: one production construction
+of the list, `PlotsInTheModel.Of(OnSheets, OnSchedules)`, both halves verbatim reads, `Trim()` the
+only transformation. **Every plot identifier builder in this repo is Drawing Sheet's** and no file
+under `Core/Kpi` or `Revit/Kpi` names `PlotTickList`, `PlotRange`, `PlotRegistry` or
+`PlotSelection`. **The two disagreement lines count the plots named by exactly ONE source**, so a
+plot named by BOTH is in neither, and MM-09 to MM-15 being in neither PLACES them in the
+intersection: on a sheet AND on a schedule. **The two nines are different nines**, one about which
+read found a plot and one about whether the split placed it. **The silence was not evidence**:
+every section of the report is over the ticked plots, and PLOTS TICKED THAT WENT INTO NO WORKBOOK
+reads 0 by construction. **Why they are unticked is one of three routes**, the component not
+being one of the eleven, the component and the prefix disagreeing, or held off by hand, and **WHICH
+CANNOT BE DETERMINED FROM THIS REPOSITORY.** Being on a sheet does not narrow it, because the third
+of those needs no component at all. `PlotOrigins` is the section, one row per plot at the top of the
+report, above the glance: the plot, which read named it, and whether it was ticked, the list read
+off the live document at the press and the ticks counted off the outcomes. **It does not say WHY a
+plot went unticked**, because the route would be worked out from two records of one fact, and the
+list and the component off ONE read is a round of its own.
+
+**2. ROWS 85, 92 AND 99 CARRY NO CANOPY FORMULA AND NOTHING IN THE TOOL CHANGED.** 52 of 150 forms
+got no Total Green cover and the glance line named the reason outright. A tree on one of those rows
+contributes no canopy in the client's own workbook whoever fills it, so refusing was right and the
+exact text rule stays. Recorded in `kpi-rules.md` with the three rows, the count and the guard's own
+printed line. Bader is taking it to the client. One thing the printed line says beside that: on that
+sheet the canopy per tree sits at N and the area at O rather than at L and M, and the guard never
+cared because the only letter it looks for is the diameter column off the heading row.
+
+Three break watches, one test red each: the two sources swapped, a ticked plot the read does not
+name dropped, and the section moved below the glance. Every one names what was broken. Both files
+restored byte for byte, checked with `diff -q`, and the suite green at 1934 after.
+
+**FOR BADER, NOT A FAULT TO FIX.** Select all and Clear do not touch the held off list, so a plot
+unticked by hand once and brought back by Select all is dropped again the next time any template
+row is ticked. Nothing on the pane prints that list.
+
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.** Every number is off the 05:49 report, the
+pane's screenshot and the code as it stands.
+
+**Open and not guessed at:** which of the three routes leaves MM-09 to MM-15 unticked, why the list
+holds a plot named `-` and whether a plot's shape should be checked on the way in, and the route
+beside each unticked plot, which needs the list and the component off one read.
+
 Phase: 9, ship. Eighty first pass, three faults off the 19:52 run. **1928 tests, 1108 of them KPI,
 12 added, against the 1916 main carries** at `484251e`, 28 hook cases unchanged, build zero
 warnings.
