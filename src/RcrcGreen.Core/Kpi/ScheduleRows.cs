@@ -112,6 +112,16 @@ namespace RcrcGreen.Core.Kpi
 
         public const string DiameterWord = "DIAMETER";
 
+        /// <summary>
+        /// **THREE COLUMNS OF THE SOFTSCAPE SCHEDULE HOLD THE WORD WATER AND ONLY ONE IS THIS
+        /// ONE.** Measured on the 1548 scan: `WATER DEMAND`, `WATER L/TREE/DAY` and `L/DAY`, and
+        /// the shrubs and lawn schedule prints `WATER DEMAND`, `WATER L/SQM/DAY` and `L/DAY`.
+        /// So this heading is matched WHOLE through <see cref="Reading"/> and never by holding
+        /// a word, because a substring rule over the word WATER would take whichever of the
+        /// three came first. That is the two DIAMETER headings again, which cost a round.
+        /// </summary>
+        public const string LitresADayHeading = "L/DAY";
+
         public static int Holding(IReadOnlyList<string> headings, string word)
         {
             if (headings == null) return -1;
@@ -137,6 +147,58 @@ namespace RcrcGreen.Core.Kpi
 
             return "the heading row names no column holding " + word + ". Its headings: "
                 + (named.Count == 0 ? "(none)" : string.Join(" | ", named.ToArray()));
+        }
+
+        /// <summary>
+        /// The one column whose heading IS this heading, matched whole through
+        /// <see cref="LabelText.Same"/>, which is the rule every whole-label lookup in this tool
+        /// already asks. Back comes the index, or -1 for none and -2 for more than one, and
+        /// <see cref="NoneReading"/> and <see cref="MoreThanOneReading"/> say which in words.
+        ///
+        /// **MORE THAN ONE IS A REFUSAL AND NEVER THE FIRST.** Taking the first is how a value
+        /// lands in a column nobody measured, and this schedule is eleven columns wide with
+        /// three of them naming WATER.
+        /// </summary>
+        public static int Reading(IReadOnlyList<string> headings, string heading)
+        {
+            if (headings == null) return -1;
+
+            int found = -1;
+            for (int at = 0; at < headings.Count; at++)
+            {
+                if (!LabelText.Same(headings[at], heading)) continue;
+                if (found >= 0) return -2;
+
+                found = at;
+            }
+
+            return found;
+        }
+
+        public static string NoneReading(IReadOnlyList<string> headings, string heading)
+        {
+            return "no column of the heading row reads " + heading + ". Its headings: " + Printed(headings);
+        }
+
+        public static string MoreThanOneReading(IReadOnlyList<string> headings, string heading)
+        {
+            var at = new List<string>();
+            for (int column = 0; column < (headings == null ? 0 : headings.Count); column++)
+            {
+                if (LabelText.Same(headings[column], heading)) at.Add((column + 1).ToString(CultureInfo.InvariantCulture));
+            }
+
+            return heading + " is the heading of more than one column, " + string.Join(" and ", at.ToArray())
+                + ", and nothing says which is meant. Its headings: " + Printed(headings);
+        }
+
+        private static string Printed(IReadOnlyList<string> headings)
+        {
+            var named = (headings ?? new List<string>())
+                .Select(one => string.IsNullOrWhiteSpace(one) ? "-" : one.Trim())
+                .ToList();
+
+            return named.Count == 0 ? "(none)" : string.Join(" | ", named.ToArray());
         }
 
         public static string At(IReadOnlyList<string> row, int column)

@@ -262,6 +262,13 @@ namespace RcrcGreen.Revit.Kpi
             int totalRow = 0;
             int passedOver = 0;
 
+            // **THE L/DAY TOTAL OFF EACH SCHEDULE, for the PDF's Irrigation water demand.** Read
+            // here beside the rows it sits in rather than worked out later, and read off the
+            // SAME ScannedSchedule the row readers get, so the two cannot see different rows.
+            // A plot holding none of a kind says so rather than reading as nought.
+            WaterDemandRead softscapeWater = WaterDemandRead.NoSchedule(WaterDemand.SoftscapeKind);
+            WaterDemandRead groundWater = WaterDemandRead.NoSchedule(WaterDemand.ShrubsAndLawnKind);
+
             // Every schedule of each kind is found first and counted. One is read. Two or more
             // are named and none of them is read, because nothing could say which of two is the
             // real one. No plot has been measured holding two: FM-05 holds one softscape
@@ -313,6 +320,7 @@ namespace RcrcGreen.Revit.Kpi
                 {
                     ScannedSchedule rows = Printed(schedule);
                     printed.Add(rows);
+                    softscapeWater = WaterDemandRead.From(rows);
                     SoftscapeReading trees = SoftscapeRows.Read(rows, counted, plotId);
                     species.AddRange(trees.Species);
                     groups.AddRange(trees.Groups);
@@ -329,7 +337,12 @@ namespace RcrcGreen.Revit.Kpi
                 catch (Exception failed)
                 {
                     refusals.Add(Threw(schedule, failed));
+                    softscapeWater = WaterDemandRead.Refused(schedule.Name, ThrewReading(failed));
                 }
+            }
+            else
+            {
+                softscapeWater = OfAKind(softscape, WaterDemand.SoftscapeKind);
             }
 
             if (ground.Count == 1)
@@ -339,6 +352,7 @@ namespace RcrcGreen.Revit.Kpi
                 {
                     ScannedSchedule rows = Printed(schedule);
                     printed.Add(rows);
+                    groundWater = WaterDemandRead.From(rows);
                     ShrubsAndLawnReading read = ShrubsAndLawnRows.Read(
                         rows, new[] { KpiMerge.ShrubsHeading, KpiMerge.LawnHeading }, counted, areaUnit);
                     subtotals.AddRange(read.Subtotals);
@@ -347,7 +361,12 @@ namespace RcrcGreen.Revit.Kpi
                 catch (Exception failed)
                 {
                     refusals.Add(Threw(schedule, failed));
+                    groundWater = WaterDemandRead.Refused(schedule.Name, ThrewReading(failed));
                 }
+            }
+            else
+            {
+                groundWater = OfAKind(ground, WaterDemand.ShrubsAndLawnKind);
             }
 
             return new PlotReading(
@@ -370,7 +389,29 @@ namespace RcrcGreen.Revit.Kpi
                 totalRow,
                 groups,
                 sheet == null ? string.Empty : Held(sheet, KpiNames.PlotUid2),
-                sheet == null ? string.Empty : Held(sheet, KpiNames.PlotNh));
+                sheet == null ? string.Empty : Held(sheet, KpiNames.PlotNh),
+                WaterDemand.Of(softscapeWater, groundWater));
+        }
+
+        /// <summary>
+        /// Why a kind's L/DAY total was not read when the kind was not read at all. **None and
+        /// more than one are two different sentences**, because a plot holding two softscape
+        /// schedules is not a plot holding none, and the reading already refuses the write over
+        /// the second case naming both schedules.
+        /// </summary>
+        private static WaterDemandRead OfAKind(IReadOnlyList<ViewSchedule> found, string kind)
+        {
+            if (found.Count == 0) return WaterDemandRead.NoSchedule(kind);
+
+            return WaterDemandRead.Refused(
+                string.Join(" and ", found.Select(one => one.Name).ToArray()),
+                "this plot holds " + found.Count + " " + kind
+                + " schedules and nothing says which of them holds the total");
+        }
+
+        private static string ThrewReading(Exception failed)
+        {
+            return "reading it threw. " + failed.GetType().Name + ": " + failed.Message;
         }
 
         private static string Threw(ViewSchedule schedule, Exception failed)

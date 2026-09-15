@@ -1119,6 +1119,85 @@ written, the numbers are right, and the note says where the model needs correcti
 schedules, never species, because on a run of 78 plots a long list is not read. The report
 keeps the full detail with the counts and the areas left out.
 
+## The irrigation water demand is both schedules' own TOTAL rows, added
+
+**The last field on these forms with a real source that nothing read.** Bader specified it on 15
+September: per plot, out of BOTH schedules, the L/DAY column, **TAKE THE TOTAL OF ALL**, add the
+two, divide by a thousand because the form's unit column reads m with a superscript three over
+day. It goes on all three forms.
+
+```
+<PlotID>-(600) SOFTSCAPE SCHEDULE          its L/DAY TOTAL row
+<PlotID>-(600) SHRUBS & LAWN SCHEDULE      its L/DAY TOTAL row
+                                           added, then divided by 1000
+```
+
+**THE SCHEDULE'S OWN TOTAL ROW AND NEVER THE SPECIES ROWS ADDED UP.** A sum this tool worked out
+is a different number from one the schedule printed, and nothing on the page would show which it
+was. `WaterDemandRead.From` is the whole rule and it adds nothing anywhere.
+
+**THREE COLUMNS HOLD THE WORD WATER AND ONLY ONE IS L/DAY.** Measured on the 1548 scan:
+
+```
+softscape        IMAGE | # | PLANT CODE | BOTANICAL NAME | COUNT (n) | HEIGHT (m)
+                 | DIAMETER (m) | WATER DEMAND | WATER L/TREE/DAY | L/DAY
+shrubs and lawn  ... | WATER DEMAND | WATER L/SQM/DAY | L/DAY
+```
+
+So the heading is matched WHOLE, through `ScheduleColumns.Reading` over `LabelText.Same`, which
+is the same rule every whole-label lookup in this tool already asks. **None and more than one are
+both refusals and the headings are printed in each.** Taking the first of two is how a value
+lands in a column nobody measured, and this is the two DIAMETER headings again, which cost a
+round.
+
+**The TOTAL row is found by its first cell and that is the row's definition rather than a value
+read by position.** `SoftscapeRows.TotalMark` is the one mark and this reads it off that class,
+so the two cannot part.
+
+**BOTH SCHEDULES OR NOTHING.** A plot missing either schedule, or whose either total cannot be
+read, writes nothing into the field and is named with which half and why, and where both failed
+BOTH are named. Half a demand in a box printed `Irrigation water demand` is a number nobody could
+tell was half. A plot holding TWO schedules of a kind says so rather than saying it holds none,
+which is a different sentence about a different model.
+
+**A SCHEDULE WITH NO TOTAL ROW IS NAMED AND THE ROW IT WOULD HAVE ADDED UP IS LEFT ALONE.**
+Whether any real schedule prints none is UNKNOWN: every schedule shape measured so far prints
+one, and the reader's own refusal is what will say so on the first run.
+
+**IT PRINTS FINE RATHER THAN TO TWO PLACES.** Dividing litres by a thousand is what makes the
+number small, the same way square metres divided by a million make the green cover small. 2492
+L/day is 2.492, and two places would send 2.49 to the client, which is two litres a day thrown
+away on every plot. It goes through the same `Fine` the green cover and the road length use.
+
+### The total counts every group and the tree lists do not, and the report says so per plot
+
+A mosque plot's Street Design group is out of scope for the tree lists by Bader's decision, and
+its water is still inside the schedule's TOTAL. **That may well be right, because the water is
+used whoever is paying for it, and it is not this tool's to decide.** So the number written is
+the total Bader specified and nothing subtracts anything, and
+`THE IRRIGATION WATER DEMAND, PER PLOT` carries a column naming every group that plot left out of
+its tree lists with that group's own subtotal. The difference is on the page rather than found
+three months later.
+
+That section also prints **the row number each total came off**, so a person can open the
+schedule and look at the same row the tool read.
+
+### What DM-11 will read, and the one thing this cannot settle from here
+
+Bader measured DM-11's shrubs and lawn schedule printing **L/DAY totals of 432 and 908** on the
+1548 scan. **That scan is not in this repository and never will be**, so two things follow and
+both are written down rather than guessed.
+
+**If those two are the two GROUP totals, GRASS and SHRUBS & GROUND COVER, the schedule's own
+TOTAL row reads 1340 and 1340 is what the tool takes.** It takes neither 432 nor 908, and
+`OnDm11TheScheduleTotalIsTakenAndNeitherGroupTotalIs` pins exactly that over a schedule built to
+that shape. If instead the TOTAL row itself reads one of them, the tool takes that one. **The
+report prints the row, so the first run settles which without anybody arguing about it.**
+
+**DM-11's softscape L/DAY total is UNKNOWN from here.** Call it S: the field comes to
+`(S + the shrubs total) / 1000` m with a superscript three over day. On the 1340 reading, a
+softscape total of 1152 would give 2.492.
+
 ## A PDF beside every workbook
 
 Every plot already gets a workbook in a folder named after its UID2. It gets a PDF beside it

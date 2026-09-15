@@ -171,8 +171,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// **FOUR CONVERSIONS AND EVERY OTHER FIELD IS WRITTEN IN THE UNIT IT WAS READ IN**, off
-        /// the page by position on 14 September. Three of the four are live and the fourth is
-        /// unreachable, because no water demand is read off any schedule yet.
+        /// the page by position on 14 September. **All four are live now**, because the
+        /// irrigation water demand is read off both schedules' L/DAY TOTAL rows and divided by a
+        /// thousand for the form.
         /// </summary>
         [Fact]
         public void FourFieldsConvertAndTheOtherThirtyEightDoNot()
@@ -182,14 +183,17 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("km\u00B2", PdfForms.Parks.FieldFor(PdfValue.TotalAreasToBeGreened).Unit);
             Assert.Equal("%", PdfForms.Parks.FieldFor(PdfValue.PercentageCanopy).Unit);
 
-            // The fourth, on all three forms, which nothing reaches today.
+            // The fourth, on all three forms, and the unit constant the division names.
             foreach (PdfForm form in PdfForms.All)
             {
                 Assert.Equal("m\u00B3/day", form.FieldFor(PdfValue.IrrigationWaterDemand).Unit);
             }
 
-            Assert.Contains("divides by 1000", PdfFill.WaterDemandIsNotReadYet);
-            Assert.Contains("litres a day", PdfFill.WaterDemandIsNotReadYet);
+            Assert.Equal("m\u00B3/day", WaterDemand.CubicMetresUnit);
+            Assert.Equal("L/day", WaterDemand.LitresUnit);
+            Assert.Equal(1000.0, WaterDemand.LitresInACubicMetre);
+            Assert.Contains("divided by 1000", PdfFill.WaterDemandNotRead);
+            Assert.Contains("litres a day", PdfFill.WaterDemandNotRead);
 
             // And the two that read like conversions and are not: the road width is metres into
             // a box printed m, and every area is square metres into a box printed m2.

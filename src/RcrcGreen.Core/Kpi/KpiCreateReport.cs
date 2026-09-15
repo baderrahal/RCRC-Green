@@ -65,6 +65,7 @@ namespace RcrcGreen.Core.Kpi
             TheGlance(report, set);
             TheRunAccounting(report, set);
             TheSplit(report, set);
+            TheWaterDemand(report, set);
 
             // **EVERY PLOT GETS ITS OWN BLOCK.** It used to take the FIRST run of each
             // template and print that one, so the 18:15 run over 156 plots carried detail for
@@ -374,6 +375,101 @@ namespace RcrcGreen.Core.Kpi
         /// **Everything here is read back off the file that was written**, never off the plan,
         /// which is the rule every written cell of the workbook already follows.
         /// </summary>
+        public const string WaterHeading = "THE IRRIGATION WATER DEMAND, PER PLOT";
+
+        /// <summary>
+        /// Both schedules' L/DAY TOTAL rows, added, and what the form was given.
+        ///
+        /// **IT IS ITS OWN SECTION AND NOT A LINE IN THE PDF BLOCK.** The PDF block prints what
+        /// LANDED in a box. This prints where the number came from, which is two rows of two
+        /// schedules a person can open, and the two questions are answered by different people.
+        ///
+        /// **THE TOTAL ROW COUNTS EVERY GROUP AND THE TREE LISTS DO NOT.** A mosque plot's
+        /// Street Design group is out of scope for the tree lists by Bader's decision, and its
+        /// water is still in the schedule's TOTAL. That may well be right, because the water is
+        /// used whoever is paying for it, and it is not this tool's to decide. So the column is
+        /// here: every plot says whether it had a group left out of its tree lists and what that
+        /// group's own subtotal was, and the difference is on the page rather than found later.
+        /// **The number written is Bader's, TAKE THE TOTAL, and nothing here subtracts anything.**
+        /// </summary>
+        private static void TheWaterDemand(StringBuilder report, KpiCreateRunSet set)
+        {
+            var readings = set.Runs
+                .SelectMany(one => one.Readings)
+                .Where(one => one != null)
+                .ToList();
+
+            Heading(report, WaterHeading, readings.Count,
+                "both schedules' own TOTAL rows, added, then divided by 1000 because the form "
+                + "asks " + WaterDemand.CubicMetresUnit + " and the schedules print "
+                + WaterDemand.LitresUnit + ". Nothing adds the species rows up instead");
+
+            if (readings.Count == 0)
+            {
+                Line(report, "  No plot was read in this press.");
+                Line(report, string.Empty);
+                return;
+            }
+
+            Line(report, "  plot | softscape TOTAL | shrubs and lawn TOTAL | added | "
+                + WaterDemand.CubicMetresUnit + " written | groups left out of the tree lists");
+
+            foreach (PlotReading reading in readings)
+            {
+                PlotWaterDemand water = reading.Water;
+
+                Line(report, "  " + Join(
+                    reading.PlotId,
+                    Half(water.Softscape),
+                    Half(water.ShrubsAndLawn),
+                    water.BothRead ? WaterDemand.Litres(water.LitresADay) : "-",
+                    water.BothRead ? WaterDemand.CubicMetres(water.CubicMetresADay) : "NOTHING WRITTEN",
+                    LeftOutOfTheTreeLists(reading)));
+            }
+
+            var refused = readings.Where(one => !one.Water.BothRead).ToList();
+            if (refused.Count > 0)
+            {
+                Line(report, string.Empty);
+                Line(report, "  " + Count(refused.Count, "plot") + " wrote no water demand, each with why:");
+                foreach (PlotReading reading in refused)
+                {
+                    Line(report, "    " + Join(reading.PlotId, reading.Water.Why));
+                }
+            }
+
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// One half, the number and the row it came off, or why there is none. The row number is
+        /// printed so a person can open that schedule and look at the row this read.
+        /// </summary>
+        private static string Half(WaterDemandRead read)
+        {
+            if (!read.Read) return "NOT READ, " + read.Why;
+
+            return WaterDemand.Litres(read.LitresADay) + " off row "
+                + read.TotalRow.ToString(CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
+        /// The groups this plot's softscape schedule printed that no tree list sheet is named
+        /// for, each with the subtotal it printed. **Their water IS in the total that was
+        /// written**, and this column is what lets that be checked rather than assumed.
+        /// </summary>
+        private static string LeftOutOfTheTreeLists(PlotReading reading)
+        {
+            var left = reading.PrintedGroups.Where(one => !one.Counted).ToList();
+            if (left.Count == 0) return "none";
+
+            return string.Join("; ", left
+                .Select(one => one.Name + " " + (one.SubtotalPrinted
+                    ? one.Subtotal.ToString(CultureInfo.InvariantCulture) + " trees"
+                    : "printed no subtotal"))
+                .ToArray());
+        }
+
         private static void ThePdfs(StringBuilder report, KpiCreateRunSet set)
         {
             var held = set.PlotOutcomes.Where(one => one.Pdf != null).ToList();

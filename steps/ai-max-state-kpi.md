@@ -1,5 +1,51 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Eighty fifth pass, the irrigation water demand off both schedules' TOTAL rows.
+**1964 tests, 1144 of them KPI, 25 added, against the 1939 main carries** at `dbae2e6`, 28 hook
+cases unchanged, build zero warnings.
+
+**THE COUNT, READ OFF THE THREE AUDIT FILES: 63 numbered findings, 19 carrying a FIXED mark, 44
+OPEN.** This round closes none, renumbers none and reorders none. Audit 4's own seventeen, 64 to
+80, stand as written.
+
+What it does: per plot, out of BOTH schedules, the L/DAY column, take the schedule's own TOTAL
+row, add the two, divide by a thousand for the form's m with a superscript three over day. It
+goes on all three PDF forms. `WaterDemandRead.From` is the whole rule, `PlotWaterDemand` holds
+both halves, `PlotReading.Water` carries it, and `THE IRRIGATION WATER DEMAND, PER PLOT` reports
+it.
+
+**Nothing adds the species rows up.** A schedule with no TOTAL row writes nothing for that half
+and is named. Both schedules or nothing, with the half that failed named, and both named where
+both failed.
+
+**The column is matched WHOLE and never by holding a word**, because three columns of the
+softscape schedule hold WATER and only one reads L/DAY. None and more than one are both refusals
+and both print the headings.
+
+**The TOTAL counts groups the tree lists leave out**, Street Design on a mosque plot among them.
+That is what TAKE THE TOTAL means and it stands, and the report names every such group with its
+own subtotal per plot so the difference is visible rather than found later.
+
+**One thing changed the round did not name**: the value prints through `Fine` rather than to two
+places, because 2492 L/day is 2.492 and two places would send 2.49, which is two litres a day
+lost on every plot.
+
+**UNKNOWN and written down**: whether any real schedule prints no TOTAL row, and DM-11's
+softscape L/DAY total, because the 1548 scan is not in this repository. The 432 and 908 Bader
+measured are two totals and the schedule has one, so if they are the group totals the TOTAL row
+reads 1340 and 1340 is what the tool takes. The report prints the row it read, which settles it
+on the first run.
+
+Break watch: `ScheduleColumns.Reading` made to take the first of two matching headings reddens 2
+of 1964, and the first names the fault in its own message. Restored byte for byte, md5
+`096037650ddefaf26bf40f276df9b697`.
+
+Files: `Core/Kpi/WaterDemand.cs` new, `ScheduleRows.cs`, `PlotReading.cs`, `PdfFill.cs`,
+`KpiCreateReport.cs`, `Revit/Kpi/KpiPlotReader.cs`, `kpi-rules.md`, and the tests
+`WaterDemandTests.cs` new plus `CreateFixture.cs`, `PdfUnitsTests.cs` and `PdfEmptyingTests.cs`.
+
+---
+
 Phase: 9, ship. Eighty fourth pass, the fourth audit of the KPI tool, a software firm's review.
 **1939 tests, 1119 of them KPI, 0 added, against the 1939 main carries** at `f2e2f42`, 28 hook
 cases unchanged, build zero warnings. **This round writes no code and changes no test**, so the
