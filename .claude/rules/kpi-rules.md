@@ -333,7 +333,7 @@ by its own path already and an empty value shared by five plots is not one value
 ## READY is the question the team is actually asking
 
 **ALL 154 ROWS OF THE PLOT LIST READ YES ON THE 16:37 PRESS**, four columns of YES with an empty
-why not, and Bader had the ready list worked out by hand at 33. Among those 154 rows were the 7
+why not, and Bader had the ready list worked out by hand at 33. Among those 154 rows were the
 plots whose workbooks had replaced each other, the 41 whose PDF Total areas to be greened came
 out blank, FP-18 whose PDF and Excel disagree about the canopy, and the plots whose workbooks
 divide by nought.

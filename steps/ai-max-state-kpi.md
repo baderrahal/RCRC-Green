@@ -54,6 +54,15 @@ hand with the new shape written out.
 
 `steps/2026-09-16-kpi-checks.md` is the Windows run sheet for Bader.
 
+**The claim checker was run over the log entry before the pull request.** It flagged one wrong
+count, `SharedUid2Tests` holding seven tests where the entry read six, corrected. And it flagged
+that the round message's 7 plots whose workbooks replaced each other does not reconcile with its
+own item 1, which names ten plots over two shared values: every plot in a colliding group is 10
+and only the plots whose file was lost is 8. **The number is removed from all four places that
+carried it** rather than argued with, and what 7 counted is a question for Bader. Everything else
+it could check came back backed, and it could run no build, no suite, no hook script and no md5,
+which it said outright.
+
 Open for Bader: the ten shared UID2 values are the model's fix, whether a stopped plot keeps its
 street reference row is UNKNOWN and does not arise this press, and whether a #DIV/0! alone should
 hold READY back is his call. `CLAUDE.md` is not wrong at any line this round touched.

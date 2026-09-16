@@ -45,7 +45,7 @@ namespace RcrcGreen.Core.Kpi
     /// ticked, whether a workbook was written and whether a PDF was, and NONE of them is the
     /// question the team is actually asking, which is whether this plot can go to the client.
     ///
-    /// That press wrote both files for 7 plots whose workbooks had replaced each other, for 41
+    /// That press wrote both files for the plots whose workbooks had replaced each other, for 41
     /// whose Total areas to be greened came out blank, for FP-18 whose PDF and Excel disagree
     /// about the canopy, and for the plots whose workbooks recalculate with a #DIV/0!. Every one
     /// of those read YES four times over.

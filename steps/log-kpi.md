@@ -66,7 +66,7 @@ byte for byte, md5 `9311f7605b66779e2e94ba455fec6e65` both sides.
 ### A READY column, because four columns of YES is not the question
 
 All 154 rows of THE PLOT LIST read YES four times over at 16:37 with an empty why not. Among them
-were the 7 plots whose workbooks replaced each other, the 41 whose Total areas to be greened came
+were the plots whose workbooks replaced each other, the 41 whose Total areas to be greened came
 out blank, FP-18, and the plots whose workbooks divide by nought. Bader had the ready list worked
 out by hand at 33.
 
@@ -190,6 +190,36 @@ by hand with the new column written out, and both now assert that not one of the
 the first three because no PDF was planned beside their workbooks or no workbook was written at
 all, and FP-17, FP-20 and FP-21 because they lost 36, 5 and 25 trees. **The subject moved, the
 tests were right, and the corrections say which.**
+
+### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` was run over this entry before the pull request was
+opened, with no shell of its own, so it says outright that it could not run the build, the suite,
+the hook script or an md5 and treats none of those as passed or failed. It read the code, the
+tests, the four audit files and the hook script.
+
+**One claim was WRONG and is corrected.** This entry read `Tests by hand in SharedUid2Tests, six
+of them` and the file holds seven. The seventh is the mixed group added late, and the count had
+not moved with it. It reads seven now.
+
+**One claim was flagged as not reconciling and the number is REMOVED rather than argued with.**
+The round message says the 16:37 press wrote both files for 7 plots whose workbooks had replaced
+each other. Item 1 of that same message names ten plots over two shared values, NS-01 with NS-42
+and MM-01 with MM-09 to MM-15. Counting every plot in a colliding group gives 10 and counting only
+the plots whose own file was lost to a later write gives 8. **Neither reading lands on 7**, the
+press report is not in this repository and cannot be, so the count is taken out of all four places
+that carried it, here, in `.claude/rules/kpi-rules.md`, in `PlotReady`'s docstring and in
+`PlotReadyTests`. The sentence now names the plots without a number. **What 7 counted is a
+question for Bader**, and the shape of the rule is unaffected either way.
+
+**Everything else it could check came back backed.** The audit count 80 and 20 FIXED it counted
+itself and matched exactly, the 28 hook cases it counted case by case and matched exactly, every
+named class, method, constant and test method exists at the name given, `WhyNotOnTheList` and
+`ReadingFor` are gone from `src` and `NoSoftscapeOnTheList` is present with no caller in `src` and
+still under test, and the run sheet really is seventeen steps and seven checks. Its static count of
+the suite came to within one of 2111 and 1291, which it said was the noise of counting attributes
+rather than running them. **The suite, the build and the md5 restores were run here and the numbers
+above are off those runs.**
 
 ### For Bader
 

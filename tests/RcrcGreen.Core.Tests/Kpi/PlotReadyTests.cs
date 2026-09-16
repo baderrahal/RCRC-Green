@@ -9,7 +9,7 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// <summary>
     /// **ALL 154 ROWS OF THE PLOT LIST READ YES ON THE 16:37 PRESS OF 16 SEPTEMBER**, four
     /// columns of YES with an empty why not, and Bader had the ready list worked out by hand at
-    /// 33. Among those 154 rows were the 7 plots whose workbooks had replaced each other, the 41
+    /// 33. Among those 154 rows were the plots whose workbooks had replaced each other, the 41
     /// whose PDF Total areas to be greened came out blank, FP-18 whose PDF and Excel disagree
     /// about the canopy, and the plots whose workbooks recalculate with a #DIV/0!.
     ///
