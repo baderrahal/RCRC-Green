@@ -1,5 +1,54 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety sixth pass, three features that behaved wrongly on the 21:38 press.
+**2152 tests, 1332 of them KPI**, 28 hook cases, build zero warnings, run after the last file was
+written. **80 audit findings, 23 FIXED, 57 open**, counted off the four files again and nothing
+closed, renumbered or reordered.
+**NOTHING HERE WAS RUN IN REVIT.**
+
+**THE 21:38 REPORT IS NOT IN THIS REPOSITORY AND DID NOT ENTER IT.** Every measurement in the log
+entry is copied from Bader's own reading of it.
+
+**READY NO LONGER PASSES A DIVISION NOBODY COULD WORK OUT.** The guard `IF(TotTrees<1," ",...)`
+reads a defined name whose cell holds `SUM(B4:B101)`, and a guard cell holding a formula answered
+not evaluated, so all 284 divisions of that press went unjudged and every plot read READY YES.
+`TheGuard` follows the name to its cell and counts the range through `OverARange`, which
+`RangeCountsToNought` now asks too so there is one counter. `DivisionsNotEvaluated` carries the
+sheet and the cell apart from the sentence, `PlotReady.DivisionsNotChecked` is the new reason, the
+glance names at most five and each plot's own block holds the full list.
+
+**THE NO PLANTING LINE FIRES.** It asked `BodyRowCount`, which counts headings, so a schedule
+showing only its heading read as one that printed something and MM-06, MM-07 and NS-23 were never
+named. It counts the rows under the heading now, through `NoPlanting.RowsBelowTheHeading`, and
+`Reconciliation`'s count of schedules that printed a body asks the same method. A schedule whose
+rows Revit refused is not one that printed nothing either, which is the same shape found while
+making the fix.
+
+**THE TEMPLATE CHECK NAMES N85 AND N88 TO N101, PRINTS NO LINE TWICE AND LEAVES THE ANALYSIS
+BLOCKS ALONE.** An empty formatted cell counts as empty through one rule at the question rather
+than in the reader. Each cell and range pair is named once and the count at the top counts
+distinct cells. A range stops short only when its column sits inside the list's own block, whose
+right edge is read off the file, so S59, T61, V59 and W61 are no longer named. A formula on the
+first tab reading a column outside that block has its own question, naming the column and what it
+holds.
+
+**THREE BREAK WATCHES, EACH RESTORED BYTE FOR BYTE.** `WorkbookFormulas.cs`
+`7afd785468306de624176e77ef0bdc32`, `NoPlanting.cs` `087a22aa231fb11b16c44a856b94a2fb`,
+`TreeListCheck.cs` `254bb9deaaa3d6849f586dba3277c26e`, md5 before and after each one.
+
+**THE RUN SHEET GAINS THREE CHECKS**, 28, 29 and 30, keeping its Windows order and every existing
+check, with what remains, the audit block and what comes next refreshed.
+
+**WHAT IS UNKNOWN AND WHAT THE NEXT PRESS ANSWERS.** Whether any template holds a list column past
+the water total, which the right edge rule would not name. How many first tab formulas read a
+column the list does not fill. What `<Streets>` E37 and E38 are for. None is answerable from this
+repository, because no client workbook is in it.
+
+**A REQUEST FOR BADER.** `steps/2026-09-16-kpi-checks.md` is titled `The seven checks` and holds
+thirty steps. It was not renamed, because the title is what he calls the file.
+
+---
+
 Phase: 9, ship. Ninety fifth pass, the two requests the ninety fourth logged.
 **Merged to main as `619f134`**, pull request 158, the squash message set on the merge call and
 off main byte for byte with no co-author line and no generated-by footer. **Nothing the tool

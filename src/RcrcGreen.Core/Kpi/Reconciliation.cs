@@ -370,7 +370,15 @@ namespace RcrcGreen.Core.Kpi
                 refusals,
                 areaWanted,
                 held.Sum(one => one.PrintedGroups.Count + one.Subtotals.Count),
-                held.Sum(one => one.PrintedSchedules.Count(printed => printed.BodyRowCount > 0)),
+                // **THE SAME ASSUMPTION, IN THE COUNT BESIDE THE LINE.** This counted a schedule
+                // as having printed a body when its BodyRowCount was above nought, and that
+                // count includes the heading row, so a schedule showing only its heading counted
+                // as one that printed something. It asks the one rule NoPlanting asks now, so
+                // each of the 21:38 press's three plots moves from 2 of its 2 schedules with a
+                // body to 0 of 2, six schedules over the three, which is what the reconciliation
+                // of the 16:06 run already said in its own words.
+                held.Sum(one => one.PrintedSchedules.Count(
+                    printed => NoPlanting.RowsBelowTheHeading(printed) > 0)),
                 held.Sum(one => one.PrintedSchedules.Count));
         }
 

@@ -77,7 +77,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             bool withWater = true,
             int[] withoutTotalWater = null,
             int[] withoutWaterPerTree = null,
-            int sumifTo = 0)
+            int sumifTo = 0,
+            int[] emptyWaterPerTreeAt = null,
+            bool withAnalysisBlock = false,
+            string mainSheetReads = null)
         {
             return WorkbookFixture.Computing(
                 _folder,
@@ -92,7 +95,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 withoutTotalWater: withoutTotalWater,
                 withoutWaterPerTree: withoutWaterPerTree,
                 sumifTo: sumifTo,
-                lastRow: 101);
+                lastRow: 101,
+                emptyWaterPerTreeAt: emptyWaterPerTreeAt,
+                withAnalysisBlock: withAnalysisBlock,
+                mainSheetReads: mainSheetReads);
         }
 
         /// <summary>
@@ -357,6 +363,131 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("    the canopy cell is typed or missing, 1:", report);
             Assert.Contains("      L85: it holds 50 and no formula", report);
             Assert.Contains("      M83: it is empty", report);
+        }
+
+        /// <summary>
+        /// **AN EMPTY FORMATTED CELL IS AN EMPTY CELL.** Tree List - Existing N85 and N88 to
+        /// N101 are empty on all seven templates and the 21:38 press named none of them, because
+        /// the cell element is in the file carrying its style and no value, and the reader hands
+        /// back every cell element it finds. A cell holding nothing that is named as holding
+        /// something is a check that passed over the very thing it exists to find.
+        /// </summary>
+        [Fact]
+        public void AnEmptyFormattedWaterCellIsNamedAsEmpty()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("formatted.xlsx", emptyWaterPerTreeAt: new[] { 85 })), Existing);
+
+            TreeListFault named = sheet.Faults.FirstOrDefault(one => one.Cell == "N85");
+
+            Assert.True(
+                named != null,
+                "N85 is a cell element carrying its style and no value at all, which is what "
+                + "N85 and N88 to N101 really are on all seven templates, and the check did not "
+                + "name it. The cells it did name: "
+                + (sheet.Faults.Count == 0
+                    ? "none"
+                    : string.Join(", ", sheet.Faults.Select(one => one.Cell).ToArray())));
+
+            Assert.Equal("the water per tree cell is empty", named.Kind);
+            Assert.Equal(
+                "it is empty, and it is the column O85 multiplies by the count",
+                named.Why);
+        }
+
+        /// <summary>
+        /// **EACH CELL AND RANGE PAIR IS NAMED ONCE.** V4 holds two COUNTIFS over the same two
+        /// ranges, so it names B4:B83 twice and F4:F83 twice, and the 21:38 press printed four
+        /// lines for it. Two cells and two ranges is two lines.
+        /// </summary>
+        [Fact]
+        public void OneCellReadingTwoRangesTwiceOverGivesTwoLines()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("twice.xlsx", withAnalysisBlock: true)), Existing);
+
+            var lines = sheet.Faults
+                .Where(one => one.Cell == Existing + " V4")
+                .ToList();
+
+            Assert.Equal(2, lines.Count);
+
+            Assert.Equal(
+                new[]
+                {
+                    "it reads B4 to B83 and this list names a species as far as row 92, so "
+                    + "every row past the range is left out of it",
+                    "it reads F4 to F83 and this list names a species as far as row 92, so "
+                    + "every row past the range is left out of it"
+                },
+                lines.Select(one => one.Why).OrderBy(one => one, StringComparer.Ordinal).ToArray());
+        }
+
+        /// <summary>
+        /// **A RANGE INSIDE THE ANALYSIS BLOCK IS NOT NAMED AT ALL.** S59 reads S4 to S34, T61
+        /// reads T4 to T34, V59 reads V4 to V57 and W61 reads W4 to W57, and every one of them
+        /// was named as a range stopping before the list ends on both tree lists. They read the
+        /// blocks beside the list and their length is nobody's fault.
+        /// </summary>
+        [Fact]
+        public void ARangeInTheAnalysisBlockIsNotNamed()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("block.xlsx", withAnalysisBlock: true)), Existing);
+
+            var named = sheet.Faults
+                .Where(one => one.Kind == "a formula reads a range that stops before the list ends")
+                .Select(one => one.Cell)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(one => one, StringComparer.Ordinal)
+                .ToList();
+
+            Assert.DoesNotContain(Existing + " S59", named);
+            Assert.DoesNotContain(Existing + " T61", named);
+            Assert.DoesNotContain(Existing + " V59", named);
+            Assert.DoesNotContain(Existing + " W61", named);
+
+            // **AND V4 TO V57 ARE STILL NAMED, BECAUSE THEY REALLY DO STOP SHORT.** Each of
+            // them counts B4 to B83 and F4 to F83, which are the list's own columns, on a list
+            // whose names reach row 92. 54 cells, written out as 54 rather than counted with
+            // the rule the check uses.
+            var wanted = new List<string>();
+            for (int row = 4; row <= 57; row++) wanted.Add(Existing + " V" + row);
+
+            Assert.Equal(
+                wanted.OrderBy(one => one, StringComparer.Ordinal).ToArray(),
+                named.ToArray());
+        }
+
+        /// <summary>
+        /// **A FORMULA ON THE FIRST TAB READING A COLUMN THE LIST DOES NOT FILL IS ITS OWN
+        /// QUESTION.** `&lt;Streets&gt;` E37 reads Q4 to Q34 and column Q holds nothing at all,
+        /// so calling it a range that stops before the list ends says the wrong thing about it.
+        /// Its fault is the column and not the length.
+        /// </summary>
+        [Fact]
+        public void AFirstTabFormulaOverAnEmptyColumnIsNamedUnderItsOwnQuestion()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("column.xlsx", mainSheetReads: "Q4:Q34")), Existing);
+
+            TreeListFault named = sheet.Faults.FirstOrDefault(
+                one => one.Cell == "<Mosques> E37");
+
+            Assert.True(
+                named != null,
+                "<Mosques> E37 reads Q4 to Q34 over a column holding nothing, which is what "
+                + "<Streets> E37 does, and it was not named at all. The cells named: "
+                + (sheet.Faults.Count == 0
+                    ? "none"
+                    : string.Join(", ", sheet.Faults.Select(one => one.Cell).ToArray())));
+
+            Assert.Equal("a formula reads a column the list does not fill", named.Kind);
+            Assert.Equal(
+                "it reads Q4 to Q34 on Tree List - Existing, and column Q holds nothing on that "
+                + "sheet. This list's own columns end at O, so the formula reads a block beside "
+                + "the list rather than the list's rows",
+                named.Why);
         }
 
         /// <summary>

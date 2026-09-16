@@ -193,8 +193,15 @@ namespace RcrcGreen.Core.Tests.Kpi
                         },
                         printedSchedules: new[]
                         {
-                            CreateFixture.Softscape("DM-12", new[] { "ALBIZIA LEBBECK", "10" }),
-                            CreateFixture.ShrubsAndLawn("DM-12")
+                            // **THE HEADING ROW IS THE FIRST ROW**, which is what the row
+                            // readers take it to be, so a schedule that printed a body holds a
+                            // heading and a row under it.
+                            CreateFixture.Softscape(
+                                "DM-12",
+                                new[] { "BOTANICAL NAME", "COUNT (n)" },
+                                new[] { "ALBIZIA LEBBECK", "10" }),
+                            CreateFixture.ShrubsAndLawn(
+                                "DM-12", new[] { "BOTANICAL NAME", "AREA  (sqm)" })
                         })
                 }),
                 new System.DateTime(2026, 9, 12, 16, 6, 0));
@@ -212,8 +219,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                         "ST-05",
                         printedSchedules: new[]
                         {
-                            CreateFixture.Softscape("ST-05"),
-                            CreateFixture.ShrubsAndLawn("ST-05")
+                            CreateFixture.Softscape(
+                                "ST-05", new[] { "BOTANICAL NAME", "COUNT (n)" }),
+                            CreateFixture.ShrubsAndLawn(
+                                "ST-05", new[] { "BOTANICAL NAME", "AREA  (sqm)" })
                         })
                 }),
                 new System.DateTime(2026, 9, 12, 16, 6, 0));

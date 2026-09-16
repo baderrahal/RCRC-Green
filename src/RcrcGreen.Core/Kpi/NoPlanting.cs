@@ -41,9 +41,21 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// **THE BODY ROW COUNT IS THE SUBJECT AND A SCHEDULE NOBODY PRINTED IS NOT ONE.** A read
-        /// that did not happen and a read that came back with nothing are two different facts,
-        /// so a schedule named on the reading and absent from what was printed answers false.
+        /// **THE ROWS AS PRINTED ARE THE SUBJECT, NEVER THE BODY ROW COUNT.** This asked
+        /// <see cref="ScannedSchedule.BodyRowCount"/>, which counts headings and totals, so a
+        /// schedule showing only its heading holds 1 and read as a schedule that printed
+        /// something. MM-06, MM-07 and NS-23 of the 21:38 press are exactly that shape, all
+        /// three read 0 in every planting box, and the glance said every plot this press read
+        /// printed at least one schedule row.
+        ///
+        /// A schedule printed nothing when it holds no row BELOW its heading, and the heading is
+        /// the first row, which is what <see cref="SoftscapeRows"/> and
+        /// <see cref="ShrubsAndLawnRows"/> already take it to be.
+        ///
+        /// **AND A SCHEDULE NOBODY PRINTED IS NOT ONE.** A read that did not happen and a read
+        /// that came back with nothing are two different facts, so a schedule named on the
+        /// reading and absent from what was printed answers false, and so does one whose rows
+        /// Revit refused, which holds no rows for the reason that nobody could read them.
         /// </summary>
         private static bool PrintedNothing(PlotReading reading, IReadOnlyList<string> names)
         {
@@ -53,7 +65,20 @@ namespace RcrcGreen.Core.Kpi
                 .Where(one => one != null)
                 .ToList();
 
-            return printed.Count == names.Count && printed.All(one => one.BodyRowCount == 0);
+            return printed.Count == names.Count
+                && printed.All(one => one.RowsWereRead && RowsBelowTheHeading(one) == 0);
+        }
+
+        /// <summary>
+        /// How many rows this schedule printed under its heading row. **One rule, asked here and
+        /// by the reconciliation**, so the line that names a plot and the count that says how
+        /// many schedules printed a body cannot part.
+        /// </summary>
+        public static int RowsBelowTheHeading(ScannedSchedule schedule)
+        {
+            if (schedule == null || !schedule.RowsWereRead) return 0;
+
+            return schedule.Rows.Count == 0 ? 0 : schedule.Rows.Count - 1;
         }
 
         /// <summary>Every plot of this press whose two schedules both printed nothing.</summary>

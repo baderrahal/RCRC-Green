@@ -425,7 +425,10 @@ namespace RcrcGreen.Core.Kpi
                 foreach (string one in glance.Divisions.Where) Line(report, "    " + one);
             }
 
-            foreach (string one in glance.Divisions.NotEvaluated) Line(report, "    " + one);
+            // **AT MOST FIVE, BECAUSE A GLANCE IS A GLANCE.** The 21:38 press held 284 of these
+            // and printed every one of them here. The count is in the line above and the full
+            // list is in each plot's own block.
+            foreach (string one in glance.Divisions.NotEvaluatedNamed) Line(report, "    " + one);
 
             Line(report, string.Empty);
             Line(report, "  " + glance.Pdfs.InWords);
@@ -538,8 +541,10 @@ namespace RcrcGreen.Core.Kpi
         {
             if (set.TreeLists.Count == 0) return;
 
+            // **THE COUNT IS THE DISTINCT CELLS NAMED**, which is what a person goes and looks
+            // at. One cell reading two ranges is two lines about one cell.
             Heading(report, TreeListCheck.Heading,
-                set.TreeLists.Sum(one => one.Faults.Count),
+                set.TreeLists.Sum(one => one.CellsNamed),
                 "both tree lists of every ticked template, read once at the press before any "
                 + "plot was written");
 
@@ -1658,6 +1663,19 @@ namespace RcrcGreen.Core.Kpi
                     one.Reason + (one.Repeats
                         ? "   THE SAME SHAPE ON " + one.Cells.Count + " CELLS, said once"
                         : string.Empty)));
+            }
+
+            // **THE FULL LIST OF DIVISIONS NOBODY COULD WORK OUT, IN THE PLOT'S OWN BLOCK.**
+            // The glance names at most five over the whole press, so this is where a person
+            // looking at one plot reads every one of its own, with the formula and the reason.
+            Line(report, string.Empty);
+            Line(report, "  THE DIVISIONS THIS CHECK COULD NOT WORK OUT, "
+                + check.DivisionsNotEvaluated.Count
+                + ". A division nobody evaluated is not a division that is fine, and READY reads "
+                + "NO for a plot holding one.");
+            foreach (DivisionNotEvaluated one in check.DivisionsNotEvaluated)
+            {
+                Line(report, "    " + one.InWords);
             }
 
             Line(report, string.Empty);
