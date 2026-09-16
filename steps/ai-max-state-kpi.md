@@ -1,7 +1,8 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Ninety third pass, the build step in the run sheet and the two lines that still
-said net8.0. **Nothing the tool does changed**, so the counts are the ninety second pass's and
+said net8.0. **Merged to main as `31b4d3d`**, pull request 154, the squash message set on the
+merge call and off main byte for byte with no co-author line and no generated-by footer. **Nothing the tool does changed**, so the counts are the ninety second pass's and
 stand unmoved: **2139 tests, 1319 of them KPI**, 28 hook cases, build zero warnings. **80 audit
 findings, 23 FIXED, 57 open**, untouched. **NOTHING HERE WAS RUN IN REVIT.**
 
