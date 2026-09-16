@@ -1,7 +1,8 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Ninety second pass, five fixes and one rule removed, all decided by Bader on
-16 September.
+16 September. **Merged to main as `133b8b0`**, pull request 152, the squash message set on the
+merge call and off main byte for byte with no co-author line and no generated-by footer.
 **2139 tests, 1319 of them KPI**, up from 2111 and 1291, 28 hook cases, build zero warnings, on
 .NET 10. **80 audit findings, 23 FIXED, 57 open**, counted per file off all four, three closed,
 65, 67 and 71, and nothing renumbered or reordered.
