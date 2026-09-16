@@ -80,16 +80,26 @@ keeps.
 **Terminal** then **New Terminal**. It opens in the repository root, which is where both commands
 below expect to be.
 
-## 7. Build it in Release
+## 7. Build the add-in in Release
 
-The install script reads `src\RcrcGreen.Revit\bin\Release`, so Release is what has to be built.
+The install script reads `src\RcrcGreen.Revit\bin\Release`, so that is the project to build and
+Release is the configuration.
 
 ```
-dotnet build RcrcGreen.sln -c Release
+dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
 ```
 
 It must end with `Build succeeded.` and `0 Error(s)`. If it does not, stop here and send the
 output.
+
+**This used to build the whole solution and it must not any more.** `RcrcGreen.sln` holds
+`tests\RcrcGreen.Core.Tests`, which targets .NET 10, so on a PC without the .NET 10 SDK the
+solution build stops with `error NETSDK1045: The current .NET SDK does not support targeting
+.NET 10.0`, and this step used to tell you to stop there. **The tests run on the GitHub test
+gate, on .NET 10, so this PC does not need the .NET 10 SDK at all.**
+
+Building the add-in project builds `RcrcGreen.Core` with it, through the project reference, and
+puts the manifest and both assemblies in the folder step 8 installs from.
 
 ## 8. Install it
 

@@ -1,5 +1,52 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety third pass, the build step in the run sheet and the two lines that still
+said net8.0. **Nothing the tool does changed**, so the counts are the ninety second pass's and
+stand unmoved: **2139 tests, 1319 of them KPI**, 28 hook cases, build zero warnings. **80 audit
+findings, 23 FIXED, 57 open**, untouched. **NOTHING HERE WAS RUN IN REVIT.**
+
+**THE RUN SHEET TOLD BADER TO BUILD SOMETHING HIS PC MAY NOT BE ABLE TO BUILD.** Step 7 built
+`RcrcGreen.sln`, which holds the test project the ninety second pass moved to `net10.0`, so
+without the .NET 10 SDK the solution build fails with `error NETSDK1045` and the step said to
+stop there. It builds `src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release` now, and the step
+says the tests run on the GitHub test gate on .NET 10 so that PC needs no .NET 10 SDK.
+
+**BOTH HALVES WERE MEASURED RATHER THAN REASONED**, on this machine's own .NET 8 SDK, which is
+a PC without .NET 10 exactly: the solution build fails naming the test project, and the add-in
+project build succeeds and emits Core with it.
+
+**AND EVERY FILE `install.ps1` COPIES OUT OF A BUILD COMES OUT OF THAT ONE**, traced by line
+before the step changed. `:50` is the add-in project's own output folder, `:53` the manifest from
+`RcrcGreen.Revit.csproj:50-52`, `:54` the two assemblies with Core arriving through the
+`ProjectReference` at `RcrcGreen.Revit.csproj:14`, and `:84` the two symbol files. Everything
+else is copied out of `install/` or written by the script. The folder was listed after the build
+and held those five files and nothing else.
+
+**THE TWO NET8.0 LINES READ NET10.0**, `CLAUDE.md:54` and
+`src/RcrcGreen.Core/RcrcGreen.Core.csproj:11`, one word each and nothing else in either file.
+Bader's line for this round covered those two lines only. **The csproj change is inside a
+comment**, asked of msbuild rather than eyeballed: the project still answers `netstandard2.0`,
+`LangVersion` 12.0 and `AssemblyName` RcrcGreen.Core.
+
+**THE CLAIM CHECKER HAD NO SHELL AND SAID SO**, so it could run none of the builds, tests or
+`git diff`. It found one real fault, in the entry rather than in the change: the entry claimed
+step 7 kept its lead sentence, and the diff says the heading and half that sentence moved and
+only the number stayed. It sharpened one more, that the test project's C# 14 is the SDK's default
+and is declared in no file, and it flagged an empty heading left as a placeholder. Every
+measurement it could not reproduce was re-run here at this commit rather than waved through.
+
+**THREE REQUESTS FOR BADER**, all in files this task may not edit. `install/install.ps1:57` and
+`:63` still say `Build RcrcGreen.sln in $Configuration first.` and now name a build the sheet no
+longer asks for. `RcrcGreen.Core.csproj:8-9` says the test project gets C# 12, and it resolves to
+14.0 on net10.0 while Core is pinned to 12.0 by line 10, so the comment's point holds and only
+the number is stale. **And eight other run sheets in `steps/` carry the same solution build line
+this round fixed**, named with their line numbers in the log and deliberately not changed, since
+several are the record of a run that already happened and `run-drawing.md` is another task's.
+`.github/workflows/tests.yml:51` builds the solution and is RIGHT, because the gate installs
+`10.0.x` at `:45`.
+
+---
+
 Phase: 9, ship. Ninety second pass, five fixes and one rule removed, all decided by Bader on
 16 September. **Merged to main as `133b8b0`**, pull request 152, the squash message set on the
 merge call and off main byte for byte with no co-author line and no generated-by footer.

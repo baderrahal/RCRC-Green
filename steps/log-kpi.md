@@ -4,6 +4,178 @@ Newest entry first.
 
 ---
 
+## 2026-09-16, ninety third pass. The build step in the run sheet, and two stale lines
+
+**Nothing the tool does changed.** No file under `src/` or `tests/` changed except one comment,
+so the counts are the ninety second pass's and are reported here as unmoved rather than as new:
+**2139 tests, 1319 of them KPI**, 28 hook cases, build zero warnings. **80 audit findings, 23
+FIXED, 57 open**, untouched, with nothing closed, renumbered or reordered.
+
+**NOTHING HERE WAS RUN IN REVIT**, by this session or by anybody.
+
+### The run sheet told Bader to build something his PC cannot build
+
+`steps/2026-09-16-kpi-checks.md` step 7 built the whole solution. The ninety second pass moved
+`tests/RcrcGreen.Core.Tests` to `net10.0`, and `RcrcGreen.sln` holds that project, so on a PC
+carrying no .NET 10 SDK the solution build fails and step 7's own last sentence says to stop
+there and send the output. **The tests are the gate's job and they never needed to run on that
+PC at all.**
+
+**MEASURED HERE RATHER THAN REASONED.** This machine carries two SDKs in two places, the system
+one at `/usr/bin/dotnet` reading `8.0.130` and nothing else, and a .NET 10 SDK in a folder of its
+own that nothing reaches unless it is put on the path. So a PC without the .NET 10 SDK is
+reproducible exactly, and both halves were run with the system one:
+
+```
+dotnet build RcrcGreen.sln -c Release
+  error NETSDK1045: The current .NET SDK does not support targeting .NET 10.0.
+  [/home/user/RCRC-Green/tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj]
+  Build FAILED.   0 Warning(s)   1 Error(s)
+
+dotnet build src/RcrcGreen.Revit/RcrcGreen.Revit.csproj -c Release
+  RcrcGreen.Core  -> src/RcrcGreen.Core/bin/Release/netstandard2.0/RcrcGreen.Core.dll
+  RcrcGreen.Revit -> src/RcrcGreen.Revit/bin/Release/RcrcGreen.Revit.dll
+  Build succeeded.   0 Warning(s)   0 Error(s)
+```
+
+**AND EVERYTHING `install.ps1` COPIES OUT OF A BUILD COMES OUT OF THAT ONE.** Traced by line
+before the step was changed, because a run sheet that installs half an add-in is worse than one
+that stops.
+
+```
+install.ps1:50   $BuildOutput = src\RcrcGreen.Revit\bin\$Configuration, the add-in project's
+                 OWN output folder, with no target framework subfolder because
+                 RcrcGreen.Revit.csproj:9 sets AppendTargetFrameworkToOutputPath false
+install.ps1:53   RcrcGreen.addin, copied at :74, put there by RcrcGreen.Revit.csproj:50-52
+install.ps1:54   RcrcGreen.Revit.dll, copied at :78, the add-in project's own assembly
+install.ps1:54   RcrcGreen.Core.dll, copied at :78, put there by the ProjectReference at
+                 RcrcGreen.Revit.csproj:14
+install.ps1:84   RcrcGreen.Revit.pdb and RcrcGreen.Core.pdb, optional, same two projects
+```
+
+Everything else it writes comes from somewhere that is not a build at all: `:110`
+`title-blocks.txt`, `:119` `sheet-names.txt`, `:128` `presets.txt` and `:137` `ViewFilters.json`
+are copied out of `install/` in the repo, and `:97-102` `reports-folder.txt`, `:143-147`
+`templates-folder.txt` and `:152-156` `kpi-output-folder.txt` are written by the script itself.
+**No line of it reads `tests/RcrcGreen.Core.Tests` or anything only the solution build
+produces.**
+
+**And the folder was listed after that build rather than reasoned about.** It held five files,
+`RcrcGreen.addin`, `RcrcGreen.Revit.dll`, `RcrcGreen.Core.dll`, `RcrcGreen.Revit.pdb` and
+`RcrcGreen.Core.pdb`, which is every file the script reads from it and nothing else.
+
+So step 7 builds `src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release` now. **One action and
+the same step number**, plus the sentence the round asked for: the tests run on the GitHub test
+gate on .NET 10, so this PC does not need the .NET 10 SDK. The error text is quoted in the step,
+so somebody who runs the old command by habit recognises what they are looking at.
+
+**THE HEADING AND HALF THE LEAD SENTENCE DID MOVE, and the first draft of this entry said they
+had not.** Read off the diff rather than off memory: `## 7. Build it in Release` became
+`## 7. Build the add-in in Release`, and the lead sentence keeps `The install script reads
+src\RcrcGreen.Revit\bin\Release` and then says that is the project to build where it used to
+say Release is what has to be built. **The number is what the round asked to keep and it is
+kept.** The heading had to move with the command, because a step called Build it in Release over
+a command naming one project is the shape this repo keeps paying for.
+
+### The two lines that still said net8.0
+
+`CLAUDE.md:54` read that `tests/RcrcGreen.Core.Tests` is net8.0 and the comment at
+`src/RcrcGreen.Core/RcrcGreen.Core.csproj:11` read that Core is consumed by net8.0 tests. Both
+read net10.0 now, one word each, and nothing else in either file moved. They were named as
+requests for Bader in the ninety second pass's entry, because neither file is this task's to
+edit, and this round has his line for these two lines only.
+
+**THE CSPROJ CHANGE IS INSIDE A COMMENT AND THE BUILD IS UNCHANGED**, asked of msbuild rather
+than eyeballed. Line 11 opens `<!--` at line 11 and closes `-->` at line 12, so no element and no
+property is touched, and after the edit the project still answers `TargetFramework`
+netstandard2.0, `LangVersion` 12.0 and `AssemblyName` RcrcGreen.Core. The whole solution builds
+with zero warnings and the suite passes 2139.
+
+### Requests for Bader
+
+Both are lines this round made stale or found stale, in files it may not edit.
+
+- **`install/install.ps1:57` and `:63` both end `Build RcrcGreen.sln in $Configuration first.`**
+  Those are the two refusals the script prints when the output folder is missing or short of a
+  file, and they now name a build the run sheet no longer asks for. The remedy is one string in
+  two places, `Build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj in $Configuration first.`, and
+  `install/` is nobody's task folder so it is not this session's to make
+- **`src/RcrcGreen.Core/RcrcGreen.Core.csproj:8-9` says the test project gets C# 12.** Measured
+  through msbuild: on `net10.0` it resolves `LangVersion` to **14.0**, and Core is pinned to
+  **12.0** by line 10. **The 14.0 is the SDK's own default and is declared in no file here**,
+  because the test project sets no `LangVersion` at all, which is exactly why it moved when the
+  target did and why the comment went stale without anybody editing it. The comment's point still holds, which is that Core would fall back to
+  C# 7.3 while the project consuming it gets a modern C#, and only the number is one version
+  stale. The round allowed line 11 alone, so lines 8 and 9 are left as they are
+- **EIGHT OTHER RUN SHEETS IN `steps/` CARRY THE SAME LINE THIS ROUND FIXED**, found by asking
+  the repository for it rather than by remembering. Each one tells whoever runs it to build the
+  solution, and each one now fails the same way on a PC with no .NET 10 SDK:
+
+```
+steps/2026-09-15-kpi-rerun.md:67      steps/2026-09-13-view-filters.md:36
+steps/2026-09-13-colour-box.md:37     steps/kpi-create.md:28
+steps/kpi-scan-2.md:28                steps/2026-09-15-kpi-fixes.md:38
+steps/run-drawing.md:30               steps/kpi-templates.md:28
+```
+
+  **They are NOT changed here and that is deliberate.** This round named one file and one step,
+  several of those eight are the record of a run that has already happened rather than a sheet
+  anybody will follow again, and rewriting a record of what somebody did is a different thing
+  from fixing an instruction. Which of the eight are live is Bader's call. **`run-drawing.md` is
+  the Drawing Sheet task's**, so it is another session's file either way
+- **`.github/workflows/tests.yml:51` builds the solution and is RIGHT as it stands.** The gate
+  installs `10.0.x` at `:45`, so the test project is exactly what it is there to build and run.
+  Checked rather than assumed, because the fix above would be wrong applied there
+
+### What is UNKNOWN
+
+**Whether Bader's PC carries a .NET 10 SDK is UNKNOWN from here.** The change makes the step
+work either way, and it is what makes the question stop mattering. The failure above was
+reproduced on this machine's own .NET 8 SDK rather than measured on his.
+
+### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` read this entry before the pull request was
+opened. **It had Read, Grep and Glob and no shell**, so it could run none of the builds, none of
+the tests, no `git diff` and no `dotnet msbuild`, and it opened its report by saying so rather
+than answering anyway. That is the right answer, and it is why the heading it found empty is this
+one.
+
+**It found one real fault and it was in this entry rather than in the change.** The entry claimed
+step 7 kept its lead sentence, which is a claim about the file's prior state and nothing it could
+read can see. Checked here against `git diff 2e968dc HEAD`: **the heading and the second half of
+the lead sentence both moved**, and only the step number stayed. The section above says so now
+and says what each one reads.
+
+**It sharpened one thing that was true and under said.** The C# 12 in
+`RcrcGreen.Core.csproj:8-9` resolves to 14.0 on `net10.0`, and it pointed out that 14.0 is
+declared in no tracked file, because the test project sets no `LangVersion` of its own. That is
+exactly how the comment went stale with nobody editing it, and it is written into the request
+above.
+
+**And it flagged the empty heading this section used to be**, a placeholder left behind, which is
+the fault the ninety second pass warned about one shape along: a heading promising something
+nobody wrote.
+
+**Six things it marked UNBACKED were measurements it had no tool to reproduce, and every one was
+re-run here at this commit rather than waved through.** The two build transcripts, on the system
+`8.0.130` SDK, which is a PC with no .NET 10 exactly: the solution build exits 1 with
+`NETSDK1045` naming `tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj`, and the add-in
+project build exits 0 with 0 warnings and 0 errors. The output folder, listed afterwards, holds
+**five files and nothing else**, no `.deps.json` and nothing out of the two Revit packages, which
+is the question it asked. The msbuild properties, Core answering `netstandard2.0`, `12.0` and
+`RcrcGreen.Core`, and the test project answering `net10.0` and `14.0`. The counts, **2139** and
+**1319** under the KPI filter, **28 hook cases**, and a build at zero warnings. And the
+footprint, `git diff 2e968dc HEAD` over `src` and `tests`, which is one file, one line, inside a
+comment.
+
+**Its own independent count of the audit files agrees**, 29, 20, 14 and 17 findings against 8, 9,
+2 and 4 FIXED marks, and it caught the known false positive in `steps/audit-kpi-4.md` by eye, the
+way the entry before this one asked the next reader to. It counted the 28 hook cases by hand off
+the script as well.
+
+---
+
 ## 2026-09-16, ninety second pass. Five fixes and one rule removed
 
 **Merged to main as `133b8b0`**, pull request 152, squashed with both message fields passed on the
