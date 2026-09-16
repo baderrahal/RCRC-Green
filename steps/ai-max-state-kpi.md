@@ -1,5 +1,51 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety fourth pass, every other place that still built the whole solution.
+**Nothing the tool does changed** and nothing under `src/` changed but one comment, so the counts
+are the ninety third pass's and stand unmoved: **2139 tests, 1319 of them KPI**, 28 hook cases,
+build zero warnings. **80 audit findings, 23 FIXED, 57 open**, untouched. **NOTHING HERE WAS RUN
+IN REVIT.**
+
+**THE INSTALL SCRIPT'S TWO REFUSALS.** `install/install.ps1:57` and `:63` sent a person at the
+build that fails and now name `src\RcrcGreen.Revit\RcrcGreen.Revit.csproj` with the same
+`$Configuration`. **Whether it still parses is UNKNOWN**: neither `pwsh` nor `powershell` is on
+this machine, and writing a second parser to answer would be two records of one fact. The diff is
+what is backed, one sentence swapped inside the two double-quoted strings with every
+interpolation untouched.
+
+**THE EIGHT OLDER RUN SHEETS** build the add-in project now, each keeping its `-c Release`, its
+step number and its one action, and six step titles that said solution moved with the command.
+No sheet of the eight names Visual Studio. **`steps/` is common ground**, which is why
+`run-drawing.md` and `2026-09-13-view-filters.md` are in scope for a KPI round, and the log says
+so.
+
+**THE ROUND'S OWN SENTENCE WAS FALSE IN SIX OF THE EIGHT AND WAS MEASURED BEFORE IT WAS
+WRITTEN.** Those six run `dotnet test` on the `net10.0` test project one step ABOVE the build,
+and that command stops with `NETSDK1045` exactly as the solution build does, run here to check.
+So the sentence reads `this build` rather than `this PC` and names the test step above as the
+thing that still wants the SDK. The other two sheets ask for no test run, grepped for rather than
+assumed, so they carry step 7's original wording, which is true in them.
+
+**CLAUDE.md:37** builds the add-in project in Release and says the solution also holds the tests,
+which need the .NET 10 SDK.
+
+**THE STALE C# NUMBER.** `RcrcGreen.Core.csproj:8-9` said C# 12 and says 14, read off SDK
+`10.0.401` through `dotnet msbuild -getProperty:LangVersion` on the test project, with the
+comment now saying that 14 is the SDK's own default and that the test project declares no
+`LangVersion`. Comment only, and msbuild still answers `netstandard2.0`, `LangVersion` 12.0 and
+`AssemblyName` RcrcGreen.Core.
+
+**SWEPT AFTER THE EDITS.** Three places still name a solution build and all three are right:
+`.github/workflows/tests.yml:51`, which is the gate, `steps/audit.md:107`, a record of that line,
+and `steps/2026-09-16-kpi-checks.md:95`, the sentence saying why step 7 used to.
+
+**TWO REQUESTS FOR BADER.** The six local `dotnet test` steps are the same fault one step up and
+were not in this round's scope, so the sheets name which step wants the SDK and the decision is
+his. And three sheets carry a test count off main as it was, 1578, 1569 and 1103 against today's
+2139, left because they are records.
+
+---
+
 Phase: 9, ship. Ninety third pass, the build step in the run sheet and the two lines that still
 said net8.0. **Merged to main as `31b4d3d`**, pull request 154, the squash message set on the
 merge call and off main byte for byte with no co-author line and no generated-by footer. **Nothing the tool does changed**, so the counts are the ninety second pass's and

@@ -24,13 +24,17 @@ does not read as described is a finding about the tool and not a slip in the rea
 
    Every test passes or you stop here and say so. Main carries 1103.
 
-6. Build the solution in Release:
+6. Build the add-in in Release, which builds Core with it:
 
    ```
-   dotnet build RcrcGreen.sln -c Release
+   dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
    ```
 
    0 warnings and 0 errors.
+
+   The tests run on the GitHub test gate, on .NET 10, so this build does not need the .NET 10
+   SDK. The test step above this one does, because `tests/RcrcGreen.Core.Tests` targets .NET 10
+   and `dotnet test` on it stops with `error NETSDK1045` without that SDK.
 
 7. Close Revit if it is open. The installer cannot replace a loaded assembly.
 

@@ -34,9 +34,11 @@ not the scheduled things:** the softscape schedule returns RVT Link instances, s
 rows are its numbers' only route, and its group rows are the only place a phase shows. Every
 measured fact is in `.claude/rules/kpi-rules.md`.
 
-Build `RcrcGreen.sln` in Visual Studio 2026, then run `.\install\install.ps1`. It builds the
-`Addins\2024\` layout the build does not, so copying the output folder by hand leaves Revit
-unable to find the assembly.
+Build `src\RcrcGreen.Revit\RcrcGreen.Revit.csproj` in Release, then run
+`.\install\install.ps1`. It builds the `Addins\2024\` layout the build does not, so copying the
+output folder by hand leaves Revit unable to find the assembly. `RcrcGreen.sln` also holds
+`tests/RcrcGreen.Core.Tests`, which needs the .NET 10 SDK, so building the solution is what the
+gate does rather than what an install wants.
 
 ## Running the tests
 
