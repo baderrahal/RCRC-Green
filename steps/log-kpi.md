@@ -32,18 +32,29 @@ this is an older sheet kept as the record of that round, and a run today uses
 their counts stay as the record of the day they were written.
 
 **THE PRECONDITION WAS CHECKED BEFORE ANY OF THE FIVE WAS MARKED.** Grepped for all five names
-across the repository. Every hit outside `steps/log-kpi.md` and `steps/ai-max-state-kpi.md`,
-which are records rather than instructions, is a single line:
+across the repository, thirty hits over four files:
 
 ```
-.claude/rules/kpi-rules.md:6      - steps/kpi-templates.md
+steps/log-kpi.md            23   this task's own log, a record
+steps/ai-max-state-kpi.md    5   this task's own state, a record
+steps/log-drawing.md:1033    1   the Drawing Sheet's log, a record
+.claude/rules/kpi-rules.md:6 1   a paths entry in that file's front matter
 ```
 
-**That is a `paths:` entry in the rules file's own front matter, a trigger that loads those
-rules when that file is touched, rather than an instruction pointing a reader at that sheet as
-the sheet to run.** So it does not hold the mark back, and it is named here because marking the
-sheet leaves a trigger aimed at a file nobody should now be following. Whether that trigger
-should move to `steps/2026-09-16-kpi-checks.md` is Bader's, and it is in the requests below.
+**The first draft of this entry said every hit outside the two KPI records was a single line, and
+that was wrong.** The sweep it was written off piped `steps/log-drawing.md` out, and then the
+sentence did not say so, which is a filter turned into a fact. The Drawing Sheet's log names
+`steps/kpi-create.md` at `:1033` as the shape a sheet of its own was written in. It is a record
+of another task's round rather than an instruction, so it does not hold the mark back either, but
+the count was wrong and the reason it was wrong is worth more than the count.
+
+**Neither of the two is an instruction pointing a reader at one of the five as the sheet to
+run.** `.claude/rules/kpi-rules.md:6` is a `paths:` entry in that file's own front matter, a
+trigger that loads those rules when that file is touched.
+
+So it does not hold the mark back, and it is named here because marking the sheet leaves a
+trigger aimed at a file nobody should now be following. Whether that trigger should move to
+`steps/2026-09-16-kpi-checks.md` is Bader's, and it is in the requests below.
 
 **And `steps/2026-09-16-kpi-checks.md` really has no local test step**, which is what makes it
 the safe sheet to send a reader to. Swept for rather than taken on trust: it holds no
@@ -130,6 +141,43 @@ three hits and the next reader should not take them for a miss.
   opening against that log's top entry. Whether it needs a new sheet is that task's to decide
 
 ### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` read this entry before the pull request was
+opened. It had Read, Grep and Glob and no shell, said so at the top of its report rather than
+answering anyway, and marked every command it could not run as unverified instead of inferring
+it.
+
+**IT FOUND ONE CLAIM WRONG AND IT WAS A GOOD CATCH.** The entry said the sweep for the five sheet
+names turned up a single hit outside the two KPI records. It re-ran the sweep and found a second,
+`steps/log-drawing.md:1033`. **The sweep this entry was written off had piped that file out, and
+the sentence then did not say so**, which is a filter dressed up as a result and is the shape
+this repository keeps meeting. The section above gives all four files and their counts now, and
+says which was excluded and why the number was wrong.
+
+**It also flagged this heading as an empty placeholder**, which it was, in an otherwise filled
+entry. That is the same fault the ninety second pass left behind once already.
+
+**THE FOUR THINGS IT HAD NO SHELL FOR WERE RE-RUN HERE AT THIS COMMIT**, and the two diff claims
+with them:
+
+```
+the solution build            0 Warning(s), 0 Error(s)
+the suite and the KPI filter  2139 passed, 1319 passed
+bash .claude/hooks/hook-tests.sh   28 passed, 0 failed
+git diff --name-only f0dc5e0 HEAD, outside steps/   none
+git diff over the five older sheets   15 added lines, 0 deleted, and every one of
+                                      them is the three line record marker
+```
+
+That last one is what backs nothing else in the five having moved, rather than a reading of the
+files as they now stand.
+
+**Everything else it checked came back backed**, ten line citations among them, and it recounted
+the audit files itself with Grep alone, 29, 20, 14 and 17 findings against 8, 9, 2 and 4 FIXED
+marks, catching the known false positive in `audit-kpi-4.md` by eye. That is the 80, 23 and 57
+this entry opens with. It also confirmed that the entry's scope on round 94's sentence is
+correct, that `steps/2026-09-16-kpi-checks.md` holds no `dotnet test` line, and that
+`run-drawing.md` is the only Drawing Sheet run sheet in `steps/`.
 
 ---
 

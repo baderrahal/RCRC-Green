@@ -11,10 +11,13 @@ Filters' run sheets, off `.claude/rules/territory.md`, and the log says so.
 **FIVE OLDER KPI SHEETS ARE MARKED AS RECORDS**, `2026-09-15-kpi-fixes`, `2026-09-15-kpi-rerun`,
 `kpi-create`, `kpi-scan-2` and `kpi-templates`, one line each under the title saying a run today
 uses `steps/2026-09-16-kpi-checks.md`. Nothing else in them moved, so their steps and counts stay
-as the record of that day. **The precondition was checked first**: the only hit outside the two
-KPI records is `.claude/rules/kpi-rules.md:6`, which is a `paths:` load trigger rather than an
-instruction to run that sheet, so it did not hold the mark back and it is a request below. And
-`2026-09-16-kpi-checks.md` was swept and really holds no `dotnet test` line.
+as the record of that day. **The precondition was checked first**, thirty hits over four
+files, `log-kpi.md` 23, `ai-max-state-kpi.md` 5, `log-drawing.md:1033` 1 and
+`.claude/rules/kpi-rules.md:6` 1. **The first draft said a single hit outside the two KPI records
+and that was wrong**, because the sweep it came off piped `log-drawing.md` out and the sentence
+did not say so. Neither of the two is an instruction to run one of the five, so the mark stands,
+and the rules trigger is a request below. And `2026-09-16-kpi-checks.md` was swept and really
+holds no `dotnet test` line.
 
 **THE THREE TASK SHEETS READ THE GATE**, step 5 in each, same number, one action, saying the
 tests run there on .NET 10 so the PC needs no .NET 10 SDK, and pointing at the count in the top
@@ -37,6 +40,12 @@ marked as records, and **no stated test count is left in any sheet**.
 `kpi-scan-2.md:37` and `kpi-templates.md:37`, saying the step above wants the SDK, and **it is
 still true there** because their step above really does run the tests locally. It was false only
 in the three sheets whose step changed, which is where it was replaced.
+
+**THE CLAIM CHECKER HAD NO SHELL AND CAUGHT THE ONE THING THAT WAS WRONG**, the sweep count
+above, by re-running the sweep it could run. It also flagged an empty heading left as a
+placeholder. The four counts and the two diff claims it had no tool for were re-run here: zero
+warnings, 2139, 1319, 28 hook cases, nothing outside `steps/` in the diff, and the five older
+sheets showing 15 added lines and 0 deleted, all of them the record marker.
 
 **THREE REQUESTS FOR BADER**: the rules trigger at `kpi-rules.md:6`, whether
 `2026-09-13-view-filters.md` should be marked a record too, which is View Filters' call, and
