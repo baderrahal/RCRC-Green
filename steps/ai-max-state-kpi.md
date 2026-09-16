@@ -1,7 +1,9 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Ninety first pass, the two presses of 16 September read back, 16:06 with 166
-plots ticked and 16:37 with exactly the 154 listed, seven items.
+plots ticked and 16:37 with exactly the 154 listed, seven items. **Merged to main as `65f7330`**,
+pull request 150, the squash message set on the merge call and off main byte for byte with no
+co-author line and no generated-by footer.
 **2111 tests, 1291 of them KPI**, up from 2070 and 1250, 28 hook cases, build zero warnings.
 **80 audit findings, 20 FIXED, 60 open**, counted per file off all four and nothing closed,
 renumbered or reordered.
