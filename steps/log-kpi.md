@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-16, ninety second pass. Five fixes and one rule removed
 
+**Merged to main as `133b8b0`**, pull request 152, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 **2139 tests, 1319 of them KPI**, up from 2111 and 1291, 28 hook cases, build zero warnings, and
 the tests now run on .NET 10. **80 audit findings, 23 FIXED, 57 open**, counted off all four
 files, three closed and nothing renumbered or reordered.
