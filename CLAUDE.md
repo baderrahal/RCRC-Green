@@ -51,7 +51,7 @@ The whole suite. It is what the pull request gate runs and nothing in it needs R
 - `src/RcrcGreen.Core` is netstandard2.0 and holds every rule and calculation, in three
   homes: `Shared/` for what every task reads, and one folder per task, `DrawingSheet/` and
   `Kpi/` so far. `src/RcrcGreen.Revit` is net48 and holds the ribbon, the commands and the
-  panes. `tests/RcrcGreen.Core.Tests` is net8.0 and covers Core only. `install/` holds the
+  panes. `tests/RcrcGreen.Core.Tests` is net10.0 and covers Core only. `install/` holds the
   PowerShell scripts and `.claude/rules/` the rules per project. Who owns which folder is in
   `.claude/rules/territory.md`
 - `reports/` holds what a run wrote and **nothing in it is ever committed.** This repository is
