@@ -50,7 +50,12 @@ namespace RcrcGreen.Revit.Kpi
         {
             if (document == null) throw new ArgumentNullException("document");
 
-            return PlotsInTheModel.Of(OnSheets(document), OnSchedules(document));
+            IReadOnlyList<SchedulePlotRead> reads = ScheduleReads(document);
+
+            return PlotsInTheModel.Of(
+                OnSheets(document),
+                SchedulePlotReads.PlotsNamed(reads),
+                SchedulePlotReads.Refused(reads).Select(one => one.InWords).ToList());
         }
 
         public static IReadOnlyList<string> OnSheets(Document document)
@@ -93,13 +98,30 @@ namespace RcrcGreen.Revit.Kpi
         {
             var found = new List<string>();
 
-            foreach (ViewSchedule schedule in Schedules(document))
-            {
-                string plot = PlotFilteredOn(document, schedule);
-                if (plot.Length > 0) found.Add(plot);
-            }
+            found.AddRange(SchedulePlotReads.PlotsNamed(ScheduleReads(document)));
 
             return found;
+        }
+
+        /// <summary>
+        /// Every schedule in the model asked which plot it filters on, answer or refusal.
+        ///
+        /// **A SCHEDULE WHOSE PLOT COULD NOT BE READ IS NOT A SCHEDULE BELONGING TO NOBODY**,
+        /// audit 4 finding 65. It used to drop out of the plot list in silence, so the line about
+        /// a plot on a schedule and on no sheet was wrong about it. `Plots` carries the refusals
+        /// on `PlotsInTheModel.SchedulesNotRead` and the report names them.
+        /// </summary>
+        public static IReadOnlyList<SchedulePlotRead> ScheduleReads(Document document)
+        {
+            if (document == null) throw new ArgumentNullException("document");
+
+            var reads = new List<SchedulePlotRead>();
+            foreach (ViewSchedule schedule in Schedules(document))
+            {
+                reads.Add(PlotFilteredOn(document, schedule));
+            }
+
+            return reads;
         }
 
         /// <summary>
@@ -280,7 +302,18 @@ namespace RcrcGreen.Revit.Kpi
 
             foreach (ViewSchedule schedule in Schedules(document))
             {
-                if (!string.Equals(PlotFilteredOn(document, schedule), plotId, StringComparison.Ordinal)) continue;
+                // **A REFUSAL BELONGS TO NO PLOT AND IS CARRIED RATHER THAN SKIPPED.** `Is`
+                // answers false for one, so the schedule is not counted for this plot, and the
+                // refusal reaches the reading below so the plot's files are not written off a
+                // half read.
+                SchedulePlotRead which = PlotFilteredOn(document, schedule);
+                if (!which.Read)
+                {
+                    refusals.Add(which.InWords);
+                    continue;
+                }
+
+                if (!which.Is(plotId)) continue;
 
                 ParsedViewName parsed;
                 if (ViewNameParser.TryParse(schedule.Name, out parsed)
@@ -458,12 +491,31 @@ namespace RcrcGreen.Revit.Kpi
                 string.Empty, string.Empty, true, true, bodyRows, rows);
         }
 
-        private static string PlotFilteredOn(Document document, ViewSchedule schedule)
+        /// <summary>
+        /// Which plot a schedule is filtered on, or a refusal naming the schedule.
+        ///
+        /// **AUDIT 4 FINDING 65. IT USED TO RETURN AN EMPTY STRING FROM BOTH CATCHES**, and an
+        /// empty string is also what a schedule filtering on no plot returns, so a throw read as
+        /// a schedule belonging to nobody. The schedule was then skipped, the plot read as
+        /// holding no softscape and no shrubs and lawn schedule, the guard that refuses a plot
+        /// holding two of a kind could not fire because the schedule was never counted, and the
+        /// reconciliation said the schedule listed no species, which is a sentence about the
+        /// MODEL. The workbook went out with that plot's trees missing.
+        ///
+        /// **THE RULE AND THE WORDS ARE IN CORE** on <see cref="SchedulePlotRead"/>, where a test
+        /// reaches them. **THE CALL THAT CAN THROW IS REVIT'S AND CANNOT BE RUN HERE**, so that
+        /// this catch really produces that refusal is UNKNOWN until somebody presses Create on a
+        /// model holding a schedule whose definition Revit refuses.
+        /// </summary>
+        private static SchedulePlotRead PlotFilteredOn(Document document, ViewSchedule schedule)
         {
             try
             {
                 Autodesk.Revit.DB.ScheduleDefinition definition = schedule.Definition;
-                if (definition == null) return string.Empty;
+                if (definition == null)
+                {
+                    return SchedulePlotRead.Of(schedule.Name, string.Empty);
+                }
 
                 foreach (ScheduleFilter filter in definition.GetFilters())
                 {
@@ -472,19 +524,23 @@ namespace RcrcGreen.Revit.Kpi
                     if (!string.Equals(field.GetName(), KpiNames.RefPlotId, StringComparison.Ordinal)) continue;
                     if (!filter.IsStringValue) continue;
 
-                    return filter.GetStringValue() ?? string.Empty;
+                    return SchedulePlotRead.Of(schedule.Name, filter.GetStringValue() ?? string.Empty);
                 }
             }
-            catch (Autodesk.Revit.Exceptions.ApplicationException)
+            catch (Autodesk.Revit.Exceptions.ApplicationException failed)
             {
-                return string.Empty;
+                return SchedulePlotRead.Refused(
+                    schedule.Name,
+                    SchedulePlotReads.ThrewReading(failed.GetType().Name, failed.Message));
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException failed)
             {
-                return string.Empty;
+                return SchedulePlotRead.Refused(
+                    schedule.Name,
+                    SchedulePlotReads.ThrewReading(failed.GetType().Name, failed.Message));
             }
 
-            return string.Empty;
+            return SchedulePlotRead.Of(schedule.Name, string.Empty);
         }
 
         private static ViewSheet FirstSheetOf(Document document, string plotId)

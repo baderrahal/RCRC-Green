@@ -273,6 +273,83 @@ not happen is an absence and not an answer.
 **The sheet's formulas are read ONCE per list.** Reading them per row is a sheet parse per row,
 and a tree list runs to 101 rows.
 
+## THE TOTAL CANOPY CHECK MUST NOT SWITCH ITSELF OFF
+
+**A GUARD THAT SWITCHES ITSELF OFF READS EXACTLY LIKE A GUARD THAT PASSED.** Where
+`TotalCanopyColumns.For` could not follow the chain, `WorkbookArithmetic` returned an empty
+reason and `SpeciesList` offered every empty row, so the green cover and the canopy percentage
+were written with no total canopy check at all and the chain's own reason was printed nowhere.
+**Today's seven templates read fine and the team is editing them**, which is exactly when a
+check nobody can see switching off costs something.
+
+The rule, in four parts, Bader's decision of 16 September.
+
+- **Where the template HAS a Total Green cover cell and the column cannot be read**, a plot
+  holding a count on that sheet gets Total areas to be greened and the canopy percentage left
+  BLANK, and the reason names the template, the sheet and the column's own `Why`. **READY reads
+  NO**, through the sourced blank box rule it already follows
+- **No empty row of that sheet is usable**, because nothing says whether one carries the formula
+  the canopy total adds, and the species is named with why. `SpeciesList.TotalCanopyUnreadable`
+  is the one flag and `UsableEmptyRows` reads it
+- **A template with NO Total Green cover cell still refuses nothing.** It holds no canopy total
+  for a row's canopy to reach, so there is nothing here to check, and that is the one case
+  unchanged. `TotalCanopyColumns.NoGreenCoverCell` is its own constant and
+  `TotalCanopyColumn.TheTemplateNamesNoGreenCover` its own flag, **because a signal that travels
+  in the data is not a signal**: reading the reason's words to tell the two apart is the shape
+  this repo has already paid for
+- **The glance names every such template**, once for the press rather than once per plot, through
+  `UnreadableCanopyColumns`. A press where every ticked template read says so, because a line
+  that disappears when there is nothing to report reads the same as one nobody wrote
+
+## THE TEMPLATES' OWN TREE LISTS ARE READ ONCE AT THE PRESS, CELL BY CELL
+
+**NONE OF THIS SHOWED UNTIL A PLOT HIT A BAD ROW.** Measured in the 16 September workbooks, after
+the team's template edits of 15 September:
+
+```
+Tree List - Existing L85, L88 and L90 to L101 still typed   EXISTING PARKS, STREETS
+Tree List - Existing L101 typed                             MOSQUES
+M83 empty                                                   EXISTING PARKS, FUTURE PARKS
+O90 to O94 and O96 to O100 empty                            all seven
+N85 and N88 to N101 empty                                   all seven
+Tree List - Proposed L84 to L92 deleted                     EXISTING PARKS, FUTURE PARKS
+the Native and Adaptive SUMIFs stop at row 91               Tree List - Proposed, list ends 92
+the same on Tree List - Existing stop at row 95             FUTURE PARKS, list ends 101
+V4 to V57, S35 to S43, S69 to T70 and the average canopy cell read rows 4 to 83 only
+```
+
+A press over 154 plots lands on a different set of those rows every time the model changes, so
+the team learnt about each one from a workbook that had already gone out. `TreeListCheck.In`
+reads **both tree lists of each ticked template ONCE, at the press, before any plot is written**,
+and names every cell. Seven questions per sheet:
+
+```
+rows the total reaches whose canopy cell is typed or missing
+rows whose total canopy cell is missing
+rows whose total water cell is missing
+named rows whose water per tree is empty
+empty rows carrying neither the canopy formula nor the total canopy one
+names held on more than one row
+formulas on the tree lists or the first tab reading a range that stops before the list's last row
+```
+
+**EVERY COLUMN IS READ OFF THE FILE AND NEVER FROM A LETTER**, which is the rule row 5, row 7 and
+the two DIAMETER headings already cost. The canopy column is the column a canopy formula really
+sits in on that sheet, the total canopy column comes off the canopy total's own chain, and **the
+water pair comes off the sheet's own formulas**, a column whose rows are another column
+multiplied by the count and which is not the canopy pair. **NOTHING HERE HOLDS N OR O.**
+
+**A COLUMN THAT CANNOT BE READ IS NAMED AS NOT READ, NEVER SKIPPED IN SILENCE.** A check nobody
+made and a check that passed read the same in a count, so `TreeListSheetCheck.NotRead` carries
+each one and a sheet holding one is not clean.
+
+**IT IS A REPORT SECTION AND IT STOPS NO WRITE.** What the canopy guard and the total canopy
+check already stop is unchanged. The glance gets ONE LINE PER TEMPLATE THE PRESS READ, clean or
+how many cells are named, and the cells themselves are in `THE TEMPLATES' OWN TREE LISTS, CELL BY
+CELL` below it, grouped by which of the seven questions named them. **A template whose pick was
+refused before its own file was opened has no line here**, because nothing read its tree lists,
+and its refusal is already on the record in its own row.
+
 ## Every printed cell text resolves a shared string to its text
 
 **The canopy check line read `D99 holds 419 and no formula, E99 holds 122 and no formula`**, and
@@ -329,6 +406,25 @@ the component comes from, so no second read is made and no second record of a pl
 
 **A PLOT WITH NO PRX_Plot_UID2 IS LEFT OUT of the grouping**, because a plot with none is refused
 by its own path already and an empty value shared by five plots is not one value.
+
+### TWO VALUES THAT DIFFER ONLY IN LETTER CASE ARE ONE FOLDER ON WINDOWS
+
+**The grouping was `StringComparer.Ordinal` and the paths were compared only INSIDE each group**,
+so `ANH-007-ST-100213` and `anh-007-st-100213` went into two groups and their two paths were
+never held against each other. Windows files them under one name, the second workbook written
+replaces the first, and nothing said a word. Bader's decision of 16 September.
+
+- **The colliding plots are found BY THE FILE PATH, across every ticked plot, ignoring case**,
+  which is how Windows compares a path and is the comparison `FilePaths.Compare` already makes
+- **Each line names every plot's UID2 EXACTLY AS THAT PLOT CARRIES IT.** Printing one spelling
+  for a group holding two is what hid this, and a person looking for `anh-007-st-100213` in a
+  model finds nothing where the line says `ANH-007-ST-100213`
+- **A group whose spellings differ only in case says so**, in its own sentence, because two
+  plots carrying one value and two plots carrying two spellings of one value are different
+  things to go and fix in the model
+
+MM-01 with `ANH-007-ST-100213` and MM-09 with `anh-007-st-100213` in one component folder is the
+test. Both write nothing and each names the other with its own spelling.
 
 ## READY is the question the team is actually asking
 
@@ -1020,6 +1116,29 @@ beside two softscape names or subtotals beside two shrubs and lawn names, and `R
 refuses the write naming the plot, the kind and every schedule found. The report names the
 schedule each number came off, per plot, and says NONE READ with every name where there were
 two. Nothing picks the first, and nothing adds them.
+
+**A THROW READING WHICH PLOT A SCHEDULE FILTERS ON IS A REFUSAL, NOT AN EMPTY STRING**, audit 4
+finding 65. `PlotFilteredOn` caught two exception types and answered both with an empty string,
+and an empty string means the schedule belongs to NO plot, so the schedule was skipped, the plot
+read as holding no softscape schedule at all, the two of a kind guard could not fire because the
+schedule was never counted, and the reconciliation said the schedule listed no species, which is
+a sentence about the MODEL. `SchedulePlotRead` carries the schedule's name, the exception's type
+and its message the way `GuardedRead` already does, the plot's files are not written off a half
+read, READY reads NO with the schedule's name, and the schedule half of the plot list NAMES what
+it could not read rather than dropping it. **The rule and the words live in Core where a test can
+reach them**, because the throw itself is Revit's and nothing here can make Revit's own
+`ScheduleDefinition` throw.
+
+**A MALFORMED SHEET PART IS A REFUSAL IN ALL FOUR READERS**, audit 4 finding 67. Five classes
+open an .xlsx and only the two that WRITE caught `System.Xml.XmlException`. A template whose
+`xl/workbook.xml` is fine and whose tree list sheet part is malformed passes the peek, is
+recognised, is listed and is offered, and at the press the parse threw past every catch in `Run`
+to the catch of everything, so the pane said the request failed and was stopped here, naming no
+template, no file and no plot, **with no report written at all**. `SpeciesList`, `LabelledCells`,
+`StreetReference` and `TotalCanopyColumns` each catch it now and return the refusal each already
+had words for, naming the file and the sheet, and the rest of the press carries on. A truncated
+download or a file another tool has rewritten is how a sheet part goes bad, and the peek does not
+read that part.
 
 **THE FM-05 DOUBLE WAS NOT TWO SCHEDULES, AND IT WAS NOT ONE SPECIES PRINTED TWICE UNDER ONE
 GROUP EITHER. IT WAS A THIRD GROUP.** The first twenty plot run printed FM-05 twice in one

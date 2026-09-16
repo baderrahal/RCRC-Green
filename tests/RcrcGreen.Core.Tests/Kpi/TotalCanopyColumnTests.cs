@@ -272,9 +272,105 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **A TEMPLATE WHOSE CHAIN CANNOT BE FOLLOWED IS NOT CHECKED AND IS NOT REFUSED**, and
-        /// the refusal says which step of the chain stopped. A template naming no green cover
-        /// label names no canopy cell, so nothing says which column its canopy total adds.
+        /// **A COLUMN THAT COULD NOT BE READ IS NOT A CHECK THAT PASSED.** The canopy cell holds
+        /// a typed number and no formula, so nothing says which cells its total comes off and no
+        /// tree list sheet's column can be read. The green cover and the canopy percentage used
+        /// to be written anyway, with every empty row still offered to a new species and the
+        /// chain's own reason printed nowhere.
+        ///
+        /// Today's seven templates read fine. The team is editing them, which is exactly when a
+        /// guard that switches itself off costs something.
+        /// </summary>
+        [Fact]
+        public void ATemplateWhoseCanopyCellIsTypedBlanksTheGreenCoverAndNamesTheReason()
+        {
+            string path = WorkbookFixture.Computing(
+                _folder,
+                new[] { new WorkbookFixture.TreeRow(4, "Albizia lebbeck", "15", "8") },
+                new[] { new WorkbookFixture.TreeRow(4, "Phoenix dactylifera", "15", "8") },
+                fileName: "typedcanopy.xlsx",
+                canopyCellIsTyped: true,
+                withGreenCoverLabel: true);
+
+            IReadOnlyList<TotalCanopyColumn> columns = Columns(path);
+
+            TotalCanopyColumn existing = TotalCanopyColumns.For(columns, Existing);
+
+            Assert.False(existing.Found);
+            Assert.False(existing.TheTemplateNamesNoGreenCover);
+            Assert.Equal(
+                "the canopy cell holds no formula, so nothing says which cells its total comes off",
+                existing.Why);
+
+            PatchOutcome outcome = WorkbookPatcher.Patch(
+                path,
+                Path.Combine(_folder, "filled-typedcanopy.xlsx"),
+                new[] { CellWrite.Number(Existing, "B4", 2) },
+                new WorkbookCell[0]);
+
+            Assert.True(outcome.Written, outcome.Refusal);
+
+            ArithmeticCheck check = WorkbookArithmetic.Canopy(
+                outcome.Formulas,
+                CanopyArea.Of(new[]
+                {
+                    new CanopyRow(Existing, 4, "ALBIZIA LEBBECK", 2, 8.0, true)
+                }),
+                new Dictionary<string, string> { { Existing, "J" } },
+                "GRP_-_KPI_Checklist_-_DD_MOSQUES.xlsx",
+                columns);
+
+            // **THE TEMPLATE AND THE REASON ARE IN THE MESSAGE.** A failure saying only that the
+            // check agreed leaves somebody opening seven workbooks to find out which one stopped
+            // reading and where.
+            Assert.False(
+                check.Agrees,
+                "GRP_-_KPI_Checklist_-_DD_MOSQUES.xlsx has a typed number in its canopy cell, so "
+                + "no tree list sheet's total canopy column could be read, and the check agreed "
+                + "anyway. That is a guard switching itself off, which reads exactly like a "
+                + "guard that passed. What it said: "
+                + (check.Why.Length == 0 ? "nothing at all" : check.Why));
+
+            Assert.Contains(
+                "GRP_-_KPI_Checklist_-_DD_MOSQUES.xlsx, Tree List - Existing row 4",
+                check.Why);
+            Assert.Contains(
+                "the total canopy column on Tree List - Existing could not be read, so nothing "
+                + "says whether this row's canopy reaches a total: the canopy cell holds no "
+                + "formula, so nothing says which cells its total comes off",
+                check.Why);
+
+            // **AND NO EMPTY ROW OF THAT SHEET IS OFFERED TO A NEW SPECIES.** Nothing says
+            // whether one carries the formula the canopy total adds, and a count written into
+            // one would put a number where the workbook computes no canopy.
+            SpeciesList list = SpeciesList.In(
+                path, KpiTemplates.Mosques.ExistingTrees, existing);
+
+            Assert.NotEmpty(list.EmptyRows);
+            Assert.Empty(list.UsableEmptyRows);
+            Assert.Equal(
+                "the canopy cell holds no formula, so nothing says which cells its total comes off",
+                list.TotalCanopyUnreadable);
+
+            // The list names the file it was really read off, which is the fixture's own name
+            // here rather than the client's, because nothing hands it a second one.
+            Assert.Equal(
+                "in typedcanopy.xlsx, Tree List - Existing the total canopy column could not be "
+                + "read, so nothing says whether an empty row carries the formula the canopy "
+                + "total adds and none of them is offered: the canopy cell holds no formula, so "
+                + "nothing says which cells its total comes off",
+                list.NoUsableEmptyRow(Existing, "J"));
+        }
+
+        /// <summary>
+        /// **A TEMPLATE NAMING NO GREEN COVER CELL IS NOT CHECKED AND IS NOT REFUSED.** It holds
+        /// no canopy total at all, so a row of it reaches none by construction and there is
+        /// nothing to check. Bader's decision of 16 September keeps this one case exactly as it
+        /// was while every other unreadable column now blanks the green cover.
+        ///
+        /// The reason moved from the general `NoCanopyCell` to `NoGreenCoverCell`, which is its
+        /// own constant and its own flag, because a check that could not be made and a check
+        /// there is nothing to make are two different facts and one of them holds rows back.
         /// </summary>
         [Fact]
         public void ATemplateWithNoGreenCoverLabelNamesNoColumnAndRefusesNothing()
@@ -290,14 +386,22 @@ namespace RcrcGreen.Core.Tests.Kpi
             TotalCanopyColumn existing = TotalCanopyColumns.For(columns, Existing);
 
             Assert.False(existing.Found);
-            Assert.Equal(TotalCanopyColumns.NoCanopyCell, existing.Why);
+            Assert.Equal(TotalCanopyColumns.NoGreenCoverCell, existing.Why);
+            Assert.True(existing.TheTemplateNamesNoGreenCover);
 
-            // **AND THE ROWS ARE NOT NARROWED BY A CHECK NOBODY COULD MAKE.** The flag says the
-            // read did not happen, which is the rule the canopy column already follows.
+            Assert.Equal(
+                "the template names no Total Green cover cell, so it holds no canopy total for "
+                + "a row's canopy to reach and there is nothing here to check",
+                existing.Why);
+
+            // **AND THE ROWS ARE NOT NARROWED BY A CHECK THERE IS NOTHING TO MAKE.** This is the
+            // one refusal that holds no row back, and the flag rather than the words is what
+            // decides it.
             SpeciesList list = SpeciesList.In(
                 path, KpiTemplates.Mosques.ExistingTrees, existing);
 
             Assert.False(list.TotalCanopyRowsRead);
+            Assert.Equal(string.Empty, list.TotalCanopyUnreadable);
             Assert.Equal(list.EmptyRows, list.UsableEmptyRows);
         }
     }

@@ -357,6 +357,7 @@ namespace RcrcGreen.Revit.Kpi
             var outcomes = new List<TemplateOutcome>();
             var plotOutcomes = new List<PlotOutcome>();
             var reads = new List<TemplateReading>();
+            var treeLists = new List<TreeListSheetCheck>();
             double readSeconds = 0.0;
 
             // **Each press decides which file is which form once.** Held across the press so 78
@@ -429,7 +430,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 WriteOneTemplate(
                     document, asked, one, root, streets, filings, sharing, runs, outcomes,
-                    plotOutcomes);
+                    plotOutcomes, treeLists);
             }
 
             // **Every ticked plot is accounted for**, including the ones no template took, which
@@ -448,7 +449,7 @@ namespace RcrcGreen.Revit.Kpi
                 document.Title, split, runs, outcomes,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
                 plotOutcomes, streets, KpiPlotReader.Plots(document),
-                PlotListFile.In(PlotListFileSetting.Read()), sharing);
+                PlotListFile.In(PlotListFileSetting.Read()), sharing, treeLists);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
@@ -590,7 +591,8 @@ namespace RcrcGreen.Revit.Kpi
             IReadOnlyList<SharedUid2Group> sharing,
             List<KpiCreateRun> runs,
             List<TemplateOutcome> outcomes,
-            List<PlotOutcome> plotOutcomes)
+            List<PlotOutcome> plotOutcomes,
+            List<TreeListSheetCheck> treeLists)
         {
             TemplatePick pick = read.Pick;
             TemplateShare share = read.Share;
@@ -629,6 +631,15 @@ namespace RcrcGreen.Revit.Kpi
             SpeciesList proposed = SpeciesList.In(
                 pick.TemplatePath, pick.Template.ProposedTrees,
                 TotalCanopyColumns.For(totalCanopy, pick.Template.ProposedTrees.SheetName));
+
+            // **BOTH TREE LISTS OF THIS TEMPLATE, CELL BY CELL, BEFORE ANY PLOT OF IT IS
+            // WRITTEN.** The team edited the templates on 15 September and the 16 September
+            // workbooks still carried typed canopy cells, empty total canopy cells, empty water
+            // cells and SUMIF ranges stopping short of the lists' own last rows, and none of it
+            // showed until a plot hit a bad row. The two species lists and the canopy column are
+            // the ones read above, so nothing is read a second way.
+            treeLists.AddRange(TreeListCheck.In(
+                pick.TemplatePath, pick.Template, totalCanopy, existing, proposed));
 
             var wrote = new List<string>();
             var why = new List<string>();

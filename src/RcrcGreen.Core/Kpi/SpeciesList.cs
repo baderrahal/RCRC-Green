@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -152,6 +153,15 @@ namespace RcrcGreen.Core.Kpi
             // formula and M83 is empty on both park templates, so the row computes a canopy per
             // tree and adds none. Its PDF read 2,631 m2 greened against the workbook's 2,531 and
             // nothing warned.
+            // **A COLUMN THE FILE REFUSED FOR A REAL REASON, or empty.** A template naming no
+            // Total Green cover cell holds no canopy total at all, so a row of it reaches none
+            // by construction and nothing is narrowed for it. Every other reason is a read that
+            // failed on a template that does have one.
+            TotalCanopyUnreadable = totalCanopy != null && !totalCanopy.Found
+                && !totalCanopy.TheTemplateNamesNoGreenCover
+                ? totalCanopy.Why
+                : string.Empty;
+
             TotalCanopyRowsRead = totalCanopyRows != null;
             RowsWithTheTotalCanopyFormula =
                 (totalCanopyRows ?? Enumerable.Empty<int>()).Distinct().OrderBy(one => one).ToList();
@@ -159,10 +169,18 @@ namespace RcrcGreen.Core.Kpi
             // **WHERE NOBODY READ THE FORMULAS, EVERY EMPTY ROW IS STILL OFFERED AND THE FLAG
             // SAYS SO.** `In` always reads them, so this is the hand built list a test makes,
             // and a silent narrowing there would be a guard nobody could see working.
-            UsableEmptyRows = EmptyRows
-                .Where(row => !CanopyRowsRead || RowsWithTheCanopyFormula.Contains(row))
-                .Where(row => !TotalCanopyRowsRead || RowsWithTheTotalCanopyFormula.Contains(row))
-                .ToList();
+            //
+            // **A COLUMN THE FILE REFUSED IS A DIFFERENT THING AND NARROWS EVERYTHING.** It was
+            // read off a real file and the read failed, so nothing says whether an empty row of
+            // this sheet carries the formula the canopy total adds, and offering one to a new
+            // species would put a count where the workbook computes no canopy. That is the fault
+            // FP-18 row 83 already cost once, one step further back.
+            UsableEmptyRows = TotalCanopyUnreadable.Length > 0
+                ? new List<int>()
+                : EmptyRows
+                    .Where(row => !CanopyRowsRead || RowsWithTheCanopyFormula.Contains(row))
+                    .Where(row => !TotalCanopyRowsRead || RowsWithTheTotalCanopyFormula.Contains(row))
+                    .ToList();
         }
 
         /// <summary>
@@ -170,6 +188,16 @@ namespace RcrcGreen.Core.Kpi
         /// a refusal naming why not. Null on a list built by hand.
         /// </summary>
         public TotalCanopyColumn TotalCanopy { get; }
+
+        /// <summary>
+        /// Why the total canopy column of this sheet could not be read, or empty where it was
+        /// read or where the template names no green cover cell at all.
+        ///
+        /// **WHILE IT IS SET, NO EMPTY ROW IS USABLE.** Nothing says whether an empty row carries
+        /// the formula the canopy total adds, and a new species written into one would put a
+        /// count where the workbook computes no canopy.
+        /// </summary>
+        public string TotalCanopyUnreadable { get; }
 
         /// <summary>
         /// Whether the sheet's total canopy formulas were read at all. **`In` always reads them
@@ -216,6 +244,16 @@ namespace RcrcGreen.Core.Kpi
         public string NoUsableEmptyRow(string sheetName, string diameterColumn)
         {
             string where = Where(sheetName);
+
+            // **A COLUMN THE FILE REFUSED IS THE WHOLE REASON WHERE IT FIRES**, and the rows are
+            // not described, because nothing read them. Saying that none of them carries the
+            // formula would be a claim about rows this tool never looked at.
+            if (TotalCanopyUnreadable.Length > 0)
+            {
+                return "in " + where + " the total canopy column could not be read, so nothing "
+                    + "says whether an empty row carries the formula the canopy total adds and "
+                    + "none of them is offered: " + TotalCanopyUnreadable;
+            }
 
             if (EmptyRows.Count == 0)
             {
@@ -535,6 +573,17 @@ namespace RcrcGreen.Core.Kpi
             catch (InvalidDataException failed)
             {
                 return Refused(Path.GetFileName(path) + " is not a readable workbook: " + failed.Message);
+            }
+            catch (XmlException failed)
+            {
+                // **AUDIT 4 FINDING 67.** Five classes open an .xlsx and only the two that WRITE
+                // caught this. A template whose workbook part is fine and whose tree list sheet
+                // part is malformed passes the peek, is recognised, is listed in the pane and is
+                // offered, and the parse here threw past every catch in `Run` to the one that
+                // catches everything, so the pane read that the request failed and was stopped,
+                // naming no template, no file and no plot, with no report written at all.
+                return Refused("The sheet part for " + sheet.SheetName + " in "
+                    + Path.GetFileName(path) + " is not well formed XML: " + failed.Message);
             }
         }
 

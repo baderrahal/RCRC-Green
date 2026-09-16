@@ -283,6 +283,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             string secondDiameterColumn = "K",
             string canopyReads = null,
             string alsoReads = null,
+            bool canopyCellIsTyped = false,
             bool withGreenCoverLabel = false,
             bool withPercentageLabel = false,
             string greenCoverFormula = null,
@@ -290,6 +291,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             int[] withoutCanopy = null,
             bool namesAsSharedStrings = false,
             int[] withoutTotalCanopy = null,
+            int[] typedCanopyAt = null,
+            bool withWater = false,
+            int[] withoutTotalWater = null,
+            int[] withoutWaterPerTree = null,
+            int sumifTo = 0,
             int lastRow = 9)
         {
             string path = Path.Combine(folder, fileName);
@@ -395,7 +401,12 @@ namespace RcrcGreen.Core.Tests.Kpi
                         ? "<c r=\"C8\" t=\"inlineStr\"><is><t xml:space=\"preserve\"> Total Green cover (m\u00B2)</t></is></c>"
                         : string.Empty)
                     + (parksShape ? string.Empty : "<c r=\"D8\"><f>" + (greenCoverFormula ?? "F8+F10+H10") + "</f><v>0</v></c>")
-                    + "<c r=\"F8\"><f>'Tree List - Existing'!M" + (lastRow + 1) + "+'Tree List - Proposed'!M" + (lastRow + 1) + "</f><v>0</v></c></row>"
+                    + (canopyCellIsTyped
+                        // **THE CANOPY CELL WITH A NUMBER TYPED INTO IT AND NO FORMULA.** The
+                        // chain reaches F8 and stops there, so nothing says which cells its
+                        // total comes off and no tree list sheet's column can be read.
+                        ? "<c r=\"F8\"><v>984</v></c></row>"
+                        : "<c r=\"F8\"><f>'Tree List - Existing'!M" + (lastRow + 1) + "+'Tree List - Proposed'!M" + (lastRow + 1) + "</f><v>0</v></c></row>")
 
                     // **THE TWO PARK TEMPLATES PUT THE GREEN COVER A ROW LOWER**, D9 off C9 with
                     // F9+F11+H11, against D8 off C8 with F8+F10+H10 on the other four and on
@@ -424,16 +435,26 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<c r=\"F31\" t=\"str\"><f>_xlfn.IFS(Area&lt;1,\" \",D9&lt;1,\" \",E31&lt;H31-(H31*7%),\"Insufficient\",TRUE,\"YES\")</f><v> </v></c>"
                     + "<c r=\"G31\" t=\"str\"><f>_xlfn.IFS(F31=\"YES\",\"COMPLIANT\",TRUE,\"NOT COMPLIANT\")</f><v> </v></c>"
                     + "<c r=\"H31\"><v>13</v></c></row>"
+                    // **A FORMULA ON THE FIRST TAB READING A RANGE OF A TREE LIST.** The Native
+                    // and Adaptive SUMIFs are this shape and they stop before their list's last
+                    // row on two of the seven templates, which leaves every species past the
+                    // range out of a count nobody checks.
+                    + (sumifTo > 0
+                        ? "<row r=\"12\"><c r=\"D12\"><f>SUMIF('Tree List - Existing'!H3:H"
+                            + sumifTo + ",\"Native\")</f><v>0</v></c></row>"
+                        : string.Empty)
                     + "</sheetData>"
                     + (withSheetCalcPr ? "<sheetCalcPr fullCalcOnLoad=\"1\"/>" : string.Empty)
                     + "</worksheet>");
 
                 Add(zip, "xl/worksheets/sheet2.xml", TreeSheetComputing(existing, heightHeading, diameterHeading, heightColumn, diameterColumn,
                     secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
-                    namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow));
+                    namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow,
+                    typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree));
                 Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn,
                     secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
-                    namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow));
+                    namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow,
+                    typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree));
             }
 
             return path;
@@ -451,7 +472,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             TreeRow[] named, string heightHeading, string diameterHeading, string heightColumn, string diameterColumn,
             string secondDiameterHeading = null, string secondDiameterColumn = "K", string canopyReads = null,
             string alsoReads = null, int[] withoutCanopy = null, List<string> sharedStrings = null,
-            int[] withoutTotalCanopy = null, int lastRow = 9)
+            int[] withoutTotalCanopy = null, int lastRow = 9,
+            int[] typedCanopyAt = null, bool withWater = false,
+            int[] withoutTotalWater = null, int[] withoutWaterPerTree = null)
         {
             // **A ROW WITH NO CANOPY FORMULA, the shape FUTURE PARKS row 85 really has.**
             // Somebody added rows and copied some columns without the canopy pair beside them,
@@ -464,6 +487,20 @@ namespace RcrcGreen.Core.Tests.Kpi
             // and M83 is empty. Row 4 is the shared formula's master and cannot be the one left
             // out.
             var noTotalCanopy = new HashSet<int>(withoutTotalCanopy ?? new int[0]);
+
+            // **AND A ROW WHOSE CANOPY CELL HOLDS A TYPED NUMBER AND NO FORMULA**, which is
+            // EXISTING PARKS and STREETS Tree List - Existing L85, L88 and L90 to L101, and
+            // MOSQUES L101, measured in the 16 September workbooks. The sheet computes nothing
+            // from a count written on such a row and the number sitting there looks like an
+            // answer. Row 4 is the shared formula's master and cannot be the one typed over.
+            var typedCanopy = new HashSet<int>(typedCanopyAt ?? new int[0]);
+
+            // **THE WATER PAIR, the shape `O85 = IF(ISBLANK(B85)," ",N85*B85)`**, with N typed
+            // per tree and O the product. O90 to O94, O96 to O100, N85 and N88 to N101 are
+            // empty across the seven templates. Row 4 carries both whatever is asked for,
+            // because it is the shared formula's master.
+            var noTotalWater = new HashSet<int>(withoutTotalWater ?? new int[0]);
+            var noWaterPerTree = new HashSet<int>(withoutWaterPerTree ?? new int[0]);
             var byRow = new Dictionary<int, TreeRow>();
             foreach (TreeRow one in named ?? new TreeRow[0]) byRow[one.Row] = one;
 
@@ -480,6 +517,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "<c r=\"L3\" t=\"inlineStr\"><is><t>Canopy per tree</t></is></c>"
                 + "<c r=\"M3\" t=\"inlineStr\"><is><t>Canopy area</t></is></c>"
                 + (alsoReads == null ? string.Empty : "<c r=\"N3\" t=\"inlineStr\"><is><t>Spread check</t></is></c>")
+                + (withWater
+                    ? "<c r=\"N3\" t=\"inlineStr\"><is><t>Water per tree</t></is></c>"
+                        + "<c r=\"O3\" t=\"inlineStr\"><is><t>Total water</t></is></c>"
+                    : string.Empty)
                 + "</row>");
             string reads = canopyReads ?? diameterColumn;
 
@@ -500,6 +541,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 // master carries the text and the ref, the rest carry the index alone.
                 string canopy = noCanopy.Contains(row) && row != 4
                     ? string.Empty
+                    : typedCanopy.Contains(row) && row != 4
+                        ? "<c r=\"L" + row + "\"><v>50</v></c>"
                     : row == 4
                         ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L" + lastRow + "\" si=\"0\">IF(ISBLANK(" + reads + "4),\" \",ROUND(PI()*(" + reads + "4/2)^2,0))</f><v> </v></c>"
                         : "<c r=\"L" + row + "\" t=\"str\"><f t=\"shared\" si=\"0\"/><v> </v></c>";
@@ -513,7 +556,16 @@ namespace RcrcGreen.Core.Tests.Kpi
                         ? "<c r=\"N4\" t=\"str\"><f t=\"shared\" ref=\"N4:N" + lastRow + "\" si=\"2\">IF(ISBLANK(" + alsoReads + "4),\" \"," + alsoReads + "4)</f><v> </v></c>"
                         : "<c r=\"N" + row + "\" t=\"str\"><f t=\"shared\" si=\"2\"/><v> </v></c>";
 
-                xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + spread + "</row>");
+                string perTree = !withWater || (noWaterPerTree.Contains(row) && row != 4)
+                    ? string.Empty
+                    : "<c r=\"N" + row + "\"><v>12</v></c>";
+                string waterTotal = !withWater || (noTotalWater.Contains(row) && row != 4)
+                    ? string.Empty
+                    : row == 4
+                        ? "<c r=\"O4\" t=\"str\"><f t=\"shared\" ref=\"O4:O" + lastRow + "\" si=\"3\">IF(ISBLANK(B4),\" \",N4*B4)</f><v> </v></c>"
+                        : "<c r=\"O" + row + "\" t=\"str\"><f t=\"shared\" si=\"3\"/><v> </v></c>";
+
+                xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + spread + perTree + waterTotal + "</row>");
             }
 
             int totalRow = lastRow + 1;

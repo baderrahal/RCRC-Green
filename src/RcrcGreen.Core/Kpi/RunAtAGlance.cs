@@ -557,7 +557,8 @@ namespace RcrcGreen.Core.Kpi
         public RunGlance(
             AreaCellGlance streetsArea, RegionGlance regions, DivisionGlance divisions,
             PdfGlance pdfs = null, ComputedGlance computed = null, TextFitGlance textSizes = null,
-            string sharing = null, string ready = null, string noPlanting = null)
+            string sharing = null, string ready = null, string noPlanting = null,
+            string unreadCanopy = null, IEnumerable<string> treeLists = null)
         {
             StreetsArea = streetsArea ?? AreaCellGlance.NoStreetPlots;
             Regions = regions ?? RegionGlance.NoAreaRead;
@@ -568,7 +569,22 @@ namespace RcrcGreen.Core.Kpi
             Sharing = sharing ?? string.Empty;
             Ready = ready ?? string.Empty;
             NoPlanting = noPlanting ?? string.Empty;
+            UnreadCanopy = unreadCanopy ?? string.Empty;
+            TreeLists = (treeLists ?? Enumerable.Empty<string>()).ToList();
         }
+
+        /// <summary>
+        /// One line per ticked template: clean, or how many cells of its tree lists are named.
+        /// None of it showed until a plot hit a bad row.
+        /// </summary>
+        public IReadOnlyList<string> TreeLists { get; }
+
+        /// <summary>
+        /// Every ticked template whose tree list canopy total could not be read, named. One line
+        /// every press, because a check that switched itself off used to read exactly like one
+        /// that passed.
+        /// </summary>
+        public string UnreadCanopy { get; }
 
         /// <summary>
         /// How many plots were written nowhere because another ticked plot shares their
@@ -619,7 +635,12 @@ namespace RcrcGreen.Core.Kpi
                     set.PlotList != null && set.PlotList.Read
                         ? PlotReady.Of(set, set.PlotList.Plots)
                         : null),
-                NoPlanting.InWords(NoPlanting.In(set)));
+                NoPlanting.InWords(NoPlanting.In(set)),
+                UnreadableCanopyColumns.InWords(UnreadableCanopyColumns.In(set)),
+                set.TreeLists
+                    .GroupBy(one => one.TemplateName, StringComparer.Ordinal)
+                    .Select(group => TreeListCheck.InWords(group.Key, group))
+                    .ToList());
         }
 
         /// <summary>

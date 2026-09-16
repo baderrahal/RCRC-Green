@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -375,6 +376,13 @@ namespace RcrcGreen.Core.Kpi
             catch (InvalidDataException failed)
             {
                 return LabelledCells.Refused("the template is not a readable .xlsx: " + failed.Message);
+            }
+            catch (XmlException failed)
+            {
+                // **AUDIT 4 FINDING 67**, the same shape as the three beside it. One malformed
+                // sheet part used to stop the whole press naming no file.
+                return LabelledCells.Refused("the main sheet " + template.MainSheetName + " in "
+                    + Path.GetFileName(path) + " is not well formed XML: " + failed.Message);
             }
         }
 

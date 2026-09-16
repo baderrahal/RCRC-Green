@@ -4,6 +4,275 @@ Newest entry first.
 
 ---
 
+## 2026-09-16, ninety second pass. Five fixes and one rule removed
+
+**2139 tests, 1319 of them KPI**, up from 2111 and 1291, 28 hook cases, build zero warnings, and
+the tests now run on .NET 10. **80 audit findings, 23 FIXED, 57 open**, counted off all four
+files, three closed and nothing renumbered or reordered.
+
+**THE 16 SEPTEMBER REPORTS AND WORKBOOKS ARE NOT IN THIS REPOSITORY AND DID NOT ENTER IT.** Every
+measurement below is copied out of them into prose, and no client file of any kind was written
+here.
+
+**NOTHING IN THIS ROUND WAS RUN IN REVIT**, by this session or by anybody. The Revit half of item
+5 cannot be run from this session at all and it is said again beside the tests that cover its
+Core half.
+
+### The total canopy check no longer switches itself off
+
+`WorkbookArithmetic.WhyTheTotalIsNotAdded` returned an empty reason when it was handed no
+columns at all, and again when `TotalCanopyColumns.For` found none for that sheet, and
+`SpeciesList.UsableEmptyRows` then offered every empty row. **The line numbers the round message
+gave, `WorkbookArithmetic:546` and `:549` and `SpeciesList:162-165`, are where those returns sat
+BEFORE this round**, and the fix's own comments moved them: the first is `:555` today and the
+second, now behind the green cover flag, is `:561`. So a template whose chain could not be
+followed got its green cover and its canopy
+percentage written with no total canopy check made at all, every empty row still offered, and the
+chain's own reason printed nowhere. **A guard that switches itself off reads exactly like a guard
+that passed**, which is the shape this repo has paid for before, and today's seven templates read
+fine while the team is editing them, which is exactly when it costs something.
+
+Four rules, all four tested.
+
+Where the template HAS a Total Green cover cell and the column cannot be read, a plot holding a
+count on that sheet gets Total areas to be greened and the canopy percentage BLANK, the reason
+names the template, the sheet and `TotalCanopyColumn.Why`, and READY reads NO through the sourced
+blank box rule it already follows. No empty row of that sheet is usable and the species is named
+with why, through `SpeciesList.TotalCanopyUnreadable`. **A template with NO green cover cell still
+refuses nothing**, which is Bader's decision and the one case unchanged. And the glance names
+every such template, once for the press rather than once per plot, through
+`UnreadableCanopyColumns`.
+
+**THE TWO CASES ARE TOLD APART BY A FLAG AND NEVER BY THE WORDS.**
+`TotalCanopyColumns.NoGreenCoverCell` is its own constant and
+`TotalCanopyColumn.TheTemplateNamesNoGreenCover` its own property, because a signal that travels
+in the data is not a signal and a reason that merely talks about a green cover cell would read as
+one.
+
+**Break watch.** The whole `!column.Found` branch put back as a bare `return string.Empty;`.
+`ATemplateWhoseCanopyCellIsTypedBlanksTheGreenCoverAndNamesTheReason` went red alone, reading
+`GRP_-_KPI_Checklist_-_DD_MOSQUES.xlsx has a typed number in its canopy cell ... and the check
+agreed anyway. That is a guard switching itself off ... What it said: nothing at all`, which names
+the template. Restored byte for byte, md5 `39e3ea52603960f6320ee52a1412c205`.
+
+### Two UID2 values that differ only in letter case are one folder
+
+`SharedUid2.Of` grouped on `StringComparer.Ordinal` and `SharedUid2Group.Colliding` compared the
+paths only INSIDE each group, so `ANH-007-ST-100213` and `anh-007-st-100213` landed in two groups
+and their two paths were never held against each other. **`SharedUid2.cs:191` and `:133` are
+where the round message found those two**, before this round, and they read
+`StringComparer.OrdinalIgnoreCase` at `:212` and `:138` today. **Windows files them under
+one name**, so the second workbook written replaces the first and nothing says a word.
+
+The grouping is `StringComparer.OrdinalIgnoreCase` now, which is how Windows compares a path and
+is the comparison `FilePaths.Compare` already makes, and the group carries the FIRST spelling seen
+so the path it prints is a real one. **Each line names every plot's UID2 exactly as that plot
+carries it**, through `NamedWithValues`, because printing one spelling for a group holding two is
+what hid this: somebody searching the model for `anh-007-st-100213` finds nothing where the line
+says `ANH-007-ST-100213`. A group whose spellings differ only in case says so in its own sentence,
+through `WhereTheSpellingsDiffer`, because two plots carrying one value and two plots carrying two
+spellings of one value are different things to go and fix.
+
+MM-01 with `ANH-007-ST-100213` and MM-09 with `anh-007-st-100213` in one component folder is the
+test. Both write nothing and each names the other with its own spelling.
+
+**Break watch.** The Ordinal grouping restored.
+`TwoUid2ValuesDifferingOnlyInCaseAreOneFolderAndBothAreStopped` went red naming MM-01 and MM-09.
+Restored byte for byte, md5 `5d8600e5dbe2d52a5661c62a3ebf550e`.
+
+**Five assertions in `SharedUid2Tests` and one in `PlotReadyTests` moved with the wording** and
+each was rewritten by hand with the new sentence written out, with a comment saying the subject
+moved rather than the test being bent to the code.
+
+### The templates' own tree lists are read once at the press, cell by cell
+
+**NONE OF THE 15 SEPTEMBER TEMPLATE EDITS SHOWED UNTIL A PLOT HIT A BAD ROW.** Measured in the 16
+September workbooks: `L85`, `L88` and `L90` to `L101` still typed on EXISTING PARKS and STREETS
+Tree List - Existing, `M83` empty on EXISTING PARKS and FUTURE PARKS, `O90` to `O94`, `O96` to
+`O100`, `N85` and `N88` to `N101` empty on all seven, `L101` typed on MOSQUES, `L84` to `L92`
+deleted on both park templates' Tree List - Proposed, and the Native and Adaptive SUMIFs on the
+first tab stopping at row 91 against a proposed list ending at 92 and at row 95 against FUTURE
+PARKS' existing list ending at 101. A press over 154 plots lands on a different set of those every
+time the model changes.
+
+`TreeListCheck.In` reads both tree lists of each ticked template ONCE, at the press, before any
+plot is written. Seven questions per sheet: rows the total reaches whose canopy cell is typed or
+missing, rows whose total canopy cell is missing, rows whose total water cell is missing, named
+rows whose water per tree is empty, empty rows carrying neither the canopy formula nor the total
+canopy one, names held on more than one row, and formulas on the tree lists or the first tab
+reading a range that stops before the list's last named row.
+
+**EVERY COLUMN IS READ OFF THE FILE AND NEVER FROM A LETTER.** The canopy column is the column a
+canopy formula really sits in on that sheet, the total canopy column comes off the canopy total's
+own chain through `TotalCanopyColumns`, and the water pair comes off the sheet's own formulas, a
+column whose rows are another column multiplied by the count and which is not the canopy pair.
+**Nothing in the file holds N or O.** A column that cannot be read is named as NOT READ and the
+sheet is not clean, because a check nobody made and a check that passed read the same in a count.
+
+**IT IS A REPORT SECTION AND IT STOPS NO WRITE.** The glance gets one line per template, clean or
+how many cells, and `THE TEMPLATES' OWN TREE LISTS, CELL BY CELL` carries the cells grouped by
+which of the seven named them.
+
+**One bug of my own was caught writing the tests and it was a real one.** Question 2 was handing
+`IsTheTotalCanopyFormula` the DIAMETER column where the CANOPY column belongs, so it would have
+built `IF(ISBLANK(B85)," ",J85*B85)` and named EVERY row of every sheet as missing its total
+canopy cell. The canopy column is read once per sheet now and both questions ask it, and a sheet
+no row of which carries a canopy formula says so as NOT READ rather than skipping both questions
+in silence. `Wanted` also held a bare `"L"`, which is the letter rule this file exists to enforce,
+and it takes the column the caller read off the file.
+
+**Where the fixture departs from the round's own example, and why.** The round named row 84 as
+both an empty row carrying no canopy formula and one of the two rows holding one name. **A row
+cannot be both**: `SpeciesList` reads the list down column D until the names stop, so a row
+holding a name is never an empty row. The duplicate keeps rows 22 and 84 as measured and the
+empty row moves to 93, the first row past the fixture list's last name. Every other cell is the
+measured one, `L85`, `M83`, `O90`, `N88`, and the SUMIF reads rows 3 to 91 of a list ending at 92.
+
+**Break watch.** The typed canopy category dropped. Four cases of `TreeListCheckTests` went red
+and the first of them reads `Expected: ["L85", "M83", ...] Actual: ["M83", ...]`, which names
+L85. Restored byte for byte, md5 `22a321e453f9f7631f2ed4507345129a`.
+
+### .NET 10, audit 4 finding 71
+
+**Read off Microsoft's own page this session**,
+`https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core`, last updated 8 September
+2026:
+
+```
+.NET 10   released 11 November 2025   patch 10.0.12 of 8 September 2026   LTS   Active
+          supported to 14 November 2028
+.NET 9    released 12 November 2024   patch 9.0.20                        STS   Maintenance
+          ends 10 November 2026
+.NET 8    released 14 November 2023   patch 8.0.31                        LTS   Maintenance
+          ends 10 November 2026
+```
+
+So .NET 10 is the current LTS. `tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj` takes
+`net10.0` and `.github/workflows/tests.yml` takes `10.0.x`. The Revit add-in stays on `net48`,
+which is what Revit 2024 loads, and Core stays on `netstandard2.0`, which is a surface rather than
+a runtime. The 10.0.401 SDK was installed here and the whole suite was built and run on it before
+the gate ever saw it.
+
+**THERE IS NO BREAK WATCH FOR A VERSION MOVE.** Nothing about what any rule does changed, so there
+is no rule to break and watch go red. The green run on the new version is the whole of the
+evidence.
+
+**TWO LINES OUTSIDE THIS TASK'S TERRITORY NOW SAY SOMETHING THAT IS NOT TRUE, AND THEY ARE LEFT
+FOR BADER.** `CLAUDE.md:54` reads that `tests/RcrcGreen.Core.Tests` is net8.0, and
+`src/RcrcGreen.Core/RcrcGreen.Core.csproj:11` carries a comment reading that Core is consumed by
+a net48 add-in and by net8.0 tests. Both are now wrong by one word. CLAUDE.md is common ground and
+the Core project file belongs to no task, so neither is touched here.
+
+### Audit 4 findings 65 and 67, the two throws
+
+**65.** `PlotFilteredOn` in `KpiPlotReader` caught `ApplicationException` and
+`InvalidOperationException` and returned an empty string from both, and an empty string means the
+schedule belongs to NO plot. Three things followed and none was visible: the schedule was skipped
+so the plot read as holding no softscape and no shrubs and lawn schedule, the guard that refuses a
+plot holding two of a kind could not fire because the schedule was never counted, and the
+reconciliation said the schedule listed no species, which is a sentence about the MODEL, while the
+workbook went out with that plot's trees missing.
+
+It hands back a `SchedulePlotRead` now. A throw carries on the reading as a refusal naming the
+schedule, the exception's type and its message, the way `GuardedRead` beside it already does, so
+the plot's files are not written off a half read and READY reads NO with the schedule's name. The
+schedule half of the plot list NAMES what it could not read rather than dropping it.
+
+**AND THE PLOT LIST ITSELF CARRIES THEM.** `PlotsInTheModel` takes a third list,
+`SchedulesNotRead`, filled by `KpiPlotReader.Plots` off the same read, and
+`EVERY PLOT THE TOOL OFFERED` prints it above the counts that are short because of it. **A
+refusal never becomes a plot**, which would invent one, and a test says so in those words: the
+union still reads DM-11 and DM-12 and the refusal is its own line.
+
+**THE RULE AND ITS WORDS LIVE IN `Core/Kpi/SchedulePlotRead.cs`, WHERE A TEST CAN REACH THEM**,
+because the throw itself is Revit's. `SchedulePlotReadTests` is seven cases. **What stays
+untested is that the two catches in `KpiPlotReader.PlotFilteredOn` really produce this refusal**,
+because nothing in this repository can make Revit's own `ScheduleDefinition` throw. One press on
+a model holding a schedule whose definition Revit refuses is what would settle it.
+
+**67.** `SpeciesList`, `LabelledCells`, `StreetReference` and the ninety first pass's
+`TotalCanopyColumns` caught `IOException`, `UnauthorizedAccessException` and `InvalidDataException`
+and none caught `System.Xml.XmlException`. A template whose `xl/workbook.xml` is fine and whose
+tree list sheet part is malformed passes the peek, is recognised, is listed and is offered, and at
+the press the parse threw past every catch in `Run` to the catch of everything, so the pane read
+that the request failed and was stopped here, naming no template, no file and no plot, **with no
+report written at all**. Each of the four catches it now and returns the refusal it already had
+words for, naming the file and the sheet, and the rest of the press carries on.
+
+**Break watch.** The `XmlException` catch removed from `SpeciesList`. The first run of it produced
+a raw `XmlException` naming no file, which is exactly the fault the finding describes, so the test
+was rewritten to catch the throw itself and fail with a message naming `broken.xlsx` either way.
+Re-broken, and `AMalformedSheetPartRefusesTheSpeciesListAndNamesTheFileAndTheSheet` went red
+naming `broken.xlsx`. Restored byte for byte, md5 `5296c457dc78ce4ace169bde272e2d7d`.
+
+### The pane picture rule is removed
+
+Bader's decision of 16 September. The section `Any round that changes the panel writes an HTML
+mockup` is gone from `.claude/rules/revit-commands.md`, lines 168 to 175 at `983c5ad`. **No mockup
+is owed for any past round** and everything under `design/` is left exactly as it is.
+`CLAUDE.md:305` mentions a mockup in passing rather than as a rule, so it is left alone.
+
+### The audit count
+
+Counted by walking all four files rather than off a note, numbered findings and FIXED marks:
+
+```
+steps/audit-kpi.md      findings  1 to 29    29    8 FIXED   21 open
+steps/audit-kpi-2.md    findings 30 to 49    20    9 FIXED   11 open
+steps/audit-kpi-3.md    findings 50 to 63    14    2 FIXED   12 open
+steps/audit-kpi-4.md    findings 64 to 80    17    4 FIXED   13 open
+                                             80   23         57
+```
+
+**Three were closed and they are 65, 67 and 71.** Nothing else was closed and nothing was
+renumbered or reordered. Each FIXED mark says what is not observed in Revit.
+
+### What is UNKNOWN, and what would settle it
+
+**Which templates carry the SUMIF that stops at row 91 is not recorded.** The measurement names
+the row and the sheet, Tree List - Proposed, and not which of the seven. The first press over the
+seven answers it, because check 25 prints the cell per template.
+
+**Which sheet the empty `O90` to `O100` and `N85` to `N101` cells sit on is not recorded either.**
+They are named as being in all seven and the sheet is not in the measurement. The same press
+answers it.
+
+**Whether the pane really shows a refusal on a malformed sheet part is not observed.** Nothing
+here can be run in Revit.
+
+### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` read this entry before the pull request was
+opened. It reported that it had **no shell tool**, so it could run neither `dotnet test` nor
+`hook-tests.sh` nor `md5sum`, and it said so rather than answering anyway. It named four things.
+
+- **The test counts and the hook count it could not run.** It walked `hook-tests.sh` by hand and
+  counted 28 cases defined, which matches, and said the pass or fail result still needed a run.
+  Both were run here: `2139 passed`, `1319` under the KPI filter, and `28 passed, 0 failed`. The
+  entry's counts were stale twice over while the round was still being worked and both were
+  corrected against a real run
+- **The four md5 sums it could not compute.** Each was taken here with `md5sum` on the restored
+  file and compared against the sum taken before the break
+- **Citation drift, and it was right.** `WorkbookArithmetic:546` and `:549`, `SpeciesList:162-165`
+  and `SharedUid2.cs:191` and `:133` are the lines the round message gave, which is where those
+  returns and that comparer sat BEFORE this round, and each fix's own comments moved them. The
+  entry named them as current. It names the method now and says which lines are before and which
+  are today
+- **A false alarm in the grep this entry suggested for counting findings.** `^[0-9]+\. +[A-Z]`
+  returns 18 on `steps/audit-kpi-4.md` because line 19, `80. Nine were dropped for having no cost
+  to the user`, is prose in that file's own introduction. There are 17 findings, 64 to 80, and
+  the table is right. It is written down here so nobody re-runs the mechanical count and corrects
+  a number that was already correct
+
+### Requests for Bader
+
+- `CLAUDE.md:54` and `src/RcrcGreen.Core/RcrcGreen.Core.csproj:11` both still say the tests are
+  net8.0. They are net10.0. Neither file is this task's to edit
+- Whether a row whose total water cell is missing should hold a plot back rather than being a line
+  is not decided. It is a line today, the same as every other question in this section
+
+---
+
 ## 2026-09-16, ninety first pass. Two presses read back, seven items
 
 **Merged to main as `65f7330`**, pull request 150, squashed with both message fields passed on the

@@ -532,10 +532,16 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>
         /// Why this row's canopy never reaches the canopy TOTAL, or empty where it does.
         ///
-        /// **WHERE NOTHING READ THE TEMPLATE'S CANOPY TOTAL, NOTHING IS CHECKED AND NOTHING IS
-        /// REFUSED.** The column is read off a chain through the file, and a template whose chain
-        /// could not be followed is a template this check cannot make, not a template that fails
-        /// it. The refusal names the chain's own reason instead.
+        /// **A CHECK THAT COULD NOT BE MADE IS NOT A CHECK THAT PASSED.** This used to return an
+        /// empty reason for every template whose chain could not be followed, so the moment
+        /// <see cref="TotalCanopyColumns.In"/> could not read a column, the green cover was
+        /// written with no total canopy check at all and the chain's own reason was printed
+        /// nowhere. Today's seven templates read fine and the team is editing them, which is
+        /// exactly when a guard that switches itself off costs something.
+        ///
+        /// **THE ONE EXCEPTION IS A TEMPLATE THAT NAMES NO GREEN COVER CELL.** It holds no canopy
+        /// total, so a row of it reaches none by construction and there is nothing to check. That
+        /// is a flag on the column rather than a reading of its words.
         /// </summary>
         private static string WhyTheTotalIsNotAdded(
             FormulaCheck formulas,
@@ -543,10 +549,20 @@ namespace RcrcGreen.Core.Kpi
             CanopyRow row,
             string canopyColumn)
         {
+            // **NOBODY READ THE COLUMNS AT ALL**, which is a caller that handed none rather than
+            // a template that could not be read. `Canopy` says so on its own answer through
+            // `TotalCanopyRead`, so the absence is on the record rather than passing as a check.
             if (totalCanopy == null) return string.Empty;
 
             TotalCanopyColumn column = TotalCanopyColumns.For(totalCanopy, row.SheetName);
-            if (!column.Found) return string.Empty;
+
+            if (!column.Found)
+            {
+                if (column.TheTemplateNamesNoGreenCover) return string.Empty;
+
+                return "the total canopy column on " + row.SheetName + " could not be read, so "
+                    + "nothing says whether this row's canopy reaches a total: " + column.Why;
+            }
 
             if (!column.Adds(row.RowNumber))
             {

@@ -1,5 +1,72 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety second pass, five fixes and one rule removed, all decided by Bader on
+16 September.
+**2139 tests, 1319 of them KPI**, up from 2111 and 1291, 28 hook cases, build zero warnings, on
+.NET 10. **80 audit findings, 23 FIXED, 57 open**, counted per file off all four, three closed,
+65, 67 and 71, and nothing renumbered or reordered.
+
+**THE 16 SEPTEMBER REPORTS AND WORKBOOKS ARE NOT IN THIS REPOSITORY AND DID NOT ENTER IT.**
+**NOTHING IN THIS ROUND WAS RUN IN REVIT**, and the Revit half of finding 65 cannot be run from
+this session at all.
+
+**THE TOTAL CANOPY CHECK NO LONGER SWITCHES ITSELF OFF.** Where the template HAS a Total Green
+cover cell and the column cannot be read, the green cover and the canopy percentage are BLANK on
+any plot holding a count on that sheet, the reason names the template, the sheet and
+`TotalCanopyColumn.Why`, READY reads NO, and no empty row of that sheet is usable. A template
+naming NO green cover cell still refuses nothing, told apart by
+`TotalCanopyColumn.TheTemplateNamesNoGreenCover` and never by the reason's words.
+`UnreadableCanopyColumns` is the glance line, one per press.
+
+**TWO UID2 VALUES THAT DIFFER ONLY IN LETTER CASE ARE ONE FOLDER ON WINDOWS.** `SharedUid2.Of`
+groups on `OrdinalIgnoreCase` and the group carries the first spelling seen, so the colliding
+plots are found by the file path across every ticked plot. Each line prints each plot's own
+spelling through `NamedWithValues`, and a group whose spellings differ only in case says so
+through `WhereTheSpellingsDiffer`.
+
+**THE TEMPLATES' OWN TREE LISTS ARE READ ONCE AT THE PRESS, CELL BY CELL.** `TreeListCheck.In`,
+seven questions per sheet, every column read off the file and none held as a letter, the water
+pair found as a column whose rows are another column multiplied by the count and which is not the
+canopy pair. A column that cannot be read is NOT READ and the sheet is not clean. It is a report
+section and a glance line per template and it stops no write.
+
+**.NET 10.** The test project and the gate, read off Microsoft's own policy page this session:
+.NET 10 LTS Active to 14 November 2028, .NET 8 and .NET 9 both ending 10 November 2026. `net48`
+and `netstandard2.0` unchanged. **No break watch for a version move.** `CLAUDE.md:54` and
+`src/RcrcGreen.Core/RcrcGreen.Core.csproj:11` still say net8.0 and are left for Bader.
+
+**FINDINGS 65 AND 67.** A throw reading which plot a schedule filters on is a
+`SchedulePlotRead` refusal naming the schedule rather than an empty string that read as belonging
+to no plot, with the rule and the words in Core where a test reaches them and the Revit catches
+themselves untested. `PlotsInTheModel.SchedulesNotRead` carries them to
+`EVERY PLOT THE TOOL OFFERED`, and a refusal never becomes a plot. All four .xlsx readers catch `System.Xml.XmlException` and return the refusal
+each already had words for, so a malformed sheet part no longer stops the whole press naming no
+template, no file and no plot with no report written.
+
+**THE PANE PICTURE RULE IS REMOVED** from `.claude/rules/revit-commands.md`. No mockup is owed for
+any past round and `design/` is untouched.
+
+**BREAK WATCHES, ALL FOUR WATCHED RED AND RESTORED BYTE FOR BYTE.** The empty return at
+`WorkbookArithmetic:549` reddened the typed canopy test naming the template. The Ordinal grouping
+reddened the case test naming MM-01 and MM-09. Dropping the typed canopy category reddened four
+tree list cases, the first naming L85. Removing the `XmlException` catch from `SpeciesList`
+reddened the malformed part test naming `broken.xlsx`, after the test was rewritten to catch the
+throw so its failure names the file either way.
+
+**ONE BUG OF MY OWN, CAUGHT WRITING THE TESTS.** `TreeListCheck` question 2 handed
+`IsTheTotalCanopyFormula` the DIAMETER column where the CANOPY column belongs, which would have
+named every row of every sheet. The canopy column is read once per sheet now and both questions
+ask it.
+
+`steps/2026-09-16-kpi-checks.md` is updated in place with three more checks, 25, 26 and 27, each
+carrying its own command, and the audit table and what comes next are refreshed.
+
+**THE CLAIM CHECKER FLAGGED FOUR THINGS AND ALL FOUR WERE ACTED ON**, the counts, the md5 sums,
+stale line citations, and a false alarm in its own suggested grep. It had no shell tool and said
+so rather than answering anyway. The log entry lists each one.
+
+---
+
 Phase: 9, ship. Ninety first pass, the two presses of 16 September read back, 16:06 with 166
 plots ticked and 16:37 with exactly the 154 listed, seven items. **Merged to main as `65f7330`**,
 pull request 150, the squash message set on the merge call and off main byte for byte with no

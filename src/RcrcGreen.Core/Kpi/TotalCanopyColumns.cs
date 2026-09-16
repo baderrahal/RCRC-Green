@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -15,7 +16,8 @@ namespace RcrcGreen.Core.Kpi
     public sealed class TotalCanopyColumn
     {
         private TotalCanopyColumn(
-            string sheetName, string column, string totalCell, int firstRow, int lastRow, string why)
+            string sheetName, string column, string totalCell, int firstRow, int lastRow, string why,
+            bool noGreenCover = false)
         {
             SheetName = (sheetName ?? string.Empty).Trim();
             Column = (column ?? string.Empty).Trim().ToUpperInvariant();
@@ -23,13 +25,16 @@ namespace RcrcGreen.Core.Kpi
             FirstRow = firstRow;
             LastRow = lastRow;
             Why = (why ?? string.Empty).Trim();
+            TheTemplateNamesNoGreenCover = noGreenCover;
         }
 
         public static TotalCanopyColumn Refused(string sheetName, string why)
         {
             if (string.IsNullOrWhiteSpace(why)) throw new ArgumentException("A refusal needs a reason.", "why");
 
-            return new TotalCanopyColumn(sheetName, string.Empty, string.Empty, 0, 0, why);
+            return new TotalCanopyColumn(
+                sheetName, string.Empty, string.Empty, 0, 0, why,
+                string.Equals(why.Trim(), TotalCanopyColumns.NoGreenCoverCell, StringComparison.Ordinal));
         }
 
         public static TotalCanopyColumn Of(
@@ -60,6 +65,19 @@ namespace RcrcGreen.Core.Kpi
         }
 
         public string Why { get; }
+
+        /// <summary>
+        /// Whether the reason is that the template names no Total Green cover cell at all.
+        ///
+        /// **IT IS THE ONE REFUSAL THAT HOLDS NO ROW BACK.** Such a template has no canopy total,
+        /// so a row of it reaches none by construction and there is nothing to check. Every other
+        /// reason is a check this tool could not make on a template that does have one, and those
+        /// blank both computed numbers rather than passing in silence.
+        ///
+        /// **IT IS A FLAG AND NEVER A SEARCH OF THE WORDS.** A signal that travels in the data is
+        /// not a signal, which this repository has already paid for once.
+        /// </summary>
+        public bool TheTemplateNamesNoGreenCover { get; }
 
         public bool Adds(int row)
         {
@@ -100,6 +118,16 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public static class TotalCanopyColumns
     {
+        /// <summary>
+        /// **THE ONE REFUSAL THAT REFUSES NOTHING.** A template naming no Total Green cover cell
+        /// has no canopy total for a row to reach, so there is no check to make and no row to
+        /// hold back. Every other reason is a check this tool could not make on a template that
+        /// does have one, and a check that could not be made is not a check that passed.
+        /// </summary>
+        public const string NoGreenCoverCell =
+            "the template names no Total Green cover cell, so it holds no canopy total for a "
+            + "row's canopy to reach and there is nothing here to check";
+
         public const string NoCanopyCell =
             "the workbook's Total Green cover cell does not name a canopy cell, so nothing says "
             + "which cell holds the canopy area or which column it adds";
@@ -198,6 +226,14 @@ namespace RcrcGreen.Core.Kpi
             {
                 return Every(sheets, Path.GetFileName(path) + " is not a readable workbook: " + failed.Message);
             }
+            catch (XmlException failed)
+            {
+                // **AUDIT 4 FINDING 67.** This reader was written after the finding and repeated
+                // the same three catches, which is how a shape spreads: it is caught here now
+                // with the other three.
+                return Every(sheets, "a sheet part of " + Path.GetFileName(path)
+                    + " is not well formed XML: " + failed.Message);
+            }
         }
 
         /// <summary>
@@ -212,7 +248,10 @@ namespace RcrcGreen.Core.Kpi
 
             if (greenCover == null || !greenCover.Found)
             {
-                why = NoCanopyCell;
+                // **THE TEMPLATE NAMES NO GREEN COVER CELL AT ALL**, which is its own answer and
+                // not a read that failed. It is told apart from every other reason here, because
+                // every other reason holds a row back and this one must not.
+                why = NoGreenCoverCell;
                 return string.Empty;
             }
 

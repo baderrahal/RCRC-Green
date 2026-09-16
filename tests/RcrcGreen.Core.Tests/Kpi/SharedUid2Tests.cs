@@ -63,17 +63,20 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(SharedUid2.Stops(groups, "MM-09"));
             Assert.False(SharedUid2.Stops(groups, "MM-05"));
 
+            // **EVERY LINE NAMES EVERY PLOT'S OWN VALUE.** Both spell it the same way here, so
+            // no sentence about letter case is printed: a line about nothing is one the team
+            // reads past on every other press.
             Assert.Equal(
-                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries it too. "
-                + "One workbook per plot files all 2 files at "
+                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries "
+                + "ANH-007-ST-100213. One workbook per plot files all 2 files at "
                 + At("STREETS", "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
                 SharedUid2.WhyStopped(groups, "MM-01"));
 
             Assert.Equal(
-                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-01 carries it too. "
-                + "One workbook per plot files all 2 files at "
+                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-01 carries "
+                + "ANH-007-ST-100213. One workbook per plot files all 2 files at "
                 + At("STREETS", "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
@@ -104,8 +107,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(SharedUid2.Stops(groups, "SC-03"));
 
             Assert.Equal(
-                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, which SC-03 carries too, and "
-                + "no file of this plot's collides with any of theirs, so it is written.",
+                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and SC-03 carries "
+                + "ANH-007-ST-100213. No file of this plot's collides with any of theirs, so "
+                + "it is written.",
                 SharedUid2.FiledApartFrom(groups, "MM-01"));
         }
 
@@ -131,17 +135,101 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(SharedUid2.Stops(groups, "SC-03"));
 
             Assert.Equal(
-                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, which MM-01 and MM-09 carry "
-                + "too, and no file of this plot's collides with any of theirs, so it is written.",
+                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-01 carries "
+                + "ANH-007-ST-100213 and MM-09 carries ANH-007-ST-100213. No file of this "
+                + "plot's collides with any of theirs, so it is written.",
                 SharedUid2.FiledApartFrom(groups, "SC-03"));
 
             Assert.Equal(
-                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries it too. "
-                + "One workbook per plot files all 2 files at "
+                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries "
+                + "ANH-007-ST-100213. One workbook per plot files all 2 files at "
                 + At("STREETS", "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
                 SharedUid2.WhyStopped(groups, "MM-01"));
+        }
+
+        /// <summary>
+        /// **TWO VALUES THAT DIFFER ONLY IN LETTER CASE ARE ONE FOLDER ON WINDOWS.** MM-01
+        /// carries ANH-007-ST-100213 and MM-09 carries anh-007-st-100213, both STREET 36m ROW,
+        /// so both land in one folder under one file name and the last one written replaces the
+        /// other. The grouping compared values with <see cref="System.StringComparer.Ordinal"/>,
+        /// so the two plots never met and nothing compared their paths.
+        ///
+        /// **EACH LINE NAMES THE PLOT'S OWN SPELLING**, because the difference between the two
+        /// is exactly what somebody has to go and correct in the model.
+        /// </summary>
+        [Fact]
+        public void TwoUid2ValuesDifferingOnlyInCaseAreOneFolderAndBothAreStopped()
+        {
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+                Root,
+                new[] { "MM-01", "MM-09" },
+                plotId => Street,
+                plotId => plotId == "MM-01" ? "ANH-007-ST-100213" : "anh-007-st-100213"));
+
+            // **BOTH PLOTS ARE IN THE MESSAGE.** A failure reading `expected true, got false`
+            // says nothing about which two plots the press wrote over each other.
+            Assert.True(
+                SharedUid2.Stops(groups, "MM-01") && SharedUid2.Stops(groups, "MM-09"),
+                "MM-01 carries ANH-007-ST-100213 and MM-09 carries anh-007-st-100213, and a "
+                + "Windows folder ignores letter case, so both file at "
+                + At("STREETS", "ANH-007-ST-100213") + " and the last one written replaces the "
+                + "other. The groups this check found: "
+                + (groups.Count == 0
+                    ? "none"
+                    : string.Join(", ", groups.Select(one => one.Uid2).ToArray())));
+
+            SharedUid2Group group = Assert.Single(groups);
+
+            Assert.Equal(new[] { "MM-01", "MM-09" }, group.StoppedPlots.ToArray());
+
+            // **MM-01's LINE CARRIES MM-09's SPELLING AND ITS OWN**, and the sentence about
+            // letter case is printed because the two really do differ.
+            Assert.Equal(
+                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries "
+                + "anh-007-st-100213. Those spellings differ only in letter case, and Windows "
+                + "files them in one folder under one name anyway. One workbook per plot files "
+                + "all 2 files at " + At("STREETS", "ANH-007-ST-100213")
+                + ", so the last one written would replace the others. No file is written for "
+                + "any of them, and nothing already in that folder is touched.",
+                SharedUid2.WhyStopped(groups, "MM-01"));
+
+            Assert.Equal(
+                "this plot's PRX_Plot_UID2 is anh-007-st-100213, and MM-01 carries "
+                + "ANH-007-ST-100213. Those spellings differ only in letter case, and Windows "
+                + "files them in one folder under one name anyway. One workbook per plot files "
+                + "all 2 files at " + At("STREETS", "ANH-007-ST-100213")
+                + ", so the last one written would replace the others. No file is written for "
+                + "any of them, and nothing already in that folder is touched.",
+                SharedUid2.WhyStopped(groups, "MM-09"));
+        }
+
+        /// <summary>
+        /// **TWO CASE DIFFERENT VALUES IN TWO COMPONENT FOLDERS STILL COLLIDE WITH NOTHING.**
+        /// The path is what decides, and two different folders are two paths whatever the
+        /// values read.
+        /// </summary>
+        [Fact]
+        public void TwoCaseDifferentValuesInTwoFoldersAreNamedAndBothStillWrite()
+        {
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+                Root,
+                new[] { "MM-01", "SC-03" },
+                plotId => plotId == "SC-03" ? "SCHOOL" : Street,
+                plotId => plotId == "MM-01" ? "ANH-007-ST-100213" : "anh-007-st-100213"));
+
+            SharedUid2Group group = Assert.Single(groups);
+
+            Assert.True(group.FiledApart);
+            Assert.Empty(group.StoppedPlots);
+
+            Assert.Equal(
+                "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and SC-03 carries "
+                + "anh-007-st-100213. Those spellings differ only in letter case, and Windows "
+                + "files them in one folder under one name anyway. No file of this plot's "
+                + "collides with any of theirs, so it is written.",
+                SharedUid2.FiledApartFrom(groups, "MM-01"));
         }
 
         /// <summary>
@@ -220,8 +308,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 plotId => plotId == "MM-05" ? "ANH-007-ST-100003" : "ANH-007-ST-100213"));
 
             Assert.Equal(
-                "PRX_Plot_UID2 ANH-007-ST-100213 is also MM-09's, so no file is written for any "
-                + "of them",
+                "PRX_Plot_UID2 ANH-007-ST-100213 files this plot where MM-09 carries "
+                + "ANH-007-ST-100213 files, so no file is written for any of them",
                 SharedUid2.StoppedShort(groups, "MM-01"));
 
             Assert.Equal(string.Empty, SharedUid2.StoppedShort(groups, "MM-05"));
