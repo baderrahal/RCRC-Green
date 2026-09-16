@@ -196,8 +196,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(can.Ready);
 
             Assert.Equal(
-                "PRX_Plot_UID2 ANH-007-ST-100213 is also MM-09's, so no file is written for any "
-                + "of them",
+                "PRX_Plot_UID2 ANH-007-ST-100213 files this plot where MM-09 carries "
+                + "ANH-007-ST-100213 files, so no file is written for any of them",
                 Assert.Single(can.Why));
         }
 

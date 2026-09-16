@@ -19,12 +19,23 @@ namespace RcrcGreen.Core.Kpi
         private PlotsInTheModel(
             IReadOnlyList<string> all,
             IReadOnlyList<string> onSheetsOnly,
-            IReadOnlyList<string> onSchedulesOnly)
+            IReadOnlyList<string> onSchedulesOnly,
+            IReadOnlyList<string> schedulesNotRead)
         {
             All = all;
             OnSheetsOnly = onSheetsOnly;
             OnSchedulesOnly = onSchedulesOnly;
+            SchedulesNotRead = schedulesNotRead;
         }
+
+        /// <summary>
+        /// **THE SCHEDULES THIS READ COULD NOT ASK WHICH PLOT THEY FILTER ON**, one line each,
+        /// audit 4 finding 65. A throw used to come back as an empty string, which is also what a
+        /// schedule filtering on no plot returns, so such a schedule dropped out of the schedule
+        /// half of this list in silence and the disagreement between the two halves was wrong
+        /// about it. Empty on every read that asked every schedule.
+        /// </summary>
+        public IReadOnlyList<string> SchedulesNotRead { get; }
 
         /// <summary>
         /// The union of both lists, sorted so DM-2 comes before DM-100. This is what the picker
@@ -47,7 +58,10 @@ namespace RcrcGreen.Core.Kpi
                 && All.Any(one => string.Equals(one, plotId, StringComparison.Ordinal));
         }
 
-        public static PlotsInTheModel Of(IEnumerable<string> fromSheets, IEnumerable<string> fromSchedules)
+        public static PlotsInTheModel Of(
+            IEnumerable<string> fromSheets,
+            IEnumerable<string> fromSchedules,
+            IEnumerable<string> schedulesNotRead = null)
         {
             List<string> sheets = Cleaned(fromSheets);
             List<string> schedules = Cleaned(fromSchedules);
@@ -61,7 +75,8 @@ namespace RcrcGreen.Core.Kpi
             return new PlotsInTheModel(
                 all,
                 Missing(sheets, schedules),
-                Missing(schedules, sheets));
+                Missing(schedules, sheets),
+                Cleaned(schedulesNotRead));
         }
 
         private static IReadOnlyList<string> Missing(List<string> from, List<string> against)

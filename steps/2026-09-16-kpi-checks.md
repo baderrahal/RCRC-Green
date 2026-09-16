@@ -4,7 +4,8 @@ For Bader, on Windows, in the order they happen. One action a step, and where a 
 command that is the one to paste. **Nothing here was run in Revit by anybody**, so every check
 below is a check and not a claim.
 
-What landed since the 16:37 press, all seven items of this round:
+What landed since the 16:37 press. **Seven items in the round before this one and six in this
+one**, all of them in the build step 8 installs:
 
 1. Two ticked plots whose PRX_Plot_UID2 files them at one path now write NOTHING, and each is
    named above Create and in the report. Ten plots of that press wrote over each other.
@@ -18,6 +19,28 @@ What landed since the 16:37 press, all seven items of this round:
 6. The glance names every plot whose two schedules both printed a heading and no rows.
 7. A ticked plot the list does not name is named above Create and in a report block of its own.
    The 16:06 press ticked 166 against a list of 154 and said nothing about the twelve.
+
+And this round:
+
+8. **Where a template's canopy total column cannot be read, the check no longer switches itself
+   off.** The green cover and the canopy percentage are left blank on any plot holding a count
+   on that sheet, no empty row of it is offered to a new species, READY reads NO, and the glance
+   names the template. A template naming no Total Green cover cell still refuses nothing.
+9. **Two ticked plots whose PRX_Plot_UID2 differs only in LETTER CASE are one folder on Windows**
+   and are found and stopped now. Each line prints each plot's own spelling, so a person looking
+   for `anh-007-st-100213` in the model finds it.
+10. **Both tree lists of every ticked template are read ONCE at the press**, before any plot is
+    written, and every cell the team has still to fix is named with its own cell reference. It is
+    a report section and it stops nothing.
+11. The test project and the gate moved to **.NET 10, the current LTS**. Nothing the tool does
+    changed. .NET 8 runs out of support on 10 November 2026.
+12. **A throw reading which plot a schedule filters on is a refusal now**, naming the schedule,
+    rather than an empty answer that read as a schedule belonging to no plot. So is a malformed
+    sheet part in any of the four readers, which used to stop the whole press naming no template,
+    no file and no plot, with no report written at all.
+13. The rule that any round changing the panel writes an HTML mockup is **removed**, your
+    decision of 16 September. Nothing under `design/` is touched and no mockup is owed for any
+    past round.
 
 ---
 
@@ -278,6 +301,70 @@ If it names plots, a workbook row was ticked after **Tick the list** and the ext
 with it. Press **Tick the list** again and run it again, because those plots are written for
 nobody and three of the 16:06 press's collisions came from exactly that.
 
+## 25. THE TEMPLATES' OWN TREE LISTS names the cells still not fixed, per template
+
+Open a terminal in the repository, as step 6 did, and pull the section out of the report:
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "TEMPLATES' OWN TREE LISTS" -Context 0,120
+```
+
+It is one block per ticked template and per tree list sheet, with the cells grouped by what is
+wrong with each. Off the workbooks measured on 16 September, expect at least these:
+
+```
+EXISTING PARKS, STREETS         Tree List - Existing   L85, L88, L90 to L101 typed or missing
+MOSQUES                         Tree List - Existing   L101 typed or missing
+EXISTING PARKS, FUTURE PARKS    Tree List - Existing   M83 missing
+all seven                       sheet not recorded     O90 to O94, O96 to O100, N85, N88 to N101
+EXISTING PARKS, FUTURE PARKS    Tree List - Proposed   L84 to L92 missing
+FUTURE PARKS                    Tree List - Existing   a SUMIF stopping at row 95 of 101
+which templates is not recorded Tree List - Proposed   a SUMIF stopping at row 91 of 92
+```
+
+**THE CHECK IS THAT IT READS CLEAN ONCE THE TEAM HAS FIXED A TEMPLATE.** The glance line above
+the section reads `<TEMPLATE>: clean.` and the block for it says `clean` on both sheets. A
+template you have fixed must stop being named. A template you have not must be named with the
+same cells it was named with last time.
+
+**It stops nothing.** Every line here is a line. What the canopy guard and the total canopy check
+already refuse is unchanged.
+
+**A line reading NOT READ is not a clean line.** It says a column could not be read at all, so
+that question was never asked on that sheet, and it is worth sending back.
+
+## 26. No template is named as having a canopy total column that could not be read
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "CANOPY TOTAL COLUMN COULD NOT BE READ" -Context 0,10
+```
+
+On a run of today's seven templates it must read:
+
+```
+THE TEMPLATES WHOSE CANOPY TOTAL COLUMN COULD NOT BE READ: every ticked template's canopy
+total named the column it adds.
+```
+
+**If it names a template, every plot holding a count on that sheet has a blank Total areas to be
+greened and a blank canopy percentage, reads READY NO, and had no empty row offered to a new
+species.** That is deliberate and it is new: the check used to write both numbers with no check
+made at all. The line says which template and which sheet and why, and that is what to send back.
+
+## 27. With only the list ticked and every UID2 its own, the shared value line names nobody
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "SHARING ONE PRX_Plot_UID2" -Context 0,20
+```
+
+This is the other half of check 19. Once the team has given each of the ten plots its own
+PRX_Plot_UID2, and with **Tick the list** the last tick you pressed, the glance line must read
+that no ticked plot shares its value with another and no plot line sits under it.
+
+**Letter case is not a difference.** `ANH-007-ST-100213` and `anh-007-st-100213` are one folder
+on Windows, so two plots spelt that way are still a collision and are still stopped, and the line
+prints each plot's own spelling so the model can be searched for what it really holds.
+
 ---
 
 # What remains
@@ -290,6 +377,14 @@ itself, and the model is where the fix is.
 **Rows 85, 92 and 99 of the tree lists carry no canopy formula**, and now **row 83 of the two
 park templates carries no total canopy formula either.** Both are the team's fix to the client's
 templates.
+
+**AND THE TEMPLATE EDITS OF 15 SEPTEMBER LEFT MORE OF THEM.** Measured in the 16 September
+workbooks and listed in check 25: `L85`, `L88` and `L90` to `L101` still typed on EXISTING PARKS
+and STREETS, `L101` typed on MOSQUES, `L84` to `L92` deleted on both park templates' proposed
+list, `O90` to `O94`, `O96` to `O100`, `N85` and `N88` to `N101` empty on all seven, and the
+Native and Adaptive SUMIFs stopping before the list they count ends. **The tool names every one
+of them at the press now and changes none of them.** They are the team's fix to the client's
+templates and they are what check 25 watches go clean.
 
 **`S70` and `T70` divide by `COUNT(B4:B83)` while the names run to row 101.** The tool reports it
 and changes no client formula, which is unchanged.
@@ -304,19 +399,20 @@ is a check.
 
 ## The audit files
 
-**80 findings across the four audit files, 20 of them marked FIXED, so 60 are open.** Counted on
+**80 findings across the four audit files, 23 of them marked FIXED, so 57 are open.** Counted on
 16 September, per file:
 
 ```
-steps/audit-kpi.md      29 findings   8 FIXED   21 open
-steps/audit-kpi-2.md    20 findings   9 FIXED   11 open
-steps/audit-kpi-3.md    14 findings   2 FIXED   12 open
-steps/audit-kpi-4.md    17 findings   1 FIXED   16 open
-                        80            20        60
+steps/audit-kpi.md      29 findings    8 FIXED   21 open
+steps/audit-kpi-2.md    20 findings    9 FIXED   11 open
+steps/audit-kpi-3.md    14 findings    2 FIXED   12 open
+steps/audit-kpi-4.md    17 findings    4 FIXED   13 open
+                        80            23         57
 ```
 
-Nothing was closed, renumbered or reordered in this round. A block of them is what the next round
-can take.
+**Three were closed in this round and they are 65, 67 and 71**, the schedule plot filter throw,
+the malformed sheet part, and the move to .NET 10. Nothing else was closed and nothing was
+renumbered or reordered. A block of the 57 is what the next round can take.
 
 ## What comes next
 
@@ -326,14 +422,16 @@ can take.
 3. Take row 83's empty M cell on the two park templates to the team.
 4. Take `S70` and `T70` and the B4:B83 ranges to the team, with rows 84 to 101.
 5. Take rows 85, 92 and 99 to the team, which is still open from 15 September.
-6. The next round can take a block of the 60 open audit findings.
+6. Take the rest of the 15 September template edits to the team, off check 25's own list, which
+   is the first run that names them all in one place.
+7. The next round can take a block of the 57 open audit findings.
 
 ---
 
 # What to send back after the press
 
-**All of it in one message.** Six things, and the report is open in front of you for the first
-five.
+**All of it in one message.** Eight things, and the report is open in front of you for the first
+seven.
 
 1. **THE PLOT LIST**, its **four counts** at the bottom, and **every row whose READY column
    reads NO**, with its last column.
@@ -342,7 +440,10 @@ five.
    not be worked out.
 4. **THE PLOTS WITH NO PLANTING AT ALL**, the whole line.
 5. **TICKED AND NOT ON THE LIST**, the count and any plots under it.
-6. **Screenshots of two PDFs**: FP-18, and any one of the ten shared plots' folders showing what
+6. **THE TEMPLATES' OWN TREE LISTS**, the glance line per template and the whole section, which
+   is check 25 and is the list to take to the team.
+7. **THE TEMPLATES WHOSE CANOPY TOTAL COLUMN COULD NOT BE READ**, the one line, whatever it says.
+8. **Screenshots of two PDFs**: FP-18, and any one of the ten shared plots' folders showing what
    is in it.
 
 **Do not send the workbooks or the PDFs themselves**, and do not put any of them, or the plot list

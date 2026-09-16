@@ -123,6 +123,11 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>
         /// The plots of this group whose file really lands on one path, keyed on that path. A
         /// path only one plot reaches is not in here, because nothing of it collides.
+        ///
+        /// **THE PATH IS WHAT DECIDES, AND IT IS COMPARED WITHOUT CASE.** Windows folders ignore
+        /// letter case, so `ANH-007-ST-100213` and `anh-007-st-100213` name one folder and one
+        /// file, and a comparison that read them as two values would let a press write one over
+        /// the other with every row of THE PLOT LIST reading YES.
         /// </summary>
         public IReadOnlyList<IReadOnlyList<PlotFiling>> Colliding
         {
@@ -184,11 +189,27 @@ namespace RcrcGreen.Core.Kpi
         /// Every PRX_Plot_UID2 two or more ticked plots carry, in the order the plots came.
         /// **A plot with no UID2 is left out**, because a plot with none is refused by its own
         /// path already and an empty value shared by five plots is not one value.
+        ///
+        /// **THE GROUPING IGNORES LETTER CASE, BECAUSE A WINDOWS FOLDER DOES.** It was
+        /// <see cref="StringComparer.Ordinal"/>, so `ANH-007-ST-100213` and
+        /// `anh-007-st-100213` were two values to this check and one folder to Windows: the two
+        /// plots never met, nothing compared their paths, and the press wrote one workbook over
+        /// the other. **What really collides is the path**, which
+        /// <see cref="SharedUid2Group.Colliding"/> decides inside each group and also without
+        /// case, and the path is the component folder and the trimmed value, so two plots reach
+        /// one path exactly when they are in one group here. Grouping on the value with the
+        /// path deciding inside it keeps the plots that share a value across two component
+        /// folders together, which is the case that is named and still writes.
+        ///
+        /// **EVERY PLOT KEEPS ITS OWN SPELLING.** The group carries the first value seen for its
+        /// own line, and every line about a plot prints that plot's value exactly as the model
+        /// holds it, because a report that tidied one of two spellings would hide the very
+        /// difference somebody has to go and fix.
         /// </summary>
         public static IReadOnlyList<SharedUid2Group> Of(IEnumerable<PlotFiling> plots)
         {
             var order = new List<string>();
-            var byUid2 = new Dictionary<string, List<PlotFiling>>(StringComparer.Ordinal);
+            var byUid2 = new Dictionary<string, List<PlotFiling>>(StringComparer.OrdinalIgnoreCase);
 
             foreach (PlotFiling one in (plots ?? Enumerable.Empty<PlotFiling>()).Where(one => one != null))
             {
@@ -207,7 +228,7 @@ namespace RcrcGreen.Core.Kpi
 
             return order
                 .Where(one => byUid2[one].Count > 1)
-                .Select(one => new SharedUid2Group(one, byUid2[one]))
+                .Select(one => new SharedUid2Group(byUid2[one][0].Uid2, byUid2[one]))
                 .ToList();
         }
 
@@ -218,8 +239,14 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Why no file is written for this plot, naming the shared value, every other ticked plot
-        /// holding it and the one path they would all land on. Empty for a plot nothing stops.
+        /// Why no file is written for this plot, naming this plot's own value, every other
+        /// ticked plot on that path WITH ITS OWN VALUE, and the one path they would all land on.
+        /// Empty for a plot nothing stops.
+        ///
+        /// **WHERE THE SPELLINGS DIFFER THE LINE SAYS SO.** Two values that differ only in
+        /// letter case are one folder on Windows and look like two values on a screen, so the
+        /// sentence that explains why they collide is the one thing a person needs to go and fix
+        /// the model.
         /// </summary>
         public static string WhyStopped(IEnumerable<SharedUid2Group> groups, string plotId)
         {
@@ -229,17 +256,52 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<PlotFiling> colliding = group.Colliding
                 .First(one => one.Any(plot => string.Equals(plot.PlotId, plotId, StringComparison.Ordinal)));
 
+            PlotFiling mine = colliding
+                .First(one => string.Equals(one.PlotId, plotId, StringComparison.Ordinal));
+
             var others = colliding
                 .Where(one => !string.Equals(one.PlotId, plotId, StringComparison.Ordinal))
-                .Select(one => one.PlotId)
                 .ToList();
 
-            return "this plot's " + KpiNames.PlotUid2 + " is " + group.Uid2 + ", and "
-                + Named(others) + " " + (others.Count == 1 ? "carries" : "carry") + " it too. "
+            return "this plot's " + KpiNames.PlotUid2 + " is " + mine.Uid2 + ", and "
+                + NamedWithValues(others) + ". " + WhereTheSpellingsDiffer(mine, others)
                 + "One workbook per plot files all " + Count(colliding.Count)
                 + " at " + colliding[0].FilePath
                 + ", so the last one written would replace the others. No file is written for any "
                 + "of them, and nothing already in that folder is touched.";
+        }
+
+        /// <summary>
+        /// The sentence that is printed only where two of these values are not spelt the same.
+        /// Empty where they all are, because a line about nothing is one the team reads past on
+        /// every other press.
+        /// </summary>
+        private static string WhereTheSpellingsDiffer(PlotFiling mine, IReadOnlyList<PlotFiling> others)
+        {
+            bool differ = others.Any(
+                one => !string.Equals(one.Uid2, mine.Uid2, StringComparison.Ordinal));
+
+            return differ
+                ? "Those spellings differ only in letter case, and Windows files them in one "
+                    + "folder under one name anyway. "
+                : string.Empty;
+        }
+
+        /// <summary>
+        /// Each plot named with the value it really carries. **Nothing tidies a spelling**,
+        /// because the difference between two of them is what somebody has to go and correct.
+        /// </summary>
+        private static string NamedWithValues(IReadOnlyList<PlotFiling> plots)
+        {
+            var said = plots
+                .Select(one => one.PlotId + " carries " + one.Uid2)
+                .ToList();
+
+            if (said.Count == 0) return "no other ticked plot carries it";
+            if (said.Count == 1) return said[0];
+
+            return string.Join(", ", said.Take(said.Count - 1).ToArray())
+                + " and " + said[said.Count - 1];
         }
 
         /// <summary>
@@ -255,13 +317,15 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<PlotFiling> colliding = group.Colliding
                 .First(one => one.Any(plot => string.Equals(plot.PlotId, plotId, StringComparison.Ordinal)));
 
+            PlotFiling mine = colliding
+                .First(one => string.Equals(one.PlotId, plotId, StringComparison.Ordinal));
+
             var others = colliding
                 .Where(one => !string.Equals(one.PlotId, plotId, StringComparison.Ordinal))
-                .Select(one => one.PlotId)
                 .ToList();
 
-            return KpiNames.PlotUid2 + " " + group.Uid2 + " is also " + Named(others) + "'s, "
-                + "so no file is written for any of them";
+            return KpiNames.PlotUid2 + " " + mine.Uid2 + " files this plot where "
+                + NamedWithValues(others) + " files, so no file is written for any of them";
         }
 
         /// <summary>
@@ -278,14 +342,16 @@ namespace RcrcGreen.Core.Kpi
             SharedUid2Group group = Group(groups, plotId, false);
             if (group == null) return string.Empty;
 
+            PlotFiling mine = group.Plots
+                .First(one => string.Equals(one.PlotId, plotId, StringComparison.Ordinal));
+
             var others = group.Plots
                 .Where(one => !string.Equals(one.PlotId, plotId, StringComparison.Ordinal))
-                .Select(one => one.PlotId)
                 .ToList();
 
-            return "this plot's " + KpiNames.PlotUid2 + " is " + group.Uid2 + ", which "
-                + Named(others) + " " + (others.Count == 1 ? "carries" : "carry") + " too, and "
-                + "no file of this plot's collides with any of theirs, so it is written.";
+            return "this plot's " + KpiNames.PlotUid2 + " is " + mine.Uid2 + ", and "
+                + NamedWithValues(others) + ". " + WhereTheSpellingsDiffer(mine, others)
+                + "No file of this plot's collides with any of theirs, so it is written.";
         }
 
         /// <summary>
@@ -354,15 +420,6 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return null;
-        }
-
-        private static string Named(IReadOnlyList<string> plots)
-        {
-            if (plots.Count == 0) return "no other ticked plot";
-            if (plots.Count == 1) return plots[0];
-
-            return string.Join(", ", plots.Take(plots.Count - 1).ToArray())
-                + " and " + plots[plots.Count - 1];
         }
 
         private static string Count(int number)

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -315,6 +316,11 @@ namespace RcrcGreen.Core.Kpi
             catch (InvalidDataException failed)
             {
                 return Refused(path, "it is not a readable .xlsx: " + failed.Message);
+            }
+            catch (XmlException failed)
+            {
+                // **AUDIT 4 FINDING 67**, the same shape as the three beside it.
+                return Refused(path, "its first sheet is not well formed XML: " + failed.Message);
             }
         }
 

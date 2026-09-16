@@ -123,6 +123,19 @@ top of the list first.**
     the way `GuardedRead` at `KpiRequestHandler.cs:870` already carries one, plus the schedule's
     name
 
+    FIXED, in the ninety second pass. `PlotFilteredOn` hands back a `SchedulePlotRead` rather
+    than a string, so a throw carries on the reading as a refusal naming the schedule, the
+    exception's type and its message, the way `GuardedRead` beside it already does. The plot's
+    files are not written off a half read, READY reads NO with the schedule's name, and the
+    schedule half of the plot list NAMES what it could not read rather than dropping it.
+    **THE RULE AND ITS WORDS LIVE IN `Core/Kpi/SchedulePlotRead.cs`, where a test can reach
+    them**, because the throw itself is Revit's. `SchedulePlotReadTests` is five cases, among
+    them that a refusal belongs to no plot and is not an empty value, and that a refusal with no
+    reason is refused outright. **WHAT STAYS UNTESTED IS THAT THE TWO CATCHES IN
+    `KpiPlotReader.PlotFilteredOn` REALLY PRODUCE THIS REFUSAL**, because nothing in this
+    repository can make Revit's own `ScheduleDefinition` throw. One press on a model holding a
+    schedule whose definition Revit refuses is what would settle it.
+
 66. WIRING | `src/RcrcGreen.Revit/Kpi/KpiRequestHandler.cs:528-533` with `:425` | **The per plot
     WRITE loop has no guard, so a throw on plot 100 of 156 ends the press with no report at
     all.** `foreach (PlotReading one in readings) OnePlot(...)` runs under nothing, and
@@ -165,6 +178,17 @@ top of the list first.**
     that part | One catch in each of the three, returning the refusal each class already has
     words for. `SpeciesList.Refused`, `LabelledCells.Refused` and `StreetReference.Refused` all
     exist
+
+    FIXED, in the ninety second pass. All three catch `System.Xml.XmlException` and return the
+    refusal each already had words for, naming the file and the sheet, and `TotalCanopyColumns`,
+    added in the ninety first pass with the same three catches as the readers beside it, takes
+    the fourth. The rest of the press carries on, which is the rule a refusal on one template
+    already follows. `MalformedSheetPartTests` builds a valid zip whose one sheet part is cut
+    off mid element and drives all four over it. **Its first case catches the throw itself and
+    fails with a message naming `broken.xlsx`**, because without the catch in `SpeciesList` an
+    xUnit failure is a bare `XmlException` naming no file at all, which is the very fault: the
+    press used to stop naming no template, no file and no plot. **NOTHING HERE CAN BE RUN IN
+    REVIT**, so what the pane really shows on such a file is not observed.
 
 ### COSTLY
 
@@ -229,6 +253,19 @@ top of the list first.**
     workflow line, not three.** Nothing in Core or in the tests uses anything the shared surface
     does not carry | `net10.0` in the test project and `10.0.x` in the workflow, then a green
     run. An hour, and it will be someone's afternoon in December if it waits
+
+    FIXED, in the ninety second pass. `net10.0` in the test project and `10.0.x` in the
+    workflow, and nothing else moved. Read off Microsoft's own page again this session,
+    `https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core`, last updated
+    8 September 2026: **.NET 10 is LTS and Active**, released 11 November 2025, latest patch
+    10.0.12 of 8 September 2026, supported to **14 November 2028**. .NET 8 is LTS in
+    Maintenance and .NET 9 is STS in Maintenance and both end **10 November 2026**. So .NET 10
+    is the current LTS and is what the test project and the gate take. The whole suite was
+    built and run on the 10.0.401 SDK here before the gate ever saw it. `netstandard2.0` and
+    `net48` are untouched for the reasons this finding already records. **THERE IS NO BREAK
+    WATCH FOR A VERSION MOVE**: nothing about what any rule does changed, so there is no rule
+    to break and watch go red, and the green run on the new version is the whole of the
+    evidence.
 
 72. QA | `src/RcrcGreen.Core/Kpi/PdfForms.cs` with `src/RcrcGreen.Core/Kpi/PdfFill.cs:385-387` |
     **Adding a field to a PDF form reddens two tests and neither of them is the one that

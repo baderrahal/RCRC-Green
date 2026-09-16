@@ -64,6 +64,7 @@ namespace RcrcGreen.Core.Kpi
             TheTeamsList(report, set);
             ThePlotList(report, set);
             TheGlance(report, set);
+            TheTreeLists(report, set);
             TheRunAccounting(report, set);
             TheSplit(report, set);
             TheWaterDemand(report, set);
@@ -332,6 +333,18 @@ namespace RcrcGreen.Core.Kpi
                 "every plot the model names and every plot that was ticked, read off the live "
                 + "document when Create was pressed");
 
+            // **THE SCHEDULE HALF OF THIS LIST NAMES WHAT IT COULD NOT READ**, audit 4 finding
+            // 65. A schedule whose plot filter threw used to drop out of it in silence, which
+            // read as a schedule belonging to no plot, so it is said here before the counts that
+            // are short because of it.
+            if (set.Plots != null && set.Plots.SchedulesNotRead.Count > 0)
+            {
+                Line(report, "  " + SchedulePlotReads.Heading + ", "
+                    + set.Plots.SchedulesNotRead.Count + ":");
+                foreach (string one in set.Plots.SchedulesNotRead) Line(report, "    " + one);
+                Line(report, string.Empty);
+            }
+
             if (!origins.Counts)
             {
                 Line(report, "  " + PlotOriginWords.NothingRead);
@@ -488,11 +501,61 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
             Line(report, "  " + glance.NoPlanting);
 
+            // **A CHECK THAT SWITCHED ITSELF OFF READ EXACTLY LIKE ONE THAT PASSED.** Where a
+            // template's canopy total column could not be read, the green cover used to be
+            // written with no total canopy check at all and the reason was printed nowhere.
+            Line(report, string.Empty);
+            Line(report, "  " + glance.UnreadCanopy);
+            foreach (UnreadCanopyColumn one in UnreadableCanopyColumns.In(set))
+            {
+                Line(report, "    " + one.InWords);
+            }
+
+            // **NONE OF THE TEMPLATE FAULTS SHOWED UNTIL A PLOT HIT A BAD ROW.** One line per
+            // ticked template, and the cells themselves in their own section below.
+            Line(report, string.Empty);
+            Line(report, "  " + TreeListCheck.Heading + ":");
+            foreach (string one in glance.TreeLists) Line(report, "    " + one);
+
             // **ALL 154 ROWS OF THE PLOT LIST READ YES FOUR TIMES ON THAT SAME PRESS**, with 41
             // blank green cover boxes and seven replaced workbooks among them. Ready is the
             // question the team is really asking and this is the count of it.
             Line(report, string.Empty);
             Line(report, "  " + glance.Ready);
+
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// **EVERY CELL OF EVERY TICKED TEMPLATE'S TWO TREE LISTS THAT THIS TOOL CAN NAME.**
+        /// Read once at the press, before any plot was written, so a team editing the templates
+        /// sees what a press would hit rather than finding out one plot at a time.
+        ///
+        /// **IT STOPS NOTHING.** What the canopy guard and the total canopy check already stop
+        /// is unchanged, and everything here is a line.
+        /// </summary>
+        private static void TheTreeLists(StringBuilder report, KpiCreateRunSet set)
+        {
+            if (set.TreeLists.Count == 0) return;
+
+            Heading(report, TreeListCheck.Heading,
+                set.TreeLists.Sum(one => one.Faults.Count),
+                "both tree lists of every ticked template, read once at the press before any "
+                + "plot was written");
+
+            foreach (TreeListSheetCheck sheet in set.TreeLists)
+            {
+                Line(report, "  " + sheet.TemplateName + ", " + sheet.InWords);
+
+                foreach (string one in sheet.NotRead) Line(report, "    NOT READ: " + one);
+
+                foreach (IGrouping<string, TreeListFault> kind in sheet.Faults
+                    .GroupBy(one => one.Kind, StringComparer.Ordinal))
+                {
+                    Line(report, "    " + kind.Key + ", " + kind.Count() + ":");
+                    foreach (TreeListFault one in kind) Line(report, "      " + one.InWords);
+                }
+            }
 
             Line(report, string.Empty);
         }

@@ -226,10 +226,12 @@ namespace RcrcGreen.Core.Kpi
             StreetReferenceFile streets = null,
             PlotsInTheModel plots = null,
             PlotListRead plotList = null,
-            IReadOnlyList<SharedUid2Group> sharing = null)
+            IReadOnlyList<SharedUid2Group> sharing = null,
+            IReadOnlyList<TreeListSheetCheck> treeLists = null)
         {
             if (split == null) throw new ArgumentNullException("split");
 
+            TreeLists = treeLists ?? new List<TreeListSheetCheck>();
             Sharing = sharing ?? new List<SharedUid2Group>();
             PlotList = plotList ?? PlotListRead.NotSet;
 
@@ -242,6 +244,16 @@ namespace RcrcGreen.Core.Kpi
             Streets = streets ?? StreetReferenceFile.NotSet;
             Plots = plots;
         }
+
+        /// <summary>
+        /// Each ticked template's two tree lists, read once at the press before any plot was
+        /// written, cell by cell. Empty on a press where nothing read them.
+        ///
+        /// **IT IS PER TEMPLATE AND NOT PER PLOT**, which is why it is on the set. A template of
+        /// 78 plots would otherwise print its own sheets 78 times, and the sheets are the same
+        /// sheets whichever plot the press is on.
+        /// </summary>
+        public IReadOnlyList<TreeListSheetCheck> TreeLists { get; }
 
         /// <summary>
         /// **EVERY PRX_Plot_UID2 TWO OR MORE TICKED PLOTS CARRIED**, worked out over the WHOLE

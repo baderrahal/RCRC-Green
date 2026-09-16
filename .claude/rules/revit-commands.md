@@ -165,15 +165,6 @@ wraps.
 document and the panel has to paint itself before any document exists. It lives in its own
 file so `DrawingSheetPanel` names no Revit type at all.
 
-## Any round that changes the panel writes an HTML mockup
-
-`design/pr-<number>/panel.html`, drawn by hand from the code, so the layout and the wording
-can be read before someone spends an install on it.
-
-It says at the top, in the file itself, that it is a mockup and not a screenshot, and that it
-cannot show how Revit will render it. That line is the whole point. A mockup passed off as a
-screenshot is worse than no mockup, because it answers a question it never asked.
-
 ## One tab, two panels
 
 The RCRC Green tab holds two panels side by side. Drawing Sheet holds its one button. KPI is
