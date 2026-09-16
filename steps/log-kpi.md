@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-16, ninety fourth pass. Every other place that still built the solution
 
+**Merged to main as `a068c8f`**, pull request 156, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 **Nothing the tool does changed**, and nothing under `src/` changed but one comment, so the
 counts are the ninety third pass's and stand unmoved: **2139 tests, 1319 of them KPI**, 28 hook
 cases, build zero warnings. **80 audit findings, 23 FIXED, 57 open**, untouched, with nothing
