@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-16, ninety third pass. The build step in the run sheet, and two stale lines
 
+**Merged to main as `31b4d3d`**, pull request 154, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 **Nothing the tool does changed.** No file under `src/` or `tests/` changed except one comment,
 so the counts are the ninety second pass's and are reported here as unmoved rather than as new:
 **2139 tests, 1319 of them KPI**, 28 hook cases, build zero warnings. **80 audit findings, 23
