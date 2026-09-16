@@ -356,6 +356,7 @@ namespace RcrcGreen.Revit.Kpi
             var runs = new List<KpiCreateRun>();
             var outcomes = new List<TemplateOutcome>();
             var plotOutcomes = new List<PlotOutcome>();
+            var reads = new List<TemplateReading>();
             double readSeconds = 0.0;
 
             // **Each press decides which file is which form once.** Held across the press so 78
@@ -397,8 +398,38 @@ namespace RcrcGreen.Revit.Kpi
                     continue;
                 }
 
-                OneTemplate(document, asked, pick, share, root, streets, runs, outcomes,
-                    plotOutcomes, ref readSeconds, ref plotsRead, plotsToRead);
+                reads.Add(ReadOneTemplate(
+                    document, asked, pick, share, ref readSeconds, ref plotsRead, plotsToRead));
+            }
+
+            // **THE WHOLE TICKED SET IS CHECKED BEFORE THE FIRST FILE OF THE PRESS IS WRITTEN.**
+            // The press used to read one template and write it before it read the next, so the
+            // first template's files had already landed when the second template's collision
+            // became knowable. On the 16:37 press NS-01 and NS-42 shared one PRX_Plot_UID2 and
+            // MM-01 with MM-09 to MM-15 shared another, ONE WORKBOOK PER PLOT gave each group one
+            // path, and the last plot written replaced the others.
+            //
+            // **THE PATH IS BUILT HERE AND READ BY THE WRITE**, through the one rule that decides
+            // where a plot's workbook goes, so a check reporting on a path the writer does not
+            // use cannot happen.
+            var filings = new List<PlotFiling>();
+            foreach (TemplateReading one in reads)
+            {
+                foreach (PlotReading reading in one.Readings)
+                {
+                    filings.Add(PlotFilings.One(
+                        root, one.Pick.Template, reading.PlotId,
+                        KpiMerge.Component(new[] { reading }).Value, reading.Uid2));
+                }
+            }
+
+            IReadOnlyList<SharedUid2Group> sharing = SharedUid2.Of(filings);
+
+            foreach (TemplateReading one in reads)
+            {
+                WriteOneTemplate(
+                    document, asked, one, root, streets, filings, sharing, runs, outcomes,
+                    plotOutcomes);
             }
 
             // **Every ticked plot is accounted for**, including the ones no template took, which
@@ -417,7 +448,7 @@ namespace RcrcGreen.Revit.Kpi
                 document.Title, split, runs, outcomes,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
                 plotOutcomes, streets, KpiPlotReader.Plots(document),
-                PlotListFile.In(PlotListFileSetting.Read()));
+                PlotListFile.In(PlotListFileSetting.Read()), sharing);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
@@ -432,25 +463,20 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// One ticked template's whole run, exactly as one press used to be. **NOTHING ABOUT THE
-        /// PER TEMPLATE LOGIC CHANGES**: its own map, its own tree lists read off its own file,
-        /// its own Street Design rule, its own group rules, its own canopy check, its own read
-        /// back, its own cache fix and its own alias list.
+        /// One ticked template's read, with nothing written. **NOTHING ABOUT READING A PLOT
+        /// CHANGES**: its own counted groups, its own area rule, its own held readings, its own
+        /// progress count and its own area unit, all decided once per template exactly as they
+        /// were when the read and the write were one method.
         ///
-        /// **A refusal on one template does not stop the others.** Everything that can end one
-        /// workbook ends this method and leaves an outcome behind, and the loop above carries on
-        /// to the next.
+        /// **THE READS ARE ALL MADE BEFORE ANY OF THEM IS WRITTEN**, which is the whole of this
+        /// split. Two plots sharing one PRX_Plot_UID2 file at one path, and which plots share
+        /// one cannot be known while the press is still reading the templates after this one.
         /// </summary>
-        private void OneTemplate(
+        private TemplateReading ReadOneTemplate(
             Document document,
             KpiCreateAsk asked,
             TemplatePick pick,
             TemplateShare share,
-            string root,
-            StreetReferenceFile streets,
-            List<KpiCreateRun> runs,
-            List<TemplateOutcome> outcomes,
-            List<PlotOutcome> plotOutcomes,
             ref double readSeconds,
             ref int plotsRead,
             int plotsToRead)
@@ -498,17 +524,84 @@ namespace RcrcGreen.Revit.Kpi
                 }
             }
 
-            Progressed?.Invoke(ProgressWords.AddingUp);
-
             if (!source.Reused) readSeconds += reading.Elapsed.TotalSeconds;
 
-            // **ONE WORKBOOK PER PLOT.** The read above is unchanged, share and all, because the
-            // held readings, the progress count and the area unit are all decided once per
-            // template. What changed is below it: each plot's own reading is filled, patched and
-            // filed on its own rather than added into one workbook with its neighbours.
+            return new TemplateReading(
+                pick, share, counted, readings, areaUnit, source, reading.Elapsed.TotalSeconds);
+        }
+
+        /// <summary>
+        /// One ticked template's read, held between the read half of a press and its write half.
+        /// **It carries what the read decided and nothing the write decides**, so a value on it
+        /// is one the read really produced.
+        /// </summary>
+        private sealed class TemplateReading
+        {
+            public TemplateReading(
+                TemplatePick pick,
+                TemplateShare share,
+                CountedGroups counted,
+                IReadOnlyList<PlotReading> readings,
+                ProjectUnit areaUnit,
+                ReadingsSource source,
+                double readSeconds)
+            {
+                Pick = pick;
+                Share = share;
+                Counted = counted;
+                Readings = readings;
+                AreaUnit = areaUnit;
+                Source = source;
+                ReadSeconds = readSeconds;
+            }
+
+            public TemplatePick Pick { get; }
+
+            public TemplateShare Share { get; }
+
+            public CountedGroups Counted { get; }
+
+            public IReadOnlyList<PlotReading> Readings { get; }
+
+            public ProjectUnit AreaUnit { get; }
+
+            public ReadingsSource Source { get; }
+
+            public double ReadSeconds { get; }
+        }
+
+        /// <summary>
+        /// One ticked template's write, off the read half above. **NOTHING ABOUT THE PER TEMPLATE
+        /// LOGIC CHANGES**: its own map, its own tree lists read off its own file, its own Street
+        /// Design rule, its own group rules, its own canopy check, its own read back, its own
+        /// cache fix and its own alias list.
+        ///
+        /// **A refusal on one template does not stop the others.** Everything that can end one
+        /// workbook ends this method and leaves an outcome behind, and the loop above carries on
+        /// to the next.
+        /// </summary>
+        private void WriteOneTemplate(
+            Document document,
+            KpiCreateAsk asked,
+            TemplateReading read,
+            string root,
+            StreetReferenceFile streets,
+            IReadOnlyList<PlotFiling> filings,
+            IReadOnlyList<SharedUid2Group> sharing,
+            List<KpiCreateRun> runs,
+            List<TemplateOutcome> outcomes,
+            List<PlotOutcome> plotOutcomes)
+        {
+            TemplatePick pick = read.Pick;
+            TemplateShare share = read.Share;
+
+            Progressed?.Invoke(ProgressWords.AddingUp);
+
+            // **ONE WORKBOOK PER PLOT.** The read this runs on is `ReadOneTemplate`'s, share and
+            // all, because the held readings, the progress count and the area unit are decided
+            // once per template there. Here each plot's own reading is filled, patched and filed
+            // on its own rather than added into one workbook with its neighbours.
             string location = KpiPlotReader.Location(document, asked.LocationParameter);
-            SpeciesList existing = SpeciesList.In(pick.TemplatePath, pick.Template.ExistingTrees);
-            SpeciesList proposed = SpeciesList.In(pick.TemplatePath, pick.Template.ProposedTrees);
 
             // Character and Context go into the cell right of their label on this template's own
             // sheet, so the labels are found ONCE per template off the template file, beside the
@@ -522,6 +615,21 @@ namespace RcrcGreen.Revit.Kpi
             LabelledCells computed = LabelledPlaces.In(
                 pick.TemplatePath, pick.Template, ComputedPlaces.All);
 
+            // **WHICH COLUMN EACH TREE SHEET'S CANOPY TOTAL ADDS, read off the file.** The green
+            // cover cell names the canopy cell, the canopy cell names the two totals, and each
+            // total's own SUM range names the column and the rows. It is read BEFORE the two tree
+            // lists because each list wants its own column, so a row that computes a canopy per
+            // tree and adds none is not offered to a new species. FP-18 row 83 is why.
+            IReadOnlyList<TotalCanopyColumn> totalCanopy = TotalCanopyColumns.In(
+                pick.TemplatePath, pick.Template, computed.For(ComputedPlaces.GreenCoverName));
+
+            SpeciesList existing = SpeciesList.In(
+                pick.TemplatePath, pick.Template.ExistingTrees,
+                TotalCanopyColumns.For(totalCanopy, pick.Template.ExistingTrees.SheetName));
+            SpeciesList proposed = SpeciesList.In(
+                pick.TemplatePath, pick.Template.ProposedTrees,
+                TotalCanopyColumns.For(totalCanopy, pick.Template.ProposedTrees.SheetName));
+
             var wrote = new List<string>();
             var why = new List<string>();
 
@@ -533,12 +641,34 @@ namespace RcrcGreen.Revit.Kpi
             // record of which plots those were. The run carries on now, the plot is named with
             // the exception's type and message, and the report is written either way, which is
             // the same shape `GuardedRead` already uses.
-            foreach (PlotReading one in readings)
+            foreach (PlotReading one in read.Readings)
             {
+                PlotFiling filing = PlotFilings.For(filings, one.PlotId);
+
+                // **NO FILE IS WRITTEN FOR ANY PLOT SHARING A PATH WITH ANOTHER TICKED PLOT.**
+                // Writing one of them and refusing the rest would pick a plot nobody chose, and
+                // writing all of them is what the 16:37 press did. **What an earlier press left
+                // in that folder is named and left exactly where it is**, the same rule the
+                // crash row already follows: deleting it destroys the only evidence there is.
+                if (SharedUid2.Stops(sharing, one.PlotId))
+                {
+                    string refusal = SharedUid2.WhyStopped(sharing, one.PlotId) + " "
+                        + SharedUid2.AlreadyThere(AlreadyInThatFolder(filing)) + ".";
+
+                    why.Add(one.PlotId + ": " + refusal);
+                    plotOutcomes.Add(PlotOutcome.WroteNothing(
+                        one.PlotId, pick.Template,
+                        filing == null ? PlotWorkbookPath.Refused(refusal) : filing.Where,
+                        filing != null && filing.FolderPath.Length > 0
+                            && Directory.Exists(filing.FolderPath),
+                        refusal));
+                    continue;
+                }
+
                 GuardedWrite(
-                    document, asked, pick, counted, one, location, existing, proposed, labels, computed,
-                    areaUnit, source, reading.Elapsed.TotalSeconds, root, streets,
-                    runs, plotOutcomes, wrote, why);
+                    document, asked, pick, read.Counted, one, location, existing, proposed, labels,
+                    computed, totalCanopy, read.AreaUnit, read.Source, read.ReadSeconds, filing,
+                    streets, runs, plotOutcomes, wrote, why);
             }
 
             // **THE ROW COUNTS WHAT HAPPENED, NEVER WHAT WAS PLANNED.** A template whose plots
@@ -561,6 +691,29 @@ namespace RcrcGreen.Revit.Kpi
                 outcomes.Add(TemplateOutcome.WroteSome(
                     pick.Template, share.Plots, wrote.Count, where,
                     CreateWords.SomePlotsWroteNothing(wrote.Count, share.Plots.Count, why)));
+            }
+        }
+
+        /// <summary>
+        /// Every file already sitting in the folder a stopped plot would have written into, by
+        /// name. **NOTHING HERE DELETES OR MOVES ANY OF THEM**, so this is a list of what to go
+        /// and look at rather than a tidy up.
+        /// </summary>
+        private static IReadOnlyList<string> AlreadyInThatFolder(PlotFiling filing)
+        {
+            if (filing == null || filing.FolderPath.Length == 0) return new List<string>();
+
+            try
+            {
+                return Directory.Exists(filing.FolderPath)
+                    ? Directory.GetFiles(filing.FolderPath).Select(Path.GetFileName).ToList()
+                    : new List<string>();
+            }
+            catch (Exception)
+            {
+                // A folder that cannot be listed is not a reason to lose the refusal above it,
+                // and the words it feeds already read as an absence rather than as an answer.
+                return new List<string>();
             }
         }
 
@@ -598,10 +751,11 @@ namespace RcrcGreen.Revit.Kpi
             SpeciesList proposed,
             LabelledCells labels,
             LabelledCells computed,
+            IReadOnlyList<TotalCanopyColumn> totalCanopy,
             ProjectUnit areaUnit,
             ReadingsSource source,
             double readSeconds,
-            string root,
+            PlotFiling filing,
             StreetReferenceFile streets,
             List<KpiCreateRun> runs,
             List<PlotOutcome> plotOutcomes,
@@ -614,7 +768,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 OnePlot(
                     document, asked, pick, counted, held, location, existing, proposed, labels,
-                    computed, areaUnit, source, readSeconds, root, streets,
+                    computed, totalCanopy, areaUnit, source, readSeconds, filing, streets,
                     runs, plotOutcomes, wrote, why, trail);
             }
             catch (Exception failed)
@@ -692,6 +846,16 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
+        /// A plot the press read and whose filing the press never built. It cannot happen, since
+        /// the filings are built over the same readings this loop walks, and a path worked out
+        /// nowhere reaching a writer as a silent empty is how a link in a chain goes missing, so
+        /// it refuses and says which of the two it is.
+        /// </summary>
+        public const string NoFilingWasBuilt =
+            "this plot's folder and file name were not worked out before the press began, "
+            + "which is a bug in this tool";
+
+        /// <summary>
         /// One plot, one workbook, one folder. **NOTHING ABOUT READING A PLOT CHANGES**: the
         /// reading was taken above by the same reader with the same rules, and this fills that
         /// one reading exactly as a share of one would have been filled.
@@ -711,10 +875,11 @@ namespace RcrcGreen.Revit.Kpi
             SpeciesList proposed,
             LabelledCells labels,
             LabelledCells computed,
+            IReadOnlyList<TotalCanopyColumn> totalCanopy,
             ProjectUnit areaUnit,
             ReadingsSource source,
             double readSeconds,
-            string root,
+            PlotFiling filing,
             StreetReferenceFile streets,
             List<KpiCreateRun> runs,
             List<PlotOutcome> plotOutcomes,
@@ -737,12 +902,16 @@ namespace RcrcGreen.Revit.Kpi
 
             IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings, counted);
 
-            // **The folder comes off the plot's OWN component, not the template's.** DAILY MOSQUE
-            // and FRIDAY MOSQUE fill one workbook and are filed in two folders, so a folder read
-            // off the template would put half the mosque plots in the wrong place. The template
-            // is passed for the one case that has no component at all, where its own folder is
-            // the only thing that can file the plot.
-            PlotWorkbookPath where = PlotWorkbookPath.For(root, pick.Template, component.Value, held.Uid2);
+            // **THE PATH WAS BUILT BEFORE THE PRESS WROTE ANYTHING AND IS READ HERE.** It comes
+            // off the plot's OWN component rather than the template's, because DAILY MOSQUE and
+            // FRIDAY MOSQUE fill one workbook and are filed in two folders. What changed is only
+            // WHEN it is worked out: the shared value check needs every ticked plot's path before
+            // the first file lands, and a check reading one path while the write uses another is
+            // the shape this repository keeps paying for.
+            PlotWorkbookPath where = filing == null
+                ? PlotWorkbookPath.Refused(NoFilingWasBuilt)
+                : filing.Where;
+
             trail.Filing(where);
 
             // Only STREETS asks the reference file, and it is asked per plot on this plot's own
@@ -802,7 +971,8 @@ namespace RcrcGreen.Revit.Kpi
             PdfOutcome pdf = ThePdf(
                 held, counted, street, where, run.Wrote, folderMade,
                 WorkbookNumbers(
-                    pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn, computed),
+                    pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn, computed,
+                    totalCanopy),
                 areaUnit);
 
             if (run.Wrote)
@@ -848,7 +1018,8 @@ namespace RcrcGreen.Revit.Kpi
             Totalled area,
             Totalled shrubs,
             Totalled lawn,
-            LabelledCells computed)
+            LabelledCells computed,
+            IReadOnlyList<TotalCanopyColumn> totalCanopy)
         {
             if (outcome == null || !outcome.Written) return PdfWorkbookNumbers.None;
 
@@ -878,7 +1049,8 @@ namespace RcrcGreen.Revit.Kpi
 
             return new PdfWorkbookNumbers(
                 canopy, shrubs.Total, lawn.Total, area.Total,
-                WorkbookArithmetic.Canopy(outcome.Formulas, canopy, columns, TemplateFileName(existing, proposed)),
+                WorkbookArithmetic.Canopy(
+                    outcome.Formulas, canopy, columns, TemplateFileName(existing, proposed), totalCanopy),
                 greenCover, percentage);
         }
 

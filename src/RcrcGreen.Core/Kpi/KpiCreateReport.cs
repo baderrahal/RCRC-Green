@@ -158,6 +158,8 @@ namespace RcrcGreen.Core.Kpi
 
         public const string TeamsListHeading = "THE PLOT LIST";
 
+        public const string TickedNotListedHeading = "TICKED AND NOT ON THE LIST";
+
         /// <summary>
         /// **THE TEAM SENT 154 PLOTS TO EXPORT AND WANTS EVERY ONE EXPORTED WITH NONE SKIPPED.**
         /// This is their own list, in their own order, with what happened to each.
@@ -197,7 +199,8 @@ namespace RcrcGreen.Core.Kpi
             foreach (PlotListFault one in list.Repeated) Line(report, "    " + one.InWords);
 
             Line(report, string.Empty);
-            Line(report, "  plot | in the model | ticked | workbook | PDF | trees not written | why not");
+            Line(report, "  plot | in the model | ticked | workbook | PDF | " + PlotReady.Column
+                + " | trees not written | why not");
 
             var byPlot = set.PlotOutcomes.ToList();
 
@@ -208,6 +211,7 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<PlotTreesNotWritten> lost = TreesNotWritten.Of(set);
             int workbooks = 0;
             int pdfs = 0;
+            int ready = 0;
 
             foreach (string plotId in list.Plots)
             {
@@ -224,14 +228,22 @@ namespace RcrcGreen.Core.Kpi
 
                 string trees = TreesNotWritten.For(lost, held);
 
+                // **THE FOUR COLUMNS BEFORE THIS ONE ALL READ YES ON EVERY ROW OF THE 16:37
+                // PRESS**, and 41 of those plots went to the client with a blank green cover
+                // box. Each of the four answers a true and narrow question and none of them is
+                // the one the team is asking.
+                ReadyAnswer can = PlotReady.For(set, held, lost, inTheModel, set.Plots != null);
+                if (can.Ready) ready++;
+
                 Line(report, "  " + Join(
                     held,
                     set.Plots == null ? "NOT READ" : (inTheModel ? "YES" : "NO"),
                     outcome == null ? "NO" : "YES",
                     written ? "YES" : "NO",
                     pdf ? "YES" : "NO",
+                    can.Ready ? "YES" : "NO",
                     trees.Length == 0 ? "none" : trees,
-                    WhyNotOnTheList(outcome, inTheModel, set.Plots != null, ReadingFor(set, held))));
+                    can.WhyInWords));
             }
 
             IReadOnlyList<string> missing = TickingTheList.NotOnTheList(set.Plots, list);
@@ -241,23 +253,40 @@ namespace RcrcGreen.Core.Kpi
                 + ". Whether any of these should have been on it is for the team.");
             foreach (string one in missing) Line(report, "    " + one);
 
+            // **THE 16:06 PRESS TICKED 166 PLOTS AGAINST THIS LIST OF 154.** The twelve extra
+            // plots were written and filed, three of that press's shared value collisions came
+            // from them, and nothing in the file said they were ticked. This is the other
+            // direction from the block above: that one is about the MODEL and this one is about
+            // what somebody ticked.
+            IReadOnlyList<string> extra = TickingTheList.TickedAndNotOnTheList(
+                set.PlotOutcomes.Select(one => one.PlotId), list);
+
+            Line(report, string.Empty);
+            Line(report, "  " + TickedNotListedHeading + ", " + extra.Count
+                + ". A workbook and a PDF were written for each of these and the team did not "
+                + "ask for them.");
+
+            foreach (string one in extra)
+            {
+                PlotOutcome outcome = byPlot.FirstOrDefault(
+                    two => string.Equals(two.PlotId, one, StringComparison.Ordinal));
+
+                Line(report, "    " + Join(
+                    one,
+                    outcome != null && outcome.Written
+                        ? "workbook " + outcome.Where.FilePath
+                        : "no workbook",
+                    outcome != null && outcome.Pdf != null && outcome.Pdf.Written
+                        ? "PDF " + outcome.Pdf.Path
+                        : "no PDF"));
+            }
+
             Line(report, string.Empty);
             Line(report, "  listed: " + list.Plots.Count);
             Line(report, "  workbooks written: " + workbooks);
             Line(report, "  PDFs written: " + pdfs);
+            Line(report, "  ready: " + ready);
             Line(report, string.Empty);
-        }
-
-        /// <summary>
-        /// This plot's reading as the press made it, or null where no run read it.
-        /// </summary>
-        private static PlotReading ReadingFor(KpiCreateRunSet set, string plotId)
-        {
-            return set.Runs
-                .Where(one => one != null)
-                .SelectMany(one => one.Readings)
-                .FirstOrDefault(one => one != null
-                    && string.Equals(one.PlotId, plotId, StringComparison.Ordinal));
         }
 
         /// <summary>
@@ -267,35 +296,19 @@ namespace RcrcGreen.Core.Kpi
         /// Existing Trees 0, Proposed Trees 0, TOTAL trees 0 and Total areas to be greened 0
         /// against 57 trees the model's own KPI% schedules list for it. A row with nothing in
         /// its last column is the row of a plot that came out right.
+        ///
+        /// **NOTHING IN src CALLS THIS ANY MORE, AND IT IS NAMED RATHER THAN DELETED**, the way
+        /// the six uncalled members in the KPI rules already are. The row's last column carries
+        /// <see cref="PlotReady"/>'s reasons since 16 September, and a plot on no softscape
+        /// schedule has all three of its tree boxes blank with <see cref="PdfFill.NoSoftscapeRead"/>
+        /// as the reason, so READY names it three times over already. A fourth line would be a
+        /// fourth record of one fact. Its tests are what keep this sentence honest.
         /// </summary>
         public static string NoSoftscapeOnTheList(PlotReading reading)
         {
             if (reading == null || reading.SoftscapeRead) return string.Empty;
 
             return "both files were written and " + PdfFill.NoSoftscapeRead(reading);
-        }
-
-        /// <summary>
-        /// Why a listed plot came out with nothing, **off the run's own recorded reason** and
-        /// never worked out again here.
-        /// </summary>
-        private static string WhyNotOnTheList(
-            PlotOutcome outcome, bool inTheModel, bool plotsRead, PlotReading reading)
-        {
-            if (outcome == null)
-            {
-                return plotsRead && !inTheModel
-                    ? "the model does not name this plot, so it could not be ticked"
-                    : "it was not ticked for this press";
-            }
-
-            if (!outcome.Written) return outcome.Why;
-
-            if (outcome.Pdf == null) return "the workbook was written and no PDF was planned";
-
-            if (!outcome.Pdf.Written) return outcome.Pdf.Refusal;
-
-            return NoSoftscapeOnTheList(reading);
         }
 
         public const string PlotListHeading = "EVERY PLOT THE TOOL OFFERED";
@@ -399,6 +412,8 @@ namespace RcrcGreen.Core.Kpi
                 foreach (string one in glance.Divisions.Where) Line(report, "    " + one);
             }
 
+            foreach (string one in glance.Divisions.NotEvaluated) Line(report, "    " + one);
+
             Line(report, string.Empty);
             Line(report, "  " + glance.Pdfs.InWords);
             foreach (string one in glance.Pdfs.WithNoPdf) Line(report, "    " + one);
@@ -445,6 +460,39 @@ namespace RcrcGreen.Core.Kpi
                         : "no /DA at all")
                     + ". That is a bug in the tool.");
             }
+
+            // **THE 16:37 PRESS FILED TEN PLOTS AT FIVE PATHS AND SAID NOTHING.** NS-01 and
+            // NS-42 share one PRX_Plot_UID2 and MM-01 with MM-09 to MM-15 share another, so the
+            // last plot written replaced the others and every one of their rows read YES.
+            Line(report, string.Empty);
+            Line(report, "  " + glance.Sharing);
+            foreach (SharedUid2Group one in set.Sharing)
+            {
+                // **EVERY PLOT OF THE GROUP GETS ITS OWN LINE**, stopped or filed apart, because
+                // a group can hold two plots colliding with each other and a third filed
+                // somewhere else, and that third is named by neither a group wide line nor a
+                // refusal it does not have.
+                foreach (PlotFiling filed in one.Plots)
+                {
+                    string said = SharedUid2.Stops(set.Sharing, filed.PlotId)
+                        ? SharedUid2.WhyStopped(set.Sharing, filed.PlotId)
+                        : SharedUid2.FiledApartFrom(set.Sharing, filed.PlotId);
+
+                    Line(report, "    " + filed.PlotId + ": " + said);
+                }
+            }
+
+            // **MM-01, MM-06, MM-07 AND NS-23 READ 0 IN EVERY PLANTING BOX ON THE 16:37 PRESS**,
+            // and the noughts are right: both of their schedules printed a heading and no rows.
+            // The line is what separates them from a plot whose numbers happen to be small.
+            Line(report, string.Empty);
+            Line(report, "  " + glance.NoPlanting);
+
+            // **ALL 154 ROWS OF THE PLOT LIST READ YES FOUR TIMES ON THAT SAME PRESS**, with 41
+            // blank green cover boxes and seven replaced workbooks among them. Ready is the
+            // question the team is really asking and this is the count of it.
+            Line(report, string.Empty);
+            Line(report, "  " + glance.Ready);
 
             Line(report, string.Empty);
         }

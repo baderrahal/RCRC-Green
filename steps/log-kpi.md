@@ -4,6 +4,255 @@ Newest entry first.
 
 ---
 
+## 2026-09-16, ninety first pass. Two presses read back, seven items
+
+**2111 tests, 1291 of them KPI**, up from 2070 and 1250, 28 hook cases, build zero warnings.
+**80 audit findings, 20 FIXED, 60 open**, counted off the four files and nothing closed,
+renumbered or reordered. Bader ran two presses on NG05 on 16 September, 16:06 with 166 plots
+ticked and 16:37 with exactly the 154 listed plots. **Neither report is in this repository and
+neither may enter it**, so every measurement below is copied out of them or out of the workbooks
+they wrote.
+
+**NOTHING HERE WAS RUN IN REVIT.** The Revit half of item 1, the split of `OneTemplate` into a
+read half and a write half, cannot be run from this session at all, and it is said again beside
+the tests that cover its Core half.
+
+### Two plots, one folder, and the last one written replaced the others
+
+At 16:37 NS-01 and NS-42 both carried PRX_Plot_UID2 ANH-007-ST-100210, and MM-01 and MM-09 to
+MM-15 all carried ANH-007-ST-100213. ONE WORKBOOK PER PLOT gave each group one path, the last
+plot written replaced the others, THE PLOT LIST read YES for all ten, and each group took one
+street reference row, so MM-01 and MM-09 to MM-15 all read ROW 10 and length 0.06108. At 16:06
+three more groups collided, and the empty DM-29 files replaced DM-11's.
+
+**The fix is a change to the SHAPE of `Create` rather than to any rule.** The press read one
+template and wrote it before it read the next, so the first template's files had already landed
+when the second template's collision became knowable. `OneTemplate` is split into
+`ReadOneTemplate` and `WriteOneTemplate` with a private `TemplateReading` between them. `Create`
+reads every ticked template, builds the filings, asks `SharedUid2.Of` and only then writes.
+**Nothing about reading a plot changed**: the counted groups, the area rule, the held readings,
+the progress count and the area unit are still decided once per template, in the read half. **Two
+things about the press's SHAPE did move and are named rather than left to be noticed.** The
+Adding up progress line now comes after every template has been read rather than after each one,
+because that is where the write half begins. And the seconds a run records as its read are taken
+at the END of the read rather than when the write loop reaches the plot, so they no longer carry
+the template's own label and tree list reads. Both follow from the split and neither changes a
+number in a workbook.
+
+`PlotFilings.One` builds the path for the press and `PlotFilings.Of` for the pane, both through
+`PlotWorkbookPath.For`, and **`OnePlot` READS its path off the list rather than working one out**.
+A check reporting on a path the writer does not use is the shape this repository keeps paying for.
+
+**The file path is what collides, not the value.** A group filed apart across two component
+folders is named and every one of its plots still writes. A plot with no UID2 is left out, because
+it is refused by its own path already and an empty value shared by five plots is not one value.
+
+**Files already in that folder are named and left where they are**, the same rule the crash row
+follows. `AlreadyInThatFolder` in the handler lists them and `SharedUid2.AlreadyThere` says so.
+
+**The pane names the groups before the press and needs no new read.**
+`KpiPlotFacts.ReferenceValuesPerPlot` already carries all four plot parameters for every plot off
+the same first sheet the component comes from, so item 1.4 is answerable YES rather than UNKNOWN.
+`KpiPanel.Uid2On` is the one lookup.
+
+Tests by hand in `SharedUid2Tests`, seven of them, one of which is the mixed group: two plots
+colliding with each other and a third carrying the same value into another component folder. Each
+plot gets its own line, because a line reading that every one of them is written would be wrong
+about two of the three. **Break watch:** `SharedUid2.Of` made to return
+an empty list. `TwoPlotsSharingOneUid2WriteNothingAndEachNamesTheOther` went red reading
+`MM-01 and MM-09 both carry ANH-007-ST-100213 ... The values this check found: none`. Restored
+byte for byte, md5 `9311f7605b66779e2e94ba455fec6e65` both sides.
+
+### A READY column, because four columns of YES is not the question
+
+All 154 rows of THE PLOT LIST read YES four times over at 16:37 with an empty why not. Among them
+were the plots whose workbooks replaced each other, the 41 whose Total areas to be greened came
+out blank, FP-18, and the plots whose workbooks divide by nought. Bader had the ready list worked
+out by hand at 33.
+
+`PlotReady` is the rule and five things decide it: both files written, no tree written nowhere, no
+PDF box that HAS A SOURCE left blank, the plot's own PRX_Plot_UID2, and no #DIV/0! in the workbook
+check. **A box this tool has no source for does not count against it**, and nothing here holds a
+list of which those are, because only the fields `PdfForms` names can reach `PdfOutcome.Blank`.
+
+The shared value is the whole reason where it fires, and the absent workbook and PDF under it are
+not said again, because a row naming three consequences of one cause reads as three faults. Every
+other reason is named, short, with its box or its cell, joined with a full stop.
+
+A fourth count under the three, `ready:`, and a glance line reading `ready N of M`. A press with no
+plot list file says so rather than counting nought of nought.
+
+**`KpiCreateReport.WhyNotOnTheList` is deleted**, and it is the second reason a thing gets
+deleted: its whole shape is `PlotReady.For`'s reason list now, branch for branch, so the SHAPE is
+gone rather than its last caller. `ReadingFor` went with it as its only caller.
+**`KpiCreateReport.NoSoftscapeOnTheList` is KEPT and now has no production caller**, named here the
+way the six uncalled members already are. A plot on no softscape schedule has all three tree boxes
+blank with `PdfFill.NoSoftscapeRead` as the reason, so READY names it three times over already and
+a fourth line would be a fourth record of one fact. Its tests still hold it.
+
+Tests by hand in `PlotReadyTests`, six of them, the #DIV/0! one built on a real patched workbook
+rather than a hand made finding, because a test handing the finding in would pass over a check
+that found nothing. **Break watch:** the `outcome.Pdf.Blank` loop taken out.
+`APlotWhoseGreenCoverBoxIsBlankReadsNoAndNamesTheBox` went red naming HF-01 and the box, and two
+more went red with it. Restored, md5 `f82f4cf22a012997265235f6466c6f4c` both sides.
+
+### The division check missed a division by a count
+
+The 16:37 glance said the formula check found no #DIV/0! anywhere in the press. FP-24 and SC-06,
+recalculated, show one in Tree List - Existing S70 and one in T70, and 30 plots of that press hold
+every existing tree on rows 84 to 101. `S70` reads `IF(TotTrees<1," ",S69/COUNT(B4:B83))` and T70
+the same over T69, on all seven templates and on both tree list tabs. The check matched a division
+by ONE CELL, so a division by a count over a range was never looked at.
+
+COUNT, COUNTA and SUM over a range are read now, the range counted off the cell states after the
+write, and nought is a #DIV/0!. The IF is honoured, so a plot with no trees gets no line. A
+division that cannot be worked out is counted as NOT EVALUATED and the glance says how many,
+rather than saying none was found.
+
+**A live scoping fault came out with it.** `TotTrees` is defined twice, at workbook level and on
+Tree List - Proposed, and `DefinedNames` kept the first by name alone, so the proposed sheet's
+target could answer for an existing sheet formula and hold a guard that is not held. It is keyed
+on the scope now with `localSheetId` resolved off the workbook's own `<sheets>` order.
+
+Tests by hand in `DivisionByACountTests`, eight of them. **Break watch:** the COUNT match dropped.
+`ACountPastTheRangeIsADivideByZeroOnS70` went red naming S70, its formula, row 85 and FP-24 and
+SC-06. The first attempt's failure read only `Expected: 2, Actual: 0`, which says nothing about
+which cell went unreported, so a leading assertion naming S70 was added and the break watched
+again.
+
+### The canopy check must also read the total canopy column
+
+FP-18 has 2 Ziziphus spina-christi on Tree List - Existing row 83. L83 carries the canopy formula
+and M83 is empty in the EXISTING PARKS and FUTURE PARKS templates. The PDF said 2,631 m² greened
+and 67.68% canopy and the recalculated Excel 2,531 and 63.97%, and nothing warned.
+
+Measured on all seven templates, which closes the open question the ninetieth pass logged: column
+M is Total Mature Canopy Area, `=IF(ISBLANK(B85)," ",L85*B85)` on a complete row, Tree List -
+Existing M102 is `SUM(M4:M101)`, Tree List - Proposed M93 is `SUM(M4:M92)`, and the first tab's
+Canopy Area cell is `'Tree List - Existing'!M102+'Tree List - Proposed'!M93`, at F8 on four
+templates and F9 on three.
+
+**No letter is written anywhere.** `TotalCanopyColumns.In` follows the chain off the file: the
+green cover cell names the canopy cell, the canopy cell names the two totals, each total's own SUM
+range names the column and the rows. The canopy cell is the one of the green cover formula's three
+cells the map does not name as planting or as lawn, which is the rule `GreenCoverCell` already
+uses, so the two cannot name two different canopies.
+
+An empty row is offered to a new species only when it carries BOTH formulas. A column that was not
+read leaves every row usable rather than refusing them all, which is what reddened
+`TreeListRowsTests` on the first attempt: those fixture sheets have no diameter column.
+
+**Break watch:** the M requirement dropped. `TheFp18RowLeavesTheGreenCoverBlankAndNamesM83` went
+red naming M83.
+
+### The canopy check line printed Excel's string table numbers
+
+The line read `D99 holds 419 and no formula, E99 holds 122 and no formula`, where D99 holds
+Prosopis Juliflora. A cell holding a shared string stores an INDEX, and the formula reader kept
+the raw `<v>`. Every printed cell text resolves a shared string through `WorkbookPackage.TextOf`
+now, read once per file. A cell holding shared string 0 would have printed as a nought, which is
+the same fault wearing a number a reader would believe.
+
+**Break watch:** the raw value printed. `ASharedStringCellPrintsItsTextAndNeverItsIndex` went red
+naming D99.
+
+### The plots with no planting at all are named
+
+MM-01, MM-06, MM-07 and NS-23 read 0 in every tree, shrub, lawn, water and green cover box at
+16:37, because both schedules printed their heading and no rows. Writing 0 is Bader's decision of
+15 September and it stands. `NoPlanting` names them in one glance line, off
+`ScannedSchedule.BodyRowCount`, which is the same reading `Reconciliation.SchedulesWithABody`
+already counts. A plot MISSING a schedule is not this and is named by its own refusal. READY does
+not move.
+
+Tests by hand in `NoPlantingTests`, five of them. **Break watch:** the `On` filter replaced with
+false. `OnlyThePlotWhoseTwoSchedulesPrintedNothingIsNamed` went red reading `What the check found:
+no plot at all` beside MM-01 by name. Restored, md5 `780fa28ebcc3f719e16aa82babe5933d` both sides.
+
+### Ticked plots that are not on the list
+
+At 16:06 the list held 154 plots and 166 were ticked. The twelve extra plots were written, three
+of that press's collisions came from them, and neither the pane nor THE PLOT LIST said they were
+ticked. `TickingTheList.TickedAndNotOnTheList` is the other direction from `NotOnTheList`, which
+is about the MODEL. A line per plot above Create and a `TICKED AND NOT ON THE LIST` block at the
+foot of THE PLOT LIST, naming each plot with the workbook and the PDF really written for it.
+
+Tests by hand in `TickedNotOnTheListTests`, five of them. **Break watch:** the pane line dropped.
+`ATickedPlotTheListDoesNotHoldIsNamedAboveCreate` went red naming NS-41 and printing the only line
+the pane would have shown. Restored, md5 `14fda4f5cc9108999ebd62ebf0588ee7` both sides.
+
+### The two tests that went red on their own, and why each was corrected rather than bent
+
+`PlotListFileTests.TheReportReadsDownTheTeamsOwnListAndCountsWhatWasWritten` and
+`TreesNotWrittenTests.ThePlotListRowAndTheGlanceBothNameWhatWasLost` both assert the plot list's
+row shape, and the row grew a READY column between PDF and trees not written. Both were corrected
+by hand with the new column written out, and both now assert that not one of their plots is ready:
+the first three because no PDF was planned beside their workbooks or no workbook was written at
+all, and FP-17, FP-20 and FP-21 because they lost 36, 5 and 25 trees. **The subject moved, the
+tests were right, and the corrections say which.**
+
+### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` was run over this entry before the pull request was
+opened, with no shell of its own, so it says outright that it could not run the build, the suite,
+the hook script or an md5 and treats none of those as passed or failed. It read the code, the
+tests, the four audit files and the hook script.
+
+**One claim was WRONG and is corrected.** This entry read `Tests by hand in SharedUid2Tests, six
+of them` and the file holds seven. The seventh is the mixed group added late, and the count had
+not moved with it. It reads seven now.
+
+**One claim was flagged as not reconciling and the number is REMOVED rather than argued with.**
+The round message says the 16:37 press wrote both files for 7 plots whose workbooks had replaced
+each other. Item 1 of that same message names ten plots over two shared values, NS-01 with NS-42
+and MM-01 with MM-09 to MM-15. Counting every plot in a colliding group gives 10 and counting only
+the plots whose own file was lost to a later write gives 8. **Neither reading lands on 7**, the
+press report is not in this repository and cannot be, so the count is taken out of all four places
+that carried it, here, in `.claude/rules/kpi-rules.md`, in `PlotReady`'s docstring and in
+`PlotReadyTests`. The sentence now names the plots without a number. **What 7 counted is a
+question for Bader**, and the shape of the rule is unaffected either way.
+
+**Everything else it could check came back backed.** The audit count 80 and 20 FIXED it counted
+itself and matched exactly, the 28 hook cases it counted case by case and matched exactly, every
+named class, method, constant and test method exists at the name given, `WhyNotOnTheList` and
+`ReadingFor` are gone from `src` and `NoSoftscapeOnTheList` is present with no caller in `src` and
+still under test, and the run sheet really is seventeen steps and seven checks. Its static count of
+the suite came to within one of 2111 and 1291, which it said was the noise of counting attributes
+rather than running them. **The suite, the build and the md5 restores were run here and the numbers
+above are off those runs.**
+
+### For Bader
+
+`steps/2026-09-16-kpi-checks.md` is the Windows run sheet, seventeen steps to the press and seven
+checks after it, one action each.
+
+### Open, and for Bader
+
+**The ten shared PRX_Plot_UID2 values are the model's fix.** The tool refuses them now rather than
+writing over itself, and nothing here can give a plot its own value.
+
+**Whether a plot stopped by a shared value should keep its place in the street reference count is
+UNKNOWN.** Each of the two groups took one reference row at 16:37, and with no file written the
+question does not arise this press. It would arise the moment the team gives eight of the ten
+their own UID2 and leaves two sharing.
+
+**Whether READY should count a plot whose only fault is a #DIV/0! is Bader's.** It is counted
+against READY here, because a workbook that recalculates with an error is not a file to send, and
+it still never stops a write.
+
+**`CLAUDE.md` is not wrong at any line this round touched**, checked against the plot parameter
+rules, the schedule rules and the one workbook per plot rule. Nothing there is a request for Bader
+today.
+
+**`.claude/rules/revit-commands.md` says any round that changes the panel writes an HTML mockup
+under `design/pr-<number>/`, and no round has since pull request 111.** This round changes
+`KpiPanel.cs` and writes none either, which is consistent with every KPI round since then and
+inconsistent with the rule as written. It is named here rather than answered: either the rule is
+the Drawing Sheet panel's alone and should say so, or thirty eight rounds owe a mockup. That is
+Bader's, because the rules file is read by every task.
+
+---
+
 ## 2026-09-15, ninetieth pass. The 154 plot press read back, seven decisions
 
 **Merged to main as `4411821`**, pull request 148, squashed with both message fields passed on the

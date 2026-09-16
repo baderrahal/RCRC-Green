@@ -1,5 +1,74 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety first pass, the two presses of 16 September read back, 16:06 with 166
+plots ticked and 16:37 with exactly the 154 listed, seven items.
+**2111 tests, 1291 of them KPI**, up from 2070 and 1250, 28 hook cases, build zero warnings.
+**80 audit findings, 20 FIXED, 60 open**, counted per file off all four and nothing closed,
+renumbered or reordered.
+
+**NEITHER REPORT IS IN THIS REPOSITORY AND NEITHER MAY ENTER IT.** Every measurement below is
+copied out of them or out of the workbooks they wrote. **NOTHING HERE WAS RUN IN REVIT**, and the
+split of `OneTemplate` cannot be run from this session at all.
+
+**TWO PLOTS, ONE FOLDER, AND THE LAST ONE WRITTEN REPLACED THE OTHERS.** NS-01 with NS-42 on
+ANH-007-ST-100210 and MM-01 with MM-09 to MM-15 on ANH-007-ST-100213, ten plots at two paths, all
+ten reading YES. `OneTemplate` is split into `ReadOneTemplate` and `WriteOneTemplate` with a
+`TemplateReading` between them, so `Create` reads every ticked template, builds the filings, asks
+`SharedUid2.Of` and only then writes. **Nothing about reading a plot changed.** `PlotFilings.One`
+for the press and `PlotFilings.Of` for the pane, both through `PlotWorkbookPath.For`, and `OnePlot`
+READS its path off the list. Files already there are named and left. The pane says it before the
+press off `ReferenceValuesPerPlot`, which already carries all four parameters per plot, so item
+1.4 is YES rather than UNKNOWN.
+
+**READY IS THE QUESTION THE FOUR COLUMNS OF YES WERE NOT ASKING.** `PlotReady`, five things: both
+files written, no tree written nowhere, no sourced PDF box blank, the plot's own PRX_Plot_UID2,
+no #DIV/0!. A box with no source does not count against it. Why not names EVERY reason with its
+box or its cell. A fourth count `ready:` and a glance line. `WhyNotOnTheList` deleted, its shape
+gone rather than its caller, `ReadingFor` with it. `NoSoftscapeOnTheList` KEPT with no production
+caller and named as one.
+
+**A DIVISION BY A COUNT OVER A RANGE IS A DIVISION.** COUNT, COUNTA and SUM read, the range
+counted off the cell states, the IF honoured, and one that cannot be worked out counted as NOT
+EVALUATED rather than as none found. FP-24 and SC-06 hold one at S70 and T70. **A live scoping
+fault came out with it**: `DefinedNames` kept `TotTrees` by name alone and is keyed on the scope
+now with `localSheetId` off the workbook's own sheet order.
+
+**A ROW HOLDING A COUNT MUST CARRY THE TOTAL CANOPY FORMULA.** FP-18 row 83, M83 empty, PDF 2,631
+against Excel 2,531. `TotalCanopyColumns.In` follows the chain off the file and no letter is
+written anywhere. An empty row is offered only when it carries both formulas, and a column not
+read leaves every row usable rather than refusing them all.
+
+**EVERY PRINTED CELL TEXT RESOLVES A SHARED STRING.** `D99 holds 419` where D99 holds Prosopis
+Juliflora, through `WorkbookPackage.TextOf`, read once per file.
+
+**THE PLOTS WITH NO PLANTING AT ALL ARE NAMED.** MM-01, MM-06, MM-07 and NS-23, off
+`ScannedSchedule.BodyRowCount`. The noughts are right and READY does not move.
+
+**A TICKED PLOT THE LIST DOES NOT NAME IS WORK NOBODY ASKED FOR.** 166 against 154 at 16:06.
+`TickingTheList.TickedAndNotOnTheList`, a line above Create and a `TICKED AND NOT ON THE LIST`
+block.
+
+Six break watches, each watched red naming its subject and each restored byte for byte with md5.
+Two tests went red on their own when the plot list row grew a column, and both were corrected by
+hand with the new shape written out.
+
+`steps/2026-09-16-kpi-checks.md` is the Windows run sheet for Bader.
+
+**The claim checker was run over the log entry before the pull request.** It flagged one wrong
+count, `SharedUid2Tests` holding seven tests where the entry read six, corrected. And it flagged
+that the round message's 7 plots whose workbooks replaced each other does not reconcile with its
+own item 1, which names ten plots over two shared values: every plot in a colliding group is 10
+and only the plots whose file was lost is 8. **The number is removed from all four places that
+carried it** rather than argued with, and what 7 counted is a question for Bader. Everything else
+it could check came back backed, and it could run no build, no suite, no hook script and no md5,
+which it said outright.
+
+Open for Bader: the ten shared UID2 values are the model's fix, whether a stopped plot keeps its
+street reference row is UNKNOWN and does not arise this press, and whether a #DIV/0! alone should
+hold READY back is his call. `CLAUDE.md` is not wrong at any line this round touched.
+
+---
+
 Phase: 9, ship. Ninetieth pass, the 154 plot press of 15 September at 13:32 read back, seven
 decisions of Bader's. **Merged to main as `4411821`**, pull request 148, the squash message set on
 the merge call and off main byte for byte with no co-author line and no generated-by footer.

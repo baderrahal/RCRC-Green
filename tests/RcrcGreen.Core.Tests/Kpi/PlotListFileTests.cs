@@ -271,24 +271,35 @@ namespace RcrcGreen.Core.Tests.Kpi
             // **THE TREES NOT WRITTEN COLUMN IS NEW**, Bader's decision of 15 September, because
             // FP-17, FP-20, FP-21 and FP-23 read YES and YES on the 13:32 run with 67 trees
             // between them written nowhere.
+            //
+            // **AND READY IS NEWER STILL**, Bader's decision of 16 September, because all 154
+            // rows of the 16:37 press read YES four times over with 41 blank green cover boxes
+            // and seven replaced workbooks among them.
             Assert.Contains(
-                "plot | in the model | ticked | workbook | PDF | trees not written | why not",
+                "plot | in the model | ticked | workbook | PDF | READY | trees not written | why not",
                 report);
 
             // The file's order: DM-12 first, DM-11 second, XX-99 last. This press made no run,
             // so no plot lost a tree and every row reads none.
-            Assert.Contains("DM-12 | YES | YES | YES | NO | none |", report);
+            //
+            // **NOT ONE OF THE THREE IS READY.** DM-12's workbook was written and no PDF was
+            // planned beside it, DM-11 got no workbook at all, and XX-99 is not in the model.
             Assert.Contains(
-                "DM-11 | YES | YES | NO | NO | none | no PRX_Plot_UID2 was read off this plot's first sheet",
+                "DM-12 | YES | YES | YES | NO | NO | none | no PDF was planned beside the workbook",
                 report);
             Assert.Contains(
-                "XX-99 | NO | NO | NO | NO | none | the model does not name this plot, so it could not be ticked",
+                "DM-11 | YES | YES | NO | NO | NO | none | no PRX_Plot_UID2 was read off this "
+                + "plot's first sheet. no PDF was planned beside the workbook",
+                report);
+            Assert.Contains(
+                "XX-99 | NO | NO | NO | NO | NO | none | the model does not name this plot, so it could not be ticked",
                 report);
 
             Assert.Contains("IN THE MODEL AND NOT ON THE LIST, 1", report);
             Assert.Contains("listed: 3", report);
             Assert.Contains("workbooks written: 1", report);
             Assert.Contains("PDFs written: 0", report);
+            Assert.Contains("ready: 0", report);
 
             Assert.True(
                 report.IndexOf(KpiCreateReport.TeamsListHeading, StringComparison.Ordinal)

@@ -171,15 +171,26 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class DivisionGlance
     {
-        public DivisionGlance(int found, int byACellThisRunWrote, IEnumerable<string> where)
+        public DivisionGlance(
+            int found, int byACellThisRunWrote, IEnumerable<string> where,
+            IEnumerable<string> notEvaluated = null)
         {
             Found = found;
             ByACellThisRunWrote = byACellThisRunWrote;
             Where = (where ?? Enumerable.Empty<string>()).ToList();
+            NotEvaluated = (notEvaluated ?? Enumerable.Empty<string>()).ToList();
         }
 
         public static readonly DivisionGlance NoneFound =
             new DivisionGlance(0, 0, new List<string>());
+
+        /// <summary>
+        /// Every division the check LOOKED AT and could not work out, one line each. **A
+        /// division nobody evaluated is not a division that is fine**, and a line saying none
+        /// was found over a press that could evaluate none of them is the fault the 16:37 glance
+        /// shipped.
+        /// </summary>
+        public IReadOnlyList<string> NotEvaluated { get; }
 
         public int Found { get; }
 
@@ -198,7 +209,7 @@ namespace RcrcGreen.Core.Kpi
                 if (Found == 0)
                 {
                     return "THE DIVISIONS: the formula check found no #DIV/0! anywhere in this "
-                        + "press.";
+                        + "press." + Unevaluated;
                 }
 
                 return "THE DIVISIONS: " + Found
@@ -208,7 +219,26 @@ namespace RcrcGreen.Core.Kpi
                         ? " The rest divide by a cell the template already held, which is its "
                             + "own arithmetic over a "
                             + "real number and not this tool's doing."
-                        : " A division by a cell this run wrote is this tool's doing.");
+                        : " A division by a cell this run wrote is this tool's doing.")
+                    + Unevaluated;
+            }
+        }
+
+        /// <summary>
+        /// The one sentence about what could not be worked out, left off a press where every
+        /// division was evaluated, so a run with nothing to say about them does not carry a
+        /// count of 0.
+        /// </summary>
+        private string Unevaluated
+        {
+            get
+            {
+                if (NotEvaluated.Count == 0) return string.Empty;
+
+                return " " + NotEvaluated.Count
+                    + (NotEvaluated.Count == 1 ? " division was" : " divisions were")
+                    + " looked at and could not be worked out, so nothing here says whether "
+                    + (NotEvaluated.Count == 1 ? "it is" : "they are") + " a #DIV/0!.";
             }
         }
     }
@@ -526,7 +556,8 @@ namespace RcrcGreen.Core.Kpi
     {
         public RunGlance(
             AreaCellGlance streetsArea, RegionGlance regions, DivisionGlance divisions,
-            PdfGlance pdfs = null, ComputedGlance computed = null, TextFitGlance textSizes = null)
+            PdfGlance pdfs = null, ComputedGlance computed = null, TextFitGlance textSizes = null,
+            string sharing = null, string ready = null, string noPlanting = null)
         {
             StreetsArea = streetsArea ?? AreaCellGlance.NoStreetPlots;
             Regions = regions ?? RegionGlance.NoAreaRead;
@@ -534,7 +565,27 @@ namespace RcrcGreen.Core.Kpi
             Pdfs = pdfs ?? PdfGlance.NonePlanned;
             Computed = computed ?? ComputedGlance.NonePlanned;
             TextSizes = textSizes ?? TextFitGlance.NonePlanned;
+            Sharing = sharing ?? string.Empty;
+            Ready = ready ?? string.Empty;
+            NoPlanting = noPlanting ?? string.Empty;
         }
+
+        /// <summary>
+        /// How many plots were written nowhere because another ticked plot shares their
+        /// PRX_Plot_UID2 and their folder, and the values. One line, every press.
+        /// </summary>
+        public string Sharing { get; }
+
+        /// <summary>
+        /// Ready N of M, over the team's own plot list. Empty where no list was set, because
+        /// ready is a question about their list rather than about the model.
+        /// </summary>
+        public string Ready { get; }
+
+        /// <summary>
+        /// Every plot whose two schedules both printed a heading and no rows, named.
+        /// </summary>
+        public string NoPlanting { get; }
 
         /// <summary>How big every written value came out, and how many did not fit.</summary>
         public TextFitGlance TextSizes { get; }
@@ -562,7 +613,13 @@ namespace RcrcGreen.Core.Kpi
 
             return new RunGlance(
                 StreetsArea(set), Regions(set), Divisions(set), Pdfs(set), Computed(set),
-                TextSizes(set));
+                TextSizes(set),
+                SharedUid2.InWords(set.Sharing),
+                PlotReady.InWords(
+                    set.PlotList != null && set.PlotList.Read
+                        ? PlotReady.Of(set, set.PlotList.Plots)
+                        : null),
+                NoPlanting.InWords(NoPlanting.In(set)));
         }
 
         /// <summary>
@@ -794,6 +851,7 @@ namespace RcrcGreen.Core.Kpi
             int found = 0;
             int ours = 0;
             var where = new List<string>();
+            var notEvaluated = new List<string>();
 
             foreach (KpiCreateRun run in set.Runs)
             {
@@ -813,9 +871,14 @@ namespace RcrcGreen.Core.Kpi
                             ? "divides by a cell THIS RUN WROTE"
                             : "divides by a cell the template already held"));
                 }
+
+                foreach (string one in run.Outcome.Formulas.DivisionsNotEvaluated)
+                {
+                    notEvaluated.Add(plot + " | " + one);
+                }
             }
 
-            return new DivisionGlance(found, ours, where);
+            return new DivisionGlance(found, ours, where, notEvaluated);
         }
     }
 }

@@ -79,8 +79,11 @@ namespace RcrcGreen.Core.Kpi
             string heightColumnChosen = null,
             string diameterColumnChosen = null,
             IEnumerable<int> canopyRows = null,
-            string fileName = null)
+            string fileName = null,
+            IEnumerable<int> totalCanopyRows = null,
+            TotalCanopyColumn totalCanopy = null)
         {
+            TotalCanopy = totalCanopy;
             FileName = (fileName ?? string.Empty).Trim();
             Refusal = refusal ?? string.Empty;
             HeightColumn = heightColumn ?? string.Empty;
@@ -144,13 +147,42 @@ namespace RcrcGreen.Core.Kpi
             CanopyRowsRead = canopyRows != null;
             RowsWithTheCanopyFormula = (canopyRows ?? Enumerable.Empty<int>()).Distinct().OrderBy(one => one).ToList();
 
+            // **AND THE TOTAL CANOPY FORMULA, which is the second half of the same rule.** FP-18
+            // has 2 Ziziphus spina-christi on Tree List - Existing row 83, L83 carries the canopy
+            // formula and M83 is empty on both park templates, so the row computes a canopy per
+            // tree and adds none. Its PDF read 2,631 m2 greened against the workbook's 2,531 and
+            // nothing warned.
+            TotalCanopyRowsRead = totalCanopyRows != null;
+            RowsWithTheTotalCanopyFormula =
+                (totalCanopyRows ?? Enumerable.Empty<int>()).Distinct().OrderBy(one => one).ToList();
+
             // **WHERE NOBODY READ THE FORMULAS, EVERY EMPTY ROW IS STILL OFFERED AND THE FLAG
             // SAYS SO.** `In` always reads them, so this is the hand built list a test makes,
             // and a silent narrowing there would be a guard nobody could see working.
-            UsableEmptyRows = CanopyRowsRead
-                ? EmptyRows.Where(row => RowsWithTheCanopyFormula.Contains(row)).ToList()
-                : EmptyRows;
+            UsableEmptyRows = EmptyRows
+                .Where(row => !CanopyRowsRead || RowsWithTheCanopyFormula.Contains(row))
+                .Where(row => !TotalCanopyRowsRead || RowsWithTheTotalCanopyFormula.Contains(row))
+                .ToList();
         }
+
+        /// <summary>
+        /// Which column this sheet's canopy total adds and over which rows, read off the file, or
+        /// a refusal naming why not. Null on a list built by hand.
+        /// </summary>
+        public TotalCanopyColumn TotalCanopy { get; }
+
+        /// <summary>
+        /// Whether the sheet's total canopy formulas were read at all. **`In` always reads them
+        /// where the template names a canopy total**, so this is false only for a list built by
+        /// hand or a template whose chain could not be followed.
+        /// </summary>
+        public bool TotalCanopyRowsRead { get; }
+
+        /// <summary>
+        /// Every row of the sheet whose own cells carry the total canopy formula for that row, in
+        /// order. Empty where they were not read.
+        /// </summary>
+        public IReadOnlyList<int> RowsWithTheTotalCanopyFormula { get; }
 
         /// <summary>
         /// The workbook this list was read out of, as its file name, so a line about a row can
@@ -390,6 +422,15 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static SpeciesList In(string path, TreeSheet sheet)
         {
+            return In(path, sheet, null);
+        }
+
+        /// <summary>
+        /// The same read, with the column this sheet's canopy total adds handed in so the rows
+        /// carrying the total canopy formula can be read too.
+        /// </summary>
+        public static SpeciesList In(string path, TreeSheet sheet, TotalCanopyColumn totalCanopy)
+        {
             if (path == null) throw new ArgumentNullException("path");
             if (sheet == null) throw new ArgumentNullException("sheet");
 
@@ -452,9 +493,23 @@ namespace RcrcGreen.Core.Kpi
                     // formula to look for, and calling every row unusable would refuse every
                     // write on a shape nobody has measured. It comes back as not read, the flag
                     // says so, and WhyNoDiameterColumn already carries the reason.
+                    // **READ ONCE AND ASKED TWICE.** Both canopy reads walk the same formulas,
+                    // and reading them per row would parse the sheet once for every row on it.
+                    IReadOnlyList<FormulaCell> onTheSheet = WorkbookFormulas.Of(sheet.SheetName, part);
+
                     List<int> canopyRows = string.IsNullOrWhiteSpace(diameterColumn)
                         ? null
-                        : CanopyRowsIn(part, sheet.SheetName, diameterColumn);
+                        : CanopyRowsIn(onTheSheet, diameterColumn);
+
+                    // **AND THE TOTAL CANOPY COLUMN'S OWN ROWS**, where the caller handed in the
+                    // column the canopy total adds. A template whose chain could not be followed
+                    // comes back not read, and the flag says so rather than the rule quietly
+                    // narrowing to nothing.
+                    List<int> totalCanopyRows =
+                        totalCanopy == null || !totalCanopy.Found || string.IsNullOrWhiteSpace(diameterColumn)
+                            ? null
+                            : TotalCanopyRowsIn(onTheSheet, diameterColumn, totalCanopy);
+
                     string fileName = Path.GetFileName(path);
 
                     int first;
@@ -463,10 +518,10 @@ namespace RcrcGreen.Core.Kpi
                     return QuantityTotal(part, out first, out last, out cell)
                         ? new SpeciesList(named, true, first, last, cell, string.Empty,
                             heightColumn, diameterColumn, whyNoHeight, whyNoDiameter,
-                            heightChosen, diameterChosen, canopyRows, fileName)
+                            heightChosen, diameterChosen, canopyRows, fileName, totalCanopyRows, totalCanopy)
                         : new SpeciesList(named, false, 0, 0, null, string.Empty,
                             heightColumn, diameterColumn, whyNoHeight, whyNoDiameter,
-                            heightChosen, diameterChosen, canopyRows, fileName);
+                            heightChosen, diameterChosen, canopyRows, fileName, totalCanopyRows, totalCanopy);
                 }
             }
             catch (IOException failed)
@@ -490,16 +545,59 @@ namespace RcrcGreen.Core.Kpi
         /// Nothing at all where no diameter column was chosen, because then there is no formula
         /// to look for and a row cannot be called usable on a guess.
         /// </summary>
-        private static List<int> CanopyRowsIn(XDocument part, string sheetName, string diameterColumn)
+        private static List<int> CanopyRowsIn(IReadOnlyList<FormulaCell> onTheSheet, string diameterColumn)
         {
             var rows = new List<int>();
             if (string.IsNullOrWhiteSpace(diameterColumn)) return rows;
 
-            foreach (FormulaCell one in WorkbookFormulas.Of(sheetName, part))
+            foreach (FormulaCell one in onTheSheet)
             {
                 CellRef at = CellRef.TryParse(one.Cell);
                 if (at == null || at.Row <= KpiTemplates.TreeHeaderRow) continue;
                 if (!WorkbookArithmetic.IsTheCanopyFormula(one.Text, diameterColumn, at.Row)) continue;
+
+                rows.Add(at.Row);
+            }
+
+            return rows;
+        }
+
+        /// <summary>
+        /// Every row whose own cells carry the TOTAL canopy formula for that row, and that the
+        /// canopy total really adds. **The comparison is
+        /// <see cref="WorkbookArithmetic.IsTheTotalCanopyFormula"/>, the same one the guard asks
+        /// of a row this run wrote**, so a row this reader calls usable is a row that guard will
+        /// pass. A row outside the total's own range is left out however it computes, because a
+        /// canopy the total does not reach is a canopy the workbook never adds.
+        /// </summary>
+        private static List<int> TotalCanopyRowsIn(
+            IReadOnlyList<FormulaCell> onTheSheet, string diameterColumn, TotalCanopyColumn totalCanopy)
+        {
+            var canopyColumns = new Dictionary<int, string>();
+            foreach (FormulaCell one in onTheSheet)
+            {
+                CellRef at = CellRef.TryParse(one.Cell);
+                if (at == null || at.Row <= KpiTemplates.TreeHeaderRow) continue;
+                if (!WorkbookArithmetic.IsTheCanopyFormula(one.Text, diameterColumn, at.Row)) continue;
+
+                if (!canopyColumns.ContainsKey(at.Row)) canopyColumns[at.Row] = at.Column.ToUpperInvariant();
+            }
+
+            var rows = new List<int>();
+            foreach (FormulaCell one in onTheSheet)
+            {
+                CellRef at = CellRef.TryParse(one.Cell);
+                if (at == null || at.Row <= KpiTemplates.TreeHeaderRow) continue;
+                if (!totalCanopy.Adds(at.Row)) continue;
+
+                string canopyColumn;
+                if (!canopyColumns.TryGetValue(at.Row, out canopyColumn)) continue;
+
+                if (!WorkbookArithmetic.IsTheTotalCanopyFormula(
+                    one.Text, canopyColumn, KpiTemplates.QuantityColumn, at.Row))
+                {
+                    continue;
+                }
 
                 rows.Add(at.Row);
             }

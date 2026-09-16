@@ -342,8 +342,10 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<FunctionUse> functionsExcelMayNotHave,
             string refusal,
             IEnumerable<FormulaCell> allFormulas = null,
-            IEnumerable<TypedCell> typedCells = null)
+            IEnumerable<TypedCell> typedCells = null,
+            IEnumerable<string> divisionsNotEvaluated = null)
         {
+            DivisionsNotEvaluated = (divisionsNotEvaluated ?? Enumerable.Empty<string>()).ToList();
             TypedCells = (typedCells ?? Enumerable.Empty<TypedCell>()).ToList();
             WasChecked = wasChecked;
             FormulaCount = formulaCount;
@@ -377,6 +379,13 @@ namespace RcrcGreen.Core.Kpi
         /// canopy guard names beside the formulas on a row that carries no canopy formula.**
         /// </summary>
         public IReadOnlyList<TypedCell> TypedCells { get; }
+
+        /// <summary>
+        /// Every division this check LOOKED AT and could not work out, one line each with the
+        /// formula and the reason. **A division nobody evaluated is not a division that is
+        /// fine**, and the glance says how many there were rather than saying none was found.
+        /// </summary>
+        public IReadOnlyList<string> DivisionsNotEvaluated { get; }
 
         /// <summary>
         /// Every formula whose text reads a cell on a row this run wrote into.
@@ -431,6 +440,29 @@ namespace RcrcGreen.Core.Kpi
             RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
         /// <summary>
+        /// **A DIVISION BY A COUNT OVER A RANGE**, which the one cell rule above never looked at.
+        /// Measured on the 16:37 press: the glance said the check found no #DIV/0! anywhere, and
+        /// the FP-24 and SC-06 workbooks recalculate with one in Tree List - Existing S70 and one
+        /// in T70. Both read `IF(TotTrees&lt;1," ",S69/COUNT(B4:B83))`, on all seven templates and
+        /// on both tree list tabs, and 30 plots of that press have every existing tree on rows 84
+        /// to 101, so the range the count covers holds nothing.
+        /// </summary>
+        private static readonly Regex DividedByACountOverARange = new Regex(
+            @"/\s*(COUNT|COUNTA|SUM)\s*\(\s*((?:(?:'(?:[^']|'')+'|[A-Za-z_][A-Za-z0-9_.]*)!)?\$?[A-Z]{1,3}\$?[0-9]{1,7}:\$?[A-Z]{1,3}\$?[0-9]{1,7})\s*\)",
+            RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// **THE ONE GUARD SHAPE THAT IS HONOURED, and nothing wider.** All seven templates open
+        /// S70 and T70 with `IF(TotTrees&lt;1," ", ...)`, so a plot with no trees at all never
+        /// reaches the division and is not a #DIV/0!. Anything else is not evaluated rather than
+        /// judged, because working out what a formula computes to is the thing this reader does
+        /// not do.
+        /// </summary>
+        private static readonly Regex GuardedByLessThanOne = new Regex(
+            @"^\s*IF\s*\(\s*((?:(?:'(?:[^']|'')+'|[A-Za-z_][A-Za-z0-9_.]*)!)?\$?[A-Z]{1,3}\$?[0-9]{1,7}|[A-Za-z_][A-Za-z0-9_.]*)\s*(<\s*1|<=\s*0|=\s*0)\s*,",
+            RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+        /// <summary>
         /// A division whose divisor is ONE CELL, which is the only shape a #DIV/0! can be read
         /// off text. A divisor that is an expression, a range or a function call is not judged,
         /// because working out what it computes to would be evaluating the formula.
@@ -461,6 +493,12 @@ namespace RcrcGreen.Core.Kpi
             if (sheetParts == null) throw new ArgumentNullException("sheetParts");
 
             Dictionary<string, string> names = DefinedNames(zip, workbookPart);
+
+            // **A SHARED STRING CELL STORES AN INDEX AND NOT ITS TEXT.** The canopy guard prints
+            // `D99 holds 419 and no formula` where D99 holds Prosopis Juliflora, because the
+            // raw `<v>` was kept. The table is read once here and every cell's text resolves
+            // through the one reader the rest of this tool already asks.
+            List<string> shared = WorkbookPackage.SharedStrings(zip);
             var states = new Dictionary<string, Dictionary<string, CellState>>(StringComparer.Ordinal);
             var formulas = new List<FormulaCell>();
 
@@ -471,14 +509,15 @@ namespace RcrcGreen.Core.Kpi
 
                 var state = new Dictionary<string, CellState>(StringComparer.OrdinalIgnoreCase);
                 states[sheet.Key] = state;
-                formulas.AddRange(FormulasIn(sheet.Key, part, state, names));
+                formulas.AddRange(FormulasIn(sheet.Key, part, state, names, shared));
             }
 
             List<WorkbookCell> wrote = (written ?? Enumerable.Empty<WorkbookCell>()).Where(one => one != null).ToList();
             List<WorkbookCell> inputs = (computesFrom ?? Enumerable.Empty<WorkbookCell>()).Where(one => one != null).ToList();
 
             List<FormulaCell> readingWritten = ReadingWrittenRows(formulas, wrote);
-            List<FormulaAtRisk> atRisk = AtRisk(formulas, states, wrote);
+            var notEvaluated = new List<string>();
+            List<FormulaAtRisk> atRisk = AtRisk(formulas, states, wrote, names, notEvaluated);
             List<ComputedFrom> computed = Computed(formulas, states, inputs);
             List<FunctionUse> functions = formulas
                 .SelectMany(one => one.FunctionsExcelMayNotHave.Distinct(StringComparer.Ordinal))
@@ -496,26 +535,74 @@ namespace RcrcGreen.Core.Kpi
 
             return new FormulaCheck(
                 true, formulas.Count, readingWritten, atRisk, computed, functions, Refusal(atRisk),
-                formulas, typed);
+                formulas, typed, notEvaluated);
         }
 
+        /// <summary>
+        /// The one separator between a defined name's scope and its own name in the map's key.
+        /// A sheet cannot hold this character, so it cannot be mistaken for part of either.
+        /// </summary>
+        private const string ScopeMark = "\u0000";
+
+        /// <summary>
+        /// Every defined name the workbook holds, KEYED ON ITS SCOPE AND ITS NAME.
+        ///
+        /// **A NAME CAN BE DEFINED TWICE AND MEAN TWO THINGS.** `TotTrees` is at workbook level
+        /// and again on Tree List - Proposed, and a `localSheetId` scopes the second to that one
+        /// sheet. Keeping the first of the two by name alone answered a Tree List - Existing
+        /// formula with the Proposed sheet's definition whenever that one came first in the file.
+        ///
+        /// The sheet a `localSheetId` names is read off the workbook's own `sheets` element in
+        /// order, because that index is what the attribute counts.
+        /// </summary>
         private static Dictionary<string, string> DefinedNames(ZipArchive zip, string workbookPart)
         {
             var names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             XDocument workbook = workbookPart == null ? null : WorkbookPackage.Read(zip, workbookPart);
             if (workbook == null || workbook.Root == null) return names;
 
+            List<string> sheets = workbook.Root.Elements()
+                .Where(element => element.Name.LocalName == "sheets")
+                .Elements().Where(element => element.Name.LocalName == "sheet")
+                .Select(element => (string)element.Attribute("name") ?? string.Empty)
+                .ToList();
+
             foreach (XElement defined in workbook.Root.Elements()
                 .Where(element => element.Name.LocalName == "definedNames")
                 .Elements().Where(element => element.Name.LocalName == "definedName"))
             {
                 string name = (string)defined.Attribute("name");
-                if (string.IsNullOrEmpty(name) || names.ContainsKey(name)) continue;
+                if (string.IsNullOrEmpty(name)) continue;
 
-                names[name] = defined.Value ?? string.Empty;
+                string scope = string.Empty;
+                int index;
+                string local = (string)defined.Attribute("localSheetId");
+                if (local != null
+                    && int.TryParse(local, NumberStyles.Integer, CultureInfo.InvariantCulture, out index)
+                    && index >= 0 && index < sheets.Count)
+                {
+                    scope = sheets[index];
+                }
+
+                string key = scope + ScopeMark + name;
+                if (names.ContainsKey(key)) continue;
+
+                names[key] = defined.Value ?? string.Empty;
             }
 
             return names;
+        }
+
+        /// <summary>
+        /// What a name means inside a formula on one sheet: that sheet's own definition where it
+        /// has one, and the workbook's otherwise. Empty where neither holds it.
+        /// </summary>
+        private static string TargetOf(Dictionary<string, string> names, string sheetName, string name)
+        {
+            string target;
+            if (names.TryGetValue((sheetName ?? string.Empty) + ScopeMark + name, out target)) return target;
+
+            return names.TryGetValue(ScopeMark + name, out target) ? target : string.Empty;
         }
 
         /// <summary>
@@ -537,11 +624,13 @@ namespace RcrcGreen.Core.Kpi
                 sheetName ?? string.Empty,
                 part,
                 new Dictionary<string, CellState>(StringComparer.Ordinal),
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)).ToList();
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                null).ToList();
         }
 
         private static IEnumerable<FormulaCell> FormulasIn(
-            string sheetName, XDocument part, Dictionary<string, CellState> state, Dictionary<string, string> names)
+            string sheetName, XDocument part, Dictionary<string, CellState> state,
+            Dictionary<string, string> names, List<string> shared)
         {
             var masters = new Dictionary<string, KeyValuePair<CellRef, string>>(StringComparer.Ordinal);
             var found = new List<KeyValuePair<CellRef, XElement>>();
@@ -560,14 +649,13 @@ namespace RcrcGreen.Core.Kpi
 
                 var held = new CellState();
                 held.HasFormula = formula != null;
-                if (inline != null)
+
+                // **THE CELL'S TEXT AS A PERSON READS IT**, through the one reader that resolves
+                // a shared string to its text. Keeping the raw `<v>` printed an index where a
+                // name belongs and would call a cell holding shared string 0 a nought.
+                if (inline != null || value != null)
                 {
-                    held.Text = string.Concat(inline.Descendants().Where(child => child.Name.LocalName == "t").Select(child => child.Value));
-                    held.HasValue = held.Text.Length > 0;
-                }
-                else if (value != null)
-                {
-                    held.Text = value.Value ?? string.Empty;
+                    held.Text = WorkbookPackage.TextOf(cell, shared);
                     held.HasValue = held.Text.Length > 0;
                 }
 
@@ -630,8 +718,8 @@ namespace RcrcGreen.Core.Kpi
 
             foreach (Match name in Name.Matches(withoutReferences))
             {
-                string target;
-                if (!names.TryGetValue(name.Groups[1].Value, out target)) continue;
+                string target = TargetOf(names, sheetName, name.Groups[1].Value);
+                if (target.Length == 0) continue;
 
                 foreach (Match reference in Reference.Matches(Literal.Replace(target, Quote + Quote)))
                 {
@@ -736,7 +824,8 @@ namespace RcrcGreen.Core.Kpi
         /// at level 2 or above, because an error carries through everything.
         /// </summary>
         private static List<FormulaAtRisk> AtRisk(
-            List<FormulaCell> formulas, Dictionary<string, Dictionary<string, CellState>> states, List<WorkbookCell> wrote)
+            List<FormulaCell> formulas, Dictionary<string, Dictionary<string, CellState>> states,
+            List<WorkbookCell> wrote, Dictionary<string, string> names, List<string> notEvaluated)
         {
             var risk = new Dictionary<string, FormulaAtRisk>(StringComparer.Ordinal);
             var order = new List<string>();
@@ -822,6 +911,54 @@ namespace RcrcGreen.Core.Kpi
                 }
             }
 
+            // **AND A DIVISION BY A COUNT OVER A RANGE**, which the loop above cannot see because
+            // its divisor is one cell. `S70 = IF(TotTrees<1," ",S69/COUNT(B4:B83))` on all seven
+            // templates and on both tree list tabs, and 30 plots of the 16:37 press hold every
+            // existing tree on rows 84 to 101, outside the range the count covers.
+            foreach (FormulaCell formula in formulas)
+            {
+                if (risk.ContainsKey(formula.Where)) continue;
+
+                foreach (Match divide in DividedByACountOverARange.Matches(formula.Text))
+                {
+                    Match reference = Reference.Match(divide.Groups[2].Value);
+                    if (!reference.Success) continue;
+
+                    CellArea range = AreaOf(reference, formula.SheetName);
+                    string over = divide.Groups[1].Value.ToUpperInvariant();
+
+                    // **THE GUARD IS ASKED BEFORE THE RANGE IS COUNTED.** A formula whose own IF
+                    // never reaches the division is not a #DIV/0! however empty the range is.
+                    GuardAnswer guard = TheGuard(formula, states, names);
+                    if (guard == GuardAnswer.Holds) break;
+
+                    string why;
+                    bool nought = RangeCountsToNought(states, range, over, out why);
+                    if (why.Length > 0 || guard == GuardAnswer.NotEvaluated)
+                    {
+                        notEvaluated.Add(formula.SheetName + " " + formula.Cell + " = " + formula.Text
+                            + ": " + (why.Length > 0 ? why : GuardNotEvaluated));
+                        break;
+                    }
+
+                    if (!nought) break;
+
+                    bool wroteInto = wrote.Any(one =>
+                        string.Equals(one.SheetName, range.SheetName, StringComparison.Ordinal)
+                        && one.Cell.ColumnNumber >= range.FirstColumn && one.Cell.ColumnNumber <= range.LastColumn
+                        && one.Cell.Row >= range.FirstRow && one.Cell.Row <= range.LastRow);
+
+                    Add(risk, order, new FormulaAtRisk(formula.SheetName, formula.Cell, formula.Text,
+                        "#DIV/0!: " + over + " over " + range.InWords + " is 0 and this formula "
+                        + "divides by it. "
+                        + (wroteInto
+                            ? "THIS RUN WROTE INTO THAT RANGE."
+                            : "This run wrote nothing into that range."),
+                        2, false, true, wroteInto));
+                    break;
+                }
+            }
+
             bool changed = true;
             while (changed)
             {
@@ -882,6 +1019,129 @@ namespace RcrcGreen.Core.Kpi
                 && number == 0.0;
 
             return isNought ? "holds " + held.Text + "," : string.Empty;
+        }
+
+        /// <summary>
+        /// Whether a formula's own IF keeps it off the division, or whether nobody can say.
+        /// </summary>
+        private enum GuardAnswer
+        {
+            None,
+            Holds,
+            NotEvaluated
+        }
+
+        public const string GuardNotEvaluated =
+            "its IF guards the division and what the guard reads could not be evaluated, so "
+            + "nothing here says whether the division is reached";
+
+        /// <summary>
+        /// **THE GUARD IS THE ONE SHAPE MEASURED AND NOTHING WIDER.** `IF(TotTrees&lt;1," ", ...)`
+        /// opens S70 and T70 on all seven templates, so a plot with no trees never reaches the
+        /// division. The reference is resolved off the file's own defined names, scoped to the
+        /// sheet the formula sits on, and a value nobody can read comes back as not evaluated
+        /// rather than as a guard that holds or a guard that does not.
+        /// </summary>
+        private static GuardAnswer TheGuard(
+            FormulaCell formula,
+            Dictionary<string, Dictionary<string, CellState>> states,
+            Dictionary<string, string> names)
+        {
+            Match guard = GuardedByLessThanOne.Match(formula.Text);
+            if (!guard.Success) return GuardAnswer.None;
+
+            string read = guard.Groups[1].Value;
+            Match reference = Reference.Match(read);
+            if (!reference.Success)
+            {
+                string target = TargetOf(names, formula.SheetName, read);
+                if (target.Length == 0) return GuardAnswer.NotEvaluated;
+
+                reference = Reference.Match(Literal.Replace(target, Quote + Quote));
+                if (!reference.Success) return GuardAnswer.NotEvaluated;
+            }
+
+            CellArea area = AreaOf(reference, formula.SheetName);
+            if (!area.IsOneCell) return GuardAnswer.NotEvaluated;
+
+            Dictionary<string, CellState> sheet;
+            CellState held = null;
+            if (states.TryGetValue(area.SheetName, out sheet))
+            {
+                sheet.TryGetValue(Letters(area.FirstColumn) + area.FirstRow, out held);
+            }
+
+            // A blank cell is nought to Excel, so the guard holds. A formula cell holds no
+            // number in this output at all, so nobody can say.
+            if (held == null || (!held.HasValue && !held.HasFormula)) return GuardAnswer.Holds;
+            if (held.HasFormula) return GuardAnswer.NotEvaluated;
+
+            double number;
+            if (!double.TryParse(held.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
+            {
+                return GuardAnswer.NotEvaluated;
+            }
+
+            return number < 1.0 ? GuardAnswer.Holds : GuardAnswer.None;
+        }
+
+        /// <summary>
+        /// Whether COUNT, COUNTA or SUM over this range comes to nought, counted off the cell
+        /// states after the write. **A cell in the range holding a FORMULA stops the count**, for
+        /// the reason the one cell rule already gives: the patcher drops every cached value, so
+        /// a formula cell holds no number and reading that absence as nothing would call a real
+        /// count nought.
+        /// </summary>
+        private static bool RangeCountsToNought(
+            Dictionary<string, Dictionary<string, CellState>> states, CellArea range, string over,
+            out string why)
+        {
+            why = string.Empty;
+
+            Dictionary<string, CellState> sheet;
+            if (!states.TryGetValue(range.SheetName, out sheet))
+            {
+                why = "the range " + range.InWords + " is on a sheet this check did not read";
+                return false;
+            }
+
+            double total = 0.0;
+            int counted = 0;
+
+            for (int column = range.FirstColumn; column <= range.LastColumn; column++)
+            {
+                for (int row = range.FirstRow; row <= range.LastRow; row++)
+                {
+                    CellState held;
+                    if (!sheet.TryGetValue(Letters(column) + row, out held)) continue;
+                    if (!held.HasValue && !held.HasFormula) continue;
+
+                    if (held.HasFormula)
+                    {
+                        why = Letters(column) + row + " in " + range.InWords + " holds a formula, "
+                            + "whose value this file does not carry, so what " + over
+                            + " over that range comes to could not be worked out";
+                        return false;
+                    }
+
+                    double number;
+                    bool isNumber = double.TryParse(
+                        held.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out number);
+
+                    if (string.Equals(over, "COUNTA", StringComparison.Ordinal))
+                    {
+                        counted++;
+                        continue;
+                    }
+
+                    if (!isNumber) continue;
+
+                    counted++;
+                    total = total + number;
+                }
+            }
+
+            return string.Equals(over, "SUM", StringComparison.Ordinal) ? total == 0.0 : counted == 0;
         }
 
         private static bool IsBlankIn(Dictionary<string, Dictionary<string, CellState>> states, CellArea area)
