@@ -111,6 +111,13 @@ steps/kpi-create.md:23     steps/kpi-scan-2.md:23     steps/kpi-templates.md:23
 moves, so their steps stay as the record of that day, and the line at the top of each now tells a
 reader to use the current sheet instead. **No stated test count is left in any sheet at all.**
 
+**AND THOSE SAME THREE STILL CARRY ROUND 94'S SENTENCE UNDER THEIR BUILD STEP**, at
+`kpi-create.md:37`, `kpi-scan-2.md:37` and `kpi-templates.md:37`, saying the test step above them
+wants the .NET 10 SDK. **That is still true there and is left alone for that reason**: their step
+above really does run the tests on this PC. The sentence was false only in the three sheets whose
+step changed, which is where it was replaced. Said here because a grep for that sentence returns
+three hits and the next reader should not take them for a miss.
+
 ### Requests for Bader
 
 - **`.claude/rules/kpi-rules.md:6` still triggers on `steps/kpi-templates.md`**, which is now

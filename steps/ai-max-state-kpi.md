@@ -33,6 +33,11 @@ still covers the panel is UNKNOWN from here.
 nothing else in `steps/`. After: three local `dotnet test` steps remain, all inside sheets now
 marked as records, and **no stated test count is left in any sheet**.
 
+**THE THREE RECORD SHEETS STILL CARRY ROUND 94'S SENTENCE** at `kpi-create.md:37`,
+`kpi-scan-2.md:37` and `kpi-templates.md:37`, saying the step above wants the SDK, and **it is
+still true there** because their step above really does run the tests locally. It was false only
+in the three sheets whose step changed, which is where it was replaced.
+
 **THREE REQUESTS FOR BADER**: the rules trigger at `kpi-rules.md:6`, whether
 `2026-09-13-view-filters.md` should be marked a record too, which is View Filters' call, and
 whether `run-drawing.md` needs a new sheet, which is Drawing Sheet's.
