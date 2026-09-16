@@ -287,7 +287,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             bool withPercentageLabel = false,
             string greenCoverFormula = null,
             bool parksShape = false,
-            int[] withoutCanopy = null)
+            int[] withoutCanopy = null,
+            bool namesAsSharedStrings = false,
+            int[] withoutTotalCanopy = null,
+            int lastRow = 9)
         {
             string path = Path.Combine(folder, fileName);
 
@@ -304,6 +307,9 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<Override PartName=\"/xl/worksheets/sheet2.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
                     + "<Override PartName=\"/xl/worksheets/sheet3.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
                     + "<Override PartName=\"/xl/calcChain.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml\"/>"
+                    + (namesAsSharedStrings
+                        ? "<Override PartName=\"/xl/sharedStrings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml\"/>"
+                        : string.Empty)
                     + "</Types>");
 
                 Add(zip, "_rels/.rels",
@@ -337,7 +343,37 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/>"
                     + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet2.xml\"/>"
                     + "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet3.xml\"/>"
+                    + (namesAsSharedStrings
+                        ? "<Relationship Id=\"rId4\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings\" Target=\"sharedStrings.xml\"/>"
+                        : string.Empty)
                     + "</Relationships>");
+
+                // **THE BOTANICAL NAMES AS SHARED STRINGS, which is how Excel stores a column of
+                // text once a person has opened and saved the file.** The cell holds an index and
+                // the table holds the text, so a reader taking the raw value prints 419 where
+                // Prosopis Juliflora belongs.
+                var strings = new List<string>();
+                if (namesAsSharedStrings)
+                {
+                    foreach (TreeRow one in (existing ?? new TreeRow[0]))
+                    {
+                        if (one.Name.Length > 0 && !strings.Contains(one.Name)) strings.Add(one.Name);
+                    }
+
+                    foreach (TreeRow one in (proposed ?? new TreeRow[0]))
+                    {
+                        if (one.Name.Length > 0 && !strings.Contains(one.Name)) strings.Add(one.Name);
+                    }
+
+                    var table = new StringBuilder();
+                    table.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+                    table.Append("<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\""
+                        + strings.Count + "\" uniqueCount=\"" + strings.Count + "\">");
+                    foreach (string one in strings) table.Append("<si><t>" + one + "</t></si>");
+                    table.Append("</sst>");
+
+                    Add(zip, "xl/sharedStrings.xml", table.ToString());
+                }
 
                 // The main sheet: the six mapped cells, three of them holding the template's own
                 // placeholders, and the formulas that compute from them. F8 is the canopy area
@@ -359,7 +395,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         ? "<c r=\"C8\" t=\"inlineStr\"><is><t xml:space=\"preserve\"> Total Green cover (m\u00B2)</t></is></c>"
                         : string.Empty)
                     + (parksShape ? string.Empty : "<c r=\"D8\"><f>" + (greenCoverFormula ?? "F8+F10+H10") + "</f><v>0</v></c>")
-                    + "<c r=\"F8\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
+                    + "<c r=\"F8\"><f>'Tree List - Existing'!M" + (lastRow + 1) + "+'Tree List - Proposed'!M" + (lastRow + 1) + "</f><v>0</v></c></row>"
 
                     // **THE TWO PARK TEMPLATES PUT THE GREEN COVER A ROW LOWER**, D9 off C9 with
                     // F9+F11+H11, against D8 off C8 with F8+F10+H10 on the other four and on
@@ -371,7 +407,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                                 ? "<c r=\"C9\" t=\"inlineStr\"><is><t xml:space=\"preserve\"> Total Green cover (m\u00B2)</t></is></c>"
                                 : string.Empty)
                             + "<c r=\"D9\"><f>" + (greenCoverFormula ?? "F9+F11+H11") + "</f><v>0</v></c>"
-                            + "<c r=\"F9\"><f>'Tree List - Existing'!M10+'Tree List - Proposed'!M10</f><v>0</v></c></row>"
+                            + "<c r=\"F9\"><f>'Tree List - Existing'!M" + (lastRow + 1) + "+'Tree List - Proposed'!M" + (lastRow + 1) + "</f><v>0</v></c></row>"
                             + "<row r=\"11\"><c r=\"F11\"><v>0</v></c><c r=\"H11\"><v>0</v></c></row>"
                         : "<row r=\"9\"><c r=\"D9\"><f>D8/H7</f><v>0</v></c><c r=\"H9\"><f>H8/Area</f><v>0</v></c></row>"
                             + "<row r=\"10\"><c r=\"F10\"><v>0</v></c><c r=\"H10\"><v>0</v></c></row>")
@@ -393,9 +429,11 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "</worksheet>");
 
                 Add(zip, "xl/worksheets/sheet2.xml", TreeSheetComputing(existing, heightHeading, diameterHeading, heightColumn, diameterColumn,
-                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy));
+                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
+                    namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow));
                 Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn,
-                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy));
+                    secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
+                    namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow));
             }
 
             return path;
@@ -412,13 +450,20 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static string TreeSheetComputing(
             TreeRow[] named, string heightHeading, string diameterHeading, string heightColumn, string diameterColumn,
             string secondDiameterHeading = null, string secondDiameterColumn = "K", string canopyReads = null,
-            string alsoReads = null, int[] withoutCanopy = null)
+            string alsoReads = null, int[] withoutCanopy = null, List<string> sharedStrings = null,
+            int[] withoutTotalCanopy = null, int lastRow = 9)
         {
             // **A ROW WITH NO CANOPY FORMULA, the shape FUTURE PARKS row 85 really has.**
             // Somebody added rows and copied some columns without the canopy pair beside them,
             // so the sheet computes no canopy from a count written there. Row 4 is the shared
             // formula's master and cannot be the one left out.
             var noCanopy = new HashSet<int>(withoutCanopy ?? new int[0]);
+
+            // **AND A ROW THAT COMPUTES A CANOPY PER TREE AND ADDS NONE**, which is FP-18's
+            // Tree List - Existing row 83 on both park templates: L83 carries the canopy formula
+            // and M83 is empty. Row 4 is the shared formula's master and cannot be the one left
+            // out.
+            var noTotalCanopy = new HashSet<int>(withoutTotalCanopy ?? new int[0]);
             var byRow = new Dictionary<int, TreeRow>();
             foreach (TreeRow one in named ?? new TreeRow[0]) byRow[one.Row] = one;
 
@@ -438,13 +483,15 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "</row>");
             string reads = canopyReads ?? diameterColumn;
 
-            for (int row = 4; row <= 9; row++)
+            for (int row = 4; row <= lastRow; row++)
             {
                 var cells = new StringBuilder();
                 TreeRow one;
                 if (byRow.TryGetValue(row, out one))
                 {
-                    cells.Append("<c r=\"D" + row + "\" t=\"inlineStr\"><is><t>" + one.Name + "</t></is></c>");
+                    cells.Append(sharedStrings == null
+                        ? "<c r=\"D" + row + "\" t=\"inlineStr\"><is><t>" + one.Name + "</t></is></c>"
+                        : "<c r=\"D" + row + "\" t=\"s\"><v>" + sharedStrings.IndexOf(one.Name) + "</v></c>");
                     if (one.Height.Length > 0) cells.Append("<c r=\"" + heightColumn + row + "\"><v>" + one.Height + "</v></c>");
                     if (one.Diameter.Length > 0) cells.Append("<c r=\"" + diameterColumn + row + "\"><v>" + one.Diameter + "</v></c>");
                 }
@@ -454,20 +501,25 @@ namespace RcrcGreen.Core.Tests.Kpi
                 string canopy = noCanopy.Contains(row) && row != 4
                     ? string.Empty
                     : row == 4
-                        ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L9\" si=\"0\">IF(ISBLANK(" + reads + "4),\" \",ROUND(PI()*(" + reads + "4/2)^2,0))</f><v> </v></c>"
+                        ? "<c r=\"L4\" t=\"str\"><f t=\"shared\" ref=\"L4:L" + lastRow + "\" si=\"0\">IF(ISBLANK(" + reads + "4),\" \",ROUND(PI()*(" + reads + "4/2)^2,0))</f><v> </v></c>"
                         : "<c r=\"L" + row + "\" t=\"str\"><f t=\"shared\" si=\"0\"/><v> </v></c>";
-                string area = row == 4
-                    ? "<c r=\"M4\" t=\"str\"><f t=\"shared\" ref=\"M4:M9\" si=\"1\">IF(ISBLANK(B4),\" \",L4*B4)</f><v> </v></c>"
-                    : "<c r=\"M" + row + "\" t=\"str\"><f t=\"shared\" si=\"1\"/><v> </v></c>";
+                string area = noTotalCanopy.Contains(row) && row != 4
+                    ? string.Empty
+                    : row == 4
+                        ? "<c r=\"M4\" t=\"str\"><f t=\"shared\" ref=\"M4:M" + lastRow + "\" si=\"1\">IF(ISBLANK(B4),\" \",L4*B4)</f><v> </v></c>"
+                        : "<c r=\"M" + row + "\" t=\"str\"><f t=\"shared\" si=\"1\"/><v> </v></c>";
                 string spread = alsoReads == null ? string.Empty
                     : row == 4
-                        ? "<c r=\"N4\" t=\"str\"><f t=\"shared\" ref=\"N4:N9\" si=\"2\">IF(ISBLANK(" + alsoReads + "4),\" \"," + alsoReads + "4)</f><v> </v></c>"
+                        ? "<c r=\"N4\" t=\"str\"><f t=\"shared\" ref=\"N4:N" + lastRow + "\" si=\"2\">IF(ISBLANK(" + alsoReads + "4),\" \"," + alsoReads + "4)</f><v> </v></c>"
                         : "<c r=\"N" + row + "\" t=\"str\"><f t=\"shared\" si=\"2\"/><v> </v></c>";
 
                 xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + spread + "</row>");
             }
 
-            xml.Append("<row r=\"10\"><c r=\"B10\"><f>SUM(B4:B9)</f><v>0</v></c><c r=\"M10\"><f>SUM(M4:M9)</f><v>0</v></c></row>");
+            int totalRow = lastRow + 1;
+            xml.Append("<row r=\"" + totalRow + "\">"
+                + "<c r=\"B" + totalRow + "\"><f>SUM(B4:B" + lastRow + ")</f><v>0</v></c>"
+                + "<c r=\"M" + totalRow + "\"><f>SUM(M4:M" + lastRow + ")</f><v>0</v></c></row>");
             xml.Append("</sheetData></worksheet>");
             return xml.ToString();
         }
@@ -516,6 +568,116 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                     + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData>"
                     + "<row r=\"5\"><c r=\"" + cell + "\" t=\"s\"><v>0</v></c></row>"
+                    + "</sheetData></worksheet>");
+            }
+
+            return path;
+        }
+
+        /// <summary>
+        /// **THE S70 SHAPE, measured on all seven templates and on both tree list tabs.**
+        /// `S70 = IF(TotTrees&lt;1," ",S69/COUNT(B4:B83))`, with `TotTrees` a defined name, and a
+        /// tree list whose rows run past the range the count covers. 30 plots of the 16:37 press
+        /// hold every existing tree on rows 84 to 101, outside B4:B83.
+        ///
+        /// One tree sheet, the counted range from row 4 to <paramref name="rangeLastRow"/>, the
+        /// numerator at S69 and T69, and `TotTrees` pointing at B102 so a test can write it.
+        /// </summary>
+        public static string DividingByACount(
+            string folder,
+            string fileName = "COUNTING.xlsx",
+            string over = "COUNT",
+            int rangeLastRow = 83,
+            bool withGuard = true,
+            bool totTreesLocalToProposedFirst = false,
+            int formulaInRangeAt = 0)
+        {
+            string path = Path.Combine(folder, fileName);
+            string sheet = KpiTemplates.ExistingTreesSheet;
+
+            using (FileStream file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
+            using (var zip = new ZipArchive(file, ZipArchiveMode.Create))
+            {
+                Add(zip, "[Content_Types].xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+                    + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                    + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+                    + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet2.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "<Override PartName=\"/xl/worksheets/sheet3.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + "</Types>");
+
+                Add(zip, "_rels/.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                    + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/>"
+                    + "</Relationships>");
+
+                // **THE SAME NAME, TWICE, ONE OF THEM SCOPED TO A SHEET.** `localSheetId` counts
+                // the sheets in the order this element lists them, so index 2 is the proposed
+                // sheet. A reader keeping the first definition by name alone answers a formula on
+                // the existing sheet with the proposed sheet's cell whenever that one comes first.
+                string workbookLevel = "<definedName name=\"TotTrees\">'" + sheet + "'!$B$102</definedName>";
+                string proposedLocal = "<definedName name=\"TotTrees\" localSheetId=\"2\">'"
+                    + KpiTemplates.ProposedTreesSheet + "'!$B$5</definedName>";
+
+                Add(zip, "xl/workbook.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
+                    + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
+                    + "<sheets>"
+                    + "<sheet name=\"" + MainSheet + "\" sheetId=\"1\" r:id=\"rId1\"/>"
+                    + "<sheet name=\"" + sheet + "\" sheetId=\"2\" r:id=\"rId2\"/>"
+                    + "<sheet name=\"" + KpiTemplates.ProposedTreesSheet + "\" sheetId=\"3\" r:id=\"rId3\"/>"
+                    + "</sheets>"
+                    + "<definedNames>"
+                    + (totTreesLocalToProposedFirst
+                        ? proposedLocal + workbookLevel
+                        : workbookLevel + proposedLocal)
+                    + "</definedNames>"
+                    + "<calcPr calcId=\"191029\"/>"
+                    + "</workbook>");
+
+                Add(zip, "xl/_rels/workbook.xml.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                    + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/>"
+                    + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet2.xml\"/>"
+                    + "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet3.xml\"/>"
+                    + "</Relationships>");
+
+                Add(zip, "xl/worksheets/sheet1.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData/></worksheet>");
+
+                string range = "B4:B" + rangeLastRow;
+                string opens = withGuard ? "IF(TotTrees&lt;1,\" \"," : string.Empty;
+                string shuts = withGuard ? ")" : string.Empty;
+
+                Add(zip, "xl/worksheets/sheet2.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData>"
+                    + "<row r=\"3\">"
+                    + "<c r=\"B3\" t=\"inlineStr\"><is><t>Quantity</t></is></c>"
+                    + "<c r=\"D3\" t=\"inlineStr\"><is><t>Botanical Name</t></is></c>"
+                    + "</row>"
+                    + (formulaInRangeAt > 0
+                        ? "<row r=\"" + formulaInRangeAt + "\"><c r=\"B" + formulaInRangeAt
+                            + "\"><f>S69</f><v>400</v></c></row>"
+                        : string.Empty)
+                    + "<row r=\"69\"><c r=\"S69\"><v>400</v></c><c r=\"T69\"><v>220</v></c></row>"
+                    + "<row r=\"70\">"
+                    + "<c r=\"S70\" t=\"str\"><f>" + opens + "S69/" + over + "(" + range + ")" + shuts + "</f><v> </v></c>"
+                    + "<c r=\"T70\" t=\"str\"><f>" + opens + "T69/" + over + "(" + range + ")" + shuts + "</f><v> </v></c>"
+                    + "</row>"
+                    + "</sheetData></worksheet>");
+
+                Add(zip, "xl/worksheets/sheet3.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData>"
+                    + "<row r=\"5\"><c r=\"B5\"><v>0</v></c></row>"
                     + "</sheetData></worksheet>");
             }
 

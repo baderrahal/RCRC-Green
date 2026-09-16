@@ -199,6 +199,221 @@ prints no such section at all.**
 draw and at the press, so the pane holds no copy of it, which is the rule this file already
 carries.
 
+## A DIVISION BY A COUNT OVER A RANGE IS A DIVISION
+
+**The 16:37 glance said the formula check found no #DIV/0! anywhere in the press.** The FP-24 and
+SC-06 workbooks, recalculated, show one in Tree List - Existing S70 and one in T70, and 30 plots
+of that press hold every existing tree on rows 84 to 101.
+
+```
+S70   IF(TotTrees<1," ",S69/COUNT(B4:B83))
+T70   IF(TotTrees<1," ",T69/COUNT(B4:B83))
+```
+
+on all seven templates and on both tree list tabs. The check matched a division by ONE CELL only,
+so a division by a count over a RANGE was never looked at at all.
+
+**THE RANGE IS COUNTED OFF THE CELL STATES AFTER THE WRITE**, COUNT, COUNTA and SUM alike, and
+nought is a #DIV/0!. Nothing evaluates a formula: a cell of the range holding one has no value in
+this output, because the patcher drops every cached result on purpose.
+
+**AN IF AROUND THE DIVISION IS HONOURED.** `IF(TotTrees<1," ",...)` with `TotTrees` at nought
+never reaches the division, so a plot with no trees at all gets no line, which is right and is
+what would otherwise fire on every such plot. **`TotTrees` IS READ OFF THE FILE'S OWN NAMES**,
+and it is defined TWICE, at workbook level and again on Tree List - Proposed.
+
+**THE SAME NAME DEFINED TWICE MEANS TWO THINGS, AND THE SHEET THE FORMULA SITS ON SAYS WHICH.**
+`DefinedNames` kept the first definition BY NAME ALONE, so a `TotTrees` scoped to Tree List -
+Proposed could answer for a Tree List - Existing formula and hold a guard that is not held. It is
+keyed on the scope now, with `localSheetId` resolved off the workbook's own `<sheets>` order, and
+`TargetOf` prefers the sheet local definition then the workbook level one. That was a live fault
+found by building the shape rather than by a run.
+
+**A DIVISION THE CHECK CANNOT EVALUATE IS COUNTED AS NOT EVALUATED**, and the glance says how
+many, instead of saying none was found. `FormulaCheck.DivisionsNotEvaluated` carries them and a
+press that worked every one out says nothing about it, because a count of 0 in a sentence about
+what could not be done is a line the team reads past on every press.
+
+**IT STAYS A REPORT LINE AND NEVER STOPS A WRITE**, which is unchanged and is what the comment at
+the check already says. What is new is that it feeds READY, so a workbook that recalculates with
+one does not read as ready to send.
+
+## A ROW THAT COMPUTES A CANOPY PER TREE AND ADDS NONE
+
+**FP-18 has 2 Ziziphus spina-christi on Tree List - Existing row 83.** `L83` carries the canopy
+formula and **`M83` is empty** in the EXISTING PARKS and FUTURE PARKS templates. The PDF said
+2,631 m² greened and 67.68% canopy, the recalculated Excel 2,531 and 63.97%, and nothing warned.
+
+Measured on all seven templates, which answers the open question the ninetieth pass logged:
+
+```
+column M is Total Mature Canopy Area,  =IF(ISBLANK(B85)," ",L85*B85) on a complete row
+Tree List - Existing   M102 = SUM(M4:M101)
+Tree List - Proposed   M93  = SUM(M4:M92)
+the first tab's Canopy Area cell   = 'Tree List - Existing'!M102+'Tree List - Proposed'!M93
+   F8 on HEALTHCARE, MOSQUES, PARKING and SCHOOLS
+   F9 on EXISTING PARKS, FUTURE PARKS and STREETS
+```
+
+**A ROW HOLDING A COUNT MUST ALSO CARRY THE TOTAL CANOPY FORMULA**, in the column the canopy
+total adds. Where it does not, Total areas to be greened and the canopy percentage are left blank
+and the line names the cell.
+
+**NOTHING WRITES M, OR F8, OR F9.** `TotalCanopyColumns.In` follows the chain off the file: the
+green cover cell names the canopy cell, the canopy cell names the two totals, each total's own
+SUM range names the column and the rows. The canopy cell is the one of the green cover formula's
+three cells the template's map does not name as planting or as lawn, which is the rule
+`WorkbookArithmetic.GreenCoverCell` already uses, so the two cannot name two different canopies.
+
+**AN EMPTY ROW IS USABLE FOR A NEW SPECIES ONLY WHEN IT CARRIES BOTH FORMULAS.**
+`SpeciesList.UsableEmptyRows` asks the canopy column and the total canopy column, and a column
+that was NOT READ leaves every row usable rather than refusing them all, because a check that did
+not happen is an absence and not an answer.
+
+**The sheet's formulas are read ONCE per list.** Reading them per row is a sheet parse per row,
+and a tree list runs to 101 rows.
+
+## Every printed cell text resolves a shared string to its text
+
+**The canopy check line read `D99 holds 419 and no formula, E99 holds 122 and no formula`**, and
+D99 holds Prosopis Juliflora. A cell holding a shared string stores an INDEX and not the text,
+the formula reader kept the raw `<v>`, and the report printed a row of index numbers at the team.
+
+`WorkbookPackage.TextOf` with the package's own shared strings is the one reader, which
+`LabelledCells` and `SpeciesList` already ask, and `WorkbookFormulas.Check` reads the table once
+per file and passes it down. **A cell holding shared string 0 would have printed as a nought**,
+which is the same fault wearing a number a reader would believe.
+
+## TWO PLOTS, ONE FOLDER, AND THE LAST ONE WRITTEN REPLACED THE OTHERS
+
+**Measured on the 16:37 press of 16 September, NS-01 and NS-42 both carry PRX_Plot_UID2
+ANH-007-ST-100210, and MM-01 and MM-09 to MM-15 all carry ANH-007-ST-100213.** ONE WORKBOOK PER
+PLOT gives each group one path, so the last plot written replaced the others, THE PLOT LIST read
+YES for all ten, and each group took one street reference row, which is why MM-01 and MM-09 to
+MM-15 all read ROW 10 and length 0.06108. On the 16:06 press three more groups collided: DM-11
+with DM-21 and DM-29 on ANH-007-MO-100001, FM-05 with FM-08 and FM-09 on ANH-007-MO-100019, and
+EP-01 with EP-05, EP-11, EP-12 and EP-13 on ANH-007-NP-100015. **The empty DM-29 files replaced
+DM-11's.**
+
+**THE WHOLE TICKED SET IS CHECKED BEFORE THE FIRST FILE OF A PRESS IS WRITTEN.** That is the
+whole of the fix and it is a change to the SHAPE of `Create` rather than to any rule: the press
+read one template and wrote it before it read the next, so the first template's files had already
+landed when the second template's collision became knowable. `OneTemplate` is split into
+`ReadOneTemplate` and `WriteOneTemplate` with a `TemplateReading` between them, `Create` reads
+every ticked template, builds the filings, asks `SharedUid2.Of`, and only then writes. **Nothing
+about reading a plot changed**, its counted groups, its area rule, its held readings, its progress
+count and its area unit all still decided once per template.
+
+**THE FILE PATH IS WHAT COLLIDES, NOT THE VALUE.** Two plots carrying one UID2 in two different
+component folders are filed apart, so nothing overwrites anything and both are written, and they
+are still named. `SharedUid2Group.FiledApart` is that case.
+
+**THE PATH IS BUILT ONCE AND READ BY THE WRITE.** `PlotFilings.One` builds it for the press,
+which already knows each plot's template off the split, and `PlotFilings.Of` builds it for the
+pane, which asks `PlotsPerTemplate.For` because nothing has been read yet. Both reach
+`PlotWorkbookPath.For`, and `OnePlot` READS the path off the list rather than working one out, so
+a check reporting on a path the writer does not use cannot happen.
+
+**NO FILE IS WRITTEN FOR ANY PLOT IN SUCH A GROUP.** Writing one of them and refusing the rest
+would pick a plot nobody chose, and writing all of them is what happened. Each plot's row names
+the shared value, every other ticked plot holding it, and the one path they would all land on.
+
+**FILES ALREADY IN THAT FOLDER FROM AN EARLIER PRESS ARE NAMED AND LEFT WHERE THEY ARE**, the
+same rule the crash row already follows. Deleting them destroys the evidence and the team's own
+earlier work, and saying nothing about them leaves somebody opening a folder tree.
+
+**AND THE GROUPS ARE NAMED BEFORE THE PRESS.** The pane owns the read already:
+`ReferenceValuesPerPlot` carries all four plot parameters for every plot off the same first sheet
+the component comes from, so no second read is made and no second record of a plot's UID2 exists.
+`KpiPanel.Uid2On` is the one lookup.
+
+**A PLOT WITH NO PRX_Plot_UID2 IS LEFT OUT of the grouping**, because a plot with none is refused
+by its own path already and an empty value shared by five plots is not one value.
+
+## READY is the question the team is actually asking
+
+**ALL 154 ROWS OF THE PLOT LIST READ YES ON THE 16:37 PRESS**, four columns of YES with an empty
+why not, and Bader had the ready list worked out by hand at 33. Among those 154 rows were the 7
+plots whose workbooks had replaced each other, the 41 whose PDF Total areas to be greened came
+out blank, FP-18 whose PDF and Excel disagree about the canopy, and the plots whose workbooks
+divide by nought.
+
+**EACH OF THE FOUR COLUMNS ANSWERS A TRUE AND NARROW QUESTION AND NONE OF THEM IS THE ONE THE
+TEAM IS ASKING**, which is whether a plot can go to the client. `PlotReady` is that question, in
+a READY column after PDF, and five things decide it:
+
+```
+both files were written
+no tree was written nowhere
+no PDF box that HAS A SOURCE was left blank
+the plot's PRX_Plot_UID2 is its own
+the workbook check found no #DIV/0!
+```
+
+**A BOX THIS TOOL HAS NO SOURCE FOR DOES NOT COUNT AGAINST READY.** The forms carry sidewalks,
+kiosks, bridges and water tanks, none of which is in the table, and a plot held back over a box
+nothing was ever going to fill is a column the team learns to read past. Only the fields
+`PdfForms` names can reach `PdfOutcome.Blank`, so nothing here holds a second list of which ones
+those are.
+
+**THE SHARED VALUE IS THE WHOLE REASON WHERE IT FIRES**, and the absent workbook and the absent
+PDF under it are not said again. A row naming three consequences of one cause reads as three
+faults.
+
+**WHY NOT NAMES EVERY REASON**, short, each with its box or its cell, joined with a full stop. A
+row short of the second reads exactly like a plot that had one, which is the rule this report
+already follows everywhere else.
+
+**A fourth count goes under the three**, `ready:`, and the glance carries `ready N of M`. **A
+press with no plot list file set says so** rather than counting nought of nought, because ready
+is a question about the team's list rather than about the model.
+
+**`KpiCreateReport.WhyNotOnTheList` IS DELETED and it is the second reason a thing gets deleted.**
+Its whole shape is `PlotReady.For`'s reason list now, one branch at a time, and the SHAPE is gone
+rather than its last caller. **`KpiCreateReport.NoSoftscapeOnTheList` is kept and has no
+production caller**, named here the way the six uncalled members already are: a plot on no
+softscape schedule has all three of its tree boxes blank with `PdfFill.NoSoftscapeRead` as the
+reason, so READY already names it three times over and a fourth line would be a fourth record.
+
+## THE PLOTS WITH NO PLANTING AT ALL are named, and their noughts are right
+
+**MM-01, MM-06, MM-07 and NS-23 read 0 in every tree, shrub, lawn, water and green cover box on
+the 16:37 press**, because both of their schedules printed their heading and no rows. Writing 0
+there is Bader's decision of 15 September and it stands: a schedule that was read and printed
+nothing really does hold nothing.
+
+**What was missing is the line that separates those four from a plot whose numbers happen to be
+small.** A workbook of noughts and a workbook of noughts because the model holds no planting look
+identical in a folder, and only one of them is a question for the team.
+
+**THE BODY ROW COUNT IS THE SUBJECT**, `ScannedSchedule.BodyRowCount`, which is the same reading
+`Reconciliation.SchedulesWithABody` already counts. **A PLOT MISSING A SCHEDULE IS NOT THIS**: it
+is already named by its own refusal and by the PDF's reason, and calling it a plot with no
+planting would say something about the model that nothing measured.
+
+**IT DOES NOT MOVE READY.** The files were written, every box has its number, and nothing about
+them is wrong. The plots are named rather than counted, because four plots to go and look at is a
+list and a count of four is a number.
+
+## A ticked plot the list does not name is work nobody asked for
+
+**THE 16:06 PRESS TICKED 166 PLOTS AGAINST A LIST OF 154.** The twelve extra plots were read,
+written and filed, three of that press's five shared value collisions came from them, and neither
+the pane nor THE PLOT LIST said they were ticked.
+
+`TickingTheList.TickedAndNotOnTheList` is the rule and it is the OTHER DIRECTION from
+`NotOnTheList`, which is about the MODEL. A plot the model holds and the list does not is
+ordinary and is already a block of its own. A plot somebody TICKED that the list does not hold is
+work nobody asked for.
+
+It is a line per plot above Create and a block `TICKED AND NOT ON THE LIST` at the foot of THE
+PLOT LIST, naming each plot with the workbook and the PDF really written for it. **The ticks are
+compared the way the pane compares them**, `StringComparer.Ordinal`, which is what `PlotTicks` and
+`PlotsInTheModel.Holds` use.
+
+**Pressing Tick the list last is what keeps it at nought**, because ticking a workbook row ticks
+every plot that belongs to it, which is the rule that put the twelve there.
+
 ## The street reference file fills the two cells STREETS types by hand
 
 `StreetReferenceFile` reads the team's Scope_Validation workbook, browsed for and remembered

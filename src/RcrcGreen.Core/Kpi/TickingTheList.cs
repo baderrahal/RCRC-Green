@@ -55,6 +55,35 @@ namespace RcrcGreen.Core.Kpi
             return plots.All.Where(one => !listed.Contains(one)).ToList();
         }
 
+        /// <summary>
+        /// Every TICKED plot the list does not name, in the order the ticks came.
+        ///
+        /// **THE 16:06 PRESS TICKED 166 PLOTS AGAINST A LIST OF 154.** The twelve extra plots
+        /// were read, written and filed, three of that press's five shared value collisions came
+        /// from them, and neither the pane nor THE PLOT LIST said a word about any of it. This is
+        /// the other direction from <see cref="NotOnTheList"/>, which is about the MODEL: a plot
+        /// the model holds and the list does not is ordinary, and a plot somebody TICKED that the
+        /// list does not hold is work nobody asked for.
+        /// </summary>
+        public static IReadOnlyList<string> TickedAndNotOnTheList(
+            IEnumerable<string> ticked, PlotListRead list)
+        {
+            if (list == null || !list.Read) return new List<string>();
+
+            var listed = new HashSet<string>(list.Plots, StringComparer.Ordinal);
+
+            return (ticked ?? Enumerable.Empty<string>())
+                .Where(one => !string.IsNullOrWhiteSpace(one))
+                .Where(one => !listed.Contains(one))
+                .ToList();
+        }
+
+        public static string TickedAndNotOnTheListInWords(string plotId)
+        {
+            return plotId + " is ticked and is not on the list, so this press will write a "
+                + "workbook and a PDF for a plot the team did not ask for.";
+        }
+
         public const string Heading = "The plot list:";
 
         /// <summary>
@@ -71,7 +100,8 @@ namespace RcrcGreen.Core.Kpi
         /// nothing is one the team reads past on every other press.
         /// </summary>
         public static IReadOnlyList<string> Lines(
-            PlotListRead list, PlotsInTheModel plots, Func<string, string> componentOf)
+            PlotListRead list, PlotsInTheModel plots, Func<string, string> componentOf,
+            IEnumerable<string> ticked = null)
         {
             var said = new List<string>();
             if (list == null || !list.Set) return said;
@@ -99,6 +129,14 @@ namespace RcrcGreen.Core.Kpi
 
                 string why = WouldWriteNothing(one, componentOf);
                 if (why.Length > 0) said.Add("  " + why);
+            }
+
+            // **A TICKED PLOT THE LIST DOES NOT NAME IS NAMED HERE TOO.** The lines above are
+            // every way a listed plot can fall out, and the 16:06 press showed the other
+            // direction costs just as much: twelve plots written that nobody asked for.
+            foreach (string one in TickedAndNotOnTheList(ticked, list))
+            {
+                said.Add("  " + TickedAndNotOnTheListInWords(one));
             }
 
             // Nothing wrong with the list at all is the one line worth keeping, because it says

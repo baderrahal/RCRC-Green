@@ -208,6 +208,41 @@ namespace RcrcGreen.Core.Kpi
                 Bare(text), Bare(CanopyColumn(diameterColumn, row)), StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// **THE TOTAL CANOPY COLUMN AS THE WORKBOOK STORES IT**, measured by Bader on all seven
+        /// templates on 16 September: column M is Total Mature Canopy Area and a complete row
+        /// reads `=IF(ISBLANK(B85)," ",L85*B85)`, the canopy per tree multiplied by the count.
+        ///
+        /// **NEITHER COLUMN IS WRITTEN IN.** The canopy column comes off the sheet's own rows and
+        /// the quantity column is the one every count already goes into, so the caller hands both
+        /// in, the same rule <see cref="CanopyColumn"/> already follows for the diameter.
+        /// </summary>
+        public static string TotalCanopyColumn(string canopyColumn, string quantityColumn, int row)
+        {
+            string number = row.ToString(CultureInfo.InvariantCulture);
+            string count = (quantityColumn ?? string.Empty) + number;
+
+            return "IF(ISBLANK(" + count + "),\" \"," + (canopyColumn ?? string.Empty) + number + "*" + count + ")";
+        }
+
+        /// <summary>
+        /// Whether one formula IS the total canopy formula for its own row. **One rule, asked by
+        /// the guard that checks a written row and by the reader that decides whether an empty
+        /// row may be written into at all**, the same shape
+        /// <see cref="IsTheCanopyFormula"/> already holds.
+        /// </summary>
+        public static bool IsTheTotalCanopyFormula(
+            string text, string canopyColumn, string quantityColumn, int row)
+        {
+            if (string.IsNullOrWhiteSpace(canopyColumn) || string.IsNullOrWhiteSpace(quantityColumn)) return false;
+            if (row < 1) return false;
+
+            return string.Equals(
+                Bare(text),
+                Bare(TotalCanopyColumn(canopyColumn, quantityColumn, row)),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
         public const string NoWorkbookRead =
             "no workbook was read, so the canopy column could not be checked";
 
@@ -223,7 +258,7 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static ArithmeticCheck Canopy(
             FormulaCheck formulas, CanopyTotal canopy, IDictionary<string, string> diameterColumns,
-            string workbookName = null)
+            string workbookName = null, IEnumerable<TotalCanopyColumn> totalCanopy = null)
         {
             if (formulas == null || !formulas.WasChecked) return ArithmeticCheck.NotChecked(NoWorkbookRead);
             if (canopy == null || canopy.Rows.Count == 0) return ArithmeticCheck.WithNothingToCheck(NoRowsWritten);
@@ -253,6 +288,18 @@ namespace RcrcGreen.Core.Kpi
 
                 if (found != null)
                 {
+                    // **AND THE ROW HAS TO ADD ITS CANOPY AS WELL AS COMPUTE IT.** FP-18's
+                    // Tree List - Existing row 83 carries L83 and no M83 on both park templates,
+                    // so its 2 Ziziphus spina-christi computed a canopy per tree that the
+                    // canopy total never added, and the PDF went out 100 m2 over the workbook.
+                    string missing = WhyTheTotalIsNotAdded(
+                        formulas, totalCanopy, row, CellRef.Parse(found.Cell).Column);
+                    if (missing.Length > 0)
+                    {
+                        differ.Add(Of(row, workbookName) + ": " + missing);
+                        continue;
+                    }
+
                     read.Add(found.SheetName + " " + found.Cell + " = " + found.Text
                         + ", " + row.Whose);
                     continue;
@@ -482,6 +529,60 @@ namespace RcrcGreen.Core.Kpi
         /// it spaced read as one text. The one string literal in it is a single space on both
         /// sides of the comparison, so it comes out of both alike.
         /// </summary>
+        /// <summary>
+        /// Why this row's canopy never reaches the canopy TOTAL, or empty where it does.
+        ///
+        /// **WHERE NOTHING READ THE TEMPLATE'S CANOPY TOTAL, NOTHING IS CHECKED AND NOTHING IS
+        /// REFUSED.** The column is read off a chain through the file, and a template whose chain
+        /// could not be followed is a template this check cannot make, not a template that fails
+        /// it. The refusal names the chain's own reason instead.
+        /// </summary>
+        private static string WhyTheTotalIsNotAdded(
+            FormulaCheck formulas,
+            IEnumerable<TotalCanopyColumn> totalCanopy,
+            CanopyRow row,
+            string canopyColumn)
+        {
+            if (totalCanopy == null) return string.Empty;
+
+            TotalCanopyColumn column = TotalCanopyColumns.For(totalCanopy, row.SheetName);
+            if (!column.Found) return string.Empty;
+
+            if (!column.Adds(row.RowNumber))
+            {
+                return "the canopy total " + column.TotalCell + " adds rows "
+                    + column.FirstRow.ToString(CultureInfo.InvariantCulture) + " to "
+                    + column.LastRow.ToString(CultureInfo.InvariantCulture)
+                    + " and not this one, so this row's canopy reaches no total";
+            }
+
+            string cell = column.Column + row.RowNumber.ToString(CultureInfo.InvariantCulture);
+
+            FormulaCell adds = formulas.AllFormulas.FirstOrDefault(one =>
+                string.Equals(one.SheetName, row.SheetName, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(one.Cell, cell, StringComparison.OrdinalIgnoreCase));
+
+            if (adds != null
+                && IsTheTotalCanopyFormula(adds.Text, canopyColumn, KpiTemplates.QuantityColumn, row.RowNumber))
+            {
+                return string.Empty;
+            }
+
+            TypedCell typed = formulas.TypedCells.FirstOrDefault(one =>
+                string.Equals(one.SheetName, row.SheetName, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(one.Cell, cell, StringComparison.OrdinalIgnoreCase));
+
+            return cell + " does not carry "
+                + TotalCanopyColumn(canopyColumn, KpiTemplates.QuantityColumn, row.RowNumber)
+                + ", which is the column the canopy total " + column.TotalCell + " adds, so this "
+                + "row computes a canopy per tree and adds none. "
+                + (adds != null
+                    ? cell + " holds " + adds.Text + "."
+                    : typed != null
+                        ? cell + " holds " + typed.Text + " and no formula."
+                        : cell + " is empty.");
+        }
+
         /// <summary>
         /// **THE ONE CELL THAT WOULD HAVE CARRIED THE CANOPY, NAMED.** Which column that is, is
         /// read off the sheet's OWN other rows: the column a canopy formula really sits in

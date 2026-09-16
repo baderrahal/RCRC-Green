@@ -1044,11 +1044,40 @@ namespace RcrcGreen.Revit.Kpi
             foreach (string line in TickingTheList.Lines(
                 PlotListFile.In(PlotListFileSetting.Read()),
                 _facts == null ? null : _facts.Plots,
-                ComponentOn))
+                ComponentOn,
+                _ticks.Ticked))
             {
                 _templates.Children.Add(line.StartsWith("  ", StringComparison.Ordinal)
                     ? Warned(line)
                     : Noted(line));
+            }
+
+            // **TWO TICKED PLOTS SHARING ONE PRX_Plot_UID2 FILE AT ONE PATH.** On the 16:37 press
+            // ten plots did, in two groups, the last one written replaced the others and every
+            // row of THE PLOT LIST read YES. It is said HERE, before the press, because twenty
+            // minutes that end in a report naming the replaced files is twenty minutes spent.
+            //
+            // **The pane owns this read already.** `ReferenceValuesPerPlot` carries all four plot
+            // parameters for every plot off the same first sheet the component comes from, so no
+            // second read is made and no second record of a plot's UID2 exists.
+            foreach (SharedUid2Group group in SharedUid2.Of(PlotFilings.Of(
+                OutputFolder.Read(), _ticks.Ticked, ComponentOn, Uid2On)))
+            {
+                // Every plot of the group gets its own line, stopped or filed apart, because a
+                // group can hold two plots colliding with each other and a third filed somewhere
+                // else. The refusal is red and the filed apart note is not.
+                foreach (PlotFiling filed in group.Plots)
+                {
+                    bool stopped = SharedUid2.Stops(new[] { group }, filed.PlotId);
+
+                    string said = stopped
+                        ? SharedUid2.WhyStopped(new[] { group }, filed.PlotId)
+                        : SharedUid2.FiledApartFrom(new[] { group }, filed.PlotId);
+
+                    _templates.Children.Add(stopped
+                        ? Warned("   " + filed.PlotId + ": " + said)
+                        : Noted("   " + filed.PlotId + ": " + said));
+                }
             }
 
             // After the press, each row says what happened to it. Never one line for the run
@@ -1285,6 +1314,21 @@ namespace RcrcGreen.Revit.Kpi
         private string ComponentOn(string plotId)
         {
             return _facts == null ? string.Empty : _facts.ComponentOn(plotId);
+        }
+
+        /// <summary>
+        /// This plot's PRX_Plot_UID2, off the same per plot read the reference block already
+        /// draws from. **It is the name of the plot's folder and of its file**, so two ticked
+        /// plots holding one value write at one path.
+        /// </summary>
+        private string Uid2On(string plotId)
+        {
+            if (_facts == null) return string.Empty;
+
+            PlotParameterValue held = _facts.ReferenceValuesOn(plotId)
+                .FirstOrDefault(one => string.Equals(one.Name, KpiNames.PlotUid2, StringComparison.Ordinal));
+
+            return held == null ? string.Empty : held.Value;
         }
 
         /// <summary>

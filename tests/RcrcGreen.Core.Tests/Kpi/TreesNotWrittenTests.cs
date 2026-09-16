@@ -142,9 +142,11 @@ namespace RcrcGreen.Core.Tests.Kpi
 
                 string report = KpiCreateReport.WriteAll(set, When);
 
-                Assert.Contains("FP-17 | YES | YES | YES | NO | 36 AZADIRACHTA INDICA |", report);
-                Assert.Contains("FP-20 | YES | YES | YES | NO | 5 AZADIRACHTA INDICA |", report);
-                Assert.Contains("FP-21 | YES | YES | YES | NO | 25 AZADIRACHTA INDICA |", report);
+                // **READY READS NO ON ALL THREE AND THE TREES ARE WHY.** Their workbooks were
+                // written, and a workbook 36 trees short is not a file anybody should send.
+                Assert.Contains("FP-17 | YES | YES | YES | NO | NO | 36 AZADIRACHTA INDICA |", report);
+                Assert.Contains("FP-20 | YES | YES | YES | NO | NO | 5 AZADIRACHTA INDICA |", report);
+                Assert.Contains("FP-21 | YES | YES | YES | NO | NO | 25 AZADIRACHTA INDICA |", report);
 
                 Assert.Contains(
                     "THE TREES WRITTEN NOWHERE: 66 trees on 3 plots were written nowhere, so "

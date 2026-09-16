@@ -225,10 +225,12 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<PlotOutcome> plotOutcomes = null,
             StreetReferenceFile streets = null,
             PlotsInTheModel plots = null,
-            PlotListRead plotList = null)
+            PlotListRead plotList = null,
+            IReadOnlyList<SharedUid2Group> sharing = null)
         {
             if (split == null) throw new ArgumentNullException("split");
 
+            Sharing = sharing ?? new List<SharedUid2Group>();
             PlotList = plotList ?? PlotListRead.NotSet;
 
             DocumentTitle = documentTitle ?? string.Empty;
@@ -240,6 +242,18 @@ namespace RcrcGreen.Core.Kpi
             Streets = streets ?? StreetReferenceFile.NotSet;
             Plots = plots;
         }
+
+        /// <summary>
+        /// **EVERY PRX_Plot_UID2 TWO OR MORE TICKED PLOTS CARRIED**, worked out over the WHOLE
+        /// ticked set before the first file of the press was written. Empty on a press where
+        /// every ticked plot's value is its own.
+        ///
+        /// It is on the set rather than on a run because a run is one template and the collision
+        /// is between plots of any template, which is exactly what made it invisible: the press
+        /// reads and writes one template before it reads the next, so the first template's files
+        /// had already landed when the second's collision became knowable.
+        /// </summary>
+        public IReadOnlyList<SharedUid2Group> Sharing { get; }
 
         /// <summary>
         /// Every plot the model names, read off the live document when Create was pressed, or
