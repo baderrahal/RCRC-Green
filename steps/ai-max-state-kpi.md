@@ -28,11 +28,22 @@ Bader's line for this round covered those two lines only. **The csproj change is
 comment**, asked of msbuild rather than eyeballed: the project still answers `netstandard2.0`,
 `LangVersion` 12.0 and `AssemblyName` RcrcGreen.Core.
 
-**TWO REQUESTS FOR BADER**, both in files this task may not edit. `install/install.ps1:57` and
+**THE CLAIM CHECKER HAD NO SHELL AND SAID SO**, so it could run none of the builds, tests or
+`git diff`. It found one real fault, in the entry rather than in the change: the entry claimed
+step 7 kept its lead sentence, and the diff says the heading and half that sentence moved and
+only the number stayed. It sharpened one more, that the test project's C# 14 is the SDK's default
+and is declared in no file, and it flagged an empty heading left as a placeholder. Every
+measurement it could not reproduce was re-run here at this commit rather than waved through.
+
+**THREE REQUESTS FOR BADER**, all in files this task may not edit. `install/install.ps1:57` and
 `:63` still say `Build RcrcGreen.sln in $Configuration first.` and now name a build the sheet no
 longer asks for. `RcrcGreen.Core.csproj:8-9` says the test project gets C# 12, and it resolves to
 14.0 on net10.0 while Core is pinned to 12.0 by line 10, so the comment's point holds and only
-the number is stale.
+the number is stale. **And eight other run sheets in `steps/` carry the same solution build line
+this round fixed**, named with their line numbers in the log and deliberately not changed, since
+several are the record of a run that already happened and `run-drawing.md` is another task's.
+`.github/workflows/tests.yml:51` builds the solution and is RIGHT, because the gate installs
+`10.0.x` at `:45`.
 
 ---
 
