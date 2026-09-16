@@ -4,6 +4,181 @@ Newest entry first.
 
 ---
 
+## 2026-09-16, ninety fourth pass. Every other place that still built the solution
+
+**Nothing the tool does changed**, and nothing under `src/` changed but one comment, so the
+counts are the ninety third pass's and stand unmoved: **2139 tests, 1319 of them KPI**, 28 hook
+cases, build zero warnings. **80 audit findings, 23 FIXED, 57 open**, untouched, with nothing
+closed, renumbered or reordered.
+
+**NOTHING HERE WAS RUN IN REVIT**, by this session or by anybody.
+
+The ninety third pass moved one run sheet's build step off `RcrcGreen.sln`, because the solution
+holds `tests/RcrcGreen.Core.Tests` on `net10.0` and a PC with no .NET 10 SDK cannot build it.
+That round then listed everywhere else still saying otherwise and left them for Bader. This is
+those places.
+
+### The install script's two refusals
+
+`install/install.ps1:57` and `:63` both ended `Build RcrcGreen.sln in $Configuration first.`,
+which is the script's own answer when its output folder is missing or short of a file. **They
+sent a person straight at the build that fails.** Both name
+`src\RcrcGreen.Revit\RcrcGreen.Revit.csproj` now, with the same `$Configuration`, and nothing
+else in the script moved.
+
+**WHETHER IT STILL PARSES IS UNKNOWN AND IT IS UNKNOWN FOR A REASON.** Neither `pwsh` nor
+`powershell` is on this machine, both checked with `command -v` and both NOT FOUND, so
+PowerShell's own parser could not be asked. **Writing a second parser here to answer would be
+two records of one fact**, which is the shape this repo keeps paying for, so the question is left
+open rather than answered by something that is not PowerShell. What IS backed is the diff: the
+change sits inside the two double-quoted strings, one sentence swapped, and `$BuildOutput`,
+`$Configuration` and `$($missing -join ', ')` are all untouched.
+
+### The eight older run sheets
+
+Each built the whole solution. Each now builds the add-in project, keeping the `-c Release` each
+already used, and each step keeps its number and its one action:
+
+```
+steps/2026-09-13-colour-box.md:37     steps/kpi-create.md:28
+steps/2026-09-13-view-filters.md:36   steps/kpi-scan-2.md:28
+steps/2026-09-15-kpi-fixes.md:40      steps/kpi-templates.md:28
+steps/2026-09-15-kpi-rerun.md:69      steps/run-drawing.md:30
+```
+
+**ALL EIGHT STEP TITLES MOVED, AND SIX OF THEM SAID SOLUTION.** Counted off
+`git diff 3467af6 HEAD -- steps/` rather than off memory. The six were `Build the solution`,
+`Build the solution in Release` and `Build the whole solution in Release`, each sitting over a
+command that now builds one project. The other two read `Build it in Release` and named nothing,
+so they moved for the same reason step 7 of the 16 September sheet did: a title that does not say
+what the command builds is the next reader's guess.
+**No sheet of the eight names Visual Studio anywhere**, checked with a grep over all eight before
+anything was changed, so the line item 2 allows for that case had nothing to act on.
+
+**`steps/` IS COMMON GROUND, so `run-drawing.md` and `2026-09-13-view-filters.md` are in scope
+even though the tools they drive are not this task's.** `.claude/rules/territory.md` puts the
+fence around `src/` and `tests/` per task and names `steps/` among the common files a commit may
+carry beside one task's work. Said here because a KPI round editing the Drawing Sheet's own run
+sheet is worth somebody being able to check rather than discover.
+
+### Where this round departed from its own instruction, and why
+
+The round asked for the added sentence in the same words as step 7 of
+`steps/2026-09-16-kpi-checks.md`, which ends `so this PC does not need the .NET 10 SDK at all`.
+**Measured before writing it: six of the eight sheets run `dotnet test` on the test project one
+step ABOVE the build**, and that command fails the same way the solution build does, exit 1 with
+`error NETSDK1045`, which was run here rather than reasoned:
+
+```
+steps/2026-09-13-colour-box.md:29    steps/kpi-scan-2.md:20
+steps/2026-09-13-view-filters.md:28  steps/kpi-templates.md:20
+steps/kpi-create.md:20               steps/run-drawing.md:22
+```
+
+So step 7's sentence is true in step 7, where no local test run is asked for, and **false in
+those six**. It is written with one word changed, `this build` rather than `this PC`, and a
+second sentence naming the test step above as the thing that does still want the SDK. **A run
+sheet carrying a line its own step above disproves is the fault this repo's front door already
+names**, so the alternative was writing something measured to be wrong.
+
+**AND THE OTHER TWO SHEETS TOOK THE ORIGINAL WORDING, BECAUSE IN THEM IT IS TRUE.**
+`steps/2026-09-15-kpi-fixes.md` and `steps/2026-09-15-kpi-rerun.md` ask for no test run at all,
+grepped for and found to hold no `dotnet test` line other than the one this round added. The
+first draft of this round put the six sheets' clause into those two as well, which would have
+sent a reader looking for a step above that is not there. It was caught by grepping for the test
+step rather than assuming all eight had one.
+
+### CLAUDE.md's own build line
+
+`CLAUDE.md:37` said to build `RcrcGreen.sln` in Visual Studio 2026 and then run the install
+script. It says to build `src\RcrcGreen.Revit\RcrcGreen.Revit.csproj` in Release and then run
+`.\install\install.ps1`, and it says the solution also holds `tests/RcrcGreen.Core.Tests`, which
+needs the .NET 10 SDK, so the solution build is the gate's rather than an install's. Nothing else
+in the file moved.
+
+### The stale C# number in Core
+
+`src/RcrcGreen.Core/RcrcGreen.Core.csproj:8-9` said the test project that consumes Core gets
+C# 12. **Read off the SDK here rather than assumed**, through
+`dotnet msbuild tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj -getProperty:LangVersion`
+on SDK `10.0.401`: it answers **14.0** against `TargetFramework` `net10.0`. The comment says 14
+now, and says that 14 is the SDK's own default and that the test project declares no
+`LangVersion` of its own, which is why it moved when the target did and why the number went stale
+with nobody editing the file.
+
+**COMMENT ONLY, AND MSBUILD STILL ANSWERS THE SAME THREE THINGS**, asked after the edit:
+`TargetFramework` netstandard2.0, `LangVersion` 12.0 and `AssemblyName` RcrcGreen.Core. The
+solution builds with zero warnings and the suite passes 2139.
+
+### What is left anywhere in the repo
+
+Swept for after the edits rather than assumed. Three places still name a solution build and
+**every one of them is correct as it stands**:
+
+```
+.github/workflows/tests.yml:51   the gate, which installs 10.0.x at :45, so the test project
+                                 is exactly what it is there to build and run
+steps/audit.md:107               an audit finding describing that workflow line, a record, and
+                                 a DIFFERENT file from the four the 80 is counted off
+steps/2026-09-16-kpi-checks.md:95  the sentence saying why step 7 used to
+```
+
+**No live instruction to a person now points at a build that needs an SDK they may not have**,
+except the six test steps named above.
+
+### Requests for Bader
+
+- **THE SIX LOCAL TEST STEPS ARE THE SAME FAULT ONE STEP UP**, at the lines listed above. Each
+  tells a reader to run `dotnet test` on a `net10.0` project, which stops with `NETSDK1045`
+  without the SDK. This round was given the build lines, so the test lines are untouched and the
+  six sheets say plainly which step wants it. Whether those steps should go, or say the SDK is
+  needed for them, or point at the gate instead, is a decision rather than a correction, and it
+  is the natural next round
+- **`steps/2026-09-13-colour-box.md:32`, `2026-09-13-view-filters.md:31` and `run-drawing.md:25`
+  each name a test count off main as it was**, 1578, 1569 and 1103 against today's 2139. They are
+  records of what those runs carried, so they are left, and they are named here because a reader
+  following one of those sheets today will see a number that no longer matches
+
+### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` read this entry before the pull request was
+opened. **It found nothing wrong in what it could check**, and it could not check six things,
+because its tool set was Read, Grep and Glob with no shell. It said so at the top of its report
+rather than answering anyway, and it named the six.
+
+**IT DID CATCH ONE THING BY NOT BEING ABLE TO SEE THE DIFF, WHICH IS WORTH MORE THAN THE SIX.**
+It reported that none of the eight sheets holds the word solution anywhere today, and called that
+corroboration rather than proof, since it could not run `git diff`. Run here: **all EIGHT step
+titles moved, not six.** The entry said six, which is true of the ones that said solution and
+silent about the two that read `Build it in Release`. The paragraph above says eight now and says
+which six were which.
+
+**And it drew a distinction this entry was loose about.** The 80 findings come off the four
+`audit-kpi*.md` files, and `steps/audit.md`, cited further up for its line 107, is a separate
+file with its own findings that are no part of that count. The sweep table says so now.
+
+**THE SIX IT COULD NOT RUN WERE ALL RE-RUN HERE AT THIS COMMIT.**
+
+```
+dotnet test on the system SDK 8.0.130      exit 1, error NETSDK1045 naming .NET 10.0
+command -v pwsh and powershell             both NOT FOUND, so the parse check stays UNKNOWN
+dotnet --version with the .NET 10 SDK      10.0.401
+the test project through msbuild           TargetFramework net10.0, LangVersion 14.0
+Core through msbuild after the edit        netstandard2.0, LangVersion 12.0, RcrcGreen.Core
+the solution build                         0 Warning(s), 0 Error(s)
+the suite and the KPI filter               2139 passed, 1319 passed
+bash .claude/hooks/hook-tests.sh           28 passed, 0 failed
+```
+
+**Everything else it checked came back backed**, every one of the eight build lines, the six test
+steps, the three stale counts, `install.ps1:57` and `:63` with their interpolations intact,
+`CLAUDE.md:37`, the csproj comment, the two workflow lines, `steps/audit.md:107` and
+`steps/2026-09-16-kpi-checks.md:95`. It also recounted the audit files by hand, including the
+known false positive in `audit-kpi-4.md`, and got 29, 20, 14 and 17 findings against 8, 9, 2 and
+4 FIXED marks, which is the 80, 23 and 57 this entry opens with.
+
+---
+
 ## 2026-09-16, ninety third pass. The build step in the run sheet, and two stale lines
 
 **Merged to main as `31b4d3d`**, pull request 154, squashed with both message fields passed on the

@@ -22,13 +22,17 @@ action per step.
 
    Every test passes or you stop here and say so.
 
-6. Build the whole solution in Release:
+6. Build the add-in in Release, which builds Core with it:
 
    ```
-   dotnet build RcrcGreen.sln -c Release
+   dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
    ```
 
    0 warnings and 0 errors, or you stop here and say so.
+
+   The tests run on the GitHub test gate, on .NET 10, so this build does not need the .NET 10
+   SDK. The test step above this one does, because `tests/RcrcGreen.Core.Tests` targets .NET 10
+   and `dotnet test` on it stops with `error NETSDK1045` without that SDK.
 
 7. Close Revit 2024 if it is open, because Windows will not replace a loaded assembly.
 8. Install:

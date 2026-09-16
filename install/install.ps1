@@ -54,13 +54,13 @@ $manifestName = 'RcrcGreen.addin'
 $assemblyNames = @('RcrcGreen.Revit.dll', 'RcrcGreen.Core.dll')
 
 if (-not (Test-Path -LiteralPath $BuildOutput)) {
-    throw "Nothing to install. $BuildOutput does not exist. Build RcrcGreen.sln in $Configuration first."
+    throw "Nothing to install. $BuildOutput does not exist. Build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj in $Configuration first."
 }
 
 $wanted = @($manifestName) + $assemblyNames
 $missing = $wanted | Where-Object { -not (Test-Path -LiteralPath (Join-Path $BuildOutput $_)) }
 if ($missing) {
-    throw "Nothing to install. $BuildOutput is missing $($missing -join ', '). Build RcrcGreen.sln in $Configuration first."
+    throw "Nothing to install. $BuildOutput is missing $($missing -join ', '). Build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj in $Configuration first."
 }
 
 $addinsFolder = Join-Path $env:APPDATA 'Autodesk\Revit\Addins\2024'

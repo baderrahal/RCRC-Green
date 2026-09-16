@@ -30,13 +30,17 @@ dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
 
    Every test passes or you stop here and say so. Main carries 1569.
 
-6. Build the solution:
+6. Build the add-in, which builds Core with it:
 
 ```
-dotnet build RcrcGreen.sln -c Release
+dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
 ```
 
    0 warnings and 0 errors.
+
+   The tests run on the GitHub test gate, on .NET 10, so this build does not need the .NET 10
+   SDK. The test step above this one does, because `tests/RcrcGreen.Core.Tests` targets .NET 10
+   and `dotnet test` on it stops with `error NETSDK1045` without that SDK.
 
 7. Install, which copies the DLLs, the addin file and ViewFilters.json into the Revit 2024
    add-ins folder:
