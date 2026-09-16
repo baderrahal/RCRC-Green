@@ -46,8 +46,12 @@ steps/2026-09-15-kpi-fixes.md:40      steps/kpi-templates.md:28
 steps/2026-09-15-kpi-rerun.md:69      steps/run-drawing.md:30
 ```
 
-**SIX STEP TITLES SAID SOLUTION OVER A COMMAND THAT NOW BUILDS ONE PROJECT** and moved with it,
-`Build the solution`, `Build the solution in Release` and `Build the whole solution in Release`.
+**ALL EIGHT STEP TITLES MOVED, AND SIX OF THEM SAID SOLUTION.** Counted off
+`git diff 3467af6 HEAD -- steps/` rather than off memory. The six were `Build the solution`,
+`Build the solution in Release` and `Build the whole solution in Release`, each sitting over a
+command that now builds one project. The other two read `Build it in Release` and named nothing,
+so they moved for the same reason step 7 of the 16 September sheet did: a title that does not say
+what the command builds is the next reader's guess.
 **No sheet of the eight names Visual Studio anywhere**, checked with a grep over all eight before
 anything was changed, so the line item 2 allows for that case had nothing to act on.
 
@@ -114,7 +118,8 @@ Swept for after the edits rather than assumed. Three places still name a solutio
 ```
 .github/workflows/tests.yml:51   the gate, which installs 10.0.x at :45, so the test project
                                  is exactly what it is there to build and run
-steps/audit.md:107               an audit finding describing that workflow line, a record
+steps/audit.md:107               an audit finding describing that workflow line, a record, and
+                                 a DIFFERENT file from the four the 80 is counted off
 steps/2026-09-16-kpi-checks.md:95  the sentence saying why step 7 used to
 ```
 
@@ -135,6 +140,42 @@ except the six test steps named above.
   following one of those sheets today will see a number that no longer matches
 
 ### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` read this entry before the pull request was
+opened. **It found nothing wrong in what it could check**, and it could not check six things,
+because its tool set was Read, Grep and Glob with no shell. It said so at the top of its report
+rather than answering anyway, and it named the six.
+
+**IT DID CATCH ONE THING BY NOT BEING ABLE TO SEE THE DIFF, WHICH IS WORTH MORE THAN THE SIX.**
+It reported that none of the eight sheets holds the word solution anywhere today, and called that
+corroboration rather than proof, since it could not run `git diff`. Run here: **all EIGHT step
+titles moved, not six.** The entry said six, which is true of the ones that said solution and
+silent about the two that read `Build it in Release`. The paragraph above says eight now and says
+which six were which.
+
+**And it drew a distinction this entry was loose about.** The 80 findings come off the four
+`audit-kpi*.md` files, and `steps/audit.md`, cited further up for its line 107, is a separate
+file with its own findings that are no part of that count. The sweep table says so now.
+
+**THE SIX IT COULD NOT RUN WERE ALL RE-RUN HERE AT THIS COMMIT.**
+
+```
+dotnet test on the system SDK 8.0.130      exit 1, error NETSDK1045 naming .NET 10.0
+command -v pwsh and powershell             both NOT FOUND, so the parse check stays UNKNOWN
+dotnet --version with the .NET 10 SDK      10.0.401
+the test project through msbuild           TargetFramework net10.0, LangVersion 14.0
+Core through msbuild after the edit        netstandard2.0, LangVersion 12.0, RcrcGreen.Core
+the solution build                         0 Warning(s), 0 Error(s)
+the suite and the KPI filter               2139 passed, 1319 passed
+bash .claude/hooks/hook-tests.sh           28 passed, 0 failed
+```
+
+**Everything else it checked came back backed**, every one of the eight build lines, the six test
+steps, the three stale counts, `install.ps1:57` and `:63` with their interpolations intact,
+`CLAUDE.md:37`, the csproj comment, the two workflow lines, `steps/audit.md:107` and
+`steps/2026-09-16-kpi-checks.md:95`. It also recounted the audit files by hand, including the
+known false positive in `audit-kpi-4.md`, and got 29, 20, 14 and 17 findings against 8, 9, 2 and
+4 FIXED marks, which is the 80, 23 and 57 this entry opens with.
 
 ---
 

@@ -39,6 +39,14 @@ comment now saying that 14 is the SDK's own default and that the test project de
 `.github/workflows/tests.yml:51`, which is the gate, `steps/audit.md:107`, a record of that line,
 and `steps/2026-09-16-kpi-checks.md:95`, the sentence saying why step 7 used to.
 
+**THE CLAIM CHECKER HAD NO SHELL AND FOUND NOTHING WRONG IN WHAT IT COULD CHECK.** It caught one
+thing by NOT being able to see the diff: it reported that no sheet of the eight holds the word
+solution today and called that corroboration rather than proof. Run here, **all eight step titles
+moved and only six of them had said solution**, where the entry said six and was silent about the
+other two. It also drew the line between the four `audit-kpi*.md` files the 80 is counted off and
+`steps/audit.md`, which is cited separately and is no part of it. Both are written in. The six
+checks it had no tool for were all re-run at this commit.
+
 **TWO REQUESTS FOR BADER.** The six local `dotnet test` steps are the same fault one step up and
 were not in this round's scope, so the sheets name which step wants the SDK and the decision is
 his. And three sheets carry a test count off main as it was, 1578, 1569 and 1103 against today's
