@@ -1,5 +1,8 @@
 # Running the KPI template picker
 
+**This is an older sheet, kept as the record of that round. A run today uses
+`steps/2026-09-16-kpi-checks.md`.**
+
 Build, install and check the third KPI round on your machine, in VS Code run order. One
 action per step.
 

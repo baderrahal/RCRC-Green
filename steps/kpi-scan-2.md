@@ -1,5 +1,8 @@
 # Running the KPI scan again
 
+**This is an older sheet, kept as the record of that round. A run today uses
+`steps/2026-09-16-kpi-checks.md`.**
+
 Build, install and run the scan with this round's four additions. VS Code run order, one
 action per step, exact command per step.
 

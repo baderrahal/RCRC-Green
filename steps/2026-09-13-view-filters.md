@@ -22,13 +22,15 @@ C:\Users\bader\source\repos\RCRC-Green
 git pull origin main
 ```
 
-5. Run the tests:
+5. Open this pull request on GitHub and check the test gate shows a green tick:
 
 ```
-dotnet test tests/RcrcGreen.Core.Tests/RcrcGreen.Core.Tests.csproj
+https://github.com/baderrahal/RCRC-Green/pulls
 ```
 
-   Every test passes or you stop here and say so. Main carries 1569.
+   A green tick or you stop here and say so. **The tests run there, on .NET 10, so this
+   PC needs no .NET 10 SDK.** What the count should read is in the top entry of
+   `steps/log-view-filters.md`, which is where it is kept up to date.
 
 6. Build the add-in, which builds Core with it:
 
@@ -38,9 +40,8 @@ dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
 
    0 warnings and 0 errors.
 
-   The tests run on the GitHub test gate, on .NET 10, so this build does not need the .NET 10
-   SDK. The test step above this one does, because `tests/RcrcGreen.Core.Tests` targets .NET 10
-   and `dotnet test` on it stops with `error NETSDK1045` without that SDK.
+   Nothing on this PC needs the .NET 10 SDK any more. This build does not, and the step
+   above reads the gate rather than running the tests here.
 
 7. Install, which copies the DLLs, the addin file and ViewFilters.json into the Revit 2024
    add-ins folder:
