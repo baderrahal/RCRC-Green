@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-16, ninety first pass. Two presses read back, seven items
 
+**Merged to main as `65f7330`**, pull request 150, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 **2111 tests, 1291 of them KPI**, up from 2070 and 1250, 28 hook cases, build zero warnings.
 **80 audit findings, 20 FIXED, 60 open**, counted off the four files and nothing closed,
 renumbered or reordered. Bader ran two presses on NG05 on 16 September, 16:06 with 166 plots
