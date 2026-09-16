@@ -1,5 +1,58 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety fifth pass, the two requests the ninety fourth logged. **Nothing the tool
+does changed and nothing outside `steps/` changed at all**, so the counts stand unmoved: **2139
+tests, 1319 of them KPI**, 28 hook cases, build zero warnings. **80 audit findings, 23 FIXED, 57
+open**, untouched. **NOTHING HERE WAS RUN IN REVIT.**
+
+**`steps/` IS COMMON GROUND**, which is why a KPI round edits the Drawing Sheet's and the View
+Filters' run sheets, off `.claude/rules/territory.md`, and the log says so.
+
+**FIVE OLDER KPI SHEETS ARE MARKED AS RECORDS**, `2026-09-15-kpi-fixes`, `2026-09-15-kpi-rerun`,
+`kpi-create`, `kpi-scan-2` and `kpi-templates`, one line each under the title saying a run today
+uses `steps/2026-09-16-kpi-checks.md`. Nothing else in them moved, so their steps and counts stay
+as the record of that day. **The precondition was checked first**, thirty hits over four
+files, `log-kpi.md` 23, `ai-max-state-kpi.md` 5, `log-drawing.md:1033` 1 and
+`.claude/rules/kpi-rules.md:6` 1. **The first draft said a single hit outside the two KPI records
+and that was wrong**, because the sweep it came off piped `log-drawing.md` out and the sentence
+did not say so. Neither of the two is an instruction to run one of the five, so the mark stands,
+and the rules trigger is a request below. And `2026-09-16-kpi-checks.md` was swept and really
+holds no `dotnet test` line.
+
+**THE THREE TASK SHEETS READ THE GATE**, step 5 in each, same number, one action, saying the
+tests run there on .NET 10 so the PC needs no .NET 10 SDK, and pointing at the count in the top
+entry of that task's own log rather than carrying 1103, 1578 or 1569. **The round 94 sentence
+under each build step went with it**, because it said the step above wants the SDK and that
+became false the moment the step became a gate check.
+
+**WHICH IS LATEST, ASKED OF THE LOGS.** `2026-09-13-colour-box.md` is the latest View Filters
+sheet, named at `steps/log-view-filters.md:22` in the top entry. `2026-09-13-view-filters.md` is
+the earlier one, named at `:133` in the entry below. `run-drawing.md` is the only Drawing Sheet
+sheet and so the latest by being the only one, and it is **older than that task's latest round**,
+its own opening naming pull request 32 against a log top entry carrying 105 and 106. Whether it
+still covers the panel is UNKNOWN from here.
+
+**THE SWEEP**, before and after. Before: exactly the six local test runs and the three counts,
+nothing else in `steps/`. After: three local `dotnet test` steps remain, all inside sheets now
+marked as records, and **no stated test count is left in any sheet**.
+
+**THE THREE RECORD SHEETS STILL CARRY ROUND 94'S SENTENCE** at `kpi-create.md:37`,
+`kpi-scan-2.md:37` and `kpi-templates.md:37`, saying the step above wants the SDK, and **it is
+still true there** because their step above really does run the tests locally. It was false only
+in the three sheets whose step changed, which is where it was replaced.
+
+**THE CLAIM CHECKER HAD NO SHELL AND CAUGHT THE ONE THING THAT WAS WRONG**, the sweep count
+above, by re-running the sweep it could run. It also flagged an empty heading left as a
+placeholder. The four counts and the two diff claims it had no tool for were re-run here: zero
+warnings, 2139, 1319, 28 hook cases, nothing outside `steps/` in the diff, and the five older
+sheets showing 15 added lines and 0 deleted, all of them the record marker.
+
+**THREE REQUESTS FOR BADER**: the rules trigger at `kpi-rules.md:6`, whether
+`2026-09-13-view-filters.md` should be marked a record too, which is View Filters' call, and
+whether `run-drawing.md` needs a new sheet, which is Drawing Sheet's.
+
+---
+
 Phase: 9, ship. Ninety fourth pass, every other place that still built the whole solution.
 **Merged to main as `a068c8f`**, pull request 156, the squash message set on the merge call and
 off main byte for byte with no co-author line and no generated-by footer.

@@ -1,5 +1,8 @@
 # Building, installing and running Create
 
+**This is an older sheet, kept as the record of that round. A run today uses
+`steps/2026-09-16-kpi-checks.md`.**
+
 The plot picker and the Create button. VS Code run order, one action per step, exact command
 per step, and what to check on screen.
 

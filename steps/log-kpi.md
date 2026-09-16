@@ -4,6 +4,183 @@ Newest entry first.
 
 ---
 
+## 2026-09-16, ninety fifth pass. The two requests the pass before this logged
+
+**Nothing the tool does changed and nothing outside `steps/` changed at all**, so the counts are
+the ninety fourth pass's and stand unmoved: **2139 tests, 1319 of them KPI**, 28 hook cases,
+build zero warnings. **80 audit findings, 23 FIXED, 57 open**, untouched, with nothing closed,
+renumbered or reordered.
+
+**NOTHING HERE WAS RUN IN REVIT**, by this session or by anybody.
+
+The ninety fourth pass pointed every build instruction at the add-in project and logged two
+things it had not been given: six run sheets still run `dotnet test` locally on the `net10.0`
+test project, which stops with `NETSDK1045` on a PC without the .NET 10 SDK, and three sheets
+carry a test count off main as it was. This closes both.
+
+**`steps/` IS COMMON GROUND**, which is why a KPI round edits the Drawing Sheet's and the View
+Filters' own run sheets. `.claude/rules/territory.md` fences `src/` and `tests/` per task and
+names `steps/` among the common files a commit may carry beside one task's work. Said here
+because it is worth somebody being able to check rather than discover.
+
+### The five older KPI sheets are marked as records
+
+`steps/2026-09-15-kpi-fixes.md`, `steps/2026-09-15-kpi-rerun.md`, `steps/kpi-create.md`,
+`steps/kpi-scan-2.md` and `steps/kpi-templates.md` each carry one line under their title now:
+this is an older sheet kept as the record of that round, and a run today uses
+`steps/2026-09-16-kpi-checks.md`. **Nothing else in any of the five moved**, so their steps and
+their counts stay as the record of the day they were written.
+
+**THE PRECONDITION WAS CHECKED BEFORE ANY OF THE FIVE WAS MARKED.** Grepped for all five names
+across the repository, thirty hits over four files:
+
+```
+steps/log-kpi.md            23   this task's own log, a record
+steps/ai-max-state-kpi.md    5   this task's own state, a record
+steps/log-drawing.md:1033    1   the Drawing Sheet's log, a record
+.claude/rules/kpi-rules.md:6 1   a paths entry in that file's front matter
+```
+
+**The first draft of this entry said every hit outside the two KPI records was a single line, and
+that was wrong.** The sweep it was written off piped `steps/log-drawing.md` out, and then the
+sentence did not say so, which is a filter turned into a fact. The Drawing Sheet's log names
+`steps/kpi-create.md` at `:1033` as the shape a sheet of its own was written in. It is a record
+of another task's round rather than an instruction, so it does not hold the mark back either, but
+the count was wrong and the reason it was wrong is worth more than the count.
+
+**Neither of the two is an instruction pointing a reader at one of the five as the sheet to
+run.** `.claude/rules/kpi-rules.md:6` is a `paths:` entry in that file's own front matter, a
+trigger that loads those rules when that file is touched.
+
+So it does not hold the mark back, and it is named here because marking the sheet leaves a
+trigger aimed at a file nobody should now be following. Whether that trigger should move to
+`steps/2026-09-16-kpi-checks.md` is Bader's, and it is in the requests below.
+
+**And `steps/2026-09-16-kpi-checks.md` really has no local test step**, which is what makes it
+the safe sheet to send a reader to. Swept for rather than taken on trust: it holds no
+`dotnet test` line at all.
+
+### The three task sheets read the gate instead
+
+In `steps/run-drawing.md`, `steps/2026-09-13-colour-box.md` and
+`steps/2026-09-13-view-filters.md`, step 5 is now one action, open the pull request on GitHub and
+check the test gate shows a green tick, keeping its number. Each says the tests run there on
+.NET 10 so the PC needs no .NET 10 SDK, and each points at the count in the top entry of its own
+task's log rather than carrying a number:
+
+```
+steps/run-drawing.md:19-27              points at steps/log-drawing.md
+steps/2026-09-13-colour-box.md:26-34    points at steps/log-view-filters.md
+steps/2026-09-13-view-filters.md:25-33  points at steps/log-view-filters.md
+```
+
+The three numbers that went were 1103, 1578 and 1569, against today's 2139. **A sheet that names
+a count goes stale the next time anybody adds a test**, and the log's top entry is the one place
+that number is kept up to date, so the sheet reads it there.
+
+**AND THE SENTENCE THE PASS BEFORE THIS PUT UNDER EACH BUILD STEP HAD TO GO WITH IT.** Round 94
+wrote `The test step above this one does, because tests/RcrcGreen.Core.Tests targets .NET 10`
+under the build step of all three, which was true while the step above ran the tests here. **The
+moment that step became a gate check the sentence was false**, and a run sheet whose own two
+steps disagree is the fault this repository's front door names. It reads that nothing on that PC
+needs the SDK any more, the build because it does not and the step above because it reads the
+gate.
+
+### Which of the three is the latest sheet for its task
+
+Asked of the two logs rather than guessed.
+
+- **`steps/2026-09-13-colour-box.md` IS the latest View Filters sheet.** The top entry of
+  `steps/log-view-filters.md`, the second pass, names it at `steps/log-view-filters.md:22` as
+  that round's guide
+- **`steps/2026-09-13-view-filters.md` is the EARLIER of the two.** It is named at
+  `steps/log-view-filters.md:133`, in the first pass entry below the top one. It is left as a
+  live sheet rather than marked a record, because this round was given the three sheets to
+  convert and not a judgement to act on, and because it is another task's file
+- **`steps/run-drawing.md` is the only Drawing Sheet run sheet there is**, so it is the latest by
+  being the only one. **It is also older than that task's latest work, and that is worth
+  saying**: its own opening says nothing in the pane has been through Revit since pull request
+  32, while the top entry of `steps/log-drawing.md` is the sixty third pass carrying pull
+  requests 105 and 106. **Whether it still covers what the panel does today is UNKNOWN from
+  here**, because nothing in this repository is a newer Drawing Sheet sheet and that task is
+  another session's
+
+### What the sweep found, and what it finds now
+
+Item 3, run over every file in `steps/` outside the logs and the audit files, which are records.
+**Before the edits it found exactly the six local test runs and the three counts items 1 and 2
+name, and nothing else.** No other sheet holds either.
+
+Run again afterwards, three local `dotnet test` steps remain and all three are inside sheets item
+1 has marked as records:
+
+```
+steps/kpi-create.md:23     steps/kpi-scan-2.md:23     steps/kpi-templates.md:23
+```
+
+**They stay on purpose.** The round's own words for those five are that nothing else in them
+moves, so their steps stay as the record of that day, and the line at the top of each now tells a
+reader to use the current sheet instead. **No stated test count is left in any sheet at all.**
+
+**AND THOSE SAME THREE STILL CARRY ROUND 94'S SENTENCE UNDER THEIR BUILD STEP**, at
+`kpi-create.md:37`, `kpi-scan-2.md:37` and `kpi-templates.md:37`, saying the test step above them
+wants the .NET 10 SDK. **That is still true there and is left alone for that reason**: their step
+above really does run the tests on this PC. The sentence was false only in the three sheets whose
+step changed, which is where it was replaced. Said here because a grep for that sentence returns
+three hits and the next reader should not take them for a miss.
+
+### Requests for Bader
+
+- **`.claude/rules/kpi-rules.md:6` still triggers on `steps/kpi-templates.md`**, which is now
+  marked as a record. Pointing it at `steps/2026-09-16-kpi-checks.md` instead is one line, and
+  `.claude/` was not in this round's scope
+- **`steps/2026-09-13-view-filters.md` is the earlier of the two View Filters sheets** and is not
+  marked as a record, because that is the View Filters task's call rather than a KPI round's.
+  Marking it would be the same one line the five KPI sheets took
+- **`steps/run-drawing.md` is older than the Drawing Sheet task's latest round**, by its own
+  opening against that log's top entry. Whether it needs a new sheet is that task's to decide
+
+### What the claim checker flagged
+
+The agent in `.claude/agents/claim-checker.md` read this entry before the pull request was
+opened. It had Read, Grep and Glob and no shell, said so at the top of its report rather than
+answering anyway, and marked every command it could not run as unverified instead of inferring
+it.
+
+**IT FOUND ONE CLAIM WRONG AND IT WAS A GOOD CATCH.** The entry said the sweep for the five sheet
+names turned up a single hit outside the two KPI records. It re-ran the sweep and found a second,
+`steps/log-drawing.md:1033`. **The sweep this entry was written off had piped that file out, and
+the sentence then did not say so**, which is a filter dressed up as a result and is the shape
+this repository keeps meeting. The section above gives all four files and their counts now, and
+says which was excluded and why the number was wrong.
+
+**It also flagged this heading as an empty placeholder**, which it was, in an otherwise filled
+entry. That is the same fault the ninety second pass left behind once already.
+
+**THE FOUR THINGS IT HAD NO SHELL FOR WERE RE-RUN HERE AT THIS COMMIT**, and the two diff claims
+with them:
+
+```
+the solution build            0 Warning(s), 0 Error(s)
+the suite and the KPI filter  2139 passed, 1319 passed
+bash .claude/hooks/hook-tests.sh   28 passed, 0 failed
+git diff --name-only f0dc5e0 HEAD, outside steps/   none
+git diff over the five older sheets   15 added lines, 0 deleted, and every one of
+                                      them is the three line record marker
+```
+
+That last one is what backs nothing else in the five having moved, rather than a reading of the
+files as they now stand.
+
+**Everything else it checked came back backed**, ten line citations among them, and it recounted
+the audit files itself with Grep alone, 29, 20, 14 and 17 findings against 8, 9, 2 and 4 FIXED
+marks, catching the known false positive in `audit-kpi-4.md` by eye. That is the 80, 23 and 57
+this entry opens with. It also confirmed that the entry's scope on round 94's sentence is
+correct, that `steps/2026-09-16-kpi-checks.md` holds no `dotnet test` line, and that
+`run-drawing.md` is the only Drawing Sheet run sheet in `steps/`.
+
+---
+
 ## 2026-09-16, ninety fourth pass. Every other place that still built the solution
 
 **Merged to main as `a068c8f`**, pull request 156, squashed with both message fields passed on the
