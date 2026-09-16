@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-16, ninety sixth pass. Three features that behaved wrongly on real files
 
+**Merged to main as `60949ee`**, pull request 160, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 Bader ran a streets only press on 16 September at 21:38, 81 listed plots on NG05. **The report is
 not in this repository and it is not going into it.** Every number below is copied from it.
 
