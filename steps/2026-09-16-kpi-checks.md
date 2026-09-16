@@ -4,8 +4,8 @@ For Bader, on Windows, in the order they happen. One action a step, and where a 
 command that is the one to paste. **Nothing here was run in Revit by anybody**, so every check
 below is a check and not a claim.
 
-What landed since the 16:37 press. **Seven items in the round before this one and six in this
-one**, all of them in the build step 8 installs:
+What landed since the 16:37 press. **Seven items two rounds back, six in the round after it and
+three in this one**, all of them in the build step 8 installs:
 
 1. Two ticked plots whose PRX_Plot_UID2 files them at one path now write NOTHING, and each is
    named above Create and in the report. Ten plots of that press wrote over each other.
@@ -41,6 +41,23 @@ And this round:
 13. The rule that any round changing the panel writes an HTML mockup is **removed**, your
     decision of 16 September. Nothing under `design/` is touched and no mockup is owed for any
     past round.
+
+And this round, off your streets only press of 16 September at 21:38, 81 listed plots:
+
+14. **A division the check could not work out now makes READY read NO and names the cell.** That
+    press printed 284 such lines, S70 and T70 on both tree lists of every one of its 71 written
+    plots, and every plot still read READY YES. The guard is `IF(TotTrees<1," ",...)`, `TotTrees`
+    is a defined name pointing at a cell reading `SUM(B4:B101)`, and that cell holds a formula,
+    so the check answered that it could not say. It follows the name to its cell and counts that
+    range now. **The glance names at most five and the full list is in each plot's own block.**
+15. **The no planting line fires.** It asked a count that includes the heading row, so a schedule
+    showing only its heading read as a schedule that printed something. It counts the rows under
+    the heading now, and so does the reconciliation's own count of schedules that printed a body.
+16. **The templates' tree list check names N85 and N88 to N101, prints no line twice, and leaves
+    the analysis blocks alone.** An empty formatted cell counted as a cell holding something, a
+    formula naming one range twice printed two lines for it, and `S59`, `T61`, `V59` and `W61`
+    read the blocks beside the list rather than the list's rows and were named as ranges stopping
+    short. A formula on the first tab reading a column the list does not fill has its own line.
 
 ---
 
@@ -375,6 +392,83 @@ that no ticked plot shares its value with another and no plot line sits under it
 on Windows, so two plots spelt that way are still a collision and are still stopped, and the line
 prints each plot's own spelling so the model can be searched for what it really holds.
 
+## 28. NS-29, NS-33, ST-13, ST-18 and ST-25 read READY NO and name S70
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "a division could not be checked" -Context 0,2
+```
+
+Those five plots hold every existing tree on **Tree List - Existing rows 84 to 101**, so
+`COUNT(B4:B83)` under `S70` is nought and their recalculated Excel really does show `#DIV/0!`.
+On the 21:38 press all five read **READY YES**, because the check said it could not work out
+whether the division is reached and nothing carried that into READY.
+
+Expect each of the five in THE PLOT LIST with **READY NO**, and its last column naming
+`Tree List - Existing S70` under one of two sentences:
+
+```
+#DIV/0!, Tree List - Existing S70, Tree List - Existing T70
+a division could not be checked, Tree List - Existing S70, Tree List - Existing T70
+```
+
+**The first is the one to expect** now that the guard is followed to its own cell. The second is
+the honest answer where the guard still cannot be worked out, and it is not a clean line either.
+
+**IT STOPS NO WRITE.** The workbooks are written and the client's own arithmetic is what divides.
+What changed is that such a plot no longer reads as ready to send.
+
+**IT GOES AWAY WHEN THE TEMPLATES ARE FIXED**, not before. `S69` to `T70` read rows 4 to 83 on
+all seven templates while the lists run to row 101, so this is the team's fix to the client's
+files and check 4 of what comes next is where it sits.
+
+## 29. The no planting line names MM-06, MM-07 and NS-23
+
+Find **THE PLOTS WITH NO PLANTING AT ALL** in the glance, the same line check 23 asks for.
+
+On the 21:38 press that line read `every plot this press read printed at least one schedule row.`
+while **MM-06, MM-07 and NS-23 read 0 in every tree, shrub, lawn, water and green cover box**.
+Their softscape and shrubs and lawn schedules each printed one row, the heading, with no group
+row, no species row and no TOTAL row, and the count that was asked counts the heading.
+
+Expect the three named. **The noughts are right** and the line is what separates them from a plot
+whose numbers happen to be small.
+
+**AND THE RECONCILIATION MOVES WITH IT.** `schedules that printed a body` counts the rows under
+the heading now, so those three plots' six schedules count as printing none.
+
+If the three are not the three, that is a change in the model since 16 September and is worth
+sending back.
+
+## 30. The STREETS tree list check names N85 and N88 to N101 and no line twice
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "TEMPLATES' OWN TREE LISTS" -Context 0,200
+```
+
+This is check 25 read again on the three things the 21:38 press got wrong, on
+`GRP_-_KPI_Checklist_-_DD_STREETS.xlsx`, where that section named 293 cells.
+
+**1. N85 and N88 to N101 must be named.** They are empty on all seven templates and none of them
+was named, because each is a cell element carrying its formatting and no value at all and that
+read as a cell holding something. Expect them under `the water per tree cell is empty`.
+
+**2. No line is printed twice.** The range question printed 265 lines on Tree List - Existing and
+only 139 of them are distinct: each of `V4` to `V57` was printed twice for `F4 to F83` and twice
+for `B4 to B83`. Expect each cell and range pair once, and the count at the top of the section to
+be the number of DISTINCT cells named.
+
+**3. `S59`, `T61`, `V59` and `W61` must not be named.** They read `S4:S34`, `T4:T34`, `V4:V57`
+and `W4:W57`, which are the analysis blocks beside the list rather than the list's own rows, and
+all four were named as ranges stopping before the list ends on both tree lists.
+
+**A formula on the first tab reading such a column has its own line now**, `a formula reads a
+column the list does not fill`, naming the column and what it holds. `<Streets>` E37 reads
+`Q4 to Q34` over a column holding nothing and E38 reads `T4 to T68`, the family percentage in the
+analysis block, and both used to be named for their length.
+
+**`V4` to `V57` are still named and that is right.** They count `B4:B83` and `F4:F83`, which ARE
+the list's own columns, on a list that runs to row 101.
+
 ---
 
 # What remains
@@ -397,7 +491,16 @@ of them at the press now and changes none of them.** They are the team's fix to 
 templates and they are what check 25 watches go clean.
 
 **`S70` and `T70` divide by `COUNT(B4:B83)` while the names run to row 101.** The tool reports it
-and changes no client formula, which is unchanged.
+and changes no client formula, which is unchanged. **NS-29, NS-33, ST-13, ST-18 and ST-25 of the
+21:38 press are the five plots it really fires on**, and they read READY NO now rather than YES.
+It is the team's fix to the client's templates, and check 28 is what watches it go away.
+
+**A first tab formula reading a tree list column the list does not fill.** `<Streets>` E37 reads
+`Q4 to Q34` over a column holding nothing at all and E38 reads `T4 to T68`, which is the family
+percentage in the analysis block. The tool names both under their own question now and changes
+neither. **Whether either is a fault in the client's file or a formula reading a block on purpose
+is UNKNOWN from this repository**, because no client workbook is in it, and the answer is the
+team's.
 
 **The FUTURE PARKS workbook holds AZADIRACHTA INDICA on more than one row.** The tool does not
 choose between two rows and will not.
@@ -420,9 +523,11 @@ steps/audit-kpi-4.md    17 findings    4 FIXED   13 open
                         80            23         57
 ```
 
-**Three were closed in this round and they are 65, 67 and 71**, the schedule plot filter throw,
-the malformed sheet part, and the move to .NET 10. Nothing else was closed and nothing was
-renumbered or reordered. A block of the 57 is what the next round can take.
+**NOTHING WAS CLOSED, RENUMBERED OR REORDERED IN THIS ROUND**, and the count above was read off
+the four files again on 16 September rather than carried forward: 29 findings numbered 1 to 29,
+20 numbered 30 to 49, 14 numbered 50 to 63 and 17 numbered 64 to 80, with the FIXED marks counted
+on the findings themselves and not on the sentences in each file's own preamble that count the
+files before it. A block of the 57 is what the next round can take.
 
 ## What comes next
 
@@ -434,26 +539,33 @@ renumbered or reordered. A block of the 57 is what the next round can take.
 5. Take rows 85, 92 and 99 to the team, which is still open from 15 September.
 6. Take the rest of the 15 September template edits to the team, off check 25's own list, which
    is the first run that names them all in one place.
-7. The next round can take a block of the 57 open audit findings.
+7. Take `N85` and `N88` to `N101` to the team with the rest of check 30, which is the first run
+   that names them at all.
+8. Ask the team what `<Streets>` E37 and E38 are for. They read `Q4 to Q34` over an empty column
+   and `T4 to T68` in the analysis block, and nothing here can say whether that is a fault.
+9. The next round can take a block of the 57 open audit findings.
 
 ---
 
 # What to send back after the press
 
-**All of it in one message.** Eight things, and the report is open in front of you for the first
-seven.
+**All of it in one message.** Nine things, and the report is open in front of you for the first
+eight.
 
 1. **THE PLOT LIST**, its **four counts** at the bottom, and **every row whose READY column
    reads NO**, with its last column.
 2. **THE PLOTS SHARING ONE PRX_Plot_UID2**, the glance line and every plot line under it.
 3. **THE DIVISIONS**, the glance line, the rows under it and the count of divisions that could
-   not be worked out.
+   not be worked out, which the glance now caps at five names with the full list under each plot.
+   The 21:38 press printed all 284 of them here.
 4. **THE PLOTS WITH NO PLANTING AT ALL**, the whole line.
 5. **TICKED AND NOT ON THE LIST**, the count and any plots under it.
 6. **THE TEMPLATES' OWN TREE LISTS**, the glance line per template and the whole section, which
    is check 25 and is the list to take to the team.
 7. **THE TEMPLATES WHOSE CANOPY TOTAL COLUMN COULD NOT BE READ**, the one line, whatever it says.
-8. **Screenshots of two PDFs**: FP-18, and any one of the ten shared plots' folders showing what
+8. **Every row whose READY column names S70**, which check 28 expects to be NS-29, NS-33, ST-13,
+   ST-18 and ST-25.
+9. **Screenshots of two PDFs**: FP-18, and any one of the ten shared plots' folders showing what
    is in it.
 
 **Do not send the workbooks or the PDFs themselves**, and do not put any of them, or the plot list

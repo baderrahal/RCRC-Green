@@ -72,6 +72,22 @@ namespace RcrcGreen.Core.Kpi
             get { return Faults.Count == 0 && NotRead.Count == 0; }
         }
 
+        /// <summary>
+        /// How many DISTINCT cells this sheet named. **A count of lines is not a count of
+        /// cells**: one cell reading two ranges that both stop short is two lines about one
+        /// cell, and the 21:38 press's STREETS existing list read 265 lines over 139 cells.
+        /// </summary>
+        public int CellsNamed
+        {
+            get
+            {
+                return Faults
+                    .Select(one => one.Cell)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Count();
+            }
+        }
+
         public string InWords
         {
             get
@@ -81,9 +97,9 @@ namespace RcrcGreen.Core.Kpi
                 // **NO CELL NAMED IS NOT THE SAME SENTENCE AS A COUNT OF NOUGHT**, which is the
                 // rule every other heading in this report already follows.
                 return SheetName + ": "
-                    + (Faults.Count == 0
+                    + (CellsNamed == 0
                         ? "no cell named"
-                        : Faults.Count + (Faults.Count == 1 ? " cell named" : " cells named"))
+                        : CellsNamed + (CellsNamed == 1 ? " cell named" : " cells named"))
                     + (NotRead.Count == 0
                         ? string.Empty
                         : ", and " + NotRead.Count
@@ -138,6 +154,8 @@ namespace RcrcGreen.Core.Kpi
         public const string NameOnTwoRows = "this name is on more than one row";
 
         public const string RangeStopsShort = "a formula reads a range that stops before the list ends";
+
+        public const string ColumnTheListDoesNotFill = "a formula reads a column the list does not fill";
 
         public const string NoCanopyColumn =
             "the canopy column could not be read off this sheet, so no row's canopy cell was checked";
@@ -297,6 +315,12 @@ namespace RcrcGreen.Core.Kpi
                     CanopyColumnOn(onTheSheet, list)),
                 WorkbookPackage.SharedStrings(zip));
 
+            // **WHAT A COLUMN HOLDS IS READ OFF THE SHEET AND NEVER ASSUMED.** The eighth
+            // question names the column and what is in it, and column Q of the STREETS tree
+            // lists holds nothing at all, so the answer needs every cell of the sheet rather
+            // than the handful the questions above wanted.
+            IReadOnlyList<CellRef> filled = FilledCellsOn(zip, partPath, WorkbookPackage.SharedStrings(zip));
+
             // **THE CANOPY COLUMN IS READ ONCE OFF THE SHEET AND BOTH QUESTIONS ASK IT.** The
             // total canopy formula reads the CANOPY column multiplied by the count, not the
             // diameter column, so the letter the canopy formulas really sit in is what question
@@ -377,7 +401,7 @@ namespace RcrcGreen.Core.Kpi
                     }
 
                     string each = water.PerTreeColumn + row.ToString(CultureInfo.InvariantCulture);
-                    if (!byCell.ContainsKey(each) && !typed.ContainsKey(each))
+                    if (!byCell.ContainsKey(each) && !TypedSomething(typed, each))
                     {
                         faults.Add(new TreeListFault(
                             EmptyWaterPerTree, each,
@@ -412,7 +436,16 @@ namespace RcrcGreen.Core.Kpi
                         + " rows, so nothing can say which row a count belongs on"));
             }
 
-            // 7. Formulas reading a range of this list that stops before its last row.
+            // 7 and 8. Formulas reading a range of this sheet.
+            //
+            // **EACH CELL AND RANGE PAIR IS NAMED ONCE.** The 21:38 press printed 265 lines on
+            // the STREETS existing list and only 139 of them are distinct: every one of V4 to
+            // V57 was printed twice for F4 to F83 and twice for B4 to B83, because a formula
+            // naming a range twice reads it twice.
+            int lastNamed = list.Rows.Count == 0 ? 0 : list.Rows[list.Rows.Count - 1].Row;
+            int rightEdge = RightEdgeOfTheList(list, canopyColumn, totalCanopy, water);
+            var said = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (FormulaCell one in everywhere)
             {
                 foreach (CellArea area in one.Reads)
@@ -430,22 +463,53 @@ namespace RcrcGreen.Core.Kpi
                         continue;
                     }
 
+                    if (lastNamed == 0) continue;
+
+                    string reads = CellArea.Letters(area.FirstColumn)
+                        + area.FirstRow.ToString(CultureInfo.InvariantCulture) + " to "
+                        + CellArea.Letters(area.LastColumn)
+                        + area.LastRow.ToString(CultureInfo.InvariantCulture);
+
+                    if (!said.Add(one.Where + " reads " + reads)) continue;
+
+                    // **A RANGE INSIDE THE ANALYSIS BLOCK IS NOT A RANGE OVER THE LIST.**
+                    // S59 COUNT(S4:S34), T61 SUM(T4:T34), V59 COUNT(V4:V57) and W61 SUM(W4:W57)
+                    // were all named as stopping before the list ends, on both tree lists of the
+                    // STREETS template. They read the blocks beside the list rather than the
+                    // list's own rows, and their length is nobody's fault.
+                    if (area.FirstColumn > rightEdge || area.LastColumn > rightEdge)
+                    {
+                        // **AND A FORMULA ON THE FIRST TAB READING ONE OF THOSE COLUMNS IS ITS
+                        // OWN QUESTION.** <Streets> E37 reads Q4 to Q34 over a column holding
+                        // nothing at all and E38 reads T4 to T68, which is the family percentage
+                        // in the analysis block. Their fault is the column and not the length.
+                        if (!string.Equals(one.SheetName, template.MainSheetName, StringComparison.Ordinal))
+                        {
+                            continue;
+                        }
+
+                        faults.Add(new TreeListFault(
+                            ColumnTheListDoesNotFill,
+                            one.SheetName + " " + one.Cell,
+                            "it reads " + reads + " on " + sheet.SheetName + ", and "
+                            + WhatTheColumnHolds(area, filled)
+                            + ". This list's own columns end at "
+                            + CellArea.Letters(rightEdge)
+                            + ", so the formula reads a block beside the list rather than the "
+                            + "list's rows"));
+                        continue;
+                    }
+
                     // **THE LIST'S LAST NAMED ROW IS WHAT A RANGE HAS TO REACH.** The names
                     // run to 101 on the MOSQUES existing list and a SUMIF stopping at 91 leaves
                     // ten species out of its own count.
-                    int lastNamed = list.Rows.Count == 0 ? 0 : list.Rows[list.Rows.Count - 1].Row;
-                    if (lastNamed == 0) continue;
-
                     if (area.FirstRow > list.TotalFirstRow) continue;
                     if (area.LastRow >= lastNamed) continue;
 
                     faults.Add(new TreeListFault(
                         RangeStopsShort,
                         one.SheetName + " " + one.Cell,
-                        "it reads " + CellArea.Letters(area.FirstColumn)
-                            + area.FirstRow.ToString(CultureInfo.InvariantCulture) + " to "
-                            + CellArea.Letters(area.LastColumn)
-                            + area.LastRow.ToString(CultureInfo.InvariantCulture)
+                        "it reads " + reads
                             + " and this list names a species as far as row "
                             + lastNamed.ToString(CultureInfo.InvariantCulture)
                             + ", so every row past the range is left out of it"));
@@ -465,6 +529,101 @@ namespace RcrcGreen.Core.Kpi
                 .Select(one => one.Row)
                 .Where(row => list.TotalFound && row >= list.TotalFirstRow && row <= list.TotalLastRow)
                 .OrderBy(row => row);
+        }
+
+        /// <summary>
+        /// **THE RIGHT EDGE OF THE LIST'S OWN BLOCK, READ OFF THE FILE.** Every column this
+        /// check found for the list's rows is a column of the list: the count column the
+        /// template names, the botanical name column, the height and the diameter off the
+        /// heading row, the canopy column a canopy formula really sits in, the total canopy
+        /// column off the canopy total's own chain, and the water pair off the sheet's own
+        /// formulas. The furthest of them is where the list ends, which on the measured
+        /// templates is the water total at O, and the analysis blocks sit beyond it at Q, S, T,
+        /// V and W.
+        ///
+        /// **THIS IS A NARROWING AND THE NARROW SIDE IS THE SAFE ONE.** A list column further
+        /// right than every column read here is a range this check will not name, which costs a
+        /// line nobody gets. Naming the analysis blocks cost 126 lines of 265 on one sheet of
+        /// one press.
+        /// </summary>
+        private static int RightEdgeOfTheList(
+            SpeciesList list, string canopyColumn, TotalCanopyColumn totalCanopy, WaterColumns water)
+        {
+            var columns = new List<string>
+            {
+                KpiTemplates.QuantityColumn,
+                KpiTemplates.BotanicalColumn,
+                list.HeightColumn,
+                list.DiameterColumn,
+                canopyColumn
+            };
+
+            if (totalCanopy.Found) columns.Add(totalCanopy.Column);
+            if (water.Found)
+            {
+                columns.Add(water.TotalColumn);
+                columns.Add(water.PerTreeColumn);
+            }
+
+            int edge = 0;
+            foreach (string column in columns)
+            {
+                if (string.IsNullOrWhiteSpace(column)) continue;
+
+                int at = CellRef.Parse(column + "1").ColumnNumber;
+                if (at > edge) edge = at;
+            }
+
+            return edge;
+        }
+
+        /// <summary>
+        /// Every cell of this sheet holding something, read once. A cell whose text is empty or
+        /// only spaces is not one, through the same rule the water question asks.
+        /// </summary>
+        private static IReadOnlyList<CellRef> FilledCellsOn(
+            ZipArchive zip, string partPath, List<string> shared)
+        {
+            var found = new List<CellRef>();
+
+            XDocument part = WorkbookPackage.Read(zip, partPath);
+            if (part == null) return found;
+
+            foreach (XElement cell in WorkbookPackage.Cells(part))
+            {
+                string where = (string)cell.Attribute("r");
+                if (string.IsNullOrWhiteSpace(where)) continue;
+
+                bool holds = cell.Elements().Any(child => child.Name.LocalName == "f")
+                    || !string.IsNullOrWhiteSpace(WorkbookPackage.TextOf(cell, shared));
+                if (!holds) continue;
+
+                found.Add(CellRef.Parse(where));
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// What the column a formula reads holds on this sheet, named rather than judged: the
+        /// count of cells with something in them and the last row one of them sits on, or that
+        /// it holds nothing at all.
+        /// </summary>
+        private static string WhatTheColumnHolds(CellArea area, IReadOnlyList<CellRef> filled)
+        {
+            string letters = CellArea.Letters(area.FirstColumn);
+
+            var inColumn = filled
+                .Where(one => one.ColumnNumber >= area.FirstColumn && one.ColumnNumber <= area.LastColumn)
+                .ToList();
+
+            if (inColumn.Count == 0) return "column " + letters + " holds nothing on that sheet";
+
+            int last = inColumn.Max(one => one.Row);
+
+            return "column " + letters + " holds " + inColumn.Count
+                + (inColumn.Count == 1 ? " cell" : " cells")
+                + " on that sheet, the last on row " + last.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -545,12 +704,36 @@ namespace RcrcGreen.Core.Kpi
             if (byCell.TryGetValue(cell, out held)) return "it holds " + held.Text;
 
             string text;
-            if (typed.TryGetValue(cell, out text) && text.Length > 0)
-            {
-                return "it holds " + text + " and no formula";
-            }
+            if (TypedSomething(typed, cell, out text)) return "it holds " + text + " and no formula";
 
             return "it is empty";
+        }
+
+        /// <summary>
+        /// **A CELL WHOSE TEXT IS EMPTY OR ONLY SPACES IS AN EMPTY CELL.** Tree List - Existing
+        /// N85 and N88 to N101 are empty on all seven templates and none of them was named,
+        /// because <see cref="WorkbookPackage.CellTexts"/> hands back every cell element it
+        /// finds, formatting and all, so a formatted cell holding nothing read as a cell holding
+        /// something. The reader is right to report what is there and the question is what
+        /// decides what counts, so the rule lives here, once, and both places ask it.
+        /// </summary>
+        private static bool TypedSomething(IReadOnlyDictionary<string, string> typed, string cell)
+        {
+            string text;
+            return TypedSomething(typed, cell, out text);
+        }
+
+        private static bool TypedSomething(
+            IReadOnlyDictionary<string, string> typed, string cell, out string text)
+        {
+            text = string.Empty;
+
+            string held;
+            if (typed == null || !typed.TryGetValue(cell, out held)) return false;
+            if (string.IsNullOrWhiteSpace(held)) return false;
+
+            text = held;
+            return true;
         }
 
         private sealed class WaterColumns
@@ -582,7 +765,7 @@ namespace RcrcGreen.Core.Kpi
 
             if (held.All(one => one.Clean)) return templateName + ": clean.";
 
-            int cells = held.Sum(one => one.Faults.Count);
+            int cells = held.Sum(one => one.CellsNamed);
             int could = held.Sum(one => one.NotRead.Count);
 
             return templateName + ": "

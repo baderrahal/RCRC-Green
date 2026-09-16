@@ -118,6 +118,9 @@ namespace RcrcGreen.Core.Kpi
             string divisions = Divisions(set, held);
             if (divisions.Length > 0) why.Add(divisions);
 
+            string notChecked = DivisionsNotChecked(set, held);
+            if (notChecked.Length > 0) why.Add(notChecked);
+
             return new ReadyAnswer(held, why);
         }
 
@@ -153,6 +156,45 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return cells.Count == 0 ? string.Empty : "#DIV/0!, " + string.Join(", ", cells.ToArray());
+        }
+
+        public const string CouldNotBeChecked = "a division could not be checked, ";
+
+        /// <summary>
+        /// Every division this plot's own workbook holds that the formula check LOOKED AT and
+        /// could not work out, named by its cell.
+        ///
+        /// **THE 21:38 PRESS SHIPPED 284 OF THEM AND EVERY PLOT READ READY YES.** Five of its
+        /// plots, NS-29, NS-33, ST-13, ST-18 and ST-25, hold every existing tree on rows 84 to
+        /// 101, so `COUNT(B4:B83)` under S70 is nought and their Excel really does show
+        /// #DIV/0!. A division nobody could work out is not a division that is fine, and a
+        /// workbook holding one does not read as ready to send.
+        /// </summary>
+        public static string DivisionsNotChecked(KpiCreateRunSet set, string plotId)
+        {
+            if (set == null) throw new ArgumentNullException("set");
+
+            string held = (plotId ?? string.Empty).Trim();
+
+            var cells = new List<string>();
+
+            foreach (KpiCreateRun run in set.Runs)
+            {
+                if (run == null || run.Outcome == null) continue;
+
+                bool mine = run.Readings.Any(
+                    one => one != null && string.Equals(one.PlotId, held, StringComparison.Ordinal));
+                if (!mine) continue;
+
+                foreach (DivisionNotEvaluated one in run.Outcome.Formulas.DivisionsNotEvaluated)
+                {
+                    cells.Add(one.Where);
+                }
+            }
+
+            return cells.Count == 0
+                ? string.Empty
+                : CouldNotBeChecked + string.Join(", ", cells.ToArray());
         }
 
         /// <summary>

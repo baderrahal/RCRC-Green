@@ -185,12 +185,28 @@ namespace RcrcGreen.Core.Kpi
             new DivisionGlance(0, 0, new List<string>());
 
         /// <summary>
-        /// Every division the check LOOKED AT and could not work out, one line each. **A
-        /// division nobody evaluated is not a division that is fine**, and a line saying none
-        /// was found over a press that could evaluate none of them is the fault the 16:37 glance
-        /// shipped.
+        /// **AT MOST THIS MANY CELLS ARE NAMED UNDER THE LINE.** The 21:38 press held 284
+        /// divisions it could not work out, S70 and T70 on both tree lists of every one of its
+        /// 71 written plots, and the glance printed all 284. A glance is a glance: the count is
+        /// the fact and the full list is in each plot's own block.
+        /// </summary>
+        public const int Named = 5;
+
+        /// <summary>
+        /// Every division the check LOOKED AT and could not work out, the plot and the cell.
+        /// **A division nobody evaluated is not a division that is fine**, and a line saying
+        /// none was found over a press that could evaluate none of them is the fault the 16:37
+        /// glance shipped.
         /// </summary>
         public IReadOnlyList<string> NotEvaluated { get; }
+
+        /// <summary>
+        /// The ones the glance prints, at most <see cref="Named"/> of them.
+        /// </summary>
+        public IReadOnlyList<string> NotEvaluatedNamed
+        {
+            get { return NotEvaluated.Take(Named).ToList(); }
+        }
 
         public int Found { get; }
 
@@ -238,7 +254,12 @@ namespace RcrcGreen.Core.Kpi
                 return " " + NotEvaluated.Count
                     + (NotEvaluated.Count == 1 ? " division was" : " divisions were")
                     + " looked at and could not be worked out, so nothing here says whether "
-                    + (NotEvaluated.Count == 1 ? "it is" : "they are") + " a #DIV/0!.";
+                    + (NotEvaluated.Count == 1 ? "it is" : "they are") + " a #DIV/0!. "
+                    + (NotEvaluated.Count > Named
+                        ? "The first " + Named + " are named under this line"
+                        : (NotEvaluated.Count == 1 ? "It is named" : "They are named")
+                            + " under this line")
+                    + " and every one of them is in its own plot's block below.";
             }
         }
     }
@@ -893,9 +914,12 @@ namespace RcrcGreen.Core.Kpi
                             : "divides by a cell the template already held"));
                 }
 
-                foreach (string one in run.Outcome.Formulas.DivisionsNotEvaluated)
+                // **THE CELL, NOT THE SENTENCE.** The finding carries its own sheet and cell,
+                // so the glance names a place rather than repeating a paragraph 284 times, and
+                // the formula and the reason stay in the plot's own block.
+                foreach (DivisionNotEvaluated one in run.Outcome.Formulas.DivisionsNotEvaluated)
                 {
-                    notEvaluated.Add(plot + " | " + one);
+                    notEvaluated.Add(plot + " | " + one.Where);
                 }
             }
 

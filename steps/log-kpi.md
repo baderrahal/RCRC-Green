@@ -4,6 +4,201 @@ Newest entry first.
 
 ---
 
+## 2026-09-16, ninety sixth pass. Three features that behaved wrongly on real files
+
+Bader ran a streets only press on 16 September at 21:38, 81 listed plots on NG05. **The report is
+not in this repository and it is not going into it.** Every number below is copied from it.
+
+**2152 tests, 1332 of them KPI**, run after the last file was written. 28 hook cases. Build zero
+warnings. **80 audit findings, 23 FIXED, 57 open**, counted off the four files again this round
+and nothing closed, renumbered or reordered.
+
+**NOTHING HERE WAS RUN IN REVIT**, by this session or by anybody.
+
+### READY must not pass a division the check could not work out
+
+The glance said the formula check found no #DIV/0! and that 284 divisions could not be worked
+out. Those 284 are S70 and T70 on both tree lists of every one of the 71 plots the press wrote,
+each reading that its IF guards the division and what the guard reads could not be evaluated.
+**NS-29, NS-33, ST-13, ST-18 and ST-25 have every existing tree on Tree List - Existing rows 84
+to 101**, so `COUNT(B4:B83)` is nought and their Excel shows #DIV/0!. All five read READY YES.
+
+Two faults, one under the other.
+
+**THE GUARD'S OWN CELL IS A FORMULA AND NOTHING FOLLOWED IT.** `TotTrees` is a defined name
+pointing at `Tree List - Existing B102`, which reads `SUM(B4:B101)`. `TheGuard` answered
+`NotEvaluated` for any guard cell holding a formula, which is every plot of every press, so the
+division was never judged at all. It follows the name to its cell now and, where that cell is
+`SUM`, `COUNT` or `COUNTA` over one range, counts the range off the cell states after the write.
+Anything else is still not evaluated, because working out what a formula computes to is the thing
+this reader does not do.
+
+**ONE COUNTER, ASKED BY THE DIVISION AND BY THE GUARD.** `RangeCountsToNought` was the only place
+a range was counted and it answered a yes or no. `OverARange` is the counter now and
+`RangeCountsToNought` asks it. Two counters would have been two rules for one question.
+
+**AND THE FINDING CARRIES ITS OWN CELL.** `DivisionsNotEvaluated` was a list of sentences, so
+READY naming the cell would have meant reading a cell reference back out of a printed line. It is
+a `DivisionNotEvaluated` now with the sheet, the cell, the formula and the reason apart, which is
+the rule `FormulaAtRisk.IsDivideByZero` already follows.
+
+`PlotReady.DivisionsNotChecked` is the new reason and it reads `a division could not be checked,
+Tree List - Existing S70, Tree List - Existing T70`. **The glance names at most five**, through
+`DivisionGlance.Named`, and its sentence says how many there are and that every one of them is in
+its own plot's block. **The full list is in the block**, under `THE DIVISIONS THIS CHECK COULD NOT
+WORK OUT` in `KpiCreateReport`, which is where a person looking at one plot reads it.
+
+**The break watch.** Put `GuardAnswer.NotEvaluated` back where the name is followed.
+`ACountPastTheRangeIsFoundThroughTheGuardsOwnSum` went red naming S70 and printing what the check
+said instead, which is the 21:38 sentence word for word. Two more went red with it.
+`WorkbookFormulas.cs` restored, md5 `7afd785468306de624176e77ef0bdc32` before and after.
+
+### The no planting line never fired
+
+MM-06, MM-07 and NS-23 read 0 in every tree, shrub, lawn, water and green cover box. Their
+softscape and shrubs and lawn schedules each printed one row, the heading, with no group row, no
+species row and no TOTAL row. The glance said every plot this press read printed at least one
+schedule row.
+
+`NoPlanting` asked `ScannedSchedule.BodyRowCount`, whose own docstring says it counts headings and
+totals, so a schedule showing only its heading holds 1. **It counts the rows below the heading
+now**, off the rows as printed, and the heading is the first row, which is what `SoftscapeRows` and
+`ShrubsAndLawnRows` already take it to be at `ScheduleRows.cs:269`.
+
+**THE RECONCILIATION'S OWN COUNT CARRIED THE SAME ASSUMPTION AND IS FIXED THE SAME WAY.** It
+counted a schedule as having printed a body when `BodyRowCount > 0`, at `Reconciliation.cs:373`
+before this round and `:380` after it. What it changes: the run's count of schedules that printed
+a body drops by those three plots' six. Both places ask one method,
+`NoPlanting.RowsBelowTheHeading`, so the line that names a plot and the count that says how many
+schedules printed a body cannot part.
+
+**A THIRD CASE OF THE SAME SHAPE, FOUND WHILE MAKING THE FIX AND FIXED WITH IT.** A schedule whose
+rows Revit refused holds no rows at all, so it read as a schedule that printed nothing. That is a
+read that did not happen answering as a measurement, which is the fault this file carries at the
+top. `RowsWereRead` is asked now and such a plot is not named, because it is already named by the
+refusal that produced it.
+
+**The fixture's rows include the heading row**, which is how ten of the twelve test files that
+use `CreateFixture.Softscape` or `CreateFixture.ShrubsAndLawn` already write them. The two that
+passed body rows alone were `NoPlantingTests` and `LinksLoadedTests`, and both carry the heading
+now. The second had already written the right words beside the wrong rows: its own comment reads
+that the schedules printed one row, the header, and no body.
+
+**The break watch.** Put `BodyRowCount == 0` back. `OnlyThePlotWhoseTwoSchedulesPrintedNothingIsNamed`
+went red naming MM-01 and saying the check found no plot at all. `NoPlanting.cs` restored, md5
+`087a22aa231fb11b16c44a856b94a2fb` before and after.
+
+### The template check missed cells and counted others twice
+
+On `GRP_-_KPI_Checklist_-_DD_STREETS.xlsx`, where the section read 293 cells named.
+
+**1. N85 AND N88 TO N101 ARE EMPTY AND NONE WAS NAMED.** The water question skipped a cell found
+in `typed`, at `TreeListCheck.cs:380` before this round and `:404` after it, and
+`WorkbookPackage.CellTexts` adds every cell element it finds, so a formatted
+cell holding nothing is in that dictionary with an empty text. **The reader is left alone**: its
+job is to report what is in the file, and a reader that dropped an empty cell would make a cell
+that is not there and a cell holding nothing read the same. The rule lives at the question, once,
+in `TypedSomething`, and the water question and `WhatItHolds` both ask it.
+
+**2. THE RANGE QUESTION PRINTED 265 LINES ON ONE SHEET AND ONLY 139 ARE DISTINCT.** Each of V4 to
+V57 was printed twice for F4 to F83 and twice for B4 to B83, because a formula naming a range
+twice reads it twice. Each cell and range pair is named once now, and **the count at the top is
+the number of distinct cells**, through `TreeListSheetCheck.CellsNamed`, because one cell reading
+two ranges is two lines about one cell.
+
+**3. S59, T61, V59 AND W61 READ THE ANALYSIS BLOCKS AND WERE NAMED AS STOPPING SHORT.** They read
+S4:S34, T4:T34, V4:V57 and W4:W57. A range counts as stopping short only when its column sits
+inside the list's own block, and **the block's right edge is read off the file**: the furthest of
+the count column, the botanical name column, the height and diameter columns off the heading row,
+the canopy column a canopy formula really sits in, the total canopy column off the canopy total's
+chain, and the water pair off the sheet's own formulas. On the measured templates that is the
+water total at O, and Q, S, T, V and W all sit beyond it.
+
+**IT IS A NARROWING AND THE NARROW SIDE IS THE SAFE ONE.** A list column further right than every
+column this check reads is a range it will not name, which costs a line nobody gets. Naming the
+analysis blocks cost 126 lines of 265 on one sheet of one press. **Whether any template holds a
+list column past the water total is UNKNOWN from this repository**, because no client workbook is
+in it, and check 30 of the run sheet is what answers it.
+
+**4. A FORMULA ON THE FIRST TAB READING SUCH A COLUMN HAS ITS OWN QUESTION.** `<Streets>` E37
+reads Q4 to Q34 and E38 reads T4 to T68. Column Q holds nothing and T is the family percentage in
+the analysis block, so their fault is the column and not the length.
+`TreeListCheck.ColumnTheListDoesNotFill` names the column and what it holds, read off the sheet.
+**It does not ask whether the range stops short**, because the length is not what is wrong with
+it. **How many such formulas each template carries is UNKNOWN from here** and the next press
+answers it.
+
+**The break watch.** Let an empty text count as typed again. `AnEmptyFormattedWaterCellIsNamedAsEmpty`
+went red naming N85 and saying the check named no cell at all. `TreeListCheck.cs` restored, md5
+`254bb9deaaa3d6849f586dba3277c26e` before and after.
+
+### The audit files, counted again
+
+```
+steps/audit-kpi.md      29 findings, numbered 1 to 29     8 FIXED   21 open
+steps/audit-kpi-2.md    20 findings, numbered 30 to 49    9 FIXED   11 open
+steps/audit-kpi-3.md    14 findings, numbered 50 to 63    2 FIXED   12 open
+steps/audit-kpi-4.md    17 findings, numbered 64 to 80    4 FIXED   13 open
+                        80                               23         57
+```
+
+**Counted off the files rather than carried forward, and two greps over-count.** A plain
+`^[0-9]+\. +[A-Z]` reads 18 findings in the fourth file, because line 19 is prose whose sentence
+opens with the number 80. And a plain search for FIXED reads 3 in the third file and 7 in the
+fourth, because each file's preamble counts the files before it: `audit-kpi-3.md:8` and
+`audit-kpi-4.md:11-13` are sentences about the other files rather than marks on findings. The
+numbers above are the findings themselves. **Nothing was closed, renumbered or reordered.**
+
+### The run sheet
+
+`steps/2026-09-16-kpi-checks.md` keeps its shape, its Windows order and every existing check, and
+gains three at the end, one action each: **28** the five plots reading READY NO and naming S70,
+**29** the no planting line naming MM-06, MM-07 and NS-23, and **30** the STREETS template check
+naming N85 and N88 to N101, printing no line twice and no longer naming S59, T61, V59 or W61. What
+remains, the audit block and what comes next are all refreshed off this round.
+
+### A request for Bader
+
+**The sheet is titled `The seven checks` and it holds thirty steps.** It has been wrong since the
+sheet grew past seven and this round did not rename it, because the title is what you call the
+file. A line about what a thing does that is not what it does is the shape this repository already
+carries three times over, and renaming it is one word whenever you want it.
+
+### What the claim checker flagged
+
+**ONE CONTRADICTION, AND IT WAS REAL.** The comment this round put in `Reconciliation` read that
+the 21:38 press's three plots move from `2 of 2` with a body to `0 of 2`, while this entry counted
+the same fact as six schedules. Three plots holding two schedules each is six, and the two records
+of one fact disagreed in the two places a person reads them. **The comment was the wrong one**,
+because it said of three plots what is true of one, and it now says each of the three moves from
+2 of its 2 schedules to 0 of 2, six over the three.
+
+**THREE THINGS IT COULD NOT CHECK AND SAID SO PLAINLY**, rather than accepting or rejecting them.
+It had no shell, so it could not compute the three md5 hashes, run the build or run the tests, and
+it has no git history, so it could not see what `TreeListCheck.cs:380` held before this round. **I
+re-ran all three myself after the last file was written**: 2152 tests with 0 failed, 1332 of them
+KPI, build zero warnings, and the three hashes read back off the live files exactly as they are
+written above. It did check the end state of the empty cell rule against the code and found it
+consistent, and it counted the `[Fact]` and `[Theory]` attributes at 1857 over the test project
+and 1115 under `Kpi`, which sits under the run counts the way theory rows do.
+
+**AND THREE THINGS I HAD ALREADY CORRECTED BEFORE IT REPORTED**, found by checking my own
+citations. `Reconciliation.cs:373` and `TreeListCheck.cs:380` are the lines before this round and
+`:380` and `:404` after it, and this entry now says both. And the claim that `NoPlantingTests` was
+the one test file passing body rows alone was wrong, because `LinksLoadedTests` did too, which the
+sentence two lines later had already said.
+
+**Everything else it could reach matched**, and it says which: the audit counts off all four
+files, the over-count example line by line, the 28 hook cases counted by hand out of
+`hook-tests.sh`, `ScheduleRows.cs:269`, `DivisionGlance.Named`, `PlotReady.DivisionsNotChecked`'s
+sentence, the report heading, the three test names and the three new run sheet checks.
+
+**One thing it noted that is not an error.** The run sheet's title is
+`# The seven checks, 16 September 2026` and this entry calls it `The seven checks`, which drops
+the date. The request above is about the word seven and not about the date.
+
+---
+
 ## 2026-09-16, ninety fifth pass. The two requests the pass before this logged
 
 **Merged to main as `619f134`**, pull request 158, squashed with both message fields passed on the

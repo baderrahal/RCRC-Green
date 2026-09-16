@@ -296,7 +296,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             int[] withoutTotalWater = null,
             int[] withoutWaterPerTree = null,
             int sumifTo = 0,
-            int lastRow = 9)
+            int lastRow = 9,
+            int[] emptyWaterPerTreeAt = null,
+            bool withAnalysisBlock = false,
+            string mainSheetReads = null)
         {
             string path = Path.Combine(folder, fileName);
 
@@ -443,6 +446,16 @@ namespace RcrcGreen.Core.Tests.Kpi
                         ? "<row r=\"12\"><c r=\"D12\"><f>SUMIF('Tree List - Existing'!H3:H"
                             + sumifTo + ",\"Native\")</f><v>0</v></c></row>"
                         : string.Empty)
+
+                    // **A FIRST TAB FORMULA READING A COLUMN OF A TREE LIST THAT HOLDS NO LIST
+                    // DATA.** <Streets> E37 reads Q4 to Q34 over a column holding nothing at
+                    // all, and E38 reads T4 to T68, which is the family percentage in the
+                    // analysis block. Both were named as ranges stopping before the list ends,
+                    // and their fault is the column rather than the length.
+                    + (mainSheetReads == null
+                        ? string.Empty
+                        : "<row r=\"37\"><c r=\"E37\"><f>COUNT('Tree List - Existing'!"
+                            + mainSheetReads + ")</f><v>0</v></c></row>")
                     + "</sheetData>"
                     + (withSheetCalcPr ? "<sheetCalcPr fullCalcOnLoad=\"1\"/>" : string.Empty)
                     + "</worksheet>");
@@ -450,11 +463,13 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Add(zip, "xl/worksheets/sheet2.xml", TreeSheetComputing(existing, heightHeading, diameterHeading, heightColumn, diameterColumn,
                     secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
                     namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow,
-                    typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree));
+                    typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree,
+                    emptyWaterPerTreeAt, withAnalysisBlock));
                 Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn,
                     secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
                     namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow,
-                    typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree));
+                    typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree,
+                    emptyWaterPerTreeAt, withAnalysisBlock));
             }
 
             return path;
@@ -474,7 +489,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             string alsoReads = null, int[] withoutCanopy = null, List<string> sharedStrings = null,
             int[] withoutTotalCanopy = null, int lastRow = 9,
             int[] typedCanopyAt = null, bool withWater = false,
-            int[] withoutTotalWater = null, int[] withoutWaterPerTree = null)
+            int[] withoutTotalWater = null, int[] withoutWaterPerTree = null,
+            int[] emptyWaterPerTreeAt = null, bool withAnalysisBlock = false)
         {
             // **A ROW WITH NO CANOPY FORMULA, the shape FUTURE PARKS row 85 really has.**
             // Somebody added rows and copied some columns without the canopy pair beside them,
@@ -501,6 +517,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             // because it is the shared formula's master.
             var noTotalWater = new HashSet<int>(withoutTotalWater ?? new int[0]);
             var noWaterPerTree = new HashSet<int>(withoutWaterPerTree ?? new int[0]);
+
+            // **AN EMPTY FORMATTED CELL, which is what N85 and N88 to N101 really are.** The
+            // cell element is in the file carrying its style and no value at all, so a reader
+            // that counts every cell element it finds counts it as a cell holding something.
+            var emptyWaterPerTree = new HashSet<int>(emptyWaterPerTreeAt ?? new int[0]);
             var byRow = new Dictionary<int, TreeRow>();
             foreach (TreeRow one in named ?? new TreeRow[0]) byRow[one.Row] = one;
 
@@ -558,14 +579,39 @@ namespace RcrcGreen.Core.Tests.Kpi
 
                 string perTree = !withWater || (noWaterPerTree.Contains(row) && row != 4)
                     ? string.Empty
-                    : "<c r=\"N" + row + "\"><v>12</v></c>";
+                    : emptyWaterPerTree.Contains(row) && row != 4
+                        ? "<c r=\"N" + row + "\" s=\"7\"/>"
+                        : "<c r=\"N" + row + "\"><v>12</v></c>";
                 string waterTotal = !withWater || (noTotalWater.Contains(row) && row != 4)
                     ? string.Empty
                     : row == 4
                         ? "<c r=\"O4\" t=\"str\"><f t=\"shared\" ref=\"O4:O" + lastRow + "\" si=\"3\">IF(ISBLANK(B4),\" \",N4*B4)</f><v> </v></c>"
                         : "<c r=\"O" + row + "\" t=\"str\"><f t=\"shared\" si=\"3\"/><v> </v></c>";
 
-                xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + spread + perTree + waterTotal + "</row>");
+                // **ONE ANALYSIS CELL PER ROW, NAMING TWO OF THE LIST'S COLUMNS TWICE EACH.**
+                // That is why each of V4 to V57 printed four lines where two cells and two
+                // ranges are all there is.
+                string analysis = !withAnalysisBlock || row > 57
+                    ? string.Empty
+                    : "<c r=\"V" + row + "\"><f>COUNTIFS($B$4:$B$83,\"&gt;0\",$F$4:$F$83,\"=Y\")"
+                        + "+COUNTIFS($B$4:$B$83,\"&gt;0\",$F$4:$F$83,\"=N\")</f><v>0</v></c>";
+
+                xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + spread + perTree
+                    + waterTotal + analysis + "</row>");
+            }
+
+            // **THE ANALYSIS BLOCK, WHICH SITS BESIDE THE LIST AND NOT IN IT.** V4 to V57 count
+            // the list's own columns twice each, which is why each of them printed four lines.
+            // S59, T61, V59 and W61 read the block's own rows, which stop long before the list
+            // does, and every one of them was named as a range stopping short.
+            if (withAnalysisBlock)
+            {
+                xml.Append("<row r=\"59\">"
+                    + "<c r=\"S59\"><f>COUNT(S4:S34)</f><v>0</v></c>"
+                    + "<c r=\"V59\"><f>COUNT(V4:V57)</f><v>0</v></c></row>");
+                xml.Append("<row r=\"61\">"
+                    + "<c r=\"T61\"><f>SUM(T4:T34)</f><v>0</v></c>"
+                    + "<c r=\"W61\"><f>SUM(W4:W57)</f><v>0</v></c></row>");
             }
 
             int totalRow = lastRow + 1;
@@ -633,7 +679,11 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// hold every existing tree on rows 84 to 101, outside B4:B83.
         ///
         /// One tree sheet, the counted range from row 4 to <paramref name="rangeLastRow"/>, the
-        /// numerator at S69 and T69, and `TotTrees` pointing at B102 so a test can write it.
+        /// numerator at S69 and T69, and `TotTrees` pointing at B102.
+        ///
+        /// <paramref name="totTreesSums"/> builds the shape the templates really carry, B102
+        /// reading `SUM(B4:B101)` and S69 a COUNTIFS. Left off, B102 is not in the file at all
+        /// and a test sets the guard by writing it, which is the blank and typed cases.
         /// </summary>
         public static string DividingByACount(
             string folder,
@@ -642,7 +692,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             int rangeLastRow = 83,
             bool withGuard = true,
             bool totTreesLocalToProposedFirst = false,
-            int formulaInRangeAt = 0)
+            int formulaInRangeAt = 0,
+            bool totTreesSums = false)
         {
             string path = Path.Combine(folder, fileName);
             string sheet = KpiTemplates.ExistingTreesSheet;
@@ -719,11 +770,29 @@ namespace RcrcGreen.Core.Tests.Kpi
                         ? "<row r=\"" + formulaInRangeAt + "\"><c r=\"B" + formulaInRangeAt
                             + "\"><f>S69</f><v>400</v></c></row>"
                         : string.Empty)
-                    + "<row r=\"69\"><c r=\"S69\"><v>400</v></c><c r=\"T69\"><v>220</v></c></row>"
+
+                    // **THE NUMERATOR AS ALL SEVEN TEMPLATES REALLY CARRY IT.** S69 is a
+                    // COUNTIFS over the list's own columns, not a typed number, and it is
+                    // built here so the division has a formula above it the way it does on a
+                    // template rather than a value nothing computes.
+                    + (totTreesSums
+                        ? "<row r=\"69\">"
+                            + "<c r=\"S69\"><f>COUNTIFS($B4:$B83,\"&gt;0\",$H4:$H83,\"=N\")</f><v>0</v></c>"
+                            + "<c r=\"T69\"><f>COUNTIFS($B4:$B83,\"&gt;0\",$H4:$H83,\"=Y\")</f><v>0</v></c>"
+                            + "</row>"
+                        : "<row r=\"69\"><c r=\"S69\"><v>400</v></c><c r=\"T69\"><v>220</v></c></row>")
                     + "<row r=\"70\">"
                     + "<c r=\"S70\" t=\"str\"><f>" + opens + "S69/" + over + "(" + range + ")" + shuts + "</f><v> </v></c>"
                     + "<c r=\"T70\" t=\"str\"><f>" + opens + "T69/" + over + "(" + range + ")" + shuts + "</f><v> </v></c>"
                     + "</row>"
+
+                    // **THE GUARD'S OWN CELL IS A SUM, WHICH IS WHAT EVERY TEMPLATE HOLDS.**
+                    // `TotTrees` points at B102 and B102 reads `SUM(B4:B101)`, so a guard that
+                    // stops at a formula cell can answer nothing about any of them. A test
+                    // wanting the guard set by hand leaves this off and writes B102 itself.
+                    + (totTreesSums
+                        ? "<row r=\"102\"><c r=\"B102\"><f>SUM(B4:B101)</f><v>0</v></c></row>"
+                        : string.Empty)
                     + "</sheetData></worksheet>");
 
                 Add(zip, "xl/worksheets/sheet3.xml",

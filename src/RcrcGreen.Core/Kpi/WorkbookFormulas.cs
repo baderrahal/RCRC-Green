@@ -331,6 +331,46 @@ namespace RcrcGreen.Core.Kpi
         public string Text { get; }
     }
 
+    /// <summary>
+    /// One division this check LOOKED AT and could not work out, with the cell it sits in kept
+    /// apart from the sentence about it.
+    ///
+    /// **A SIGNAL THAT TRAVELS IN THE DATA IS NOT A SIGNAL.** READY has to name the cell, and
+    /// reading a cell reference back out of a printed sentence is the shape this repository has
+    /// already paid for once, when a reason was reported by printing a marker word into the
+    /// message it described.
+    /// </summary>
+    public sealed class DivisionNotEvaluated
+    {
+        public DivisionNotEvaluated(string sheetName, string cell, string text, string why)
+        {
+            SheetName = (sheetName ?? string.Empty).Trim();
+            Cell = (cell ?? string.Empty).Trim();
+            Text = text ?? string.Empty;
+            Why = (why ?? string.Empty).Trim();
+        }
+
+        public string SheetName { get; }
+
+        public string Cell { get; }
+
+        /// <summary>The formula itself, so the line can be read without opening the file.</summary>
+        public string Text { get; }
+
+        public string Why { get; }
+
+        /// <summary>The sheet and the cell, which is what READY and the glance name.</summary>
+        public string Where
+        {
+            get { return SheetName + " " + Cell; }
+        }
+
+        public string InWords
+        {
+            get { return Where + " = " + Text + ": " + Why; }
+        }
+    }
+
     public sealed class FormulaCheck
     {
         internal FormulaCheck(
@@ -343,9 +383,10 @@ namespace RcrcGreen.Core.Kpi
             string refusal,
             IEnumerable<FormulaCell> allFormulas = null,
             IEnumerable<TypedCell> typedCells = null,
-            IEnumerable<string> divisionsNotEvaluated = null)
+            IEnumerable<DivisionNotEvaluated> divisionsNotEvaluated = null)
         {
-            DivisionsNotEvaluated = (divisionsNotEvaluated ?? Enumerable.Empty<string>()).ToList();
+            DivisionsNotEvaluated =
+                (divisionsNotEvaluated ?? Enumerable.Empty<DivisionNotEvaluated>()).ToList();
             TypedCells = (typedCells ?? Enumerable.Empty<TypedCell>()).ToList();
             WasChecked = wasChecked;
             FormulaCount = formulaCount;
@@ -381,11 +422,16 @@ namespace RcrcGreen.Core.Kpi
         public IReadOnlyList<TypedCell> TypedCells { get; }
 
         /// <summary>
-        /// Every division this check LOOKED AT and could not work out, one line each with the
-        /// formula and the reason. **A division nobody evaluated is not a division that is
-        /// fine**, and the glance says how many there were rather than saying none was found.
+        /// Every division this check LOOKED AT and could not work out, each carrying its own
+        /// cell. **A division nobody evaluated is not a division that is fine**, and the glance
+        /// says how many there were rather than saying none was found.
+        ///
+        /// **THE 21:38 PRESS HELD 284 OF THEM**, S70 and T70 on both tree lists of every one of
+        /// its 71 written plots, all reading that the guard could not be evaluated. They feed
+        /// READY now, so a workbook whose divisions nobody could check does not read as ready to
+        /// send.
         /// </summary>
-        public IReadOnlyList<string> DivisionsNotEvaluated { get; }
+        public IReadOnlyList<DivisionNotEvaluated> DivisionsNotEvaluated { get; }
 
         /// <summary>
         /// Every formula whose text reads a cell on a row this run wrote into.
@@ -467,6 +513,15 @@ namespace RcrcGreen.Core.Kpi
         /// off text. A divisor that is an expression, a range or a function call is not judged,
         /// because working out what it computes to would be evaluating the formula.
         /// </summary>
+        /// <summary>
+        /// **THE ONE SHAPE A GUARD'S CELL MAY CARRY**, `SUM`, `COUNT` or `COUNTA` over a single
+        /// range and the whole of the formula. `TotTrees` points at B102, which reads
+        /// `SUM(B4:B101)` on all seven templates. Anything else is not evaluated.
+        /// </summary>
+        private static readonly Regex TotalOverARange = new Regex(
+            @"^\s*(COUNT|COUNTA|SUM)\s*\(\s*((?:(?:'(?:[^']|'')+'|[A-Za-z_][A-Za-z0-9_.]*)!)?\$?[A-Z]{1,3}\$?[0-9]{1,7}:\$?[A-Z]{1,3}\$?[0-9]{1,7})\s*\)\s*$",
+            RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
         private static readonly Regex DividedByACell = new Regex(
             @"/\s*((?:(?:'(?:[^']|'')+'|[A-Za-z_][A-Za-z0-9_.]*)!)?\$?[A-Z]{1,3}\$?[0-9]{1,7})(?![A-Za-z0-9_(:])",
             RegexOptions.CultureInvariant);
@@ -516,7 +571,7 @@ namespace RcrcGreen.Core.Kpi
             List<WorkbookCell> inputs = (computesFrom ?? Enumerable.Empty<WorkbookCell>()).Where(one => one != null).ToList();
 
             List<FormulaCell> readingWritten = ReadingWrittenRows(formulas, wrote);
-            var notEvaluated = new List<string>();
+            var notEvaluated = new List<DivisionNotEvaluated>();
             List<FormulaAtRisk> atRisk = AtRisk(formulas, states, wrote, names, notEvaluated);
             List<ComputedFrom> computed = Computed(formulas, states, inputs);
             List<FunctionUse> functions = formulas
@@ -825,10 +880,19 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         private static List<FormulaAtRisk> AtRisk(
             List<FormulaCell> formulas, Dictionary<string, Dictionary<string, CellState>> states,
-            List<WorkbookCell> wrote, Dictionary<string, string> names, List<string> notEvaluated)
+            List<WorkbookCell> wrote, Dictionary<string, string> names,
+            List<DivisionNotEvaluated> notEvaluated)
         {
             var risk = new Dictionary<string, FormulaAtRisk>(StringComparer.Ordinal);
             var order = new List<string>();
+
+            // **THE GUARD'S OWN CELL IS A FORMULA AND FOLLOWING IT IS THE WHOLE OF ITEM 1.**
+            // `TotTrees` points at B102, which is `SUM(B4:B101)`, so every one of the 284
+            // divisions the 21:38 press looked at came back as a guard nobody could evaluate.
+            // <see cref="CellState"/> carries no formula text, so the guard is handed the
+            // formulas it already has rather than a second read of the file.
+            var byCell = new Dictionary<string, FormulaCell>(StringComparer.OrdinalIgnoreCase);
+            foreach (FormulaCell one in formulas) byCell[one.Where] = one;
 
             foreach (FormulaCell formula in formulas)
             {
@@ -929,15 +993,16 @@ namespace RcrcGreen.Core.Kpi
 
                     // **THE GUARD IS ASKED BEFORE THE RANGE IS COUNTED.** A formula whose own IF
                     // never reaches the division is not a #DIV/0! however empty the range is.
-                    GuardAnswer guard = TheGuard(formula, states, names);
+                    GuardAnswer guard = TheGuard(formula, states, names, byCell);
                     if (guard == GuardAnswer.Holds) break;
 
                     string why;
                     bool nought = RangeCountsToNought(states, range, over, out why);
                     if (why.Length > 0 || guard == GuardAnswer.NotEvaluated)
                     {
-                        notEvaluated.Add(formula.SheetName + " " + formula.Cell + " = " + formula.Text
-                            + ": " + (why.Length > 0 ? why : GuardNotEvaluated));
+                        notEvaluated.Add(new DivisionNotEvaluated(
+                            formula.SheetName, formula.Cell, formula.Text,
+                            why.Length > 0 ? why : GuardNotEvaluated));
                         break;
                     }
 
@@ -1045,7 +1110,8 @@ namespace RcrcGreen.Core.Kpi
         private static GuardAnswer TheGuard(
             FormulaCell formula,
             Dictionary<string, Dictionary<string, CellState>> states,
-            Dictionary<string, string> names)
+            Dictionary<string, string> names,
+            Dictionary<string, FormulaCell> byCell)
         {
             Match guard = GuardedByLessThanOne.Match(formula.Text);
             if (!guard.Success) return GuardAnswer.None;
@@ -1071,10 +1137,16 @@ namespace RcrcGreen.Core.Kpi
                 sheet.TryGetValue(Letters(area.FirstColumn) + area.FirstRow, out held);
             }
 
-            // A blank cell is nought to Excel, so the guard holds. A formula cell holds no
-            // number in this output at all, so nobody can say.
+            // A blank cell is nought to Excel, so the guard holds.
             if (held == null || (!held.HasValue && !held.HasFormula)) return GuardAnswer.Holds;
-            if (held.HasFormula) return GuardAnswer.NotEvaluated;
+
+            // **A FORMULA CELL HOLDS NO NUMBER IN THIS OUTPUT, SO ITS OWN FORMULA IS FOLLOWED.**
+            // `TotTrees` is `SUM(B4:B101)` on all seven templates, and answering not evaluated
+            // there is what left 284 divisions unchecked on the 21:38 press. A total over a
+            // range is counted off the cell states the same way the division's own divisor is,
+            // through one counter, and anything else is still not evaluated because working out
+            // what a formula computes to is the thing this reader does not do.
+            if (held.HasFormula) return OverTheGuardsRange(area, byCell, states);
 
             double number;
             if (!double.TryParse(held.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
@@ -1083,6 +1155,42 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return number < 1.0 ? GuardAnswer.Holds : GuardAnswer.None;
+        }
+
+        /// <summary>
+        /// **THE GUARD'S CELL IS A TOTAL OVER A RANGE, AND THAT RANGE IS COUNTED.** The one
+        /// shape measured is `SUM`, `COUNT` or `COUNTA` over a single range and nothing wider,
+        /// which is the same rule the division's own divisor already follows. A range the
+        /// counter cannot work out, or a formula of any other shape, stays not evaluated.
+        /// </summary>
+        private static GuardAnswer OverTheGuardsRange(
+            CellArea guardCell,
+            Dictionary<string, FormulaCell> byCell,
+            Dictionary<string, Dictionary<string, CellState>> states)
+        {
+            FormulaCell held;
+            if (byCell == null
+                || !byCell.TryGetValue(
+                    guardCell.SheetName + " " + Letters(guardCell.FirstColumn) + guardCell.FirstRow,
+                    out held))
+            {
+                return GuardAnswer.NotEvaluated;
+            }
+
+            Match total = TotalOverARange.Match(held.Text ?? string.Empty);
+            if (!total.Success) return GuardAnswer.NotEvaluated;
+
+            Match reference = Reference.Match(total.Groups[2].Value);
+            if (!reference.Success) return GuardAnswer.NotEvaluated;
+
+            string why;
+            double value = OverARange(
+                states, AreaOf(reference, guardCell.SheetName),
+                total.Groups[1].Value.ToUpperInvariant(), out why);
+
+            if (why.Length > 0) return GuardAnswer.NotEvaluated;
+
+            return value < 1.0 ? GuardAnswer.Holds : GuardAnswer.None;
         }
 
         /// <summary>
@@ -1096,13 +1204,28 @@ namespace RcrcGreen.Core.Kpi
             Dictionary<string, Dictionary<string, CellState>> states, CellArea range, string over,
             out string why)
         {
+            double value = OverARange(states, range, over, out why);
+
+            return why.Length == 0 && value == 0.0;
+        }
+
+        /// <summary>
+        /// What COUNT, COUNTA or SUM over this range comes to, counted off the cell states after
+        /// the write. **ONE COUNTER, ASKED BY THE DIVISION AND BY THE GUARD ALIKE**, because two
+        /// of them would be two rules for one question, which is the shape this repository keeps
+        /// paying for.
+        /// </summary>
+        private static double OverARange(
+            Dictionary<string, Dictionary<string, CellState>> states, CellArea range, string over,
+            out string why)
+        {
             why = string.Empty;
 
             Dictionary<string, CellState> sheet;
             if (!states.TryGetValue(range.SheetName, out sheet))
             {
                 why = "the range " + range.InWords + " is on a sheet this check did not read";
-                return false;
+                return 0.0;
             }
 
             double total = 0.0;
@@ -1121,7 +1244,7 @@ namespace RcrcGreen.Core.Kpi
                         why = Letters(column) + row + " in " + range.InWords + " holds a formula, "
                             + "whose value this file does not carry, so what " + over
                             + " over that range comes to could not be worked out";
-                        return false;
+                        return 0.0;
                     }
 
                     double number;
@@ -1141,7 +1264,7 @@ namespace RcrcGreen.Core.Kpi
                 }
             }
 
-            return string.Equals(over, "SUM", StringComparison.Ordinal) ? total == 0.0 : counted == 0;
+            return string.Equals(over, "SUM", StringComparison.Ordinal) ? total : counted;
         }
 
         private static bool IsBlankIn(Dictionary<string, Dictionary<string, CellState>> states, CellArea area)
