@@ -50,6 +50,22 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// Rows 4 to 83 named with no gap, which is the real Tree List - Proposed shape: the
+        /// names stop at 83 while the total sums to 92, so rows 84 to 92 are inside the total
+        /// and hold no name. PL-35 and ST-07 had a species written into D84 on the 15:55 press.
+        /// </summary>
+        private static WorkbookFixture.TreeRow[] ProposedNamedToRow83()
+        {
+            var rows = new List<WorkbookFixture.TreeRow>();
+            for (int row = 4; row <= 83; row++)
+            {
+                rows.Add(new WorkbookFixture.TreeRow(row, "Proposed species " + row, "15", "8"));
+            }
+
+            return rows.ToArray();
+        }
+
+        /// <summary>
         /// Rows 4 to 92 named with no gap, which is the real MOSQUES shape one list short: the
         /// names stop at 92 and the sheet runs to 101 with the total reaching all of it.
         /// </summary>
@@ -80,7 +96,15 @@ namespace RcrcGreen.Core.Tests.Kpi
             int sumifTo = 0,
             int[] emptyWaterPerTreeAt = null,
             bool withAnalysisBlock = false,
-            string mainSheetReads = null)
+            string mainSheetReads = null,
+            string refErrorAt = null,
+            string circularRangeAt = null,
+            int outOfStepAt = 0,
+            string proposedTotalRange = null,
+            string sameTextAt = null,
+            int oddTextAt = 0,
+            string refInALiteralAt = null,
+            bool withoutQuantityTotal = false)
         {
             return WorkbookFixture.Computing(
                 _folder,
@@ -98,7 +122,15 @@ namespace RcrcGreen.Core.Tests.Kpi
                 lastRow: 101,
                 emptyWaterPerTreeAt: emptyWaterPerTreeAt,
                 withAnalysisBlock: withAnalysisBlock,
-                mainSheetReads: mainSheetReads);
+                mainSheetReads: mainSheetReads,
+                refErrorAt: refErrorAt,
+                circularRangeAt: circularRangeAt,
+                outOfStepAt: outOfStepAt,
+                proposedTotalRange: proposedTotalRange,
+                sameTextAt: sameTextAt,
+                oddTextAt: oddTextAt,
+                refInALiteralAt: refInALiteralAt,
+                withoutQuantityTotal: withoutQuantityTotal);
         }
 
         /// <summary>
@@ -140,6 +172,50 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static TreeListSheetCheck Sheet(IReadOnlyList<TreeListSheetCheck> checks, string sheetName)
         {
             return checks.Single(one => string.Equals(one.SheetName, sheetName, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// One plot read against MOSQUES, with these tree list checks on the press, so READY can
+        /// be asked the way the report asks it.
+        /// </summary>
+        private static ReadyAnswer Ready(
+            IReadOnlyList<TreeListSheetCheck> checks, string plotId)
+        {
+            var set = new KpiCreateRunSet(
+                "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
+                PlotsPerTemplate.Split(
+                    new[] { plotId }, one => "FRIDAY MOSQUE", new[] { KpiTemplates.Mosques }),
+                new[]
+                {
+                    CreateFixture.Run(
+                        readings: new[] { CreateFixture.Plot(plotId, component: "FRIDAY MOSQUE") },
+                        template: KpiTemplates.Mosques)
+                },
+                new List<TemplateOutcome>(),
+                null,
+                new[] { Wrote(plotId) },
+                null,
+                null,
+                null,
+                null,
+                checks);
+
+            return PlotReady.For(set, plotId);
+        }
+
+        /// <summary>
+        /// A plot that wrote both its files with nothing blank, so the only reason READY can
+        /// hold is the one this round adds.
+        /// </summary>
+        private static PlotOutcome Wrote(string plotId)
+        {
+            PlotWorkbookPath where = PlotWorkbookPath.For(
+                "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100019");
+
+            return PlotOutcome.Wrote(plotId, KpiTemplates.Mosques, where)
+                .WithPdf(PdfOutcome.Wrote(
+                    plotId, PdfForms.ForPlot(plotId), PdfChecklist.Beside(where), null,
+                    new List<PdfLandedField>(), new PdfFieldFill[0]));
         }
 
         /// <summary>
@@ -194,9 +270,12 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "Albizia lebbeck is on 2 rows, so nothing can say which row a count belongs on",
                 why["D22 and D84"]);
 
+            // **THE TOTAL'S REACH, NOT THE LAST NAMED ROW.** This list names species to row 92
+            // and its total B102 sums B4 to B101, so a species written into row 93 is inside the
+            // total and outside a SUMIF that stops at 91.
             Assert.Equal(
-                "it reads H3 to H91 and this list names a species as far as row 92, so every "
-                + "row past the range is left out of it",
+                "it reads H3 to H91 and the total B102 reaches row 101, so every row past the "
+                + "range is left out of it",
                 why["<Mosques> D12"]);
         }
 
@@ -415,10 +494,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "it reads B4 to B83 and this list names a species as far as row 92, so "
-                    + "every row past the range is left out of it",
-                    "it reads F4 to F83 and this list names a species as far as row 92, so "
-                    + "every row past the range is left out of it"
+                    "it reads B4 to B83 and the total B102 reaches row 101, so every row past "
+                    + "the range is left out of it",
+                    "it reads F4 to F83 and the total B102 reaches row 101, so every row past "
+                    + "the range is left out of it"
                 },
                 lines.Select(one => one.Why).OrderBy(one => one, StringComparer.Ordinal).ToArray());
         }
@@ -488,6 +567,299 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "sheet. This list's own columns end at O, so the formula reads a block beside "
                 + "the list rather than the list's rows",
                 named.Why);
+        }
+
+        /// <summary>
+        /// **A FORMULA HOLDING #REF! COMPUTES NOTHING, AND NOTHING CHECKED FOR ONE.** The
+        /// STREETS template holds
+        /// `Tree List - Existing W4 = IF(OR(#REF!=" ",#REF!&lt;1)," ",#REF!/ TotTrees)`, so all
+        /// 73 street plots of the 15:55 press went out carrying it, and all 73 read READY YES.
+        /// The report holds no line with #REF anywhere in it.
+        /// </summary>
+        [Fact]
+        public void AFormulaHoldingARefErrorIsNamedWithItsTabAndItsCell()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("ref.xlsx", refErrorAt: "W")), Existing);
+
+            TreeListFault named = sheet.Faults.FirstOrDefault(
+                one => one.Cell == Existing + " W200");
+
+            Assert.True(
+                named != null,
+                "Tree List - Existing W200 holds IF(OR(#REF!=\" \",#REF!<1),\" \",#REF!/ TotTrees), "
+                + "which is what the STREETS template holds at W4, and the check did not name "
+                + "it. The cells it named: "
+                + (sheet.Faults.Count == 0
+                    ? "none"
+                    : string.Join(", ", sheet.Faults.Select(one => one.Cell).ToArray())));
+
+            Assert.Equal("a formula holds #REF!", named.Kind);
+            Assert.Equal(
+                "it reads IF(OR(#REF!=\" \",#REF!<1),\" \",#REF!/ TotTrees), and a reference "
+                + "Excel has lost computes nothing",
+                named.Why);
+
+            // **AND THE PLOT READS READY NO.** All 73 street plots of that press read YES.
+            ReadyAnswer can = Ready(Checked(Template("ref-ready.xlsx", refErrorAt: "W")), "ST-07");
+
+            Assert.False(
+                can.Ready,
+                "ST-07's template holds a #REF! on Tree List - Existing, so its workbook opens "
+                + "with an error whatever this run wrote into it, and READY read YES.");
+
+            Assert.Equal(
+                "MOSQUES holds a formula holds #REF! on Tree List - Existing W200, so this "
+                + "plot's workbook opens with an error whatever was written into it",
+                Assert.Single(can.Why));
+        }
+
+        /// <summary>
+        /// **A RANGE THAT HOLDS ITS OWN CELL IS CIRCULAR.** The FUTURE PARKS template holds
+        /// `Tree List - Proposed L93 = AVERAGE(L4:L93)` and the 15:55 report printed that
+        /// formula in 12 plot blocks without a word. The report holds no line saying circular.
+        /// </summary>
+        [Fact]
+        public void ARangeThatHoldsItsOwnCellIsNamed()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("circular.xlsx", circularRangeAt: "L")), Existing);
+
+            TreeListFault named = sheet.Faults.FirstOrDefault(
+                one => one.Cell == Existing + " L201");
+
+            Assert.True(
+                named != null,
+                "Tree List - Existing L201 reads AVERAGE(L4:L201), a range holding L201 itself, "
+                + "which is what FUTURE PARKS holds at L93, and the check did not name it. The "
+                + "cells it named: "
+                + (sheet.Faults.Count == 0
+                    ? "none"
+                    : string.Join(", ", sheet.Faults.Select(one => one.Cell).ToArray())));
+
+            Assert.Equal("a formula reads a range that holds its own cell", named.Kind);
+            Assert.Equal(
+                "it reads AVERAGE(L4:L201), and L4:L201 holds L201 itself, so the formula is "
+                + "one of the numbers it works out",
+                named.Why);
+
+            // **AND THE PLOT READS READY NO.** 5 FUTURE PARKS plots of that press read YES.
+            ReadyAnswer can = Ready(
+                Checked(Template("circular-ready.xlsx", circularRangeAt: "L")), "FP-18");
+
+            Assert.False(can.Ready, "FP-18's template holds a circular range and READY read YES.");
+
+            Assert.Equal(
+                "MOSQUES holds a formula reads a range that holds its own cell on "
+                + "Tree List - Existing L201, so this plot's workbook opens with an error "
+                + "whatever was written into it",
+                Assert.Single(can.Why));
+        }
+
+        /// <summary>
+        /// **ONE ROW OUT OF STEP IN A COLUMN FILLED DOWN, AND ONLY THAT ROW IS NAMED.** STREETS
+        /// W5 reads V4 where every row from W6 to W57 reads its own row of V. W4 is the block's
+        /// first row and is not asked at all, because a block may differ on purpose there.
+        /// </summary>
+        [Fact]
+        public void OnlyTheRowWhoseShapeDiffersFromBothItsNeighboursIsNamed()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("step.xlsx", outOfStepAt: 5)), Existing);
+
+            var named = sheet.Faults
+                .Where(one => one.Kind == "a formula's shape differs from the cells above and below it")
+                .ToList();
+
+            TreeListFault only = Assert.Single(named);
+
+            Assert.Equal(Existing + " W5", only.Cell);
+            Assert.Equal(
+                "it reads IF(OR(V4=\" \",V4<1),\" \",V4/TotTrees), and W4 and W6 both carry "
+                + "IF(OR(V[+0]=\" \",V[+0]<1),\" \",V[+0]/TotTrees), written as each row's own. "
+                + "A column filled down carries one shape, so this row was edited",
+                only.Why);
+        }
+
+        /// <summary>
+        /// **A COLUMN WHOSE EVERY ROW READS ITS OWN ROW NAMES NOTHING.** The half that says the
+        /// shape question is not simply finding something in every column it opens.
+        /// </summary>
+        [Fact]
+        public void AColumnFilledDownWithOneShapeNamesNothing()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("instep.xlsx", outOfStepAt: -1)), Existing);
+
+            Assert.DoesNotContain(
+                sheet.Faults,
+                one => one.Kind == "a formula's shape differs from the cells above and below it");
+        }
+
+        /// <summary>
+        /// **A SHAPE OUT OF STEP DOES NOT MOVE READY**, because a column block may differ on
+        /// purpose at its first or its last row and nothing here can tell the two apart.
+        /// </summary>
+        [Fact]
+        public void AShapeOutOfStepIsAReportLineAndLeavesReadyAlone()
+        {
+            IReadOnlyList<TreeListSheetCheck> checks = Checked(Template("step-ready.xlsx", outOfStepAt: 5));
+
+            Assert.Contains(
+                Sheet(checks, Existing).Faults,
+                one => one.Kind == "a formula's shape differs from the cells above and below it");
+
+            Assert.True(
+                Ready(checks, "DM-11").Ready,
+                "a shape out of step is a report line and it read READY NO: "
+                + Ready(checks, "DM-11").WhyInWords);
+        }
+
+        /// <summary>
+        /// **A BLOCK TYPED THE SAME ON EVERY ROW IS NOT A COLUMN OUT OF STEP.** A column FILLED
+        /// DOWN holds one relative shape and a different text on every row. A block somebody
+        /// TYPED holds one text and a different relative shape on every row. Reading every block
+        /// the first way names every interior row of the second: the analysis block carries one
+        /// text over S35 to S43, nine consecutive rows, so it would have named seven of them
+        /// with nobody having edited anything.
+        /// </summary>
+        [Fact]
+        public void ABlockTypedTheSameOnEveryRowNamesNothing()
+        {
+            string path = Template("typed.xlsx", sameTextAt: "S");
+
+            TreeListSheetCheck sheet = Sheet(Checked(path), Existing);
+
+            var named = sheet.Faults
+                .Where(one => one.Kind == "a formula's shape differs from the cells above and below it")
+                .Select(one => one.Cell)
+                .ToList();
+
+            Assert.True(
+                named.Count == 0,
+                "S35 to S43 all carry SUMIF(D4:D83,\"SHRUBS\",B4:B83) word for word, which is one "
+                + "block typed the same rather than a column filled down, and reading it as a "
+                + "filled column names every interior row of it. Named: "
+                + string.Join(", ", named.ToArray()));
+        }
+
+        /// <summary>
+        /// **AND ONE ROW OF SUCH A BLOCK THAT REALLY DIFFERS IS STILL NAMED**, by its text rather
+        /// than by its shape, so the question is narrowed and not switched off.
+        /// </summary>
+        [Fact]
+        public void OneRowOfATypedBlockThatDiffersIsNamedByItsText()
+        {
+            string path = Template("typed-odd.xlsx", sameTextAt: "S", oddTextAt: 37);
+
+            TreeListSheetCheck sheet = Sheet(Checked(path), Existing);
+
+            TreeListFault only = Assert.Single(
+                sheet.Faults,
+                one => one.Kind == "a formula's shape differs from the cells above and below it");
+
+            Assert.Equal(Existing + " S37", only.Cell);
+            Assert.Contains("word for word", only.Why);
+        }
+
+        /// <summary>
+        /// **A FORMULA THAT NAMES `#REF!` IN A STRING LITERAL DOES NOT HOLD ONE.** The question
+        /// is what a formula DOES, and a literal is what it says. Naming it would make a plot
+        /// read READY NO over a template that is fine.
+        /// </summary>
+        [Fact]
+        public void AFormulaWhoseLiteralNamesTheErrorIsNotNamed()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("literal.xlsx", refInALiteralAt: "W")), Existing);
+
+            Assert.DoesNotContain(sheet.Faults, one => one.Kind == "a formula holds #REF!");
+        }
+
+        /// <summary>
+        /// **A SHEET WHOSE OWN QUANTITY TOTAL COULD NOT BE READ SAYS SO RATHER THAN READING
+        /// CLEAN.** The range question is measured against what the total reaches, so a total
+        /// nobody could read leaves it with nothing to measure against, and a check that switches
+        /// itself off reads exactly like a check that passed.
+        /// </summary>
+        [Fact]
+        public void ASheetWithNoQuantityTotalSaysTheRangesWereNotMeasured()
+        {
+            TreeListSheetCheck sheet = Sheet(
+                Checked(Template("nototal.xlsx", withoutQuantityTotal: true)), Existing);
+
+            Assert.False(sheet.Clean, "a sheet whose total was never read came back clean");
+
+            Assert.Contains(
+                sheet.NotRead,
+                one => one.StartsWith(
+                    "this sheet's own quantity total could not be read",
+                    StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// **A RANGE IS MEASURED AGAINST WHAT THE LIST'S OWN TOTAL REACHES.** Tree List -
+        /// Proposed names species to row 83 and its total B93 reads `SUM(B4:B92)`, so a Proposed
+        /// range ending at 83 was never named. On the 15:55 press that left `T69`, `S70` and
+        /// `T70` unnamed on four templates, `S70` and `T70` on two more, `S69` to `T70` and `V4`
+        /// to `V57` on STREETS and `V4` to `V57` on FUTURE PARKS. PL-35 and ST-07 had
+        /// WASHINGTONIA ROBUSTA written into Tree List - Proposed D84 that same press.
+        /// </summary>
+        [Fact]
+        public void AProposedRangeStoppingAtTheLastNamedRowIsNamed()
+        {
+            string path = WorkbookFixture.Computing(
+                _folder,
+                NamedToRow92(false),
+                ProposedNamedToRow83(),
+                fileName: "proposed.xlsx",
+                withGreenCoverLabel: true,
+                lastRow: 101,
+                proposedTotalRange: "B4:B92",
+                proposedCountsTo: 83);
+
+            TreeListSheetCheck sheet = Sheet(Checked(path), Proposed);
+
+            TreeListFault named = sheet.Faults.FirstOrDefault(
+                one => one.Cell == Proposed + " S70");
+
+            Assert.True(
+                named != null,
+                "Tree List - Proposed names species as far as row 83 and its total B102 reaches "
+                + "row 92, so S70 reading COUNT(B4:B83) leaves rows 84 to 92 out of its own "
+                + "count, and a species written into D84 is one of them. The check measured the "
+                + "range against the last NAMED row, so it named nothing. The cells it named: "
+                + (sheet.Faults.Count == 0
+                    ? "none"
+                    : string.Join(", ", sheet.Faults.Select(one => one.Cell).ToArray())));
+
+            Assert.Equal("a formula reads a range that stops before the list ends", named.Kind);
+            Assert.Equal(
+                "it reads B4 to B83 and the total B102 reaches row 92, so every row past the "
+                + "range is left out of it",
+                named.Why);
+        }
+
+        /// <summary>
+        /// **AND THE SAME CELL READING THE TOTAL'S OWN RANGE NAMES NOTHING**, which is what the
+        /// team's fix to the template looks like.
+        /// </summary>
+        [Fact]
+        public void AProposedRangeReachingTheTotalNamesNothing()
+        {
+            string path = WorkbookFixture.Computing(
+                _folder,
+                NamedToRow92(false),
+                ProposedNamedToRow83(),
+                fileName: "proposed-fixed.xlsx",
+                withGreenCoverLabel: true,
+                lastRow: 101,
+                proposedTotalRange: "B4:B92",
+                proposedCountsTo: 92);
+
+            TreeListSheetCheck sheet = Sheet(Checked(path), Proposed);
+
+            Assert.DoesNotContain(sheet.Faults, one => one.Cell == Proposed + " S70");
         }
 
         /// <summary>

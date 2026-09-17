@@ -193,7 +193,9 @@ namespace RcrcGreen.Core.Kpi
     {
         public FormulaAtRisk(
             string sheetName, string cell, string text, string reason, int level, bool fromWrittenRow,
-            bool isDivideByZero = false, bool divisorThisRunWrote = false)
+            bool isDivideByZero = false, bool divisorThisRunWrote = false,
+            string divisorOver = null, string divisorInWords = null,
+            bool theGuardCountedTrees = false)
         {
             SheetName = sheetName ?? string.Empty;
             Cell = cell ?? string.Empty;
@@ -203,7 +205,39 @@ namespace RcrcGreen.Core.Kpi
             FromWrittenRow = fromWrittenRow;
             IsDivideByZero = isDivideByZero;
             DivisorThisRunWrote = divisorThisRunWrote;
+            DivisorOver = (divisorOver ?? string.Empty).Trim();
+            DivisorInWords = (divisorInWords ?? string.Empty).Trim();
+            TheGuardCountedTrees = theGuardCountedTrees;
         }
+
+        /// <summary>
+        /// `COUNT`, `COUNTA` or `SUM` where this division's divisor is a total over a range, and
+        /// empty where it is one cell.
+        ///
+        /// **THE DIVISOR TRAVELS ON THE FINDING.** The glance said every one of the 15:55
+        /// press's 60 divisions divides by a cell the template already held, and `S70` divides
+        /// by `COUNT(B4:B83)`, which is a range. Reading that back out of the printed sentence
+        /// is the shape this repository has already paid for.
+        /// </summary>
+        public string DivisorOver { get; }
+
+        /// <summary>
+        /// The divisor as the formula writes it, the cell or the range, so a line about what a
+        /// formula divides by names the thing rather than its kind.
+        /// </summary>
+        public string DivisorInWords { get; }
+
+        /// <summary>
+        /// True where this formula's own IF guard was READ, held a number and did not hold, so
+        /// the workbook's own tree total is one or more while the divisor counted nought.
+        ///
+        /// **THAT IS WHAT MAKES THE TREES SENTENCE TRUE.** `S70` opens
+        /// `IF(TotTrees&lt;1," ",...)`, so a division reached at all is a division on a plot with
+        /// trees, and a count of nought over `B4:B83` means those trees sit outside it. A
+        /// formula carrying no guard says nothing about how many trees there are, so it does not
+        /// get the sentence.
+        /// </summary>
+        public bool TheGuardCountedTrees { get; }
 
         /// <summary>
         /// **A division by a cell holding nought or nothing**, which is the one kind of risk the
@@ -970,7 +1004,7 @@ namespace RcrcGreen.Core.Kpi
                         + (written
                             ? "THIS RUN WROTE THAT CELL."
                             : "This run wrote nothing into that cell."),
-                        2, false, true, written));
+                        2, false, true, written, null, area.InWords));
                     break;
                 }
             }
@@ -998,6 +1032,14 @@ namespace RcrcGreen.Core.Kpi
 
                     string why;
                     bool nought = RangeCountsToNought(states, range, over, out why);
+
+                    // **A DIVISOR THAT COUNTS SOMETHING CANNOT BE A #DIV/0! HOWEVER THE GUARD
+                    // READS.** The guard says only whether the division is REACHED, so asking it
+                    // first recorded a division nobody could work out on a plot whose own count
+                    // came to one or more, and READY read NO over it. The divisor is asked first
+                    // now, and only a range that really counts nought goes on to the guard.
+                    if (why.Length == 0 && !nought) break;
+
                     if (why.Length > 0 || guard == GuardAnswer.NotEvaluated)
                     {
                         notEvaluated.Add(new DivisionNotEvaluated(
@@ -1005,8 +1047,6 @@ namespace RcrcGreen.Core.Kpi
                             why.Length > 0 ? why : GuardNotEvaluated));
                         break;
                     }
-
-                    if (!nought) break;
 
                     bool wroteInto = wrote.Any(one =>
                         string.Equals(one.SheetName, range.SheetName, StringComparison.Ordinal)
@@ -1019,7 +1059,8 @@ namespace RcrcGreen.Core.Kpi
                         + (wroteInto
                             ? "THIS RUN WROTE INTO THAT RANGE."
                             : "This run wrote nothing into that range."),
-                        2, false, true, wroteInto));
+                        2, false, true, wroteInto, over, range.InWords,
+                        guard == GuardAnswer.DoesNotHold));
                     break;
                 }
             }
@@ -1093,6 +1134,7 @@ namespace RcrcGreen.Core.Kpi
         {
             None,
             Holds,
+            DoesNotHold,
             NotEvaluated
         }
 
@@ -1154,7 +1196,7 @@ namespace RcrcGreen.Core.Kpi
                 return GuardAnswer.NotEvaluated;
             }
 
-            return number < 1.0 ? GuardAnswer.Holds : GuardAnswer.None;
+            return number < 1.0 ? GuardAnswer.Holds : GuardAnswer.DoesNotHold;
         }
 
         /// <summary>
@@ -1190,7 +1232,7 @@ namespace RcrcGreen.Core.Kpi
 
             if (why.Length > 0) return GuardAnswer.NotEvaluated;
 
-            return value < 1.0 ? GuardAnswer.Holds : GuardAnswer.None;
+            return value < 1.0 ? GuardAnswer.Holds : GuardAnswer.DoesNotHold;
         }
 
         /// <summary>

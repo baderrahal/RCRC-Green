@@ -218,6 +218,17 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public IReadOnlyList<string> Where { get; }
 
+        /// <summary>
+        /// The ones the glance prints, at most <see cref="Named"/> of them. **The 15:55 press
+        /// held 60 and the glance printed all 60**, which is the same fault the divisions it
+        /// could not work out already had. The count is the fact and the full list is in each
+        /// plot's own block.
+        /// </summary>
+        public IReadOnlyList<string> WhereNamed
+        {
+            get { return Where.Take(Named).ToList(); }
+        }
+
         public string InWords
         {
             get
@@ -232,10 +243,14 @@ namespace RcrcGreen.Core.Kpi
                     + (Found == 1 ? " #DIV/0! was found" : " #DIV/0! were found")
                     + " and " + ByACellThisRunWrote + " of them divide by a cell THIS RUN WROTE."
                     + (ByACellThisRunWrote == 0
-                        ? " The rest divide by a cell the template already held, which is its "
+                        ? " The rest divide by something the template already held, which is its "
                             + "own arithmetic over a "
                             + "real number and not this tool's doing."
                         : " A division by a cell this run wrote is this tool's doing.")
+                    + (Found > Named
+                        ? " The first " + Named + " are named under this line and every one of "
+                            + "them is in its own plot's block below."
+                        : string.Empty)
                     + Unevaluated;
             }
         }
@@ -908,10 +923,15 @@ namespace RcrcGreen.Core.Kpi
                     found = found + 1;
                     if (risk.DivisorThisRunWrote) ours = ours + 1;
 
+                    // **A DIVISION BY A COUNT OVER A RANGE IS NOT A DIVISION BY A CELL.** This
+                    // said each one divides by a cell the template already held, and S70
+                    // divides by `COUNT(B4:B83)`, which is a range. The divisor travels on the
+                    // finding, so the line names what it really is.
                     where.Add(plot + " | " + risk.Where + " | "
                         + (risk.DivisorThisRunWrote
-                            ? "divides by a cell THIS RUN WROTE"
-                            : "divides by a cell the template already held"));
+                            ? "divides by " + Divisor(risk) + ", and THIS RUN WROTE it"
+                            : "divides by " + Divisor(risk)
+                                + ", which the template already held"));
                 }
 
                 // **THE CELL, NOT THE SENTENCE.** The finding carries its own sheet and cell,
@@ -924,6 +944,25 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return new DivisionGlance(found, ours, where, notEvaluated);
+        }
+
+        /// <summary>
+        /// What this division really divides by, off the finding's own record of it rather than
+        /// off the sentence it prints. **A RANGE IS NOT A CELL**, and a range the plot's trees
+        /// sit outside is the whole reason `S70` reads #DIV/0! on a plot that has trees.
+        /// </summary>
+        private static string Divisor(FormulaAtRisk risk)
+        {
+            if (risk.DivisorInWords.Length == 0) return "a cell";
+
+            if (risk.DivisorOver.Length == 0) return "cell " + risk.DivisorInWords;
+
+            return risk.DivisorOver + " over " + risk.DivisorInWords
+                + ", a range"
+                + (risk.TheGuardCountedTrees
+                    ? " this plot's trees sit outside, because its own guard read a tree total of "
+                        + "one or more and the range counted nought"
+                    : " that counted nought");
         }
     }
 }

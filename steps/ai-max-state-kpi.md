@@ -1,5 +1,57 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety seventh pass, two checks that missed real errors and four report lines.
+**2165 tests, 1345 of them KPI**, 28 hook cases, build zero warnings, run after the last file was
+written. **80 audit findings, 23 FIXED, 57 open**, counted off the four files again and nothing
+closed, renumbered or reordered. **NOTHING HERE WAS RUN IN REVIT.**
+
+**THE 15:55 REPORT AND THE TEMPLATES ARE NOT IN THIS REPOSITORY AND DID NOT ENTER IT.** Every
+measurement in the log entry is copied from Bader's own reading of them.
+
+**ERRORS A WORKBOOK OPENS WITH ARE CHECKED NOW.** Three questions, asked on every tab of every
+ticked template: a formula holding `#REF!`, a formula reading a range that holds its own cell, and
+a formula whose shape, written relative to its own row, differs from the cells above and below it.
+The first two make a plot read READY NO through `TreeListCheck.StopsAPlotBeingReady` and
+`PlotReady.TemplateErrors`, keyed on the fault's own kind rather than on its words. The third is a
+report line, because a column block may differ on purpose at its first or last row, which is also
+why only a row with a neighbour on both sides is asked. **An absolute row stays absolute in the
+shape**, or a column of `COUNTIFS($B$4:$B$83,...)` would differ from itself on every row.
+
+**A TREE LIST RANGE IS MEASURED AGAINST WHAT THE LIST'S OWN TOTAL REACHES.** Tree List - Proposed
+names species to row 83 and its total sums to 92, so every Proposed range ending at 83 went
+unnamed on all seven templates. The analysis block rule and the first tab column rule from round
+96 are untouched.
+
+**FOUR REPORT LINES.** The glance names at most five `#DIV/0!` rather than all 60. The divisor
+travels on the finding, so a division by a count over a range names the range and a division by a
+cell names the cell, and the trees sentence fires only where the formula's own guard really read a
+tree total. The canopy opening is chosen off the kind of difference, so the M83 case opens with
+the M83 fact. And the run sheet is retitled at both lines, which closes the request the ninety
+sixth pass logged.
+
+**THREE BREAK WATCHES, EACH RESTORED BYTE FOR BYTE**, md5 before and after each one, on the file
+as it stood at that moment: `TreeListCheck.cs` `4286794676d4d4c9011cecb6739da961` twice over, and
+`WorkbookArithmetic.cs` `4187d0bacac3f96fb48086bbb5ad5504`.
+
+**AND SIX DEFECTS IN THIS ROUND'S OWN NEW CODE, FOUND BY AN ADVERSARIAL READING OF IT AND FIXED.**
+The worst was the shape question's first reading, which named seven rows of a block nobody had
+edited, measured by putting that reading back. The neighbours say which reading a block is written
+in now, filled down or typed. The other five: a cell reference the file holds that `CellRef.Parse`
+threw over, a gate that switched question 8 off in silence, a guard recorded as unevaluated on a
+divisor that counted more than nought, a `#REF!` inside a string literal read as a real one, and a
+sheet with no diameter column opening with the canopy column sentence. Four tests pin them.
+**One more is written down and not acted on**, whether a template whose file could not be opened
+should hold a plot back, which is a decision rather than a fault.
+
+**THE RUN SHEET GAINS CHECKS 31, 32 AND 33** and is titled `The run sheet` over its 33 steps.
+
+**WHAT IS UNKNOWN.** Whether the HEALTHCARE Tree List - Existing pair reading `$F$4:$F$101` and
+`$F$4:$F$83` is a fault or the client's intent. How many first tab cells each template has out of
+step, which the shape question has never run over a client file to find out. Neither is answerable
+from this repository, because no client workbook is in it.
+
+---
+
 Phase: 9, ship. Ninety sixth pass, three features that behaved wrongly on the 21:38 press.
 **Merged to main as `60949ee`**, pull request 160, the squash message set on the merge call and
 off main byte for byte with no co-author line and no generated-by footer. **2152 tests, 1332 of

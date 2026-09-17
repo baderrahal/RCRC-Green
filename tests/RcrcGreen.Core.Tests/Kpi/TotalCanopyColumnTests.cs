@@ -172,6 +172,18 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("M7 does not carry IF(ISBLANK(B7),\" \",L7*B7)", check.Why);
             Assert.Contains("which is the column the canopy total M10 adds", check.Why);
             Assert.Contains("M7 is empty.", check.Why);
+
+            // **THE REASON OPENS WITH THE M7 FACT.** It opened with the canopy column sentence,
+            // which is the column L wording, on a row whose canopy column is exactly the one
+            // this tool works out. The first thing a person read about M7 was about a column
+            // that had not moved.
+            Assert.StartsWith(
+                "a row computes a canopy per tree and adds none to the canopy total. ",
+                check.Why);
+
+            Assert.DoesNotContain(
+                "the workbook's canopy column is not the one this tool works out",
+                check.Why);
         }
 
         /// <summary>

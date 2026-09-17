@@ -266,12 +266,25 @@ namespace RcrcGreen.Core.Kpi
             var read = new List<string>();
             var differ = new List<string>();
 
+            // **THE OPENING IS CHOSEN OFF THE KIND OF DIFFERENCE, never off its words.** Every
+            // reason used to open with the canopy column sentence, so FP-18's M83, whose canopy
+            // column is exactly the one this tool works out, was reported as a column that had
+            // drifted and only then said M83 is empty.
+            bool columnDrifted = false;
+            bool totalNotAdded = false;
+            bool noColumnChosen = false;
+
             foreach (CanopyRow row in canopy.Rows)
             {
                 string column;
                 if (diameterColumns == null || !diameterColumns.TryGetValue(row.SheetName, out column)
                     || string.IsNullOrWhiteSpace(column))
                 {
+                    // **NOTHING OF THE WORKBOOK WAS COMPARED HERE.** This tool chose no
+                    // diameter column for the sheet, so no cell of it was held against anything,
+                    // and opening with the canopy column sentence would assert a drift nobody
+                    // looked for. That is the FP-18 misattribution one branch further back.
+                    noColumnChosen = true;
                     differ.Add(Of(row, workbookName) + ": no diameter column was chosen for this "
                         + "sheet, so the canopy formula it should carry cannot be worked out");
                     continue;
@@ -296,6 +309,7 @@ namespace RcrcGreen.Core.Kpi
                         formulas, totalCanopy, row, CellRef.Parse(found.Cell).Column);
                     if (missing.Length > 0)
                     {
+                        totalNotAdded = true;
                         differ.Add(Of(row, workbookName) + ": " + missing);
                         continue;
                     }
@@ -312,6 +326,7 @@ namespace RcrcGreen.Core.Kpi
                     string.Equals(one.SheetName, row.SheetName, StringComparison.OrdinalIgnoreCase)
                     && RowOf(one.Cell) == row.RowNumber).ToList();
 
+                columnDrifted = true;
                 differ.Add(Of(row, workbookName) + ": no cell on it carries " + wanted + ". "
                     + TheCanopyCell(formulas, column, row, typed) + " " + Holding(onTheRow, typed));
             }
@@ -319,8 +334,41 @@ namespace RcrcGreen.Core.Kpi
             return differ.Count == 0
                 ? ArithmeticCheck.Agreeing(read)
                 : ArithmeticCheck.Differing(
-                    "the workbook's canopy column is not the one this tool works out. "
-                    + string.Join(" ", differ.ToArray()), read);
+                    Opening(columnDrifted, totalNotAdded, noColumnChosen)
+                        + string.Join(" ", differ.ToArray()),
+                    read);
+        }
+
+        public const string ColumnDrifted =
+            "the workbook's canopy column is not the one this tool works out. ";
+
+        public const string TotalNotAdded =
+            "a row computes a canopy per tree and adds none to the canopy total. ";
+
+        public const string NoColumnChosen =
+            "the canopy column this tool works out could not be chosen for a sheet. ";
+
+        /// <summary>
+        /// The sentence the whole reason opens with, chosen off WHICH KIND of difference was
+        /// found rather than off the words of any of them.
+        ///
+        /// **FP-18 IS WHY.** Its Tree List - Existing row 83 carries L83, which is exactly the
+        /// canopy formula this tool works out, and M83 is empty. The reason opened with the
+        /// canopy column sentence anyway and only then reached the M83 fact, so the first thing
+        /// a person read about it was about a column that had not moved.
+        /// </summary>
+        private static string Opening(bool columnDrifted, bool totalNotAdded, bool noColumnChosen)
+        {
+            var said = new List<string>();
+
+            if (totalNotAdded) said.Add(TotalNotAdded);
+            if (noColumnChosen) said.Add(NoColumnChosen);
+            if (columnDrifted) said.Add(ColumnDrifted);
+
+            // **EVERY BRANCH THAT ADDS A REASON SETS ONE OF THE THREE**, so this cannot be
+            // reached empty. It answers the column sentence there rather than nothing, because a
+            // reason with no opening at all would read as a sentence somebody lost.
+            return said.Count == 0 ? ColumnDrifted : string.Concat(said.ToArray());
         }
 
         /// <summary>

@@ -299,7 +299,16 @@ namespace RcrcGreen.Core.Tests.Kpi
             int lastRow = 9,
             int[] emptyWaterPerTreeAt = null,
             bool withAnalysisBlock = false,
-            string mainSheetReads = null)
+            string mainSheetReads = null,
+            string refErrorAt = null,
+            string circularRangeAt = null,
+            int outOfStepAt = 0,
+            string proposedTotalRange = null,
+            int proposedCountsTo = 0,
+            string sameTextAt = null,
+            int oddTextAt = 0,
+            string refInALiteralAt = null,
+            bool withoutQuantityTotal = false)
         {
             string path = Path.Combine(folder, fileName);
 
@@ -464,12 +473,16 @@ namespace RcrcGreen.Core.Tests.Kpi
                     secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
                     namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow,
                     typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree,
-                    emptyWaterPerTreeAt, withAnalysisBlock));
+                    emptyWaterPerTreeAt, withAnalysisBlock,
+                    refErrorAt, circularRangeAt, outOfStepAt, null, 0,
+                    sameTextAt, oddTextAt, refInALiteralAt, withoutQuantityTotal));
                 Add(zip, "xl/worksheets/sheet3.xml", TreeSheetComputing(proposed, heightHeading, diameterHeading, heightColumn, diameterColumn,
                     secondDiameterHeading, secondDiameterColumn, canopyReads ?? diameterColumn, alsoReads, withoutCanopy,
                     namesAsSharedStrings ? strings : null, withoutTotalCanopy, lastRow,
                     typedCanopyAt, withWater, withoutTotalWater, withoutWaterPerTree,
-                    emptyWaterPerTreeAt, withAnalysisBlock));
+                    emptyWaterPerTreeAt, withAnalysisBlock,
+                    null, null, 0, proposedTotalRange, proposedCountsTo,
+                    null, 0, null, false));
             }
 
             return path;
@@ -490,7 +503,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             int[] withoutTotalCanopy = null, int lastRow = 9,
             int[] typedCanopyAt = null, bool withWater = false,
             int[] withoutTotalWater = null, int[] withoutWaterPerTree = null,
-            int[] emptyWaterPerTreeAt = null, bool withAnalysisBlock = false)
+            int[] emptyWaterPerTreeAt = null, bool withAnalysisBlock = false,
+            string refErrorAt = null, string circularRangeAt = null, int outOfStepAt = 0,
+            string totalRange = null, int countsTo = 0,
+            string sameTextAt = null, int oddTextAt = 0, string refInALiteralAt = null,
+            bool withoutQuantityTotal = false)
         {
             // **A ROW WITH NO CANOPY FORMULA, the shape FUTURE PARKS row 85 really has.**
             // Somebody added rows and copied some columns without the canopy pair beside them,
@@ -596,8 +613,18 @@ namespace RcrcGreen.Core.Tests.Kpi
                     : "<c r=\"V" + row + "\"><f>COUNTIFS($B$4:$B$83,\"&gt;0\",$F$4:$F$83,\"=Y\")"
                         + "+COUNTIFS($B$4:$B$83,\"&gt;0\",$F$4:$F$83,\"=N\")</f><v>0</v></c>";
 
+                // **A COLUMN FILLED DOWN, WITH ONE ROW OUT OF STEP.** Every row of W reads its
+                // own row of V, and the row named reads the row above, which is what STREETS W5
+                // really does under W6 to W57.
+                string step = outOfStepAt == 0 || row > 57
+                    ? string.Empty
+                    : "<c r=\"W" + row + "\" t=\"str\"><f>IF(OR(V" + (row == outOfStepAt ? row - 1 : row)
+                        + "=\" \",V" + (row == outOfStepAt ? row - 1 : row)
+                        + "&lt;1),\" \",V" + (row == outOfStepAt ? row - 1 : row)
+                        + "/TotTrees)</f><v> </v></c>";
+
                 xml.Append("<row r=\"" + row + "\">" + cells + canopy + area + spread + perTree
-                    + waterTotal + analysis + "</row>");
+                    + waterTotal + analysis + step + "</row>");
             }
 
             // **THE ANALYSIS BLOCK, WHICH SITS BESIDE THE LIST AND NOT IN IT.** V4 to V57 count
@@ -614,9 +641,62 @@ namespace RcrcGreen.Core.Tests.Kpi
                     + "<c r=\"W61\"><f>SUM(W4:W57)</f><v>0</v></c></row>");
             }
 
+            // **THE THREE ERRORS A WORKBOOK OPENS WITH, as the 15:55 templates really carry
+            // them.** STREETS Tree List - Existing W4 holds a #REF! and W5 reads the row above
+            // where W6 to W57 read their own, and FUTURE PARKS Tree List - Proposed L93 averages
+            // a range holding L93 itself. All three are on a tab, not in what this run wrote.
+            if (refErrorAt != null)
+            {
+                xml.Append("<row r=\"200\"><c r=\"" + refErrorAt + "200\" t=\"str\">"
+                    + "<f>IF(OR(#REF!=\" \",#REF!&lt;1),\" \",#REF!/ TotTrees)</f><v> </v></c></row>");
+            }
+
+            // **A BLOCK TYPED THE SAME ON EVERY ROW, which is what the analysis block really
+            // is.** S35 to S43 all carry one text word for word, so their relative shapes all
+            // differ and reading them as a filled down column names every interior row.
+            if (sameTextAt != null)
+            {
+                for (int row = 35; row <= 43; row++)
+                {
+                    string over = row == oddTextAt ? "D4:D92" : "D4:D83";
+
+                    xml.Append("<row r=\"" + row + "\"><c r=\"" + sameTextAt + row + "\">"
+                        + "<f>SUMIF(" + over + ",\"SHRUBS\",B4:B83)</f><v>0</v></c></row>");
+                }
+            }
+
+            // **A FORMULA THAT NAMES THE ERROR IN A STRING LITERAL AND DOES NOT HOLD ONE.**
+            if (refInALiteralAt != null)
+            {
+                xml.Append("<row r=\"202\"><c r=\"" + refInALiteralAt + "202\" t=\"str\">"
+                    + "<f>IF(B4=\"#REF!\",\" \",B4)</f><v> </v></c></row>");
+            }
+
+            if (circularRangeAt != null)
+            {
+                xml.Append("<row r=\"201\"><c r=\"" + circularRangeAt + "201\">"
+                    + "<f>AVERAGE(" + circularRangeAt + "4:" + circularRangeAt + "201)</f>"
+                    + "<v>0</v></c></row>");
+            }
+
+            // **THE ANALYSIS PAIR ALL SEVEN TEMPLATES CARRY**, `S69` a count and
+            // `S70 = IF(TotTrees<1," ",S69/COUNT(B4:B83))`. On Tree List - Proposed the names
+            // stop at 83 while the total sums to 92, which is what hid the short range.
+            if (countsTo > 0)
+            {
+                xml.Append("<row r=\"69\"><c r=\"S69\">"
+                    + "<f>COUNTIFS($B$4:$B$83,\"&gt;0\",$H$4:$H$83,\"=N\")</f><v>0</v></c></row>");
+                xml.Append("<row r=\"70\"><c r=\"S70\" t=\"str\">"
+                    + "<f>IF(TotTrees&lt;1,\" \",S69/COUNT(B4:B" + countsTo + "))</f>"
+                    + "<v> </v></c></row>");
+            }
+
             int totalRow = lastRow + 1;
             xml.Append("<row r=\"" + totalRow + "\">"
-                + "<c r=\"B" + totalRow + "\"><f>SUM(B4:B" + lastRow + ")</f><v>0</v></c>"
+                + (withoutQuantityTotal
+                    ? string.Empty
+                    : "<c r=\"B" + totalRow + "\"><f>SUM("
+                        + (totalRange ?? "B4:B" + lastRow) + ")</f><v>0</v></c>")
                 + "<c r=\"M" + totalRow + "\"><f>SUM(M4:M" + lastRow + ")</f><v>0</v></c></row>");
             xml.Append("</sheetData></worksheet>");
             return xml.ToString();
