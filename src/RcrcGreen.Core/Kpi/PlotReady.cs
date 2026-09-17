@@ -121,6 +121,9 @@ namespace RcrcGreen.Core.Kpi
             string notChecked = DivisionsNotChecked(set, held);
             if (notChecked.Length > 0) why.Add(notChecked);
 
+            string template = TemplateErrors(set, held);
+            if (template.Length > 0) why.Add(template);
+
             return new ReadyAnswer(held, why);
         }
 
@@ -213,6 +216,43 @@ namespace RcrcGreen.Core.Kpi
                     set.Plots != null && set.Plots.Holds(one),
                     set.Plots != null))
                 .ToList();
+        }
+
+        /// <summary>
+        /// Every error the plot's own TEMPLATE opens with, which is an error in every workbook
+        /// built from it whatever this run wrote.
+        ///
+        /// **ALL 73 STREET PLOTS AND 5 FUTURE PARKS PLOTS OF THE 15:55 PRESS READ READY YES.**
+        /// The STREETS template holds `Tree List - Existing W4 = IF(OR(#REF!=" ",#REF!&lt;1),
+        /// " ",#REF!/ TotTrees)` and the FUTURE PARKS one `Tree List - Proposed
+        /// L93 = AVERAGE(L4:L93)`, a range holding its own cell. Neither is anything this run
+        /// did and both go out in the client's file.
+        ///
+        /// **THE PLOT'S TEMPLATE IS THE ONE THE RUN THAT READ IT USED**, off the run itself
+        /// rather than worked out again, which is how <see cref="Divisions"/> already finds a
+        /// plot's own workbook.
+        /// </summary>
+        public static string TemplateErrors(KpiCreateRunSet set, string plotId)
+        {
+            if (set == null) throw new ArgumentNullException("set");
+
+            string held = (plotId ?? string.Empty).Trim();
+
+            var said = new List<string>();
+
+            foreach (KpiCreateRun run in set.Runs)
+            {
+                if (run == null || run.Template == null) continue;
+
+                bool mine = run.Readings.Any(
+                    one => one != null && string.Equals(one.PlotId, held, StringComparison.Ordinal));
+                if (!mine) continue;
+
+                string why = TreeListCheck.StopsAPlotBeingReady(set.TreeLists, run.Template.Name);
+                if (why.Length > 0 && !said.Contains(why)) said.Add(why);
+            }
+
+            return string.Join(". ", said.ToArray());
         }
 
         public const string Heading = "THE PLOTS READY TO SEND";

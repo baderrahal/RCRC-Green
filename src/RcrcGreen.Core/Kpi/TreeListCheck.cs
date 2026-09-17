@@ -157,6 +157,34 @@ namespace RcrcGreen.Core.Kpi
 
         public const string ColumnTheListDoesNotFill = "a formula reads a column the list does not fill";
 
+        /// <summary>
+        /// **AN ERROR THE WORKBOOK OPENS WITH, WHICH NOTHING CHECKED.** The STREETS template
+        /// holds `Tree List - Existing W4 = IF(OR(#REF!=" ",#REF!&lt;1)," ",#REF!/ TotTrees)`, so
+        /// every one of the 73 street plots of the 15:55 press went out carrying it and all 73
+        /// read READY YES. A formula whose reference has been deleted computes nothing at all.
+        /// </summary>
+        public const string HoldsARefError = "a formula holds #REF!";
+
+        /// <summary>
+        /// **A RANGE THAT HOLDS ITS OWN CELL IS A CIRCULAR REFERENCE.** The FUTURE PARKS
+        /// template holds `Tree List - Proposed L93 = AVERAGE(L4:L93)`, and the 15:55 report
+        /// printed that formula in 12 plot blocks without a word about it.
+        /// </summary>
+        public const string RangeHoldsItsOwnCell = "a formula reads a range that holds its own cell";
+
+        /// <summary>
+        /// **A COLUMN FILLED DOWN IS ONE FORMULA, AND A ROW THAT DIFFERS IS A ROW SOMEBODY
+        /// EDITED.** STREETS W5 reads V4 where every row from W6 to W57 reads its own row of V.
+        /// The shape is written relative to its own row before it is compared, so a column of
+        /// one formula filled down reads as one shape.
+        ///
+        /// **IT IS A REPORT LINE AND IT DOES NOT MOVE READY**, because a column block may differ
+        /// on purpose at its first or its last row, which is why only a row with a neighbour on
+        /// both sides is asked at all.
+        /// </summary>
+        public const string ShapeDiffersFromItsNeighbours =
+            "a formula's shape differs from the cells above and below it";
+
         public const string NoCanopyColumn =
             "the canopy column could not be read off this sheet, so no row's canopy cell was checked";
 
@@ -228,13 +256,43 @@ namespace RcrcGreen.Core.Kpi
                         everywhere.AddRange(WorkbookFormulas.Of(one.Key, part));
                     }
 
+                    // **THE THREE NEW QUESTIONS ARE ASKED ON EVERY TAB, not on the tree lists
+                    // alone.** STREETS carries its #REF! on Tree List - Existing and FUTURE
+                    // PARKS its circular range on Tree List - Proposed, and nothing says the
+                    // next one will not be on the first tab. They are worked out once per tab
+                    // here, folded into a tree list's own check where the tab is one, and given
+                    // a check of their own where it is not, so no cell is named twice.
+                    var everyTab = new Dictionary<string, List<TreeListFault>>(StringComparer.Ordinal);
+                    foreach (string tab in parts.Keys)
+                    {
+                        everyTab[tab] = OnEveryTab(tab, everywhere);
+                    }
+
                     var found = new List<TreeListSheetCheck>();
                     foreach (KeyValuePair<TreeSheet, SpeciesList> sheet in sheets)
                     {
+                        List<TreeListFault> alsoOnThisTab;
+                        if (!everyTab.TryGetValue(sheet.Key.SheetName, out alsoOnThisTab))
+                        {
+                            alsoOnThisTab = new List<TreeListFault>();
+                        }
+
+                        everyTab.Remove(sheet.Key.SheetName);
+
                         found.Add(OneSheet(
                             zip, parts, template, sheet.Key, sheet.Value,
                             TotalCanopyColumns.For(totalCanopy, sheet.Key.SheetName),
-                            everywhere));
+                            everywhere, alsoOnThisTab));
+                    }
+
+                    // **A TAB WITH NOTHING WRONG WITH IT GETS NO ROW AT ALL**, because a clean
+                    // first tab under a heading about tree lists is a line the team reads past
+                    // on every press.
+                    foreach (KeyValuePair<string, List<TreeListFault>> tab in everyTab)
+                    {
+                        if (tab.Value.Count == 0) continue;
+
+                        found.Add(new TreeListSheetCheck(template.Name, tab.Key, tab.Value, null));
                     }
 
                     return found;
@@ -277,23 +335,24 @@ namespace RcrcGreen.Core.Kpi
             TreeSheet sheet,
             SpeciesList list,
             TotalCanopyColumn totalCanopy,
-            IReadOnlyList<FormulaCell> everywhere)
+            IReadOnlyList<FormulaCell> everywhere,
+            List<TreeListFault> alsoOnThisTab)
         {
-            var faults = new List<TreeListFault>();
+            var faults = new List<TreeListFault>(alsoOnThisTab ?? new List<TreeListFault>());
             var notRead = new List<string>();
 
             string partPath;
             if (!parts.TryGetValue(sheet.SheetName, out partPath))
             {
                 return new TreeListSheetCheck(
-                    template.Name, sheet.SheetName, null,
+                    template.Name, sheet.SheetName, faults,
                     new[] { "the template holds no sheet named " + sheet.SheetName });
             }
 
             if (list == null || !list.WasRead)
             {
                 return new TreeListSheetCheck(
-                    template.Name, sheet.SheetName, null,
+                    template.Name, sheet.SheetName, faults,
                     new[]
                     {
                         "this sheet's species list was not read, so its rows and its total's "
@@ -442,7 +501,19 @@ namespace RcrcGreen.Core.Kpi
             // the STREETS existing list and only 139 of them are distinct: every one of V4 to
             // V57 was printed twice for F4 to F83 and twice for B4 to B83, because a formula
             // naming a range twice reads it twice.
-            int lastNamed = list.Rows.Count == 0 ? 0 : list.Rows[list.Rows.Count - 1].Row;
+            // **THE ROW THE LIST'S OWN TOTAL REACHES, NEVER THE LAST ROW THAT NAMES A SPECIES.**
+            // Tree List - Proposed names species to row 83 and its total B93 reads SUM(B4:B92),
+            // so measuring against the names left every Proposed range ending at 83 unnamed:
+            // T69, S70 and T70 on four templates, S70 and T70 on two more, S69 to T70 and V4 to
+            // V57 on STREETS, and V4 to V57 on FUTURE PARKS. PL-35 and ST-07 had WASHINGTONIA
+            // ROBUSTA written into Tree List - Proposed D84 on the 15:55 press, a row every one
+            // of those ranges leaves out.
+            int reaches = list.TotalFound ? list.TotalLastRow : 0;
+            if (reaches == 0)
+            {
+                notRead.Add("this sheet's own quantity total could not be read, so what its rows "
+                    + "reach is UNKNOWN and no range over it was measured: " + list.TotalInWords);
+            }
             int rightEdge = RightEdgeOfTheList(list, canopyColumn, totalCanopy, water);
             var said = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -462,8 +533,6 @@ namespace RcrcGreen.Core.Kpi
                     {
                         continue;
                     }
-
-                    if (lastNamed == 0) continue;
 
                     string reads = CellArea.Letters(area.FirstColumn)
                         + area.FirstRow.ToString(CultureInfo.InvariantCulture) + " to "
@@ -500,18 +569,23 @@ namespace RcrcGreen.Core.Kpi
                         continue;
                     }
 
-                    // **THE LIST'S LAST NAMED ROW IS WHAT A RANGE HAS TO REACH.** The names
-                    // run to 101 on the MOSQUES existing list and a SUMIF stopping at 91 leaves
-                    // ten species out of its own count.
+                    // **WHAT THE LIST'S OWN TOTAL REACHES IS WHAT A RANGE HAS TO REACH.** A
+                    // row inside the total's reach is a row a species can be written into, so a
+                    // range stopping before it leaves that species out of its own count.
+                    //
+                    // **THIS GATES QUESTION 7 ALONE.** Question 8 above reads no total at all, and
+                    // switching it off with this one would be a check that turns itself off on a
+                    // sheet whose total nobody could read, which is the shape the canopy column
+                    // already cost this tool a round.
+                    if (reaches == 0) continue;
                     if (area.FirstRow > list.TotalFirstRow) continue;
-                    if (area.LastRow >= lastNamed) continue;
+                    if (area.LastRow >= reaches) continue;
 
                     faults.Add(new TreeListFault(
                         RangeStopsShort,
                         one.SheetName + " " + one.Cell,
-                        "it reads " + reads
-                            + " and this list names a species as far as row "
-                            + lastNamed.ToString(CultureInfo.InvariantCulture)
+                        "it reads " + reads + " and the total " + list.TotalCell
+                            + " reaches row " + reaches.ToString(CultureInfo.InvariantCulture)
                             + ", so every row past the range is left out of it"));
                 }
             }
@@ -530,6 +604,206 @@ namespace RcrcGreen.Core.Kpi
                 .Where(row => list.TotalFound && row >= list.TotalFirstRow && row <= list.TotalLastRow)
                 .OrderBy(row => row);
         }
+
+        /// <summary>
+        /// The three questions asked of EVERY tab: a formula holding `#REF!`, a formula reading
+        /// a range that holds its own cell, and a formula whose shape differs from the cells
+        /// directly above and below it in the same column block.
+        ///
+        /// **ALL THREE ARE READ OFF THE FILE AND NONE OF THEM KNOWS A COLUMN LETTER.** They are
+        /// asked of the tab's own formulas, whichever tab it is, because the 15:55 press found
+        /// the first on Tree List - Existing and the second on Tree List - Proposed and nothing
+        /// says the next one will not be on the first tab.
+        /// </summary>
+        private static List<TreeListFault> OnEveryTab(string tab, IReadOnlyList<FormulaCell> everywhere)
+        {
+            var faults = new List<TreeListFault>();
+
+            List<FormulaCell> onTheTab = everywhere
+                .Where(one => string.Equals(one.SheetName, tab, StringComparison.Ordinal))
+                .ToList();
+
+            // 1. A formula holding #REF!, which computes nothing whatever else is right about it.
+            foreach (FormulaCell one in onTheTab)
+            {
+                // **A FORMULA THAT NAMES THE TEXT IS NOT A FORMULA THAT HOLDS THE ERROR.**
+                // `IF(A1="#REF!",...)` carries it inside a string literal, so the literals come
+                // out before the text is searched.
+                if (WithoutLiterals(one.Text).IndexOf(RefError, StringComparison.Ordinal) < 0) continue;
+
+                faults.Add(new TreeListFault(
+                    HoldsARefError,
+                    tab + " " + one.Cell,
+                    "it reads " + one.Text + ", and a reference Excel has lost computes nothing"));
+            }
+
+            // 2. A range that holds the very cell the formula sits in, which is circular.
+            foreach (FormulaCell one in onTheTab)
+            {
+                CellRef where = CellRef.TryParse(one.Cell);
+                if (where == null) continue;
+
+                foreach (CellArea area in one.Reads)
+                {
+                    if (area.IsOneCell) continue;
+                    if (!area.Contains(one.SheetName, where.ColumnNumber, where.Row)) continue;
+
+                    faults.Add(new TreeListFault(
+                        RangeHoldsItsOwnCell,
+                        tab + " " + one.Cell,
+                        "it reads " + one.Text + ", and " + area.InWords + " holds " + one.Cell
+                            + " itself, so the formula is one of the numbers it works out"));
+                    break;
+                }
+            }
+
+            faults.AddRange(ShapesOutOfStep(tab, onTheTab));
+
+            return faults;
+        }
+
+        /// <summary>
+        /// **A COLUMN FILLED DOWN IS ONE SHAPE, AND A ROW OUT OF STEP IS A ROW SOMEBODY EDITED.**
+        /// Each formula is rewritten relative to its own row before anything is compared, so
+        /// `W6` reading `V6` and `W7` reading `V7` are one shape while `W5` reading `V4` is
+        /// another.
+        ///
+        /// **ONLY A ROW WITH A NEIGHBOUR ON BOTH SIDES IS ASKED**, because a block may differ on
+        /// purpose at its first or its last row. That is also why this never moves READY.
+        ///
+        /// **AND THE NEIGHBOURS SAY WHICH READING THE BLOCK IS WRITTEN IN.** Where they share a
+        /// relative shape the block was filled down and the middle row is read that way; where
+        /// they share their text word for word it was typed and the middle row is read that way;
+        /// where they share neither, the column is not a block of one kind and nothing is said.
+        /// </summary>
+        private static IEnumerable<TreeListFault> ShapesOutOfStep(string tab, IEnumerable<FormulaCell> onTheTab)
+        {
+            var found = new List<TreeListFault>();
+
+            var byColumn = new Dictionary<string, List<KeyValuePair<int, FormulaCell>>>(
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (FormulaCell one in onTheTab)
+            {
+                CellRef where = CellRef.TryParse(one.Cell);
+                if (where == null) continue;
+
+                List<KeyValuePair<int, FormulaCell>> column;
+                if (!byColumn.TryGetValue(where.Column, out column))
+                {
+                    column = new List<KeyValuePair<int, FormulaCell>>();
+                    byColumn[where.Column] = column;
+                }
+
+                column.Add(new KeyValuePair<int, FormulaCell>(where.Row, one));
+            }
+
+            foreach (KeyValuePair<string, List<KeyValuePair<int, FormulaCell>>> column in byColumn)
+            {
+                List<KeyValuePair<int, FormulaCell>> rows = column.Value
+                    .OrderBy(one => one.Key)
+                    .ToList();
+
+                for (int at = 1; at < rows.Count - 1; at++)
+                {
+                    // **A GAP BREAKS THE BLOCK.** Two formulas with empty rows between them are
+                    // not one column filled down, so neither is the other's neighbour.
+                    if (rows[at].Key != rows[at - 1].Key + 1) continue;
+                    if (rows[at + 1].Key != rows[at].Key + 1) continue;
+
+                    // **THE NEIGHBOURS SAY WHICH READING THIS BLOCK IS WRITTEN IN, and where
+                    // they agree on neither, nothing is said.** A column FILLED DOWN holds one
+                    // relative shape and a different text on every row. A block somebody TYPED
+                    // holds one text and a different relative shape on every row. Comparing by
+                    // either alone names every interior row of the other kind: measured on the
+                    // analysis block, S35 to S43 carry one text over nine consecutive rows, so
+                    // the relative reading alone would have named seven of them and nobody had
+                    // edited anything.
+                    string mine = ShapeOf(rows[at].Value.Text, rows[at].Key);
+                    string above = ShapeOf(rows[at - 1].Value.Text, rows[at - 1].Key);
+                    string below = ShapeOf(rows[at + 1].Value.Text, rows[at + 1].Key);
+
+                    bool filledDown = string.Equals(above, below, StringComparison.OrdinalIgnoreCase);
+                    bool typed = string.Equals(
+                        rows[at - 1].Value.Text, rows[at + 1].Value.Text, StringComparison.OrdinalIgnoreCase);
+
+                    if (!filledDown && !typed) continue;
+
+                    string wanted = filledDown ? above : rows[at - 1].Value.Text;
+                    string held = filledDown ? mine : rows[at].Value.Text;
+
+                    if (string.Equals(held, wanted, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    found.Add(new TreeListFault(
+                        ShapeDiffersFromItsNeighbours,
+                        tab + " " + rows[at].Value.Cell,
+                        "it reads " + rows[at].Value.Text + ", and "
+                            + rows[at - 1].Value.Cell + " and " + rows[at + 1].Value.Cell
+                            + " both carry " + wanted
+                            + (filledDown
+                                ? ", written as each row's own. A column filled down carries one "
+                                    + "shape, so this row was edited"
+                                : " word for word. A block typed the same on every row carries "
+                                    + "one text, so this row was edited")));
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// A formula written relative to the row it sits on: a RELATIVE row becomes its distance
+        /// from that row. **The letters are untouched**, so a column reading another column
+        /// still reads that column, and only the row moves.
+        ///
+        /// **AN ABSOLUTE ROW IS LEFT EXACTLY AS IT IS**, because `$B$4` does not move when a
+        /// column is filled down. Rewriting it relative would make every row of a column of
+        /// `COUNTIFS($B$4:$B$83,...)` differ from its neighbours, which is 54 false lines on one
+        /// sheet of one template.
+        /// </summary>
+        private static string ShapeOf(string text, int row)
+        {
+            return RowInAReference.Replace(text ?? string.Empty, match =>
+            {
+                if (match.Groups["fixed"].Value.Length > 0) return match.Value;
+
+                int at;
+                if (!int.TryParse(match.Groups["row"].Value, NumberStyles.Integer,
+                    CultureInfo.InvariantCulture, out at))
+                {
+                    return match.Value;
+                }
+
+                int away = at - row;
+
+                return match.Groups["column"].Value + "[" + (away >= 0 ? "+" : string.Empty)
+                    + away.ToString(CultureInfo.InvariantCulture) + "]";
+            });
+        }
+
+        /// <summary>
+        /// A cell reference inside a formula, its column letters, the dollar before its row and
+        /// its row apart. The dollar before the row is what says whether the reference moves
+        /// when the column is filled down.
+        /// </summary>
+        private static readonly Regex RowInAReference = new Regex(
+            @"(?<![A-Za-z0-9_])(?<column>\$?[A-Z]{1,3})(?<fixed>\$?)(?<row>[0-9]{1,7})(?![A-Za-z0-9_(])",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        /// <summary>The text Excel writes where a reference has been deleted.</summary>
+        private const string RefError = "#REF!";
+
+        /// <summary>
+        /// The formula with every string literal replaced by an empty pair of quotes, so a
+        /// question about what a formula DOES is never answered by what one of its literals says.
+        /// </summary>
+        private static string WithoutLiterals(string text)
+        {
+            return Literal.Replace(text ?? string.Empty, "\"\"");
+        }
+
+        private static readonly Regex Literal = new Regex(
+            "\"(?:[^\"]|\"\")*\"", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
         /// <summary>
         /// **THE RIGHT EDGE OF THE LIST'S OWN BLOCK, READ OFF THE FILE.** Every column this
@@ -598,7 +872,16 @@ namespace RcrcGreen.Core.Kpi
                     || !string.IsNullOrWhiteSpace(WorkbookPackage.TextOf(cell, shared));
                 if (!holds) continue;
 
-                found.Add(CellRef.Parse(where));
+                // **A REFERENCE THIS CANNOT READ IS SKIPPED, NEVER THROWN OVER.** The `r`
+                // attribute is a plain string in the file, so a lowercase `l93` or a truncated
+                // one parses to nothing, and `CellRef.Parse` answers that with a throw that none
+                // of the four catches above takes. `SpeciesList` reads the same part in the same
+                // press through `TryParse` and skips such a cell, so one reader tolerated it and
+                // this one would have ended the press.
+                CellRef held = CellRef.TryParse(where);
+                if (held == null) continue;
+
+                found.Add(held);
             }
 
             return found;
@@ -752,6 +1035,48 @@ namespace RcrcGreen.Core.Kpi
             {
                 get { return TotalColumn.Length > 0 && PerTreeColumn.Length > 0; }
             }
+        }
+
+        /// <summary>
+        /// **THE TWO QUESTIONS THAT STOP A PLOT BEING READY.** A `#REF!` computes nothing and a
+        /// range holding its own cell is circular, so a workbook built on a template carrying
+        /// either opens with an error whatever this run wrote into it. All 73 street plots and
+        /// 5 FUTURE PARKS plots of the 15:55 press read READY YES over exactly that.
+        ///
+        /// **A SHAPE OUT OF STEP IS NOT ONE OF THEM**, because a column block may differ on
+        /// purpose at its first or its last row, so it stays a report line.
+        ///
+        /// The kinds are compared as the constants they are and never read out of the printed
+        /// words, which is the rule this repository already follows for a division's own kind.
+        /// </summary>
+        public static string StopsAPlotBeingReady(
+            IEnumerable<TreeListSheetCheck> checks, string templateName)
+        {
+            string wanted = (templateName ?? string.Empty).Trim();
+
+            var named = new List<string>();
+
+            foreach (TreeListSheetCheck sheet in (checks ?? Enumerable.Empty<TreeListSheetCheck>()))
+            {
+                if (sheet == null) continue;
+                if (!string.Equals(sheet.TemplateName, wanted, StringComparison.Ordinal)) continue;
+
+                foreach (TreeListFault fault in sheet.Faults)
+                {
+                    if (!string.Equals(fault.Kind, HoldsARefError, StringComparison.Ordinal)
+                        && !string.Equals(fault.Kind, RangeHoldsItsOwnCell, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    named.Add(fault.Kind + " on " + fault.Cell);
+                }
+            }
+
+            return named.Count == 0
+                ? string.Empty
+                : wanted + " holds " + string.Join(", ", named.ToArray())
+                    + ", so this plot's workbook opens with an error whatever was written into it";
         }
 
         /// <summary>

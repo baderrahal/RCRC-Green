@@ -4,6 +4,191 @@ Newest entry first.
 
 ---
 
+## 2026-09-17, ninety seventh pass. Two checks that missed real errors, and four report lines
+
+Bader ran the full 154 plot press on NG05 on 17 September at 15:55, on the templates the team
+saved that day. It wrote 154 workbooks and 154 PDFs and READY read 122 YES. **The report and the
+templates are not in this repository and they are not going into it.** Every measurement below is
+copied from them.
+
+**2165 tests, 1345 of them KPI**, run after the last file was written. 28 hook cases. Build zero
+warnings. **80 audit findings, 23 FIXED, 57 open**, counted off the four files again and nothing
+closed, renumbered or reordered.
+
+**NOTHING HERE WAS RUN IN REVIT**, by this session or by anybody.
+
+### Errors a workbook opens with were not checked at all
+
+**ALL 73 STREET PLOTS AND 5 FUTURE PARKS PLOTS READ READY YES.** The STREETS template holds
+
+```
+Tree List - Existing W4   IF(OR(#REF!=" ",#REF!<1)," ",#REF!/ TotTrees)
+Tree List - Existing W5   IF(OR(V4=" ",V4<1)," ", V4/TotTrees)
+```
+
+while every row from W6 to W57 reads its own row of V, and the FUTURE PARKS template holds
+`Tree List - Proposed L93 = AVERAGE(L4:L93)`, a range that holds its own cell. The report printed
+that second formula in 12 plot blocks without a word, and **it holds no line with #REF and no
+line saying circular.**
+
+The template check gets three questions, **asked on every tab rather than on the two tree lists
+alone**, because the first is on Tree List - Existing, the second on Tree List - Proposed and
+nothing says the next will not be on the first tab. `TreeListCheck.OnEveryTab` works them out
+once per tab, folds them into a tree list's own check where the tab is one, and gives a check of
+its own to a tab that is not, so no cell is named twice. A tab with nothing wrong gets no row.
+
+- **A formula holds `#REF!`**, read off the formula's own text.
+- **A formula reads a range that holds its own cell**, through `CellArea.Contains` and the
+  formula's own sheet and cell. A same sheet reference already carries the owning formula's sheet
+  name, substituted at parse time, so nothing here compares a sheet a second way.
+- **A formula's shape differs from the cells directly above and below it in the same column
+  block.** Each formula is rewritten relative to its own row first, so a column filled down reads
+  as one shape.
+
+**AN ABSOLUTE ROW IS LEFT ABSOLUTE AND THAT IS NOT A DETAIL.** `$B$4` does not move when a column
+is filled down, so rewriting it relative would have made every row of
+`COUNTIFS($B$4:$B$83,...)` differ from its neighbours. That is 54 false lines on one sheet of one
+template, and the dollar before the row is what the rule reads.
+
+**ONLY A ROW WITH A NEIGHBOUR ON BOTH SIDES IS ASKED, AND ONLY WHERE IT DIFFERS FROM BOTH.** A
+block may differ on purpose at its first or its last row, which is why W4 is not named and W5 is,
+and why **a differing shape is a report line and never moves READY**.
+
+**READY READS NO ON THE FIRST TWO.** `TreeListCheck.StopsAPlotBeingReady` answers off the fault's
+own kind rather than off its printed words, and `PlotReady.TemplateErrors` finds the plot's
+template through the run that read it, which is how `Divisions` already finds a plot's own
+workbook. The reason names the template, the tab and the cell.
+
+**The break watch.** Take the `#REF!` question out. The test named for it went red naming the
+cell and printing the STREETS formula back. `TreeListCheck.cs` restored, md5
+`4286794676d4d4c9011cecb6739da961` before and after, which is the hash it carried at that moment
+rather than the one the round ends on.
+
+### The template check skipped every Proposed range
+
+A range was measured against the last row that NAMES a species. **Tree List - Proposed names
+species to row 83 while its total B93 reads `SUM(B4:B92)`**, so a Proposed range ending at row 83
+was never named at all. In the templates that ran, none of these was named:
+
+```
+T69, S70 and T70        EXISTING PARKS, FUTURE PARKS, MOSQUES, PARKING
+S70 and T70             HEALTHCARE, SCHOOLS
+S69 to T70, V4 to V57   STREETS
+V4 to V57               FUTURE PARKS
+```
+
+**PL-35 and ST-07 had WASHINGTONIA ROBUSTA WRITTEN INTO Tree List - Proposed D84 this press**, a
+row every one of those ranges leaves out.
+
+It is measured against what the list's own total reaches now, `SpeciesList.TotalLastRow`, and the
+line names the total cell. **A row inside the total's reach is a row a species can be written
+into**, which is the fact the rule rests on, and the last named row is not that. The analysis
+block rule and the first tab column rule from round 96 are untouched.
+
+**The break watch.** Measure against the last named row again.
+`AProposedRangeStoppingAtTheLastNamedRowIsNamed` went red naming S70 and saying the check named
+nothing. Same file, same md5 before and after.
+
+### Four report lines
+
+**1. THE GLANCE PRINTED ALL 60 `#DIV/0!`.** It names at most five now, through
+`DivisionGlance.WhereNamed` and the same `Named` of 5 the divisions it could not work out already
+use, and its sentence says where the rest are. The full list stays in each plot's own block.
+
+**2. IT SAID EACH ONE DIVIDES BY A CELL THE TEMPLATE ALREADY HELD, AND S70 DIVIDES BY A RANGE.**
+The divisor travels on the finding now, `FormulaAtRisk.DivisorOver` and `DivisorInWords`, set
+where the risk is built rather than read back out of the sentence. A one cell divisor names its
+cell too, which it never did.
+
+**AND THE TREES SENTENCE IS MADE TRUE RATHER THAN ASSUMED.** `GuardAnswer` told a formula with no
+guard at all from a guard that was read and did not hold, which it did not, so
+`TheGuardCountedTrees` says the workbook's own tree total was one or more while the range counted
+nought. Only then does the line say the plot's trees sit on rows the range does not reach. A
+formula carrying no guard says nothing about how many trees there are and does not get it.
+
+**3. THE M83 REASON OPENED WITH THE COLUMN L WORDING.** Every canopy difference was prefixed with
+`the workbook's canopy column is not the one this tool works out`, including FP-18's row 83, whose
+canopy column is exactly the one this tool works out and whose M83 is empty. The opening is chosen
+off WHICH KIND of difference was found, through two flags set where each is found, so the M83 case
+opens with `a row computes a canopy per tree and adds none to the canopy total`. A run holding
+both kinds says both. The two column drift tests keep their wording unchanged.
+
+**The break watch.** Return the column sentence to every case.
+`TheGuardNamesTheCellThatWouldHaveAddedTheCanopy` went red on the opening. `WorkbookArithmetic.cs`
+restored, md5 `4187d0bacac3f96fb48086bbb5ad5504` before and after.
+
+**4. THE RUN SHEET WAS TITLED `The seven checks` OVER THIRTY STEPS**, at line 1 and again at line
+208 as the file stood before this round. Both read `The run sheet` now, the second at line 227
+once this round's three items had gone in above it, and the sheet says why. That was a request
+this task logged in the ninety sixth pass and it is closed.
+
+### The audit files, counted again
+
+```
+steps/audit-kpi.md      29 findings, numbered 1 to 29     8 FIXED   21 open
+steps/audit-kpi-2.md    20 findings, numbered 30 to 49    9 FIXED   11 open
+steps/audit-kpi-3.md    14 findings, numbered 50 to 63    2 FIXED   12 open
+steps/audit-kpi-4.md    17 findings, numbered 64 to 80    4 FIXED   13 open
+                        80                               23         57
+```
+
+Counted off the files rather than carried forward, and the two greps that over-count are the ones
+the ninety sixth pass named: `audit-kpi-4.md:19` is prose whose sentence opens with the number 80,
+and `audit-kpi-3.md:8` and `audit-kpi-4.md:11-13` are preamble sentences counting the files before
+them. **Nothing was closed, renumbered or reordered.**
+
+### The run sheet
+
+`steps/2026-09-16-kpi-checks.md` keeps its shape, its Windows order and every existing check, and
+gains three at the end, one action each: **31** every street plot reading READY NO and naming W4
+with W4 and W5 named in the template check, **32** every future park plot reading READY NO and
+naming L93, and **33** the Proposed cells still reading row 83 named template by template. What
+remains, the audit block and what comes next are refreshed off this round.
+
+### What is UNKNOWN
+
+**Whether the HEALTHCARE Tree List - Existing V4 to V57 pair is a fault is UNKNOWN from here.**
+Those cells read `$F$4:$F$101` in the first SUMIF and `$F$4:$F$83` in the second. The second is
+short of what that list's total reaches and the range question names it, which is the answer this
+round gives. Whether the client meant the two to differ is a question for the team, and no client
+workbook is in this repository to settle it.
+
+**How many cells each template's first tab has out of step is UNKNOWN until the next press.** The
+shape question has never run over a client file, and the count it returns is what the next report
+says.
+
+### What the claim checker flagged
+
+**IT FOUND NO WRONG CLAIM**, and said so after checking every identifier, every test message, the
+absolute row arithmetic, the two drift tests and all four audit files line by line. What it
+flagged is three things it could not reach and one number that had moved.
+
+**THE NUMBER THAT HAD MOVED.** This entry said the run sheet's second title sits at line 208.
+That is where it sat BEFORE this round, which is what the round was given and what a read of line
+208 returned off the file before any edit. It sits at 227 now, because this round put three items
+in above it. The sentence says both lines, because a line number with no moment attached to it is
+one nobody can check.
+
+**THREE THINGS IT COULD NOT CHECK, AND IT SAID SO PLAINLY** rather than accepting or rejecting
+them. It had no shell, so it could not compute the two md5 hashes, run the build, run the tests or
+run the hook cases, and it has no git history, so it could not see the file as it stood before
+this round. **I re-ran every one of them myself after the last file was written**: 2165 tests with
+0 failed, 1345 of them KPI, 28 hook cases with 0 failed and build zero warnings. It counted the
+`[Fact]` and `[Theory]` attributes at 1866 over the test project and 1124 under `Kpi`, which sits
+under the run counts the way theory rows do.
+
+**IT RAN BEFORE THE SIX DEFECTS SECTION ABOVE**, which moved the counts from 2161 and 1341 to
+2165 and 1345 and moved two of the files under it. The hashes in the break watches are the ones
+each file carried at its own break watch, which is what a break watch records.
+
+**AND IT NAMED THE CLASS OF CLAIM THAT COMES FROM OUTSIDE THIS REPOSITORY**, which is every
+measurement of the 15:55 press and of the client's templates. This entry says at the top that
+neither is in here, and the checker confirmed that each of those facts is echoed word for word in
+the code's own docstrings and test names, so the tool was built against a measurement rather than
+against a guess.
+
+---
+
 ## 2026-09-16, ninety sixth pass. Three features that behaved wrongly on real files
 
 **Merged to main as `60949ee`**, pull request 160, squashed with both message fields passed on the

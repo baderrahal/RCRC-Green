@@ -1,11 +1,15 @@
-# The seven checks, 16 September 2026
+# The run sheet, 16 September 2026
 
 For Bader, on Windows, in the order they happen. One action a step, and where a step carries a
 command that is the one to paste. **Nothing here was run in Revit by anybody**, so every check
 below is a check and not a claim.
 
-What landed since the 16:37 press. **Seven items two rounds back, six in the round after it and
-three in this one**, all of them in the build step 8 installs:
+**IT WAS TITLED `The seven checks` OVER THIRTY STEPS**, at the top and again above what remains,
+and it has been wrong since the sheet grew past seven. A line about what a thing holds that is
+not what it holds is the shape this repository already carries three times over.
+
+What landed since the 16:37 press. **Seven items three rounds back, six in the round after it,
+three in the round after that and three in this one**, all of them in the build step 8 installs:
 
 1. Two ticked plots whose PRX_Plot_UID2 files them at one path now write NOTHING, and each is
    named above Create and in the report. Ten plots of that press wrote over each other.
@@ -41,6 +45,21 @@ And this round:
 13. The rule that any round changing the panel writes an HTML mockup is **removed**, your
     decision of 16 September. Nothing under `design/` is touched and no mockup is owed for any
     past round.
+
+And this round, off your full 154 plot press of 17 September at 15:55, which wrote 154 workbooks
+and 154 PDFs with READY at 122 YES:
+
+17. **Three new questions, asked on every tab of every ticked template.** A formula holding
+    `#REF!`, a formula reading a range that holds its own cell, and a formula whose shape,
+    written relative to its own row, differs from the cells directly above and below it. The
+    first two make a plot read READY NO, because the workbook opens with an error whatever this
+    run wrote into it. The third is a report line only.
+18. **A tree list range is measured against what the list's own total reaches**, not the last
+    row that names a species, so the Proposed ranges stopping at row 83 are named at last.
+19. **Four report lines.** The glance names at most five `#DIV/0!` rather than all 60. A
+    division by a count over a range says so and names the range. The M83 reason opens with the
+    M83 fact rather than with the canopy column sentence. And this sheet is no longer titled
+    `The seven checks` over thirty steps.
 
 And this round, off your streets only press of 16 September at 21:38, 81 listed plots:
 
@@ -205,7 +224,7 @@ Press **Create**. The progress window says which plot is being read and how far 
 
 ---
 
-# The seven checks
+# The run sheet
 
 One check a step. Each one is a thing to look at, not a thing to take on trust.
 
@@ -469,6 +488,83 @@ analysis block, and both used to be named for their length.
 **`V4` to `V57` are still named and that is right.** They count `B4:B83` and `F4:F83`, which ARE
 the list's own columns, on a list that runs to row 101.
 
+## 31. Every street plot reads READY NO naming Tree List - Existing W4
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "opens with an error" -Context 0,2
+```
+
+The STREETS template holds
+
+```
+Tree List - Existing W4   IF(OR(#REF!=" ",#REF!<1)," ",#REF!/ TotTrees)
+```
+
+so every workbook built from it opens with a formula that computes nothing. On the 15:55 press
+**all 73 street plots read READY YES** and the report held no line with #REF anywhere in it.
+
+Expect every street plot in THE PLOT LIST with **READY NO**, its last column reading
+
+```
+STREETS holds a formula holds #REF! on Tree List - Existing W4, so this plot's workbook opens
+with an error whatever was written into it
+```
+
+and **the template check naming W4 and W5 in THE TEMPLATES' OWN TREE LISTS**, W4 under
+`a formula holds #REF!` and W5 under `a formula's shape differs from the cells above and below
+it`, because W5 reads V4 where W6 to W57 each read their own row of V.
+
+**IT STOPS NO WRITE.** The workbooks are still written and the error is the template's, not
+this run's. What changed is that such a plot no longer reads as ready to send.
+
+**IT GOES AWAY WHEN THE TEMPLATE IS FIXED**, not before, and that is the team's fix to the
+client's file.
+
+## 32. Every future park plot reads READY NO naming Tree List - Proposed L93
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "holds its own cell" -Context 0,2
+```
+
+The FUTURE PARKS template holds `Tree List - Proposed L93 = AVERAGE(L4:L93)`, a range holding
+the very cell the formula sits in, which is a circular reference. The 15:55 report printed that
+formula in **12 plot blocks without a word**, and its 5 future park plots read READY YES.
+
+Expect every future park plot with **READY NO**, its last column naming
+`Tree List - Proposed L93`, and the cell named in the template check under
+`a formula reads a range that holds its own cell`.
+
+**A plot reading READY NO here is the template's fault and not the model's**, so nothing in
+Revit fixes it.
+
+## 33. The template check names the Proposed cells still reading row 83
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "stops before the list ends" -Context 0,60
+```
+
+A range used to be measured against the last row that NAMES a species. Tree List - Proposed
+names species to row 83 while its total B93 reads `SUM(B4:B92)`, so **a Proposed range ending at
+row 83 was never named at all**. It is measured against what the list's own total reaches now.
+
+Expect these, off the templates that ran on 15:55, all on Tree List - Proposed:
+
+```
+EXISTING PARKS, FUTURE PARKS, MOSQUES, PARKING    T69, S70 and T70
+HEALTHCARE, SCHOOLS                              S70 and T70
+STREETS                                          S69 to T70, and V4 to V57
+FUTURE PARKS                                     V4 to V57
+```
+
+**THIS IS NOT A NEW FAULT IN THE TEMPLATES.** Every one of those cells was reading row 83 on the
+15:55 press and the check simply did not look at them. **PL-35 and ST-07 had a species written
+into Tree List - Proposed D84 that press**, which is a row every one of those ranges leaves
+out.
+
+**THE CHECK IS THAT THEY STOP BEING NAMED.** Once the team has taken each range out to row 92,
+the block for that template reads clean on Tree List - Proposed. A template they have not fixed
+must be named with the same cells it was named with last time.
+
 ---
 
 # What remains
@@ -489,6 +585,14 @@ list, `O90` to `O94`, `O96` to `O100`, `N85` and `N88` to `N101` empty on all se
 Native and Adaptive SUMIFs stopping before the list they count ends. **The tool names every one
 of them at the press now and changes none of them.** They are the team's fix to the client's
 templates and they are what check 25 watches go clean.
+
+**THE STREETS TEMPLATE HOLDS A `#REF!` AND THE FUTURE PARKS ONE A CIRCULAR RANGE.**
+`Tree List - Existing W4` and `Tree List - Proposed L93`. The tool names both and reads READY NO
+for every plot built on either, and changes neither. They are the team's fix to the client's
+files, and checks 31 and 32 are what watch them go away.
+
+**EVERY TEMPLATE'S PROPOSED ANALYSIS RANGES STILL STOP AT ROW 83** while the list's own total
+reaches row 92. Named in check 33, template by template, and changed by nothing here.
 
 **`S70` and `T70` divide by `COUNT(B4:B83)` while the names run to row 101.** The tool reports it
 and changes no client formula, which is unchanged. **NS-29, NS-33, ST-13, ST-18 and ST-25 of the
@@ -523,8 +627,8 @@ steps/audit-kpi-4.md    17 findings    4 FIXED   13 open
                         80            23         57
 ```
 
-**NOTHING WAS CLOSED, RENUMBERED OR REORDERED IN THIS ROUND**, and the count above was read off
-the four files again on 16 September rather than carried forward: 29 findings numbered 1 to 29,
+**NOTHING WAS CLOSED, RENUMBERED OR REORDERED**, and the count above was read off the four files
+again on 17 September rather than carried forward: 29 findings numbered 1 to 29,
 20 numbered 30 to 49, 14 numbered 50 to 63 and 17 numbered 64 to 80, with the FIXED marks counted
 on the findings themselves and not on the sentences in each file's own preamble that count the
 files before it. A block of the 57 is what the next round can take.
@@ -543,7 +647,10 @@ files before it. A block of the 57 is what the next round can take.
    that names them at all.
 8. Ask the team what `<Streets>` E37 and E38 are for. They read `Q4 to Q34` over an empty column
    and `T4 to T68` in the analysis block, and nothing here can say whether that is a fault.
-9. The next round can take a block of the 57 open audit findings.
+9. Take `Tree List - Existing W4` and `Tree List - Proposed L93` to the team. Those two hold
+   73 street plots and 5 future park plots between them.
+10. Take the Proposed analysis ranges out to row 92 on all seven, off check 33's own list.
+11. The next round can take a block of the 57 open audit findings.
 
 ---
 

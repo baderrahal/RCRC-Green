@@ -421,8 +421,11 @@ namespace RcrcGreen.Core.Kpi
             Line(report, "  " + glance.Divisions.InWords);
             if (glance.Divisions.Found > 0)
             {
-                Line(report, "    plot | sheet and cell | which cell it divides by");
-                foreach (string one in glance.Divisions.Where) Line(report, "    " + one);
+                // **AT MOST FIVE HERE TOO.** The 15:55 press found 60 and this printed all
+                // 60, which is the fault the divisions it could not work out already had. The
+                // count is in the line above and the full list is in each plot's own block.
+                Line(report, "    plot | sheet and cell | what it divides by");
+                foreach (string one in glance.Divisions.WhereNamed) Line(report, "    " + one);
             }
 
             // **AT MOST FIVE, BECAUSE A GLANCE IS A GLANCE.** The 21:38 press held 284 of these

@@ -38,6 +38,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// A press over the shape all seven templates really carry: B102 reading
         /// `SUM(B4:B101)` and S69 a COUNTIFS, so the guard has to be followed to be answered.
         /// </summary>
+        private PatchOutcome LastOutcome;
+
         private FormulaCheck Summing(string fileName, params CellWrite[] writes)
         {
             string template = WorkbookFixture.DividingByACount(
@@ -50,6 +52,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new WorkbookCell[0]);
 
             Assert.True(outcome.Written, outcome.Refusal);
+
+            LastOutcome = outcome;
 
             return outcome.Formulas;
         }
@@ -330,6 +334,86 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "a division could not be checked, Tree List - Existing S70, "
                 + "Tree List - Existing T70",
                 PlotReady.DivisionsNotChecked(set, "NS-29"));
+        }
+
+        /// <summary>
+        /// **A DIVISION BY A COUNT OVER A RANGE IS NOT A DIVISION BY A CELL.** The 15:55 glance
+        /// said each of its 60 divisions divides by a cell the template already held, and `S70`
+        /// divides by `COUNT(B4:B83)`. The line names the range now, and says the plot's trees
+        /// sit on rows it does not reach, which is true because the formula's own guard read a
+        /// tree total of one or more before the division was reached at all.
+        /// </summary>
+        [Fact]
+        public void TheGlanceLineNamesTheRangeRatherThanCallingItACell()
+        {
+            FormulaCheck check = Summing("named.xlsx", CellWrite.Number(Sheet, "B85", 3));
+
+            FormulaAtRisk s70 = Assert.Single(
+                check.AtRisk, one => one.IsDivideByZero && one.Cell == "S70");
+
+            Assert.Equal("COUNT", s70.DivisorOver);
+            Assert.Equal("B4:B83", s70.DivisorInWords);
+            Assert.True(
+                s70.TheGuardCountedTrees,
+                "S70 opens IF(TotTrees<1,\" \",...) and TotTrees reads SUM(B4:B101), which this "
+                + "plot's 3 trees on row 85 make 3, so the guard was read and did not hold.");
+
+            var run = CreateFixture.Run(
+                readings: new[] { CreateFixture.Plot("ST-13", component: "STREET 36m ROW") },
+                template: KpiTemplates.Streets,
+                outcome: LastOutcome);
+
+            var set = new KpiCreateRunSet(
+                "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
+                PlotsPerTemplate.Split(
+                    new[] { "ST-13" }, one => "STREET 36m ROW", new[] { KpiTemplates.Streets }),
+                new[] { run },
+                new List<TemplateOutcome>());
+
+            RunGlance glance = RunAtAGlance.Of(set);
+
+            Assert.Contains(
+                "ST-13 | Tree List - Existing S70 | divides by COUNT over B4:B83, a range this "
+                + "plot's trees sit outside, because its own guard read a tree total of one or "
+                + "more and the range counted nought, which the template already held",
+                glance.Divisions.Where);
+        }
+
+        /// <summary>
+        /// **AND THE GLANCE NAMES AT MOST FIVE OF THEM.** The 15:55 press found 60 #DIV/0! and
+        /// the glance printed all 60, which is the fault the divisions it could not work out
+        /// already had.
+        /// </summary>
+        [Fact]
+        public void TheGlanceNamesAtMostFiveDivisionsAndSaysWhereTheRestAre()
+        {
+            var lines = new List<string>();
+            for (int at = 1; at <= 7; at++)
+            {
+                lines.Add("ST-1" + at + " | Tree List - Existing S70 | divides by cell H7");
+            }
+
+            var glance = new DivisionGlance(7, 0, lines);
+
+            Assert.Equal(7, glance.Where.Count);
+
+            Assert.Equal(
+                new[]
+                {
+                    "ST-11 | Tree List - Existing S70 | divides by cell H7",
+                    "ST-12 | Tree List - Existing S70 | divides by cell H7",
+                    "ST-13 | Tree List - Existing S70 | divides by cell H7",
+                    "ST-14 | Tree List - Existing S70 | divides by cell H7",
+                    "ST-15 | Tree List - Existing S70 | divides by cell H7"
+                },
+                glance.WhereNamed.ToArray());
+
+            Assert.Equal(
+                "THE DIVISIONS: 7 #DIV/0! were found and 0 of them divide by a cell THIS RUN "
+                + "WROTE. The rest divide by something the template already held, which is its "
+                + "own arithmetic over a real number and not this tool's doing. The first 5 are "
+                + "named under this line and every one of them is in its own plot's block below.",
+                glance.InWords);
         }
 
         /// <summary>

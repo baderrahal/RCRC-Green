@@ -326,10 +326,13 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "THE DIVISIONS: 2 #DIV/0! were found and 1 of them divide by a cell THIS RUN "
                 + "WROTE. A division by a cell this run wrote is this tool's doing.",
                 glance.Divisions.InWords);
+            // **THE DIVISOR IS NAMED.** D9 reads D8/H7, so H7 is what it divides by, and the
+            // line said only that it was a cell. The 15:55 press printed 60 of these and every
+            // one of them said a cell where S70 divides by COUNT(B4:B83), which is a range.
             Assert.Equal(new[]
             {
-                "DM-12 | <Mosques> D9 | divides by a cell the template already held",
-                "DM-13 | <Mosques> D9 | divides by a cell THIS RUN WROTE"
+                "DM-12 | <Mosques> D9 | divides by cell H7, which the template already held",
+                "DM-13 | <Mosques> D9 | divides by cell H7, and THIS RUN WROTE it"
             }, glance.Divisions.Where.ToArray());
         }
 
@@ -400,7 +403,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Contains("    ST-07: Nothing was written. the workbook is open in Excel", report);
             Assert.Contains(glance.Regions.InWords, report);
             Assert.Contains(glance.Divisions.InWords, report);
-            Assert.Contains("DM-13 | <Mosques> D9 | divides by a cell THIS RUN WROTE", report);
+            Assert.Contains("DM-13 | <Mosques> D9 | divides by cell H7, and THIS RUN WROTE it", report);
 
             // **THE HEADING LINE, NOT THE NAME.** The contents block above the body names every
             // section, widest first, so the bare name is now in the file twice and the first of
