@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-17, ninety seventh pass. Two checks that missed real errors, and four report lines
 
+**Merged to main as `a3e531c`**, pull request 162, squashed with both message fields passed on the
+call, so the message came back off main byte for byte with no co-author line and no generated-by
+footer.
+
 Bader ran the full 154 plot press on NG05 on 17 September at 15:55, on the templates the team
 saved that day. It wrote 154 workbooks and 154 PDFs and READY read 122 YES. **The report and the
 templates are not in this repository and they are not going into it.** Every measurement below is
