@@ -123,5 +123,24 @@ namespace RcrcGreen.Revit
         /// this round does not touch. **This number has not been seen in Revit.**
         /// </summary>
         public const double WideLabelWidth = 88.0;
+
+        /// <summary>
+        /// The View Filters rail, the whole column. The rail has to leave a 300 pixel pane
+        /// a readable body, which is where the 34 comes from. Added for that pane and used
+        /// by nothing on the other two. **This number has not been seen in Revit.**
+        /// </summary>
+        public const double RailWidth = 34.0;
+
+        /// <summary>
+        /// One rail cell, its width and its height, so the cell is a circle when its
+        /// corner radius is half of this. **This number has not been seen in Revit.**
+        /// </summary>
+        public const double RailCell = 26.0;
+
+        /// <summary>
+        /// The tick drawn in a finished rail cell, a shape rather than a character so no
+        /// font gets a say in it. **This number has not been seen in Revit.**
+        /// </summary>
+        public const double RailTick = 12.0;
     }
 }

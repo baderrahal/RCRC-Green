@@ -75,7 +75,8 @@ namespace RcrcGreen.Revit.ViewFilters
                 Logger.AppendLine("Error: Please provide at least one view keyword and one filter configuration.");
                 return new Output { ViewsEvaluated = 0, ViewsModified = 0, FiltersAdded = 0, FiltersConfigured = 0,
                     FiltersCreatedInDoc = 0, FiltersNotFoundInDoc = 0, Skipped = 0, Blocked = 0,
-                    Logs = new string[] { "Please provide at least one view keyword and one filter configuration." } };
+                    Logs = new string[] { "Please provide at least one view keyword and one filter configuration." },
+                    Failures = new ViewFilterFailure[0] };
             }
 
             Autodesk.Revit.DB.Color ParseHexColor(string hex)
@@ -104,6 +105,11 @@ namespace RcrcGreen.Revit.ViewFilters
             int viewsBlocked = 0;
             List<string> runLogs = new List<string>();
 
+            // One entry per thing not applied, each holding the very sentence logged for
+            // it. The sentence is built into a local at every site and handed to both, so
+            // the log and the result panel cannot word one failure two ways.
+            List<ViewFilterFailure> failures = new List<ViewFilterFailure>();
+
             using (Transaction trans = new Transaction(doc, "RCRC Green - View Filters"))
             {
                 trans.Start();
@@ -120,7 +126,9 @@ namespace RcrcGreen.Revit.ViewFilters
                     if (TemplateOwnsTheFilters(doc, v, out string blockingTemplate))
                     {
                         viewsBlocked++;
-                        Logger.AppendLine($"Blocked '{v.Name}', its template '{blockingTemplate}' owns the filters setting.");
+                        string blocked = $"Blocked '{v.Name}', its template '{blockingTemplate}' owns the filters setting.";
+                        Logger.AppendLine(blocked);
+                        failures.Add(new ViewFilterFailure(v.Name, blocked));
                         continue;
                     }
 
@@ -132,13 +140,24 @@ namespace RcrcGreen.Revit.ViewFilters
                     if (!ViewFilterPlotCode.TryFromViewName(viewName, out string plotCode))
                     {
                         viewsSkipped++;
-                        Logger.AppendLine($"Skipped '{viewName}', its name does not start with a plot id.");
+                        string skipped = $"Skipped '{viewName}', its name does not start with a plot id.";
+                        Logger.AppendLine(skipped);
+                        failures.Add(new ViewFilterFailure(viewName, skipped));
                         continue;
                     }
 
                     ICollection<ElementId> currentFilterIds = new HashSet<ElementId>();
                     try { currentFilterIds = v.GetFilters(); }
-                    catch { continue; }
+                    catch
+                    {
+                        // This catch continued in silence, so a view whose filters could
+                        // not be read looked exactly like one that was fine. It counts
+                        // toward no counter, as before, and it says so now.
+                        string couldNotRead = $"Could not read the filters on '{viewName}', so it is left as it is.";
+                        Logger.AppendLine(couldNotRead);
+                        failures.Add(new ViewFilterFailure(viewName, couldNotRead));
+                        continue;
+                    }
 
                     bool viewModified = false;
 
@@ -146,6 +165,10 @@ namespace RcrcGreen.Revit.ViewFilters
                     {
                         string prefix = filterCfg.Prefix;
                         string targetFilterName = ViewFilterNames.TargetFilterName(prefix, plotCode);
+
+                        // Whether this lookup's failure has already been said, so the
+                        // guard under the exemplar path does not word one failure twice.
+                        bool failureSaid = false;
 
                         ParameterFilterElement filter = allFilters.FirstOrDefault(f =>
                             ViewFilterNames.IsExactMatch(f.Name, targetFilterName));
@@ -173,7 +196,9 @@ namespace RcrcGreen.Revit.ViewFilters
                                     if (!ViewFilterPlotCode.StartsWithAPlotId(exemplarPlotCode))
                                     {
                                         filtersNotFound++;
-                                        Logger.AppendLine($"Cannot create '{targetFilterName}', the exemplar '{exemplar.Name}' does not end in a plot id, skipped.");
+                                        string cannotCreate = $"Cannot create '{targetFilterName}', the exemplar '{exemplar.Name}' does not end in a plot id, skipped.";
+                                        Logger.AppendLine(cannotCreate);
+                                        failures.Add(new ViewFilterFailure(targetFilterName, cannotCreate));
                                         continue;
                                     }
 
@@ -189,7 +214,9 @@ namespace RcrcGreen.Revit.ViewFilters
                                     if (newElemFilter == null)
                                     {
                                         filtersNotFound++;
-                                        Logger.AppendLine($"Cannot copy rules from exemplar '{exemplar.Name}', skipped.");
+                                        string cannotCopy = $"Cannot copy rules from exemplar '{exemplar.Name}', skipped.";
+                                        Logger.AppendLine(cannotCopy);
+                                        failures.Add(new ViewFilterFailure(targetFilterName, cannotCopy));
                                         continue;
                                     }
 
@@ -206,12 +233,30 @@ namespace RcrcGreen.Revit.ViewFilters
                                 }
                                 catch (Exception ex)
                                 {
-                                    Logger.AppendLine($"Failed to create filter '{targetFilterName}': {ex.Message}");
+                                    string createFailed = $"Failed to create filter '{targetFilterName}': {ex.Message}";
+                                    Logger.AppendLine(createFailed);
+                                    failures.Add(new ViewFilterFailure(targetFilterName, createFailed));
+                                    failureSaid = true;
                                 }
                             }
                         }
 
-                        if (filter == null) { filtersNotFound++; continue; }
+                        if (filter == null)
+                        {
+                            // This counted with nothing logged when no exemplar carried
+                            // the prefix, so a lookup that found nothing looked exactly
+                            // like one that never ran. The count is untouched and covers
+                            // a thrown create too, which said its own line above.
+                            if (!failureSaid)
+                            {
+                                string nothingToUse = $"No filter named '{targetFilterName}' was found or created.";
+                                Logger.AppendLine(nothingToUse);
+                                failures.Add(new ViewFilterFailure(targetFilterName, nothingToUse));
+                            }
+
+                            filtersNotFound++;
+                            continue;
+                        }
 
                         try
                         {
@@ -313,7 +358,9 @@ namespace RcrcGreen.Revit.ViewFilters
                         }
                         catch (Exception ex)
                         {
-                            Logger.AppendLine($"Failed to configure filter '{filter.Name}' on view '{v.Name}': {ex.Message}");
+                            string configureFailed = $"Failed to configure filter '{filter.Name}' on view '{v.Name}': {ex.Message}";
+                            Logger.AppendLine(configureFailed);
+                            failures.Add(new ViewFilterFailure(filter.Name, configureFailed));
                         }
                     }
 
@@ -340,7 +387,8 @@ namespace RcrcGreen.Revit.ViewFilters
                 FiltersNotFoundInDoc = filtersNotFound,
                 Skipped = viewsSkipped,
                 Blocked = viewsBlocked,
-                Logs = runLogs.ToArray()
+                Logs = runLogs.ToArray(),
+                Failures = failures.ToArray()
             };
         }
 

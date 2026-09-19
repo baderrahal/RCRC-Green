@@ -25,5 +25,12 @@ namespace RcrcGreen.Core.ViewFilters
         public int Blocked { get; set; }
 
         public string[] Logs { get; set; }
+
+        /// <summary>
+        /// One entry per thing the run did not apply, each carrying the same sentence the
+        /// run logged for it, so the result panel and the log cannot word one failure two
+        /// ways. Filled at the same sites that already count the failures.
+        /// </summary>
+        public ViewFilterFailure[] Failures { get; set; }
     }
 }

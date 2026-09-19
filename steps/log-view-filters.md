@@ -4,6 +4,143 @@ Newest entry first.
 
 ---
 
+## 2026-09-19, third pass. The rail: five numbered steps, one open at a time
+
+The round fixes nothing and moves everything: the pane's five flat sections become five
+numbered cells down the left, KEYWORDS, FILTER ROWS, SCAN, APPLY and RESULTS, the pane's
+own old headings, with one step's controls showing at a time, a drawn tick in place of a
+finished step's number, and a tooltip on every cell, because a rail of bare numbers has
+nowhere else to say what a cell is. Every reachability rule, every summary, every shut
+step's reason and the tooltip line are decided in Core and tested there, and the pane
+draws the answers. This round adds 26 tests, 2165 to 2191, 0 failed and 0 skipped, build
+0 warnings, the whole suite on .NET 10. **Nothing in this round has been observed in
+Revit.** The run sheet is `steps/run-view-filters.md`.
+
+### The new Core surface
+
+`ViewFilterStep` numbers the five steps, `ViewFilterStepState` is one step's answers,
+`ViewFilterSteps.Of` works all five out from four things the pane holds: the boxes now,
+the inputs of the last answered scan, that scan's result and the last answered run. It
+mirrors `PanelSteps` in shape, naming and doc style and shares no type with it, because
+the two panes' steps are two facts. The one new word on a state is `Tip`, the tooltip
+line, the title plus the summary when the step is usable or the reason when it is shut,
+and a test holds it never empty. `ApplyGate` stays the one comparison: step 3's Done,
+step 4's Usable and the pane's Apply button all read it through `ViewFilterSteps`, and
+the old greyed-Apply wording survives exactly, `NeedAScan` when no scan has answered and
+`ScanAgain` when the boxes have moved off one. `FilterRows.Kept` still decides what a
+prefix is, called over an `InputsCopy.Deep` copy inside `Of`, never over the pane's own
+records, because `Kept` trims rows in place and trimming the pane's record is the fault
+that jammed Apply for a round. A test pins that `Of` leaves its argument untrimmed.
+
+`ViewFilterResult.Of(Output, reportPlace)` is what RESULTS holds: `Applied` is the run's
+FiltersConfigured, `NotApplied` is the failure list's own length rather than a second
+count, asserted in a test both ways, `Lines` is the eight count lines character for
+character unchanged, pinned by hand in a test, `Failures` one entry per thing not
+applied, and `HasReport` reads off the report place. The `reportPlace` handed in is the
+written report's own path, not the sentence about it, so the step 5 button opens the
+file. The sentence the pane always showed still arrives beside it and still shows.
+
+### The ported run body changed at eight places, and that is this round's edit
+
+`Output` gained `Failures`, nothing else, and `ViewFiltersRunner.Run` fills it at the
+eight places that already count or log a failure. At each, the sentence is built once
+into a local and handed to `Logger.AppendLine` and to the `ViewFilterFailure` both, so
+the log and the result panel cannot word one failure two ways. No existing sentence
+changed, no counter moved and no check reordered. Two silent places gained new lines:
+
+- the catch around `v.GetFilters()` that did a bare continue now says
+  `Could not read the filters on '<view>', so it is left as it is.` It still counts
+  toward nothing, as before, and it now leaves a line and a failure.
+- the `filtersNotFound++` that ran when the filter was still null after the exemplar path
+  now says `No filter named '<name>' was found or created.` when nothing was recorded
+  for that lookup. A thrown create already said its own line moments earlier, so a
+  `failureSaid` local gates the new line and one failed item cannot print twice. The
+  wording is deliberately true for both silent ways here: no exemplar at all, and a
+  create that returned null without throwing.
+
+`What` on a failure is the view name for a view level failure, blocked, skipped and the
+unreadable filters, the target filter name for a filter level one, and the resolved
+filter's own name on a configure failure, because that is the name in its sentence.
+
+Named line by line, since every line differing from the ported body is named here: the
+`failures` list and its comment above the loop, the sentence locals at the six sites that
+already logged, the two new sentences with their comments in the GetFilters catch and the
+null filter guard, the `failureSaid` local with its comment at the top of the filter
+loop and its set in the create catch, `Failures` on both returns, and nothing else. The
+early return still words its one failure two ways, `Error: Please provide` to the log
+and the bare sentence into Logs, which is the ported body's own pre existing pair and
+rule 3 said to leave it.
+
+### The pane
+
+The DockPanel stays, strip on top, status line at the bottom, and the middle is a two
+column Grid, the rail Auto and the body star. The rail sits outside the scroller, so only
+the body scrolls and the way to another step never leaves the screen. The five cells are
+built once, restyled on every change: the open cell is a filled round background on
+`PanelTheme.Primary` and `OnPrimary`, a shut usable cell is a plain number a click opens,
+an unusable one is the faint brush and its click does nothing, decided by asking Core.
+The tick is a WPF `Path`, drawn, never a character, because the check characters sit
+inside `writing-check.sh`'s emoji range. The five step bodies are built once in the
+constructor and switched by Visibility, never rebuilt, so the ComboBoxes keep their lists
+and a TextBox keeps what somebody is halfway through typing. The open step's `Header`
+sits over its controls. After a scan the pane lands on `FirstUnfinished`, after a run it
+opens RESULTS, the two moves the round asked the pane to make on its own, recorded in the
+rules file beside the Drawing Sheet's opposite rule. `GateApply` is absorbed into
+`RefreshSteps`, which redraws the rail and sets Apply's enabled state and its why line
+from the same steps object, and no wording under Apply changed. The four option lines in
+`FilterRowEditor` are WrapPanels now, so a 300 pixel pane wraps them instead of cutting
+them, the scan grid keeps the one sideways scrollbar, and RESULTS holds the eight count
+lines, one line per failed item carrying the run's own sentence, in a bounded scroller
+when there are many, the report line, the report button and the log list. The button
+shows only when `HasReport`, opens the path with `Process.Start` in a try catch, and a
+failure to open lands on the status line rather than taking the pane down.
+
+### PanelMetrics was touched, a shared file
+
+Three values added for the rail and nothing existing moved: `RailWidth` 34, so a 300
+pixel pane keeps a readable body, `RailCell` 26, the circle, and `RailTick` 12, the drawn
+tick's box. Each is marked as never seen in Revit, like the pass before's additions.
+
+### Decisions this round made that the round text left open
+
+- The enum's second member is `Rows`, as the round named it, while its title is FILTER
+  ROWS, the pane's own heading.
+- `ViewFilterResult` keeps the report's raw path under `ReportPlace`, and the pane still
+  shows the `ReportPlaces.Written` sentence it always showed, handed beside the result.
+- At first open the pane lands on `FirstUnfinished`, which with the shipped defaults is
+  SCAN, because steps 1 and 2 arrive already done. The round named the landings after a
+  scan and after a run and named none for the open, so the same rule was used.
+- A step can be Done while not Usable, a muted tick: rows keeping their prefixes while
+  the keyword box is cleared. The tick tells the truth about the step's own work and the
+  muting tells the truth about the path to it.
+- After Apply, the handler's fresh scan lands first and moves the pane to APPLY for the
+  moment before the run's answer opens RESULTS. Both moves are the round's own words and
+  the second always wins, so the flash is accepted rather than special cased.
+
+### What is left, and known bugs
+
+Nothing in this round is known broken. What is left is everything only Revit can show,
+the eight items below, walked by `steps/run-view-filters.md` steps 10 to 20. The progress
+window still reads RCRC Green KPI over a View Filters run, the first pass's recorded
+blemish, untouched here. Rows edited in the pane still live only until the pane goes, the
+first pass's open question, untouched here.
+
+### What cannot be tested here
+
+None of these can be reached from `tests/RcrcGreen.Core.Tests`, because Core holds no WPF
+and no Revit, so the green gate says nothing about them:
+
+- that only the open step's controls are visible
+- that the rail fits in its 34 pixels and the body still reads at 300
+- that the tooltips appear at all, which is the rail's only naming
+- that a kept control still holds half typed text when its step reopens
+- that the tick and the greying draw
+- that the report button opens the file
+- that the new rail cells repaint on a Revit theme switch
+- the scan, the run and the template question, which all need a model open
+
+---
+
 ## 2026-09-13, second pass. One colour box, three places, and the Windows picker behind it
 
 Shipped as pull request #111, squash merged at `386948e`, the title and the message passed
