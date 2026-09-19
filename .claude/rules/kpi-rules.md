@@ -1341,8 +1341,17 @@ reads its count off the split of the TICKED plots, so a hand untick moves it.
 as before, and it stays listed.
 
 **A row ticked before the read gets its plots when the read lands.** The template rows come off
-the templates folder and need no model, so ticking MOSQUES and then pressing Read is the
-ordinary order and the plots cannot be ticked until they exist.
+the templates folder and need no model, so the code still works that way and the plots cannot be
+ticked until they exist.
+
+**THE FOUR STEP PANE MAKES THAT ORDER UNREACHABLE, AND IT IS BADER'S OWN GATE.** His layout of
+17 September says Tick cannot be worked on before a read, so step 3, which holds the workbook
+rows, is shut until the plots have come back. Ticking MOSQUES and then pressing Read was the
+ordinary order and cannot be done any more: with no model open there is no way to reach a
+workbook row at all. **The loop the sentence above describes is live in the code and dead on the
+screen.** Whether the gate should let the workbook rows through before a read is his call and it
+is one argument in `KpiSteps.Of`, recorded in `steps/log-kpi.md` as a request rather than
+decided here.
 
 **What the grouping buttons did that the rows do not.** Two things, both deliberate. They
 REPLACED the ticks rather than adding, which was right when one checklist was one template and

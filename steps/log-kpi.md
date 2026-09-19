@@ -4,6 +4,320 @@ Newest entry first.
 
 ---
 
+## 2026-09-19, ninety eighth pass. The pane in four steps, and the result in the pane
+
+Bader chose this layout on 17 September: the pane works in four steps, one at a time, and after a
+press it shows the result in the pane instead of sending him to the report file.
+
+**THIS ROUND CHANGES ONLY HOW THE PANE IS LAID OUT AND WHAT IT SHOWS.** Nothing about what the
+press reads, writes or reports changed, and no number in any workbook, PDF or report moved. That
+is measured rather than asserted, under its own heading below.
+
+**2208 tests, 1388 of them KPI**, run after the last file was written, up from 2165 and 1345.
+28 hook cases. Build zero warnings. **80 audit findings, 23 FIXED, 57 open**, counted off the
+four files again with nothing closed, renumbered or reordered.
+
+**NOTHING HERE WAS RUN IN REVIT**, by this session or by anybody, and **the pane cannot be opened
+from here at all**. Which parts are unobserved is its own section below, and it is most of the
+round.
+
+### The four steps, and what decides them
+
+A bar across the top carries `1 Setup`, `2 Read`, `3 Tick`, `4 Create`. The step being worked on
+is the marked cell and a step that is done carries a word beside its name. Only the step being
+worked on shows its controls, and a step that cannot be worked on yet shows one line saying why
+in place of them.
+
+**Which step may be worked on is decided in Core**, `KpiSteps.Of`, off plain values the pane reads
+live at every draw. The pane draws the answer and decides none of it, which is the rule
+`PanelSteps` already carries for the other pane.
+
+- **Setup is always usable**, because it is where every reason below is fixed.
+- **Setup is done when the templates folder and the output folder are set.** Those two are the
+  only ones that refuse: `TemplateWords.NoFolder` ends the workbook list before it starts and
+  `CreateWords.CannotCreate` refuses on the output folder. The forms folder, the street reference
+  file and the plot list file are each recorded in `kpi-rules.md` as a note and never a refusal,
+  so they are named in the still not set line and gate nothing. **Gating on one of them would
+  hold back a press this tool is willing to make.** That reading is mine and it is named here as
+  a decision rather than a measurement.
+- **Read is usable once Setup is done** and done once a read has landed.
+- **Tick is usable once a read has landed** and done once a workbook row and a plot are both
+  ticked, which is exactly what the Create button's own gate reads on main and today, so the
+  step and the button cannot say different things.
+- **Create is usable once a workbook row AND a plot are ticked**, which is Tick's own done and
+  is stricter than the round's own wording of something is ticked. Its why not names both
+  missing ticks rather than the first of them. 154 plots ticked with no workbook leaves Create
+  shut, and a test says so.
+
+### The tick Bader asked for is refused by this repository's own hook
+
+`.claude/hooks/writing-check.sh` line 47 builds its emoji pattern from four ranges and the second
+runs from code point 2600 to 27BF. The tick character is 2713, inside it. **A commit carrying one
+does not land**, so a step that is done is marked with the word `done`.
+
+**AND THE FIRST DRAFT OF THIS ROUND WAS REFUSED BY IT.** The comment explaining the rule was
+written with the range spelt out, the characters reached the file, and four lines across
+`KpiSteps.cs` and `KpiStepsTests.cs` would have been refused by the hook they describe. That is
+the shape already in `CLAUDE.md`, where a commit was refused by its own message for naming the
+marker it introduced. Both files name the code points in words now and carry none of them, and
+the one assertion that needs the character builds it from `((char)0x2713)`.
+
+**Whether the range should be narrowed so a tick can be used is a question for Bader**, and it is
+a change to that hook rather than to the pane.
+
+### The list tick is the last tick
+
+Ticking a workbook row ticks that template's plots, so a row touched after Tick the list leaves
+the ticks saying something the team's list does not. `ListTickFreshness` is the rule: the workbook
+rows that stood at the press travel with it, and the pane says the list tick is out of date and
+offers the button again.
+
+**NOTHING IS TICKED OR UNTICKED BEHIND HIS BACK.** Moving the ticks without being asked is the
+fault the hand choices already cost this tool a round.
+
+**IT IS A SET AND NOT A COUNTER**, compared with `StringComparer.Ordinal`, which is what
+`PlotTicks`, `PlotsInTheModel.Holds` and `KpiPanel.TickFor` all use. Ticking a row and unticking
+it again puts the ticks back where the list press left them, so the line goes on its own: the
+question is whether the ticks that press produced still stand, not whether anybody touched a box.
+A row swapped for another is out of date although the count did not move, which is the case a
+counter would have read as fresh and which has its own test.
+
+### The results panel reads the report's own rows
+
+**THE PLOT LIST's rows were built inline in `KpiCreateReport` for nine rounds**, which was right
+while the report was the only thing printing them. A pane showing how many plots are ready needs
+the same answer, and a second loop working it out beside the button is two records of one fact.
+
+`PlotListRows.Of` is that record now. It carries facts rather than printed cells, so the report
+writes YES, NO and NOT READ into its columns and the pane writes its own words, and neither holds
+the other's spelling. `KpiResults.Of` reads those rows for the two counts and the not ready lines,
+and **the reason on each line is the report's own, word for word**.
+
+The panel holds the two counts side by side, every plot that is not ready with its plot, its
+PRX_Plot_UID2 and its reason, a button to the output folder, a button to the report, and a way
+back to step 3. **Every plot that is not ready, not the first few**, because a panel showing some
+of them is a panel somebody has to open the report behind anyway.
+
+### The report's own bytes did not move, measured rather than asserted
+
+The extraction is a refactor of the report and the round's rule is that the report is untouched,
+so it was measured. A probe built a run set of five listed plots over three outcomes and wrote
+the whole report with `KpiCreateReport.WriteAll`, once with the change and once with
+`KpiCreateReport.cs` stashed back to main's version. **144 lines, md5
+`e1bc564f0f5910159bc28da79fe3e11e` both ways, and `diff` found nothing.**
+
+### What the pane gained and what it kept
+
+**Every folder, file, field, button and named line the pane held is still reachable and not one
+word of any of them moved.** Checked by listing every literal string the old pane put on screen
+and every Core method it called, and holding both against the new file: no string lost, and
+`CreateWords.TemplateRow` reached through `KpiWillWrite.Rows` rather than directly, which is one
+record and not a second.
+
+**AND FOUR OF THEM ARE REACHABLE WHERE THEY WERE NOT.** The old block returned early three times,
+at no templates folder, at a folder holding no workbook and at nothing ticked, so **the output
+folder, the forms folder, the street reference and the plot list could not be browsed for at all
+until a template had been picked.** Step 1 shows all five at all times.
+
+What moved, and nothing else did:
+
+```
+the five browsed lines and the three typed boxes      to step 1
+the plots block, Read this model and the link note    to step 2
+the workbook rows, the plot ticks and Tick the list   to step 3
+TickingTheList.Lines and the shared UID2 lines        from above Create to step 3
+the three pickers and the reference values            to step 3, under the tick lines
+everything else above Create                          stayed in step 4
+```
+
+**The two blocks that moved from above Create to step 3 are about what is ticked**, which is that
+step's subject, and they were drawn over a button whose step no longer holds them.
+
+**The three pickers are mine to place and the brief did not name them.** They need a read, and the
+reference values block shows the FIRST TICKED plot, so in step 2 it would always read that nothing
+is ticked and the Reference picker would lose the values it exists to be picked by. That is a
+decision rather than a measurement.
+
+**One line was dropped and put back.** `GRP KPI Checklist templates` headed the folder line and
+the list together, and the folder went to step 1 while the list stayed in step 3. It heads the
+list. The string check is what found it.
+
+### What is UNOBSERVED, and what Bader has to look at
+
+**NOTHING IN THIS REPOSITORY CAN OPEN A DOCKABLE PANE.** The whole of the layout is drawn by code
+nobody has run. What is tested is the rules behind it, in Core, with every expected value written
+out by hand. What is not tested, and cannot be from here:
+
+- the bar at about 300 pixels wide, four cells across, and whether the cells read
+- one step at a time, and whether pressing a cell moves where it should
+- the two counts side by side in the results panel
+- the two buttons really opening the output folder and the report
+- the step moving by itself after a read lands and after a press finishes
+- the outer scroll position when the step changes, which nothing resets
+
+**Checks 34 to 37 in `steps/2026-09-16-kpi-checks.md` are what look at each of them**, one action
+a step, and they are the first time any of it is seen.
+
+### The break watches
+
+Three, each restored byte for byte.
+
+**Create reachable with nothing ticked.** `tick.Done` to `true` at the Create step's usable
+argument. Five tests went red, `WithNothingSetOnlySetupCanBeWorkedOn`,
+`WithEverythingSetAndNothingReadTheReadStepIsTheOneToWorkOn`,
+`WithOneReadAndNothingTickedCreateNamesBothMissingTicks`,
+`AWorkbookTickedWithNoPlotNamesOnlyThePlot` and `PlotsTickedWithNoWorkbookNameOnlyTheWorkbook`,
+each on the assertion that Create cannot be worked on. `KpiSteps.cs` restored, md5
+`4f2ab6fcf76bfc0024d875b546c53b10` before and after, **which is the hash it carried at that
+moment and not the one the round ends on**: the emoji characters came out of its comment
+afterwards and it ends at `a269aa45c81b86a0ab127d2cedb4ba66`.
+
+**A changed workbook row keeping a fresh list tick.** `OutOfDate` returned false outright. Six
+tests went red including `ARowTickedAfterThePressIsOutOfDate` and
+`ARowUntickedAfterThePressIsOutOfDate`. The set comparison was broken a second way first, to a
+count comparison, which reddened exactly the two that pin the set,
+`ARowSwappedForAnotherIsOutOfDateThoughTheCountDidNotMove` and
+`TheRowsAreComparedTheWayThePaneComparesThem`. `ListTickFreshness.cs` restored, md5
+`b5e81db632f73480623a1d85b800dfec` before and after.
+
+**The results panel counting a NO row as ready.** `Ready` counted rows whose workbook landed
+rather than rows that are READY, which is the four columns of YES the 16:37 press printed.
+`ThePanelCountsOneHundredAndTwentyTwoReadyAndThirtyTwoNot` read 123 against 122, and
+`ThePanelsCountAndTheReportsReadyLineAreTheSameNumber` went red with it, which is the pane and
+the report parting. `KpiResults.cs` restored, md5 `054feb70c06369244b2c79f0b85012b7` before and
+after.
+
+### What is left open
+
+**Whether ticking a workbook row and unticking it back should say the list tick is stale.** The
+rule reads the ticks rather than the touches, so it says nothing, and a test writes that out as
+the deliberate reading. If Bader wants any touch to say so it is one line.
+
+**Whether `KpiSteps` and `PanelSteps` should be one shape in Shared.** They are two panes' steps
+with different meanings, so this one is written in Core/Kpi rather than called across the fence,
+which is what `ScrollMemory` already did and is recorded the same way. It is a Shared round for
+Bader to call.
+
+**Whether the link note belongs in step 2, step 4 or both.** It is in both today: step 2 is where
+the read that learnt it is and step 4 is where it has always been, and the two steps are never on
+one screen. One fact, `_facts.Links`, drawn twice.
+
+### What an adversarial review of this round's own diff found
+
+Six lenses over the diff, every finding verified against the source by a second pass, then
+judged here one at a time. **EIGHTEEN CAME BACK CONFIRMED AND SIXTEEN ARE FIXED IN THIS ROUND.**
+None was found by a test, because every one of them is about what the pane does rather than
+what Core computes.
+
+**THE WORST OF THEM: THE PRESS HID THE CONTROL THAT ANSWERS IT.** The reconciliation refusals,
+the buttons naming a plot's two regions and the groups left out note lived only inside
+`TheCreateButton`, which the results panel replaces. A press refused over a region nobody picked
+showed its own refusal with nothing on screen to answer it, and `TheRegionChoices` is the only
+writer of `_chosenRegions`. `TheAnswerable` is one method now, drawn by the results panel and by
+step 4's own controls, so the two can never offer two different sets of questions about one
+press.
+
+**OPEN THE REPORT WAS DEAD ON EVERY PRESS.** `KpiRequestHandler` passed
+`ReportPlaces.Written(written)`, which builds `Report at <path>.` for the status line, and the
+button tested it with `File.Exists`. It passes the path and the status line still gets the
+sentence.
+
+**THE LIST TICK RAISED ITS OWN WARNING.** The rows were recorded before the tick, and
+`TickedByHand` reaches `Changed` and then `Preselect`, which can tick a workbook row, so the
+press went out of date the moment it finished. `PressTickTheList` records what the press LEAVES.
+
+**AND THREE MORE WAYS IT LIED.** Select all and Clear replace every tick exactly as Tick the
+list does, so they forget it rather than leaving it standing over ticks it no longer describes.
+Browsing to another templates folder clears the workbook rows, so a list tick recorded against
+the old ones reported a drift nobody caused. A park template pick and a workbook row tick move
+the plot ticks without going through `Changed`, so the results of the press before them outlived
+the ticks they were made from.
+
+**A STEP THAT CANNOT BE WORKED ON CANNOT BE DONE.** A model closing leaves the ticks standing
+and takes the read away, so the bar read `3 Tick done` beside a step saying the model had not
+been read, and step 4 opened on the strength of it. A model change clears the run, the confirm
+and the region picks with it, because one model's plots read against one model's templates are
+not another's.
+
+**THREE SENTENCES THAT WERE FALSE.** A plot list set and unreadable said no plot list file was
+set, which contradicts the report word for word and is the absence against refusal rule this
+tool already carries. A list that reads and names no plot said every plot on it is ready. And a
+not ready line said a plot holds no `PRX_Plot_UID2` whenever it simply had not been ticked,
+which is a sentence about the model that nothing measured.
+
+**TWO THINGS ABOUT THE WIDTH.** The done mark sat inside the cell text and was the first thing
+trimmed at about 70 pixels a cell, so a finished step read SHORTER than an unfinished one. It is
+its own line under the name. And step 1 printed the whole not set sentence in its header and
+again at its foot, the same words twice on one screen, which is the shape a run already printed
+four lines twice over. The header carries a count and the step carries the naming.
+
+**TWO ARE RECORDED RATHER THAN FIXED, AND BOTH ARE FOR BADER.**
+
+- **THE WORKBOOK ROWS CANNOT BE REACHED WITH NO MODEL OPEN.** Step 3 holds them and the round
+  says Tick cannot be worked on before a read, so ticking MOSQUES and then pressing Read, which
+  `kpi-rules.md` recorded as the ordinary order, is no longer possible. **The loop is live in
+  the code and dead on the screen.** It is his own gate, so it stands, and it is one argument in
+  `KpiSteps.Of` to reverse. The rules file says so now rather than reading as current.
+- **TWO BRANCHES OF `CreateWords.CannotCreate` CANNOT FIRE FROM THE PANE ANY MORE**, its no
+  template ticked and no plot ticked lines, because step 4 is shut until both are ticked and its
+  own why not says the same thing first. The two other branches, no model open and no output
+  folder, still fire. Nothing is deleted, on the rule this repository already carries about a
+  member whose last caller stopped calling it.
+
+**AND TWO OF THE EIGHTEEN WERE NARROWED BY THE VERIFIER RATHER THAN TAKEN AS WRITTEN.** The
+identical areas confirm was named as hidden by the press and is pre existing dead UI: the
+handler builds one reconciliation per plot and `KpiMerge.IdenticalAreas` needs two readings
+sharing a raw area, so it has never drawn. And the region pick example given, NS-19, does not
+reproduce, because `RegionChoice.Pick` takes the type the client's note names where both hold an
+area. The fix stands for the case that really is reachable, two regions with the note's type
+among neither.
+
+
+### What the claim checker flagged
+
+Run over this entry before the pull request was opened.
+
+**ONE WRONG, AND IT WAS RIGHT.** The entry read `Create is usable once something is ticked`,
+which is the round's own wording, and the code is stricter: `tick.Done` is a workbook row AND a
+plot, so 154 plots ticked with no workbook leaves Create shut and
+`PlotsTickedWithNoWorkbookNameOnlyTheWorkbook` says so. **A plain English summary that
+contradicts the test under it is worse than no summary**, and the bullet says both ticks now.
+
+**ONE ABSOLUTE SOFTENED.** `the Create button's own gate has always been` was a claim over all
+history and only main and today were read. It says on main and today.
+
+**SIX MARKED UNBACKED, AND ALL SIX WERE MEASURED HERE WITH A SHELL THE CHECKER DID NOT HAVE.**
+Its tools are Read, Grep and Glob, so it could not run the suite, the hook cases, `md5sum` or
+`git show origin/main`. Each is measured in this session and the measurement is what the entry
+rests on: 2204 and 1384 off `dotnet test`, 28 off `hook-tests.sh`, the three hashes off
+`md5sum`, the report's identity off two writes of one run set and a `diff`, no string lost off
+every on screen literal in main's own pane held against the new one, and the three early returns
+off `git show origin/main` read line by line. **A check that could not be made is an absence and
+not a finding**, which is the rule this tool already applies to its own columns, and it is
+written down here rather than left looking like a gap.
+
+**EVERYTHING ELSE BACKED**, including the audit count recounted independently to the same 80, 23
+and 57, the emoji range covering the tick, both files carrying no character from it, all eleven
+named tests existing under their exact names, and the two break watches re-derived by hand
+against the real test bodies to the same six red and the same 123 against 122.
+
+
+### The audit files, counted again
+
+```
+audit-kpi.md      findings  1 to 29    29     8 FIXED   21 open
+audit-kpi-2.md    findings 30 to 49    20     9 FIXED   11 open
+audit-kpi-3.md    findings 50 to 63    14     2 FIXED   12 open
+audit-kpi-4.md    findings 64 to 80    17     4 FIXED   13 open
+                                       80    23 FIXED   57 open
+```
+
+Counted by walking each file's own numbering run rather than off a note. **Two numbered lines are
+prose and not findings**, `audit-kpi-4.md` line 19 opening with `80.` and its line 13 FIXED
+sentence, which counts the three files before it. Nothing was closed, renumbered or reordered.
+
+---
+
 ## 2026-09-17, ninety seventh pass. Two checks that missed real errors, and four report lines
 
 **Merged to main as `a3e531c`**, pull request 162, squashed with both message fields passed on the

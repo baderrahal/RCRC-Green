@@ -459,7 +459,11 @@ namespace RcrcGreen.Revit.Kpi
                 KpiFile.NameFor(document.Title + "_checklist", writtenAt),
                 KpiCreateReport.WriteAll(set, writtenAt));
 
-            CreatedAcross?.Invoke(set, ReportPlaces.Written(written));
+            // **THE PANE WANTS THE PATH AND THE STATUS LINE WANTS THE SENTENCE.**
+            // `ReportPlaces.Written` builds `Report at <path>.`, which is right on the line
+            // below and is not a path, so the pane's Open the report button tested it with
+            // `File.Exists` and was dead on every press.
+            CreatedAcross?.Invoke(set, written.FirstOrDefault() ?? string.Empty);
             Told?.Invoke(CreateWords.WroteAcross(set, ReportPlaces.Written(written)));
         }
 
