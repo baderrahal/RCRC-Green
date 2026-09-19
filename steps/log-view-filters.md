@@ -155,6 +155,16 @@ resolved filter only through a throw after the assignment, harmless because its 
 reader sits behind the null check, and the early return still words its one refusal two
 ways, the ported body's own pre existing pair.
 
+The claim checker then read this entry against the code and contradicted nothing. Its
+two flags were the claims its read only toolset cannot rerun, the pass and warning
+counts and the two nothing else changed claims, so each was rerun rather than softened:
+a fresh build after the last edit, 0 warnings and 0 errors, the fresh suite, 2192
+passed, 0 failed and 0 skipped, a diff of PanelMetrics against `2ee5ca7` holding
+additions only, and a diff of the runner against `2ee5ca7` whose removed lines are
+exactly the ten this entry's site list rewrites in place, the six logged sentences into
+locals, the two silent sites, and the two returns gaining Failures. No wording of this
+entry was removed on its account.
+
 ### What is left, and known bugs
 
 Nothing in this round is known broken. What is left is everything only Revit can show,

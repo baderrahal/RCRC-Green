@@ -19,7 +19,9 @@ values and no existing one moved. A four agent verification pass ran before the 
 three walks clean and the breaker's four findings all changed: the report write no longer
 takes a committed run's results with it, a failed press no longer leaves RESULTS wearing
 the last run's tick, the scan shuts with the keywords and points at step 1, and a scan
-answering after an edit moves nobody. Nothing in this pass has been observed in Revit, and
+answering after an edit moves nobody. The claim checker then read the round's log entry
+and contradicted nothing, and the two claims its read only toolset could not rerun were
+rerun fresh instead. Nothing in this pass has been observed in Revit, and
 the run sheet for Bader is `steps/run-view-filters.md`. The pass is up as pull request
 #164, the mockup is `design/pr-164/rail.html`, and the test counts and the merge hash are
 in the top entry of `steps/log-view-filters.md`.
