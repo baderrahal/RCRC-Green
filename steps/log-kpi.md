@@ -42,10 +42,12 @@ live at every draw. The pane draws the answer and decides none of it, which is t
   a decision rather than a measurement.
 - **Read is usable once Setup is done** and done once a read has landed.
 - **Tick is usable once a read has landed** and done once a workbook row and a plot are both
-  ticked, which is exactly what the Create button's own gate has always been, so the step and the
-  button cannot say different things.
-- **Create is usable once something is ticked**, and its why not names both missing ticks rather
-  than the first of them.
+  ticked, which is exactly what the Create button's own gate reads on main and today, so the
+  step and the button cannot say different things.
+- **Create is usable once a workbook row AND a plot are ticked**, which is Tick's own done and
+  is stricter than the round's own wording of something is ticked. Its why not names both
+  missing ticks rather than the first of them. 154 plots ticked with no workbook leaves Create
+  shut, and a test says so.
 
 ### The tick Bader asked for is refused by this repository's own hook
 
@@ -199,6 +201,35 @@ Bader to call.
 **Whether the link note belongs in step 2, step 4 or both.** It is in both today: step 2 is where
 the read that learnt it is and step 4 is where it has always been, and the two steps are never on
 one screen. One fact, `_facts.Links`, drawn twice.
+
+### What the claim checker flagged
+
+Run over this entry before the pull request was opened.
+
+**ONE WRONG, AND IT WAS RIGHT.** The entry read `Create is usable once something is ticked`,
+which is the round's own wording, and the code is stricter: `tick.Done` is a workbook row AND a
+plot, so 154 plots ticked with no workbook leaves Create shut and
+`PlotsTickedWithNoWorkbookNameOnlyTheWorkbook` says so. **A plain English summary that
+contradicts the test under it is worse than no summary**, and the bullet says both ticks now.
+
+**ONE ABSOLUTE SOFTENED.** `the Create button's own gate has always been` was a claim over all
+history and only main and today were read. It says on main and today.
+
+**SIX MARKED UNBACKED, AND ALL SIX WERE MEASURED HERE WITH A SHELL THE CHECKER DID NOT HAVE.**
+Its tools are Read, Grep and Glob, so it could not run the suite, the hook cases, `md5sum` or
+`git show origin/main`. Each is measured in this session and the measurement is what the entry
+rests on: 2204 and 1384 off `dotnet test`, 28 off `hook-tests.sh`, the three hashes off
+`md5sum`, the report's identity off two writes of one run set and a `diff`, no string lost off
+every on screen literal in main's own pane held against the new one, and the three early returns
+off `git show origin/main` read line by line. **A check that could not be made is an absence and
+not a finding**, which is the rule this tool already applies to its own columns, and it is
+written down here rather than left looking like a gap.
+
+**EVERYTHING ELSE BACKED**, including the audit count recounted independently to the same 80, 23
+and 57, the emoji range covering the tick, both files carrying no character from it, all eleven
+named tests existing under their exact names, and the two break watches re-derived by hand
+against the real test bodies to the same six red and the same 123 against 122.
+
 
 ### The audit files, counted again
 

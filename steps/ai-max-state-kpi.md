@@ -17,6 +17,11 @@ the step being worked on marked, a done step carrying a word, and only the step 
 showing its controls. A step that cannot be worked on yet shows one line saying why in place of
 them, because a cell that does nothing and says nothing is worse than no cell.
 
+**CREATE OPENS ON A WORKBOOK ROW AND A PLOT, WHICH IS STRICTER THAN THE ROUND'S WORDING** of
+something is ticked, and is exactly the Create button's own gate on main and today, so the step
+and the button cannot say different things. The claim checker caught the looser sentence in the
+log and it is corrected there.
+
 **THE FOUR RULES ARE IN CORE AND THE PANE DECIDES NONE OF THEM.** `KpiSteps` says which step may
 be worked on, `ListTickFreshness` whether the list tick has gone out of date, `KpiWillWrite` what
 step 4 says before the press counted per template, and `KpiResults` what the results panel holds.
