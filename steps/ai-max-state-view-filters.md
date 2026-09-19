@@ -16,8 +16,9 @@ item, and a button that opens the written report. The row editors wrap for a 300
 pane, the scan grid keeps the one sideways scrollbar, the step bodies are built once and
 shown or hidden, and PanelMetrics gained RailWidth, RailCell and RailTick, three new named
 values and no existing one moved. Nothing in this pass has been observed in Revit, and the
-run sheet for Bader is `steps/run-view-filters.md`. The test counts, the pull request and
-the merge hash are in the top entry of `steps/log-view-filters.md`.
+run sheet for Bader is `steps/run-view-filters.md`. The pass is up as pull request #164,
+the mockup is `design/pr-164/rail.html`, and the test counts and the merge hash are in the
+top entry of `steps/log-view-filters.md`.
 
 Before that. Second pass, the colour box. `HexColorBox` in the Revit ViewFilters folder,
 one control used three times on every filter row, replacing the two bare pattern hex boxes

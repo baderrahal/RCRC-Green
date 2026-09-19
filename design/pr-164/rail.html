@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The View Filters rail, hand drawn from the code</title>
+<style>
+  body { background: #2e2e2e; color: #e6e6e6; font-family: "Segoe UI", sans-serif; font-size: 12px; margin: 0; padding: 24px; }
+  .note { background: #4a3a1a; color: #e6e6e6; padding: 10px 14px; margin-bottom: 18px; max-width: 480px; }
+  .pane { width: 300px; background: #2e2e2e; border: 1px solid #4a4a4a; margin-bottom: 24px; }
+  .strip { background: #3a3a3a; padding: 6px 8px; }
+  .strip b { display: block; }
+  .middle { display: flex; }
+  .rail { width: 34px; padding-top: 3px; flex: none; }
+  .cell { width: 26px; height: 26px; border-radius: 13px; margin: 3px auto; display: flex; align-items: center; justify-content: center; }
+  .cell.open { background: #569cd6; color: #1e1e1e; }
+  .cell.plain { color: #e6e6e6; }
+  .cell.muted { color: #7a7a7a; }
+  .cell svg { display: block; }
+  .body { flex: 1; padding: 8px; min-width: 0; }
+  .header { font-weight: bold; margin: 4px 0 8px 0; }
+  .faint { color: #aaaaaa; margin: 3px 0; }
+  button { background: #3a3a3a; color: #e6e6e6; border: 1px solid #4a4a4a; font: inherit; padding: 2px 8px; margin: 3px 0; }
+  .status { border-top: 1px solid #4a4a4a; background: #3a3a3a; padding: 6px 8px; }
+  .gridwrap { overflow-x: auto; border: 1px solid #4a4a4a; margin: 3px 0; }
+  table { border-collapse: collapse; font-size: 12px; }
+  td, th { padding: 2px 6px; white-space: nowrap; text-align: left; font-weight: normal; }
+  th { font-weight: bold; }
+  tr.shade { background: #383838; }
+  .caption { margin: 14px 0 6px 0; font-weight: bold; max-width: 480px; }
+  .line { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="note">
+This is a mockup drawn by hand from ViewFiltersPane.cs and ViewFilterSteps.cs, not a
+screenshot. It cannot show how Revit will render the pane, the tooltips, or the drawn
+tick's exact weight. Dark theme values from PanelTheme are used and the pane is drawn at
+300 pixels wide on purpose, the width rule 4 names. The tick is an SVG here for the same
+reason it is a Path in the pane: a check character sits inside the writing hook's emoji
+range.
+</div>
+
+<div class="caption">After a scan: 1, 2 and 3 ticked, the pane landed on APPLY, 5 still shut</div>
+<div class="pane">
+  <div class="strip"><b>View Filters</b>Scan reads and changes nothing. Apply writes once, one undo.</div>
+  <div class="middle">
+    <div class="rail">
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell open">4</div>
+      <div class="cell muted">5</div>
+    </div>
+    <div class="body">
+      <div class="header">4  APPLY</div>
+      <button>Apply</button>
+    </div>
+  </div>
+  <div class="status">Read 41 matching views on RCRC_NG05: 12 plots, 3 skipped, 1 blocked.</div>
+</div>
+
+<div class="caption">Open step 3 by its cell: the grid keeps the one sideways scrollbar</div>
+<div class="pane">
+  <div class="strip"><b>View Filters</b>Scan reads and changes nothing. Apply writes once, one undo.</div>
+  <div class="middle">
+    <div class="rail">
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell open"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#1e1e1e"/></svg></div>
+      <div class="cell plain">4</div>
+      <div class="cell muted">5</div>
+    </div>
+    <div class="body">
+      <div class="header">3  SCAN   12 plots, 3 skipped, 1 blocked</div>
+      <div class="faint">Rows are plots, columns are the filter prefixes, and each square
+      says whether that filter exists, will be created, or cannot be.</div>
+      <button>Scan</button>
+      <div class="gridwrap">
+        <table>
+          <tr><th></th><th>(200-260) Presentation</th><th>(200-260) Sections Scope</th></tr>
+          <tr class="shade"><td>DM-11</td><td>Exists</td><td>Will create</td></tr>
+          <tr><td>DM-12</td><td>Will create</td><td>Will create</td></tr>
+          <tr class="shade"><td>DM-13</td><td>Exists</td><td>Cannot create</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="status">Read 41 matching views on RCRC_NG05: 12 plots, 3 skipped, 1 blocked.</div>
+</div>
+
+<div class="caption">After a run: every cell ticked, RESULTS open, the report button live</div>
+<div class="pane">
+  <div class="strip"><b>View Filters</b>Scan reads and changes nothing. Apply writes once, one undo.</div>
+  <div class="middle">
+    <div class="rail">
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell plain"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></div>
+      <div class="cell open"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#1e1e1e"/></svg></div>
+    </div>
+    <div class="body">
+      <div class="header">5  RESULTS   38 applied, 2 not applied</div>
+      <div class="line">Views evaluated 41</div>
+      <div class="line">Views modified 10</div>
+      <div class="line">Filters added to views 21</div>
+      <div class="line">Filters configured 38</div>
+      <div class="line">Filters created in the document 17</div>
+      <div class="line">Filter lookups with nothing to use 1</div>
+      <div class="line">Views skipped, no plot id 1</div>
+      <div class="line">Views blocked by their template 0</div>
+      <div class="line">Skipped 'Working View 3D', its name does not start with a plot id.</div>
+      <div class="line">No filter named '(215) Borders Edging DM-12' was found or created.</div>
+      <div class="faint">Report at C:\Users\bader\source\repos\RCRC-Green\reports\... .</div>
+      <button>Open the report</button>
+      <div class="faint">Created missing filter '(200-260) Presentation DM-12' in document.</div>
+    </div>
+  </div>
+  <div class="status">Done. 10 of 41 views changed. Report at ... .</div>
+</div>
+
+<div class="caption">Cell states, the rail's whole vocabulary</div>
+<div class="line"><span class="cell open" style="display:inline-flex">3</span> <span class="faint">open, filled round background</span></div>
+<div class="line"><span class="cell plain" style="display:inline-flex">4</span> <span class="faint">shut and usable, plain, a click opens it</span></div>
+<div class="line"><span class="cell muted" style="display:inline-flex">5</span> <span class="faint">not usable, muted, a click does nothing, the tooltip says why</span></div>
+<div class="line"><span class="cell plain" style="display:inline-flex"><svg width="12" height="12" viewBox="0 0 12 10"><polygon points="0,5.2 2,3.2 4.4,5.6 10,0 12,2 4.4,9.6" fill="#e6e6e6"/></svg></span> <span class="faint">done, the drawn tick in place of the number</span></div>
+</body>
+</html>

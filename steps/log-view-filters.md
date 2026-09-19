@@ -14,7 +14,8 @@ nowhere else to say what a cell is. Every reachability rule, every summary, ever
 step's reason and the tooltip line are decided in Core and tested there, and the pane
 draws the answers. This round adds 26 tests, 2165 to 2191, 0 failed and 0 skipped, build
 0 warnings, the whole suite on .NET 10. **Nothing in this round has been observed in
-Revit.** The run sheet is `steps/run-view-filters.md`.
+Revit.** The run sheet is `steps/run-view-filters.md` and the mockup, hand drawn from the
+code, is `design/pr-164/rail.html`.
 
 ### The new Core surface
 
