@@ -6,6 +6,13 @@ Newest entry first.
 
 ## 2026-09-19, third pass. The rail: five numbered steps, one open at a time
 
+Shipped as pull request #164, squash merged at `e2d2ff5`, the title and the message passed
+on the merge call and back off main byte for byte, no co-author line and no generated-by
+footer. The runner read 2192 tests on the merge, its own log line, 0 failed and 0 skipped.
+Merged main reads 2216 locally, 0 failed and 0 skipped, because the Drawing Sheet's own
+pane pass, #165 at `4397284`, landed 24 tests underneath this round, the same shape the
+first pass recorded.
+
 The round fixes nothing and moves everything: the pane's five flat sections become five
 numbered cells down the left, KEYWORDS, FILTER ROWS, SCAN, APPLY and RESULTS, the pane's
 own old headings, with one step's controls showing at a time, a drawn tick in place of a

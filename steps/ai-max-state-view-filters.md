@@ -22,9 +22,9 @@ the last run's tick, the scan shuts with the keywords and points at step 1, and 
 answering after an edit moves nobody. The claim checker then read the round's log entry
 and contradicted nothing, and the two claims its read only toolset could not rerun were
 rerun fresh instead. Nothing in this pass has been observed in Revit, and
-the run sheet for Bader is `steps/run-view-filters.md`. The pass is up as pull request
-#164, the mockup is `design/pr-164/rail.html`, and the test counts and the merge hash are
-in the top entry of `steps/log-view-filters.md`.
+the run sheet for Bader is `steps/run-view-filters.md`. The pass shipped as pull request
+#164, squash merged at `e2d2ff5` with the message back byte for byte, the runner reading
+2192 tests, 0 failed and 0 skipped, and the mockup is `design/pr-164/rail.html`.
 
 Before that. Second pass, the colour box. `HexColorBox` in the Revit ViewFilters folder,
 one control used three times on every filter row, replacing the two bare pattern hex boxes
