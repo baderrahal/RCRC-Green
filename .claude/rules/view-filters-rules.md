@@ -57,6 +57,24 @@ the scanned one, is decided on the Revit thread at the press. After a run the ha
 hands back a fresh scan, so the grid is never older than the run's own writes. Captions go
 through `PaneLabel`, colours through `PanelTheme`, sizes through `PanelMetrics`.
 
+## The rail
+
+Five steps down the left, numbered, one open at a time: KEYWORDS, FILTER ROWS, SCAN,
+APPLY, RESULTS, which are the pane's own old section headings and nobody else's step
+names. Every reachability rule, every summary, every shut step's reason and the rail
+tooltip live in `ViewFilterSteps` in Core with the tests, worked out by comparing through
+`ApplyGate`, never by a flag, and the pane draws the answers and decides none of them. A
+cell shows its number, or a drawn tick when the step is done, drawn as a `Path` because
+the check characters sit inside the writing hook's emoji range. The step bodies are built
+once and shown or hidden, never rebuilt, so a ComboBox keeps its list and a TextBox keeps
+what somebody is halfway through typing. Only the body scrolls, the scan grid keeps the
+one sideways scrollbar, and the row editors wrap instead of running off a 300 pixel pane.
+After a scan the pane lands on `FirstUnfinished`, after a run it opens RESULTS, and those
+two moves are the round's own instruction, where the Drawing Sheet's rule is that nothing
+moves on its own. RESULTS holds the two counts, the eight count lines unchanged, one line
+per failed item carrying the run's own sentence through `ViewFilterFailure`, and a report
+button that opens the written file and puts a failure to open it on the status line.
+
 ## The settings file
 
 `ViewFilters.json` beside the installed assembly holds the default rows, shipped from

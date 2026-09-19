@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Autodesk.Revit.UI;
 using RcrcGreen.Core;
 using RcrcGreen.Core.ViewFilters;
@@ -12,19 +14,22 @@ using TextBox = System.Windows.Controls.TextBox;
 namespace RcrcGreen.Revit.ViewFilters
 {
     /// <summary>
-    /// The View Filters pane: the keyword box, the filter rows, Scan, the grid, Apply and
-    /// the results. Modeless, and it names no Document, no Transaction and no ElementId.
-    /// Everything it wants goes through <see cref="ViewFiltersRequestHandler"/> and its own
-    /// external event, never another pane's, so a failure in one pane cannot cost another.
+    /// The View Filters pane: a numbered rail down the left and one step's controls beside
+    /// it, KEYWORDS, FILTER ROWS, SCAN, APPLY and RESULTS. Modeless, and it names no
+    /// Document, no Transaction and no ElementId. Everything it wants goes through
+    /// <see cref="ViewFiltersRequestHandler"/> and its own external event, never another
+    /// pane's, so a failure in one pane cannot cost another.
     ///
     /// No brush and no number is written here: colours come from PanelTheme and every size
     /// from PanelMetrics, which is what kept the first panel from shipping black on black a
     /// second time. Every caption on a button or a tick box goes through PaneLabel.
     ///
-    /// Apply is greyed on what the pane owns, its own boxes against its own last scan,
-    /// compared rather than remembered. Whether a model is open, and whether it is still
-    /// the scanned one, is decided on the Revit thread when a button is pressed, because a
-    /// pane holds no copy of anything it can ask for.
+    /// No reachability decision lives here. Which step can be used, which is finished and
+    /// what a shut one says are all <see cref="ViewFilterSteps"/>, worked out by comparing
+    /// through ApplyGate rather than by a flag, and this file only draws the answers.
+    /// Whether a model is open, and whether it is still the scanned one, is decided on the
+    /// Revit thread when a button is pressed, because a pane holds no copy of anything it
+    /// can ask for.
     /// </summary>
     internal sealed class ViewFiltersPane : UserControl, IDockablePaneProvider
     {
@@ -62,22 +67,46 @@ namespace RcrcGreen.Revit.ViewFilters
 
         private TextBlock _applyWhy;
 
+        private Button _openReport;
+
         private TextBlock _settingsLine;
+
+        private TextBlock _header;
+
+        // The rail's five cells and what each shows: the number until the step is done and
+        // the tick after. Built once, restyled by RefreshSteps, never rebuilt.
+        private Border[] _railCells;
+
+        private TextBlock[] _railNumbers;
+
+        private System.Windows.Shapes.Path[] _railTicks;
+
+        private FrameworkElement[] _bodies;
+
+        private ViewFilterStep _open = ViewFilterStep.Keywords;
 
         private PanelTheme _theme;
 
         // The inputs the last press sent, and the inputs the last answered scan used. The
         // first is captured at the press so an edit made while Revit works cannot pass as
-        // scanned. The second is what ApplyGate compares the boxes against.
+        // scanned. The second is what ApplyGate compares the boxes against, through
+        // ViewFilterSteps.
         private Inputs _askedInputs;
 
         private Inputs _scannedInputs;
+
+        // What the last answered scan read and what the last answered run did. Records of
+        // answers this pane was handed, not copies of anything it could ask for.
+        private ViewFilterScanResult _scannedResult;
+
+        private ViewFilterResult _run;
 
         private KpiProgressWindow _running;
 
         // The marks the theme repaint walk looks for. The rows and the lists are built once
         // and kept, so a Revit theme switch has to find their quiet brushes where they sit
-        // rather than trusting a rebuild that never comes.
+        // rather than trusting a rebuild that never comes. The rail cells wear no mark,
+        // because their brushes follow their state and RefreshSteps restyles them whole.
         private const string FaintMark = "theme faint";
 
         private const string HairlineMark = "theme hairline";
@@ -97,12 +126,12 @@ namespace RcrcGreen.Revit.ViewFilters
             _asking = ExternalEvent.Create(_handler);
 
             _keywords.Text = ViewFilterWords.DefaultKeywords;
-            _keywords.TextChanged += (sender, e) => GateApply();
+            _keywords.TextChanged += (sender, e) => RefreshSteps();
 
             Layout();
             StartingRows();
+            _open = Steps().FirstUnfinished;
             PaintFromTheTheme();
-            GateApply();
 
             IsVisibleChanged += (sender, e) => PaintFromTheTheme();
         }
@@ -142,15 +171,134 @@ namespace RcrcGreen.Revit.ViewFilters
                 BorderThickness = PanelMetrics.HairlineAbove
             };
 
-            var body = new StackPanel();
+            _header = new TextBlock
+            {
+                FontWeight = FontWeights.Bold,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = PanelMetrics.Heading
+            };
 
-            body.Children.Add(Head("KEYWORDS"));
+            _bodies = new FrameworkElement[]
+            {
+                KeywordsBody(), RowsBody(), ScanBody(), ApplyBody(), ResultsBody()
+            };
+
+            var bodyColumn = new StackPanel();
+            bodyColumn.Children.Add(_header);
+            foreach (FrameworkElement body in _bodies)
+            {
+                bodyColumn.Children.Add(body);
+            }
+
+            // Only the body scrolls. The rail sits outside the scroller, so the way to
+            // another step stays on screen however long the open one grows.
+            var scrolled = new ScrollViewer
+            {
+                Content = bodyColumn,
+                Padding = PanelMetrics.Edge,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            };
+
+            var middle = new Grid();
+            middle.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            middle.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = new GridLength(1.0, GridUnitType.Star)
+            });
+
+            StackPanel rail = Rail();
+            Grid.SetColumn(rail, 0);
+            Grid.SetColumn(scrolled, 1);
+            middle.Children.Add(rail);
+            middle.Children.Add(scrolled);
+
+            var whole = new DockPanel { LastChildFill = true };
+            DockPanel.SetDock(_strip, Dock.Top);
+            DockPanel.SetDock(_status, Dock.Bottom);
+            whole.Children.Add(_strip);
+            whole.Children.Add(_status);
+            whole.Children.Add(middle);
+
+            Content = whole;
+        }
+
+        /// <summary>
+        /// The five cells, one per step, each holding its number and its tick with one of
+        /// the two showing. The tick is a drawn shape rather than a character, so no font
+        /// gets a say in what done looks like. Every brush is set by RefreshSteps, because
+        /// a cell's colours follow its state.
+        /// </summary>
+        private StackPanel Rail()
+        {
+            var rail = new StackPanel
+            {
+                Width = PanelMetrics.RailWidth,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = PanelMetrics.Row
+            };
+
+            _railCells = new Border[5];
+            _railNumbers = new TextBlock[5];
+            _railTicks = new System.Windows.Shapes.Path[5];
+
+            for (int at = 0; at < 5; at++)
+            {
+                ViewFilterStep step = (ViewFilterStep)(at + 1);
+
+                _railNumbers[at] = new TextBlock
+                {
+                    Text = (at + 1).ToString(CultureInfo.InvariantCulture),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+
+                _railTicks[at] = new System.Windows.Shapes.Path
+                {
+                    Data = Geometry.Parse("M 0,5.2 L 2,3.2 L 4.4,5.6 L 10,0 L 12,2 L 4.4,9.6 Z"),
+                    Stretch = Stretch.Uniform,
+                    Width = PanelMetrics.RailTick,
+                    Height = PanelMetrics.RailTick,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Visibility = Visibility.Collapsed
+                };
+
+                var inside = new Grid();
+                inside.Children.Add(_railNumbers[at]);
+                inside.Children.Add(_railTicks[at]);
+
+                var cell = new Border
+                {
+                    Child = inside,
+                    Width = PanelMetrics.RailCell,
+                    Height = PanelMetrics.RailCell,
+                    CornerRadius = new CornerRadius(PanelMetrics.RailCell / 2.0),
+                    Margin = PanelMetrics.Row,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+                cell.MouseLeftButtonUp += (sender, e) => RailClicked(step);
+
+                _railCells[at] = cell;
+                rail.Children.Add(cell);
+            }
+
+            return rail;
+        }
+
+        private FrameworkElement KeywordsBody()
+        {
+            var body = new StackPanel();
             body.Children.Add(Faint(
                 "A view is read when its name holds any of these, one per line. A comma or "
                 + "a semicolon also separates them."));
             body.Children.Add(WithRowMargin(_keywords));
+            return body;
+        }
 
-            body.Children.Add(Head("FILTER ROWS"));
+        private FrameworkElement RowsBody()
+        {
+            var body = new StackPanel();
             _settingsLine = Faint(string.Empty);
             body.Children.Add(_settingsLine);
             body.Children.Add(_rowsPanel);
@@ -164,8 +312,12 @@ namespace RcrcGreen.Revit.ViewFilters
             };
             addRow.Click += (sender, e) => AddRow(EmptyRow());
             body.Children.Add(addRow);
+            return body;
+        }
 
-            body.Children.Add(Head("SCAN"));
+        private FrameworkElement ScanBody()
+        {
+            var body = new StackPanel();
             body.Children.Add(Faint(
                 "Rows are plots, columns are the filter prefixes, and each square says "
                 + "whether that filter exists, will be created, or cannot be."));
@@ -179,8 +331,12 @@ namespace RcrcGreen.Revit.ViewFilters
             _scan.Click += (sender, e) => AskedToScan();
             body.Children.Add(_scan);
             body.Children.Add(_scanArea);
+            return body;
+        }
 
-            body.Children.Add(Head("APPLY"));
+        private FrameworkElement ApplyBody()
+        {
+            var body = new StackPanel();
             _apply = new Button
             {
                 Content = PaneLabel.Escaped("Apply"),
@@ -192,27 +348,27 @@ namespace RcrcGreen.Revit.ViewFilters
             _applyWhy = Faint(string.Empty);
             body.Children.Add(_apply);
             body.Children.Add(_applyWhy);
+            return body;
+        }
 
-            body.Children.Add(Head("RESULTS"));
+        private FrameworkElement ResultsBody()
+        {
+            var body = new StackPanel();
             body.Children.Add(_resultsArea);
-            body.Children.Add(Scrolling(_logList, PanelMetrics.ListHeight));
 
-            var scrolled = new ScrollViewer
+            _openReport = new Button
             {
-                Content = body,
-                Padding = PanelMetrics.Edge,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+                Content = PaneLabel.Escaped("Open the report"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Row,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Visibility = Visibility.Collapsed
             };
+            _openReport.Click += (sender, e) => OpenReport();
+            body.Children.Add(_openReport);
 
-            var whole = new DockPanel { LastChildFill = true };
-            DockPanel.SetDock(_strip, Dock.Top);
-            DockPanel.SetDock(_status, Dock.Bottom);
-            whole.Children.Add(_strip);
-            whole.Children.Add(_status);
-            whole.Children.Add(scrolled);
-
-            Content = whole;
+            body.Children.Add(Scrolling(_logList, PanelMetrics.ListHeight));
+            return body;
         }
 
         /// <summary>
@@ -264,11 +420,11 @@ namespace RcrcGreen.Revit.ViewFilters
 
         private void AddRow(FilterConfig starting)
         {
-            var editor = new FilterRowEditor(starting, GateApply, RemoveRow);
+            var editor = new FilterRowEditor(starting, RefreshSteps, RemoveRow);
             _rows.Add(editor);
             _rowsPanel.Children.Add(editor.Root);
             RefreshRemoveButtons();
-            GateApply();
+            RefreshSteps();
         }
 
         /// <summary>At least one row stays, so Remove greys out on the last one.</summary>
@@ -279,7 +435,7 @@ namespace RcrcGreen.Revit.ViewFilters
             _rows.Remove(editor);
             _rowsPanel.Children.Remove(editor.Root);
             RefreshRemoveButtons();
-            GateApply();
+            RefreshSteps();
         }
 
         private void RefreshRemoveButtons()
@@ -306,19 +462,64 @@ namespace RcrcGreen.Revit.ViewFilters
         }
 
         /// <summary>
-        /// Apply is usable when a scan exists and the boxes still say what it read. It is
-        /// worked out by comparing, never by a flag, so an edit undone by hand brings Apply
-        /// back without anything to reset.
+        /// The five steps off what the pane holds right now, which is the only question
+        /// this file ever asks about reachability.
         /// </summary>
-        private void GateApply()
+        private ViewFilterSteps Steps()
         {
-            if (_apply == null) return;
+            return ViewFilterSteps.Of(CurrentInputs(), _scannedInputs, _scannedResult, _run);
+        }
 
-            bool can = ApplyGate.CanApply(_scannedInputs, CurrentInputs());
-            _apply.IsEnabled = can;
-            _applyWhy.Text = can
-                ? string.Empty
-                : (_scannedInputs == null ? ViewFilterWords.NeedAScan : ViewFilterWords.ScanAgain);
+        /// <summary>
+        /// Redraws the rail and the open step from <see cref="ViewFilterSteps"/>: the tick
+        /// or the number, the fill on the open cell, the tooltip every cell carries, which
+        /// body shows, and whether Apply can be pressed with the one line saying why not.
+        /// Worked out by comparing, never by a flag, so an edit undone by hand brings a
+        /// step back without anything to reset.
+        /// </summary>
+        private void RefreshSteps()
+        {
+            if (_railCells == null || _apply == null || _theme == null) return;
+
+            ViewFilterSteps steps = Steps();
+
+            foreach (ViewFilterStepState step in steps.All)
+            {
+                int at = step.Number - 1;
+                bool open = step.Step == _open;
+
+                _railCells[at].Background = open ? _theme.Primary : _theme.Clear;
+                _railCells[at].ToolTip = step.Tip;
+
+                Brush inside = open
+                    ? _theme.OnPrimary
+                    : (step.Usable ? _theme.Foreground : _theme.Faint);
+                _railNumbers[at].Foreground = inside;
+                _railTicks[at].Fill = inside;
+
+                _railNumbers[at].Visibility = step.Done ? Visibility.Collapsed : Visibility.Visible;
+                _railTicks[at].Visibility = step.Done ? Visibility.Visible : Visibility.Collapsed;
+
+                _bodies[at].Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            _header.Text = steps.For(_open).Header;
+
+            ViewFilterStepState apply = steps.For(ViewFilterStep.Apply);
+            _apply.IsEnabled = apply.Usable;
+            _applyWhy.Text = apply.WhyNot;
+        }
+
+        /// <summary>
+        /// A click on a cell opens its step when Core says the step can be used, and does
+        /// nothing at all when it cannot, which is what a muted number promises.
+        /// </summary>
+        private void RailClicked(ViewFilterStep step)
+        {
+            if (!Steps().For(step).Usable) return;
+
+            _open = step;
+            RefreshSteps();
         }
 
         private void Ask(ViewFiltersRequest wanted)
@@ -345,6 +546,14 @@ namespace RcrcGreen.Revit.ViewFilters
             _resultsArea.Children.Clear();
             _logList.Children.Clear();
 
+            // The last run's record goes with its lines, or a press that ends in a status
+            // sentence instead of an answer leaves RESULTS wearing the old run's tick and
+            // counts over the body this just emptied, with its button opening the old
+            // run's report.
+            _run = null;
+            _openReport.Visibility = Visibility.Collapsed;
+            RefreshSteps();
+
             // Opened here and not inside Execute: this is a click handler on the pane's own
             // thread, so the window is up before the external event is raised. Told closes
             // it, whatever ends the run.
@@ -362,17 +571,32 @@ namespace RcrcGreen.Revit.ViewFilters
             Dispatcher.Invoke(() =>
             {
                 _scannedInputs = _askedInputs;
+                _scannedResult = result;
                 DrawScan(result);
-                GateApply();
+
+                // A scan coming back lands the pane on the first step with work left in
+                // it, which is Core's answer rather than this file's. Only while the
+                // boxes still say what the scan was asked with: an answer landing after
+                // an edit must not fold the step the edit is being typed in, so a moved
+                // scan, which Core reads as not done, moves nobody.
+                ViewFilterSteps steps = Steps();
+                if (steps.For(ViewFilterStep.Scan).Done)
+                {
+                    _open = steps.FirstUnfinished;
+                }
+
+                RefreshSteps();
             });
         }
 
-        private void Applied(Output output, string reportPlace)
+        private void Applied(ViewFilterResult result, string reportSentence)
         {
             Dispatcher.Invoke(() =>
             {
+                _run = result;
+
                 _resultsArea.Children.Clear();
-                foreach (string line in ViewFilterWords.ResultLines(output))
+                foreach (string line in result.Lines)
                 {
                     _resultsArea.Children.Add(new TextBlock
                     {
@@ -381,11 +605,58 @@ namespace RcrcGreen.Revit.ViewFilters
                     });
                 }
 
-                if (!string.IsNullOrEmpty(reportPlace))
+                // One line per thing not applied, the run's own sentence for it, in a
+                // bounded scroller because a run can fail a lot of items at once.
+                if (result.Failures.Length > 0)
                 {
-                    _resultsArea.Children.Add(Faint(reportPlace));
+                    var failed = new StackPanel();
+                    foreach (ViewFilterFailure failure in result.Failures)
+                    {
+                        failed.Children.Add(new TextBlock
+                        {
+                            Text = failure.Why,
+                            TextWrapping = TextWrapping.Wrap,
+                            Margin = PanelMetrics.Row
+                        });
+                    }
+
+                    _resultsArea.Children.Add(Scrolling(failed, PanelMetrics.ListHeight));
                 }
+
+                if (!string.IsNullOrEmpty(reportSentence))
+                {
+                    _resultsArea.Children.Add(Faint(reportSentence));
+                }
+
+                _openReport.Visibility = result.HasReport
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+
+                // A run that has answered opens its results, the one move the round asked
+                // the pane to make on its own.
+                _open = ViewFilterStep.Results;
+                RefreshSteps();
             });
+        }
+
+        /// <summary>
+        /// The report is opened with whatever the machine opens text files with. A missing
+        /// file or a machine with no association must not take the pane down, so a failure
+        /// goes to the status line and nothing else happens.
+        /// </summary>
+        private void OpenReport()
+        {
+            ViewFilterResult run = _run;
+            if (run == null || !run.HasReport) return;
+
+            try
+            {
+                System.Diagnostics.Process.Start(run.ReportPlace);
+            }
+            catch (Exception failed)
+            {
+                _said.Text = "The report could not be opened. " + failed.Message;
+            }
         }
 
         private void Logged(string line)
@@ -434,6 +705,8 @@ namespace RcrcGreen.Revit.ViewFilters
 
             if (result.Plots.Count > 0 && result.Prefixes.Count > 0)
             {
+                // The one thing on the pane that scrolls sideways, because a grid of plots
+                // by prefixes is as wide as it is and squeezing it would make it a lie.
                 _scanArea.Children.Add(new ScrollViewer
                 {
                     Content = ScanGrid(result),
@@ -554,6 +827,10 @@ namespace RcrcGreen.Revit.ViewFilters
             _status.Background = _theme.Strip;
             _status.BorderBrush = _theme.Line;
             Repaint(Content);
+
+            // The rail's brushes follow each cell's state, so a theme switch redraws them
+            // through the same method every other change does.
+            RefreshSteps();
         }
 
         /// <summary>
@@ -630,6 +907,8 @@ namespace RcrcGreen.Revit.ViewFilters
         /// One filter row's controls, holding exactly the FilterConfig properties. Built
         /// once and kept, because a ComboBox carries its own list and a TextBox carries
         /// what somebody is halfway through typing, so nothing here is rebuilt on a change.
+        /// Its option lines wrap rather than run sideways, because the rail takes its own
+        /// width off a pane that is already narrow.
         /// </summary>
         private sealed class FilterRowEditor
         {
@@ -743,13 +1022,13 @@ namespace RcrcGreen.Revit.ViewFilters
                 nameLine.Children.Add(_prefix);
                 inside.Children.Add(nameLine);
 
-                var ticks = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+                var ticks = new WrapPanel { Margin = PanelMetrics.Row };
                 ticks.Children.Add(_enabled);
                 ticks.Children.Add(_visible);
                 ticks.Children.Add(_halftone);
                 inside.Children.Add(ticks);
 
-                var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+                var line = new WrapPanel { Margin = PanelMetrics.Row };
                 line.Children.Add(_lineTick);
                 line.Children.Add(_lineColour);
                 line.Children.Add(new TextBlock
@@ -767,13 +1046,13 @@ namespace RcrcGreen.Revit.ViewFilters
                 });
                 inside.Children.Add(line);
 
-                var front = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+                var front = new WrapPanel { Margin = PanelMetrics.Row };
                 front.Children.Add(_frontTick);
                 front.Children.Add(_frontType);
                 front.Children.Add(_frontColour);
                 inside.Children.Add(front);
 
-                var back = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+                var back = new WrapPanel { Margin = PanelMetrics.Row };
                 back.Children.Add(_backTick);
                 back.Children.Add(_backType);
                 back.Children.Add(_backColour);

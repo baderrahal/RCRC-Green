@@ -41,8 +41,11 @@ namespace RcrcGreen.Revit.ViewFilters
 
         public Action<ViewFilterScanResult> Scanned { get; set; }
 
-        /// <summary>What one press of Apply really did, with where the report went.</summary>
-        public Action<Output, string> Applied { get; set; }
+        /// <summary>
+        /// What one press of Apply really did, decided in Core so the RESULTS step is
+        /// testable, beside the report sentence the pane has always shown.
+        /// </summary>
+        public Action<ViewFilterResult, string> Applied { get; set; }
 
         /// <summary>The run's end line, whatever ended it. It closes the progress window.</summary>
         public Action<string> Told { get; set; }
@@ -184,11 +187,37 @@ namespace RcrcGreen.Revit.ViewFilters
 
             Progressed?.Invoke(ViewFilterWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
-            IReadOnlyList<string> written = ReportFile.Write(
-                ViewFiltersFileName.For(document.Title, writtenAt),
-                ViewFiltersReport.Write(output, loggedLines, document.Title, writtenAt));
 
-            Applied?.Invoke(output, ReportPlaces.Written(written));
+            // The write is caught here rather than left to the outer catches, because the
+            // run has already committed. Letting a report failure out of this method took
+            // the run's own counts and failures with it: the pane had cleared its results
+            // at the press, Applied never came, and a run that changed the model reached
+            // the pane as one status sentence.
+            IReadOnlyList<string> written;
+            try
+            {
+                written = ReportFile.Write(
+                    ViewFiltersFileName.For(document.Title, writtenAt),
+                    ViewFiltersReport.Write(output, loggedLines, document.Title, writtenAt));
+            }
+            catch (UnauthorizedAccessException denied)
+            {
+                Applied?.Invoke(ViewFilterResult.Of(output, string.Empty), string.Empty);
+                Told?.Invoke("The report could not be written. " + denied.Message);
+                return;
+            }
+            catch (IOException failed)
+            {
+                Applied?.Invoke(ViewFilterResult.Of(output, string.Empty), string.Empty);
+                Told?.Invoke("The report could not be written. " + failed.Message);
+                return;
+            }
+
+            // The result carries the report's own path, not the sentence about it, so the
+            // button that opens it opens the file. The sentence still rides beside it for
+            // the line the pane has always shown.
+            string reportPath = written.Count == 0 ? string.Empty : written[0];
+            Applied?.Invoke(ViewFilterResult.Of(output, reportPath), ReportPlaces.Written(written));
             Told?.Invoke(ViewFilterWords.AppliedLine(output, ReportPlaces.Written(written)));
         }
 

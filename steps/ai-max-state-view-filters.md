@@ -1,6 +1,32 @@
 # ai-max state, View Filters
 
-Phase: 9, ship. Second pass, the colour box. `HexColorBox` in the Revit ViewFilters folder,
+Phase: 9, ship. Third pass, the rail. The pane is re laid as five numbered steps down the
+left, KEYWORDS, FILTER ROWS, SCAN, APPLY and RESULTS, the pane's own old section headings,
+one open at a time, a drawn tick in place of a finished step's number and a tooltip on
+every cell, because the rail shows numbers and nothing else. Every reachability rule, every
+summary, every shut step's reason and the tooltip line live in Core, `ViewFilterStep`,
+`ViewFilterStepState`, `ViewFilterSteps`, `ViewFilterFailure` and `ViewFilterResult` in
+`RcrcGreen.Core/ViewFilters`, mirroring PanelSteps and sharing nothing with it, and the
+compare stays `ApplyGate`'s alone. `Output` gained a failure list the runner fills at the
+eight places that already count or log a failure, each sentence built once into a local
+and handed to the log and the failure both, with the two silent sites, the GetFilters
+catch and the bare filtersNotFound guard, given new lines. RESULTS holds the two counts,
+the eight count lines unchanged character for character under a test, one line per failed
+item, and a button that opens the written report. The row editors wrap for a 300 pixel
+pane, the scan grid keeps the one sideways scrollbar, the step bodies are built once and
+shown or hidden, and PanelMetrics gained RailWidth, RailCell and RailTick, three new named
+values and no existing one moved. A four agent verification pass ran before the merge,
+three walks clean and the breaker's four findings all changed: the report write no longer
+takes a committed run's results with it, a failed press no longer leaves RESULTS wearing
+the last run's tick, the scan shuts with the keywords and points at step 1, and a scan
+answering after an edit moves nobody. The claim checker then read the round's log entry
+and contradicted nothing, and the two claims its read only toolset could not rerun were
+rerun fresh instead. Nothing in this pass has been observed in Revit, and
+the run sheet for Bader is `steps/run-view-filters.md`. The pass is up as pull request
+#164, the mockup is `design/pr-164/rail.html`, and the test counts and the merge hash are
+in the top entry of `steps/log-view-filters.md`.
+
+Before that. Second pass, the colour box. `HexColorBox` in the Revit ViewFilters folder,
 one control used three times on every filter row, replacing the two bare pattern hex boxes
 and the lone swatch beside Line colour. Typing paints live through `HexColor.TryParse`,
 a pick comes back through `HexColor.Written` as upper case, an invalid type keeps the
@@ -10,8 +36,8 @@ main window handle, custom colours static for the session. The override ticks ga
 own boxes. The csproj already carried the WinForms references for the progress window, so
 nothing was added there. The round asked for the control in Core as XAML and it cannot
 live there, the same call as the first pass's runner, in the log. The reader was cleared
-of the ticked box in the screenshot by the gate test over the shipped file. Nothing in
-this pass has been observed in Revit. The guide is `steps/2026-09-13-colour-box.md`, the
+of the ticked box in the screenshot by the gate test over the shipped file. That pass has
+not been observed in Revit. The guide is `steps/2026-09-13-colour-box.md`, the
 pass shipped as pull request #111, squash merged at `386948e` with the message back byte
 for byte, the runner and merged main both reading 1578, and the mockup is
 `design/pr-111/colour-box.html`.
@@ -29,8 +55,8 @@ the host swaps, and every line that differs beyond those is named in
 `install/ViewFilters.json` ships the four default rows and install.ps1 copies it beside
 the DLL. The scan and the run read one set of rules, Core's, so the grid cannot part from
 the press. No cancel exists because the KPI progress window this reuses has none, by that
-task's recorded decision, and the probe stands ready. Nothing in this pass has been
-observed in Revit. The round guide for Bader is `steps/2026-09-13-view-filters.md`. The
+task's recorded decision, and the probe stands ready. That pass has not been observed in
+Revit. The round guide for Bader is `steps/2026-09-13-view-filters.md`. The
 round shipped as pull request #108, squash merged at `3bcebd5` with the message back byte
 for byte, and the pane's mockup, hand drawn from the code, is
 `design/pr-108/view-filters-pane.html`. The runner read 1569 on the merge, this round's 75
