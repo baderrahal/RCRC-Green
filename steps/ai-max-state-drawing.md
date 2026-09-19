@@ -1,5 +1,13 @@
 # ai-max state, Drawing Sheet
 
+Phase: 9, ship, done. Sixty fourth pass merged. Pull request 165 is `4397284`, 2189 on the
+runner, 0 failed and 0 skipped, squash message back byte for byte and merged main reads 2189
+locally. The open finding carries: five live strings in ModelWriter name step 5, at 334, 403,
+424, 453 and 472, four of them refusals that the new result panel prints, not reworded because
+the brief said to stop and say so rather than reword a line this mapping breaks. Nothing in the
+round has been seen in Revit and steps/run-sheet-drawing-sheet-pane.md is the pass that would
+settle it.
+
 Phase: 9, ship. Sixty fourth pass, one pull request. The pane is four stacked rows now, 1 PLOTS
 to 4 SHEETS, with RUN off the row list and turned into the button docked at the foot plus the
 result that takes over step 4's body. PanelSteps still holds five steps and every literal in it
