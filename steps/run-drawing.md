@@ -170,8 +170,8 @@ pass, with what would force it.
     `no scope box`, and leave it marked. In Revit, without pressing Refresh, make that view by
     hand: duplicate any view of that type and rename the copy to exactly the name the square's
     tooltip shows, `<plot>-(<code>) <view name>`. Press **Run**. Passing: no dialog, because
-    the run makes nothing, the status line reads `Nothing was created. Report at <Desktop
-    path> and <repo path>.`, and the report's `NOT CREATED, DECIDED BEFORE THE RUN, 1` reads
+    the run makes nothing, the status line reads `Nothing was created. Report at <repo
+    path>.`, and the report's `NOT CREATED, DECIDED BEFORE THE RUN, 1` reads
     `<name>. A view with this name is already in the model, added since the panel last read
     it, so nothing is made over it. Press Refresh to see it.` The project browser holds one
     view of that name, the one made by hand. Delete it again and press **Refresh**.
@@ -251,7 +251,7 @@ pass, with what would force it.
     through one reader, so the counts here are what the next step's dialog says.
 
 28. Press **Assign Scope Boxes**. Where C is 0 no dialog appears and the status line reads
-    `Nothing was changed. Report at <Desktop path> and <repo path>.` Where C is above zero,
+    `Nothing was changed. Report at <repo path>.` Where C is above zero,
     passing: a dialog titled `RCRC Green, Scope Box` reads `Give N views their scope boxes?`
     over the six counts, the same numbers as on the pane, then `Only case C is written. D and
     F are reported and left as they are. The report is written either way.`, with No as the
@@ -261,8 +261,8 @@ pass, with what would force it.
     be forced on this model, and the No path is the check. Keep the report.
 
 29. Press **Scan Model**. The status line reads `Scanning the whole model. This one reads
-    every element, so it takes longer.` then `Scan written. Report at <Desktop path> and
-    <repo path>.` Count the seconds. Open the report. Passing: the sections run `SHEETS`,
+    every element, so it takes longer.` then `Scan written. Report at <repo path>.`
+    Count the seconds. Open the report. Passing: the sections run `SHEETS`,
     `VIEWS ON SHEETS`, `VIEWS NOT ON SHEETS`, `VIEW TEMPLATES`, `VIEW FAMILY TYPES`, `VIEW
     FAMILY TYPE PER VIEW TYPE`, `VIEWPORTS ON EXISTING SHEETS`, `SCOPE BOXES`, `PRX_Plot_ID
     VALUES`, `VIEWS THAT DISAGREE WITH THEMSELVES` and `PARSE SUMMARY`. The viewports section
@@ -316,7 +316,7 @@ pass, with what would force it.
     4 sheets across the ticked plots.`, and No as the default. Press Yes.
 
 34. Read the status line. Passing: `10 created, 0 not created. Press Refresh to see them.
-    Report at <Desktop path> and <repo path>.` Press **Refresh**: the six squares are filled
+    Report at <repo path>.` Press **Refresh**: the six squares are filled
     and the two plots' rows show them.
 
 35. Open the run report. Passing, section by section:
@@ -397,7 +397,8 @@ Each one is a yes or a no.
 ## What to send back
 
 42. The scan report from step 29 and the run report from step 35, both from `reports/` in the
-    repo or from the Desktop, one line per step from 10 to 40 that did not read as described,
+    repo, which is the one place either lands, one line per step from 10 to 40 that did not
+    read as described,
     and the four answers from steps 38 to 41.
 
 ## Not covered by this pass

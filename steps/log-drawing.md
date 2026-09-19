@@ -122,6 +122,47 @@ paragraph standing. It is replaced and the entry says so. `steps/run-drawing.md`
 copy was dropped, and would have sent the user to the wrong folder on this round's own buttons.
 Both were found rather than caused.
 
+### What the claim checker caught
+
+It ran against this entry and the pull request body and came back with one finding worth the
+round, one thing it could not check, and no false claim in either document.
+
+**FIVE LIVE STRINGS STILL NAME STEP 5, AND I HAVE NOT REWORDED THEM.** All five are in
+`src/RcrcGreen.Revit/ModelWriter.cs` and none is a doc comment:
+
+- `334`, in `FromAnswersInWords`, which goes into the run report under WHERE EACH NEW VIEW AND
+  SHEET WAS SET UP FROM: `is set up from the answers saved in step 5`
+- `403`, a refusal reason: `the answers in step 5 are short of ... Answer them there`
+- `424`, `453` and `472`, three refusal reasons each ending `pick one this model holds in step
+  5.`
+
+The four refusals reach the user twice over now: through `RunOutcome.NotCreated`, which is
+what `RunResult.FailedLines` is built from, so **this round's own result panel prints them**,
+and through the report. They send somebody looking for a step the pane no longer draws.
+
+**They are left exactly as they are on purpose.** The brief said that if a line this mapping
+breaks turns up, stop and say so rather than rewording it. This is that line, five times.
+The lines are the answers a new view type needs, which now live in the BEFORE YOU RUN block,
+so what they should say is the user's call rather than mine.
+
+The one thing the checker could not check is the deliberate breaks, which leave no trace in a
+working tree. It read the after count as 1835 Fact methods plus 354 InlineData rows, 2189,
+arriving at the same number from the other end.
+
+### One more document found already false
+
+`steps/run-drawing.md` told the reader to expect `Report at <Desktop path> and <repo path>.`
+in four places, at lines 173, 254, 264 and 319, and to fetch a report from the repo or the
+Desktop at 400. `ReportPlaces.Written` names one path and there has been no Desktop copy for
+rounds. That matters to this round because the two buttons on the result open the one folder,
+so a reader following that sheet would have reported a fault that is not one. All five are
+corrected.
+
+**That document holds other stale expectations from earlier rounds** and I have not swept it.
+Its step 34 still expects the status line to read `Press Refresh to see them`, which the
+handler stopped saying when a run started handing a fresh read back. A pass over the whole of
+it is a round of its own.
+
 ### NOT SEEN IN REVIT
 
 Nothing in this round has been through Revit. Every one of these is UNOBSERVED, not working:

@@ -18,7 +18,14 @@ of either kind. Two breaks watched red and reversed byte for byte. Suite 2165 be
 wrap at 300, the result panel and both buttons are all UNOBSERVED, and
 steps/run-sheet-drawing-sheet-pane.md is the pass that would settle them. The log entry is in
 steps/log-drawing.md rather than the steps/log-drawing-sheet.md the brief named, because this
-task's pair already exists and splitting it would be two records of one thing.
+task's pair already exists and splitting it would be two records of one thing. The claim
+checker found FIVE LIVE STRINGS still naming step 5 in ModelWriter, at 334, 403, 424, 453 and
+472, four of them refusal reasons that reach RunOutcome.NotCreated and so print in this round's
+own result panel. THEY ARE NOT REWORDED: the brief said to stop and say so rather than reword a
+line this mapping breaks, and what they should say is the user's call. It also turned up four
+more places in steps/run-drawing.md expecting a report at a Desktop path as well as a repo one,
+which ReportPlaces.Written cannot produce, corrected because this round's buttons open that one
+folder. That document holds other stale expectations this round did not sweep.
 
 Phase: 9, ship. Sixty third pass, second of two pull requests, fixes 5 to 8. Fix 6 first because
 it is a diagnosis. CodeFor TRIMMED its arguments and compared them against values the file
