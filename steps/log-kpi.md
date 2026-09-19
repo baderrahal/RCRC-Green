@@ -6,6 +6,10 @@ Newest entry first.
 
 ## 2026-09-19, ninety eighth pass. The pane in four steps, and the result in the pane
 
+**Merged to main as `78b36c4`**, pull request 168, squashed with both message fields passed
+on the call, so the message came back off main byte for byte with no co-author line and no
+generated-by footer.
+
 Bader chose this layout on 17 September: the pane works in four steps, one at a time, and after a
 press it shows the result in the pane instead of sending him to the report file.
 
