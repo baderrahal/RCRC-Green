@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,9 +18,14 @@ namespace RcrcGreen.Revit
     /// The Drawing Sheet panel. Built in C# rather than XAML, because an SDK style net48
     /// project has no XAML compilation step.
     ///
-    /// It is five numbered steps in the order somebody does them, one open at a time, each
+    /// It is four numbered rows in the order somebody does them, one open at a time, each
     /// carrying its own summary while it is shut. It was a list of controls before, which read
     /// as a wall to anyone who had not built it.
+    ///
+    /// RUN is not one of the rows. It is the button docked at the foot, live or grey on the
+    /// RUN step's own state, and the result of the last run, which takes over step 4's body
+    /// once there is one. Every number the other four say out loud still points at the step
+    /// it always did.
     ///
     /// Nothing in this file reads a Document, opens a Transaction or touches the Revit API.
     /// Everything it wants doing goes through <see cref="DrawingSheetRequestHandler"/> and the
@@ -107,9 +113,23 @@ namespace RcrcGreen.Revit
         private readonly Border _strip = new Border();
         private readonly Border _status = new Border();
 
-        // Built fresh inside step 5 rather than kept as one instance, and remembered here only
-        // so a keystroke elsewhere can update its text. See Reparented for why.
+        // The tick on each row, kept for the same reason the line under a title is: a
+        // keystroke in a sheet box can finish a step, and rebuilding the tree there would
+        // take the cursor out of the box being typed in.
+        private readonly Dictionary<PanelStep, TextBlock> _tickMark =
+            new Dictionary<PanelStep, TextBlock>();
+
+        // Built fresh inside the block above the Run button rather than kept as one instance,
+        // and remembered here only so a keystroke elsewhere can update its text. See
+        // Reparented for why.
         private TextBlock _runLine;
+
+        // Run, and the one line about it, docked under the four rows rather than drawn inside
+        // a step, so pressing it never means scrolling to find it first. These three outlive
+        // every redraw, which is why they are built once here.
+        private readonly Border _foot = new Border();
+        private readonly Button _runButton = new Button();
+        private readonly TextBlock _runWhyNot = new TextBlock { TextWrapping = TextWrapping.Wrap };
 
         private PanelTheme _theme = PanelTheme.Current();
         private DrawingSheetSnapshot _model = DrawingSheetSnapshot.Nothing;
@@ -169,11 +189,27 @@ namespace RcrcGreen.Revit
         private StepFourOpen _step4 = StepFourOpen.Nothing;
 
         /// <summary>
-        /// Whether step 5's list of what cannot be made is open. Shut by default: the count
-        /// by reason is what somebody pressing Run needs, and the sentences are the detail
+        /// Whether the list of what cannot be made is open. Shut by default: the count by
+        /// reason is what somebody pressing Run needs, and the sentences are the detail
         /// behind it.
         /// </summary>
         private bool _refusalsOpen;
+
+        /// <summary>
+        /// Whether the unnumbered block above the Run button is open. It holds what step 5's
+        /// body held, minus the button, and is shut by default for the same reason a row is.
+        /// </summary>
+        private bool _beforeRunOpen;
+
+        /// <summary>
+        /// What the last run did, or null until one has happened. It is what step 4's row
+        /// shows in place of its controls.
+        ///
+        /// It is a <see cref="RunResult"/> and never a <see cref="RunPlan"/>. The plan is what
+        /// a run intends and this is what it did, and reading one where the other belongs is
+        /// what put four views under created and under not created in the first real report.
+        /// </summary>
+        private RunResult _result;
 
         private bool _filling;
         private bool _readOnce;
@@ -185,6 +221,11 @@ namespace RcrcGreen.Revit
             {
                 Read = Took,
                 Told = Say,
+
+                // What the run did, so step 4's row can show it. Everything else a run had
+                // to say came back as one sentence on the status line, and a sentence is not
+                // something a panel can draw two counts and a list of reasons from.
+                Ran = TheRunEnded,
 
                 // A document opened or closed under the pane triggers a read, so the panel
                 // never needs anybody to remember Refresh to stop proposing numbers the
@@ -258,13 +299,23 @@ namespace RcrcGreen.Revit
             _status.BorderBrush = _theme.Line;
             _readAt.Foreground = _theme.Faint;
 
+            _foot.Background = _theme.Strip;
+            _foot.BorderBrush = _theme.Line;
+            _runWhyNot.Foreground = _theme.Faint;
+            _runButton.Background = _theme.Primary;
+            _runButton.Foreground = _theme.OnPrimary;
+
             Redraw();
         }
 
         /// <summary>
-        /// The strip at the top, the steps in the middle, the status line at the bottom. The
-        /// status line is docked rather than placed last inside the scroll, so it stays in the
-        /// same place whatever is open above it.
+        /// The strip at the top, the four rows in the middle, Run at the foot and the status
+        /// line under it. Run and the status line are docked rather than placed last inside
+        /// the scroll, so both stay where they are whatever is open above them.
+        ///
+        /// The rows are laid out for a pane about <see cref="PanelMetrics.NarrowPane"/> wide
+        /// and will not be measured narrower than that. Below it the pane scrolls sideways
+        /// rather than squeezing a wrapped line down to a word a line.
         /// </summary>
         private UIElement Layout()
         {
@@ -278,15 +329,74 @@ namespace RcrcGreen.Revit
             DockPanel.SetDock(status, Dock.Bottom);
             everything.Children.Add(status);
 
+            UIElement foot = Foot();
+            DockPanel.SetDock(foot, Dock.Bottom);
+            everything.Children.Add(foot);
+
+            _steps.MinWidth = PanelMetrics.NarrowPane;
+
             everything.Children.Add(new ScrollViewer
             {
                 Content = _steps,
                 Padding = PanelMetrics.Edge,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
             });
 
             return everything;
+        }
+
+        /// <summary>
+        /// Run, and the one line the RUN step says about itself.
+        ///
+        /// RUN stopped being a numbered step this round. What made step 5 shut is what greys
+        /// this button now and what the line above it says instead, read off the same
+        /// StepState rather than worked out again here.
+        /// </summary>
+        private UIElement Foot()
+        {
+            var block = new StackPanel { Margin = PanelMetrics.StripInside };
+
+            _runWhyNot.Margin = PanelMetrics.Row;
+            block.Children.Add(_runWhyNot);
+
+            _runButton.Content = Label("Run");
+            _runButton.Padding = PanelMetrics.HeaderInside;
+            _runButton.FontWeight = FontWeights.Bold;
+            _runButton.BorderThickness = new Thickness(0.0);
+            _runButton.Click += (sender, e) => AskToRun();
+            block.Children.Add(_runButton);
+
+            _foot.BorderThickness = PanelMetrics.HairlineAbove;
+            _foot.Child = block;
+
+            return _foot;
+        }
+
+        /// <summary>
+        /// The Run button's state, read off the RUN step. A button greyed on a fact the pane
+        /// worked out for itself is how one stale string turned into a dead end before.
+        /// </summary>
+        private void RefreshTheFoot(PanelSteps steps)
+        {
+            StepState run = steps.For(PanelStep.Run);
+
+            _runButton.IsEnabled = run.Usable;
+            _runButton.ToolTip = run.Usable
+                ? "Creates what is marked, in one transaction, after one confirmation."
+                : run.WhyNot;
+
+            _runWhyNot.Text = run.WhenShut;
+            _runWhyNot.Visibility = Shown(run.WhenShut);
+        }
+
+        /// <summary>
+        /// A line with nothing in it takes the same space as one with something in it, which
+        /// is how a row came to carry a blank second line.
+        /// </summary>
+        private static Visibility Shown(string text)
+        {
+            return text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private UIElement Strip()
@@ -369,6 +479,12 @@ namespace RcrcGreen.Revit
 
             _steps.Children.Clear();
             _headerText.Clear();
+            _tickMark.Clear();
+
+            // The old one is out of the tree now, and a keystroke updating a TextBlock nobody
+            // can see is a line that reads as refreshed and is not.
+            _runLine = null;
+
             ForgetTheNumberWarnings();
 
             _modelName.Text = _model.DocumentTitle.Length == 0
@@ -377,7 +493,11 @@ namespace RcrcGreen.Revit
                 ? _model.ViewsRead + " views read at " + _model.ReadAt.ToString("HH:mm:ss")
                 : "Press Refresh";
 
-            foreach (StepState step in steps.All) _steps.Children.Add(Step(step));
+            foreach (StepState step in steps.Rows) _steps.Children.Add(Step(step));
+
+            _steps.Children.Add(BeforeTheRun());
+
+            RefreshTheFoot(steps);
         }
 
         private PanelSteps StepsNow()
@@ -409,9 +529,18 @@ namespace RcrcGreen.Revit
 
             foreach (StepState step in steps.All)
             {
-                TextBlock header;
-                if (_headerText.TryGetValue(step.Step, out header)) header.Text = step.Header;
+                TextBlock said;
+                if (_headerText.TryGetValue(step.Step, out said))
+                {
+                    said.Text = step.WhenShut;
+                    said.Visibility = Shown(step.WhenShut);
+                }
+
+                TextBlock tick;
+                if (_tickMark.TryGetValue(step.Step, out tick)) tick.Text = TickOn(step);
             }
+
+            RefreshTheFoot(steps);
 
             if (_runLine != null) _runLine.Text = RunLine();
 
@@ -425,37 +554,63 @@ namespace RcrcGreen.Revit
             }
         }
 
+        /// <summary>
+        /// One row: the number and the title on the first line with the tick on the right, the
+        /// step's own line under it, and its controls under that when it is the open one.
+        ///
+        /// A row that cannot be used yet carries its reason on that same second line rather
+        /// than in a block of its own, which is what makes a shut row and a greyed row read as
+        /// the same shape. A greyed row with no reason on it is worse than no row at all.
+        ///
+        /// The one exception is a finished run. Its result is about what already happened
+        /// rather than about what step 4 can do next, so it is drawn even on a step 4 that has
+        /// gone unusable underneath it.
+        /// </summary>
         private UIElement Step(StepState step)
         {
             var block = new StackPanel { Margin = PanelMetrics.StepGap };
-            bool open = _stepOpen == step.Step && step.Usable;
+
+            bool showsAResult = step.Step == PanelStep.Sheets && _result != null;
+            bool open = _stepOpen == step.Step && (step.Usable || showsAResult);
 
             block.Children.Add(Header(step, open));
 
-            if (!step.Usable)
+            if (open)
             {
                 block.Children.Add(new Border
                 {
                     Margin = PanelMetrics.StepInside,
-                    Child = new TextBlock
-                    {
-                        Text = step.WhyNot,
-                        TextWrapping = TextWrapping.Wrap,
-                        Foreground = _theme.Faint
-                    }
+                    Child = Inside(step)
                 });
-
-                return block;
             }
-
-            if (open) block.Children.Add(new Border { Margin = PanelMetrics.StepInside, Child = Inside(step) });
 
             return block;
         }
 
+        /// <summary>
+        /// The tick a finished step carries. It is the word rather than a tick character,
+        /// because writing-check.sh refuses the whole range that character sits in as an
+        /// emoji, and a row's mark is not worth arguing with the guard over.
+        /// </summary>
+        private static string TickOn(StepState step)
+        {
+            return step.Done ? DoneMark : string.Empty;
+        }
+
+        private const string DoneMark = "done";
+
+        /// <summary>
+        /// The row's own two lines. The number, the title and the tick sit in columns rather
+        /// than in one built string, so nothing here composes a second version of a line
+        /// StepState already owns.
+        ///
+        /// The second line wraps rather than being cut. Step 1's sub plot counts live nowhere
+        /// else once it is shut, and an ellipsis eating the only copy of a number is the one
+        /// thing a narrow pane must not do.
+        /// </summary>
         private UIElement Header(StepState step, bool open)
         {
-            var line = new DockPanel { Margin = PanelMetrics.HeaderInside, LastChildFill = true };
+            var line = new DockPanel { LastChildFill = true };
 
             var sign = new TextBlock
             {
@@ -467,24 +622,61 @@ namespace RcrcGreen.Revit
             DockPanel.SetDock(sign, Dock.Left);
             line.Children.Add(sign);
 
-            var text = new TextBlock
+            var number = new TextBlock
             {
-                Text = step.Header,
+                Text = step.Number.ToString(CultureInfo.InvariantCulture),
+                Width = PanelMetrics.StepNumber,
+                FontWeight = FontWeights.Bold,
+                FontSize = PanelMetrics.StepTitle,
+                VerticalAlignment = VerticalAlignment.Center,
+                Opacity = step.Usable ? 1.0 : 0.55
+            };
+            DockPanel.SetDock(number, Dock.Left);
+            line.Children.Add(number);
+
+            var tick = new TextBlock
+            {
+                Text = TickOn(step),
+                MinWidth = PanelMetrics.Tick,
+                TextAlignment = TextAlignment.Right,
+                Foreground = _theme.Faint,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(tick, Dock.Right);
+            line.Children.Add(tick);
+            _tickMark[step.Step] = tick;
+
+            var title = new TextBlock
+            {
+                Text = step.Title,
                 FontWeight = FontWeights.Bold,
                 FontSize = PanelMetrics.StepTitle,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
                 Opacity = step.Usable ? 1.0 : 0.55
             };
-            _headerText[step.Step] = text;
-            line.Children.Add(text);
+            line.Children.Add(title);
+
+            var said = new TextBlock
+            {
+                Text = step.WhenShut,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = _theme.Faint,
+                Margin = PanelMetrics.Row,
+                Visibility = Shown(step.WhenShut)
+            };
+            _headerText[step.Step] = said;
+
+            var both = new StackPanel { Margin = PanelMetrics.HeaderInside };
+            both.Children.Add(line);
+            both.Children.Add(said);
 
             var header = new Border
             {
                 Background = _theme.StepHeader,
                 BorderBrush = _theme.Line,
                 BorderThickness = PanelMetrics.Hairline,
-                Child = line
+                Child = both
             };
 
             if (!step.Usable) return header;
@@ -505,6 +697,10 @@ namespace RcrcGreen.Revit
             return button;
         }
 
+        /// <summary>
+        /// What the open row shows. Step 4 shows the last run's result in place of its
+        /// controls once there is one, and the control on it puts them back.
+        /// </summary>
         private UIElement Inside(StepState step)
         {
             switch (step.Step)
@@ -512,8 +708,9 @@ namespace RcrcGreen.Revit
                 case PanelStep.Plots: return InsidePlots();
                 case PanelStep.ViewTypes: return InsideViewTypes();
                 case PanelStep.Mark: return InsideMark();
-                case PanelStep.Sheets: return InsideSheets();
-                default: return InsideRun();
+                case PanelStep.Sheets:
+                    return _result == null ? InsideSheets() : TheResult(_result);
+                default: return new StackPanel();
             }
         }
 
@@ -2195,34 +2392,225 @@ namespace RcrcGreen.Revit
             Redraw();
         }
 
-        private UIElement InsideRun()
+        /// <summary>
+        /// The unnumbered block under the four rows: what the run would do, the answers a new
+        /// view type needs, what it cannot make, and the scope box cases.
+        ///
+        /// This was step 5's body. RUN stops being a numbered step this round, so its body
+        /// stops being a numbered one as well, and nothing in it is dropped. It is shut by
+        /// default and one click opens it, the same as a row. The Run button itself is docked
+        /// at the foot, where it is on screen whatever is open above it.
+        /// </summary>
+        private UIElement BeforeTheRun()
+        {
+            var block = new StackPanel { Margin = PanelMetrics.StepGap };
+
+            block.Children.Add(BeforeTheRunHeader());
+
+            if (!_beforeRunOpen) return block;
+
+            var inside = new StackPanel();
+
+            _runLine = new TextBlock { Text = RunLine(), TextWrapping = TextWrapping.Wrap };
+            inside.Children.Add(_runLine);
+
+            inside.Children.Add(NewViewAnswersBlock());
+
+            inside.Children.Add(SummaryOfTheRun());
+
+            inside.Children.Add(ScopeBoxes());
+
+            block.Children.Add(new Border
+            {
+                Margin = PanelMetrics.StepInside,
+                Child = inside
+            });
+
+            return block;
+        }
+
+        /// <summary>
+        /// The same shape a row's header has, with no number and no tick, because this is not
+        /// one of the four and counting it as one would move every number the other steps say
+        /// out loud.
+        /// </summary>
+        private UIElement BeforeTheRunHeader()
+        {
+            var line = new DockPanel
+            {
+                LastChildFill = true,
+                Margin = PanelMetrics.HeaderInside
+            };
+
+            var sign = new TextBlock
+            {
+                Text = _beforeRunOpen ? "-" : "+",
+                Width = PanelMetrics.StepNumber,
+                Foreground = _theme.Faint,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            DockPanel.SetDock(sign, Dock.Left);
+            line.Children.Add(sign);
+
+            line.Children.Add(new TextBlock
+            {
+                Text = "BEFORE YOU RUN",
+                FontWeight = FontWeights.Bold,
+                FontSize = PanelMetrics.StepTitle,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            var header = new Border
+            {
+                Background = _theme.StepHeader,
+                BorderBrush = _theme.Line,
+                BorderThickness = PanelMetrics.Hairline,
+                Child = line
+            };
+
+            var button = new Button
+            {
+                Content = header,
+                Padding = new Thickness(0.0),
+                BorderThickness = new Thickness(0.0),
+                Background = _theme.StepHeader,
+                Foreground = _theme.Foreground,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                ToolTip = _beforeRunOpen
+                    ? "Shuts this again."
+                    : "What this run would do, the answers a new view type needs, what it "
+                        + "cannot make, and the scope box cases."
+            };
+
+            button.Click += (sender, e) => { _beforeRunOpen = !_beforeRunOpen; Redraw(); };
+            return button;
+        }
+
+        /// <summary>
+        /// What the run did, in step 4's body where its controls were.
+        ///
+        /// **It reads the outcome and never the plan.** The plan is what a run intends and
+        /// this is what it did. The first real run printed its created sections off the plan
+        /// and its refusals off the outcome, and the same four plan views came out under
+        /// PLAN VIEWS and under NOT CREATED while the panel said nothing had been made.
+        ///
+        /// Nothing is counted again here either. Both counts and every line come off the one
+        /// <see cref="RunResult"/> the run handed back.
+        /// </summary>
+        private UIElement TheResult(RunResult result)
         {
             var block = new StackPanel();
 
-            _runLine = new TextBlock { Text = RunLine(), TextWrapping = TextWrapping.Wrap };
-            block.Children.Add(_runLine);
+            // First, and loud. A run that counts one thing both ways has a bug in this code
+            // rather than a model worth blaming, and a wrong schedule still in the model gets
+            // worse the longer nobody reads it.
+            AddLoudly(block, result.Alarm);
+            AddLoudly(block, result.Loud);
 
-            block.Children.Add(NewViewAnswersBlock());
-
-            block.Children.Add(SummaryOfTheRun());
-
-            block.Children.Add(ScopeBoxes());
-
-            var run = new Button
+            block.Children.Add(new TextBlock
             {
-                Content = "Run",
-                Margin = PanelMetrics.Row,
-                Padding = PanelMetrics.HeaderInside,
+                Text = result.CountsInWords,
+                TextWrapping = TextWrapping.Wrap,
                 FontWeight = FontWeights.Bold,
-                Background = _theme.Primary,
-                Foreground = _theme.OnPrimary,
-                BorderThickness = new Thickness(0.0),
-                ToolTip = "Creates what is marked, in one transaction, after one confirmation."
-            };
-            run.Click += (sender, e) => AskToRun();
-            block.Children.Add(run);
+                Margin = PanelMetrics.Row
+            });
+
+            if (result.FailedLines.Count > 0)
+            {
+                var list = new StackPanel();
+                foreach (RunResultLine one in result.FailedLines)
+                {
+                    TextBlock said = Faint(one.InWords());
+                    if (one.LeftInTheModel) said.Foreground = _theme.Warning;
+                    list.Children.Add(said);
+                }
+
+                block.Children.Add(Scrolling(list, PanelMetrics.ListHeight, "run result"));
+            }
+
+            block.Children.Add(Faint(result.Where));
+
+            if (result.HasReport)
+            {
+                // Wrapped rather than in a row, because two buttons side by side do not fit a
+                // pane this narrow and the second would be off the edge.
+                var buttons = new WrapPanel();
+                buttons.Children.Add(Secondary("Open the report", () => Open(result.ReportPath),
+                    "Opens " + result.ReportPath + "."));
+                buttons.Children.Add(Secondary("Open the folder", () => Open(result.FolderPath),
+                    "Opens " + result.FolderPath + "."));
+                block.Children.Add(buttons);
+            }
+
+            block.Children.Add(Secondary("Back to the sheets", BackToTheSheets,
+                "Puts step 4's controls back. The report keeps the result."));
 
             return block;
+        }
+
+        private void AddLoudly(Panel block, string said)
+        {
+            if (said.Length == 0) return;
+
+            block.Children.Add(new TextBlock
+            {
+                Text = said,
+                TextWrapping = TextWrapping.Wrap,
+                FontWeight = FontWeights.Bold,
+                Foreground = _theme.Warning,
+                Margin = PanelMetrics.Row
+            });
+        }
+
+        /// <summary>
+        /// What the run did, handed over from the Revit thread once it is over. Step 4's row
+        /// is opened so the result is not one nobody can see.
+        /// </summary>
+        private void TheRunEnded(RunResult result)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _result = result;
+                _stepOpen = PanelStep.Sheets;
+                Redraw();
+            });
+        }
+
+        /// <summary>
+        /// Puts step 4's controls back. Nothing is lost by it: the report is on disk, the
+        /// panel has already read the model again, and the result is a reading of a run that
+        /// is over.
+        /// </summary>
+        private void BackToTheSheets()
+        {
+            _result = null;
+            Redraw();
+        }
+
+        /// <summary>
+        /// Hands a path to the shell. It is not a Revit call, so it goes nowhere near the
+        /// external event, and a path the shell will not take is said rather than thrown.
+        /// </summary>
+        private void Open(string path)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(
+                    new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+            }
+            catch (System.ComponentModel.Win32Exception failed)
+            {
+                Say("That could not be opened. " + failed.Message);
+            }
+            catch (System.IO.FileNotFoundException failed)
+            {
+                Say("That is not there any more. " + failed.Message);
+            }
+            catch (InvalidOperationException failed)
+            {
+                Say("That could not be opened. " + failed.Message);
+            }
         }
 
         /// <summary>
@@ -2437,8 +2825,8 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// The six counts, with every case but B openable in one click. It sits inside step 5
-        /// because it acts on the same ticked plots the run does.
+        /// The six counts, with every case but B openable in one click. It sits in the block
+        /// above the Run button because it acts on the same ticked plots the run does.
         ///
         /// A count on its own is not enough. On the real model F was 1, one view carrying a
         /// scope box that is not its plot's, and finding out which view that was meant opening
@@ -2546,7 +2934,7 @@ namespace RcrcGreen.Revit
 
         private UIElement NextButton(PanelStep from)
         {
-            PanelStep? next = StepsNow().OpenAfter(from);
+            PanelStep? next = StepsNow().RowAfter(from);
             if (!next.HasValue) return new StackPanel();
 
             StepState to = StepsNow().For(next.Value);
@@ -2780,8 +3168,8 @@ namespace RcrcGreen.Revit
         }
 
         /// <summary>
-        /// The marked view types no view in the model carries, which are the ones step 5
-        /// asks the three answers for.
+        /// The marked view types no view in the model carries, which are the ones the block
+        /// above the Run button asks the three answers for.
         /// </summary>
         private IReadOnlyList<ViewType> NewTypesMarked()
         {
@@ -2988,6 +3376,11 @@ namespace RcrcGreen.Revit
                 return;
             }
 
+            // The last run's result is about a model this one is about to change, so it goes
+            // before the new one is asked for rather than sitting under step 4 while Revit
+            // works.
+            _result = null;
+
             Say("Working out the run.");
             _handler.AskToRun(ticked, GridNow().Marked, SheetsWanted());
             _asking.Raise();
@@ -3059,7 +3452,9 @@ namespace RcrcGreen.Revit
                 // The same rule per sub plot: one that has gone is simply not put back.
                 foreach (string plotId in untickedWere) _plots = _plots.Ticking(plotId, false);
 
-                _stepOpen = StepsNow().FirstUnfinished;
+                // Clamped to one of the four rows. RUN is not one any more, and landing
+                // the pane on a step it no longer draws would open nothing at all.
+                _stepOpen = StepsNow().RowOpen(StepsNow().FirstUnfinished);
                 Redraw();
 
                 return marksCleared == 0 ? string.Empty : BulkMarking.ClearedInWords(marksCleared);

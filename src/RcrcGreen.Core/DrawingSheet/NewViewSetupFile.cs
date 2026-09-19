@@ -88,8 +88,8 @@ namespace RcrcGreen.Core
             text.Append("# One line per view type, tab separated: view code, view name, view ")
                 .Append("family type, view template, level. The level is empty for a section, ")
                 .Append("which takes none.").Append(Line);
-            text.Append("# Written by the Drawing Sheet panel whenever an answer is picked in ")
-                .Append("step 5.").Append(Line);
+            text.Append("# Written by the Drawing Sheet panel whenever an answer is picked ")
+                .Append("before a run.").Append(Line);
 
             foreach (NewViewAnswers one in (answers ?? Enumerable.Empty<NewViewAnswers>())
                 .Where(one => one != null

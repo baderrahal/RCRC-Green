@@ -63,6 +63,20 @@ namespace RcrcGreen.Core
         public bool Done { get; }
 
         /// <summary>
+        /// The one line a row carries under its title: what the step says while it is shut,
+        /// or, when it cannot be used yet, why it cannot. A greyed row with no reason on it
+        /// is worse than no row at all.
+        ///
+        /// It is here rather than worked out where it is drawn, because the pane would then
+        /// hold a second copy of a sentence this class already owns. Empty only when the step
+        /// has nothing to say, which no builder here produces for a step it has shut.
+        /// </summary>
+        public string WhenShut
+        {
+            get { return Usable ? Summary : WhyNot; }
+        }
+
+        /// <summary>
         /// The whole header line, built here so the number, the title and the summary are
         /// spaced the same way in every step.
         /// </summary>
@@ -86,15 +100,73 @@ namespace RcrcGreen.Core
     public sealed class PanelSteps
     {
         private readonly IReadOnlyList<StepState> _steps;
+        private readonly IReadOnlyList<StepState> _rows;
 
         private PanelSteps(IReadOnlyList<StepState> steps)
         {
             _steps = steps;
+            _rows = steps.Where(one => IsARow(one.Step)).ToList();
         }
 
         public IReadOnlyList<StepState> All
         {
             get { return _steps; }
+        }
+
+        /// <summary>
+        /// The steps the pane draws as rows, in order.
+        ///
+        /// RUN is not one of them. It is the button at the foot and the result that takes
+        /// over step 4's body once a run has happened, so its own state still decides whether
+        /// that button is live and what it says when it is not. Every number the user reads
+        /// in another step's words stays correct, because none of the four moves.
+        /// </summary>
+        public IReadOnlyList<StepState> Rows
+        {
+            get { return _rows; }
+        }
+
+        /// <summary>
+        /// Whether the pane draws this step as one of its rows.
+        /// </summary>
+        public static bool IsARow(PanelStep step)
+        {
+            return step != PanelStep.Run;
+        }
+
+        /// <summary>
+        /// The one row open, given the one the pane had open last.
+        ///
+        /// A row that cannot be used yet is never the open one, and RUN is not a row, so a
+        /// pane holding it lands on a row rather than on nothing. When no row can be used the
+        /// answer is step 1, because step 1 is where the reason is written.
+        /// </summary>
+        public PanelStep RowOpen(PanelStep wanted)
+        {
+            StepState asked = _rows.FirstOrDefault(one => one.Step == wanted);
+            if (asked != null && asked.Usable) return asked.Step;
+
+            PanelStep first = FirstUnfinished;
+            StepState unfinished = _rows.FirstOrDefault(one => one.Step == first && one.Usable);
+            if (unfinished != null) return unfinished.Step;
+
+            StepState last = _rows.LastOrDefault(one => one.Usable);
+            return last == null ? PanelStep.Plots : last.Step;
+        }
+
+        /// <summary>
+        /// The row to open once this one is finished, skipping the ones that cannot be used.
+        ///
+        /// Null past the last row, which leaves step 4 open rather than sending the pane to a
+        /// step that is no longer drawn.
+        /// </summary>
+        public PanelStep? RowAfter(PanelStep finished)
+        {
+            return _rows
+                .Where(one => one.Number > (int)finished)
+                .Where(one => one.Usable)
+                .Select(one => (PanelStep?)one.Step)
+                .FirstOrDefault();
         }
 
         public StepState For(PanelStep step)
@@ -207,7 +279,7 @@ namespace RcrcGreen.Core
         }
 
         /// <summary>
-        /// The line over the scope box cases in step 5.
+        /// The line over the scope box cases in the block above the Run button.
         /// </summary>
         public static string ScopeBoxLine(int viewsConsidered, int plotsTicked)
         {

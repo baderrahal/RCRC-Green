@@ -46,8 +46,8 @@ does not read as described is a finding about the tool and not a slip in the rea
    ```
 
    It builds the `Addins\2024\` layout the build does not, and writes `reports-folder.txt`
-   next to the assembly so every report lands in the repo's `reports/` folder as well as on
-   the Desktop.
+   next to the assembly, which is the only thing that says where the reports folder is. The
+   Desktop copy was dropped rounds ago, so without that file nothing is written at all.
 
 ## Open the model and the pane
 

@@ -26,7 +26,7 @@ namespace RcrcGreen.Core
     }
 
     /// <summary>
-    /// What step 5 says before the Run button.
+    /// What the block above the Run button says.
     ///
     /// It used to draw a card per sheet, and a run over 35 sub plots with 7 definitions drew
     /// 247 of them. The user asked for the drawing to go. What is left is the two numbers

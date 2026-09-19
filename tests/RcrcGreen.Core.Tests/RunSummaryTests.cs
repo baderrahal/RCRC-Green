@@ -6,7 +6,7 @@ using Xunit;
 namespace RcrcGreen.Core.Tests
 {
     /// <summary>
-    /// What step 5 says in place of the 247 preview cards.
+    /// What the block above the Run button says in place of the 247 preview cards.
     ///
     /// The counting-by-reason rule is the one that matters: every refusal sentence names its
     /// plot, so the five views refused on the run of 2026-09-13 for "No scope box is named

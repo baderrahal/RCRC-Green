@@ -4,6 +4,155 @@ Newest entry first.
 
 ---
 
+## 2026-09-19, sixty fourth pass. The pane becomes four stacked rows with a result panel
+
+Branch `claude/rcrc-green-setup-wf9ham`, one pull request. Suite **2165 before, 2189 after**,
+0 failed and 0 skipped, measured on the merged main this branch was reset onto, `2ee5ca7`.
+Twenty four new tests. The runner count and the merge hash go in a short entry above this one
+once the merge lands.
+
+**The file name in the brief does not match this repo.** The brief names
+`steps/log-drawing-sheet.md` and `steps/ai-max-state-drawing-sheet.md`. This task's pair has
+always been `steps/log-drawing.md` and `steps/ai-max-state-drawing.md`, and `CLAUDE.md` names
+those two by hand. Creating the pair the brief names would have split one task's record in two,
+which is the shape this repo keeps paying for, so the entry is here. The run sheet's name was
+new and is used exactly as the brief gave it.
+
+### The mapping, and what it cost
+
+`PanelSteps` still holds five steps. The pane draws **four rows**, 1 PLOTS, 2 VIEW TYPES,
+3 MARK, 4 SHEETS. RUN stops being a row and becomes the button docked at the foot plus the
+result that takes over step 4's body after a run. `PanelStep.Run`, its `StepState`, `Of()`,
+`Header`, `Usable`, `WhyNot` and every string literal in the file are untouched, so every
+sentence that names a step number out loud still points where it always did. I checked the
+three the brief named and found no fourth.
+
+Three new members on `PanelSteps`, `Rows`, `RowOpen` and `RowAfter`, and one on `StepState`,
+`WhenShut`, which is Summary when the step is usable and WhyNot when it is not. Nothing was
+restructured and nothing was renamed.
+
+Two things RUN's disappearance did cost, both said here rather than hidden:
+
+- **Step 4's Next button is gone**, because `RowAfter(Sheets)` is null and there is no step
+  past it to offer. The Run button at the foot is what took its place.
+- **Step 5's body is not a numbered step any more.** None of it is dropped. The run line, the
+  three answers a new view type needs, what the run cannot make with its Show control, and the
+  six scope box cases are an unnumbered block under the four rows, headed BEFORE YOU RUN, shut
+  by default and opened by a click the same way a row is. That is one more thing that can be
+  open beside the one open row, which the brief's one-row-at-a-time rule is about rows rather
+  than about this block, and the user can overrule it.
+
+### The trap, and where I found it already sitting
+
+The result panel reads `RunOutcome` and never `RunPlan`. `RunResult.Of` takes the outcome and
+whatever `ReportFile.Write` returned. The worked count is `outcome.CreatedCount`, the failed
+count is `outcome.NotCreatedCount`, and the lines are `outcome.NotCreated` then
+`outcome.LeftBehind`, which is exactly the two lists `NotCreatedCount` adds up, so a test pins
+`FailedLines.Count` to `Failed`. `BothWays` not being empty raises a line beginning THIS IS A
+BUG IN THE TOOL, NOT IN THE MODEL, first and in the warning colour.
+
+While wiring it I found the same fact already written twice. The handler built
+`outcome.CreatedCount + " created, " + outcome.NotCreatedCount + " not created."` by hand for
+the status line, and the pane was about to build its own. Both read `RunResult.CountsInWords`
+now, and the handler's sentence is unchanged byte for byte. The loud line about schedules left
+in the model went the same way, into `RunResult.Loud`.
+
+### Long lines at 300 pixels: they wrap
+
+The row is two lines. The number, the title and the tick sit on the first, and `WhenShut` wraps
+on the second. **Cutting was not an option.** Step 1's summary reads `DM, 14 of 20 sub plots
+ticked` and those two numbers appear nowhere else once step 1 is shut, so an ellipsis would
+have eaten the only copy of a number, which the brief rules out. The same treatment is on every
+row and on the line above the Run button.
+
+Below 300 the pane scrolls sideways. `PanelMetrics.NarrowPane` is 300 and is the `MinWidth` of
+the row stack, and the outer scroller's horizontal bar went from Disabled to Auto so that width
+is reachable rather than clipped. The grid in step 3 has had its own sideways scroller all
+along, so below 300 there can be two horizontal bars, which is outside the width this is laid
+out for.
+
+### The tick is the word done
+
+`writing-check.sh` refuses the whole character range a tick mark sits in, `\u2600` to `\u27BF`,
+as an emoji. So a finished row carries the word `done` on the right of its title line, in
+`PanelMetrics.Tick`, 34 wide. It also reads at 300 pixels, which a glyph would have had to earn.
+
+### How the pane gets back to step 4's controls
+
+A control on the result reading **Back to the sheets** drops the result and redraws, and
+pressing Run drops it before the new run is asked for so a stale result cannot sit under step 4
+while Revit works. Rows 1 to 3 are not touched by any of it. Step 4 is opened by the run itself,
+because a result nobody can see is not a result, and it draws even if step 4 has gone unusable
+underneath it, since the result is about what already happened rather than about what step 4 can
+do next.
+
+### The handler's contract grew by one callback
+
+`DrawingSheetRequestHandler.Ran` hands the panel a `RunResult`. It had to: everything a run
+had to say left there as one sentence on the status line, and a sentence is not something a
+pane can draw two counts and a line per refusal from. The alternative was the panel reaching
+back for the outcome, which would be a second way into Revit. It fires on both paths, including
+a run nobody confirmed, because an empty area under step 4 reads as a pane that broke.
+
+### A platform difference the tests caught
+
+`RunResult` asked `Path.GetDirectoryName` for the report's folder. That answers by the platform
+it runs on, the tests run on Linux, and a real Windows report path came back with no folder at
+all. The pane would have offered one button in Revit and two on the runner. It cuts at the last
+separator of either kind now, so the answer is the same where it is checked and where it runs.
+The test that caught it was written against a real Windows path on purpose.
+
+### Two breaks watched red
+
+`RowOpen` returning the asked-for row without checking `Usable`: 2 red. `Failed` reading
+`outcome.NotCreated.Count` and dropping the left behind: 1 red. Both reversed, both files md5
+identical before and after, green again at 2189.
+
+### Documents this round made false, and one it found already false
+
+`CLAUDE.md` and `.claude/rules/revit-commands.md` both said five numbered steps and called Run
+step 5. Both are corrected, along with six doc comments and one line of the header
+`NewViewSetupFile` writes into the user's settings file, which named step 5 in a file the user
+reads.
+
+The section headed **Step 5 draws the sheets before it makes them** in `revit-commands.md`
+described the 247 preview cards, which a previous round deleted from the panel and left the
+paragraph standing. It is replaced and the entry says so. `steps/run-drawing.md` said
+`install.ps1` puts a report on the Desktop as well, which stopped being true when the Desktop
+copy was dropped, and would have sent the user to the wrong folder on this round's own buttons.
+Both were found rather than caused.
+
+### NOT SEEN IN REVIT
+
+Nothing in this round has been through Revit. Every one of these is UNOBSERVED, not working:
+
+- the four rows drawing at all
+- the four rows at about 300 pixels, and whether the second line wraps the way it is meant to
+- whether the sideways scroll below 300 behaves, and whether two horizontal bars appear in
+  step 3 down there
+- the word `done` appearing on a finished row and nowhere else
+- only the open row showing its controls, and two rows never being open at once
+- a shut row showing its summary, and a greyed row showing its reason on the same line
+- clicking a row's header opening that row, and a greyed header refusing the click
+- the BEFORE YOU RUN block opening and holding everything step 5 held
+- the Run button staying on screen at the foot, and going grey with its reason above it
+- the result panel appearing in step 4's row after a real run
+- the two buttons opening anything at all, the report or the folder
+- Back to the sheets putting step 4's controls back
+- whether `MinWidth` on the row stack is respected by Revit's own dock
+- anything about how any of it looks
+
+`steps/run-sheet-drawing-sheet-pane.md` is the pass that would settle every one of them.
+
+### Open to the user
+
+- The BEFORE YOU RUN block can be open at the same time as a row. Say if it should shut one.
+- Its caption is new wording. RUN was taken by the button.
+- The build and install half of the new run sheet repeats `steps/run-drawing.md`'s. Two
+  records of one procedure, kept because the brief asked for a standalone sheet.
+
+---
+
 ## 2026-09-13, sixty third pass. The panel at 35 sub plots, and five faults from the DM-02 run
 
 Branch `claude/rcrc-green-setup-wf9ham`, eight fixes over two pull requests, 105 merged as

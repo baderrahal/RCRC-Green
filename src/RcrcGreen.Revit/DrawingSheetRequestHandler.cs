@@ -50,6 +50,16 @@ namespace RcrcGreen.Revit
         public Action<string> Told { get; set; }
 
         /// <summary>
+        /// What the run did, handed over once it is over, so the panel can draw it.
+        ///
+        /// The contract grew by this one callback and by nothing else. Everything a run had
+        /// to say used to leave here as a sentence on the status line, and a sentence is not
+        /// something a panel can draw two counts and a line per refusal from. The alternative
+        /// was the panel reaching back for the outcome, which would be a second way in.
+        /// </summary>
+        public Action<RunResult> Ran { get; set; }
+
+        /// <summary>
         /// Called when a document opens or closes under the open pane, so the panel can read
         /// again without anybody remembering to press Refresh. Three runs in a row asked for
         /// numbers the model already held because the panel's read was a day older than the
@@ -468,10 +478,16 @@ namespace RcrcGreen.Revit
                 ScanFileName.For(ReportFileNames.RunPrefix, document.Title, writtenAt),
                 RunReport.Write(plan, outcome, document.Title, writtenAt, applied));
 
-            string where = ReportPlaces.Written(written);
+            // Read off the outcome and off where the report went, and nothing else. The panel
+            // and this line both read it, so the two cannot disagree about what happened.
+            RunResult result = RunResult.Of(outcome, written);
+            string where = result.Where;
 
             if (!applied)
             {
+                // A run nobody confirmed still gets a result. An empty area under step 4
+                // reads as a panel that broke rather than as a run that did nothing.
+                Ran?.Invoke(result);
                 Told?.Invoke("Nothing was created. " + where);
                 return;
             }
@@ -485,17 +501,15 @@ namespace RcrcGreen.Revit
 
             // Counted off what the run did, never off what it planned. The two disagreeing is
             // what put four views under both created and not created in the first real report.
-            string said = outcome.CreatedCount + " created, " + outcome.NotCreatedCount
-                + " not created.";
+            // The wording is the one the panel draws inside itself, from the same object, so
+            // the line under the pane and the line in it cannot part.
+            string said = result.CountsInWords;
             if (outcome.Attention.Count > 0) said += " " + outcome.Attention.Count + " need attention.";
 
             // Loud, and first. A wrong schedule left in the model is not a footnote.
-            if (outcome.LeftBehind.Count > 0)
-            {
-                said = outcome.LeftBehind.Count
-                    + (outcome.LeftBehind.Count == 1 ? " WRONG SCHEDULE IS" : " WRONG SCHEDULES ARE")
-                    + " IN THE MODEL AND MUST BE DELETED BY HAND. " + said;
-            }
+            if (result.Loud.Length > 0) said = result.Loud + " " + said;
+
+            Ran?.Invoke(result);
 
             string andCleared = marksCleared.Length == 0 ? string.Empty : " " + marksCleared;
             Told?.Invoke(said + " The panel has read the model again." + andCleared + " " + where);

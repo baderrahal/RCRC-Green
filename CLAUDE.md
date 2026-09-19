@@ -17,14 +17,18 @@ and creates them with correct names and, for a cross section, a cut across the m
 
 ## Running it
 
-**Drawing Sheet** is a dockable panel that reads the model every time it is shown. Five numbered
-steps, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS, RUN. A shut step carries its own
+**Drawing Sheet** is a dockable panel that reads the model every time it is shown. Four numbered
+rows, one open at a time: PLOTS, VIEW TYPES, MARK, SHEETS. A shut row carries its own
 summary and an unusable one says why. A filled square is a view that exists and opens on a
 click, an empty one is missing and can be marked one at a time, by row, by column or all at
 once. Every dropdown comes from the model, and Scan Model reads the whole document.
 
-**Run**, step 5, creates what the marked cells on the ticked plots ask for: plan views, sections,
-schedules and sheets. One confirmation, one transaction, one undo, one report.
+**Run** is the button docked at the foot, under all four rows, live or grey on what the RUN step
+state says and carrying its reason when it is grey. It creates what the marked cells on the
+ticked plots ask for: plan views, sections, schedules and sheets. One confirmation, one
+transaction, one undo, one report. What it did then takes over step 4's row: two counts read
+off the outcome, one line per thing that did not happen with its reason, and a button to the
+report and one to the folder it went in.
 
 **KPI Checklist** opens a pane of the model name, KPI Scan, a status line, the template picker,
 the output folder, the plot picker and Create. KPI Scan writes nine sections and Create copies a
@@ -135,7 +139,7 @@ own kind, a calculated field cannot be added at all, and field names are copied 
 DM-11-(010) Location Key Plan uses `(010) Key Location Plan`, words swapped, so nothing anywhere
 is matched on a name. A new view takes its family type, level, template and two crop settings
 from ONE view of the same type the model holds, and the report names it. A type with NO view
-anywhere is created from three answers the user picks once in step 5, family type, template
+anywhere is created from three answers the user picks once before the run, family type, template
 and level, each from what the model holds, remembered per type and refused until all three
 are answered. A section takes no level. Three (010) views in
 one run took three different family types that way. **(400) Landscape Cross Section is a section
