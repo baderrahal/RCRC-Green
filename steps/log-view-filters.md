@@ -12,7 +12,7 @@ own old headings, with one step's controls showing at a time, a drawn tick in pl
 finished step's number, and a tooltip on every cell, because a rail of bare numbers has
 nowhere else to say what a cell is. Every reachability rule, every summary, every shut
 step's reason and the tooltip line are decided in Core and tested there, and the pane
-draws the answers. This round adds 26 tests, 2165 to 2191, 0 failed and 0 skipped, build
+draws the answers. This round adds 27 tests, 2165 to 2192, 0 failed and 0 skipped, build
 0 warnings, the whole suite on .NET 10. **Nothing in this round has been observed in
 Revit.** The run sheet is `steps/run-view-filters.md` and the mockup, hand drawn from the
 code, is `design/pr-164/rail.html`.
@@ -117,6 +117,43 @@ tick's box. Each is marked as never seen in Revit, like the pass before's additi
 - After Apply, the handler's fresh scan lands first and moves the pane to APPLY for the
   moment before the run's answer opens RESULTS. Both moves are the round's own words and
   the second always wins, so the flash is accepted rather than special cased.
+
+### What the verification pass found, and what changed
+
+Four agents read the round before it shipped: a diff guard over the ported body, a
+wording freeze over the pane before against after, a breaker, and a spec check. The
+first three walks came back clean, the runner's eight sites, every counter and sentence,
+every control, string and behaviour, and every spec line, with the pane's three numeric
+literal grep hits judged in place: the body column's star weight, a ratio of a
+PanelMetrics constant, and the row shade parity that predates the round. The breaker
+found four real things, all changed before the pull request went up for merge:
+
+- **A committed run whose report write threw never delivered its results.** Applied sat
+  after `ReportFile.Write`, the outer catch answered with one status sentence, and a run
+  that had changed the model reached a pane whose results the press had just emptied.
+  The write is caught around the write alone now, the result is delivered with no report
+  place, and the status line still says the report could not be written, in the words
+  the outer catch already used.
+- **A failed press left RESULTS wearing the last run's tick and counts** over the body
+  the press had emptied, with the button still opening the old run's report. The press
+  clears the run record with the lines now, so RESULTS reads as not run until the next
+  answer, which is what the emptied body already said.
+- **The scan stayed usable with the keyword box empty**, because rows keep their
+  prefixes when the keywords go, so step 3 sat reachable below an unreachable step 2,
+  the chain fault PanelSteps recorded on the Drawing Sheet. The round text said usable
+  when step 2 is Done and the shipped rule is tighter, the keywords and a prefix both,
+  with the reason pointing at step 1 when the keywords are the missing thing. This is
+  the one place the round text was deliberately not followed to the letter, and a test
+  pins it.
+- **A scan answering after a mid flight edit folded the step the edit was being typed
+  in**, because the answer moved to FirstUnfinished unconditionally. It moves only when
+  Core reads the scan as done now, so a moved scan moves nobody, which is the Drawing
+  Sheet's rule that nothing drags the user out of a step they are working in.
+
+Two of its notes stand as records rather than changes: `failureSaid` can be true with a
+resolved filter only through a throw after the assignment, harmless because its one
+reader sits behind the null check, and the early return still words its one refusal two
+ways, the ported body's own pre existing pair.
 
 ### What is left, and known bugs
 

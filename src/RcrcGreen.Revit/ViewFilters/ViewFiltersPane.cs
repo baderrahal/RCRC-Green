@@ -546,6 +546,14 @@ namespace RcrcGreen.Revit.ViewFilters
             _resultsArea.Children.Clear();
             _logList.Children.Clear();
 
+            // The last run's record goes with its lines, or a press that ends in a status
+            // sentence instead of an answer leaves RESULTS wearing the old run's tick and
+            // counts over the body this just emptied, with its button opening the old
+            // run's report.
+            _run = null;
+            _openReport.Visibility = Visibility.Collapsed;
+            RefreshSteps();
+
             // Opened here and not inside Execute: this is a click handler on the pane's own
             // thread, so the window is up before the external event is raised. Told closes
             // it, whatever ends the run.
@@ -567,8 +575,16 @@ namespace RcrcGreen.Revit.ViewFilters
                 DrawScan(result);
 
                 // A scan coming back lands the pane on the first step with work left in
-                // it, which is Core's answer rather than this file's.
-                _open = Steps().FirstUnfinished;
+                // it, which is Core's answer rather than this file's. Only while the
+                // boxes still say what the scan was asked with: an answer landing after
+                // an edit must not fold the step the edit is being typed in, so a moved
+                // scan, which Core reads as not done, moves nobody.
+                ViewFilterSteps steps = Steps();
+                if (steps.For(ViewFilterStep.Scan).Done)
+                {
+                    _open = steps.FirstUnfinished;
+                }
+
                 RefreshSteps();
             });
         }

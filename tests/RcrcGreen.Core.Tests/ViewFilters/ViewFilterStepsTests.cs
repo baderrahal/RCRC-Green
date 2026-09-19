@@ -138,9 +138,17 @@ namespace RcrcGreen.Core.Tests.ViewFilters
             Assert.Equal(
                 "Type at least one keyword in step 1.",
                 steps.For(ViewFilterStep.Rows).WhyNot);
+
+            // With nothing typed at all, the scan points at step 1 too, because step 2
+            // cannot even be reached yet. With the keywords in and no prefix, it points
+            // at step 2, the one thing still missing.
+            Assert.Equal(
+                "Type at least one keyword in step 1.",
+                steps.For(ViewFilterStep.Scan).WhyNot);
             Assert.Equal(
                 "Give at least one row a prefix in step 2.",
-                steps.For(ViewFilterStep.Scan).WhyNot);
+                After(Boxes(TwoKeywords, string.Empty)).For(ViewFilterStep.Scan).WhyNot);
+
             Assert.Equal(
                 "Scan first, so what Apply will do has been seen.",
                 steps.For(ViewFilterStep.Apply).WhyNot);
@@ -177,6 +185,24 @@ namespace RcrcGreen.Core.Tests.ViewFilters
             Assert.Equal(
                 "2  FILTER ROWS   1 row, none with a prefix",
                 After(Boxes(TwoKeywords, string.Empty)).For(ViewFilterStep.Rows).Header);
+        }
+
+        /// <summary>
+        /// Rows keep their prefixes while the keyword box is cleared, so step 2 reads done
+        /// under a shut header. The scan must shut with it, pointing at step 1, or a step
+        /// sits reachable below an unreachable one, the chain fault PanelSteps recorded.
+        /// </summary>
+        [Fact]
+        public void ClearingTheKeywordsShutsTheScanEvenWhileTheRowsKeepTheirPrefixes()
+        {
+            ViewFilterSteps steps = After(Boxes(string.Empty, "(200-260) Presentation"));
+
+            Assert.True(steps.For(ViewFilterStep.Rows).Done);
+            Assert.False(steps.For(ViewFilterStep.Rows).Usable);
+            Assert.False(steps.For(ViewFilterStep.Scan).Usable);
+            Assert.Equal(
+                "Type at least one keyword in step 1.",
+                steps.For(ViewFilterStep.Scan).WhyNot);
         }
 
         /// <summary>

@@ -102,7 +102,7 @@ namespace RcrcGreen.Core.ViewFilters
             {
                 Keywords(keywords, keywordsDone),
                 Rows(rows, withAPrefix, keywordsDone, rowsDone),
-                Scan(scan, rowsDone, scanAnswered, boxesMatchTheScan),
+                Scan(scan, keywordsDone, rowsDone, scanAnswered, boxesMatchTheScan),
                 Apply(scanAnswered, boxesMatchTheScan, runAnswered),
                 Results(run, runAnswered)
             };
@@ -145,7 +145,11 @@ namespace RcrcGreen.Core.ViewFilters
         }
 
         private static ViewFilterStepState Scan(
-            ViewFilterScanResult scan, bool usable, bool scanAnswered, bool boxesMatchTheScan)
+            ViewFilterScanResult scan,
+            bool keywordsDone,
+            bool rowsDone,
+            bool scanAnswered,
+            bool boxesMatchTheScan)
         {
             string summary = scan == null
                 ? string.Empty
@@ -153,12 +157,23 @@ namespace RcrcGreen.Core.ViewFilters
                     + Count(scan.SkippedViews.Count) + " skipped, "
                     + Count(scan.BlockedViews.Count) + " blocked";
 
+            // The keywords count here too, not only through step 2, because rows can keep
+            // their prefixes while the keyword box is cleared. Rows' Done alone left this
+            // step reachable below an unreachable one, the chain fault PanelSteps recorded,
+            // and a scan over no keywords reads nothing and answers as though it had.
+            bool usable = keywordsDone && rowsDone;
+            string whyNot = usable
+                ? string.Empty
+                : (keywordsDone
+                    ? "Give at least one row a prefix in step 2."
+                    : "Type at least one keyword in step 1.");
+
             return new ViewFilterStepState(
                 ViewFilterStep.Scan,
                 "SCAN",
                 summary,
                 usable,
-                usable ? string.Empty : "Give at least one row a prefix in step 2.",
+                whyNot,
                 scanAnswered && boxesMatchTheScan);
         }
 
