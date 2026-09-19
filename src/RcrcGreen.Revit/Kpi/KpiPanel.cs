@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using Autodesk.Revit.UI;
 using RcrcGreen.Core.Kpi;
 
@@ -161,6 +162,25 @@ namespace RcrcGreen.Revit.Kpi
         // every redraw and every tick redraws. 155 tick boxes threw themselves back to the
         // top on every tick.
         private readonly ScrollMemory _scrolled = new ScrollMemory();
+
+        // **WHICH OF THE FOUR STEPS IS BEING WORKED ON.** Null until somebody presses a cell
+        // in the bar, and then it is theirs: the pane picks the first step worth working on
+        // only while nobody has chosen. Forgotten when the model changes, because another
+        // model's state is not this one's.
+        private KpiStep? _stepOpen;
+
+        // Whether Tick the list still stands, and which workbook rows were ticked when it was
+        // pressed. **NOTHING TICKS OR UNTICKS BEHIND HIS BACK**: this only decides whether the
+        // pane says the list tick is out of date and offers the button again.
+        private ListTickFreshness _listTick = ListTickFreshness.NeverPressed;
+
+        // Whether step 4 is showing what the last press did rather than what a press would do.
+        // Cleared by anything that could move a number, the same as the run it describes.
+        private bool _showingResults;
+
+        // Where the last press wrote its report, so the results panel can open it. Empty until
+        // a press has written one.
+        private string _reportWhere = string.Empty;
 
         // These three outlive every redraw, because each carries what somebody is halfway
         // through typing. None of them comes from Revit.
@@ -327,6 +347,13 @@ namespace RcrcGreen.Revit.Kpi
                     // The hand record is plot identifiers, and another model's DM-14 is not this
                     // one's. Holding it across would take a plot off a model nobody had touched.
                     _byHand = _byHand.Forgotten();
+
+                    // And so are the step somebody had open, the list tick they had pressed and
+                    // the results of a press made against the model that has gone.
+                    _stepOpen = null;
+                    _listTick = ListTickFreshness.NeverPressed;
+                    _showingResults = false;
+                    _reportWhere = string.Empty;
                 }
 
                 TheHeader();
@@ -418,41 +445,215 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// The whole template block, drawn again from the state on every change. One path in
-        /// and out of every change, the same rule as the Drawing Sheet grid.
+        /// The pane, drawn again from the state on every change. One path in and out of every
+        /// change, the same rule as the Drawing Sheet grid.
+        ///
+        /// **FOUR STEPS, ONE AT A TIME.** Bader's layout of 17 September. The bar across the
+        /// top says which step is which and which are done, and only the step being worked on
+        /// shows its controls. Which step may be worked on is decided in
+        /// <see cref="KpiSteps"/> and this draws the answer.
         /// </summary>
         private void RedrawTemplates()
         {
             _templates.Children.Clear();
 
+            KpiSteps steps = Steps();
+            KpiStep open = _stepOpen ?? steps.FirstUnfinished;
+
+            _templates.Children.Add(TheStepBar(steps, open));
+
+            KpiStepState state = steps.For(open);
+
             _templates.Children.Add(new TextBlock
             {
-                Text = "GRP KPI Checklist templates",
+                Text = state.Number + "  " + state.Title
+                    + (state.Summary.Length == 0 ? string.Empty : "   " + state.Summary),
                 FontWeight = FontWeights.Bold,
-                Margin = PanelMetrics.Row
+                Margin = PanelMetrics.Heading,
+                TextWrapping = TextWrapping.Wrap
             });
 
+            // **A STEP THAT CANNOT BE WORKED ON SHOWS ITS REASON IN PLACE OF ITS CONTROLS.** A
+            // cell that does nothing and says nothing is worse than one that is not there.
+            if (!state.Usable)
+            {
+                _templates.Children.Add(Warned(state.WhyNot));
+            }
+            else
+            {
+                switch (open)
+                {
+                    case KpiStep.Setup: InsideSetup(); break;
+                    case KpiStep.Read: InsideRead(); break;
+                    case KpiStep.Tick: InsideTick(); break;
+                    default: InsideCreate(); break;
+                }
+            }
+
+            // Read at the moment the pane is drawn, never held. A model saved while the pane
+            // sat open used to leave Create refusing on a folder read once and never again, and
+            // a second scan did not shift it. The answer comes back through Took, which redraws
+            // only when it moved, so this does not chase its own tail.
+            Ask(KpiRequest.WhichModel);
+        }
+
+        /// <summary>
+        /// The four steps, worked out in Core off what the pane can ask for at this moment.
+        ///
+        /// **EVERY VALUE HERE IS READ LIVE.** The five pointers are read off their own files
+        /// and the model off the last answer, because the pane holds no copy of anything it can
+        /// ask for, which is the rule one stale folder string already cost this tool.
+        /// </summary>
+        private KpiSteps Steps()
+        {
+            return KpiSteps.Of(
+                TemplateFolder.Read().Length > 0,
+                OutputFolder.Read().Length > 0,
+                FormsFolder.Read().Length > 0,
+                StreetReferenceFileSetting.Read().Length > 0,
+                PlotListFileSetting.Read().Length > 0,
+                _model.IsOpen,
+                _facts == null ? (int?)null : _facts.Plots.All.Count,
+                Settled().Count,
+                _ticks.Count,
+                _showingResults);
+        }
+
+        /// <summary>
+        /// The bar across the top: four cells, the one being worked on marked and a done one
+        /// carrying its word.
+        ///
+        /// **FOUR EQUAL CELLS RATHER THAN A ROW THAT WRAPS**, because a dockable pane on the
+        /// right of Revit is about 300 pixels wide and this panel has shipped columns running
+        /// off the right edge once already. Each cell trims rather than pushing its neighbours.
+        /// </summary>
+        private UIElement TheStepBar(KpiSteps steps, KpiStep open)
+        {
+            var bar = new UniformGrid { Columns = 4, Margin = PanelMetrics.Row };
+
+            foreach (KpiStepState step in steps.All)
+            {
+                KpiStep which = step.Step;
+                bool here = which == open;
+
+                var text = new TextBlock
+                {
+                    Text = step.Cell,
+                    FontWeight = here ? FontWeights.Bold : FontWeights.Normal,
+                    FontSize = PanelMetrics.StepTitle,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Opacity = step.Usable ? 1.0 : PanelMetrics.FadedOpacity
+                };
+
+                var cell = new Button
+                {
+                    Content = text,
+                    Padding = PanelMetrics.CellPad,
+                    Margin = PanelMetrics.Gap,
+                    Background = here ? _theme.Primary : _theme.StepHeader,
+                    Foreground = here ? _theme.OnPrimary : _theme.Foreground,
+                    BorderBrush = _theme.Line,
+                    BorderThickness = PanelMetrics.Outline,
+                    ToolTip = step.Usable
+                        ? "Work on step " + step.Number + ", " + step.Title + "."
+                        : step.WhyNot
+                };
+
+                cell.Click += (sender, e) => { _stepOpen = which; RedrawTemplates(); };
+                bar.Children.Add(cell);
+            }
+
+            return bar;
+        }
+
+        /// <summary>
+        /// **STEP 1.** The five folders and files this pane is pointed at, each with its own
+        /// Browse and its own line, the three the workbook carries that come from no model, and
+        /// one line naming what is still not set.
+        ///
+        /// **EVERY ONE OF THE FIVE IS REACHABLE AT ALL TIMES NOW.** The block used to stop at
+        /// the templates folder when none was set and at the workbook list when nothing was
+        /// ticked, so the output folder, the forms folder, the street reference and the plot
+        /// list could not be browsed for until a template had been picked.
+        /// </summary>
+        private void InsideSetup()
+        {
             string folder = TemplateFolder.Read();
 
-            var folderLine = new DockPanel { Margin = PanelMetrics.Row, LastChildFill = true };
-            var browse = new Button
+            _templates.Children.Add(BrowsedLine(
+                "Templates", folder, "No folder set",
+                "Point at the folder holding the GRP KPI Checklist template workbooks. "
+                    + "It is remembered beside the installed add-in.",
+                BrowseForTheFolder));
+
+            if (folder.Length == 0) _templates.Children.Add(Faint(TemplateWords.NoFolder));
+
+            TheOutputFolder();
+            TheFormsFolder();
+            TheStreetReferenceFile();
+            ThePlotListFile();
+
+            _templates.Children.Add(Head("What the workbook carries"));
+            _templates.Children.Add(Boxed("Date", _date));
+            _templates.Children.Add(Boxed("Prepared by", _preparedBy));
+            _templates.Children.Add(Boxed("Position", _position));
+
+            _templates.Children.Add(Faint(KpiSteps.StillNotSet(KpiSteps.NotSet(
+                TemplateFolder.Read().Length > 0,
+                OutputFolder.Read().Length > 0,
+                FormsFolder.Read().Length > 0,
+                StreetReferenceFileSetting.Read().Length > 0,
+                PlotListFileSetting.Read().Length > 0))));
+        }
+
+        /// <summary>
+        /// **STEP 2.** The one press that starts a read apart from Create, the counts it
+        /// produces, and the named lines that come with it.
+        /// </summary>
+        private void InsideRead()
+        {
+            TheReadButton();
+
+            PlotListRead sent = PlotListFile.In(PlotListFileSetting.Read());
+            if (sent.Set)
             {
-                Content = PaneLabel.Escaped("Browse"),
-                Padding = PanelMetrics.CellPad,
-                Margin = PanelMetrics.Gap,
-                ToolTip = "Point at the folder holding the GRP KPI Checklist template workbooks. "
-                    + "It is remembered beside the installed add-in."
-            };
-            browse.Click += (sender, e) => BrowseForTheFolder();
-            DockPanel.SetDock(browse, Dock.Right);
-            folderLine.Children.Add(browse);
-            folderLine.Children.Add(new TextBlock
+                _templates.Children.Add(sent.Read
+                    ? Faint(TickingTheList.Heading + " " + sent.InWords)
+                    : Warned(TickingTheList.Heading + " " + sent.Why));
+            }
+
+            // **A NOTE AND NEVER A REFUSAL, AND IT IS KNOWN AS SOON AS THE MODEL IS READ.** The
+            // first STREETS run spent 78 plots finding nothing because not one of six link
+            // instances was loaded. It is said here, where the read that learnt it is, and
+            // again above Create, where it has always been.
+            if (_facts != null && _facts.Links.Worth)
             {
-                Text = folder.Length == 0 ? "No folder set" : folder,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-            _templates.Children.Add(folderLine);
+                _templates.Children.Add(Noted(_facts.Links.OnThePane));
+            }
+        }
+
+        /// <summary>
+        /// **STEP 3.** The workbook rows, then Tick the list under them so the order reads the
+        /// way it has to be done, then what is ticked and what that costs.
+        /// </summary>
+        private void InsideTick()
+        {
+            TheWorkbookRows();
+            ThePlotTicks();
+            TheTickLines();
+            TheChoices();
+        }
+
+        /// <summary>
+        /// The templates folder's workbooks, one tickable row each, exactly as they were drawn
+        /// before the pane worked in steps. **The folder itself is step 1's**, so this says
+        /// which step to go to rather than offering a second Browse for one folder.
+        /// </summary>
+        private void TheWorkbookRows()
+        {
+            string folder = TemplateFolder.Read();
 
             if (folder.Length == 0)
             {
@@ -460,6 +661,13 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(Faint(TemplateWords.NoFolder));
                 return;
             }
+
+            _templates.Children.Add(new TextBlock
+            {
+                Text = "GRP KPI Checklist templates",
+                FontWeight = FontWeights.Bold,
+                Margin = PanelMetrics.Row
+            });
 
             IReadOnlyList<string> paths = TemplateFolder.WorkbooksIn(folder);
             if (paths.Count == 0)
@@ -561,18 +769,23 @@ namespace RcrcGreen.Revit.Kpi
                 }
 
             }
+        }
 
-            TheOutputFolder();
+        /// <summary>
+        /// **STEP 4.** What a press would write, every named line that would stop or change a
+        /// plot, and the button. After a press this step shows the results panel instead.
+        /// </summary>
+        private void InsideCreate()
+        {
+            if (_showingResults && _lastSet != null)
+            {
+                TheResults();
+                return;
+            }
 
-            ThePlots();
-            TheChoices();
+            _templates.Children.Add(Faint(KpiWillWrite.InWords(TheSplit())));
+
             TheCreateButton();
-
-            // Read at the moment the pane is drawn, never held. A model saved while the pane
-            // sat open used to leave Create refusing on a folder read once and never again, and
-            // a second scan did not shift it. The answer comes back through Took, which redraws
-            // only when it moved, so this does not chase its own tail.
-            Ask(KpiRequest.WhichModel);
         }
 
         /// <summary>
@@ -610,10 +823,6 @@ namespace RcrcGreen.Revit.Kpi
             // own UID2. Said once here rather than once per ticked row, because the shape is
             // the same for every template.
             _templates.Children.Add(Faint(CreateWords.WhereTheWorkbooksGo(folder)));
-
-            TheStreetReferenceFile();
-            ThePlotListFile();
-            TheFormsFolder();
         }
 
         /// <summary>
@@ -778,11 +987,10 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// The plot picker. Every plot the model holds, ticked one at a time, in a run, or all
-        /// at once, with the count showing at all times. There is no free text box: a plot the
-        /// model does not hold cannot be chosen, the same rule the Drawing Sheet follows.
+        /// **STEP 2'S OWN PRESS.** What the model holds, in the four states the block reads,
+        /// and the one button that starts a read apart from Create.
         /// </summary>
-        private void ThePlots()
+        private void TheReadButton()
         {
             _templates.Children.Add(Head(CreateWords.Heading));
 
@@ -815,8 +1023,22 @@ namespace RcrcGreen.Revit.Kpi
                 };
                 _templates.Children.Add(read);
             }
+        }
 
+        /// <summary>
+        /// The plot picker. Every plot the model holds, ticked one at a time, in a run, or all
+        /// at once, with the count showing at all times. There is no free text box: a plot the
+        /// model does not hold cannot be chosen, the same rule the Drawing Sheet follows.
+        ///
+        /// **TICK THE LIST SITS UNDER THE WORKBOOK ROWS**, because ticking a row ticks its
+        /// plots and the list tick has to be the last one. The line saying it has gone out of
+        /// date is drawn by TheTickLines under this.
+        /// </summary>
+        private void ThePlotTicks()
+        {
             if (_facts == null || _facts.Plots.All.Count == 0) return;
+
+            _templates.Children.Add(Head(CreateWords.Heading));
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
             var all = new Button { Content = PaneLabel.Escaped(CreateWords.SelectAll), Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
@@ -849,9 +1071,18 @@ namespace RcrcGreen.Revit.Kpi
                             + "and forget every plot ticked or unticked by hand."
                         : sent.Why
                 };
-                listed.Click += (sender, e) => TickedByHand(
-                    TickingTheList.Ticked(_ticks, PlotListFile.In(PlotListFileSetting.Read())),
-                    _byHand.Forgotten());
+                listed.Click += (sender, e) =>
+                {
+                    // **THE LIST TICK IS THE LAST TICK**, so the rows it was pressed against
+                    // travel with it. A row ticked or unticked after this adds or removes that
+                    // template's plots, and the line under the rows says so.
+                    _listTick = ListTickFreshness.Pressed(
+                        Settled().Select(one => one.Workbook.FileName));
+
+                    TickedByHand(
+                        TickingTheList.Ticked(_ticks, PlotListFile.In(PlotListFileSetting.Read())),
+                        _byHand.Forgotten());
+                };
                 buttons.Children.Add(listed);
             }
 
@@ -1010,11 +1241,12 @@ namespace RcrcGreen.Revit.Kpi
             // get, and for one no ticked plot belongs to, why it will write nothing. Bader's
             // decision: it stays tickable and stays listed.
             TemplateSplit split = TheSplit();
-            foreach (TemplateShare share in split.Shares)
+            IReadOnlyList<string> rows = KpiWillWrite.Rows(split);
+            for (int at = 0; at < split.Shares.Count; at++)
             {
-                _templates.Children.Add(share.WillWrite
-                    ? Faint(CreateWords.TemplateRow(share))
-                    : Noted(CreateWords.TemplateRow(share)));
+                _templates.Children.Add(split.Shares[at].WillWrite
+                    ? Faint(rows[at])
+                    : Noted(rows[at]));
             }
 
             foreach (PlotTemplate left in split.Unplaced)
@@ -1034,50 +1266,6 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(noComponent[at].Contains("WRITTEN NOWHERE")
                     ? Warned("   " + noComponent[at])
                     : Noted(noComponent[at]));
-            }
-
-            // **NOTHING ON THE TEAM'S LIST DROPS OUT WITHOUT A LINE.** They sent 154 plots to
-            // export and want every one exported, so a listed plot the model does not name, a
-            // plot listed twice, a line that is not a plot and a listed plot the press would put
-            // into no workbook or no PDF are each named HERE, before the press, rather than found
-            // in a report twenty minutes later. The rule is TickingTheList in Core.
-            foreach (string line in TickingTheList.Lines(
-                PlotListFile.In(PlotListFileSetting.Read()),
-                _facts == null ? null : _facts.Plots,
-                ComponentOn,
-                _ticks.Ticked))
-            {
-                _templates.Children.Add(line.StartsWith("  ", StringComparison.Ordinal)
-                    ? Warned(line)
-                    : Noted(line));
-            }
-
-            // **TWO TICKED PLOTS SHARING ONE PRX_Plot_UID2 FILE AT ONE PATH.** On the 16:37 press
-            // ten plots did, in two groups, the last one written replaced the others and every
-            // row of THE PLOT LIST read YES. It is said HERE, before the press, because twenty
-            // minutes that end in a report naming the replaced files is twenty minutes spent.
-            //
-            // **The pane owns this read already.** `ReferenceValuesPerPlot` carries all four plot
-            // parameters for every plot off the same first sheet the component comes from, so no
-            // second read is made and no second record of a plot's UID2 exists.
-            foreach (SharedUid2Group group in SharedUid2.Of(PlotFilings.Of(
-                OutputFolder.Read(), _ticks.Ticked, ComponentOn, Uid2On)))
-            {
-                // Every plot of the group gets its own line, stopped or filed apart, because a
-                // group can hold two plots colliding with each other and a third filed somewhere
-                // else. The refusal is red and the filed apart note is not.
-                foreach (PlotFiling filed in group.Plots)
-                {
-                    bool stopped = SharedUid2.Stops(new[] { group }, filed.PlotId);
-
-                    string said = stopped
-                        ? SharedUid2.WhyStopped(new[] { group }, filed.PlotId)
-                        : SharedUid2.FiledApartFrom(new[] { group }, filed.PlotId);
-
-                    _templates.Children.Add(stopped
-                        ? Warned("   " + filed.PlotId + ": " + said)
-                        : Noted("   " + filed.PlotId + ": " + said));
-                }
             }
 
             // After the press, each row says what happened to it. Never one line for the run
@@ -1163,6 +1351,255 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
+        /// **WHAT THE TICKS COST, SAID IN STEP 3 RATHER THAN ABOVE CREATE.** Both blocks were
+        /// drawn over the button and both are about what is ticked, which is this step's
+        /// subject. Not one word of either moves.
+        ///
+        /// The line above them is new: **the list tick is the last tick**, so a workbook row
+        /// ticked or unticked after Tick the list was pressed leaves the ticks saying something
+        /// the team's list does not. Nothing is ticked or unticked for him.
+        /// </summary>
+        private void TheTickLines()
+        {
+            if (_facts == null) return;
+
+            string stale = _listTick.InWords(Settled().Select(one => one.Workbook.FileName));
+            if (stale.Length > 0)
+            {
+                _templates.Children.Add(Warned(stale));
+
+                PlotListRead again = PlotListFile.In(PlotListFileSetting.Read());
+                if (again.Read)
+                {
+                    var press = new Button
+                    {
+                        Content = PaneLabel.Escaped(CreateWords.TickTheList),
+                        Padding = PanelMetrics.CellPad,
+                        Margin = PanelMetrics.Row,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        ToolTip = "Replace every tick with exactly the plots the plot list file "
+                            + "names, and forget every plot ticked or unticked by hand."
+                    };
+                    press.Click += (sender, e) =>
+                    {
+                        _listTick = ListTickFreshness.Pressed(
+                            Settled().Select(one => one.Workbook.FileName));
+
+                        TickedByHand(
+                            TickingTheList.Ticked(
+                                _ticks, PlotListFile.In(PlotListFileSetting.Read())),
+                            _byHand.Forgotten());
+                    };
+                    _templates.Children.Add(press);
+                }
+            }
+
+            // **NOTHING ON THE TEAM'S LIST DROPS OUT WITHOUT A LINE.** They sent 154 plots to
+            // export and want every one exported, so a listed plot the model does not name, a
+            // plot listed twice, a line that is not a plot and a listed plot the press would put
+            // into no workbook or no PDF are each named HERE, before the press, rather than found
+            // in a report twenty minutes later. The rule is TickingTheList in Core.
+            foreach (string line in TickingTheList.Lines(
+                PlotListFile.In(PlotListFileSetting.Read()),
+                _facts == null ? null : _facts.Plots,
+                ComponentOn,
+                _ticks.Ticked))
+            {
+                _templates.Children.Add(line.StartsWith("  ", StringComparison.Ordinal)
+                    ? Warned(line)
+                    : Noted(line));
+            }
+
+            // **TWO TICKED PLOTS SHARING ONE PRX_Plot_UID2 FILE AT ONE PATH.** On the 16:37 press
+            // ten plots did, in two groups, the last one written replaced the others and every
+            // row of THE PLOT LIST read YES. It is said HERE, before the press, because twenty
+            // minutes that end in a report naming the replaced files is twenty minutes spent.
+            //
+            // **The pane owns this read already.** `ReferenceValuesPerPlot` carries all four plot
+            // parameters for every plot off the same first sheet the component comes from, so no
+            // second read is made and no second record of a plot's UID2 exists.
+            foreach (SharedUid2Group group in SharedUid2.Of(PlotFilings.Of(
+                OutputFolder.Read(), _ticks.Ticked, ComponentOn, Uid2On)))
+            {
+                // Every plot of the group gets its own line, stopped or filed apart, because a
+                // group can hold two plots colliding with each other and a third filed somewhere
+                // else. The refusal is red and the filed apart note is not.
+                foreach (PlotFiling filed in group.Plots)
+                {
+                    bool stopped = SharedUid2.Stops(new[] { group }, filed.PlotId);
+
+                    string said = stopped
+                        ? SharedUid2.WhyStopped(new[] { group }, filed.PlotId)
+                        : SharedUid2.FiledApartFrom(new[] { group }, filed.PlotId);
+
+                    _templates.Children.Add(stopped
+                        ? Warned("   " + filed.PlotId + ": " + said)
+                        : Noted("   " + filed.PlotId + ": " + said));
+                }
+            }
+        }
+
+        /// <summary>
+        /// **WHAT THE PRESS DID, IN THE PANE.** Bader's layout of 17 September, in place of
+        /// step 4's controls: two counts side by side, then every plot that is not ready with
+        /// its UID2 and its reason, then a way to the folder, to the report and back to step 3.
+        ///
+        /// **THE COUNTS AND THE REASONS ARE THE REPORT'S OWN.** `KpiResults` reads the rows
+        /// `KpiCreateReport` prints THE PLOT LIST from, so the number on this screen and the
+        /// `ready:` line in the file cannot say two different things.
+        /// </summary>
+        private void TheResults()
+        {
+            KpiResults results = KpiResults.Of(_lastSet);
+
+            // **TWO COUNTS SIDE BY SIDE**, each in its own box so the number is the thing a
+            // person sees first rather than a sentence they have to read.
+            if (results.ListWasSet)
+            {
+                var counts = new UniformGrid { Columns = 2, Margin = PanelMetrics.Row };
+                counts.Children.Add(CountBox(results.Ready, KpiResults.ReadyHeading, false));
+                counts.Children.Add(CountBox(results.NotReady, KpiResults.NotReadyHeading, results.NotReady > 0));
+                _templates.Children.Add(counts);
+            }
+
+            _templates.Children.Add(Faint(results.CountsInWords));
+
+            // Each row says what happened to its template, written with its path or not written
+            // with its reason, because one line for the run would hide which of six failed.
+            foreach (TemplateOutcome outcome in _lastSet.Outcomes)
+            {
+                _templates.Children.Add(outcome.Written
+                    ? Faint(CreateWords.TemplateOutcomeRow(outcome))
+                    : Warned(CreateWords.TemplateOutcomeRow(outcome)));
+            }
+
+            if (results.NotReadyInWords.Length > 0)
+            {
+                _templates.Children.Add(new TextBlock
+                {
+                    Text = results.NotReadyInWords,
+                    FontWeight = FontWeights.Bold,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = PanelMetrics.Heading
+                });
+            }
+
+            // **EVERY ONE OF THEM**, in the list's own order. A panel showing the first few is
+            // a panel somebody has to open the report behind anyway, which is the thing this
+            // exists to save.
+            if (results.NotReadyRows.Count > 0)
+            {
+                var notReady = new StackPanel();
+                foreach (PlotListRow row in results.NotReadyRows)
+                {
+                    notReady.Children.Add(Warned(row.InWords));
+                }
+
+                _templates.Children.Add(Scrolling(notReady, PanelMetrics.ListHeight, "not ready"));
+            }
+
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
+
+            string output = OutputFolder.Read();
+            var folder = new Button
+            {
+                Content = PaneLabel.Escaped("Open the output folder"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Gap,
+                IsEnabled = output.Length > 0 && Directory.Exists(output),
+                ToolTip = output.Length == 0 ? TemplateWords.NoOutputFolder : output
+            };
+            folder.Click += (sender, e) => Open(OutputFolder.Read());
+            buttons.Children.Add(folder);
+
+            var report = new Button
+            {
+                Content = PaneLabel.Escaped("Open the report"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Gap,
+                IsEnabled = _reportWhere.Length > 0 && File.Exists(_reportWhere),
+                ToolTip = _reportWhere.Length == 0
+                    ? "This press wrote no report."
+                    : _reportWhere
+            };
+            report.Click += (sender, e) => Open(_reportWhere);
+            buttons.Children.Add(report);
+
+            _templates.Children.Add(buttons);
+
+            // **THE WAY BACK IS A PRESS AND NEVER A TIMER.** The results stand until somebody
+            // says they are done with them, because a panel that clears itself is a panel
+            // whose numbers somebody was still reading.
+            var again = new Button
+            {
+                Content = PaneLabel.Escaped("Back to step 3, Tick"),
+                Padding = PanelMetrics.CellPad,
+                Margin = PanelMetrics.Row,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            again.Click += (sender, e) =>
+            {
+                _showingResults = false;
+                _stepOpen = KpiStep.Tick;
+                RedrawTemplates();
+            };
+            _templates.Children.Add(again);
+        }
+
+        /// <summary>
+        /// One of the two counts, the number over its word.
+        /// </summary>
+        private UIElement CountBox(int howMany, string caption, bool warn)
+        {
+            var inside = new StackPanel { Margin = PanelMetrics.StripInside };
+
+            inside.Children.Add(new TextBlock
+            {
+                Text = howMany.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                FontWeight = FontWeights.Bold,
+                FontSize = PanelMetrics.HeaderRowHeight / 2.0,
+                Foreground = warn ? _theme.Warning : _theme.Foreground,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+
+            inside.Children.Add(new TextBlock
+            {
+                Text = caption,
+                Foreground = _theme.Faint,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+
+            return new Border
+            {
+                Background = _theme.StepHeader,
+                BorderBrush = _theme.Line,
+                BorderThickness = PanelMetrics.Outline,
+                Margin = PanelMetrics.Gap,
+                Child = inside
+            };
+        }
+
+        /// <summary>
+        /// Opens a folder or a file with whatever Windows opens it with. **It touches no
+        /// document**, so it needs no external event, the same reason the Browse dialogs do
+        /// not. A path that will not open says so on the status line rather than throwing out
+        /// of a click handler and taking the pane with it.
+        /// </summary>
+        private void Open(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+
+            try
+            {
+                System.Diagnostics.Process.Start(path);
+            }
+            catch (System.Exception bad)
+            {
+                Say("That could not be opened: " + path + ". " + bad.Message);
+            }
+        }
+
+        /// <summary>
         /// One row of buttons per plot whose regions left the answer open. Which of a plot's
         /// two regions carries the area varies by plot, so the tool asks rather than picking.
         /// </summary>
@@ -1225,6 +1662,8 @@ namespace RcrcGreen.Revit.Kpi
             _lastSet = null;
             _confirmedIdentical = false;
             _chosenRegions.Clear();
+            _showingResults = false;
+            _reportWhere = string.Empty;
             Preselect();
             RedrawTemplates();
         }
@@ -1496,6 +1935,11 @@ namespace RcrcGreen.Revit.Kpi
                     _locationParameter = Preselected.From(facts.LocationNames, KpiNames.NeighbourhoodName);
                 }
 
+                // **THE READ WAS A PRESS, SO THE PANE MOVES TO WHAT IT WAS FOR.** Nothing
+                // else moves the step by itself except a finished press, and both are
+                // answers to something the person just did.
+                _stepOpen = KpiStep.Tick;
+
                 RedrawTemplates();
             });
         }
@@ -1505,6 +1949,13 @@ namespace RcrcGreen.Revit.Kpi
             Dispatcher.Invoke(() =>
             {
                 _lastSet = set;
+                _reportWhere = reportWhere ?? string.Empty;
+
+                // **AFTER A PRESS THE PANE SHOWS THE RESULT RATHER THAN SENDING HIM TO THE
+                // REPORT FILE.** Step 4's controls give way to the results panel, and the way
+                // back is a button rather than a timer.
+                _showingResults = true;
+                _stepOpen = KpiStep.Create;
 
                 // Create is the one thing in this tool that writes a workbook, and it can write
                 // into the templates folder. Any press that reached the patcher with an output

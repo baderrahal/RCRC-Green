@@ -1,5 +1,54 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Ninety eighth pass, the KPI pane laid out in four steps with a results panel.
+**2204 tests, 1384 of them KPI**, 28 hook cases, build zero warnings, run after the last file was
+written. **80 audit findings, 23 FIXED, 57 open**, counted off the four files again by walking
+each file's own numbering run, and nothing closed, renumbered or reordered.
+**NOTHING HERE WAS RUN IN REVIT, AND THE PANE CANNOT BE OPENED FROM HERE AT ALL.**
+
+**THIS ROUND CHANGED ONLY HOW THE PANE IS LAID OUT AND WHAT IT SHOWS.** The press, the report,
+the workbooks and the PDFs are untouched and no number in any of them moved. The report was
+measured rather than asserted: the same run set written twice, once with the change and once with
+`KpiCreateReport.cs` back at main's version, 144 lines, md5 `e1bc564f0f5910159bc28da79fe3e11e`
+both ways.
+
+**FOUR STEPS, ONE AT A TIME.** A bar of `1 Setup`, `2 Read`, `3 Tick`, `4 Create` across the top,
+the step being worked on marked, a done step carrying a word, and only the step being worked on
+showing its controls. A step that cannot be worked on yet shows one line saying why in place of
+them, because a cell that does nothing and says nothing is worse than no cell.
+
+**THE FOUR RULES ARE IN CORE AND THE PANE DECIDES NONE OF THEM.** `KpiSteps` says which step may
+be worked on, `ListTickFreshness` whether the list tick has gone out of date, `KpiWillWrite` what
+step 4 says before the press counted per template, and `KpiResults` what the results panel holds.
+Every expected value in their tests is written out by hand.
+
+**THE RESULTS PANEL READS THE REPORT'S OWN ROWS.** `PlotListRows` is one record of THE PLOT
+LIST's rows, built in Core, read by `KpiCreateReport` and by `KpiResults`, so the pane's two
+counts and the report's `ready:` line cannot say two different numbers and a not ready line
+carries the report's own reason word for word.
+
+**THE LIST TICK IS THE LAST TICK.** Tick the list sits under the workbook rows, and a row ticked
+or unticked after it makes the pane say the list tick is out of date and offer the button again.
+**Nothing is ticked or unticked behind his back.** It is a set of ticked rows rather than a
+counter, so a row ticked and unticked back leaves the ticks the list press produced and the line
+goes on its own.
+
+**NOTHING WAS DROPPED AND FOUR THINGS BECAME REACHABLE.** The old block returned early three
+times, so the output folder, the forms folder, the street reference and the plot list could not be
+browsed for until a template had been picked. Step 1 shows all five at all times. Checked by
+holding every literal string and every Core call in the old pane against the new one, which is
+what caught the one heading that had come off with the folder line it sat over.
+
+**THE TICK BADER ASKED FOR IS REFUSED BY THIS REPOSITORY'S OWN HOOK**, whose emoji range covers
+code point 2713, so a done step is marked with the word `done`. The first draft of the round was
+refused by that hook for spelling the range out in the comment that explains it, which is the
+shape `CLAUDE.md` already carries. Whether to narrow the range is a question for Bader.
+
+**THE WHOLE LAYOUT IS UNOBSERVED.** The bar at a narrow width, one step at a time, the results
+panel, the two buttons and the step moving by itself after a press are drawn by code nobody has
+run. Checks 34 to 37 of `steps/2026-09-16-kpi-checks.md` are the first time any of it is looked
+at, and the log names each one.
+
 Phase: 9, ship. Ninety seventh pass, two checks that missed real errors and four report lines.
 **Merged to main as `a3e531c`**, pull request 162, the squash message set on the merge call and
 off main byte for byte with no co-author line and no generated-by footer.

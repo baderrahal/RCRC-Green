@@ -205,46 +205,38 @@ namespace RcrcGreen.Core.Kpi
 
             var byPlot = set.PlotOutcomes.ToList();
 
-            // **THE TREES THAT REACHED NO ROW, PER PLOT.** Counted off the runs' own matches, so
-            // the column and the refusal that produced it are one record. On the 13:32 run FP-17,
+            // **THE ROWS ARE BUILT IN CORE AND THE PANE READS THE SAME ONES.** They were built
+            // here, which was right while this report was the only thing printing them. The pane
+            // shows how many plots are ready after a press, and a second loop working that out
+            // beside the button is two records of one fact.
+            //
+            // **THE TREES THAT REACHED NO ROW travel on the row.** On the 13:32 run FP-17,
             // FP-20, FP-21 and FP-23 all read YES and YES here with 67 trees between them written
             // nowhere and not a word about it in the row.
-            IReadOnlyList<PlotTreesNotWritten> lost = TreesNotWritten.Of(set);
             int workbooks = 0;
             int pdfs = 0;
             int ready = 0;
 
-            foreach (string plotId in list.Plots)
+            foreach (PlotListRow row in PlotListRows.Of(set))
             {
-                string held = plotId;
-                PlotOutcome outcome = byPlot.FirstOrDefault(
-                    one => string.Equals(one.PlotId, held, StringComparison.Ordinal));
-
-                bool inTheModel = set.Plots != null && set.Plots.Holds(held);
-                bool written = outcome != null && outcome.Written;
-                bool pdf = outcome != null && outcome.Pdf != null && outcome.Pdf.Written;
-
-                if (written) workbooks++;
-                if (pdf) pdfs++;
-
-                string trees = TreesNotWritten.For(lost, held);
+                if (row.Written) workbooks++;
+                if (row.Pdf) pdfs++;
 
                 // **THE FOUR COLUMNS BEFORE THIS ONE ALL READ YES ON EVERY ROW OF THE 16:37
                 // PRESS**, and 41 of those plots went to the client with a blank green cover
                 // box. Each of the four answers a true and narrow question and none of them is
                 // the one the team is asking.
-                ReadyAnswer can = PlotReady.For(set, held, lost, inTheModel, set.Plots != null);
-                if (can.Ready) ready++;
+                if (row.Ready) ready++;
 
                 Line(report, "  " + Join(
-                    held,
-                    set.Plots == null ? "NOT READ" : (inTheModel ? "YES" : "NO"),
-                    outcome == null ? "NO" : "YES",
-                    written ? "YES" : "NO",
-                    pdf ? "YES" : "NO",
-                    can.Ready ? "YES" : "NO",
-                    trees.Length == 0 ? "none" : trees,
-                    can.WhyInWords));
+                    row.PlotId,
+                    row.PlotsRead ? (row.InTheModel ? "YES" : "NO") : "NOT READ",
+                    row.Ticked ? "YES" : "NO",
+                    row.Written ? "YES" : "NO",
+                    row.Pdf ? "YES" : "NO",
+                    row.Ready ? "YES" : "NO",
+                    row.Trees.Length == 0 ? "none" : row.Trees,
+                    row.WhyNot));
             }
 
             IReadOnlyList<string> missing = TickingTheList.NotOnTheList(set.Plots, list);

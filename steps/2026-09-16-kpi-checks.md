@@ -61,6 +61,16 @@ and 154 PDFs with READY at 122 YES:
     M83 fact rather than with the canopy column sentence. And this sheet is no longer titled
     `The seven checks` over thirty steps.
 
+And this round, which changes only how the pane is laid out and what it shows:
+
+20. **The pane works in four steps**, Setup, Read, Tick and Create, one at a time, with a bar
+    across the top. **Tick the list sits under the workbook rows** so the order on the screen is
+    the order it has to be done in, and touching a workbook row after it says the list tick is
+    out of date rather than moving your ticks for you. **After a press the pane shows the result
+    rather than sending you to the report file**: two counts, every plot that is not ready with
+    its reason, and a button to the output folder and to the report. **Nothing about the press,
+    the report, the workbooks or the PDFs changed**, and no number in any of them moved.
+
 And this round, off your streets only press of 16 September at 21:38, 81 listed plots:
 
 14. **A division the check could not work out now makes READY read NO and names the cell.** That
@@ -166,21 +176,50 @@ Start Revit 2024 and open the detached copy from step 2.
 
 **RCRC Green** tab, then **KPI Checklist**.
 
-## 12. Point the pane at the plot list
+**THE PANE WORKS IN FOUR STEPS NOW**, your layout of 17 September. A bar across the top reads
+**1 Setup**, **2 Read**, **3 Tick**, **4 Create**, the step you are on is the marked one, and a
+step that is finished carries the word `done` beside its name. **Only the step you are on shows
+its controls.** Press a cell in the bar to move.
 
-In the template block, on the **Plot list** line, press **Browse** and choose the file from step
-9. Under it the pane says how many plots it read, over how many lines.
+A step you cannot work on yet shows one line saying why rather than being a dead cell, so
+nothing is hidden from you.
 
-## 13. Read the plots
+## 12. Step 1, Setup: point the pane at all five, and type the three
 
-In the **Plots** block press **Read this model**. Nothing heavy runs without a press, so the plot
-list cannot be ticked until this has finished.
+Press **1 Setup** if the pane is not already there. Five Browse lines, each with what it is
+pointed at now or the words No folder set:
 
-## 14. Tick every workbook row
+- **Templates**, the folder holding the seven GRP KPI Checklist templates
+- **Output folder**, where the workbooks and the PDFs go
+- **Forms folder**, the three Projects Basic Data forms
+- **Street reference**, the team's Scope_Validation workbook
+- **Plot list**, the file from step 9
 
-**THIS STEP IS EASY TO MISS AND IT COSTS THE WHOLE RUN.** In the template block, tick every
-workbook row, which on the templates folder is all seven. A ticked plot belonging to no ticked
-row is written nowhere.
+Under **What the workbook carries**, type the **Date**, **Prepared by** and **Position**. The
+last two are remembered between runs and the date starts on today.
+
+**THE LAST LINE OF THE STEP NAMES EVERYTHING STILL NOT SET.** Only the templates folder and the
+output folder stop anything: the other three are notes, and a press without them writes every
+workbook with the PDFs, the street cells or the plot list section missing and says so.
+
+**Step 1 reads `done` once the templates folder and the output folder are set.**
+
+## 13. Step 2, Read: press Read this model
+
+Press **2 Read**, then **Read this model**. Nothing heavy runs without a press, so nothing below
+can be ticked until this has finished.
+
+Under it the pane says how many plots the model holds, how many are on a sheet, how many on a
+schedule, and how many the plot list file names. **If a link is not loaded it says so here**,
+which is the one line that explains a whole run that finds nothing.
+
+The pane moves you to step 3 when the read lands.
+
+## 14. Step 3, Tick: tick every workbook row
+
+**THIS IS EASY TO MISS AND IT COSTS THE WHOLE RUN.** At the top of step 3, tick every workbook
+row, which on the templates folder is all seven. A ticked plot belonging to no ticked row is
+written nowhere.
 
 **If a row asks which of the two park templates it is, answer it.** The two park templates share
 their main sheet name, so a file that settles nothing is ticked with no template and arms nothing
@@ -189,36 +228,38 @@ until you say which.
 **These ticks live in the pane and nothing writes them down.** Closing Revit loses them, so this
 step comes round again on every fresh start of the pane.
 
-## 15. Press Tick the list, and make it the LAST tick
+## 15. Step 3 still: press Tick the list, and make it the LAST tick
 
-In the **Plots** block, beside **Select all** and **Clear**, press **Tick the list**. It replaces
-every tick with exactly the plots the file names and forgets every plot you ticked or unticked by
-hand.
+**Tick the list** sits UNDER the workbook rows now, beside **Select all** and **Clear**, so the
+order on the screen is the order it has to be done in. It replaces every tick with exactly the
+plots the file names and forgets every plot you ticked or unticked by hand.
 
-**THIS MUST BE THE LAST TICK ACTION BEFORE CREATE.** Ticking a workbook row ticks every plot that
-belongs to it and unticking one takes them off again, both of them moving the plot ticks this step
-has just set. So if you touch a workbook row after this, press **Tick the list** again before you
-go on.
+**IF YOU TOUCH A WORKBOOK ROW AFTER THIS, THE PANE SAYS SO.** A line in red appears under the
+rows saying the list tick is out of date and offering the button again. **Nothing is ticked or
+unticked for you**, because moving your ticks without being asked is worse than saying nothing.
 
 **The 16:06 press is why this step matters more than it looks.** 166 plots were ticked against a
 list of 154, twelve plots nobody asked for were written, and three of the shared value collisions
 came from them.
 
-## 16. Read the named lines above Create
+## 16. Step 3 still: read what the ticks cost
 
-Before pressing anything, read the lines above the **Create** button. Every one of these is named
-there rather than found in a report afterwards:
+Under the plot list, before you go on:
 
 - a plot on the list the model does not name
 - a plot listed twice, with both line numbers
 - a line that is not a plot, with its line number
 - a listed plot that would get no workbook or no PDF, with the reason
-- **a TICKED plot the list does not name**, which is new this round
-- **two or more ticked plots sharing one PRX_Plot_UID2 and one folder**, which is new this round
+- **a TICKED plot the list does not name**
+- **two or more ticked plots sharing one PRX_Plot_UID2 and one folder**
 
-If a plot you expect is named there, fix it before pressing Create.
+If a plot you expect is named there, fix it before going on.
 
-## 17. Press Create
+## 17. Step 4, Create: read what a press would write, then press it
+
+Press **4 Create**. The first line says how many workbooks this press would write over how many
+templates, and how many ticked plots go into no workbook at all. Under it is one row per ticked
+template and every named line that would stop or change a plot.
 
 Press **Create**. The progress window says which plot is being read and how far through it is.
 
@@ -565,6 +606,99 @@ out.
 the block for that template reads clean on Tree List - Proposed. A template they have not fixed
 must be named with the same cells it was named with last time.
 
+## 34. The bar shows four steps and only one of them shows its controls
+
+Open the KPI pane and look at the bar across the top.
+
+Expect **1 Setup**, **2 Read**, **3 Tick** and **4 Create**, four cells across, each readable
+with the pane at its ordinary docked width. The step you are on is the marked one. A step that
+is finished carries the word `done` beside its name: Setup once the templates folder and the
+output folder are set, Read once the model has been read, Tick once a workbook row and a plot
+are both ticked.
+
+**Only the step you are on shows its controls.** On step 1 there is no plot list and no Create
+button. On step 3 there are no Browse lines.
+
+Press a cell you have not reached yet, for instance **4 Create** before anything is ticked.
+**Expect one line saying why rather than an empty step**, reading `In step 3, no workbook is
+ticked and no plot is ticked.` A cell that does nothing and says nothing would be worse than no
+cell at all.
+
+**THE MARK IS THE WORD `done` AND NOT A TICK CHARACTER.** This repository's own commit hook
+refuses every character in the range the tick sits in, so the word is what a commit can carry.
+Whether you want the character instead is a question for you, and the answer is a change to
+that hook rather than to the pane.
+
+## 35. Ticking a workbook row after Tick the list says so, and moves nothing
+
+On step 3, with the plot list ticked, tick one more workbook row you had left off. If all seven
+are already ticked, untick one instead.
+
+Expect **a line in red under the workbook rows** reading:
+
+```
+A workbook row has been ticked or unticked since Tick the list was pressed, so the ticked
+plots are no longer the plots the list names. Press Tick the list again to put them back.
+Nothing has been ticked or unticked for you.
+```
+
+and a second **Tick the list** button beside it.
+
+**CHECK THE PLOT COUNT DID NOT MOVE BY ITSELF.** Note the number of ticked plots before you
+touch the row and after. Ticking a workbook row ticks that template's plots, so the count moves
+because of what YOU did, and nothing else moves it. Press **Tick the list** again and the line
+goes and the count returns to the list's own.
+
+**Now put the row back the way it was without pressing Tick the list.** Expect the line to go on
+its own, because the ticks are once again the ones the list press produced. The pane asks whether
+the list tick still stands, not whether anybody touched a box.
+
+## 36. After the press, the pane's two counts match THE PLOT LIST in the report
+
+Press Create and let it finish. **Step 4 shows the results instead of its controls.**
+
+Expect two counts side by side, **ready** and **not ready**, then a line reading
+`ready N, not ready M, of 154 plots on the list`, then every plot that is not ready on one line
+with its plot, its PRX_Plot_UID2 and its reason.
+
+Hold them against the report:
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "^  ready: |^  listed: " -Context 0,0
+```
+
+**THE TWO MUST BE THE SAME NUMBERS.** The pane reads the rows the report prints THE PLOT LIST
+from, so a pane saying 122 over a report saying anything else is a bug in the tool rather than
+a thing to reconcile by hand.
+
+Then pick any plot the pane calls not ready and find its row in THE PLOT LIST:
+
+```
+Select-String -Path .\reports\RCRC-Green-KPI_*.txt -Pattern "<the plot>" -Context 0,1
+```
+
+**Its last column must read word for word what the pane said.** A pane and a report giving one
+plot two different reasons would send somebody looking for a second fault that is not there.
+
+## 37. The two buttons open the output folder and the report
+
+On the results panel, press **Open the output folder**.
+
+Expect Windows Explorer on the folder the workbooks and PDFs were written into, the one the
+**Output folder** line in step 1 names.
+
+Press **Open the report**.
+
+Expect the report this press wrote, opened in whatever opens a .txt on your machine. It is the
+file every check above reads.
+
+**A button that cannot work is greyed rather than failing when pressed**, so a press with no
+report written leaves the second one grey with the reason on it.
+
+Press **Back to step 3, Tick** to leave the results and set up another press. **The results stay
+until you press it**, because a panel that clears itself is a panel whose numbers somebody was
+still reading.
+
 ---
 
 # What remains
@@ -593,6 +727,18 @@ files, and checks 31 and 32 are what watch them go away.
 
 **EVERY TEMPLATE'S PROPOSED ANALYSIS RANGES STILL STOP AT ROW 83** while the list's own total
 reaches row 92. Named in check 33, template by template, and changed by nothing here.
+
+**THE WHOLE OF THE NEW LAYOUT IS UNOBSERVED.** Nothing in this repository can open a dockable
+pane, so the bar, the one step at a time, the results panel, the two buttons and the behaviour at
+a narrow width have been built and tested in Core and drawn by code nobody has run. **Checks 34
+to 37 are the first time any of it is looked at.** What the tests cover is the RULES behind it:
+which step may be worked on, whether the list tick is out of date, what step 4 says before the
+press, and what the results panel counts. What they cannot cover is any of it on a screen.
+
+**THE TICK CHARACTER BADER ASKED FOR IS REFUSED BY THIS REPOSITORY'S OWN HOOK.** A step that is
+done is marked with the word `done`. `.claude/hooks/writing-check.sh` line 47 refuses every
+character from code point 2600 to 27BF as an emoji and the tick is 2713, so a commit carrying one
+does not land. Whether to narrow that range is a question for Bader and a change to the hook.
 
 **`S70` and `T70` divide by `COUNT(B4:B83)` while the names run to row 101.** The tool reports it
 and changes no client formula, which is unchanged. **NS-29, NS-33, ST-13, ST-18 and ST-25 of the
@@ -650,7 +796,12 @@ files before it. A block of the 57 is what the next round can take.
 9. Take `Tree List - Existing W4` and `Tree List - Proposed L93` to the team. Those two hold
    73 street plots and 5 future park plots between them.
 10. Take the Proposed analysis ranges out to row 92 on all seven, off check 33's own list.
-11. The next round can take a block of the 57 open audit findings.
+11. **Run the new layout and say what is wrong with it**, off checks 34 to 37. It is the first
+    time anybody has seen it, and the things that only show when somebody uses a thing have cost
+    this pane two rounds already.
+12. Say whether the word `done` is enough or whether the tick character is wanted, which is a
+    change to `writing-check.sh` rather than to the pane.
+13. The next round can take a block of the 57 open audit findings.
 
 ---
 
