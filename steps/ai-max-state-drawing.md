@@ -1,5 +1,32 @@
 # ai-max state, Drawing Sheet
 
+Phase: 9, ship. Sixty fourth pass, one pull request. The pane is four stacked rows now, 1 PLOTS
+to 4 SHEETS, with RUN off the row list and turned into the button docked at the foot plus the
+result that takes over step 4's body. PanelSteps still holds five steps and every literal in it
+is untouched, so no step number said out loud moved. New: Rows, RowOpen, RowAfter on PanelSteps,
+WhenShut on StepState, and RunResult in Core, which reads RunOutcome and never RunPlan. The
+handler grew one callback, Ran, because a sentence on the status line is not something a pane
+can draw two counts and a line per refusal from, and the counts sentence it used to build by
+hand moved into RunResult.CountsInWords so there is one formatter rather than two. Step 5's body
+is not dropped: it is the unnumbered BEFORE YOU RUN block under the rows, shut by default. Long
+lines WRAP rather than cut, because step 1's sub plot counts live nowhere else once it is shut,
+and below PanelMetrics.NarrowPane, 300, the pane scrolls sideways. The tick is the word done
+because writing-check.sh refuses the character range a tick mark sits in. Path.GetDirectoryName
+answered by platform and the Linux runner caught it, so the folder is cut at the last separator
+of either kind. Two breaks watched red and reversed byte for byte. Suite 2165 before, 2189 after,
+0 failed and 0 skipped. NOTHING IN THIS ROUND HAS BEEN SEEN IN REVIT: the rows, the tick, the
+wrap at 300, the result panel and both buttons are all UNOBSERVED, and
+steps/run-sheet-drawing-sheet-pane.md is the pass that would settle them. The log entry is in
+steps/log-drawing.md rather than the steps/log-drawing-sheet.md the brief named, because this
+task's pair already exists and splitting it would be two records of one thing. The claim
+checker found FIVE LIVE STRINGS still naming step 5 in ModelWriter, at 334, 403, 424, 453 and
+472, four of them refusal reasons that reach RunOutcome.NotCreated and so print in this round's
+own result panel. THEY ARE NOT REWORDED: the brief said to stop and say so rather than reword a
+line this mapping breaks, and what they should say is the user's call. It also turned up four
+more places in steps/run-drawing.md expecting a report at a Desktop path as well as a repo one,
+which ReportPlaces.Written cannot produce, corrected because this round's buttons open that one
+folder. That document holds other stale expectations this round did not sweep.
+
 Phase: 9, ship. Sixty third pass, second of two pull requests, fixes 5 to 8. Fix 6 first because
 it is a diagnosis. CodeFor TRIMMED its arguments and compared them against values the file
 deliberately does not trim, so a pairing on a name with an edge space could never be found,

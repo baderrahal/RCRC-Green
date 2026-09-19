@@ -517,5 +517,200 @@ namespace RcrcGreen.Core.Tests
             Assert.False(plots.Done);
             Assert.Equal("1  PLOTS   160 in the model, none ticked", plots.Header);
         }
+
+        /// <summary>
+        /// The pane draws four rows. RUN is not one of them: it is the button at the foot and
+        /// the result that takes over step 4's body, and its state still says whether that
+        /// button is live.
+        /// </summary>
+        [Fact]
+        public void TheFourRowsComeBackInOrderAndRunIsNotOneOfThem()
+        {
+            PanelSteps steps = After();
+
+            Assert.Equal(
+                new[] { 1, 2, 3, 4 },
+                steps.Rows.Select(one => one.Number).ToArray());
+
+            Assert.Equal(
+                new[] { "PLOTS", "VIEW TYPES", "MARK", "SHEETS" },
+                steps.Rows.Select(one => one.Title).ToArray());
+
+            Assert.DoesNotContain(PanelStep.Run, steps.Rows.Select(one => one.Step));
+            Assert.False(PanelSteps.IsARow(PanelStep.Run));
+            Assert.True(PanelSteps.IsARow(PanelStep.Sheets));
+        }
+
+        /// <summary>
+        /// RUN is still one of the five here, because the button at the foot reads its Usable
+        /// and its WhyNot. Taking it out of the list would have moved every number the other
+        /// steps say out loud.
+        /// </summary>
+        [Fact]
+        public void RunIsStillAStepEvenThoughItIsNotARow()
+        {
+            PanelSteps steps = After(marked: 3);
+
+            Assert.Equal(5, steps.All.Count);
+            Assert.True(steps.For(PanelStep.Run).Usable);
+        }
+
+        [Fact]
+        public void OneRowIsOpenAtATimeAndItIsAlwaysARow()
+        {
+            PanelSteps steps = After(typesTicked: 4, marked: 2);
+
+            PanelStep open = steps.RowOpen(PanelStep.Mark);
+
+            Assert.Equal(PanelStep.Mark, open);
+            Assert.Contains(open, steps.Rows.Select(one => one.Step));
+        }
+
+        /// <summary>
+        /// A step that cannot be used cannot be the one showing its controls, because it has
+        /// no controls worth showing yet and its reason is what belongs there.
+        /// </summary>
+        [Fact]
+        public void ARowThatCannotBeUsedIsNeverTheOpenOne()
+        {
+            PanelSteps steps = After(
+                tickedPlots: new string[0], subPlotsInRange: 0, subPlotsTicked: 0);
+
+            Assert.False(steps.For(PanelStep.Mark).Usable);
+            Assert.Equal(PanelStep.Plots, steps.RowOpen(PanelStep.Mark));
+        }
+
+        /// <summary>
+        /// A pane that had RUN open before this round lands on a row rather than on nothing.
+        /// </summary>
+        [Fact]
+        public void AskingForRunAsTheOpenRowLandsOnARow()
+        {
+            PanelSteps steps = After();
+
+            PanelStep open = steps.RowOpen(PanelStep.Run);
+
+            Assert.Equal(PanelStep.ViewTypes, open);
+            Assert.Contains(open, steps.Rows.Select(one => one.Step));
+        }
+
+        /// <summary>
+        /// Nothing read yet, so no row can be used. Step 1 is the answer because step 1 is
+        /// where the reason is written.
+        /// </summary>
+        [Fact]
+        public void WithNoUsableRowTheOpenOneIsStepOne()
+        {
+            PanelSteps steps = After(readOnce: false);
+
+            Assert.DoesNotContain(steps.Rows, one => one.Usable);
+            Assert.Equal(PanelStep.Plots, steps.RowOpen(PanelStep.Sheets));
+        }
+
+        [Fact]
+        public void ATickShowsOnlyWhereDoneIsTrue()
+        {
+            PanelSteps steps = After(typesTicked: 4);
+
+            Assert.Equal(
+                new[] { true, true, false, false },
+                steps.Rows.Select(one => one.Done).ToArray());
+        }
+
+        /// <summary>
+        /// No view type ticked leaves step 3 shut, so finishing step 2 has to land on step 4
+        /// rather than on a step that would only say why it is shut.
+        /// </summary>
+        [Fact]
+        public void FinishingAStepOpensTheNextUsableOneAndSkipsTheShutOnes()
+        {
+            PanelSteps steps = After(typesTicked: 0);
+
+            Assert.False(steps.For(PanelStep.Mark).Usable);
+            Assert.Equal(PanelStep.Sheets, steps.RowAfter(PanelStep.ViewTypes));
+        }
+
+        /// <summary>
+        /// There is no row past step 4 now, so step 4 stays where it is instead of the pane
+        /// sending it to a step it no longer draws.
+        /// </summary>
+        [Fact]
+        public void ThereIsNoRowAfterStepFour()
+        {
+            PanelSteps steps = After(typesTicked: 4, marked: 6);
+
+            Assert.True(steps.For(PanelStep.Run).Usable);
+            Assert.Null(steps.RowAfter(PanelStep.Sheets));
+        }
+
+        [Fact]
+        public void AShutUsableRowShowsItsSummary()
+        {
+            StepState types = After(typesTicked: 4).For(PanelStep.ViewTypes);
+
+            Assert.True(types.Usable);
+            Assert.Equal("4 of 84 ticked", types.WhenShut);
+        }
+
+        [Fact]
+        public void AShutRowThatCannotBeUsedShowsItsWhyNot()
+        {
+            StepState mark = After(typesTicked: 0).For(PanelStep.Mark);
+
+            Assert.False(mark.Usable);
+            Assert.Equal(
+                "Tick at least one view type in step 2. The grid has no columns until you do.",
+                mark.WhenShut);
+        }
+
+        /// <summary>
+        /// Every state the fixture can reach, in both directions: a row that has something to
+        /// say always says it, and the line it says is the step's own Summary or its own
+        /// WhyNot rather than a second copy written where it is drawn.
+        /// </summary>
+        [Fact]
+        public void NoRowShowsAnEmptyLineWhenItsStepHasSomethingToSay()
+        {
+            PanelSteps[] every =
+            {
+                After(readOnce: false),
+                After(plotsInModel: 0),
+                After(tickedPlots: new string[0], subPlotsInRange: 0, subPlotsTicked: 0),
+                After(),
+                After(typesTicked: 4),
+                After(typesTicked: 4, marked: 6),
+                After(titleBlockTypes: 0),
+                After(typesTicked: 4, marked: 6, sheetsDescribed: 2, sheetsAsked: 5)
+            };
+
+            foreach (PanelSteps steps in every)
+            {
+                foreach (StepState row in steps.Rows)
+                {
+                    Assert.Equal(row.Usable ? row.Summary : row.WhyNot, row.WhenShut);
+
+                    if (row.Summary.Length > 0 || row.WhyNot.Length > 0)
+                    {
+                        Assert.NotEqual(string.Empty, row.WhenShut);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The pane reads the number, the title and this one line off the same StepState the
+        /// header is built from, so the two readings cannot part.
+        /// </summary>
+        [Fact]
+        public void TheRowsLineIsTheStepsOwnWordsAndNotASecondCopy()
+        {
+            StepState plots = After(tickedPlots: new[] { "DM", "FP" }, subPlotsInRange: 23,
+                subPlotsTicked: 21).For(PanelStep.Plots);
+
+            Assert.Equal("DM, FP, 21 of 23 sub plots ticked", plots.WhenShut);
+            Assert.Equal("1  PLOTS   DM, FP, 21 of 23 sub plots ticked", plots.Header);
+            Assert.Equal(1, plots.Number);
+            Assert.Equal("PLOTS", plots.Title);
+        }
     }
 }

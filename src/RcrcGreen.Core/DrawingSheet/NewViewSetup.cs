@@ -5,7 +5,8 @@ using System.Linq;
 namespace RcrcGreen.Core
 {
     /// <summary>
-    /// Where a new view type's three answers came from, said beside them in step 5.
+    /// Where a new view type's three answers came from, said beside them in the block above
+    /// the Run button.
     /// </summary>
     public enum NewViewSource
     {

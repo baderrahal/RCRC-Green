@@ -116,6 +116,22 @@ namespace RcrcGreen.Revit
         public static readonly Thickness Outline = new Thickness(1.0);
 
         /// <summary>
+        /// The tick column on a step row, on the right of its title line. Wide enough for the
+        /// word the Drawing Sheet marks a finished step with and nothing more, because the
+        /// title beside it is what the row is for.
+        /// **This number has not been seen in Revit.**
+        /// </summary>
+        public const double Tick = 34.0;
+
+        /// <summary>
+        /// The width the Drawing Sheet's rows are laid out for. The rows are never measured
+        /// narrower than this, so below it the pane scrolls sideways rather than squeezing a
+        /// wrapped line down to a word a line.
+        /// **This number has not been seen in Revit.**
+        /// </summary>
+        public const double NarrowPane = 300.0;
+
+        /// <summary>
         /// A wider caption column for the KPI pane's typed boxes. Prepared by is the longest of
         /// the three captions and came out as Prepared b, running into its box, at the shared 54.
         ///

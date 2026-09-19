@@ -93,8 +93,9 @@ namespace RcrcGreen.Core
     /// Why the run will not make something, as a category rather than as a sentence.
     ///
     /// The sentence names the plot, so counting by it gives a group of one per plot: five
-    /// views refused for no scope box on five plots read as five reasons. Step 5 counts by
-    /// this instead, and prints the sentences only when somebody opens the list.
+    /// views refused for no scope box on five plots read as five reasons. The block above the
+    /// Run button counts by this instead, and prints the sentences only when somebody opens
+    /// the list.
     /// </summary>
     public enum RunRefusalKind
     {

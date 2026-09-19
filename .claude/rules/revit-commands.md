@@ -38,19 +38,43 @@ mid write is how a model ends up half changed.
 Scope Box reports a view carrying the wrong scope box and leaves it alone. Someone chose it,
 and this add-in does not know why.
 
-## The panel is five numbered steps
+## The panel is four numbered rows and a Run button
 
-`PLOTS`, `VIEW TYPES`, `MARK`, `SHEETS`, `RUN`, in the order somebody does them. One open at a
+`PLOTS`, `VIEW TYPES`, `MARK`, `SHEETS`, in the order somebody does them. One open at a
 time. It was a flat list of controls before, which read as a wall to anyone who had not built
 it.
 
-Four rules hold it together.
+**RUN is not one of the rows.** It is the button docked at the foot, under all four, and the
+result of the last run, which takes over step 4's body once there is one. `PanelStep.Run` and
+its `StepState` are unchanged in Core: what used to grey step 5 greys the button now, and what
+step 5 said while it was shut is the line above it. Nothing renumbered, so every step number
+the other four say out loud still points where it always did. `PanelSteps.Rows` is the four the
+pane draws, `RowOpen` says which one is open and `RowAfter` which one the Next button offers.
 
-**A shut step carries its own summary**, so the whole state reads without opening anything.
-`1  PLOTS   DM, FP, 21 of 23 sub plots ticked`.
+**What step 5's body held is not dropped.** The run line, the answers a new view type needs,
+what the run cannot make and the scope box cases are an unnumbered block under the four rows,
+headed BEFORE YOU RUN, shut by default and opened by a click the same way a row is.
 
-**A step that cannot be used yet is greyed out with one line saying why.** A disabled control
-with no reason next to it tells nobody anything.
+**The result panel reads `RunOutcome` and never `RunPlan`.** `RunResult` in Core takes the
+outcome and the paths the report write returned, and hands back both counts, one line per
+refusal and per schedule left in the model, the sentence about where the report went, and the
+two paths the buttons open. The handler's status line reads its counts off the same object, so
+the line under the pane and the line inside it are one record. The plan is what a run intends
+and the outcome is what it did, and reading one where the other belongs is what put four views
+under created and under not created in the first real report.
+
+Four rules hold the rows together.
+
+**A shut row carries its own summary**, so the whole state reads without opening anything. The
+number, the title and a tick when the step is done sit on one line, and `StepState.WhenShut`
+goes under it, wrapped rather than cut: step 1's sub plot counts live nowhere else once it is
+shut, and an ellipsis eating the only copy of a number is what a narrow pane must not do. The
+tick is the word `done` rather than a tick character, which `writing-check.sh` refuses along
+with the whole range it sits in.
+
+**A step that cannot be used yet is greyed out with one line saying why**, on the same line a
+usable row puts its summary. A disabled control with no reason next to it tells nobody
+anything, and that holds for the Run button too.
 
 **Every summary and every reason is in `PanelSteps` in Core, with a test.** None of it is
 formatted next to the control that shows it. That is the same shape as the grid cell, the
@@ -72,8 +96,8 @@ nothing between them. The search box is made once and kept, and typing in it ref
 lines under it rather than redrawing the step, because rebuilding the tree under the cursor
 takes the keyboard out of the box.
 
-The scope box counts live inside step 5 rather than in a section of their own, because they act
-on the same ticked plots the run does.
+The scope box counts live inside the BEFORE YOU RUN block rather than in a section of their
+own, because they act on the same ticked plots the run does.
 
 ## The strip, the steps and the status line
 
@@ -375,16 +399,17 @@ pre-run model, which is what had three runs in a row re-asking for the first run
 And the handler subscribes to DocumentOpened and DocumentClosed on its first request, so a
 model opened or closed under the open pane triggers a read with nothing pressed.
 
-**A view type with no example is answered once in step 5, or refused by name.** The Add
+**A view type with no example is answered once before the run, or refused by name.** The Add
 row lets the user invent a column, and creation copies its setup from a view that does not
-exist, so the run refused every one. Step 5 lists each marked type no view in the model
-carries, with three dropdowns read off the model: view family type, view template, level.
+exist, so the run refused every one. The BEFORE YOU RUN block lists each marked type no view in
+the model carries, with three dropdowns read off the model: view family type, view template,
+level.
 The family type's kind decides plan or section, a section takes no level, and only the
 kinds a view can be created under are offered, the four plan kinds and Section, which is
 what ViewPlan.Create and ViewSection.CreateSection accept. Answers save to
 `%APPDATA%\RCRC Green\new-view-setups.txt` through `NewViewSetupStore`, nothing shipped,
 because the names are a model's own. The handler reads the file fresh at Run, routes the
-type as a section through the same Core method the preview asks, and the writer resolves
+type as a section through the same Core method the panel asks, and the writer resolves
 each saved name against the model, refusing with the name when one is not there. A type
 with no sibling and no complete answers is refused naming what is missing. On a view built
 from answers, annotation crop is still the tool's own on a plan and Crop View on a
@@ -580,35 +605,19 @@ worked and did not would be worse than none.
 Both steps carry the line `PresetFilling` gives, and an edit shows as an edit because the line
 is worked out by comparing rather than by a flag.
 
-## Step 5 draws the sheets before it makes them
+## The run is counted, not drawn
 
-A card per sheet, in the order the run creates them, each the title block outline at the
-proportion it comes out at, the title strip down its right, and a rectangle for every viewport
-at the place and the size the run will put it. The number, the name and the marks sit under it.
+The panel drew a card per sheet before the run, at real proportion with every viewport on it.
+A run over 35 sub plots with 7 definitions drew 247 of them and the user asked for the drawing
+to go. **This section described those cards for a round after they were deleted**, which is
+what a rules file costs when a round removes something and leaves the paragraph standing.
 
-**The panel decides one number, how many pixels a foot is.** Every position on it comes out of
-`SheetPlacement`, which is what `ModelWriter` places from. Nothing on this side works out a
-layout.
+What is there now is two numbers somebody presses Run on: what the run will make, and what it
+will not, counted by reason rather than printed one line each, with the sentences behind a
+control. `RunSummary` works both out from the plan.
 
-A view already in the model is drawn at its real size, read off `View.Outline`, which needs no
-viewport. A view the run is about to make has no size and is drawn dashed at nine tenths of its
-cell, so a nominal rectangle cannot be mistaken for a measured one at a glance. So is every
-schedule, whose size is not known until Revit has drawn it.
-
-`DrawingSheetReader.SizeOnPaper` is the one outline read. The writer measures the same thing to
-work out its fit and now calls it rather than holding its own copy. The reader measures only a
-view that belongs to a plot and a view type, because those are the only ones a described sheet
-can carry. What that one extra property read per view costs on a model of this size has not
-been measured.
-
-The reader also measures each title block type off the first placed instance it finds, and
-records which sheet that was. Sheet Width and Sheet Height are INSTANCE parameters, so a type
-no sheet uses yet has no size, and its card says so rather than drawing an A1 because the name
-looks like one.
-
-Clicking a card opens step 4 and scrolls to the described sheet whose row carries that number,
-found by the number rather than by counting cards, because one described sheet makes a row per
-ticked plot and a row can make more than one sheet.
+`SheetPlacement` stays, because `ModelWriter` places from it, and
+`DrawingSheetReader.SizeOnPaper` stays because the writer measures its fit with it.
 
 ## A sheet number is read back off the sheet
 
