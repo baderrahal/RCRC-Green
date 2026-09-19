@@ -1,6 +1,8 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Ninety eighth pass, the KPI pane laid out in four steps with a results panel.
+**Merged to main as `78b36c4`**, pull request 168, the squash message set on the merge call
+and off main byte for byte with no co-author line and no generated-by footer.
 **2208 tests, 1388 of them KPI**, 28 hook cases, build zero warnings, run after the last file was
 written. **80 audit findings, 23 FIXED, 57 open**, counted off the four files again by walking
 each file's own numbering run, and nothing closed, renumbered or reordered.
