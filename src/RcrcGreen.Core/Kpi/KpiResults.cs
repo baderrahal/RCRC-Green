@@ -20,9 +20,10 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class KpiResults
     {
-        private KpiResults(bool listWasSet, IReadOnlyList<PlotListRow> rows)
+        private KpiResults(bool listWasSet, bool listWasRead, IReadOnlyList<PlotListRow> rows)
         {
             ListWasSet = listWasSet;
+            ListWasRead = listWasRead;
             Rows = rows ?? new List<PlotListRow>();
         }
 
@@ -32,6 +33,14 @@ namespace RcrcGreen.Core.Kpi
         /// of nought, which is the rule the report's own `ready:` count already follows.
         /// </summary>
         public bool ListWasSet { get; }
+
+        /// <summary>
+        /// Whether the file the press was pointed at could be read. **A FILE THAT COULD NOT BE
+        /// OPENED AND A FILE NOBODY CHOSE TICK EXACTLY THE SAME NOTHING**, which is the rule
+        /// `PlotListFile` already carries, and the panel said the same sentence for both while
+        /// the report printed the file's own reason.
+        /// </summary>
+        public bool ListWasRead { get; }
 
         /// <summary>Every row of the team's list, in the file's order.</summary>
         public IReadOnlyList<PlotListRow> Rows { get; }
@@ -60,6 +69,14 @@ namespace RcrcGreen.Core.Kpi
             "No plot list file was set for this press, so there is no list to count ready "
             + "against. The report says what each ticked plot did.";
 
+        public const string ListNotRead =
+            "The plot list file was set and could not be read, so there is no list to count "
+            + "ready against. The report names the file and says why.";
+
+        public const string ListNamesNoPlot =
+            "The plot list file was read and names no plot, so there is nothing to count ready "
+            + "against.";
+
         public const string EveryPlotIsReady = "Every plot on the list is ready.";
 
         public const string ReadyHeading = "ready";
@@ -75,6 +92,8 @@ namespace RcrcGreen.Core.Kpi
             get
             {
                 if (!ListWasSet) return NoPlotList;
+                if (!ListWasRead) return ListNotRead;
+                if (Rows.Count == 0) return ListNamesNoPlot;
 
                 return ReadyHeading + " " + Ready.ToString(CultureInfo.InvariantCulture)
                     + ", " + NotReadyHeading + " "
@@ -93,7 +112,10 @@ namespace RcrcGreen.Core.Kpi
         {
             get
             {
-                if (!ListWasSet) return string.Empty;
+                // **A LIST WITH NO PLOT ON IT IS NOT A LIST WHERE EVERY PLOT IS READY.** An
+                // empty list counted nought not ready and said every plot on it is ready, which
+                // is a sentence about nothing that reads as a clean press.
+                if (!ListWasSet || !ListWasRead || Rows.Count == 0) return string.Empty;
                 if (NotReady == 0) return EveryPlotIsReady;
 
                 return NotReady.ToString(CultureInfo.InvariantCulture)
@@ -107,9 +129,11 @@ namespace RcrcGreen.Core.Kpi
             if (set == null) throw new ArgumentNullException("set");
 
             PlotListRead list = set.PlotList;
-            bool listWasSet = list != null && list.Set && list.Read;
 
-            return new KpiResults(listWasSet, PlotListRows.Of(set));
+            return new KpiResults(
+                list != null && list.Set,
+                list != null && list.Set && list.Read,
+                PlotListRows.Of(set));
         }
     }
 }

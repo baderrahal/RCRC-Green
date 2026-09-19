@@ -182,8 +182,11 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "Tree List - Existing row 85 carries no canopy formula",
                 notReady[0].InWords);
 
+            // **A PLOT NOBODY TICKED IS NOT A PLOT WITH NO PRX_Plot_UID2.** Nothing looked
+            // for one, so saying it holds none is a sentence about the model that nothing
+            // measured. The row names the plot and the reason and claims nothing else.
             Assert.Equal(
-                "HF-002 | no PRX_Plot_UID2 | it was not ticked for this press",
+                "HF-002 | it was not ticked for this press",
                 notReady[1].InWords);
 
             Assert.Equal(
@@ -207,6 +210,75 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("HF-003", notReady[2].PlotId);
             Assert.Equal("HF-004", notReady[3].PlotId);
             Assert.Equal("HF-032", notReady[31].PlotId);
+        }
+
+        /// <summary>
+        /// **A PLOT THE PRESS TRIED TO FILE AND COULD NOT STILL SAYS IT HOLDS NO UID2**, which
+        /// is the case the row really measured: HF-003's own path was refused for exactly that.
+        /// </summary>
+        [Fact]
+        public void APlotWhosePathWasRefusedStillSaysItHoldsNoUid()
+        {
+            PlotListRow row = KpiResults.Of(Press(
+                new[] { "HF-003" }, new[] { NoWorkbook("HF-003") })).Rows[0];
+
+            Assert.StartsWith("HF-003 | no PRX_Plot_UID2 | ", row.InWords);
+        }
+
+        /// <summary>
+        /// **A FILE THAT WAS SET AND COULD NOT BE READ IS NOT A FILE NOBODY CHOSE.** They tick
+        /// exactly the same nothing, which is the rule `PlotListFile` already carries, and the
+        /// panel said the same sentence for both while the report printed the file's own
+        /// reason beside the file's own name.
+        /// </summary>
+        [Fact]
+        public void APlotListThatCouldNotBeReadIsNotAPlotListNobodySet()
+        {
+            var set = new KpiCreateRunSet(
+                "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
+                PlotsPerTemplate.Split(
+                    new[] { "HF-001" }, plotId => "HEALTH", new[] { KpiTemplates.Healthcare }),
+                new List<KpiCreateRun>(),
+                new List<TemplateOutcome>(),
+                null,
+                new List<PlotOutcome> { Ready("HF-001") },
+                null,
+                PlotsInTheModel.Of(new[] { "HF-001" }, new[] { "HF-001" }),
+                PlotListFile.In("C:\\lists\\gone.txt"));
+
+            KpiResults results = KpiResults.Of(set);
+
+            Assert.True(results.ListWasSet);
+            Assert.False(results.ListWasRead);
+
+            Assert.Equal(
+                "The plot list file was set and could not be read, so there is no list to "
+                + "count ready against. The report names the file and says why.",
+                results.CountsInWords);
+
+            Assert.Equal(string.Empty, results.NotReadyInWords);
+        }
+
+        /// <summary>
+        /// **A LIST THAT NAMES NO PLOT IS NOT A LIST WHERE EVERY PLOT IS READY.** An empty list
+        /// counted nought not ready and said every plot on it is ready, which is a sentence
+        /// about nothing that reads as a clean press.
+        /// </summary>
+        [Fact]
+        public void APlotListThatNamesNoPlotSaysSoRatherThanSayingEveryPlotIsReady()
+        {
+            KpiResults results = KpiResults.Of(Press(new string[0], new PlotOutcome[0]));
+
+            Assert.True(results.ListWasSet);
+            Assert.True(results.ListWasRead);
+            Assert.Empty(results.Rows);
+
+            Assert.Equal(
+                "The plot list file was read and names no plot, so there is nothing to count "
+                + "ready against.",
+                results.CountsInWords);
+
+            Assert.Equal(string.Empty, results.NotReadyInWords);
         }
 
         /// <summary>

@@ -13,7 +13,7 @@ press it shows the result in the pane instead of sending him to the report file.
 press reads, writes or reports changed, and no number in any workbook, PDF or report moved. That
 is measured rather than asserted, under its own heading below.
 
-**2204 tests, 1384 of them KPI**, run after the last file was written, up from 2165 and 1345.
+**2208 tests, 1388 of them KPI**, run after the last file was written, up from 2165 and 1345.
 28 hook cases. Build zero warnings. **80 audit findings, 23 FIXED, 57 open**, counted off the
 four files again with nothing closed, renumbered or reordered.
 
@@ -201,6 +201,77 @@ Bader to call.
 **Whether the link note belongs in step 2, step 4 or both.** It is in both today: step 2 is where
 the read that learnt it is and step 4 is where it has always been, and the two steps are never on
 one screen. One fact, `_facts.Links`, drawn twice.
+
+### What an adversarial review of this round's own diff found
+
+Six lenses over the diff, every finding verified against the source by a second pass, then
+judged here one at a time. **EIGHTEEN CAME BACK CONFIRMED AND SIXTEEN ARE FIXED IN THIS ROUND.**
+None was found by a test, because every one of them is about what the pane does rather than
+what Core computes.
+
+**THE WORST OF THEM: THE PRESS HID THE CONTROL THAT ANSWERS IT.** The reconciliation refusals,
+the buttons naming a plot's two regions and the groups left out note lived only inside
+`TheCreateButton`, which the results panel replaces. A press refused over a region nobody picked
+showed its own refusal with nothing on screen to answer it, and `TheRegionChoices` is the only
+writer of `_chosenRegions`. `TheAnswerable` is one method now, drawn by the results panel and by
+step 4's own controls, so the two can never offer two different sets of questions about one
+press.
+
+**OPEN THE REPORT WAS DEAD ON EVERY PRESS.** `KpiRequestHandler` passed
+`ReportPlaces.Written(written)`, which builds `Report at <path>.` for the status line, and the
+button tested it with `File.Exists`. It passes the path and the status line still gets the
+sentence.
+
+**THE LIST TICK RAISED ITS OWN WARNING.** The rows were recorded before the tick, and
+`TickedByHand` reaches `Changed` and then `Preselect`, which can tick a workbook row, so the
+press went out of date the moment it finished. `PressTickTheList` records what the press LEAVES.
+
+**AND THREE MORE WAYS IT LIED.** Select all and Clear replace every tick exactly as Tick the
+list does, so they forget it rather than leaving it standing over ticks it no longer describes.
+Browsing to another templates folder clears the workbook rows, so a list tick recorded against
+the old ones reported a drift nobody caused. A park template pick and a workbook row tick move
+the plot ticks without going through `Changed`, so the results of the press before them outlived
+the ticks they were made from.
+
+**A STEP THAT CANNOT BE WORKED ON CANNOT BE DONE.** A model closing leaves the ticks standing
+and takes the read away, so the bar read `3 Tick done` beside a step saying the model had not
+been read, and step 4 opened on the strength of it. A model change clears the run, the confirm
+and the region picks with it, because one model's plots read against one model's templates are
+not another's.
+
+**THREE SENTENCES THAT WERE FALSE.** A plot list set and unreadable said no plot list file was
+set, which contradicts the report word for word and is the absence against refusal rule this
+tool already carries. A list that reads and names no plot said every plot on it is ready. And a
+not ready line said a plot holds no `PRX_Plot_UID2` whenever it simply had not been ticked,
+which is a sentence about the model that nothing measured.
+
+**TWO THINGS ABOUT THE WIDTH.** The done mark sat inside the cell text and was the first thing
+trimmed at about 70 pixels a cell, so a finished step read SHORTER than an unfinished one. It is
+its own line under the name. And step 1 printed the whole not set sentence in its header and
+again at its foot, the same words twice on one screen, which is the shape a run already printed
+four lines twice over. The header carries a count and the step carries the naming.
+
+**TWO ARE RECORDED RATHER THAN FIXED, AND BOTH ARE FOR BADER.**
+
+- **THE WORKBOOK ROWS CANNOT BE REACHED WITH NO MODEL OPEN.** Step 3 holds them and the round
+  says Tick cannot be worked on before a read, so ticking MOSQUES and then pressing Read, which
+  `kpi-rules.md` recorded as the ordinary order, is no longer possible. **The loop is live in
+  the code and dead on the screen.** It is his own gate, so it stands, and it is one argument in
+  `KpiSteps.Of` to reverse. The rules file says so now rather than reading as current.
+- **TWO BRANCHES OF `CreateWords.CannotCreate` CANNOT FIRE FROM THE PANE ANY MORE**, its no
+  template ticked and no plot ticked lines, because step 4 is shut until both are ticked and its
+  own why not says the same thing first. The two other branches, no model open and no output
+  folder, still fire. Nothing is deleted, on the rule this repository already carries about a
+  member whose last caller stopped calling it.
+
+**AND TWO OF THE EIGHTEEN WERE NARROWED BY THE VERIFIER RATHER THAN TAKEN AS WRITTEN.** The
+identical areas confirm was named as hidden by the press and is pre existing dead UI: the
+handler builds one reconciliation per plot and `KpiMerge.IdenticalAreas` needs two readings
+sharing a raw area, so it has never drawn. And the region pick example given, NS-19, does not
+reproduce, because `RegionChoice.Pick` takes the type the client's note names where both hold an
+area. The fix stands for the case that really is reachable, two regions with the note's type
+among neither.
+
 
 ### What the claim checker flagged
 

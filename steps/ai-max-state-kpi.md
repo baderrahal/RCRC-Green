@@ -1,7 +1,7 @@
 # ai-max state, KPI
 
 Phase: 9, ship. Ninety eighth pass, the KPI pane laid out in four steps with a results panel.
-**2204 tests, 1384 of them KPI**, 28 hook cases, build zero warnings, run after the last file was
+**2208 tests, 1388 of them KPI**, 28 hook cases, build zero warnings, run after the last file was
 written. **80 audit findings, 23 FIXED, 57 open**, counted off the four files again by walking
 each file's own numbering run, and nothing closed, renumbered or reordered.
 **NOTHING HERE WAS RUN IN REVIT, AND THE PANE CANNOT BE OPENED FROM HERE AT ALL.**
@@ -48,6 +48,18 @@ what caught the one heading that had come off with the folder line it sat over.
 code point 2713, so a done step is marked with the word `done`. The first draft of the round was
 refused by that hook for spelling the range out in the comment that explains it, which is the
 shape `CLAUDE.md` already carries. Whether to narrow the range is a question for Bader.
+
+**AN ADVERSARIAL REVIEW OF THE ROUND'S OWN DIFF FOUND EIGHTEEN, AND SIXTEEN ARE FIXED HERE.**
+None was found by a test, because every one is about what the pane does rather than what Core
+computes. The worst: the results panel replaced the only control that answers a refused press,
+so a plot waiting on a region pick had its refusal on screen and no way to answer it. Open the
+report was dead on every press, because the handler passed a sentence where the pane wanted a
+path. The list tick raised its own out of date warning. A step that could not be worked on was
+still marked done. Three sentences were false about a plot list that was set and unreadable, one
+that names no plot, and a plot nobody ticked. **Two are recorded rather than fixed and both are
+for Bader**, the workbook rows being unreachable with no model open, which is his own gate and
+reverses a line `kpi-rules.md` carried, and two branches of `CreateWords.CannotCreate` that the
+step's own why not now says first.
 
 **THE WHOLE LAYOUT IS UNOBSERVED.** The bar at a narrow width, one step at a time, the results
 panel, the two buttons and the step moving by itself after a press are drawn by code nobody has

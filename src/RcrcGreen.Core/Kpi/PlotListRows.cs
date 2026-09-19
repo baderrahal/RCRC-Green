@@ -95,10 +95,18 @@ namespace RcrcGreen.Core.Kpi
         {
             get
             {
-                string named = Uid2.Length == 0 ? NoUid2 : Uid2;
-                return WhyNot.Length == 0
-                    ? PlotId + " | " + named
-                    : PlotId + " | " + named + " | " + WhyNot;
+                var cells = new List<string> { PlotId };
+
+                // **AN ABSENCE AND AN ANSWER NOBODY LOOKED FOR ARE TWO DIFFERENT THINGS.** A
+                // plot nobody ticked has no path, so it has no UID2 here, and saying it holds
+                // none is a sentence about the MODEL that nothing measured. Only a plot the
+                // press really tried to file says so.
+                if (Uid2.Length > 0) cells.Add(Uid2);
+                else if (Ticked) cells.Add(NoUid2);
+
+                if (WhyNot.Length > 0) cells.Add(WhyNot);
+
+                return string.Join(" | ", cells.ToArray());
             }
         }
 

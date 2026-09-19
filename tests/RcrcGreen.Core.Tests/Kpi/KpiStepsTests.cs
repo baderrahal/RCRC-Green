@@ -114,12 +114,14 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(steps.For(KpiStep.Read).Usable);
             Assert.Equal(string.Empty, steps.For(KpiStep.Read).WhyNot);
 
+            Assert.Equal("3 not set", steps.For(KpiStep.Setup).Summary);
+
             Assert.Equal(
                 "Not set: the forms folder is not set, so no PDF will be written. the street "
                 + "reference file is not set, so every street plot's road width and total "
                 + "length will be left empty. the plot list file is not set, so Tick the list "
                 + "cannot be pressed and the report prints no plot list section.",
-                steps.For(KpiStep.Setup).Summary);
+                KpiSteps.StillNotSet(KpiSteps.NotSet(true, true, false, false, false)));
         }
 
         /// <summary>
@@ -132,9 +134,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiSteps steps = AllSetNothingRead();
 
             Assert.True(steps.For(KpiStep.Setup).Done);
+
+            // **THE HEADER CARRIES A COUNT AND THE STEP CARRIES THE NAMING.** Both used to
+            // carry the whole sentence, which is the same words twice on one screen.
+            Assert.Equal("all set", steps.For(KpiStep.Setup).Summary);
             Assert.Equal(
                 "Every folder and file this pane is pointed at is set.",
-                steps.For(KpiStep.Setup).Summary);
+                KpiSteps.StillNotSet(KpiSteps.NotSet(true, true, true, true, true)));
 
             Assert.True(steps.For(KpiStep.Read).Usable);
             Assert.False(steps.For(KpiStep.Read).Done);
@@ -263,9 +269,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiSteps steps = Ticked();
 
-            Assert.Equal("1 Setup done", steps.For(KpiStep.Setup).Cell);
-            Assert.Equal("2 Read done", steps.For(KpiStep.Read).Cell);
-            Assert.Equal("3 Tick done", steps.For(KpiStep.Tick).Cell);
+            // **THE CELL CARRIES THE NUMBER AND THE NAME AND NOTHING ELSE.** `3 Tick done` in
+            // a cell about 70 pixels wide trimmed the mark away first, so a finished step read
+            // SHORTER than an unfinished one. The mark is its own line under the name.
+            Assert.Equal("1 Setup", steps.For(KpiStep.Setup).Cell);
+            Assert.Equal("2 Read", steps.For(KpiStep.Read).Cell);
+            Assert.Equal("3 Tick", steps.For(KpiStep.Tick).Cell);
             Assert.Equal("4 Create", steps.For(KpiStep.Create).Cell);
 
             Assert.Equal("done", steps.For(KpiStep.Setup).Mark);
@@ -275,6 +284,35 @@ namespace RcrcGreen.Core.Tests.Kpi
             {
                 Assert.DoesNotContain(((char)0x2713).ToString(), step.Cell);
             }
+        }
+
+        /// <summary>
+        /// **A STEP THAT CANNOT BE WORKED ON CANNOT BE DONE.** A model closing leaves the ticks
+        /// standing and takes the read away, and the bar read `3 Tick done` beside a step
+        /// saying the model had not been read, with step 4 open on the strength of it.
+        /// </summary>
+        [Fact]
+        public void AStepThatCannotBeWorkedOnIsNotMarkedDone()
+        {
+            KpiSteps steps = KpiSteps.Of(
+                true, true, true, true, true, true, null, 1, 154, false);
+
+            Assert.False(steps.For(KpiStep.Tick).Usable);
+            Assert.False(
+                steps.For(KpiStep.Tick).Done,
+                "A workbook row and 154 plots are ticked and nothing has been read, so Tick "
+                + "cannot be worked on, and a mark on a step nobody can open is a claim about "
+                + "a step that is shut.");
+
+            Assert.Equal("3 Tick", steps.For(KpiStep.Tick).Cell);
+            Assert.Equal(string.Empty, steps.For(KpiStep.Tick).Mark);
+
+            Assert.False(
+                steps.For(KpiStep.Create).Usable,
+                "And step 4 must not open on the strength of ticks the read behind them has "
+                + "gone.");
+
+            Assert.Equal(KpiStep.Read, steps.FirstUnfinished);
         }
 
         /// <summary>

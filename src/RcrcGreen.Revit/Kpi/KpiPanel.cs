@@ -354,6 +354,13 @@ namespace RcrcGreen.Revit.Kpi
                     _listTick = ListTickFreshness.NeverPressed;
                     _showingResults = false;
                     _reportWhere = string.Empty;
+
+                    // **AND THE RUN ITSELF**, which is one model's plots read against one
+                    // model's templates. Held across, its region questions and its refusals
+                    // would be asked about a model nobody has open.
+                    _lastSet = null;
+                    _confirmedIdentical = false;
+                    _chosenRegions.Clear();
                 }
 
                 TheHeader();
@@ -536,20 +543,34 @@ namespace RcrcGreen.Revit.Kpi
                 KpiStep which = step.Step;
                 bool here = which == open;
 
-                var text = new TextBlock
+                var inside = new StackPanel
+                {
+                    Opacity = step.Usable ? 1.0 : PanelMetrics.FadedOpacity
+                };
+
+                inside.Children.Add(new TextBlock
                 {
                     Text = step.Cell,
                     FontWeight = here ? FontWeights.Bold : FontWeights.Normal,
                     FontSize = PanelMetrics.StepTitle,
                     TextTrimming = TextTrimming.CharacterEllipsis,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Opacity = step.Usable ? 1.0 : PanelMetrics.FadedOpacity
-                };
+                    HorizontalAlignment = HorizontalAlignment.Center
+                });
+
+                // **THE MARK IS ITS OWN LINE UNDER THE NAME.** Inside the cell text it was the
+                // first thing trimmed at about 70 pixels a cell, so a finished step read
+                // shorter than an unfinished one, which is the opposite of what a mark does.
+                inside.Children.Add(new TextBlock
+                {
+                    Text = step.Mark,
+                    FontSize = PanelMetrics.StepTitle - 2.0,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                });
 
                 var cell = new Button
                 {
-                    Content = text,
+                    Content = inside,
                     Padding = PanelMetrics.CellPad,
                     Margin = PanelMetrics.Gap,
                     Background = here ? _theme.Primary : _theme.StepHeader,
@@ -600,6 +621,9 @@ namespace RcrcGreen.Revit.Kpi
             _templates.Children.Add(Boxed("Prepared by", _preparedBy));
             _templates.Children.Add(Boxed("Position", _position));
 
+            // **ONCE, AT THE FOOT.** The step header carries a count of what is not set and
+            // this carries the naming, because the same sentence twice on one screen is what a
+            // run already printed four lines twice over.
             _templates.Children.Add(Faint(KpiSteps.StillNotSet(KpiSteps.NotSet(
                 TemplateFolder.Read().Length > 0,
                 OutputFolder.Read().Length > 0,
@@ -738,6 +762,7 @@ namespace RcrcGreen.Revit.Kpi
                     {
                         waiting.SettledAs = chosen;
                         TickItsPlots(waiting);
+                        _showingResults = false;
                         RedrawTemplates();
                     };
                     either.Children.Add(choice);
@@ -1047,9 +1072,9 @@ namespace RcrcGreen.Revit.Kpi
             // what is on screen, and the next template row tick acts on the disagreement. A
             // person pressing Select all is saying they want everything and a person pressing
             // Clear is starting over.
-            all.Click += (sender, e) => TickedByHand(_ticks.All(), _byHand.Forgotten());
+            all.Click += (sender, e) => ReplacedEveryTick(_ticks.All());
             var none = new Button { Content = PaneLabel.Escaped(CreateWords.Clear), Padding = PanelMetrics.CellPad, Margin = PanelMetrics.Gap };
-            none.Click += (sender, e) => TickedByHand(_ticks.None(), _byHand.Forgotten());
+            none.Click += (sender, e) => ReplacedEveryTick(_ticks.None());
             buttons.Children.Add(all);
             buttons.Children.Add(none);
 
@@ -1071,18 +1096,7 @@ namespace RcrcGreen.Revit.Kpi
                             + "and forget every plot ticked or unticked by hand."
                         : sent.Why
                 };
-                listed.Click += (sender, e) =>
-                {
-                    // **THE LIST TICK IS THE LAST TICK**, so the rows it was pressed against
-                    // travel with it. A row ticked or unticked after this adds or removes that
-                    // template's plots, and the line under the rows says so.
-                    _listTick = ListTickFreshness.Pressed(
-                        Settled().Select(one => one.Workbook.FileName));
-
-                    TickedByHand(
-                        TickingTheList.Ticked(_ticks, PlotListFile.In(PlotListFileSetting.Read())),
-                        _byHand.Forgotten());
-                };
+                listed.Click += (sender, e) => PressTickTheList();
                 buttons.Children.Add(listed);
             }
 
@@ -1118,6 +1132,39 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             _templates.Children.Add(Scrolling(list, PanelMetrics.ListHeight, "plots"));
+        }
+
+        /// <summary>
+        /// Select all and Clear. **THEY REPLACE EVERY TICK, WHICH IS WHAT TICK THE LIST DOES**,
+        /// so they forget the list tick as well as every hand choice. Leaving it standing had
+        /// the pane say the list tick still held over ticks it no longer describes, which is a
+        /// record that disagrees with the screen, and saying it had gone OUT OF DATE would be
+        /// wrong too: a person pressing Select all is saying these are the plots.
+        /// </summary>
+        private void ReplacedEveryTick(PlotTicks next)
+        {
+            _listTick = ListTickFreshness.NeverPressed;
+            TickedByHand(next, _byHand.Forgotten());
+        }
+
+        /// <summary>
+        /// Tick the list, from either of the two buttons that offer it.
+        ///
+        /// **THE ROWS ARE RECORDED OFF WHAT THE PRESS LEAVES, NOT WHAT IT STARTED FROM.**
+        /// `TickedByHand` reaches `Changed`, which reaches `Preselect`, which can tick a
+        /// workbook row of its own, so recording before the tick made the press raise its own
+        /// out of date warning the moment it finished.
+        /// </summary>
+        private void PressTickTheList()
+        {
+            TickedByHand(
+                TickingTheList.Ticked(_ticks, PlotListFile.In(PlotListFileSetting.Read())),
+                _byHand.Forgotten());
+
+            _listTick = ListTickFreshness.Pressed(
+                Settled().Select(one => one.Workbook.FileName));
+
+            RedrawTemplates();
         }
 
         /// <summary>
@@ -1296,43 +1343,7 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(Faint(tick.SettledAs.Name + ": " + CreateWords.TakesNoArea));
             }
 
-            foreach (KpiCreateRun run in Held().Where(one => !one.Reconciliation.AddsUp))
-            {
-                foreach (string refusal in run.Reconciliation.Refusals)
-                {
-                    _templates.Children.Add(Warned(run.Template.Name + ": " + refusal));
-                }
-
-                TheRegionChoices(run);
-
-                if (run.Reconciliation.IdenticalAreas.Count > 0 && !_confirmedIdentical)
-                {
-                    foreach (string line in CreateWords.ConfirmIdentical(run.Reconciliation.IdenticalAreas))
-                    {
-                        _templates.Children.Add(Warned(line));
-                    }
-
-                    var confirm = new Button
-                    {
-                        Content = PaneLabel.Escaped("These areas are right, write anyway"),
-                        Padding = PanelMetrics.CellPad,
-                        Margin = PanelMetrics.Row,
-                        HorizontalAlignment = HorizontalAlignment.Left
-                    };
-                    confirm.Click += (sender, e) => { _confirmedIdentical = true; RedrawTemplates(); };
-                    _templates.Children.Add(confirm);
-                }
-            }
-
-            // A group no sheet takes, Street Design on a mosque plot, is a note and never a
-            // refusal: the workbook was written with those rows left out, and this says where
-            // the model needs correcting, beside the button the user pressed. The report
-            // carries the full detail, and a person acts on plots and schedules, not species.
-            foreach (KpiCreateRun run in Held().Where(one => one.Template != null))
-            {
-                string leftOut = CreateWords.GroupsLeftOut(run.Readings, run.Template);
-                if (leftOut.Length > 0) _templates.Children.Add(Noted(run.Template.Name + ": " + leftOut));
-            }
+            TheAnswerable();
 
             // Greyed out on what the PANE owns and on nothing else. Whether a model is open
             // belongs to Revit, and a button greyed out on the pane's last answer about it
@@ -1380,16 +1391,7 @@ namespace RcrcGreen.Revit.Kpi
                         ToolTip = "Replace every tick with exactly the plots the plot list file "
                             + "names, and forget every plot ticked or unticked by hand."
                     };
-                    press.Click += (sender, e) =>
-                    {
-                        _listTick = ListTickFreshness.Pressed(
-                            Settled().Select(one => one.Workbook.FileName));
-
-                        TickedByHand(
-                            TickingTheList.Ticked(
-                                _ticks, PlotListFile.In(PlotListFileSetting.Read())),
-                            _byHand.Forgotten());
-                    };
+                    press.Click += (sender, e) => PressTickTheList();
                     _templates.Children.Add(press);
                 }
             }
@@ -1498,6 +1500,14 @@ namespace RcrcGreen.Revit.Kpi
                 _templates.Children.Add(Scrolling(notReady, PanelMetrics.ListHeight, "not ready"));
             }
 
+            // **THE PRESS THAT RAISES A QUESTION MUST NOT HIDE THE CONTROL THAT ANSWERS IT.**
+            // A refusal the reconciliation raised, the buttons naming a plot's two regions and
+            // the groups no sheet takes all lived only inside TheCreateButton, which this
+            // panel replaces. A press refused over a region nobody picked showed its own
+            // refusal with nothing on screen to answer it, and the only route back was two
+            // presses nothing signposted.
+            TheAnswerable();
+
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = PanelMetrics.Row };
 
             string output = OutputFolder.Read();
@@ -1544,6 +1554,53 @@ namespace RcrcGreen.Revit.Kpi
                 RedrawTemplates();
             };
             _templates.Children.Add(again);
+        }
+
+        /// <summary>
+        /// Everything the last press left for somebody to ANSWER: a reconciliation that does
+        /// not add up, a plot whose two regions left the question open, an identical pair
+        /// waiting on a confirm, and a group no tree list sheet takes.
+        ///
+        /// **ONE METHOD, DRAWN BY BOTH THE RESULTS PANEL AND STEP 4'S OWN CONTROLS**, so the
+        /// two can never offer two different sets of questions about one press.
+        /// </summary>
+        private void TheAnswerable()
+        {
+            foreach (KpiCreateRun run in Held().Where(one => !one.Reconciliation.AddsUp))
+            {
+                foreach (string refusal in run.Reconciliation.Refusals)
+                {
+                    _templates.Children.Add(Warned(run.Template.Name + ": " + refusal));
+                }
+
+                TheRegionChoices(run);
+
+                if (run.Reconciliation.IdenticalAreas.Count > 0 && !_confirmedIdentical)
+                {
+                    foreach (string line in CreateWords.ConfirmIdentical(run.Reconciliation.IdenticalAreas))
+                    {
+                        _templates.Children.Add(Warned(line));
+                    }
+
+                    var confirm = new Button
+                    {
+                        Content = PaneLabel.Escaped("These areas are right, write anyway"),
+                        Padding = PanelMetrics.CellPad,
+                        Margin = PanelMetrics.Row,
+                        HorizontalAlignment = HorizontalAlignment.Left
+                    };
+                    confirm.Click += (sender, e) => { _confirmedIdentical = true; RedrawTemplates(); };
+                    _templates.Children.Add(confirm);
+                }
+            }
+
+            // A group no sheet takes is a note and never a refusal: the workbook was written
+            // with those rows left out, and this says where the model needs correcting.
+            foreach (KpiCreateRun run in Held().Where(one => one.Template != null))
+            {
+                string leftOut = CreateWords.GroupsLeftOut(run.Readings, run.Template);
+                if (leftOut.Length > 0) _templates.Children.Add(Noted(run.Template.Name + ": " + leftOut));
+            }
         }
 
         /// <summary>
@@ -1833,6 +1890,11 @@ namespace RcrcGreen.Revit.Kpi
             // what makes it untrue whichever way it read. A line left standing beside the state
             // that contradicts it is the shape this repo has met seven times.
             _whyThisTemplate = string.Empty;
+
+            // **AND SO ARE THE RESULTS OF THE PRESS BEFORE IT.** This moves the plot ticks
+            // without going through Changed, so the panel describing the last press would have
+            // outlived the ticks it was made from.
+            _showingResults = false;
             RedrawTemplates();
         }
 
@@ -2143,6 +2205,10 @@ namespace RcrcGreen.Revit.Kpi
                 _picks.Clear();
                 _whyThisTemplate = string.Empty;
                 _templatesListed = TemplateListing.Nothing;
+
+                // Another folder is another set of workbook rows, so a list tick recorded
+                // against the old ones would report a drift nobody caused.
+                _listTick = ListTickFreshness.NeverPressed;
                 RedrawTemplates();
             }
         }

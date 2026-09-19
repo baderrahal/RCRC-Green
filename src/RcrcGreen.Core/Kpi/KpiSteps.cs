@@ -91,15 +91,14 @@ namespace RcrcGreen.Core.Kpi
         /// done. Built here so four cells are spaced one way rather than four.
         ///
         /// **THE BAR IS FOUR CELLS ACROSS A PANE ABOUT 300 PIXELS WIDE**, so this carries no
-        /// summary. The summary is its own line under the bar for the step being worked on.
+        /// summary and no mark. `3 Tick done` in a cell about 70 pixels wide is trimmed to
+        /// nothing useful, and a finished step would read SHORTER than an unfinished one, which
+        /// is the opposite of what a mark is for. The summary is its own line under the bar and
+        /// <see cref="Mark"/> is drawn under the name.
         /// </summary>
         public string Cell
         {
-            get
-            {
-                string start = Number.ToString(CultureInfo.InvariantCulture) + " " + Title;
-                return Done ? start + " " + DoneMark : start;
-            }
+            get { return Number.ToString(CultureInfo.InvariantCulture) + " " + Title; }
         }
     }
 
@@ -247,7 +246,7 @@ namespace RcrcGreen.Core.Kpi
             var setup = new KpiStepState(
                 KpiStep.Setup,
                 "Setup",
-                StillNotSet(notSet),
+                SetupSummary(notSet),
                 true,
                 string.Empty,
                 setupDone);
@@ -266,13 +265,17 @@ namespace RcrcGreen.Core.Kpi
                 readWhyNot,
                 readDone);
 
+            // **A STEP THAT CANNOT BE WORKED ON CANNOT BE DONE.** A model closing leaves the
+            // ticks standing and takes the read away, and without this the bar read
+            // `3 Tick done` beside a step saying the model has not been read, with step 4
+            // open on the strength of it. A mark is a claim about a step somebody can use.
             var tick = new KpiStepState(
                 KpiStep.Tick,
                 "Tick",
                 TickSummary(templatesTicked, plotsTicked),
                 readDone,
                 readDone ? string.Empty : "Read the model in step 2 first.",
-                templatesTicked > 0 && plotsTicked > 0);
+                readDone && templatesTicked > 0 && plotsTicked > 0);
 
             string createWhyNot = string.Empty;
             if (!tick.Done)
@@ -304,6 +307,18 @@ namespace RcrcGreen.Core.Kpi
         {
             if (!templatesFolder && !outputFolder) return "the templates folder and the output folder";
             return templatesFolder ? "the output folder" : "the templates folder";
+        }
+
+        /// <summary>
+        /// **SHORT, BECAUSE THE STEP ITSELF PRINTS THE WHOLE SENTENCE.** The header carried
+        /// `StillNotSet` and so did the foot of the step, which is the same words twice on one
+        /// screen, the shape a run already printed four lines twice over.
+        /// </summary>
+        private static string SetupSummary(IReadOnlyList<string> notSet)
+        {
+            if (notSet == null || notSet.Count == 0) return "all set";
+
+            return notSet.Count.ToString(CultureInfo.InvariantCulture) + " not set";
         }
 
         private static string ReadSummary(bool modelOpen, int? plotsRead)
