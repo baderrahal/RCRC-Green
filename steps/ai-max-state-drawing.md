@@ -2,7 +2,9 @@
 
 Phase: 9, ship, done. Sixty fourth pass merged. Pull request 165 is `4397284`, 2189 on the
 runner, 0 failed and 0 skipped, squash message back byte for byte and merged main reads 2189
-locally. The open finding carries: five live strings in ModelWriter name step 5, at 334, 403,
+locally. The record pull request 166 reads 2216 on the runner because View Filters merged 164
+between the two and the gate tests the merge, measured on origin/main at e2d2ff5 in a throwaway
+worktree. The open finding carries: five live strings in ModelWriter name step 5, at 334, 403,
 424, 453 and 472, four of them refusals that the new result panel prints, not reworded because
 the brief said to stop and say so rather than reword a line this mapping breaks. Nothing in the
 round has been seen in Revit and steps/run-sheet-drawing-sheet-pane.md is the pass that would

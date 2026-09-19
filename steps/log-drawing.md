@@ -11,6 +11,12 @@ build 0 warnings and 0 errors. The squash message came back off main byte for by
 appended. Merged main reads 2189 locally, the same number, which is the 2165 this branch was
 cut from plus the round's 24.
 
+**This record's own pull request reads 2216 on the runner, and that is not this round's
+number.** The gate tests the merge of a branch into main, and View Filters merged pull request
+164 between the two, so 166's run covered their 27 tests as well. Measured rather than reasoned:
+`origin/main` at `e2d2ff5` reads 2216 in a throwaway worktree, which is `4397284`'s 2189 plus
+their 27.
+
 The entry under this one is the round itself. **Its finding stands open:** five live strings in
 `src/RcrcGreen.Revit/ModelWriter.cs` name step 5, at 334, 403, 424, 453 and 472, and the four
 refusals among them print in the new result panel. They are not reworded and what they should
