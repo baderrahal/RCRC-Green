@@ -74,8 +74,10 @@ def scope(action):
     The reason comes off standard error rather than out of the answer, so a message that
     merely talks about a failure cannot be mistaken for one.
     """
+    # sys.executable rather than python3. On Windows a bare python3 from inside Python
+    # goes through the Windows path and lands on the Store alias, which runs nothing.
     done = subprocess.run(
-        ["python3", SCOPE_FILE, action, os.environ.get("RCRC_COMMIT_COMMAND", "")],
+        [sys.executable, SCOPE_FILE, action, os.environ.get("RCRC_COMMIT_COMMAND", "")],
         capture_output=True)
     if done.returncode != 0:
         return None, done.stderr.decode("utf-8", "replace").strip()

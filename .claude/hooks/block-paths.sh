@@ -40,7 +40,17 @@ RESOLVE='import os,sys; print(os.path.realpath(os.path.abspath(sys.argv[1])))'
 ROOT=$(python3 -c "$RESOLVE" "$REPO_ROOT")
 WHERE=$(python3 -c "$RESOLVE" "$TARGET")
 
-if [ "$WHERE" = "$ROOT" ] || [ "${WHERE#"$ROOT"/}" != "$WHERE" ]; then
+# THE COMPARISON IS PYTHON'S, NOT A SLASH. It was the root and a forward slash as a prefix,
+# so on Windows, where the separator is a backslash and case does not count, every path
+# inside the repo read as outside it and every write was refused. commonpath after
+# normcase is the rule each platform itself applies, and two drives raise, which is outside.
+INSIDE='import os,sys
+root, where = (os.path.normcase(one) for one in sys.argv[1:3])
+try:
+    sys.exit(0 if os.path.commonpath([root, where]) == root else 1)
+except ValueError:
+    sys.exit(1)'
+if python3 -c "$INSIDE" "$ROOT" "$WHERE"; then
   exit 0
 fi
 

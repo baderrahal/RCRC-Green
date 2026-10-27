@@ -112,8 +112,10 @@ def territory_of(path):
     return None
 
 
+# sys.executable rather than python3. On Windows a bare python3 from inside Python
+# goes through the Windows path and lands on the Store alias, which runs nothing.
 listed = subprocess.run(
-    ["python3", ".claude/hooks/commit-scope.py", "all-paths",
+    [sys.executable, ".claude/hooks/commit-scope.py", "all-paths",
      os.environ.get("RCRC_COMMIT_COMMAND", "")],
     capture_output=True)
 if listed.returncode != 0:
