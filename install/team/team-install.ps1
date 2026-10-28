@@ -9,7 +9,7 @@ bypassed for that one run. Needs no admin rights: everything it writes is under 
 own profile.
 
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen.addin
-  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\         the assemblies, features.txt, VERSION.txt
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\         the assemblies, components.csv, features.txt, VERSION.txt
   %APPDATA%\RCRC Green\previous-install\                  the version this install replaced
   Documents\RCRC Green\reports\                           where the pane writes its reports
 
@@ -51,7 +51,7 @@ if (-not $documents) { $documents = Join-Path $env:USERPROFILE 'Documents' }
 $reports = Join-Path $documents 'RCRC Green\reports'
 
 # What this kit puts in the installed folder, and therefore all it keeps and puts back.
-$needed = @('RcrcGreen.Revit.dll', 'RcrcGreen.Core.dll', 'features.txt', 'VERSION.txt')
+$needed = @('RcrcGreen.Revit.dll', 'RcrcGreen.Core.dll', 'components.csv', 'features.txt', 'VERSION.txt')
 $optional = @('RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb')
 $owned = $needed + $optional
 

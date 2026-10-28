@@ -20,6 +20,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
 
 .PARAMETER Configuration
 Which build to install. Release unless you are debugging.
@@ -150,6 +151,17 @@ if (Test-Path -LiteralPath $viewFilters) {
     Copy-Item -LiteralPath $viewFilters -Destination $assemblyFolder -Force
     $copied.Add((Join-Path $assemblyFolder 'ViewFilters.json'))
 }
+
+# The KPI component table: which template each PRX_Component value fills and which folder it
+# files under. Copied on every install, because it is the shipped table and nobody edits it in
+# place: a line added by hand goes to the shared copy in the templates folder or to
+# %APPDATA%\RCRC Green\components.csv, and both of those win over this one.
+$components = Join-Path $PSScriptRoot 'components.csv'
+if (-not (Test-Path -LiteralPath $components)) {
+    throw "Nothing to install. $components is missing, and without it the KPI pane knows no component value."
+}
+Copy-Item -LiteralPath $components -Destination $assemblyFolder -Force
+$copied.Add((Join-Path $assemblyFolder 'components.csv'))
 
 $templatesPointer = Join-Path $assemblyFolder 'templates-folder.txt'
 if (-not (Test-Path -LiteralPath $templatesPointer)) {

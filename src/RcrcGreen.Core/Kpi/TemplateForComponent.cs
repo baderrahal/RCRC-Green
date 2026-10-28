@@ -119,8 +119,7 @@ namespace RcrcGreen.Core.Kpi
             if (meant == null)
             {
                 return TemplateChoice.Between(all, held + " " + NotInTheTable
-                    + ". Pick the template. The eleven it knows are in ComponentTemplates, "
-                    + "measured off the 1548 scan."
+                    + ". Pick the template. The values it knows are in components.csv."
                     + (byPrefix == null ? string.Empty : " The plot prefix says " + byPrefix.Name + "."));
             }
 
@@ -135,7 +134,7 @@ namespace RcrcGreen.Core.Kpi
 
             // The cross check. The component decides where they agree, and where they do not
             // NEITHER of them does.
-            if (byPrefix != null && !ReferenceEquals(byPrefix, meant))
+            if (byPrefix != null && !ReferenceEquals(byPrefix, meant.Kind))
             {
                 return TemplateChoice.Between(all, RoutesDisagree + ": " + held + " means "
                     + meant.Name + " and the plot prefix says " + byPrefix.Name + ". Pick the template.");

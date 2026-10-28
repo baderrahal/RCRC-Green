@@ -33,35 +33,38 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Eleven values and the folders they reach, written out here rather than counted off
-        /// the table. **The round message said nine folders and the table it gave reaches
-        /// eight**, so the number is asserted rather than left to be read off the list. The
+        /// Fifteen values and the folders they reach, written out here rather than counted off
+        /// the table. **The round message said nine folders and the first eleven reach eight**,
+        /// so the number is asserted rather than left to be read off the list. The four 60 per
+        /// cent values of 28 Oct each reach a new folder named as the value, Bader's answer. The
         /// team's snip also holds GOVERMENT BUILDING, which no plot in either measured model
         /// carries a component for, and it is deliberately not in the table.
         /// </summary>
         [Fact]
-        public void ElevenValuesReachEightFolders()
+        public void FifteenValuesReachTwelveFolders()
         {
-            Assert.Equal(11, ComponentFolders.All.Count);
+            Assert.Equal(15, ComponentFolders.All.Count);
 
             Assert.Equal(
                 new[]
                 {
                     "DAILY MOSQUE", "FRIDAY MOSQUE", "SCHOOL", "HEALTHCARE",
-                    "PARKING LOT", "EXISTING PARK", "FUTURE PARKS", "STREETS"
+                    "PARKING LOT", "EXISTING PARK", "FUTURE PARKS", "STREETS",
+                    "DAILY MOSQUE MORE THAN 60%", "DAILY MOSQUE LESS THAN 60%",
+                    "SCHOOL MORE THAN 60%", "SCHOOL LESS THAN 60%"
                 },
                 ComponentFolders.Folders.ToArray());
         }
 
         /// <summary>
         /// Four street values share one folder and the two mosque values do not share theirs,
-        /// which is the whole reason this is a second table beside the template one.
+        /// which is the whole reason the folder is a column of its own beside the template.
         /// </summary>
         [Fact]
         public void TheMosqueValuesSplitWhereTheStreetValuesJoin()
         {
             Assert.Equal(
-                new[] { "NH STRT 20m ROW", "NH STRT LESS 20m ROW", "STREET 30m ROW", "STREET 36m ROW" },
+                new[] { "NH STRT LESS 20m ROW", "NH STRT 20m ROW", "STREET 30m ROW", "STREET 36m ROW" },
                 ComponentFolders.All.Where(one => one.Folder == "STREETS")
                     .Select(one => one.Component).ToArray());
 
@@ -74,7 +77,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// Every value the template table holds is in this one too, so a plot that can be filled
-        /// can be filed. They are separate tables and nothing keeps them level but this.
+        /// can be filed. Every row carries both columns, and this holds the table to it.
         /// </summary>
         [Fact]
         public void EveryComponentThatPicksATemplateAlsoPicksAFolder()

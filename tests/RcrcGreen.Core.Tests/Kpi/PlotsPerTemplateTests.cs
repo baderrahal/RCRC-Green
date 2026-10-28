@@ -214,9 +214,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.True(split.AddsUp);
             Assert.Empty(split.CountedTwice);
-            Assert.Equal(7, split.TemplatesTicked);
+            Assert.Equal(11, split.TemplatesTicked);
             Assert.Equal(4, split.TemplatesWithPlots);
-            Assert.Equal(3, split.TemplatesWithNothing);
+            Assert.Equal(7, split.TemplatesWithNothing);
             Assert.Empty(split.Unplaced);
 
             // Five plots ticked, five plots placed, no plot in two lists.

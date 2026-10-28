@@ -4,6 +4,37 @@ Newest entry first.
 
 ---
 
+## 2026-10-28, the 60 per cent templates and one components.csv, part (a) of two
+
+**Goal.** Four 60 per cent templates and four new PRX_Component values, one components.csv in
+place of the two tables in code, and the spacing tolerant match. Part (b), the layout rule and the
+two prompts in the pane, is the next pull request.
+
+**Done.** `design/component-wiring.md` maps every use and holds the cell by cell comparison: the
+LESS THAN 60 files are byte for byte MOSQUES and SCHOOLS, and MORE THAN 60 differs in H31 to H35
+only. `install/components.csv`, fifteen rows, read by `ComponentTable`, shipped under personal
+under shared. `ComponentMatch` is the one match rule. The four templates are versions of their
+kind, K72 and K73. install.ps1, the kit and team-install carry the csv. The round prompt asked for
+the install.ps1 change, and the line in `RcrcGreen.Core.csproj` is what puts the file beside the
+DLLs, so both are named here for Bader.
+
+**Checked.** RAN after the last code file: build 0 warnings 0 errors, 2472 tests passed against
+2395 before, 28 of 28 hook cases. install.ps1 into a throwaway profile put components.csv beside
+the DLLs, same SHA-256. A kit built from the branch holds it and installs it.
+
+**UNKNOWN.** Nothing ran in Revit. The model's spelling of the two school values.
+
+**Remains.** Part (b).
+
+**Known bugs.** A shared components.csv that cannot be read lets the shipped one answer with no
+word on the pane until part (b).
+
+**Next.** Part (b).
+
+**Your turn.** Nothing until the round ends.
+
+---
+
 ## 2026-10-28, Q6, Q7 and the KPI team kit, F2
 
 **Goal.** Q6 and Q7 in, one build that shows KPI alone where features.txt says so, a build stamp

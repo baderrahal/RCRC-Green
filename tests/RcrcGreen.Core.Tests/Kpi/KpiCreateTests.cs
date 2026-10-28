@@ -105,10 +105,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Fact]
-        public void TheTableHoldsTheElevenAndNothingElse()
+        public void TheTableHoldsTheFifteenAndNothingElse()
         {
-            Assert.Equal(11, ComponentTemplates.All.Count);
-            Assert.Equal(11, ComponentTemplates.All.Select(one => one.Component).Distinct().Count());
+            Assert.Equal(15, ComponentTemplates.All.Count);
+            Assert.Equal(15, ComponentTemplates.All.Select(one => one.Component).Distinct().Count());
             Assert.All(ComponentTemplates.All,
                 one => Assert.Contains(one.Template, KpiTemplates.All));
         }
@@ -152,7 +152,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Fact]
-        public void TheCaseAndTheSurroundingSpaceComeOffAndNothingElseDoes()
+        public void TheCaseAndTheSpacingAreForgivenAndNoOtherGluedWordIsPulledApart()
         {
             Assert.Equal("HEALTHCARE", ComponentTemplates.For("  health  ").Name);
             Assert.Equal("STREETS", ComponentTemplates.For("street 36M row").Name);
@@ -227,12 +227,12 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.True(choice.NeedsAPick);
             Assert.Contains("FRIDAY MOSQUE, SCHOOL", choice.Why);
-            Assert.Equal(7, choice.Candidates.Count);
+            Assert.Equal(11, choice.Candidates.Count);
         }
 
         /// <summary>
         /// A value the table does not hold preselects nothing, names itself, and offers all
-        /// seven. Nothing guesses and nothing falls back to matching on a name.
+        /// eleven. Nothing guesses and nothing falls back to matching on a name.
         /// </summary>
         [Fact]
         public void AComponentNotInTheTablePutsThePickToTheUserAndNamesIt()
@@ -240,10 +240,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             TemplateChoice choice = TemplateForComponent.For(Holding("PUMP STATION"), null, null);
 
             Assert.True(choice.NeedsAPick);
-            Assert.Equal(7, choice.Candidates.Count);
+            Assert.Equal(11, choice.Candidates.Count);
             Assert.Equal(
                 "PUMP STATION is not one of the component values this tool knows. Pick the "
-                + "template. The eleven it knows are in ComponentTemplates, measured off the 1548 scan.",
+                + "template. The values it knows are in components.csv.",
                 choice.Why);
         }
 

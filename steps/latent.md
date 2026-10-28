@@ -296,3 +296,73 @@ Where: `install/team/team-install.ps1`, the reports folder
 Input: Documents redirected to a network share that is offline
 Why latent: the install ends on a clear FAILED line
 Found: KPI team kit, breaker second pass
+
+## L41 A folder from components.csv is not checked as a folder name
+
+Where: `PlotWorkbookPath.cs` 113 and 139, `Path.Combine(root, folder, held)`
+Input: a hand typed Folder such as `D:\KPI`, `..`, `SCHOOL/60` or `STREETS.` in a shared or personal file
+Why latent: no shared or personal file exists yet and the fifteen shipped folders are plain names
+Found: 60 per cent round part (a), breaker and reviewer
+
+## L42 A press reads the table in force more than once
+
+Where: `KpiRequestHandler.cs` before the split, `ComponentFolders.For` in the filing paths, `KpiCreateReport` at the end
+Input: the shared components.csv saved by someone during a press
+Why latent: a press takes minutes and no edit of a shared file during one has been seen. PutInForce hands back its table and the press does not hold it
+Found: 60 per cent round part (a), breaker and reviewer
+
+## L43 A version file name spelt another way reads as its kind
+
+Where: `RecognisedWorkbook.ByVersion`, words MORE THAN 60 looked for whole
+Input: a file named MOSQUES MORETHAN60.xlsx or MOSQUES OVER 60.xlsx
+Why latent: the client's four files carry the words with spaces. A trailing per cent sign is now taken
+Found: 60 per cent round part (a), breaker
+
+## L44 A row naming an unknown template is called an unknown value
+
+Where: `PlotsPerTemplate.For` and `TemplateForComponent.For`, the NotInTheTable sentence
+Input: a shared row whose Template column is MOSQUES MORE THAN 60% with the per cent sign
+Why latent: no shared file exists yet. Both reports name the row and its template as unknown
+Found: 60 per cent round part (a), breaker
+
+## L45 The create report shows one spelling of a value the model spells two ways
+
+Where: `KpiCreateReport.TheComponentTable`, grouped on the key
+Input: plots carrying DAILY MOSQUE LESSTHAN 60% and DAILY MOSQUE LESS THAN 60% at once
+Why latent: which spelling the model holds is UNKNOWN. The scan report prints both
+Found: 60 per cent round part (a), breaker
+
+## L46 Two rules say what a version adds to its kind
+
+Where: `AssetTypeNames.Display` parses MORE or LESS THAN n, `RecognisedWorkbook.VersionWords` cuts the kind's name
+Input: a version named other than kind plus MORE or LESS THAN n
+Why latent: the four versions are all that shape and agree under both
+Found: 60 per cent round part (a), reviewer
+
+## L47 The shipped path and the shared path can throw
+
+Where: `ComponentTable.ShippedPath` on an empty `Assembly.Location`, `ComponentFiles.SharedPath` on a pointer with invalid characters
+Input: an add-in loaded from bytes, a hand edited templates-folder.txt
+Why latent: Revit loads the add-in from its file and the pane writes the pointer itself
+Found: 60 per cent round part (a), breaker
+
+## L48 Every redraw reads the shared file and every lookup works the key out again
+
+Where: `KpiPanel.RedrawTemplates` through `ComponentFiles.PutInForce`, `ComponentTable.RowFor`
+Input: a templates folder on a slow share, or a table of thousands of rows
+Why latent: the table holds fifteen rows and the templates folder is synced locally today
+Found: 60 per cent round part (a), breaker and reviewer
+
+## L49 Two filled version paths have no test
+
+Where: `RecognisedWorkbook.ByVersion`, a filled file with one version's words and with two
+Input: a filled MOSQUES MORE THAN 60 checklist dropped back into the templates folder
+Why latent: no filled version checklist exists yet. The kind's filled path is tested
+Found: 60 per cent round part (a), reviewer
+
+## L50 The header is written down twice in ComponentTable
+
+Where: `ComponentTable.Header` and `HeaderFields`
+Input: a change to one of the two and not the other
+Why latent: neither has changed and a test reads the shipped header through both
+Found: 60 per cent round part (a), reviewer

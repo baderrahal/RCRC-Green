@@ -30,11 +30,13 @@ namespace RcrcGreen.Core.Kpi
     public sealed class PlotTemplate
     {
         public PlotTemplate(
-            string plotId, KpiTemplate template, TemplateRoute route, string why, KpiTemplate notTicked = null)
+            string plotId, KpiTemplate template, TemplateRoute route, string why, KpiTemplate notTicked = null,
+            string component = null)
         {
             if (string.IsNullOrWhiteSpace(plotId)) throw new ArgumentNullException("plotId");
 
             NotTicked = notTicked;
+            Component = (component ?? string.Empty).Trim();
             PlotId = plotId.Trim();
             Template = template;
             Route = route;
@@ -42,6 +44,12 @@ namespace RcrcGreen.Core.Kpi
         }
 
         public string PlotId { get; }
+
+        /// <summary>
+        /// The component on the plot's sheets as the model holds it, empty where none is, so the
+        /// report can say which components.csv row placed it.
+        /// </summary>
+        public string Component { get; }
 
         /// <summary>
         /// Null where nothing placed it. Such a plot is read for no workbook and is named in
@@ -168,11 +176,11 @@ namespace RcrcGreen.Core.Kpi
                 if (byPrefix == null)
                 {
                     return new PlotTemplate(plotId, null, TemplateRoute.Nothing,
-                        "no component is on its sheets and " + prefixSays);
+                        "no component is on its sheets and " + prefixSays, null, held);
                 }
 
                 return new PlotTemplate(plotId, byPrefix, TemplateRoute.Prefix,
-                    "no component is on its sheets, so the PLOT PREFIX placed it in " + byPrefix.Name);
+                    "no component is on its sheets, so the PLOT PREFIX placed it in " + byPrefix.Name, null, held);
             }
 
             KpiTemplate meant = ComponentTemplates.For(held);
@@ -182,19 +190,21 @@ namespace RcrcGreen.Core.Kpi
                 return new PlotTemplate(plotId, null, TemplateRoute.Nothing,
                     held + " " + TemplateForComponent.NotInTheTable
                     + ", so the component placed it nowhere and the prefix does not answer in its "
-                    + "place. " + Capitalised(prefixSays));
+                    + "place. " + Capitalised(prefixSays), null, held);
             }
 
-            if (byPrefix != null && !ReferenceEquals(byPrefix, meant))
+            // The prefix names an asset type, so it agrees with any version of it: DM says
+            // MOSQUES and MOSQUES MORE THAN 60 is a MOSQUES template.
+            if (byPrefix != null && !ReferenceEquals(byPrefix, meant.Kind))
             {
                 return new PlotTemplate(plotId, null, TemplateRoute.Disagree,
                     held + " means " + meant.Name + " and " + prefixSays
-                    + ", so NEITHER placed it");
+                    + ", so NEITHER placed it", null, held);
             }
 
             return new PlotTemplate(plotId, meant, TemplateRoute.Component,
                 held + " placed it in " + meant.Name
-                + (byPrefix == null ? string.Empty : ", and the plot prefix agrees"));
+                + (byPrefix == null ? string.Empty : ", and the plot prefix agrees"), null, held);
         }
 
         /// <summary>
@@ -239,7 +249,7 @@ namespace RcrcGreen.Core.Kpi
                 .Select(one => one.Placed
                     ? new PlotTemplate(one.PlotId, null, one.Route,
                         one.Why + ", and " + one.Template.Name + " is not ticked, so it was not read",
-                        one.Template)
+                        one.Template, one.Component)
                     : one)
                 .ToList();
 

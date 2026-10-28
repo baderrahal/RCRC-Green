@@ -21,9 +21,9 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// **Two routes to a template and one to a folder**, which is the two records shape where
     /// the two records are the two steps of one decision.
     ///
-    /// The answer adds no eighth table. Both tables are keyed on the same eleven components, so
-    /// which folders a template reaches is already written down, and six of the seven templates
-    /// reach exactly ONE folder. That one is where a plot with no component of its own is filed.
+    /// The answer adds no table. The template and the folder are two columns of one row per
+    /// component, so which folders a template reaches is already written down, and ten of the
+    /// eleven templates reach exactly ONE folder. That one is where a plot with no component of its own is filed.
     /// MOSQUES reaches two, so FM-08 is still refused, and it is refused BEFORE the press.
     /// </summary>
     public class PlotWithNoComponentTests

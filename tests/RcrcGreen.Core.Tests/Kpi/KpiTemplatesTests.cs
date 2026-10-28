@@ -8,10 +8,11 @@ namespace RcrcGreen.Core.Tests.Kpi
     public class KpiTemplatesTests
     {
         [Fact]
-        public void TheMapHoldsSevenCompleteTemplatesAndEveryCellParses()
+        public void TheMapHoldsElevenCompleteTemplatesAndEveryCellParses()
         {
-            Assert.Equal(7, KpiTemplates.All.Count);
-            Assert.Equal(7, KpiTemplates.All.Select(template => template.Name).Distinct().Count());
+            // The seven of 9 September and the four 60 per cent versions of 28 Oct.
+            Assert.Equal(11, KpiTemplates.All.Count);
+            Assert.Equal(11, KpiTemplates.All.Select(template => template.Name).Distinct().Count());
 
             foreach (KpiTemplate template in KpiTemplates.All)
             {
@@ -45,14 +46,39 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Fact]
-        public void TheSevenNamesAndTheirMainSheetsComeInTheBriefsOrder()
+        public void TheSevenNamesAndTheirMainSheetsComeInTheBriefsOrderThenTheFourVersions()
         {
             Assert.Equal(
-                new[] { "EXISTING PARKS", "FUTURE PARKS", "HEALTHCARE", "MOSQUES", "PARKING", "SCHOOLS", "STREETS" },
+                new[]
+                {
+                    "EXISTING PARKS", "FUTURE PARKS", "HEALTHCARE", "MOSQUES", "PARKING", "SCHOOLS", "STREETS",
+                    "MOSQUES MORE THAN 60", "MOSQUES LESS THAN 60", "SCHOOLS MORE THAN 60", "SCHOOLS LESS THAN 60"
+                },
                 KpiTemplates.All.Select(template => template.Name));
             Assert.Equal(
-                new[] { "<Park Name>", "<Park Name>", "<Healthcare>", "<Mosques>", "<Parking Plots>", "<Schools>", "<Streets>" },
+                new[]
+                {
+                    "<Park Name>", "<Park Name>", "<Healthcare>", "<Mosques>", "<Parking Plots>", "<Schools>", "<Streets>",
+                    "<Mosques>", "<Mosques>", "<Schools>", "<Schools>"
+                },
                 KpiTemplates.All.Select(template => template.MainSheetName));
+        }
+
+        /// <summary>
+        /// Each 60 per cent template is a version of its kind and every one of the seven is its
+        /// own kind, which is what the plot prefix cross checks.
+        /// </summary>
+        [Theory]
+        [InlineData("MOSQUES MORE THAN 60", "MOSQUES")]
+        [InlineData("MOSQUES LESS THAN 60", "MOSQUES")]
+        [InlineData("SCHOOLS MORE THAN 60", "SCHOOLS")]
+        [InlineData("SCHOOLS LESS THAN 60", "SCHOOLS")]
+        [InlineData("MOSQUES", "MOSQUES")]
+        [InlineData("STREETS", "STREETS")]
+        public void EachVersionIsOfItsKind(string name, string kind)
+        {
+            Assert.Equal(kind, Named(name).Kind.Name);
+            Assert.Equal(name != kind, Named(name).IsVariant);
         }
 
         [Theory]
@@ -63,6 +89,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("PARKING", "D3", "E4", "H7", "F10", "H10")]
         [InlineData("SCHOOLS", "D3", "E4", "H7", "F10", "H10")]
         [InlineData("STREETS", "D3", "E4", "H8", "F11", "H11")]
+        [InlineData("MOSQUES MORE THAN 60", "D3", "E4", "H7", "F10", "H10")]
+        [InlineData("MOSQUES LESS THAN 60", "D3", "E4", "H7", "F10", "H10")]
+        [InlineData("SCHOOLS MORE THAN 60", "D3", "E4", "H7", "F10", "H10")]
+        [InlineData("SCHOOLS LESS THAN 60", "D3", "E4", "H7", "F10", "H10")]
         public void EachValueGoesIntoTheCellMeasuredOffTheAnnotatedSet(
             string name, string component, string location, string area, string shrubs, string lawn)
         {
@@ -188,7 +218,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void EveryMainSheetNameIsWrappedInAngleBrackets()
         {
-            Assert.Equal(7, KpiTemplates.All.Count);
+            Assert.Equal(11, KpiTemplates.All.Count);
 
             foreach (KpiTemplate template in KpiTemplates.All)
             {

@@ -14,4 +14,13 @@
          shared surface both can load. Nothing here may reference the Revit API. -->
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The one table of component values, in install/ because the install copies it beside
+         the add-in. Copied into this output too, so the tests and the Revit build carry it
+         beside RcrcGreen.Core.dll, which is where ComponentTable.Shipped reads it. -->
+    <None Include="..\..\install\components.csv" Link="components.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

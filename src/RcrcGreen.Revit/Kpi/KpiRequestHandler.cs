@@ -386,6 +386,8 @@ namespace RcrcGreen.Revit.Kpi
             // no workbook and is named. A plot has one template and one only, which is why a plot
             // read for MOSQUES is never read again for STREETS: the split is what makes the read
             // once, and no cache sits beside it.
+            // Read again at the press, so the split and its report use the files as they are now.
+            ComponentFiles.PutInForce();
             TemplateSplit split = PlotsPerTemplate.Split(
                 asked.Ticked, asked.ComponentOn, asked.Templates.Select(one => one.Template));
 

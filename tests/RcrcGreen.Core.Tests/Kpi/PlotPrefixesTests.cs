@@ -33,7 +33,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void EveryTemplateIsReachedByAtLeastOnePrefix()
         {
-            Assert.All(KpiTemplates.All, one => Assert.NotEmpty(PlotPrefixes.PrefixesFor(one)));
+            // A prefix names an asset type, so it reaches a 60 per cent version through its kind.
+            Assert.All(KpiTemplates.All, one => Assert.NotEmpty(PlotPrefixes.PrefixesFor(one.Kind)));
+            Assert.Empty(PlotPrefixes.PrefixesFor(KpiTemplates.MosquesMoreThan60));
         }
 
         /// <summary>
@@ -58,7 +60,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             var byPrefix = new HashSet<string>(
                 PlotPrefixes.All.Select(one => one.Template.Name));
             var byComponent = new HashSet<string>(
-                ComponentTemplates.All.Select(one => one.Template.Name));
+                ComponentTemplates.All.Select(one => one.Template.Kind.Name));
 
             Assert.Equal(7, byPrefix.Count);
             Assert.Equal(7, byComponent.Count);

@@ -74,7 +74,11 @@ namespace RcrcGreen.Core.Kpi
             get
             {
                 if (IsMatched) return Template.Name;
-                if (NeedsAPick) return "EXISTING PARKS or FUTURE PARKS. Pick one, nothing is guessed.";
+                if (NeedsAPick)
+                {
+                    return string.Join(" or ", Candidates.Select(one => one.Name).ToArray())
+                        + ". Pick one, nothing is guessed.";
+                }
                 if (IsFilled) return "filled, not offered. " + Reason;
                 return "not offered. " + Reason;
             }
@@ -90,9 +94,14 @@ namespace RcrcGreen.Core.Kpi
 
         public static RecognisedWorkbook Between(string fileName, KpiTemplate first, KpiTemplate second)
         {
+            return Between(fileName, new[] { first, second });
+        }
+
+        public static RecognisedWorkbook Between(string fileName, IReadOnlyList<KpiTemplate> candidates)
+        {
             if (fileName == null) throw new ArgumentNullException("fileName");
 
-            return new RecognisedWorkbook(fileName, null, new[] { first, second }, null);
+            return new RecognisedWorkbook(fileName, null, candidates, null);
         }
 
         public static RecognisedWorkbook NotATemplate(string fileName, string reason)
@@ -169,6 +178,11 @@ namespace RcrcGreen.Core.Kpi
                     "Its first sheet is named " + mainSheet + ", which no template uses.");
             }
 
+            if (byName.Any(one => one.IsVariant))
+            {
+                return ByVersion(fileName, byName, cells);
+            }
+
             if (byName.Count == 1)
             {
                 FilledCell decided = FilledMarks.Decide(cells);
@@ -193,6 +207,61 @@ namespace RcrcGreen.Core.Kpi
             if (future && !existing) return Matched(fileName, KpiTemplates.FutureParks);
 
             return Between(fileName, KpiTemplates.ExistingParks, KpiTemplates.FutureParks);
+        }
+
+        /// <summary>
+        /// A first sheet that a kind and its versions share, `&lt;Mosques&gt;` for MOSQUES and its
+        /// two 60 per cent versions. **The file name says which**, through the words that tell a
+        /// version from its kind, MORE THAN 60 or LESS THAN 60, as whole words and with the
+        /// spacing forgiven. No version's words in the name is the kind itself, which is every
+        /// file this tool recognised before the versions existed. Two versions' words in one
+        /// name is a pick for the user, never a guess.
+        /// </summary>
+        private static RecognisedWorkbook ByVersion(string fileName, IReadOnlyList<KpiTemplate> byName, IReadOnlyDictionary<string, string> cells)
+        {
+            string words = " " + NameWords(fileName) + " ";
+            List<KpiTemplate> named = byName
+                .Where(one => one.IsVariant && words.Contains(" " + VersionWords(one) + " "))
+                .ToList();
+
+            KpiTemplate kind = byName.FirstOrDefault(one => !one.IsVariant) ?? byName[0].Kind;
+            FilledCell decided = FilledMarks.Decide(cells);
+
+            if (named.Count > 1)
+            {
+                return decided == null
+                    ? Between(fileName, named)
+                    : NotATemplate(fileName, "It is a filled " + string.Join(" or ", named.Select(one => one.Name).ToArray())
+                        + " checklist, which its file name cannot tell apart, not a template. " + decided.InWords);
+            }
+
+            KpiTemplate which = named.Count == 1 ? named[0] : kind;
+            return decided == null ? Matched(fileName, which) : Filled(fileName, which, decided);
+        }
+
+        /// <summary>
+        /// What a version's name adds to its kind's, MORE THAN 60 on MOSQUES MORE THAN 60.
+        /// </summary>
+        internal static string VersionWords(KpiTemplate version)
+        {
+            string whole = ComponentMatch.Key(version.Name);
+            string kind = ComponentMatch.Key(version.Kind.Name);
+
+            return whole.StartsWith(kind + " ", StringComparison.Ordinal) ? whole.Substring(kind.Length + 1) : whole;
+        }
+
+        /// <summary>
+        /// A file name as words: the extension off, every run of anything but a letter or a
+        /// digit one space, and the rest through <see cref="ComponentMatch"/>. A per cent sign is
+        /// a gap too, so a file named MORE THAN 60% is the MORE THAN 60 version.
+        /// </summary>
+        internal static string NameWords(string fileName)
+        {
+            string bare = System.IO.Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+            var spaced = new System.Text.StringBuilder();
+            foreach (char one in bare) spaced.Append(char.IsLetterOrDigit(one) ? one : ' ');
+
+            return ComponentMatch.Key(spaced.ToString());
         }
     }
 }
