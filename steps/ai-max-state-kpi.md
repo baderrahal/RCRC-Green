@@ -1,7 +1,8 @@
 # ai-max state, KPI
 
-Phase: 7, building. Q6, Q7 and the KPI team kit, F2 in `steps/01_next.md`. The tool list in
-`Core/Shared/Features.cs` lands first, in a commit of its own, because it is a Shared change.
+Phase: 9, ship. Q6, Q7 and the KPI team kit, F2 in `steps/01_next.md`. The Shared tool list
+merged alone as pull request 173, the KPI work in the pull request after it. Its entry is the
+top of `steps/log-kpi.md`. Nothing in it has run in Revit.
 
 Phase: 9, ship. Q1 to Q5 answered and the records inside the AI MAX version 4 caps, F1b in
 `steps/01_next.md`. Under AI MAX version 4. Its entry is the top of `steps/log-kpi.md`, and

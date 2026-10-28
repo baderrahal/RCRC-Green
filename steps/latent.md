@@ -167,3 +167,132 @@ Where: `steps/runs/2026-10-28-records-split/split.py`, the CLAUDE.md proof
 Input: a rerun whose pointer text gains a second heading
 Why latent: the script refuses outside 4b244b3, and the line holding the heading is checked once
 Found: records split, reviewer second pass
+
+## L23 A throw before the install's try ends on red text
+
+Where: `install/team/team-install.ps1`, Get-Process, Unblock-File and the reference read
+Input: a damaged DLL in the zip, or Windows refusing a process list
+Why latent: neither has happened, and INSTALL-TEAM.txt asks for a screenshot of red text
+Found: KPI team kit, 28 Oct 2026, reviewer and breaker
+
+## L24 A failed copy while keeping the old version promises a put back that refuses
+
+Where: `install/team/team-install.ps1`, the keep step and the FAILED line
+Input: a disk error between deleting the old kept folder and writing kept-files.txt, or a copy
+that fails on the same zip's second install when nothing was ever kept
+Why latent: it needs the disk to fail in that moment
+Found: KPI team kit, reviewer and breaker, and the second case in the reviewer's second pass
+
+## L25 Group Policy over the launcher's policy bypass
+
+Where: `install/team/Install RCRC Green KPI.cmd`
+Input: a machine or user execution policy set by Group Policy, with the zip's internet mark
+Why latent: whether the team's PCs carry one is UNKNOWN, and red text asks for a screenshot
+Found: KPI team kit, breaker
+
+## L26 SmartScreen's More info, Run anyway is not on the install page
+
+Where: `install/team/INSTALL-TEAM.txt`, step 3
+Input: a zip from Teams or a browser on a PC with SmartScreen for .cmd files
+Why latent: which prompt the team's PCs show is UNKNOWN
+Found: KPI team kit, reviewer
+
+## L27 C# names written again in PowerShell
+
+Where: `build-team-kit.ps1` writes KPI and matches no-commit and changed, `install.ps1` names
+features.txt, `team-install.ps1` words an unstamped build its own way
+Input: a rename of `Features.Kpi`, `Features.FileName` or the stamp's words
+Why latent: nothing renames them, and PowerShell cannot call the C#
+Found: KPI team kit, reviewer
+
+## L28 The stamp is in the pane header and the reports, not a title bar
+
+Where: Phase 10 asks for the window's title bar, the round asked for the pane header
+Input: none, it is where the round put it
+Why latent: the round's own instruction, recorded here so the audit does not read it as missed
+Found: KPI team kit, reviewer
+
+## L29 The Q6 test reaches the rule and not the pane line that asks it
+
+Where: `KpiPanel.cs`, Say, which asks `PressEnd.RedrawsTheSteps`
+Input: the pane line put back to asking the pressing flag alone
+Why latent: no Core test can reach the pane, and the line asks the rule today
+Found: KPI team kit, reviewer
+
+## L30 A stamp built where git cannot answer
+
+Where: `RcrcGreen.Revit.csproj`, RcrcBuildStamp, which takes the error text as changes
+Input: a build from a source zip or on a machine with no git, or git printing a warning line
+Why latent: every build here runs in a checkout, and the kit refuses a no-commit stamp
+Found: KPI team kit, breaker
+
+## L31 VERSION.txt and the DLL can disagree about what is installed
+
+Where: `team-install.ps1`, VersionIn, which reads VERSION.txt before the DLL's stamp
+Input: an older install.ps1 or a hand copy over a kit install, which leaves VERSION.txt
+Why latent: this round's install.ps1 removes it, and nobody copies by hand
+Found: KPI team kit, breaker
+
+## L32 install.ps1 leaves the kit's kept version in place
+
+Where: `install/install.ps1` and `%APPDATA%\RCRC Green\previous-install`
+Input: Bader installs the kit, then install.ps1 without a put back, then a put back
+Why latent: Bader's steps put back before install.ps1
+Found: KPI team kit, breaker
+
+## L33 A second manifest with the same add-in id elsewhere
+
+Where: `team-install.ps1` checks only its own Addins\2024 path
+Input: a copy in ProgramData\Autodesk\Revit\Addins\2024 or under another name
+Why latent: both installs here write the one path
+Found: KPI team kit, breaker
+
+## L34 The KPI pane's not-available words name the Drawing Sheet
+
+Where: `src/RcrcGreen.Revit/Kpi/ShowKpiCommand.cs`, NotAvailable
+Input: a kit machine where the KPI pane fails to register
+Why latent: no pane has failed to register on any measured machine
+Found: KPI team kit, breaker
+
+## L35 The journal write and the event raise are unguarded
+
+Where: `RcrcGreenApplication.cs`, Journal, and `KpiPanel.cs`, Ask, which ignores Raise's answer
+Input: Revit throwing on a journal comment, or answering a raise with Denied or TimedOut
+Why latent: neither has been seen, and the journal line runs only for an unknown name
+Found: KPI team kit, breaker
+
+## L36 A repeat install is known by the stamp, which holds the build minute
+
+Where: `install/team/team-install.ps1`, StampOf and $again
+Input: two kits of one commit built minutes apart both installed, or Bader's own build of the
+same commit in the same minute as the kit
+Why latent: the team installs the one zip on Teams, and the kit is built from a clean worktree
+Found: KPI team kit, breaker second pass
+
+## L37 A reports folder named by an earlier kit is kept
+
+Where: `install/team/team-install.ps1`, reports-folder.txt left as it is when it names a folder
+Input: a PC that installed a kit from before the OneDrive fix
+Why latent: no kit zip has been shared yet
+Found: KPI team kit, breaker second pass
+
+## L38 An install after a half failed put back keeps the mix
+
+Where: `install/team/team-install.ps1`, put back then install again
+Input: a put back that fails part way, then Install instead of a screenshot
+Why latent: it needs a disk failure during the put back
+Found: KPI team kit, breaker second pass
+
+## L39 A source file under an ignored build or dist folder is not counted as a change
+
+Where: `RcrcGreen.Revit.csproj`, git status against `.gitignore`
+Input: a new .cs file under a folder named build or dist inside src
+Why latent: no such folder exists under src
+Found: KPI team kit, breaker second pass
+
+## L40 A Documents folder on an offline share
+
+Where: `install/team/team-install.ps1`, the reports folder
+Input: Documents redirected to a network share that is offline
+Why latent: the install ends on a clear FAILED line
+Found: KPI team kit, breaker second pass

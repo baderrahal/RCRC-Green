@@ -53,7 +53,8 @@ Questions asked before this file existed are in each task's own log and are not 
    Options: A fix it in a short round of its own, with the pane redrawing step 2 after a refusal.
    B leave it, the status line already says why
 
-   Answer:
+   Answer: A, 2026-10-28. `PressEnd.RedrawsTheSteps` draws the steps again after a refused read,
+   in the KPI team kit round.
 
 7. Rules a session needs on every turn now sit in docs/rules. The split kept a few whole
    sections in .claude/rules and CLAUDE.md under their caps. The two plot parameters fact (M07),
@@ -62,5 +63,14 @@ Questions asked before this file existed are in each task's own log and are not 
 
    Options: A add one pointer line per rule to CLAUDE.md, naming its id, which costs about 0.5 KB.
    B leave them in docs/rules, found through the index
+
+   Answer: A, 2026-10-28. Five lines in CLAUDE.md under Rules a session needs every turn.
+
+8. A features.txt naming no tool it knows shows all three tools. The round said unknown names
+   are ignored, and a file of nothing but unknown names would then show an empty tab. The kit
+   writes KPI, so only a hand edit reaches it.
+
+   Options: A keep it, three tools shown is a fault somebody sees and reports, and the journal
+   says why. B show no tool at all
 
    Answer:

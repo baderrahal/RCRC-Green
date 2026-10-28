@@ -4,6 +4,50 @@ Newest entry first.
 
 ---
 
+## 2026-10-28, Q6, Q7 and the KPI team kit, F2
+
+**Goal.** Q6 and Q7 in, one build that shows KPI alone where features.txt says so, a build stamp
+in the KPI pane and its reports, and a zip the production team installs with no repo and no
+admin rights.
+
+**Done.** Q6: `PressEnd.RedrawsTheSteps` draws the steps again after a refused read. Q7: five
+id lines in CLAUDE.md. `Features` in Core/Shared decides from the lines of features.txt, which
+the application reads: none or empty shows all three, an unknown name goes to Revit's journal, a file naming no tool shows all three, CHOSEN
+and Q8. It merged alone as pull request 173, `4390520`, because territory.md asks a Shared change
+for a pull request of its own, against this round's one pull request. The csproj stamps the
+short hash and build time, with changed for changes or untracked files, shown after Build in the
+pane header and as the first line of both KPI reports. `install/build-team-kit.ps1` builds a
+throwaway worktree and zips to Documents\RCRC-Green-Team-Kit. `install/team/` holds
+team-install.ps1, the two launchers from the AI MAX assets and INSTALL-TEAM.txt. install.ps1
+removes a kit's features.txt and VERSION.txt.
+
+**Checked.** RAN after the last file: build 0 warnings 0 errors, 2395 tests passed, 28 of 28
+hook cases, against 2380 and 28 before. The PressEnd test failed 1 of 3 on the old rule.
+Pull request 173's gate read 2388 and 28. In throwaway profiles, through the launchers of the
+zip built from `f23b895`: Bader's install.ps1, the kit, the kit again, put back with a stand-in
+Revit.exe running (REFUSED, exit 2), put back (DONE, the full install's DLL back by hash,
+features.txt gone). Before that, a fresh install made the reports folder, a folder named
+Temp1_x.zip was REFUSED, a blocked file beside the kit stayed blocked, and the chosen templates
+folder was untouched. The zip holds 11 files, 631,384 bytes. Reviewer and breaker, two passes
+each, their findings in `steps/latent.md` by pass. The six REAL are fixed: the same zip twice, the unblock sweep, untracked files in the stamp,
+OneDrive Documents, the unsigned add-in prompt, the Shared pull request. L23 to L40 are LATENT.
+Usage: the session reads 254,875,370 tokens and 94.98 USD. Since the F1b reading, F1b's merge
+turns included, that is 40,444,652 and 16.10, read before this round's final checks and merge.
+Both rows are partial. This one is more than F1b's 24,229,432 and 12.40 and under twice it.
+
+**UNKNOWN.** Nothing ran in Revit: the KPI only ribbon, the stamp on screen, Q6 on a real refused
+read, Revit's unsigned add-in prompt. No team PC: OneDrive, SmartScreen, Group Policy.
+
+**Remains.** The kit from main is built after the merge, outside the repo.
+
+**Known bugs.** None open.
+
+**Next.** Bader's pass in `steps/03_your_steps.md`, then the zip to Teams or SharePoint.
+
+**Your turn.** Q8 Features file naming no tool. The run in `steps/03_your_steps.md`.
+
+---
+
 ## 2026-10-28, Q1 to Q5 answered and the records inside the version 4 caps
 
 **Goal.** Bader's answers to Q1 to Q5 in, every record a session pays for at start inside the

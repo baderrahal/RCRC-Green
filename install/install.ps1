@@ -79,6 +79,17 @@ foreach ($assembly in $assemblyNames) {
     $copied.Add((Join-Path $assemblyFolder $assembly))
 }
 
+# A team kit install leaves features.txt naming KPI alone and a VERSION.txt for the kit. This is
+# the full install, so both go: no features.txt shows all three tools, and a VERSION.txt left
+# over would name a build that is no longer the one installed.
+foreach ($kitFile in @('features.txt', 'VERSION.txt')) {
+    $left = Join-Path $assemblyFolder $kitFile
+    if (Test-Path -LiteralPath $left) {
+        Remove-Item -LiteralPath $left -Force
+        Write-Host "Removed $left, left by a team kit install"
+    }
+}
+
 # The symbol files are optional. Without them a stack trace from Revit has no line numbers,
 # which is the difference between a report you can act on and one you cannot.
 foreach ($symbols in @('RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb')) {

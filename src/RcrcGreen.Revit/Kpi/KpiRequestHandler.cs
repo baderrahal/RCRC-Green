@@ -225,7 +225,7 @@ namespace RcrcGreen.Revit.Kpi
             DateTime writtenAt = DateTime.Now;
             IReadOnlyList<string> written = ReportFile.Write(
                 KpiFile.NameFor(scan.Document.Title, writtenAt),
-                KpiReport.Write(scan, writtenAt));
+                BuildStamp.Stamped(KpiBuildStamp.Read(), KpiReport.Write(scan, writtenAt)));
 
             // What was read, so a second Create on the same model does not read it again.
             _scannedTitle = scan.Document.Title ?? string.Empty;
@@ -498,7 +498,9 @@ namespace RcrcGreen.Revit.Kpi
             // **ONE REPORT FOR THE RUN, not one per workbook.**
             IReadOnlyList<string> written = ReportFile.Write(
                 KpiFile.NameFor(document.Title + "_checklist", writtenAt),
-                KpiCreateReport.WriteAll(set, writtenAt, asked.Before.WithScan(_scanHeadline)));
+                BuildStamp.Stamped(
+                    KpiBuildStamp.Read(),
+                    KpiCreateReport.WriteAll(set, writtenAt, asked.Before.WithScan(_scanHeadline))));
 
             // **THE PANE WANTS THE PATH AND THE STATUS LINE WANTS THE SENTENCE.**
             // `ReportPlaces.Written` builds `Report at <path>.`, which is right on the line

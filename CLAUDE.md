@@ -100,6 +100,14 @@ SCHEDULES` really carries two spaces. The KPI rules hold the measurement, K35.09
 
 **Things that have gone wrong before** are in `docs/gone-wrong.md`. Add to it whenever something breaks.
 
+## Rules a session needs every turn, read by id
+
+- M07, two plot parameters, `PRX_Plot_ID` and `PRX_Ref Plot ID`: `docs/rules/project-facts.md`
+- K51, the pane holds no copy of anything it can ask for: `docs/rules/kpi-pane.md`
+- K56, nothing may write to a template: `docs/rules/kpi-workbook-2.md`
+- R14, a new view is set up from ONE sibling: `docs/rules/revit-run.md`
+- R18, a schedule is built on a category number: `docs/rules/revit-run.md`
+
 ## Writing and working agreements
 
 **Anything not written down is UNKNOWN.** Never invent a rule. Open questions go in the log.
