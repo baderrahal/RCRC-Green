@@ -387,7 +387,9 @@ namespace RcrcGreen.Revit.Kpi
             // read for MOSQUES is never read again for STREETS: the split is what makes the read
             // once, and no cache sits beside it.
             // Read again at the press, so the split and its report use the files as they are now.
-            ComponentFiles.PutInForce(asked.Templates.Select(one => one.Template));
+            // Over every template the pane put in force, ticked or not, so a row naming an
+            // unticked new template reads the same here as on the pane.
+            ComponentFiles.PutInForce(ComponentTable.InForce.Templates.Concat(asked.Templates.Select(one => one.Template)));
             TemplateSplit split = PlotsPerTemplate.Split(
                 asked.Ticked, asked.ComponentOn, asked.Templates.Select(one => one.Template));
 

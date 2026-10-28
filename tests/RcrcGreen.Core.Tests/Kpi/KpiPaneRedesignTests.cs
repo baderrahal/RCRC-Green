@@ -131,9 +131,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiPaneWords.Choose, KpiPaneWords.Add, KpiPaneWords.NewTemplateSameAs(KpiTemplates.SchoolsMoreThan60),
                 KpiPaneWords.UnknownValue("DAILY MOSQUE MORE THAN 80%"), KpiPaneWords.PlotsCarryIt(1), KpiPaneWords.PlotsCarryIt(12345),
                 KpiPaneWords.Suggested(KpiTemplates.MosquesMoreThan60), KpiPaneWords.Suggested(null),
-                KpiPaneWords.AddsTo(true), KpiPaneWords.AddsTo(false),
+                KpiPaneWords.AddsTo(true), KpiPaneWords.AddsTo(false), KpiPaneWords.SuggestedFolder("DAILY MOSQUE MORE THAN 80%"),
                 KpiPaneWords.ComponentFileSays(shared), KpiPaneWords.ComponentFileSays(taken),
-                KpiPaneWords.LineWritten("C:\\a\\components.csv"), KpiPaneWords.LineNotWritten("x")
+                KpiPaneWords.LineWritten("C:\\a\\components.csv"), KpiPaneWords.LineNotWritten,
+                KpiPaneWords.PickATemplateAndAFolder
             });
 
             foreach (KpiSteps steps in EveryStepState())

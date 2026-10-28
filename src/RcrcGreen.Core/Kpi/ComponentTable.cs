@@ -372,6 +372,16 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// Whether any file says something about a value: a row in force, or a refusal in one of
+        /// the files. A value no file names is the only kind the pane offers a line for.
+        /// </summary>
+        public bool Names(string component)
+        {
+            string key = ComponentMatch.Key(component);
+            return key.Length > 0 && (RowFor(component) != null || Files.Any(file => file.RefusedKeys.Contains(key)));
+        }
+
+        /// <summary>
         /// The template a value fills, or null where no file holds the value or its row names a
         /// template this table does not know.
         /// </summary>

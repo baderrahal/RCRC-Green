@@ -401,3 +401,66 @@ Where: `ComponentFiles.Add` through `ComponentTable.Line`
 Input: a shared components.csv Excel saved with semicolons, then Use suggestion
 Why latent: no shared file exists yet. The added line is then refused and named on Setup
 Found: 60 per cent round part (b), author
+
+## L56 A new template laid out like STREETS gets no road width and no length
+
+Where: `KpiRequestHandler` asks the street reference file only for the STREETS object, and `RunAtAGlance` and `KpiCreateReport` test for STREETS by object or name
+Input: a reissued STREETS file under another name with Use pressed
+Why latent: no new street template exists
+Found: 60 per cent round part (b), breaker
+
+## L57 A new template's name hangs on the rest of the folder, and an old one stays for the session
+
+Where: `NewTemplates.SharedOpening`, and `_madeTemplates` in `KpiPanel`, never cleared
+Input: a `Copy of ..._MOSQUES.xlsx` dropped in the folder, or a new file renamed or removed
+Why latent: the folder holds the eleven, all opening the same way
+Found: 60 per cent round part (b), breaker
+
+## L58 The template a new file is compared with is the first with its layout
+
+Where: `NewTemplates.Review`, the known file picked by layout alone
+Input: a file named FUTURE PARK, singular, when the EXISTING PARKS file is listed first
+Why latent: no such file is in the folder
+Found: 60 per cent round part (b), breaker
+
+## L59 A tick outlives the recognition it was made under
+
+Where: `KpiPanel.TickFor` by file name, the template frozen at the tick
+Input: a colleague removing the row that made a file used, while it is ticked
+Why latent: no new template exists, and the press then writes nothing for it
+Found: 60 per cent round part (b), breaker
+
+## L60 Adding a line to a file of notes only, or into a missing templates folder
+
+Where: `ComponentTable.TextToAppend`, `ComponentFiles.Add`
+Input: a shared file holding only # lines, or a templates folder deleted under an open pane
+Why latent: no shared file exists yet and the folder is checked on every draw
+Found: 60 per cent round part (b), breaker
+
+## L61 Two people adding at once on the synced folder
+
+Where: `ComponentFiles.Add`, a read then an append, not one step
+Input: two machines pressing Use suggestion within one sync, or Excel saving the file meanwhile
+Why latent: the team has not added a value yet. A dropped line brings the box back
+Found: 60 per cent round part (b), breaker and reviewer
+
+## L62 The box says the shared file and the write falls back to your own
+
+Where: `KpiPaneWords.AddsTo`, read before the write
+Input: the shared file held by Excel or read only
+Why latent: the status line names the file really written
+Found: 60 per cent round part (b), breaker
+
+## L63 Choose offers a template made for a file somebody skipped
+
+Where: `KpiPanel.Choosing` and `TemplateForComponent`, both offer every made template
+Input: Skip on a new template, then Choose it for a value, which makes it used by K74
+Why latent: no new template exists
+Found: 60 per cent round part (b), reviewer
+
+## L64 The review runs several times a redraw, and its tests leave temp folders
+
+Where: `KpiPanel.Listing` and `Reviewed`, `NewTemplatesTests.Folder`
+Input: a templates folder of a hundred files, and a long run of the suite on one machine
+Why latent: the folder holds eleven files and the temp folders are small
+Found: 60 per cent round part (b), breaker and reviewer

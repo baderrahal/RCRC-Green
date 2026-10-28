@@ -323,13 +323,17 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Most shared words, a plural S and a per cent sign off each word, the first listed on a
-        /// tie. PARK is a word of no template, PARKS is, and PARKING is its own.
+        /// Most shared words, a plural S and a per cent sign off each word, and none on a tie.
+        /// PARK is a word of no template, PARKS is two, and PARKING is its own. BELOW 60 ties the
+        /// over and under 60 mosque templates, which is the press a tie must not make.
         /// </summary>
         [Theory]
         [InlineData("SCHOOL LESS THAN 70%", "SCHOOLS LESS THAN 60")]
         [InlineData("FRIDAY MOSQUE MORE THAN 60%", "MOSQUES MORE THAN 60")]
-        [InlineData("NEW PARK", "EXISTING PARKS")]
+        [InlineData("NEW PARK", null)]
+        [InlineData("NEW EXISTING PARK", "EXISTING PARKS")]
+        [InlineData("DAILY MOSQUE BELOW 60%", null)]
+        [InlineData("DAILY MOSQUE < 60%", null)]
         [InlineData("PARKING AREA", "PARKING")]
         [InlineData("HEALTHCARE CLINIC", "HEALTHCARE")]
         [InlineData("STREET 40m ROW", "STREETS")]
@@ -352,6 +356,27 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiPaneWords.ComponentFileSays(ComponentFile.Unreadable(ComponentSource.Shared, "s.csv", "x")));
             Assert.Equal("Your own components.csv has lines not taken",
                 KpiPaneWords.ComponentFileSays(ComponentFile.Parse(ComponentSource.Personal, "p.csv", new[] { "Component,Template,Folder", "A,B" })));
+        }
+
+        /// <summary>
+        /// A value a file already names gets no box, even where it places nothing here, because a
+        /// second line would refuse it for everyone.
+        /// </summary>
+        [Fact]
+        public void AValueSomeFileNamesIsNotOfferedALine()
+        {
+            ComponentTable table = ComponentTable.Layered(
+                ComponentFile.Parse(ComponentSource.Shared, "s.csv", new[]
+                {
+                    "Component,Template,Folder", "X,MOSQUES MORE THAN 80,X", "Y,SCHOOLS,A", "Y,SCHOOLS,B"
+                }));
+            var components = new Dictionary<string, string> { { "DM-50", "X" }, { "SC-09", "Y" }, { "PS-01", "Z" } };
+
+            IReadOnlyList<UnknownComponent> unknown = UnknownComponents.In(components.Keys, plot => components[plot], table, KpiTemplates.All);
+
+            Assert.Equal(new[] { "Z" }, unknown.Select(one => one.Value).ToArray());
+            Assert.Null(table.TemplateFor("X"));
+            Assert.True(table.Names("y"));
         }
 
         [Fact]

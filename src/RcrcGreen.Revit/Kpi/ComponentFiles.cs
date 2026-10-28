@@ -86,6 +86,15 @@ namespace RcrcGreen.Revit.Kpi
                 {
                     tried.Add(path + ": " + failed.Message);
                 }
+                catch (ArgumentException failed)
+                {
+                    // A hand edited templates pointer can hold a character no path takes.
+                    tried.Add(path + ": " + failed.Message);
+                }
+                catch (NotSupportedException failed)
+                {
+                    tried.Add(path + ": " + failed.Message);
+                }
             }
 
             why = tried.Count == 0 ? "No folder to write a components.csv in." : string.Join(" ", tried.ToArray());

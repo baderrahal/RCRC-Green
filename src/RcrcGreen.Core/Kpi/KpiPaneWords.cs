@@ -189,6 +189,11 @@ namespace RcrcGreen.Core.Kpi
             return template == null ? "No suggestion. Choose a template." : "Suggested: " + AssetTypeNames.Display(template);
         }
 
+        public static string SuggestedFolder(string folder)
+        {
+            return "Folder: " + folder;
+        }
+
         public static string AddsTo(bool shared)
         {
             return shared ? "Adds a line to the shared components.csv" : "Adds a line to your own components.csv";
@@ -230,10 +235,10 @@ namespace RcrcGreen.Core.Kpi
             return "Added to " + path;
         }
 
-        public static string LineNotWritten(string why)
-        {
-            return "Not added. " + why;
-        }
+        // Why it was not added is the status line's tooltip, because it is an exception's text.
+        public const string LineNotWritten = "Not added. The tooltip says why.";
+
+        public const string PickATemplateAndAFolder = "Pick a template and a folder first.";
 
         public static string RowsHeld(int howMany)
         {

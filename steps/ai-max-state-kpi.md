@@ -1,7 +1,8 @@
 # ai-max state, KPI
 
 Phase: 9, ship, part (b) of two. The layout rule and the two prompts in the pane, K74 and K75.
-Part (a) merged as pull request 175, `79028a5`. Nothing in either has run in Revit.
+Part (a) merged as pull request 175, `79028a5`. Nothing in either has run in Revit. Review pass 1 fixed: no box for a value a file names, a tie suggests none, the folder
+shown on the box. L56 to L64 are LATENT.
 
 Phase: 9, ship, part (a) of two. Four 60 per cent templates, four new PRX_Component values and
 one components.csv in place of the two tables in code. Part (b), the layout rule and the two

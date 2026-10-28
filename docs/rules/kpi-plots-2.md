@@ -313,8 +313,10 @@ lets the files below it answer.
 
 **K75.** After a read, step 2 shows one box per value no components.csv places: the value, how
 many plots carry it, and a suggestion. The suggested template is the known one sharing the most
-words with the value, a plural S and a per cent sign off each word, the first listed on a tie, and
-none where no word is shared. The suggested folder is the value itself. Use suggestion and Choose,
+words with the value, a plural S and a per cent sign off each word, and none on a tie or where no
+word is shared, because a tie between the over and under 60 templates is one press from the wrong
+targets. A value some file already names, its template unknown here or given two answers, gets
+no box, because a second line would refuse it for everyone, and Setup names that file. The suggested folder is the value itself. Use suggestion and Choose,
 two dropdowns of the templates and the known folders, each write one line, to the shared file
 where the templates folder is set and takes the write, else to `%APPDATA%\RCRC Green\components.csv`,
 and the box and the status line say which. Skip hides the box until Revit closes. Until a line is

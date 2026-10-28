@@ -1894,16 +1894,6 @@ namespace RcrcGreen.Revit.Kpi
         }
 
         /// <summary>
-        /// One warning box: the triangle, the bold line, the plot ids in Consolas, and Show in
-        /// report. **A box whose kind stops a write takes the error colours**, read off
-        /// <see cref="PaneWarning.Blocks"/> and never off its words. Its whole text is the
-        /// tooltip.
-        ///
-        /// **SHOW IN REPORT POINTS ONLY INTO A FILE THAT HOLDS THE BOX.** A box from before the
-        /// press is offered the link when that press's BEFORE THE PRESS held the same box, and a
-        /// box about the press itself is held by the report's own sections.
-        /// </summary>
-        /// <summary>
         /// Setup's boxes about the templates folder: each new template with Use and Skip, each
         /// file whose layout is unknown, and each components.csv that was not read whole. The
         /// last is the one a person cannot see otherwise, because a file not read lets the files
@@ -1979,6 +1969,7 @@ namespace RcrcGreen.Revit.Kpi
                 var lines = new StackPanel();
                 lines.Children.Add(new TextBlock { Text = KpiPaneWords.PlotsCarryIt(which.Plots.Count), Foreground = KpiTheme.Muted });
                 lines.Children.Add(new TextBlock { Text = KpiPaneWords.Suggested(which.Suggested), Foreground = KpiTheme.Text, TextWrapping = TextWrapping.Wrap });
+                lines.Children.Add(new TextBlock { Text = KpiPaneWords.SuggestedFolder(which.Folder), Foreground = KpiTheme.Text, TextWrapping = TextWrapping.Wrap });
                 lines.Children.Add(new TextBlock { Text = KpiPaneWords.AddsTo(shared), Foreground = KpiTheme.Muted, TextWrapping = TextWrapping.Wrap });
 
                 var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = KpiTheme.StatusGap };
@@ -2043,7 +2034,12 @@ namespace RcrcGreen.Revit.Kpi
             {
                 KpiTemplate picked = KpiTemplates.Named(templates.SelectedItem as string, table.Templates);
                 string folder = folders.SelectedItem as string;
-                if (picked == null || string.IsNullOrWhiteSpace(folder)) return;
+                if (picked == null || string.IsNullOrWhiteSpace(folder))
+                {
+                    _told = new StatusLine(KpiPaneWords.PickATemplateAndAFolder);
+                    PaintStatus();
+                    return;
+                }
 
                 AddComponent(unknown.Value, picked, folder);
             };
@@ -2068,10 +2064,20 @@ namespace RcrcGreen.Revit.Kpi
             Changed();
             _told = written.Length > 0
                 ? new StatusLine(KpiPaneWords.LineWritten(written))
-                : new StatusLine(KpiPaneWords.LineNotWritten(why), why);
+                : new StatusLine(KpiPaneWords.LineNotWritten, why);
             PaintStatus();
         }
 
+        /// <summary>
+        /// One warning box: the triangle, the bold line, the plot ids in Consolas, and Show in
+        /// report. **A box whose kind stops a write takes the error colours**, read off
+        /// <see cref="PaneWarning.Blocks"/> and never off its words. Its whole text is the
+        /// tooltip.
+        ///
+        /// **SHOW IN REPORT POINTS ONLY INTO A FILE THAT HOLDS THE BOX.** A box from before the
+        /// press is offered the link when that press's BEFORE THE PRESS held the same box, and a
+        /// box about the press itself is held by the report's own sections.
+        /// </summary>
         private UIElement WarningBox(PaneWarning warning, UIElement extra, bool aboutThePress = false)
         {
             Brush text = warning.Blocks ? KpiTheme.ErrorText : KpiTheme.WarningText;
