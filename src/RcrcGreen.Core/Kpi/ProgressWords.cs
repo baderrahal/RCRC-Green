@@ -99,6 +99,29 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// The progress window's first line while the plots are read, Reading 3 of 18, and while
+        /// the scan inside Create reads the whole model, which has no plot to count.
+        /// </summary>
+        public static string Reading(int number, int of)
+        {
+            return "Reading " + number.ToString(CultureInfo.InvariantCulture) + " of "
+                + of.ToString(CultureInfo.InvariantCulture);
+        }
+
+        public const string ReadingTheModel = "Reading the model";
+
+        /// <summary>
+        /// The progress window's first line while the workbooks are written, Creating 3 of 18,
+        /// counting up from one. The plot goes on the line under it, so the number is never
+        /// read back out of a sentence.
+        /// </summary>
+        public static string Creating(int number, int of)
+        {
+            return "Creating " + number.ToString(CultureInfo.InvariantCulture) + " of "
+                + of.ToString(CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
         /// The percentage, floored, or nothing where the total is not known, because a count
         /// alone is honest and a percentage over nothing is not.
         /// </summary>

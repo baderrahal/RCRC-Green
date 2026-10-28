@@ -4,6 +4,59 @@ Newest entry first.
 
 ---
 
+## 2026-10-28, the pane redesign for company wide use, F1
+
+**Goal.** The KPI pane rebuilt to Bader's approved design, no pane sentence over 10 words, the
+long texts in the report and in tooltips, nothing the pane did lost. What a press reads and the
+workbooks and PDFs it writes stay as they were, and the report gains one section.
+
+**Done.**
+- Four steps, Setup, Read, Plots and Create, under one frame: header with the model and the
+  build, a row of circles, sections, a footer with one main button and a status line. Step 3
+  was Tick and is `KpiStep.Plots`. Colours and sizes in `KpiTheme` alone
+- A result panel: banner, Created and Failed, a row per asset type, a short reason per failed
+  plot, missing PDFs and not ready plots as boxes, Retry failed for what a retry can write, New run
+- `BEFORE THE PRESS` in the report holds what the pane used to explain, each box once.
+  `design/kpi-pane-words.md` gives every old pane string a home
+- New in Core: `PaneWarning`, `CreateBlocked`, `FailedReasons`, `BeforeThePress`, `MissingPdfs`.
+  A warning's kind is a value, where the pane used to search its text for WRITTEN NOWHERE
+- **Two decisions reversed and named.** Create's reason names the first thing missing, not both
+  ticks as the ninety eighth pass did, because step 4's shut line and the footer read one reason
+  now. The
+  output folder being the templates folder blocked Create in the first draft, and that was taken
+  back: it is a note, as on main
+- Outside the pane: the hooks fixed for Windows, from 4 of 28 to 28 of 28, AI MAX version 4 in
+  the repo, the version 4 agents, and the steps files version 4 expects
+
+**Checked.** RAN after the last file was written: Release build 0 warnings 0 errors, the suite
+2368 passed 0 failed against 2259 on main, `hook-tests.sh` 28 passed 0 failed. Two review passes,
+breaker and reviewer each, whose reports are not in the repo. The lead turned pass 1's REAL
+findings into 17 fix items and pass 2's into 8, labelled in `KpiPaneFixPassTests.cs`. Pane-only,
+so no Core test: pass 1 items 6 and 16, pass 2 item 4. No behaviour change, so no test: pass 1
+items 9 and 10. 13 LATENT are in `steps/latent.md`. `TheNewSectionIsTheOnlyDifference` holds the
+report with and without BEFORE THE PRESS equal once the section is cut out. The word list was
+sampled against main's pane by the breaker, and no test holds it against the old file.
+
+**UNKNOWN.** No report or workbook was written on main and on this branch from one run set to
+compare bytes, so unchanged output rests on the diff, which shows refusal kinds on the patcher
+and the run set and no change to a written cell. The developer reported breaking each Core fix
+and seeing its test go red, which no file records and the lead did not repeat. Nothing in this
+round has been seen in Revit. Every look, width, tooltip and click
+is unobserved, and so is the progress window. No screenshot exists: the pane needs a running
+Revit and a model, and this session did not drive one.
+
+**Remains.** Bader's pass in `steps/03_your_steps.md`. Dark theme values if Q1 asks for them.
+
+**Known bugs.** The dropdowns have square corners, Q5. Step 2 is empty before a read, Q4.
+
+**Next.** F2, the team kit, in a fresh session.
+
+**Your turn.** Q1 Dark theme colours for the KPI pane. Q2 Should Read write its own report.
+Q3 All and None on searched plots. Q4 A line in step 2 before a read. Q5 Rounded corners on
+the dropdowns. And the run in `steps/03_your_steps.md`.
+
+---
+
 ## 2026-09-19, ninety eighth pass. The pane in four steps, and the result in the pane
 
 **Merged to main as `78b36c4`**, pull request 168, squashed with both message fields passed

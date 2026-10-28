@@ -747,7 +747,11 @@ namespace RcrcGreen.Core.Kpi
         private static PdfGlance Pdfs(KpiCreateRunSet set)
         {
             int written = 0;
-            var without = new List<string>();
+
+            // The plots with a workbook and no PDF, off the one rule the pane's result reads too.
+            List<string> without = MissingPdfs.Of(set.PlotOutcomes)
+                .Select(missing => missing.PlotId + ": " + missing.Why)
+                .ToList();
             var forms = new List<string>();
             var named = new HashSet<string>(StringComparer.Ordinal);
             int noughtBoxes = 0;
@@ -759,7 +763,6 @@ namespace RcrcGreen.Core.Kpi
                 if (one.Pdf == null) continue;
 
                 if (one.Pdf.Written) written = written + 1;
-                else if (one.Written) without.Add(one.PlotId + ": " + one.Pdf.Refusal);
 
                 // **COUNTED OFF THE FLAG EACH FIELD CARRIES**, never off the words its working
                 // prints, so the count cannot part from the decision when the words are rewritten.

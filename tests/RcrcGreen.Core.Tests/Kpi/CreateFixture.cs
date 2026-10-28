@@ -172,7 +172,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] ticked = null,
             ProjectUnit areaUnit = null,
             LinksLoaded links = null,
-            LabelledCells labels = null)
+            LabelledCells labels = null,
+            PlotWorkbookPath where = null)
         {
             KpiTemplate which = template ?? KpiTemplates.Mosques;
 
@@ -190,7 +191,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
                 which,
                 @"C:\templates\MOSQUES.xlsx",
-                PlotWorkbookPath.For(
+                where ?? PlotWorkbookPath.For(
                     outputRoot ?? @"C:\models", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006"),
                 "PRX_Component",
                 "PRX_Plot_UID2",

@@ -181,6 +181,13 @@ namespace RcrcGreen.Core.Kpi
 
         public string Refusal { get; }
 
+        /// <summary>
+        /// What kind of refusal this is, set where the refusal is built. **The pane's short
+        /// reason is chosen off this and never off the refusal's words**, because a signal that
+        /// travels in the data is not a signal. None on a patch that wrote.
+        /// </summary>
+        public PatchRefusal RefusedAs { get; private set; }
+
         public int PartsInSource { get; }
 
         public int PartsInOutput { get; }
@@ -212,7 +219,16 @@ namespace RcrcGreen.Core.Kpi
         public static PatchOutcome Refused(string why)
         {
             if (why == null) throw new ArgumentNullException("why");
-            return new PatchOutcome(false, why, 0, 0, null, null, null, null);
+            return Refused(why, PatchRefusal.Other);
+        }
+
+        public static PatchOutcome Refused(string why, PatchRefusal kind)
+        {
+            if (why == null) throw new ArgumentNullException("why");
+            return new PatchOutcome(false, why, 0, 0, null, null, null, null)
+            {
+                RefusedAs = kind == PatchRefusal.None ? PatchRefusal.Other : kind
+            };
         }
 
         /// <summary>
@@ -225,7 +241,10 @@ namespace RcrcGreen.Core.Kpi
             if (why == null) throw new ArgumentNullException("why");
             if (formulas == null) throw new ArgumentNullException("formulas");
 
-            return new PatchOutcome(false, why, 0, 0, null, null, null, formulas);
+            return new PatchOutcome(false, why, 0, 0, null, null, null, formulas)
+            {
+                RefusedAs = PatchRefusal.FormulaError
+            };
         }
 
         public static PatchOutcome Done(

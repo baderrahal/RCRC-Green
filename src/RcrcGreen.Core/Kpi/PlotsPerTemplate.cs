@@ -29,10 +29,12 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PlotTemplate
     {
-        public PlotTemplate(string plotId, KpiTemplate template, TemplateRoute route, string why)
+        public PlotTemplate(
+            string plotId, KpiTemplate template, TemplateRoute route, string why, KpiTemplate notTicked = null)
         {
             if (string.IsNullOrWhiteSpace(plotId)) throw new ArgumentNullException("plotId");
 
+            NotTicked = notTicked;
             PlotId = plotId.Trim();
             Template = template;
             Route = route;
@@ -54,6 +56,18 @@ namespace RcrcGreen.Core.Kpi
         public bool Placed
         {
             get { return Template != null; }
+        }
+
+        /// <summary>
+        /// The template a route did place this plot in, where that template is not ticked, so
+        /// the plot is unplaced for this press only. Null for a plot no route places, which is
+        /// a different thing to go and fix. Set where the split builds the unplaced list.
+        /// </summary>
+        public KpiTemplate NotTicked { get; }
+
+        public bool AssetTypeNotTicked
+        {
+            get { return NotTicked != null; }
         }
     }
 
@@ -224,7 +238,8 @@ namespace RcrcGreen.Core.Kpi
                 .Where(one => !one.Placed || !wanted.Any(template => ReferenceEquals(one.Template, template)))
                 .Select(one => one.Placed
                     ? new PlotTemplate(one.PlotId, null, one.Route,
-                        one.Why + ", and " + one.Template.Name + " is not ticked, so it was not read")
+                        one.Why + ", and " + one.Template.Name + " is not ticked, so it was not read",
+                        one.Template)
                     : one)
                 .ToList();
 

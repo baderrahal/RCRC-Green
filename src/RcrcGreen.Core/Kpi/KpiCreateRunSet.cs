@@ -130,7 +130,7 @@ namespace RcrcGreen.Core.Kpi
     {
         private PlotOutcome(
             string plotId, KpiTemplate template, PlotWorkbookPath where,
-            bool written, bool folderMade, string why, PdfOutcome pdf)
+            bool written, bool folderMade, string why, PdfOutcome pdf, NotWrittenKind kind)
         {
             if (string.IsNullOrWhiteSpace(plotId)) throw new ArgumentNullException("plotId");
 
@@ -141,7 +141,15 @@ namespace RcrcGreen.Core.Kpi
             FolderMade = folderMade;
             Why = why ?? string.Empty;
             Pdf = pdf;
+            Kind = kind;
         }
+
+        /// <summary>
+        /// Why nothing was written, as a value set where this outcome was built. Unknown on a
+        /// plot that was written and on one whose builder knew no kind, which the result screen
+        /// says as not written, details in the report.
+        /// </summary>
+        public NotWrittenKind Kind { get; }
 
         /// <summary>
         /// What this plot's PDF run did, or null where no PDF was attempted at all, which is a
@@ -156,12 +164,12 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public PlotOutcome WithPdf(PdfOutcome pdf)
         {
-            return new PlotOutcome(PlotId, Template, Where, Written, FolderMade, Why, pdf);
+            return new PlotOutcome(PlotId, Template, Where, Written, FolderMade, Why, pdf, Kind);
         }
 
         public static PlotOutcome Wrote(string plotId, KpiTemplate template, PlotWorkbookPath where)
         {
-            return new PlotOutcome(plotId, template, where, true, true, string.Empty, null);
+            return new PlotOutcome(plotId, template, where, true, true, string.Empty, null, NotWrittenKind.Unknown);
         }
 
         /// <summary>
@@ -169,9 +177,10 @@ namespace RcrcGreen.Core.Kpi
         /// been made by then, so which it was travels rather than being assumed.
         /// </summary>
         public static PlotOutcome WroteNothing(
-            string plotId, KpiTemplate template, PlotWorkbookPath where, bool folderMade, string why)
+            string plotId, KpiTemplate template, PlotWorkbookPath where, bool folderMade, string why,
+            NotWrittenKind kind = NotWrittenKind.Unknown)
         {
-            return new PlotOutcome(plotId, template, where, false, folderMade, why, null);
+            return new PlotOutcome(plotId, template, where, false, folderMade, why, null, kind);
         }
 
         public string PlotId { get; }
@@ -227,10 +236,12 @@ namespace RcrcGreen.Core.Kpi
             PlotsInTheModel plots = null,
             PlotListRead plotList = null,
             IReadOnlyList<SharedUid2Group> sharing = null,
-            IReadOnlyList<TreeListSheetCheck> treeLists = null)
+            IReadOnlyList<TreeListSheetCheck> treeLists = null,
+            bool pdfsWanted = false)
         {
             if (split == null) throw new ArgumentNullException("split");
 
+            PdfsWanted = pdfsWanted;
             TreeLists = treeLists ?? new List<TreeListSheetCheck>();
             Sharing = sharing ?? new List<SharedUid2Group>();
             PlotList = plotList ?? PlotListRead.NotSet;
@@ -254,6 +265,13 @@ namespace RcrcGreen.Core.Kpi
         /// sheets whichever plot the press is on.
         /// </summary>
         public IReadOnlyList<TreeListSheetCheck> TreeLists { get; }
+
+        /// <summary>
+        /// Whether a forms folder was set when this press ran, read once at the press. It is
+        /// what says a PDF was expected beside every workbook, so a plot with none is a gap
+        /// rather than the ordinary press with no forms folder.
+        /// </summary>
+        public bool PdfsWanted { get; }
 
         /// <summary>
         /// **EVERY PRX_Plot_UID2 TWO OR MORE TICKED PLOTS CARRIED**, worked out over the WHOLE

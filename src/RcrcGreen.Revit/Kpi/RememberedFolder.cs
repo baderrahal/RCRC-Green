@@ -34,13 +34,20 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         public string Read()
         {
+            string folder = ReadRaw();
+            return folder.Length > 0 && Directory.Exists(folder) ? folder : string.Empty;
+        }
+
+        /// <summary>
+        /// What the pointer names whether or not the folder is still there, so the pane can tell
+        /// a folder nobody chose from one that has gone.
+        /// </summary>
+        public string ReadRaw()
+        {
             try
             {
                 string pointer = PointerPath();
-                if (pointer == null || !File.Exists(pointer)) return string.Empty;
-
-                string folder = File.ReadAllText(pointer).Trim();
-                return folder.Length > 0 && Directory.Exists(folder) ? folder : string.Empty;
+                return pointer != null && File.Exists(pointer) ? File.ReadAllText(pointer).Trim() : string.Empty;
             }
             catch (IOException)
             {
@@ -110,23 +117,9 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         public string ReadRaw()
         {
-            try
-            {
-                string pointer = Path.Combine(
-                    Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                        ?? string.Empty,
-                    _pointer.PointerFileName);
-
-                return File.Exists(pointer) ? File.ReadAllText(pointer).Trim() : string.Empty;
-            }
-            catch (IOException)
-            {
-                return string.Empty;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return string.Empty;
-            }
+            // The pointer is read once, by the folder pointer this wraps, so a change to where
+            // pointers live is made in one place.
+            return _pointer.ReadRaw();
         }
 
         public bool Remember(string file)
@@ -211,6 +204,11 @@ namespace RcrcGreen.Revit.Kpi
             return Pointer.Read();
         }
 
+        public static string ReadRaw()
+        {
+            return Pointer.ReadRaw();
+        }
+
         public static bool Remember(string folder)
         {
             return Pointer.Remember(folder);
@@ -237,6 +235,11 @@ namespace RcrcGreen.Revit.Kpi
         public static string Read()
         {
             return Pointer.Read();
+        }
+
+        public static string ReadRaw()
+        {
+            return Pointer.ReadRaw();
         }
 
         public static bool Remember(string folder)

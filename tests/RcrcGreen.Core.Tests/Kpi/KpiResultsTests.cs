@@ -148,7 +148,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "ready 122, not ready 32, of 154 plots on the list",
                 results.CountsInWords);
 
-            Assert.Equal("32 plots are not ready to send:", results.NotReadyInWords);
+            Assert.Equal("32 plots are not ready to send.", results.NotReadyInWords);
         }
 
         /// <summary>
@@ -344,7 +344,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { "HF-001" }, new[] { GreenCoverBlank("HF-001") }));
 
             Assert.Equal("ready 0, not ready 1, of 1 plot on the list", results.CountsInWords);
-            Assert.Equal("1 plot is not ready to send:", results.NotReadyInWords);
+            Assert.Equal("1 plot is not ready to send.", results.NotReadyInWords);
         }
 
         /// <summary>

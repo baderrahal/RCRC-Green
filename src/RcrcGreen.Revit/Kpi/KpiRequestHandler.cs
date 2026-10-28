@@ -78,7 +78,17 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         public Action<KpiCreateRunSet, string> CreatedAcross { get; set; }
 
-        public Action<string> Told { get; set; }
+        /// <summary>
+        /// The run's end line, short for the status line with the full text beside it for its
+        /// tooltip. A status line carrying an exception message ran three lines down the pane.
+        /// </summary>
+        public Action<StatusLine> Told { get; set; }
+
+        /// <summary>
+        /// How far a press has got, as numbers and a plot id rather than a sentence, so the
+        /// progress window never reads a count back out of words.
+        /// </summary>
+        public Action<PlotProgress> Advanced { get; set; }
 
         /// <summary>
         /// A line the pane shows while a scan or a create runs, raised as the work it names
@@ -155,7 +165,7 @@ namespace RcrcGreen.Revit.Kpi
                 // The document can be closed while the pane is still on screen. That is
                 // ordinary, so it is said rather than thrown.
                 Named?.Invoke(string.Empty);
-                Told?.Invoke(KpiPaneWords.NoModel);
+                Told?.Invoke(new StatusLine(KpiPaneWords.NoModelOpen, KpiPaneWords.NoModel));
                 return;
             }
 
@@ -182,23 +192,23 @@ namespace RcrcGreen.Revit.Kpi
             }
             catch (Autodesk.Revit.Exceptions.ApplicationException failed)
             {
-                Told?.Invoke("Revit refused that. " + failed.Message);
+                Told?.Invoke(StatusLine.RevitRefused(failed.Message));
             }
             catch (InvalidOperationException failed)
             {
-                Told?.Invoke("Revit would not do that now. " + failed.Message);
+                Told?.Invoke(StatusLine.RevitWouldNot(failed.Message));
             }
             catch (ArgumentException failed)
             {
-                Told?.Invoke("Revit refused that as a bad argument. " + failed.Message);
+                Told?.Invoke(StatusLine.BadArgument(failed.Message));
             }
             catch (UnauthorizedAccessException denied)
             {
-                Told?.Invoke("The Desktop folder refused the report. " + denied.Message);
+                Told?.Invoke(StatusLine.ReportRefused(denied.Message));
             }
             catch (IOException failed)
             {
-                Told?.Invoke("The report could not be written. " + failed.Message);
+                Told?.Invoke(StatusLine.ReportNotWritten(failed.Message));
             }
         }
 
@@ -227,8 +237,19 @@ namespace RcrcGreen.Revit.Kpi
             // the run's end line: saying the scan headline there would end the press on
             // screen while the workbook was still being filled, and would shut the progress
             // window with the work still running.
-            Progressed?.Invoke(KpiPaneWords.Headline(scan, ReportPlaces.Written(written)));
+            _scanHeadline = KpiPaneWords.Headline(scan, ReportPlaces.Written(written));
+            Progressed?.Invoke(_scanHeadline);
         }
+
+        // How many plots the write half has reached, of how many were read. The two halves
+        // count apart under two words, so neither count goes backwards.
+        private int _pressTotal;
+        private int _written;
+
+        // The last scan's own headline, which names the scan report, for the checklist
+        // report's BEFORE THE PRESS. Kept beside the scanned title because a press that reuses
+        // the scan reuses the report it wrote.
+        private string _scanHeadline = string.Empty;
 
         /// <summary>
         /// The plots and the two lists the dropdowns offer, read in one pass. The component
@@ -314,6 +335,10 @@ namespace RcrcGreen.Revit.Kpi
             // already.
             string root = OutputFolder.Read();
 
+            // Whether a PDF is expected beside every workbook, read with the root so the result
+            // judges the press by the folder it started with.
+            bool pdfsWanted = FormsFolder.Read().Length > 0;
+
             // The reference file is read ONCE for the whole press. It is 8,353 rows and every
             // street plot asks the same copy of it.
             StreetReferenceFile streets = StreetReferenceFile.In(StreetReferenceFileSetting.Read());
@@ -326,7 +351,14 @@ namespace RcrcGreen.Revit.Kpi
 
             if (cannot.Length > 0)
             {
-                Told?.Invoke(cannot);
+                // The short half is the first reason in the pane's own order, read off the same
+                // four facts CannotCreate was just handed, and the whole refusal goes beside it.
+                Told?.Invoke(new StatusLine(
+                    CreateBlocked.Reason(
+                        OpenModel.Of(document.Title).IsOpen, true, !string.IsNullOrWhiteSpace(root), true,
+                        asked != null && asked.Templates.Count > 0,
+                        asked != null && asked.Ticked.Count > 0, cannot),
+                    cannot));
                 return;
             }
 
@@ -343,7 +375,11 @@ namespace RcrcGreen.Revit.Kpi
             // the screen is never silent about a press that skipped two minutes of work.
             ScanSource scanned = ScanNeeded.Decide(_scannedTitle, document.Title);
             if (scanned.Held) Progressed?.Invoke(ProgressWords.ReusingTheScan);
-            else Scan(document);
+            else
+            {
+                Advanced?.Invoke(PlotProgress.TheModel);
+                Scan(document);
+            }
 
             // **EACH WORKBOOK GETS ONLY THE PLOTS WHOSE OWN TEMPLATE IS THAT ONE.** PRX_Component
             // decides, the plot prefix is the cross check, and a plot neither can place goes into
@@ -426,6 +462,10 @@ namespace RcrcGreen.Revit.Kpi
 
             IReadOnlyList<SharedUid2Group> sharing = SharedUid2.Of(filings);
 
+            // The writes count up again from one under their own word, over every plot read.
+            _pressTotal = reads.Sum(one => one.Readings.Count);
+            _written = 0;
+
             foreach (TemplateReading one in reads)
             {
                 WriteOneTemplate(
@@ -438,7 +478,8 @@ namespace RcrcGreen.Revit.Kpi
             foreach (PlotTemplate left in split.Unplaced)
             {
                 plotOutcomes.Add(PlotOutcome.WroteNothing(
-                    left.PlotId, left.Template, PlotWorkbookPath.Refused(left.Why), false, left.Why));
+                    left.PlotId, left.Template, PlotWorkbookPath.Refused(left.Why), false, left.Why,
+                    NotWrittenKinds.ForUnplaced(left)));
             }
 
             // **THE PLOT LIST IS READ OFF THE LIVE DOCUMENT AT THE PRESS**, not taken off the
@@ -449,7 +490,7 @@ namespace RcrcGreen.Revit.Kpi
                 document.Title, split, runs, outcomes,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
                 plotOutcomes, streets, KpiPlotReader.Plots(document),
-                PlotListFile.In(PlotListFileSetting.Read()), sharing, treeLists);
+                PlotListFile.In(PlotListFileSetting.Read()), sharing, treeLists, pdfsWanted);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
@@ -457,14 +498,15 @@ namespace RcrcGreen.Revit.Kpi
             // **ONE REPORT FOR THE RUN, not one per workbook.**
             IReadOnlyList<string> written = ReportFile.Write(
                 KpiFile.NameFor(document.Title + "_checklist", writtenAt),
-                KpiCreateReport.WriteAll(set, writtenAt));
+                KpiCreateReport.WriteAll(set, writtenAt, asked.Before.WithScan(_scanHeadline)));
 
             // **THE PANE WANTS THE PATH AND THE STATUS LINE WANTS THE SENTENCE.**
             // `ReportPlaces.Written` builds `Report at <path>.`, which is right on the line
             // below and is not a path, so the pane's Open the report button tested it with
             // `File.Exists` and was dead on every press.
             CreatedAcross?.Invoke(set, written.FirstOrDefault() ?? string.Empty);
-            Told?.Invoke(CreateWords.WroteAcross(set, ReportPlaces.Written(written)));
+            Told?.Invoke(new StatusLine(
+                PressResult.Of(set).Status, CreateWords.WroteAcross(set, ReportPlaces.Written(written))));
         }
 
         /// <summary>
@@ -513,6 +555,8 @@ namespace RcrcGreen.Revit.Kpi
             {
                 Progressed?.Invoke(ProgressWords.ReusingTheReadings);
                 plotsRead += share.Plots.Count;
+                Advanced?.Invoke(PlotProgress.Reading(
+                    plotsRead, plotsToRead, share.Plots.Count == 0 ? string.Empty : share.Plots[share.Plots.Count - 1]));
                 areaUnit = asked.HeldRunFor(pick.Template).AreaUnit;
                 readings.AddRange(HeldReadings.Applied(
                     asked.HeldRunFor(pick.Template).Readings, asked.RegionChosenFor));
@@ -525,6 +569,7 @@ namespace RcrcGreen.Revit.Kpi
                 {
                     plotsRead++;
                     Progressed?.Invoke(ProgressWords.ReadingPlot(plotId, plotsRead, plotsToRead));
+                    Advanced?.Invoke(PlotProgress.Reading(plotsRead, plotsToRead, plotId));
                     readings.Add(GuardedRead(document, asked, plotId, counted, areaWanted, areaUnit));
                 }
             }
@@ -658,6 +703,8 @@ namespace RcrcGreen.Revit.Kpi
             // the same shape `GuardedRead` already uses.
             foreach (PlotReading one in read.Readings)
             {
+                _written++;
+                Advanced?.Invoke(PlotProgress.Creating(_written, _pressTotal, one.PlotId));
                 PlotFiling filing = PlotFilings.For(filings, one.PlotId);
 
                 // **NO FILE IS WRITTEN FOR ANY PLOT SHARING A PATH WITH ANOTHER TICKED PLOT.**
@@ -676,7 +723,7 @@ namespace RcrcGreen.Revit.Kpi
                         filing == null ? PlotWorkbookPath.Refused(refusal) : filing.Where,
                         filing != null && filing.FolderPath.Length > 0
                             && Directory.Exists(filing.FolderPath),
-                        refusal));
+                        refusal, NotWrittenKind.SharedFolder));
                     continue;
                 }
 
@@ -800,7 +847,7 @@ namespace RcrcGreen.Revit.Kpi
                     held.PlotId, pick.Template,
                     trail.Where ?? PlotWorkbookPath.Refused(refusal),
                     trail.FolderExists(),
-                    refusal));
+                    refusal, NotWrittenKind.Crashed));
             }
         }
 
@@ -949,7 +996,7 @@ namespace RcrcGreen.Revit.Kpi
             {
                 trail.Reached(CreateStep.TheFolder);
                 folderMade = MadeTheFolder(where, out string folderRefusal);
-                if (!folderMade) outcome = PatchOutcome.Refused(folderRefusal);
+                if (!folderMade) outcome = PatchOutcome.Refused(folderRefusal, PatchRefusal.FolderRefused);
                 else
                 {
                     // **THE COPY AND THE PATCH ARE TWO STEPS AND THE ROW TELLS THEM APART.** The
@@ -1000,7 +1047,8 @@ namespace RcrcGreen.Revit.Kpi
             string refusal = where.Ok ? CreateWords.WhyThisOneWroteNothing(run) : where.Why;
             why.Add(held.PlotId + ": " + refusal);
             plotOutcomes.Add(PlotOutcome.WroteNothing(
-                held.PlotId, pick.Template, where, folderMade, refusal).WithPdf(pdf));
+                held.PlotId, pick.Template, where, folderMade, refusal,
+                NotWrittenKinds.Of(run)).WithPdf(pdf));
         }
 
         /// <summary>
@@ -1249,7 +1297,8 @@ namespace RcrcGreen.Revit.Kpi
             SamePath answer = FilePaths.Compare(templatePath, outputPath);
             if (answer != SamePath.Different)
             {
-                return PatchOutcome.Refused(CreateWords.WouldOverwriteTheTemplate(outputPath, answer));
+                return PatchOutcome.Refused(
+                    CreateWords.WouldOverwriteTheTemplate(outputPath, answer), PatchRefusal.WouldOverwriteTheTemplate);
             }
 
             try
@@ -1260,11 +1309,15 @@ namespace RcrcGreen.Revit.Kpi
             }
             catch (UnauthorizedAccessException denied)
             {
-                return PatchOutcome.Refused("The folder refused the workbook. " + denied.Message);
+                return PatchOutcome.Refused(
+                    "The folder refused the workbook. " + denied.Message, PatchRefusal.FolderRefused);
             }
             catch (IOException failed)
             {
-                return PatchOutcome.Refused(CreateWords.CouldNotBeWritten(failed.Message));
+                // The kind comes off Windows's own error code, so the open in Excel sentence on
+                // the result screen is said only where the file really is held open.
+                return PatchOutcome.Refused(
+                    CreateWords.CouldNotBeWritten(failed.Message), PatchRefusals.ForIo(failed.HResult));
             }
         }
 
@@ -1276,9 +1329,7 @@ namespace RcrcGreen.Revit.Kpi
         {
             try
             {
-                Told?.Invoke(
-                    "That request failed and was stopped here rather than being let out. "
-                    + failed.GetType().Name + ". " + failed.Message);
+                Told?.Invoke(StatusLine.Stopped(failed.GetType().Name, failed.Message));
             }
             catch (Exception)
             {

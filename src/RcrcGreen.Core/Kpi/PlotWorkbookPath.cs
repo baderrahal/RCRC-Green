@@ -5,6 +5,21 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
+    /// Why a plot has no path, one kind per refusal <see cref="PlotWorkbookPath.For"/> builds.
+    /// Other is a path refused from outside it, carrying a reason it did not write.
+    /// </summary>
+    public enum PathRefusal
+    {
+        None = 0,
+        Other,
+        NoRoot,
+        NoFolderForComponent,
+        TemplateReachesTwoFolders,
+        NoUid2,
+        UnusableUid2
+    }
+
+    /// <summary>
     /// Where one plot's checklist goes, or why nowhere.
     ///
     /// <code>
@@ -26,8 +41,11 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PlotWorkbookPath
     {
-        private PlotWorkbookPath(bool ok, string folder, string uid2, string folderPath, string filePath, string why)
+        private PlotWorkbookPath(
+            bool ok, string folder, string uid2, string folderPath, string filePath, string why,
+            PathRefusal refusedAs = PathRefusal.None)
         {
+            RefusedAs = ok ? PathRefusal.None : (refusedAs == PathRefusal.None ? PathRefusal.Other : refusedAs);
             Ok = ok;
             Folder = folder ?? string.Empty;
             Uid2 = uid2 ?? string.Empty;
@@ -37,6 +55,13 @@ namespace RcrcGreen.Core.Kpi
         }
 
         public bool Ok { get; }
+
+        /// <summary>
+        /// Which of the refusals below this is, set where it is built, so the result screen's
+        /// short reason never reads the sentence to tell FM-08's two folders from a missing
+        /// UID2. None on a path that is fine.
+        /// </summary>
+        public PathRefusal RefusedAs { get; }
 
         /// <summary>
         /// The component folder under the root, empty when the component placed nothing.
@@ -68,7 +93,12 @@ namespace RcrcGreen.Core.Kpi
 
         public static PlotWorkbookPath Refused(string why)
         {
-            return new PlotWorkbookPath(false, string.Empty, string.Empty, string.Empty, string.Empty, why);
+            return Refused(why, PathRefusal.Other);
+        }
+
+        public static PlotWorkbookPath Refused(string why, PathRefusal kind)
+        {
+            return new PlotWorkbookPath(false, string.Empty, string.Empty, string.Empty, string.Empty, why, kind);
         }
 
         /// <summary>
@@ -78,7 +108,7 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static PlotWorkbookPath For(string root, KpiTemplate template, string component, string uid2)
         {
-            if (string.IsNullOrWhiteSpace(root)) return Refused(NoRoot);
+            if (string.IsNullOrWhiteSpace(root)) return Refused(NoRoot, PathRefusal.NoRoot);
 
             string folder = ComponentFolders.For(component);
             if (folder.Length == 0)
@@ -90,18 +120,21 @@ namespace RcrcGreen.Core.Kpi
                 // filed where every other plot of its template is filed.
                 if (!string.IsNullOrWhiteSpace(component))
                 {
-                    return Refused(ComponentFolders.NoFolderFor(component));
+                    return Refused(ComponentFolders.NoFolderFor(component), PathRefusal.NoFolderForComponent);
                 }
 
                 folder = ComponentFolders.OnlyFolderFor(template);
-                if (folder.Length == 0) return Refused(ComponentFolders.NoFolderForTemplate(template));
+                if (folder.Length == 0)
+                {
+                    return Refused(ComponentFolders.NoFolderForTemplate(template), PathRefusal.TemplateReachesTwoFolders);
+                }
             }
 
             string held = (uid2 ?? string.Empty).Trim();
-            if (held.Length == 0) return Refused(NoUid2);
+            if (held.Length == 0) return Refused(NoUid2, PathRefusal.NoUid2);
 
             string bad = Unusable(held);
-            if (bad.Length > 0) return Refused(bad);
+            if (bad.Length > 0) return Refused(bad, PathRefusal.UnusableUid2);
 
             string plotFolder = Path.Combine(root.Trim(), folder, held);
 

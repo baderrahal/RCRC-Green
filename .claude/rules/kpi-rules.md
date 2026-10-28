@@ -4150,3 +4150,36 @@ would leave a half read set of plots that the reconciliation would count as plot
 is the one state the rest of the tool would trust and should not. A cancel that lies is worse
 than no cancel, and an honest one is a cancellation threaded through every reader with a
 discard of everything read, which is its own round.
+
+**Since the pane redesign of 28 October the window shows two short lines**, `Reading i of n`
+or `Creating i of n` from `ProgressWords`, and the plot under it, carried as values from the
+handler and never read back out of a sentence. Reads and writes count under their own word so
+neither count goes backwards. The status line no longer repeats the phase lines.
+
+## The pane is Bader's design of 28 October, and the long words live in the report
+
+**The pane is for the whole production team, so it reads like a finished product.** Four steps,
+Setup, Read, Plots and Create, each a frame of a header, a step row, sections and a footer with
+one main button and one status line. Step 3 was called Tick and is `KpiStep.Plots` now.
+
+- **No sentence on the pane is longer than 10 words, and a failed reason 8.** A test walks every
+  pane string in Core with sample values. A longer line is a tooltip on the control it explains
+  or a line in the report, never a second paragraph on the pane
+- **What the pane used to explain is in the report, under `BEFORE THE PRESS`**, after the glance:
+  the folders and files the press used and what each means, the parameters the values came from,
+  and the full text of every warning box the four steps hold for that press, each once
+- **A warning box is a value from Core, `PaneWarning`, and `Blocks` says whether it stops a
+  write.** The pane used to decide that by searching the text for WRITTEN NOWHERE and by a line
+  starting with two spaces, which is a signal travelling in the data
+- **Why Create cannot run is one reason, `KpiSteps.CreateBlockedBy` through `CreateBlocked`**, read
+  by step 4 and by the footer, so the two cannot say different things
+- **A failed plot's short reason comes off a kind set where the refusal is built**, never off its
+  words. FM-08 reads `No component, and two folders fit.`
+- **The output folder being the templates folder is a note and stops nothing**, as it was before
+  the redesign. The per file guard is what refuses the press that would overwrite a template
+- **The colours are `KpiTheme` alone and are the design's light palette in both Revit themes.**
+  That departs from the panel rule that every colour has a value per theme. The pane paints its
+  own background and every foreground, so nothing is black on black, and the dark values are a
+  question for Bader in `steps/02_questions.md`
+- **The tick and the warning sign are drawn as paths**, because `writing-check.sh` refuses the
+  code point range they sit in

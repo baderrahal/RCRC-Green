@@ -45,6 +45,16 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static string WriteAll(KpiCreateRunSet set, DateTime writtenAt)
         {
+            return WriteAll(set, writtenAt, BeforeThePress.Nothing);
+        }
+
+        /// <summary>
+        /// The same report with <see cref="BeforeThePress"/> after the glance: everything the
+        /// pane used to say in full and says in ten words now. A press with nothing handed
+        /// over prints no such section, so a report built off a run alone reads as it did.
+        /// </summary>
+        public static string WriteAll(KpiCreateRunSet set, DateTime writtenAt, BeforeThePress before)
+        {
             if (set == null) throw new ArgumentNullException("set");
 
             var report = new StringBuilder();
@@ -64,6 +74,7 @@ namespace RcrcGreen.Core.Kpi
             TheTeamsList(report, set);
             ThePlotList(report, set);
             TheGlance(report, set);
+            ThePane(report, before);
             TheTreeLists(report, set);
             TheRunAccounting(report, set);
             TheSplit(report, set);
@@ -123,6 +134,16 @@ namespace RcrcGreen.Core.Kpi
             TheContents(contents, body);
 
             return contents + body;
+        }
+
+        private static void ThePane(StringBuilder report, BeforeThePress before)
+        {
+            if (before == null || before.IsNothing) return;
+
+            Heading(report, BeforeThePress.Heading, before.Warnings.Count,
+                "what the pane said before this press, in full, with the warning boxes it showed counted");
+            foreach (string line in before.Lines()) Line(report, line);
+            Line(report, string.Empty);
         }
 
         public const string ContentsHeading = "WHAT IS IN THIS FILE";

@@ -1,8 +1,8 @@
 # ai-max state, KPI
 
-Phase: 9, in work. The pane redesign for company wide use, F1 in `steps/01_next.md`, on branch
-`kpi-pane-redesign`. Its entry in `steps/log-kpi.md` is written when the round ends. The round
-runs under AI MAX version 4, now the repo's own copy.
+Phase: 9, ship. The pane redesign for company wide use, F1 in `steps/01_next.md`, on branch
+`kpi-pane-redesign`, under AI MAX version 4. Its entry is the top of `steps/log-kpi.md`. Build
+0 warnings, 2368 tests passed, 28 hook cases. Nothing in it has been seen in Revit.
 
 Phase: 9, ship. Ninety eighth pass, the KPI pane laid out in four steps with a results panel.
 **Merged to main as `78b36c4`**, pull request 168, the squash message set on the merge call

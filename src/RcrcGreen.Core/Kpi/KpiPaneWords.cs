@@ -27,9 +27,39 @@ namespace RcrcGreen.Core.Kpi
             "Reading the whole model. It reads every sheet, link and schedule, so it takes "
             + "longer than the Drawing Sheet read.";
 
+        /// <summary>
+        /// What one press writes, counted off the handler: per plot, its two folders where they
+        /// are missing, the workbook and, where a forms folder is set, the PDF beside it, then
+        /// the checklist report, and the scan report too when the press reads the model rather
+        /// than reusing the scan it holds.
+        /// </summary>
         public const string ReadOnly =
-            "Create reads the model and writes a workbook and two text files. It creates "
-            + "nothing in the model and never writes to a template.";
+            "Create writes one workbook per plot, with a PDF beside it when a forms folder "
+            + "is set, in a component folder and a UID2 folder it makes where they are missing "
+            + "and never deletes. It writes the checklist report, and the scan report when it "
+            + "reads the model. It creates nothing in the model and never writes to a template.";
+
+        /// <summary>
+        /// What the street reference file is, in full: the not set sentence, or what the file
+        /// held. Step 1's tooltip and BEFORE THE PRESS both read this.
+        /// </summary>
+        public static string StreetReferenceSays(string path, StreetReferenceFile file)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return KpiSteps.StreetReferenceNotSet + ".";
+            return (file ?? StreetReferenceFile.NotSet).InWords;
+        }
+
+        /// <summary>
+        /// What the team's plot list file is, in full: the not set sentence, its count, or why
+        /// it could not be read. Step 1, the Plot list button and BEFORE THE PRESS read this.
+        /// </summary>
+        public static string PlotListSays(string path, PlotListRead list)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return KpiSteps.PlotListNotSet + ".";
+
+            PlotListRead held = list ?? PlotListRead.NotSet;
+            return TickingTheList.Heading + " " + (held.Read ? held.InWords : held.Why);
+        }
 
         public static string ModelNamed(string documentTitle)
         {
@@ -81,6 +111,343 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return said + ". " + (where ?? string.Empty);
+        }
+
+        // **THE PANE'S OWN WORDS FROM THE REDESIGN OF OCTOBER ON.** The pane went to the whole
+        // production team and read like a log, so every line it shows is at most ten words a
+        // sentence and every explanation it used to carry is a tooltip or a report section. A
+        // test walks every one of these with sample values, large counts included.
+
+        public const string Title = "KPI Checklist";
+
+        /// <summary>The header's third line, off the add-in assembly's own version.</summary>
+        public static string Build(string version)
+        {
+            return "Build " + (string.IsNullOrWhiteSpace(version) ? "unknown" : version.Trim());
+        }
+
+        public const string Folders = "Folders";
+        public const string Files = "Files";
+        public const string WorkbookDetails = "Workbook details";
+        public const string Templates = "Templates";
+        public const string Output = "Output";
+        public const string PdfForms = "PDF forms";
+        public const string StreetReference = "Street reference";
+        public const string PlotList = "Plot list";
+        public const string Optional = "Optional";
+        public const string Browse = "Browse";
+        public const string Date = "Date";
+        public const string PreparedBy = "Prepared by";
+        public const string Position = "Position";
+
+        /// <summary>The hint under a path box nobody has pointed anywhere.</summary>
+        public const string NotSet = "Not set";
+
+        /// <summary>The hint under a path box whose remembered path has gone.</summary>
+        public const string NotFound = "Not found";
+
+        /// <summary>The hint under a file that is there and could not be read.</summary>
+        public const string Unreadable = "Unreadable";
+
+        public static string TemplatesFound(int howMany)
+        {
+            return Count(howMany, "template", "templates") + " found";
+        }
+
+        public static string RowsHeld(int howMany)
+        {
+            return Count(howMany, "row", "rows");
+        }
+
+        public static string PlotsListed(int howMany)
+        {
+            return Count(howMany, "plot", "plots");
+        }
+
+        public const string NextRead = "Next: Read";
+
+        public const string ModelRead = "Model read";
+        public const string ReadModel = "Read model";
+        public const string ReadAgain = "Read again";
+        public const string NotReadYet = "Not read yet";
+        public const string NoModelOpen = "No model open";
+        public const string ReadingTheModel = "Reading the model";
+        public const string PlotsBox = "Plots";
+        public const string ElementsBox = "Elements";
+        public const string TimeBox = "Time";
+        public const string InPlotList = "In plot list";
+        public const string TemplatesMatched = "Templates matched";
+        public const string ValuesFrom = "Values from";
+        public const string Component = "Component";
+        public const string Reference = "Reference";
+        public const string Location = "Location";
+        public const string NothingHoldsThatWord = "Nothing in this model holds that word.";
+        public const string NextPlots = "Next: Plots";
+
+        /// <summary>The Time box, 0.8 s. One place, so the box and the report agree.</summary>
+        public static string Seconds(double seconds)
+        {
+            return seconds.ToString("0.0", CultureInfo.InvariantCulture) + " s";
+        }
+
+        /// <summary>A count in a box, with thousands grouped, 96,959.</summary>
+        public static string Number(int howMany)
+        {
+            return howMany.ToString("#,0", CultureInfo.InvariantCulture);
+        }
+
+        public static string OfCount(int some, int all)
+        {
+            return some.ToString(CultureInfo.InvariantCulture) + " of " + all.ToString(CultureInfo.InvariantCulture);
+        }
+
+        public static string ReadAtClock(DateTime when)
+        {
+            return "Read at " + when.ToString("HH:mm", CultureInfo.InvariantCulture);
+        }
+
+        public const string ShowInReport = "Show in report";
+        public const string InTheReportAfterCreate = "In the report after Create";
+
+        public const string AssetTypes = "Asset types";
+        public const string PlotsSection = "Plots";
+        public const string All = "All";
+        public const string None = "None";
+        public const string PlotListButton = "Plot list";
+        public const string SearchTooltip = "Type to filter the list by plot id.";
+        public const string NoType = "No type";
+        public const string SharedId = "Shared id";
+        public const string TickListAgain = "Tick list again";
+        public const string NoTemplatesInTheFolder = "No templates in this folder.";
+        public const string NextCreate = "Next: Create";
+
+        public static string PlotsSelected(int howMany)
+        {
+            return Count(howMany, "plot", "plots") + " selected";
+        }
+
+        public const string ReadyToCreate = "Ready to create";
+        public const string AssetTypeColumn = "Asset type";
+        public const string PlotsColumn = "Plots";
+        public const string RangeColumn = "Range";
+        public const string Replaced = "Files with the same name are replaced.";
+        public const string NothingInTheModelChanges = "Nothing in the model changes";
+
+        /// <summary>
+        /// The words beside the big number in step 4. **A forms folder set is what says a PDF
+        /// goes beside each workbook**, and none set is the ordinary case of no PDF at all.
+        /// </summary>
+        public static string WorkbooksBeside(int workbooks, bool withPdf)
+        {
+            string unit = workbooks == 1 ? "workbook" : "workbooks";
+            return withPdf ? unit + ", each with its PDF" : unit + ", no PDF";
+        }
+
+        public static string CreateWorkbooks(int workbooks)
+        {
+            return "Create " + Count(workbooks, "workbook", "workbooks");
+        }
+
+        public const string Failed = "Failed";
+        public const string Created = "Created";
+        public const string AllCreated = "All workbooks created";
+        public const string ReadyToSend = "Ready to send";
+        public const string OpenOutputFolder = "Open output folder";
+        public const string OpenReport = "Open report";
+        public const string RetryFailed = "Retry failed";
+        public const string NewRun = "New run";
+        public const string WriteAnyway = "Write anyway";
+
+        /// <summary>The result's status line when Retry failed leaves plots out.</summary>
+        public static string NeedAChangeFirst(int plots)
+        {
+            return Count(plots, "plot needs", "plots need") + " a change first";
+        }
+
+        public static string PdfsNotWritten(int missing)
+        {
+            return Count(missing, "PDF", "PDFs") + " not written";
+        }
+
+        public static string NotCreated(int failed)
+        {
+            return Count(failed, "workbook", "workbooks") + " not created";
+        }
+
+        /// <summary>The status line under the result, counted off the run's own outcomes.</summary>
+        public static string ResultStatus(int created, int failed)
+        {
+            return Number(created) + " created, " + Number(failed) + " failed";
+        }
+
+        private static string Count(int howMany, string one, string many)
+        {
+            return Number(howMany) + " " + (howMany == 1 ? one : many);
+        }
+    }
+
+    /// <summary>
+    /// A line for the pane's status line and the full text behind it. **The short half is
+    /// what the line shows and the detail is its tooltip**, because a status line carrying an
+    /// exception message ran three lines down a 300 pixel pane.
+    /// </summary>
+    public sealed class StatusLine
+    {
+        public StatusLine(string text, string detail = null)
+        {
+            Text = text ?? string.Empty;
+            Detail = detail ?? string.Empty;
+        }
+
+        public string Text { get; }
+
+        public string Detail { get; }
+
+        public static readonly StatusLine NoModel = new StatusLine(KpiPaneWords.NoModelOpen);
+
+        public static StatusLine RevitRefused(string message)
+        {
+            return new StatusLine("Revit refused the request.", message);
+        }
+
+        public static StatusLine RevitWouldNot(string message)
+        {
+            return new StatusLine("Revit would not do that now.", message);
+        }
+
+        public static StatusLine BadArgument(string message)
+        {
+            return new StatusLine("Revit refused an argument.", message);
+        }
+
+        public static StatusLine ReportRefused(string message)
+        {
+            return new StatusLine("The report folder refused the write.", message);
+        }
+
+        public static StatusLine ReportNotWritten(string message)
+        {
+            return new StatusLine("The report could not be written.", message);
+        }
+
+        public static StatusLine Stopped(string kind, string message)
+        {
+            return new StatusLine(
+                "The request failed and was stopped.",
+                "That request failed and was stopped here rather than being let out. "
+                    + (kind ?? string.Empty) + ". " + (message ?? string.Empty));
+        }
+
+        public static StatusLine NotRemembered(string pointerFileName)
+        {
+            return new StatusLine(
+                "Could not remember that choice.",
+                "The choice could not be remembered. " + (pointerFileName ?? string.Empty)
+                    + " beside the installed add-in refused the write.");
+        }
+
+        public static StatusLine NotOpened(string path, string message)
+        {
+            return new StatusLine(
+                "Could not open that.",
+                "That could not be opened: " + (path ?? string.Empty) + ". " + (message ?? string.Empty));
+        }
+
+        public static readonly StatusLine Reading =
+            new StatusLine(KpiPaneWords.ReadingTheModel, CreateWords.ReadingNow);
+
+        public static readonly StatusLine Creating = new StatusLine(CreateWords.Creating);
+    }
+
+    /// <summary>
+    /// The workbook rows' names on the pane, in sentence case, Existing parks rather than
+    /// EXISTING PARKS. **The template's own name is unchanged everywhere else**, the report
+    /// and the folder tables included, because those spellings are the client's.
+    /// </summary>
+    public static class AssetTypeNames
+    {
+        public static string Display(KpiTemplate template)
+        {
+            if (template == null) return string.Empty;
+
+            string name = template.Name.Trim().ToLowerInvariant();
+            return name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name.Substring(1);
+        }
+    }
+
+    /// <summary>
+    /// The first and last plot of a list in the order the pane lists them, EP-01 to EP-14,
+    /// or the one id where there is one.
+    /// </summary>
+    public static class PlotSpan
+    {
+        public static string Of(System.Collections.Generic.IReadOnlyList<string> plots)
+        {
+            if (plots == null || plots.Count == 0) return string.Empty;
+            if (plots.Count == 1) return plots[0];
+
+            return plots[0] + " to " + plots[plots.Count - 1];
+        }
+    }
+
+    /// <summary>
+    /// Which half of a press the window is counting. **Two labels so neither count goes
+    /// backwards**: the reads count up to the plots read and the writes count up again from
+    /// one under their own word.
+    /// </summary>
+    public enum PressPhase
+    {
+        ReadingTheModel,
+        Reading,
+        Creating
+    }
+
+    /// <summary>
+    /// How far a press has got, carried as values so the window never reads a number back out
+    /// of a sentence.
+    /// </summary>
+    public sealed class PlotProgress
+    {
+        private PlotProgress(PressPhase phase, int number, int of, string plotId)
+        {
+            Phase = phase;
+            Number = number;
+            Of = of;
+            PlotId = plotId ?? string.Empty;
+        }
+
+        /// <summary>The scan inside Create, which reads the whole model and has no plot.</summary>
+        public static readonly PlotProgress TheModel = new PlotProgress(PressPhase.ReadingTheModel, 0, 0, string.Empty);
+
+        public static PlotProgress Reading(int number, int of, string plotId)
+        {
+            return new PlotProgress(PressPhase.Reading, number, of, plotId);
+        }
+
+        public static PlotProgress Creating(int number, int of, string plotId)
+        {
+            return new PlotProgress(PressPhase.Creating, number, of, plotId);
+        }
+
+        public PressPhase Phase { get; }
+
+        public int Number { get; }
+
+        public int Of { get; }
+
+        public string PlotId { get; }
+
+        public string InWords
+        {
+            get
+            {
+                switch (Phase)
+                {
+                    case PressPhase.ReadingTheModel: return ProgressWords.ReadingTheModel;
+                    case PressPhase.Reading: return ProgressWords.Reading(Number, Of);
+                    default: return ProgressWords.Creating(Number, Of);
+                }
+            }
         }
     }
 }
