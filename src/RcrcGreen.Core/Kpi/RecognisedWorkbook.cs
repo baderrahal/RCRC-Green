@@ -12,8 +12,9 @@ namespace RcrcGreen.Core.Kpi
     public sealed class RecognisedWorkbook
     {
         private RecognisedWorkbook(string fileName, KpiTemplate template, IReadOnlyList<KpiTemplate> candidates, string reason, FilledCell decidedBy = null, KpiTemplate filledAs = null,
-            TemplateLayout layout = null, KpiTemplate proposed = null, bool unknownLayout = false)
+            TemplateLayout layout = null, KpiTemplate proposed = null, bool unknownLayout = false, KpiTemplate sameAs = null)
         {
+            SameAs = sameAs;
             Layout = layout ?? TemplateLayout.Nothing;
             Proposed = proposed;
             UnknownLayout = unknownLayout;
@@ -57,6 +58,9 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public KpiTemplate Proposed { get; }
 
+        /// <summary>The known template a new one shares its layout with, null for anything else.</summary>
+        public KpiTemplate SameAs { get; }
+
         public bool IsNewTemplate
         {
             get { return Proposed != null && Template == null; }
@@ -71,7 +75,7 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>The same answer carrying the layout the peek read.</summary>
         public RecognisedWorkbook Laid(TemplateLayout layout)
         {
-            return new RecognisedWorkbook(FileName, Template, Candidates, Reason, DecidedBy, FilledAs, layout, Proposed, UnknownLayout);
+            return new RecognisedWorkbook(FileName, Template, Candidates, Reason, DecidedBy, FilledAs, layout, Proposed, UnknownLayout, SameAs);
         }
 
         /// <summary>
@@ -87,7 +91,7 @@ namespace RcrcGreen.Core.Kpi
             return new RecognisedWorkbook(fileName, null, null,
                 KpiPaneWords.NewTemplateSameAs(sameAs) + ". It would be filled as " + proposed.Name
                     + " with the cell map of " + sameAs.Name + ". Press Use in Setup to use it.",
-                null, null, layout, proposed);
+                null, null, layout, proposed, false, sameAs);
         }
 
         /// <summary>

@@ -154,7 +154,7 @@ if (Test-Path -LiteralPath $viewFilters) {
 
 # The KPI component table: which template each PRX_Component value fills and which folder it
 # files under. Copied on every install, because it is the shipped table and nobody edits it in
-# place: a line added by hand goes to the shared copy in the templates folder or to
+# place: a line the pane adds goes to the shared copy in the templates folder or to
 # %APPDATA%\RCRC Green\components.csv, and both of those win over this one.
 $components = Join-Path $PSScriptRoot 'components.csv'
 if (-not (Test-Path -LiteralPath $components)) {

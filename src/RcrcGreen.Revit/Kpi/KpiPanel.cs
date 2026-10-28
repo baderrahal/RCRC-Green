@@ -166,6 +166,15 @@ namespace RcrcGreen.Revit.Kpi
         private readonly TextBox _position = KpiTheme.Input();
         private readonly TextBox _search = KpiTheme.Input();
 
+        // Templates made for files the tool does not know by name, by name, so a redraw hands
+        // back the same object and a tick held against one still holds. Use and Skip on those
+        // files, and Skip on an unknown component value, last until Revit closes.
+        private readonly Dictionary<string, KpiTemplate> _madeTemplates = new Dictionary<string, KpiTemplate>(StringComparer.Ordinal);
+        private readonly HashSet<string> _usedTemplates = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> _skippedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _skippedValues = new HashSet<string>(StringComparer.Ordinal);
+        private string _choosingValue = string.Empty;
+
         // The plot rows of the open step 3, refilled by the search box without a redraw,
         // because rebuilding the tree under the cursor takes the keyboard out of the box.
         private StackPanel _plotRows;
@@ -454,7 +463,7 @@ namespace RcrcGreen.Revit.Kpi
         {
             // Every count below places plots through the component table, so it is read first,
             // fresh, and a line added to the shared file shows on the next redraw.
-            ComponentFiles.PutInForce();
+            ComponentFiles.PutInForce(_madeTemplates.Values);
 
             KpiSteps steps = Steps();
             _steps = steps;
@@ -644,6 +653,7 @@ namespace RcrcGreen.Revit.Kpi
                 "Point at the folder holding the GRP KPI Checklist template workbooks. "
                     + "It is remembered beside the installed add-in.",
                 BrowseForTheFolder));
+            foreach (UIElement box in TemplatePrompts()) _body.Children.Add(box);
 
             _body.Children.Add(PathRow(
                 KpiPaneWords.Output, false, output, OutputFolder.ReadRaw(), string.Empty, true,
@@ -861,7 +871,8 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             IReadOnlyList<RecognisedWorkbook> workbooks = Listing();
-            int matched = workbooks.Where(one => one.IsMatched).Select(one => one.Template).Distinct().Count();
+            int matched = workbooks.Where(one => one.IsMatched && KpiTemplates.All.Contains(one.Template))
+                .Select(one => one.Template).Distinct().Count();
             _body.Children.Add(ValueLine(
                 KpiPaneWords.TemplatesMatched,
                 KpiPaneWords.OfCount(matched, KpiTemplates.All.Count),
@@ -881,6 +892,7 @@ namespace RcrcGreen.Revit.Kpi
             IReadOnlyList<PaneWarning> warnings = PaneWarnings.ForRead(_facts.Plots, _facts.Links, list);
             if (warnings.Count > 0) _body.Children.Add(new Border { Margin = KpiTheme.Group });
             foreach (PaneWarning warning in warnings) _body.Children.Add(WarningBox(warning, null));
+            foreach (UIElement box in UnknownValueBoxes()) _body.Children.Add(box);
 
             Button next = KpiTheme.Main(Caption(KpiPaneWords.NextPlots));
             next.Click += (sender, e) => GoTo(KpiStep.Plots);
@@ -1891,6 +1903,175 @@ namespace RcrcGreen.Revit.Kpi
         /// press is offered the link when that press's BEFORE THE PRESS held the same box, and a
         /// box about the press itself is held by the report's own sections.
         /// </summary>
+        /// <summary>
+        /// Setup's boxes about the templates folder: each new template with Use and Skip, each
+        /// file whose layout is unknown, and each components.csv that was not read whole. The
+        /// last is the one a person cannot see otherwise, because a file not read lets the files
+        /// below it answer.
+        /// </summary>
+        private IEnumerable<UIElement> TemplatePrompts()
+        {
+            var boxes = new List<UIElement>();
+
+            foreach (RecognisedWorkbook workbook in Listing())
+            {
+                RecognisedWorkbook which = workbook;
+                if (_skippedFiles.Contains(which.FileName)) continue;
+
+                if (which.IsNewTemplate)
+                {
+                    var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = KpiTheme.StatusGap };
+                    Button use = KpiTheme.Small(Caption(KpiPaneWords.Use));
+                    use.Click += (sender, e) =>
+                    {
+                        _usedTemplates.Add(which.Proposed.Name);
+                        Changed();
+                    };
+                    Button skip = KpiTheme.Small(Caption(KpiPaneWords.Skip));
+                    skip.Margin = KpiTheme.LeftGap;
+                    skip.Click += (sender, e) =>
+                    {
+                        _skippedFiles.Add(which.FileName);
+                        RedrawTemplates();
+                    };
+                    buttons.Children.Add(use);
+                    buttons.Children.Add(skip);
+
+                    boxes.Add(WarningBox(new PaneWarning(
+                        KpiPaneWords.NewTemplateSameAs(which.SameAs), which.FileName, KpiPaneWords.NewTemplateSays(which), false), buttons));
+                }
+                else if (which.UnknownLayout)
+                {
+                    boxes.Add(WarningBox(new PaneWarning(
+                        KpiPaneWords.UnknownTemplateLayout, which.FileName, which.FileName + "\n\n" + which.Reason, false), null));
+                }
+            }
+
+            ComponentTable table = ComponentTable.InForce;
+            foreach (ComponentFile file in table.Files.Where(one => one.There && (!one.Read || one.Problems.Count > 0)))
+            {
+                boxes.Add(WarningBox(new PaneWarning(
+                    KpiPaneWords.ComponentFileSays(file), file.Path,
+                    string.Join("\n", table.InWords().ToArray()), !file.Read), null));
+            }
+
+            return boxes;
+        }
+
+        /// <summary>
+        /// Step 2's box per component value no components.csv places, after a read. Its plots
+        /// are refused until a line is added. Use suggestion and Choose each add one line, and
+        /// Skip hides the box until Revit closes with the plots still refused.
+        /// </summary>
+        private IEnumerable<UIElement> UnknownValueBoxes()
+        {
+            var boxes = new List<UIElement>();
+            if (_facts == null) return boxes;
+
+            ComponentTable table = ComponentTable.InForce;
+            bool shared = TemplateFolder.Read().Length > 0;
+
+            foreach (UnknownComponent unknown in UnknownComponents.In(_facts.Plots.All, ComponentOn, table, table.Templates))
+            {
+                UnknownComponent which = unknown;
+                if (_skippedValues.Contains(which.Key)) continue;
+
+                var lines = new StackPanel();
+                lines.Children.Add(new TextBlock { Text = KpiPaneWords.PlotsCarryIt(which.Plots.Count), Foreground = KpiTheme.Muted });
+                lines.Children.Add(new TextBlock { Text = KpiPaneWords.Suggested(which.Suggested), Foreground = KpiTheme.Text, TextWrapping = TextWrapping.Wrap });
+                lines.Children.Add(new TextBlock { Text = KpiPaneWords.AddsTo(shared), Foreground = KpiTheme.Muted, TextWrapping = TextWrapping.Wrap });
+
+                var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = KpiTheme.StatusGap };
+                Button suggestion = KpiTheme.Small(Caption(KpiPaneWords.UseSuggestion));
+                suggestion.IsEnabled = which.Suggested != null;
+                suggestion.Click += (sender, e) => AddComponent(which.Value, which.Suggested, which.Folder);
+                Button choose = KpiTheme.Small(Caption(KpiPaneWords.Choose));
+                choose.Margin = KpiTheme.LeftGap;
+                choose.Click += (sender, e) =>
+                {
+                    _choosingValue = which.Key;
+                    RedrawTemplates();
+                };
+                Button skip = KpiTheme.Small(Caption(KpiPaneWords.Skip));
+                skip.Margin = KpiTheme.LeftGap;
+                skip.Click += (sender, e) =>
+                {
+                    _skippedValues.Add(which.Key);
+                    RedrawTemplates();
+                };
+                buttons.Children.Add(suggestion);
+                buttons.Children.Add(choose);
+                buttons.Children.Add(skip);
+                lines.Children.Add(buttons);
+
+                if (_choosingValue == which.Key) lines.Children.Add(Choosing(which, table));
+
+                boxes.Add(WarningBox(new PaneWarning(
+                    KpiPaneWords.UnknownValue(which.Value), PlotSpan.Of(which.Plots),
+                    KpiPaneWords.UnknownValueSays(which, ComponentFiles.SharedPath(TemplateFolder.Read()), ComponentFiles.PersonalPath()),
+                    true), lines));
+            }
+
+            return boxes;
+        }
+
+        /// <summary>
+        /// The two dropdowns Choose opens, every template the table knows and every folder it
+        /// already files under with the value itself first, and Add.
+        /// </summary>
+        private UIElement Choosing(UnknownComponent unknown, ComponentTable table)
+        {
+            var panel = new StackPanel { Margin = KpiTheme.StatusGap };
+
+            ComboBox templates = KpiTheme.Dropdown();
+            foreach (KpiTemplate one in table.Templates) templates.Items.Add(one.Name);
+            templates.SelectedItem = unknown.Suggested == null ? null : unknown.Suggested.Name;
+
+            ComboBox folders = KpiTheme.Dropdown();
+            folders.Items.Add(unknown.Folder);
+            foreach (string one in ComponentFolders.Folders)
+            {
+                if (!string.Equals(one, unknown.Folder, StringComparison.OrdinalIgnoreCase)) folders.Items.Add(one);
+            }
+            folders.SelectedIndex = 0;
+            folders.Margin = KpiTheme.StatusGap;
+
+            Button add = KpiTheme.Small(Caption(KpiPaneWords.Add));
+            add.Margin = KpiTheme.StatusGap;
+            add.HorizontalAlignment = HorizontalAlignment.Left;
+            add.Click += (sender, e) =>
+            {
+                KpiTemplate picked = KpiTemplates.Named(templates.SelectedItem as string, table.Templates);
+                string folder = folders.SelectedItem as string;
+                if (picked == null || string.IsNullOrWhiteSpace(folder)) return;
+
+                AddComponent(unknown.Value, picked, folder);
+            };
+
+            panel.Children.Add(templates);
+            panel.Children.Add(folders);
+            panel.Children.Add(add);
+            return panel;
+        }
+
+        /// <summary>
+        /// Writes the one line and says where it went on the status line, then draws again, which
+        /// reads the files afresh so the value's plots are placed on this same redraw.
+        /// </summary>
+        private void AddComponent(string value, KpiTemplate template, string folder)
+        {
+            if (template == null) return;
+
+            string why;
+            string written = ComponentFiles.Add(value, template.Name, folder, out why);
+            _choosingValue = string.Empty;
+            Changed();
+            _told = written.Length > 0
+                ? new StatusLine(KpiPaneWords.LineWritten(written))
+                : new StatusLine(KpiPaneWords.LineNotWritten(why), why);
+            PaintStatus();
+        }
+
         private UIElement WarningBox(PaneWarning warning, UIElement extra, bool aboutThePress = false)
         {
             Brush text = warning.Blocks ? KpiTheme.ErrorText : KpiTheme.WarningText;
@@ -1995,10 +2176,27 @@ namespace RcrcGreen.Revit.Kpi
             {
                 PeekedWorkbook peeked = PeekedWorkbook.Of(path);
                 return RecognisedWorkbook.Recognise(
-                    Path.GetFileName(path), peeked.SheetNames, peeked.Refusal, peeked.FirstSheetCells);
+                    Path.GetFileName(path), peeked.SheetNames, peeked.Refusal, peeked.FirstSheetCells)
+                    .Laid(peeked.Layout);
             });
 
-            return _templatesListed.Workbooks;
+            return Reviewed(_templatesListed.Workbooks);
+        }
+
+        /// <summary>
+        /// The folder looked at as a whole: a file whose name the tool does not know is offered
+        /// as a new template where its layout is a known one's, and used once Use is pressed or a
+        /// components.csv row names it. A template made here for the first time goes into the
+        /// table at once, so a row naming it places plots on this same draw.
+        /// </summary>
+        private IReadOnlyList<RecognisedWorkbook> Reviewed(IReadOnlyList<RecognisedWorkbook> listed)
+        {
+            int before = _madeTemplates.Count;
+            List<string> used = _usedTemplates.Concat(ComponentTable.InForce.Rows.Select(row => row.Template)).ToList();
+            IReadOnlyList<RecognisedWorkbook> reviewed = NewTemplates.Review(listed, used, _madeTemplates);
+
+            if (_madeTemplates.Count != before) ComponentFiles.PutInForce(_madeTemplates.Values);
+            return reviewed;
         }
 
         /// <summary>

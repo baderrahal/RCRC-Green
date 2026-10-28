@@ -122,6 +122,20 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             lines.AddRange(KpiTemplates.All.Select(AssetTypeNames.Display));
 
+            // The new template prompt and the unknown value box, with the longest real names.
+            ComponentFile shared = ComponentFile.Unreadable(ComponentSource.Shared, "s.csv", "x");
+            ComponentFile taken = ComponentFile.Parse(ComponentSource.Personal, "p.csv", new[] { "Component,Template,Folder", "A,B" });
+            lines.AddRange(new[]
+            {
+                KpiPaneWords.UnknownTemplateLayout, KpiPaneWords.Use, KpiPaneWords.Skip, KpiPaneWords.UseSuggestion,
+                KpiPaneWords.Choose, KpiPaneWords.Add, KpiPaneWords.NewTemplateSameAs(KpiTemplates.SchoolsMoreThan60),
+                KpiPaneWords.UnknownValue("DAILY MOSQUE MORE THAN 80%"), KpiPaneWords.PlotsCarryIt(1), KpiPaneWords.PlotsCarryIt(12345),
+                KpiPaneWords.Suggested(KpiTemplates.MosquesMoreThan60), KpiPaneWords.Suggested(null),
+                KpiPaneWords.AddsTo(true), KpiPaneWords.AddsTo(false),
+                KpiPaneWords.ComponentFileSays(shared), KpiPaneWords.ComponentFileSays(taken),
+                KpiPaneWords.LineWritten("C:\\a\\components.csv"), KpiPaneWords.LineNotWritten("x")
+            });
+
             foreach (KpiSteps steps in EveryStepState())
             {
                 foreach (KpiStepState state in steps.All)

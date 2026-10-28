@@ -366,3 +366,38 @@ Where: `ComponentTable.Header` and `HeaderFields`
 Input: a change to one of the two and not the other
 Why latent: neither has changed and a test reads the shipped header through both
 Found: 60 per cent round part (a), reviewer
+
+## L51 A bad shared row refuses whatever its first field reads
+
+Where: `ComponentFile.Parse`, a row that cannot be read refuses the key of its first field
+Input: `DAILY MOSQUE;MOSQUES;X` in a comma file, `HEALTH, NEW,HEALTHCARE,HC` unquoted, or a note typed in column D
+Why latent: no shared file exists yet. Each case is named in both reports and on Setup
+Found: 60 per cent round part (a), breaker pass 2
+
+## L52 A components.csv read while it is being saved
+
+Where: `ComponentFile.From`
+Input: a redraw in the moment an editor deletes and renames the shared file, or writes it in place
+Why latent: the window is a moment and the next redraw reads it whole
+Found: 60 per cent round part (a), breaker pass 2
+
+## L53 A quoted line break and Excel's own code page
+
+Where: `ComponentFile.From`, `StreamReader.ReadLine` and UTF-8
+Input: a field holding Alt+Enter, or a value with a non ASCII letter saved as plain CSV
+Why latent: every value and folder today is ASCII on one line. A split row is refused and named
+Found: 60 per cent round part (a), reviewer pass 2
+
+## L54 Two rules say when two folders are one
+
+Where: `ComponentTable` compares folders case blind, `ComponentFolders.Folders` and `FoldersOf` ordinal
+Input: a shared file giving FRIDAY MOSQUE the folder Daily Mosque
+Why latent: no file spells one folder two ways
+Found: 60 per cent round part (a), reviewer pass 2
+
+## L55 A line added to a semicolon file is written with commas
+
+Where: `ComponentFiles.Add` through `ComponentTable.Line`
+Input: a shared components.csv Excel saved with semicolons, then Use suggestion
+Why latent: no shared file exists yet. The added line is then refused and named on Setup
+Found: 60 per cent round part (b), author

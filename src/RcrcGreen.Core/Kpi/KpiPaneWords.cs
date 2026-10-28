@@ -215,6 +215,16 @@ namespace RcrcGreen.Core.Kpi
                 + " uses it on every start. Skip leaves the file unused.";
         }
 
+        /// <summary>
+        /// A components.csv that was there and was not read whole. Not read lets the files below
+        /// it answer for every value, so it is said on the pane and not only in the report.
+        /// </summary>
+        public static string ComponentFileSays(ComponentFile file)
+        {
+            string which = file == null ? "A" : char.ToUpperInvariant(ComponentTable.SourceWord(file.Source)[0]) + ComponentTable.SourceWord(file.Source).Substring(1);
+            return which + " components.csv " + (file != null && !file.Read ? "was not read" : "has lines not taken");
+        }
+
         public static string LineWritten(string path)
         {
             return "Added to " + path;

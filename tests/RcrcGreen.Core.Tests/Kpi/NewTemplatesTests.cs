@@ -101,6 +101,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(added.IsNewTemplate);
             Assert.False(added.IsMatched);
             Assert.Equal("MOSQUES MORE THAN 80", added.Proposed.Name);
+            Assert.Same(KpiTemplates.Mosques, added.SameAs);
             Assert.Same(KpiTemplates.Mosques, added.Proposed.Kind);
             Assert.Equal("<Mosques>", added.Proposed.MainSheetName);
             Assert.Equal(KpiTemplates.Mosques.Cells.Select(one => one.Value + one.Cell), added.Proposed.Cells.Select(one => one.Value + one.Cell));
@@ -338,6 +339,19 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiTemplate suggested = UnknownComponents.Suggest(value, KpiTemplates.All);
 
             Assert.Equal(template, suggested == null ? null : suggested.Name);
+        }
+
+        [Fact]
+        public void TheBoxesSayWhatTheyAreAbout()
+        {
+            Assert.Equal("New template, same layout as MOSQUES", KpiPaneWords.NewTemplateSameAs(KpiTemplates.Mosques));
+            Assert.Equal("Unknown value PUMP STATION", KpiPaneWords.UnknownValue("PUMP STATION"));
+            Assert.Equal("Suggested: Schools >60%", KpiPaneWords.Suggested(KpiTemplates.SchoolsMoreThan60));
+            Assert.Equal("3 plots carry it", KpiPaneWords.PlotsCarryIt(3));
+            Assert.Equal("The shared components.csv was not read",
+                KpiPaneWords.ComponentFileSays(ComponentFile.Unreadable(ComponentSource.Shared, "s.csv", "x")));
+            Assert.Equal("Your own components.csv has lines not taken",
+                KpiPaneWords.ComponentFileSays(ComponentFile.Parse(ComponentSource.Personal, "p.csv", new[] { "Component,Template,Folder", "A,B" })));
         }
 
         [Fact]

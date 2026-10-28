@@ -289,3 +289,33 @@ The four values, Bader's answers: each fills its own template and files under a 
 as the value. The workbook and the PDF print the value as the model holds it, as they always
 have, off the plot's own reading. The PDF form is still chosen by plot prefix. On the pane the
 four rows read Mosques >60%, Mosques <60%, Schools >60% and Schools <60%.
+
+## A new template is offered on its layout, never used on it alone
+
+**K74.** A file the tool knows by name is one whose name, as words, ends with the template it was
+recognised as. The client names all eleven that way, measured on the real folder and the four new
+files: all eleven known by name. `NewTemplates.Review` looks at every other file after the folder
+is read, and compares it by `TemplateLayout` with the known files in the same folder.
+
+**A layout is every sheet name in order and every typed label on the first sheet at its address**,
+through the K35.09 label rule. A formula is not a label, so a 60 per cent file, whose five changed
+cells are formulas, has its kind's layout, measured on all four. A layout that matches is a new
+template, named after the file less the words every known file opens with, carrying the matched
+template's cell map and kind. Setup shows it as New template, same layout as MOSQUES, with Use and
+Skip. Use holds until Revit closes, and a components.csv row naming the template is a use too,
+because somebody already chose to send plots to it. A layout that matches nothing is Unknown
+template layout and is never used. Tests on built workbooks hold both, never on client files.
+
+Setup also says when a components.csv was there and was not read whole, because a file not read
+lets the files below it answer.
+
+## A component value no file holds is offered one line, never placed by a guess
+
+**K75.** After a read, step 2 shows one box per value no components.csv places: the value, how
+many plots carry it, and a suggestion. The suggested template is the known one sharing the most
+words with the value, a plural S and a per cent sign off each word, the first listed on a tie, and
+none where no word is shared. The suggested folder is the value itself. Use suggestion and Choose,
+two dropdowns of the templates and the known folders, each write one line, to the shared file
+where the templates folder is set and takes the write, else to `%APPDATA%\RCRC Green\components.csv`,
+and the box and the status line say which. Skip hides the box until Revit closes. Until a line is
+written the value's plots are refused as before, with the value named.
