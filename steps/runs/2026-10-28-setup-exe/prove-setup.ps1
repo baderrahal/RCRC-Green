@@ -13,7 +13,7 @@ HKCU, so every scenario ends on an uninstall and the script checks the entry is 
   Upgrade     the older Setup, a chosen templates folder, then the newer Setup over it
   Refused     a stand-in Revit.exe running, for Setup and for the uninstall
   Full        install.ps1's full install, then the Setup over it
-  NoDocuments a profile with no Documents folder, where the shell answers with nothing
+  NoDocuments a profile with no Documents folder, which the shell may make itself
 
 Run it in Windows PowerShell 5.1:
 
@@ -230,7 +230,8 @@ try {
     Check 'install.ps1 puts the full install back, no features.txt' ((Test-Path (Join-Path $beside 'RcrcGreen.Revit.dll')) -and -not (Test-Path (Join-Path $beside 'features.txt')))
     Back
 
-    # No Documents folder, where the shell answers with nothing and USERPROFILE\Documents is used.
+    # No Documents folder. The shell may make it itself, and the reports folder lands under
+    # USERPROFILE\Documents either way.
     $p = Profile 'nodocuments' -NoDocuments
     $code = Setup $Newer (Join-Path $Root 'nodocuments-setup.log')
     $reports = Join-Path $p 'Documents\RCRC Green\reports'

@@ -1,0 +1,320 @@
+
+=== fresh, profile <root>\fresh
+Setup RCRC Green KPI Setup e869e1b 2026-10-28 1815.exe exit 0
+Files in the profile:
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1280.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_16.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1920.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_256.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_2560.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_32.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_48.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_768.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_96.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_custom_stream.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_exif.db
+       7416  AppData\Local\Microsoft\Windows\Explorer\iconcache_idx.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_sr.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide_alternate.db
+        965  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+        683  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+          5  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\features.txt
+          0  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+    1008128  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+     260500  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.pdb
+     328192  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+      93188  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.pdb
+        174  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+          0  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+        150  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\VERSION.txt
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\desktop.ini
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\Programs\desktop.ini
+      16681  AppData\Roaming\RCRC Green\Setup\unins000.dat
+    4452506  AppData\Roaming\RCRC Green\Setup\unins000.exe
+Apps entry: DisplayName 'RCRC Green KPI', DisplayVersion 'e869e1b 2026-10-28 1815'
+  PASS  exit code 0
+  PASS  RcrcGreen.Revit.dll the same bytes as in the zip
+  PASS  RcrcGreen.Core.dll the same bytes as in the zip
+  PASS  RcrcGreen.Revit.pdb the same bytes as in the zip
+  PASS  RcrcGreen.Core.pdb the same bytes as in the zip
+  PASS  components.csv the same bytes as in the zip
+  PASS  features.txt the same bytes as in the zip
+  PASS  VERSION.txt the same bytes as in the zip
+  PASS  RcrcGreen.addin the same bytes as in the zip
+  PASS  features.txt reads KPI
+  PASS  the reports folder is made
+  PASS  reports-folder.txt names it
+  PASS  the Apps entry is RCRC Green KPI
+Uninstall exit 0, uninstaller still there: False
+Files in the profile:
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1280.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_16.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1920.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_256.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_2560.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_32.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_48.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_768.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_96.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_custom_stream.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_exif.db
+       7416  AppData\Local\Microsoft\Windows\Explorer\iconcache_idx.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_sr.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide_alternate.db
+        152  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-forms-folder.txt
+        153  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+         11  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-prepared-by.txt
+        174  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+        167  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\desktop.ini
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\Programs\desktop.ini
+         55  AppData\Roaming\RCRC Green\components.csv
+         13  Documents\RCRC Green\reports\kpi-report.txt
+         61  Shared\KPI templates\components.csv
+Apps entry: none
+  PASS  uninstall exit code 0
+  PASS  RcrcGreen.addin is gone
+  PASS  RcrcGreen.Revit.dll beside the DLLs is gone
+  PASS  RcrcGreen.Core.dll beside the DLLs is gone
+  PASS  RcrcGreen.Revit.pdb beside the DLLs is gone
+  PASS  RcrcGreen.Core.pdb beside the DLLs is gone
+  PASS  components.csv beside the DLLs is gone
+  PASS  features.txt beside the DLLs is gone
+  PASS  VERSION.txt beside the DLLs is gone
+  PASS  kept unchanged: AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+  PASS  kept unchanged: AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+  PASS  kept unchanged: AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-forms-folder.txt
+  PASS  kept unchanged: AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-prepared-by.txt
+  PASS  kept unchanged: AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+  PASS  kept unchanged: Shared\KPI templates\components.csv
+  PASS  kept unchanged: AppData\Roaming\RCRC Green\components.csv
+  PASS  kept unchanged: Documents\RCRC Green\reports\kpi-report.txt
+  PASS  the Apps entry is gone
+
+=== upgrade, profile <root>\upgrade
+Setup RCRC Green KPI Setup 7e29aba 2026-10-28 1807.exe exit 0
+Apps entry: DisplayName 'RCRC Green KPI', DisplayVersion '7e29aba 2026-10-28 1807'
+Setup RCRC Green KPI Setup e869e1b 2026-10-28 1815.exe exit 0
+Files in the profile:
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1280.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_16.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1920.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_256.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_2560.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_32.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_48.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_768.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_96.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_custom_stream.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_exif.db
+       7416  AppData\Local\Microsoft\Windows\Explorer\iconcache_idx.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_sr.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide_alternate.db
+        965  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+        683  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+          5  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\features.txt
+          0  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+    1008128  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+     260500  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.pdb
+     328192  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+      93188  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.pdb
+        176  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+         22  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+        150  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\VERSION.txt
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\desktop.ini
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\Programs\desktop.ini
+      30416  AppData\Roaming\RCRC Green\Setup\unins000.dat
+    4452506  AppData\Roaming\RCRC Green\Setup\unins000.exe
+Apps entry: DisplayName 'RCRC Green KPI', DisplayVersion 'e869e1b 2026-10-28 1815'
+  PASS  both exit codes 0
+  PASS  the DLL is the newer one
+  PASS  the Apps entry moved on from '7e29aba 2026-10-28 1807'
+  PASS  VERSION.txt is the newer one
+  PASS  the chosen templates folder is kept
+  PASS  one uninstaller, not a second
+Uninstall exit 0, uninstaller still there: False
+  PASS  uninstall exit code 0 and the Apps entry gone
+
+=== refused, profile <root>\refused
+Setup RCRC Green KPI Setup e869e1b 2026-10-28 1815.exe exit 1
+Files in the profile:
+Apps entry: none
+  PASS  Setup refused with a non zero exit, 1
+  PASS  nothing written under AppData\Roaming
+  PASS  no Apps entry
+Setup RCRC Green KPI Setup e869e1b 2026-10-28 1815.exe exit 0
+Uninstall with Revit running, exit 1
+  PASS  the uninstall refused with a non zero exit, 1
+  PASS  the add-in is still installed
+  PASS  the Apps entry is still there
+Uninstall exit 0, uninstaller still there: False
+  PASS  uninstall after Revit closed, exit 0 and the Apps entry gone
+
+=== full, profile <root>\full
+Installed RCRC Green from C:\Users\bader\Documents\GitHub\RCRC-Green\src\RcrcGreen.Revit\bin\Release
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.pdb
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.pdb
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\sheet-names.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\presets.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+13 files copied. Restart Revit 2024 and look for the RCRC Green tab.
+Reports go to C:\Users\bader\Documents\GitHub\RCRC-Green\reports
+After install.ps1:
+Files in the profile:
+        965  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+        683  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+          3  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+       1432  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\presets.txt
+    1008128  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+     260216  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.pdb
+     328192  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+      93112  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.pdb
+         53  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+       1031  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\sheet-names.txt
+          3  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+       1477  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
+       1792  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
+Setup RCRC Green KPI Setup e869e1b 2026-10-28 1815.exe exit 0
+Files in the profile:
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1280.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_16.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1920.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_256.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_2560.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_32.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_48.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_768.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_96.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_custom_stream.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_exif.db
+       7416  AppData\Local\Microsoft\Windows\Explorer\iconcache_idx.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_sr.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide_alternate.db
+        965  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+        683  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+          5  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\features.txt
+          3  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+       1432  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\presets.txt
+    1008128  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+     260500  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.pdb
+     328192  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+      93188  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.pdb
+         53  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+       1031  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\sheet-names.txt
+          3  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+       1477  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
+        150  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\VERSION.txt
+       1792  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\desktop.ini
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\Programs\desktop.ini
+      14765  AppData\Roaming\RCRC Green\Setup\unins000.dat
+    4452506  AppData\Roaming\RCRC Green\Setup\unins000.exe
+Apps entry: DisplayName 'RCRC Green KPI', DisplayVersion 'e869e1b 2026-10-28 1815'
+  PASS  exit code 0
+  PASS  features.txt reads KPI
+  PASS  the DLL is the kit one
+  PASS  the log names the full install
+  PASS  reports-folder.txt left naming the repo reports
+install.ps1 over the Setup: RCRC Green KPI from the team Setup.exe is installed. Uninstall it first in Windows Settings, Apps, Installed apps, then run this again. Nothing was changed.
+  PASS  install.ps1 refuses while the Setup's entry is in Apps
+  PASS  the kit DLL and features.txt still there after install.ps1
+uninstall.ps1 over the Setup: RCRC Green KPI from the team Setup.exe is installed. Uninstall it in Windows Settings, Apps, Installed apps instead. Nothing was changed.
+  PASS  uninstall.ps1 refuses while the Setup's entry is in Apps
+  PASS  the kit DLL and features.txt still there after uninstall.ps1
+Uninstall exit 0, uninstaller still there: False
+Files in the profile:
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1280.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_16.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1920.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_256.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_2560.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_32.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_48.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_768.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_96.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_custom_stream.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_exif.db
+       7416  AppData\Local\Microsoft\Windows\Explorer\iconcache_idx.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_sr.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide_alternate.db
+          3  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+       1432  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\presets.txt
+         53  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+       1031  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\sheet-names.txt
+          3  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+       1477  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
+       1792  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\desktop.ini
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\Programs\desktop.ini
+  PASS  uninstall exit code 0 and the Apps entry gone
+Installed RCRC Green from C:\Users\bader\Documents\GitHub\RCRC-Green\src\RcrcGreen.Revit\bin\Release
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.pdb
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.pdb
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\title-blocks.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\sheet-names.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\presets.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+  <root>\full\AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+13 files copied. Restart Revit 2024 and look for the RCRC Green tab.
+Reports go to C:\Users\bader\Documents\GitHub\RCRC-Green\reports
+  PASS  install.ps1 puts the full install back, no features.txt
+
+=== nodocuments, profile <root>\nodocuments
+Setup RCRC Green KPI Setup e869e1b 2026-10-28 1815.exe exit 0
+Files in the profile:
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1280.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_16.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_1920.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_256.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_2560.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_32.db
+    1048576  AppData\Local\Microsoft\Windows\Explorer\iconcache_48.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_768.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_96.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_custom_stream.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_exif.db
+       7416  AppData\Local\Microsoft\Windows\Explorer\iconcache_idx.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_sr.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide.db
+         24  AppData\Local\Microsoft\Windows\Explorer\iconcache_wide_alternate.db
+        965  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen.addin
+        683  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+          5  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\features.txt
+          0  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
+    1008128  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.dll
+     260500  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Core.pdb
+     328192  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.dll
+      93188  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\RcrcGreen.Revit.pdb
+        180  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\reports-folder.txt
+          0  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\templates-folder.txt
+        150  AppData\Roaming\Autodesk\Revit\Addins\2024\RcrcGreen\VERSION.txt
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\desktop.ini
+        174  AppData\Roaming\Microsoft\Windows\Start Menu\Programs\desktop.ini
+      16909  AppData\Roaming\RCRC Green\Setup\unins000.dat
+    4452506  AppData\Roaming\RCRC Green\Setup\unins000.exe
+        418  Documents\desktop.ini
+  PASS  exit code 0
+  PASS  the reports folder is made under USERPROFILE\Documents
+Uninstall exit 0, uninstaller still there: False
+  PASS  uninstall exit code 0 and the Apps entry gone
+
+DONE: every check passed.

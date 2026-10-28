@@ -43,6 +43,9 @@ Why: the team wants one file, double click, Next, Install, Finish, with no zip t
 Proved by: the Setup.exe installed, upgraded, refused, uninstalled and run over a full install
 in throwaway profiles, and Bader's pass in `steps/03_your_steps.md`.
 
+DONE 2026-10-28, this round's pull request, the entry at the top of `steps/log-kpi.md`. 59 checks
+in `steps/runs/2026-10-28-setup-exe/proof.txt`. The Revit pass is still to run.
+
 ## F3 The RCRC Green folder name in Shared
 
 What: the folder name RCRC Green, held by `ComponentFiles`, `PresetStore` and

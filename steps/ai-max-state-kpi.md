@@ -5,7 +5,8 @@ the team zip, INSTALL-TEAM.txt leading with it, and Bader's answers to Q8 to Q12
 script is `steps/runs/2026-10-28-setup-exe/prove-setup.ps1`. Its entry is the top of `steps/log-kpi.md`.
 Review pass 1 fixed install.ps1 over the Setup and named the installed version on Ready. L67 to
 L77 are LATENT. Pass 2 found nothing REAL beyond a Look for line in step 6, fixed. L78 to L84
-are LATENT. Nothing in it has run in Revit.
+are LATENT. The claim checker found nothing wrong. 59 checks in `proof.txt`. Nothing in it has
+run in Revit.
 
 Phase: 9, ship, part (b) of two. The layout rule and the two prompts in the pane, K74 and K75.
 Part (a) merged as pull request 175, `79028a5`. Two review passes on each. L41 to L66 are LATENT.
