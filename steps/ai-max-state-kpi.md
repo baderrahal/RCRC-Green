@@ -1,5 +1,9 @@
 # ai-max state, KPI
 
+Phase: 10, package. The KPI Setup.exe, F2b in `steps/01_next.md`, built by Inno Setup beside
+the team zip, and Bader's answers to Q8 to Q12. Its entry is the top of `steps/log-kpi.md`.
+Nothing in it has run in Revit.
+
 Phase: 9, ship, part (b) of two. The layout rule and the two prompts in the pane, K74 and K75.
 Part (a) merged as pull request 175, `79028a5`. Two review passes on each. L41 to L66 are LATENT.
 Its entry is the top of `steps/log-kpi.md`. Nothing in either has run in Revit.
