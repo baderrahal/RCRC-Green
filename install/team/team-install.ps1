@@ -110,7 +110,7 @@ if ($PSVersionTable.PSEdition -ne 'Desktop') {
 if ($CheckOnly) {
     $absent = $needed + @($manifest) | Where-Object { -not (Test-Path -LiteralPath (Join-Path $here $_)) }
     if ($absent) { Finish 'FAILED' "The bundle is missing $($absent -join ', ')." 1 }
-    $missing = MissingReferences $here
+    $missing = @(MissingReferences $here)
     if ($missing.Count -gt 0) { Finish 'FAILED' "A reference is in neither the bundle, the framework nor Revit: $($missing -join '. ')." 1 }
     Finish 'DONE' 'The bundle holds every file and every reference is satisfied.' 0
 }
@@ -160,7 +160,7 @@ if ($absent) {
 # says only that the add-in could not be loaded. Taking the mark off first costs nothing.
 Get-ChildItem -LiteralPath $here -File | Unblock-File
 
-$missing = MissingReferences $here
+$missing = @(MissingReferences $here)
 if ($missing.Count -gt 0) {
     Refuse "This zip is incomplete: $($missing -join '. '). Send this window to Bader."
 }

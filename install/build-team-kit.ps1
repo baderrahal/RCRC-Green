@@ -44,13 +44,14 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $outputFolder = Join-Path $env:USERPROFILE 'Documents\RCRC-Green-Team-Kit'
 $work = Join-Path ([System.IO.Path]::GetTempPath()) ('rcrc-green-kit-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 
-function Git([string[]] $arguments) {
-    & git -C $repoRoot @arguments
+# Not named Git: PowerShell names ignore case, so a function called Git calls itself.
+function InRepo([string[]] $arguments) {
+    & git.exe -C $repoRoot @arguments
     if ($LASTEXITCODE -ne 0) { throw "git $($arguments -join ' ') failed." }
 }
 
-Git @('fetch', '--quiet', 'origin')
-Git @('worktree', 'add', '--quiet', '--detach', $work, $Ref)
+InRepo @('fetch', '--quiet', 'origin')
+InRepo @('worktree', 'add', '--quiet', '--detach', $work, $Ref)
 
 try {
     $project = Join-Path $work 'src\RcrcGreen.Revit\RcrcGreen.Revit.csproj'
