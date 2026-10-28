@@ -216,6 +216,13 @@ try {
     Check 'the DLL is the kit one' ((Hash (Join-Path $beside 'RcrcGreen.Revit.dll')) -eq (Hash (Join-Path $unzipped 'RcrcGreen.Revit.dll')))
     Check 'the log names the full install' ((Get-Content (Join-Path $Root 'full-setup.log') -Raw) -match 'A full install with no features.txt is here')
     Check 'reports-folder.txt left naming the repo reports' ((Get-Content (Join-Path $beside 'reports-folder.txt') -Raw) -eq $pointer)
+    foreach ($script in 'install.ps1', 'uninstall.ps1') {
+        $said = ''
+        try { & (Join-Path $repoRoot "install\$script") | Out-Null } catch { $said = $_.Exception.Message }
+        Write-Host "$script over the Setup: $said"
+        Check "$script refuses while the Setup's entry is in Apps" ($said -match 'Uninstall it')
+        Check "the kit DLL and features.txt still there after $script" (((Hash (Join-Path $beside 'RcrcGreen.Revit.dll')) -eq (Hash (Join-Path $unzipped 'RcrcGreen.Revit.dll'))) -and (Test-Path (Join-Path $beside 'features.txt')))
+    }
     $code = Uninstall $p
     Files $p
     Check 'uninstall exit code 0 and the Apps entry gone' (($code -eq 0) -and -not (Test-Path $entry))

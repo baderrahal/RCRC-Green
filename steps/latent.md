@@ -478,3 +478,80 @@ Where: `NewTemplates.KnownByName` and `Why`
 Input: a folder whose files do not end with their template's name, so none is known by name
 Why latent: the client's folder names all eleven that way, measured
 Found: 60 per cent round part (b), reviewer
+
+## L67 The zip and the Setup on one PC cross each other
+
+Where: `RCRC Green KPI Setup.iss` and `team-install.ps1`, neither reads what the other left
+Input: a zip install then the Setup and a put back, or the Setup then a zip install
+Why latent: no zip has been shared yet, and INSTALL-TEAM.txt says one way on a PC, not both
+Found: Setup.exe round, breaker
+
+## L68 A full install is known by a missing features.txt alone
+
+Where: `RCRC Green KPI Setup.iss`, FullInstallIsHere
+Input: a full install whose features.txt is empty or names all three tools
+Why latent: install.ps1 deletes features.txt and the kit always writes KPI
+Found: Setup.exe round, breaker
+
+## L69 The Revit check answers not running when it cannot run
+
+Where: `RCRC Green KPI Setup.iss`, RevitIsRunning, when WMI and tasklist both fail, with no Log line
+Input: WMI off and tasklist blocked by policy, with Revit open
+Why latent: neither is off on any measured machine. Inno then stops on the locked DLL
+Found: Setup.exe round, breaker and reviewer
+
+## L70 Run as administrator under another account installs into that account
+
+Where: `RCRC Green KPI Setup.iss`, {userappdata} and {userdocs}
+Input: IT choosing Run as administrator with its own account
+Why latent: PrivilegesRequired=lowest never asks for admin on a double click
+Found: Setup.exe round, breaker
+
+## L71 A write the Setup could not make still ends on Finish
+
+Where: `RCRC Green KPI Setup.iss`, ForceDirectories and the pointer writes, answers not read
+Input: Controlled folder access blocking Documents
+Why latent: the pane makes the reports folder itself before it writes and says so loudly
+Found: Setup.exe round, breaker and reviewer
+
+## L72 The uninstaller sits under %APPDATA%\RCRC Green
+
+Where: `RCRC Green KPI Setup.iss`, UninstallFilesDir
+Input: somebody clearing %APPDATA%\RCRC Green to reset their own components.csv
+Why latent: nothing tells anybody to clear it, and Uninstall then fails loudly
+Found: Setup.exe round, breaker
+
+## L73 The build can find an older ISCC, or none under a missing Program Files (x86)
+
+Where: `install/build-team-kit.ps1`, the ISCC search
+Input: Inno Setup 5 on PATH, or a Windows with no ProgramFiles(x86) variable
+Why latent: this machine has Inno Setup 6.7.3 per user and a 64 bit Windows. Both fail loudly
+Found: Setup.exe round, breaker and reviewer
+
+## L74 The throwaway profiles follow a Documents folder fixed in the registry
+
+Where: `steps/runs/2026-10-28-setup-exe/prove-setup.ps1`
+Input: a machine whose Documents is a fixed OneDrive path in User Shell Folders
+Why latent: Bader's Documents is the plain one. The checks then fail loudly
+Found: Setup.exe round, breaker
+
+## L75 Any running Revit refuses the Setup, another version or another user's included
+
+Where: `RCRC Green KPI Setup.iss`, RevitIsRunning, as team-install.ps1 does
+Input: Revit 2023, 2025 or 2027 open on Bader's machine, or a second user's Revit
+Why latent: it refuses loudly and asks only to close Revit, never installs over a locked file
+Found: Setup.exe round, breaker and reviewer
+
+## L76 The Ready page names a repo script
+
+Where: `RCRC Green KPI Setup.iss`, UpdateReadyMemo, install\install.ps1
+Input: a team PC with a full install
+Why latent: only Bader has a full install
+Found: Setup.exe round, reviewer
+
+## L77 A reports-folder.txt holding only a byte order mark counts as filled
+
+Where: `RCRC Green KPI Setup.iss`, WriteWhereMissing
+Input: a pointer file saved as UTF-8 with a BOM and nothing else
+Why latent: nothing writes such a file
+Found: Setup.exe round, breaker

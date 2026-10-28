@@ -15,6 +15,12 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Removing the files under the team Setup.exe would leave its entry in Apps naming an install
+# that is gone. The id is the AppId in install\team\RCRC Green KPI Setup.iss.
+if (Test-Path -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{B2B66EEE-05CF-49A3-9F38-6020B8046379}_is1') {
+    throw 'RCRC Green KPI from the team Setup.exe is installed. Uninstall it in Windows Settings, Apps, Installed apps instead. Nothing was changed.'
+}
+
 $addinsFolder = Join-Path $env:APPDATA 'Autodesk\Revit\Addins\2024'
 $manifest = Join-Path $addinsFolder 'RcrcGreen.addin'
 $assemblyFolder = Join-Path $addinsFolder 'RcrcGreen'

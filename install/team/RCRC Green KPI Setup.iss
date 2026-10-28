@@ -132,16 +132,38 @@ begin
     SuppressibleMsgBox(RevitRunningUninstall, mbError, MB_OK, IDOK);
 end;
 
+// What is installed now, so an older Setup run over a newer one says so before Install. The
+// zip's own install prints both versions in the same way.
+function InstalledNow: String;
+var
+  Lines: TArrayOfString;
+begin
+  Result := '';
+  if LoadStringsFromFile(ExpandConstant('{app}\RcrcGreen\VERSION.txt'), Lines) and (GetArrayLength(Lines) > 0) then
+    Result := Trim(Lines[0])
+  else if FileExists(ExpandConstant('{app}\RcrcGreen\RcrcGreen.Revit.dll')) then
+    Result := 'an RCRC Green build with no VERSION.txt';
+end;
+
+// The memo does not wrap, so every line is kept short enough to read without scrolling sideways.
 function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo,
   MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+var
+  Now: String;
 begin
-  Result := 'RCRC Green KPI {#Version} for Revit 2024, for ' + GetUserNameString + ' alone.' + NewLine
+  Now := InstalledNow;
+  if Now = '' then
+    Now := 'nothing';
+  Result := 'RCRC Green KPI {#Version} for Revit 2024,' + NewLine
+    + 'for ' + GetUserNameString + ' alone.' + NewLine
+    + NewLine + 'Installed now:' + NewLine + Space + Now + NewLine
     + NewLine + 'Into:' + NewLine + Space + ExpandConstant('{app}') + NewLine
-    + NewLine + 'Every folder you chose in the pane, your reports and your own components.csv are kept.';
+    + NewLine + 'Your chosen folders, your reports and your components.csv are kept.';
   if FullInstallIsHere then
     Result := Result + NewLine + NewLine
-      + 'The full RCRC Green install, with all three tools, is here. Setup replaces it with KPI only. '
-      + 'install\install.ps1 in the repo puts the full install back.';
+      + 'The full RCRC Green install, with all three tools, is here.' + NewLine
+      + 'Setup replaces it with KPI only. To put it back, uninstall' + NewLine
+      + 'RCRC Green KPI in Apps, then run install\install.ps1.';
 end;
 
 procedure WriteWhereMissing(Path, Text: String);

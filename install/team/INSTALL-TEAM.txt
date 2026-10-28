@@ -21,6 +21,8 @@ Uninstall. Your folders, your reports and your own components.csv are kept.
 
 If your PC will not run the Setup, use the zip instead
 
+Use one way on a PC, the Setup or the zip, not both.
+
 1. Close Revit.
 2. Right click the zip and choose Extract All, then open the folder that makes. A file opened
    inside the zip without extracting it does not work.
@@ -32,7 +34,7 @@ If your PC will not run the Setup, use the zip instead
      FAILED:   It stopped part way. The line says what to do.
      REFUSED:  Nothing was changed. The line says why and what to do.
    Then press any key to close the window.
-5. Start Revit 2024 and choose Always Load, as in step 4 above. VERSION.txt in the folder says
+5. Start Revit 2024 and choose Always Load, as in step 4 of To install. VERSION.txt in the folder says
    which version the zip holds.
 
 To go back to the version you had before the last zip install, close Revit, double click

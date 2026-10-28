@@ -114,6 +114,18 @@ try {
     & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $kit 'team-install.ps1') -CheckOnly
     if ($LASTEXITCODE -ne 0) { throw 'The bundle check refused. Nothing was written.' }
 
+    # The Setup names its files by hand, a second list beside team-install.ps1's. Every file the
+    # kit carries apart from the zip's own install files must be one the Setup installs, and the
+    # other way round, so a file added to the kit and not to the Setup stops the build here.
+    $iss = Join-Path $work 'install\team\RCRC Green KPI Setup.iss'
+    $zipOnly = @('team-install.ps1', 'Install RCRC Green KPI.cmd', 'Put back the previous version.cmd', 'INSTALL-TEAM.txt')
+    $carried = @(Get-ChildItem -LiteralPath $kit -File | Where-Object { $zipOnly -notcontains $_.Name } | ForEach-Object { $_.Name })
+    $named = @(Select-String -LiteralPath $iss -Pattern '^Source: "\{#Kit\}\\([^"]+)"' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+    $apart = @(Compare-Object $carried $named | ForEach-Object { $_.InputObject })
+    if ($apart.Count -gt 0) {
+        throw "The Setup script and the kit disagree about $($apart -join ', '). Name every installed file in both. Nothing was written."
+    }
+
     New-Item -ItemType Directory -Path $outputFolder -Force | Out-Null
     $zip = Join-Path $outputFolder "RCRC Green KPI $version.zip"
     if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
@@ -122,7 +134,7 @@ try {
     # Compiled from the worktree's own script, so the installer is what main holds as well.
     $setup = Join-Path $outputFolder "RCRC Green KPI Setup $version.exe"
     if (Test-Path -LiteralPath $setup) { Remove-Item -LiteralPath $setup -Force }
-    & $iscc /Q "/DKit=$kit" "/DVersion=$version" "/O$outputFolder" (Join-Path $work 'install\team\RCRC Green KPI Setup.iss')
+    & $iscc /Q "/DKit=$kit" "/DVersion=$version" "/O$outputFolder" $iss
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $setup)) {
         Remove-Item -LiteralPath $zip -Force
         throw "Inno Setup could not compile the Setup.exe. The zip was taken away again, so nothing was written."

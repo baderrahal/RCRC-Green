@@ -110,3 +110,14 @@ Questions asked before this file existed are in each task's own log and are not 
 
     Answer: A, 2026-10-28. Moved to Shared in a round of its own later, F3 in
     `steps/01_next.md`. Not in the Setup.exe round.
+
+13. The Setup.exe and the add-in are unsigned, so Windows SmartScreen shows Windows protected your
+    PC on a downloaded Setup.exe, Revit asks about RCRC Green once, and a PC whose policy blocks
+    unsigned programs cannot run the Setup at all, which is why the zip stays. A code signing
+    certificate from Parsons IT would sign both the Setup.exe and the DLLs in build-team-kit.ps1.
+
+    Options: A ask Parsons IT for a code signing certificate, or for their signing service, and
+    sign in a round of its own once it is in hand. B stay unsigned, with More info, Run anyway
+    and Always Load in INSTALL-TEAM.txt
+
+    Answer:
