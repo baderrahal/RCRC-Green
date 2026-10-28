@@ -5,7 +5,8 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// The map: seven templates, one per asset type, each cell measured off the annotated set.
+    /// The map: seven templates, one per asset type, each cell measured off the annotated set,
+    /// and four versions of two of them issued on 28 Oct, the 60 per cent mosques and schools.
     ///
     /// The production templates the team fills carry no note saying where a value comes from,
     /// measured at zero note cells in all seven. A separate annotated set holds the mapping in
@@ -66,6 +67,22 @@ namespace RcrcGreen.Core.Kpi
         public static readonly KpiTemplate Schools = Standard("SCHOOLS", "<Schools>");
 
         /// <summary>
+        /// The four of 28 Oct. **Each is its kind's workbook with five cells changed**, the KPI
+        /// targets H31 to H35 on the first sheet, which read another row of Green Strategy KPI's:
+        /// 33 for mosques over 60 per cent, 34 under, 35 for schools over, 36 under. Measured cell
+        /// by cell, every sheet, in `design/component-wiring.md`, so the map is the kind's map and
+        /// the tool measures nothing new. The LESS THAN 60 files are byte for byte the MOSQUES
+        /// and SCHOOLS the team already had.
+        /// </summary>
+        public static readonly KpiTemplate MosquesMoreThan60 = Standard("MOSQUES MORE THAN 60", "<Mosques>", Mosques);
+
+        public static readonly KpiTemplate MosquesLessThan60 = Standard("MOSQUES LESS THAN 60", "<Mosques>", Mosques);
+
+        public static readonly KpiTemplate SchoolsMoreThan60 = Standard("SCHOOLS MORE THAN 60", "<Schools>", Schools);
+
+        public static readonly KpiTemplate SchoolsLessThan60 = Standard("SCHOOLS LESS THAN 60", "<Schools>", Schools);
+
+        /// <summary>
         /// The one group a template counts by decision rather than by a sheet name. ST-05
         /// prints Existing 369, Proposed 2 and Street Design 68 under a TOTAL of 439, and on a
         /// street its Street Design trees are its own proposed trees. Bader's decision, and it
@@ -102,8 +119,22 @@ namespace RcrcGreen.Core.Kpi
 
         public static readonly IReadOnlyList<KpiTemplate> All = new[]
         {
-            ExistingParks, FutureParks, Healthcare, Mosques, Parking, Schools, Streets
+            ExistingParks, FutureParks, Healthcare, Mosques, Parking, Schools, Streets,
+            MosquesMoreThan60, MosquesLessThan60, SchoolsMoreThan60, SchoolsLessThan60
         };
+
+        /// <summary>
+        /// The template a name means, compared through <see cref="ComponentMatch"/> so a name
+        /// typed in components.csv is matched the way a component is, or null.
+        /// </summary>
+        public static KpiTemplate Named(string name, IEnumerable<KpiTemplate> among = null)
+        {
+            string key = ComponentMatch.Key(name);
+            if (key.Length == 0) return null;
+
+            return (among ?? All).FirstOrDefault(
+                one => one != null && string.Equals(ComponentMatch.Key(one.Name), key, StringComparison.Ordinal));
+        }
 
         /// <summary>
         /// EXISTING PARKS and FUTURE PARKS share the Park Name sheet and every cell, so the
@@ -126,7 +157,7 @@ namespace RcrcGreen.Core.Kpi
                 new TreeSheet(ProposedTreesSheet));
         }
 
-        private static KpiTemplate Standard(string name, string mainSheetName)
+        private static KpiTemplate Standard(string name, string mainSheetName, KpiTemplate kind = null)
         {
             return new KpiTemplate(
                 name,
@@ -140,7 +171,9 @@ namespace RcrcGreen.Core.Kpi
                     new MappedCell(KpiValue.Lawn, "H10")
                 },
                 new TreeSheet(ExistingTreesSheet),
-                new TreeSheet(ProposedTreesSheet));
+                new TreeSheet(ProposedTreesSheet),
+                null,
+                kind);
         }
 
         /// <summary>

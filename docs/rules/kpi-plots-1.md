@@ -41,7 +41,8 @@ already followed, and each plot's own row says what happened to it.
 
 `ComponentFolders` answers a different question from `ComponentTemplates`. One says which
 WORKBOOK a plot is filled from and the other which FOLDER the filled workbook is filed in, and
-neither derives from the other:
+neither derives from the other. Both are columns of components.csv now, under K72, and the four
+60 per cent values each file under a folder named as the value:
 
 ```
 DAILY MOSQUE          -> DAILY MOSQUE        NH STRT 20m ROW       -> STREETS

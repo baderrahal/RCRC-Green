@@ -374,8 +374,20 @@ namespace RcrcGreen.Core.Kpi
         {
             if (template == null) return string.Empty;
 
-            string name = template.Name.Trim().ToLowerInvariant();
-            return name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name.Substring(1);
+            string[] words = ComponentMatch.Key(template.Name).Split(' ');
+            int last = words.Length;
+
+            // MORE THAN 60 at the end of a name reads >60% on the pane and LESS THAN 60 reads
+            // <60%, so the four 60 per cent rows fit the asset grid as Mosques >60%.
+            string tail = string.Empty;
+            if (last >= 4 && words[last - 2] == "THAN" && (words[last - 3] == "MORE" || words[last - 3] == "LESS"))
+            {
+                tail = " " + (words[last - 3] == "MORE" ? ">" : "<") + words[last - 1].TrimEnd('%') + "%";
+                last -= 3;
+            }
+
+            string name = string.Join(" ", words.Take(last).ToArray()).ToLowerInvariant();
+            return (name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name.Substring(1)) + tail;
         }
     }
 

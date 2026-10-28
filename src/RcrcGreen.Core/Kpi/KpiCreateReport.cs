@@ -78,6 +78,7 @@ namespace RcrcGreen.Core.Kpi
             TheTreeLists(report, set);
             TheRunAccounting(report, set);
             TheSplit(report, set);
+            TheComponentTable(report, set, ComponentTable.InForce);
             TheWaterDemand(report, set);
             TheShrubsAndGroundCover(report, set);
 
@@ -1128,6 +1129,41 @@ namespace RcrcGreen.Core.Kpi
                 Line(report, "  " + Join(answer.PlotId, answer.Why));
             }
 
+            Line(report, string.Empty);
+        }
+
+        /// <summary>
+        /// Which components.csv each value on the ticked plots was read from, and every file the
+        /// table was read from, with every line it did not take. The shared copy in the
+        /// templates folder wins over the person's own and the shipped one, so a value can place
+        /// a plot differently on two machines, and this is where that shows.
+        /// </summary>
+        public static void TheComponentTable(StringBuilder report, KpiCreateRunSet set, ComponentTable table)
+        {
+            List<string> held = set.Split.Answers
+                .Select(one => one.Component)
+                .Where(one => one.Length > 0)
+                .GroupBy(ComponentMatch.Key)
+                .Select(group => group.First())
+                .OrderBy(one => one, NaturalOrder.Comparer)
+                .ToList();
+
+            Heading(report, "WHERE EACH COMPONENT VALUE WAS READ", held.Count,
+                "one table, " + ComponentTable.FileName + ", the shared copy winning over yours and the shipped one");
+
+            Line(report, "  value | template | folder | read from");
+            foreach (string value in held)
+            {
+                ComponentRow row = table.RowFor(value);
+                KpiTemplate template = table.TemplateFor(value);
+                Line(report, "  " + Join(
+                    value,
+                    template == null ? (row == null ? "NONE" : "NONE, " + row.Template + " is not a template this tool knows") : template.Name,
+                    row == null ? "NONE" : row.Folder,
+                    ComponentTable.ReadFrom(row)));
+            }
+
+            foreach (string line in table.InWords()) Line(report, "  " + line);
             Line(report, string.Empty);
         }
 

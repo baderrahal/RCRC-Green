@@ -46,8 +46,12 @@ namespace RcrcGreen.Core.Kpi
     /// template name into a folder name any more than one turns a component value into a
     /// template name, and this is data measured against the team's own folders.
     ///
-    /// **Eleven values. The table as Bader wrote it reaches EIGHT distinct folders**, counted
-    /// off the entries below rather than off the round message, which said nine. The team's snip
+    /// **The rows live in components.csv now, read through <see cref="ComponentTable"/>**, one
+    /// table with the template column beside the folder, so the two answers keep one key.
+    ///
+    /// **Eleven values first. The table as Bader wrote it reaches EIGHT distinct folders**, counted
+    /// off the entries rather than off the round message, which said nine. The four 60 per cent
+    /// values of 28 Oct each file under a folder of their own, named as the value. The team's snip
     /// also holds a GOVERMENT BUILDING folder, spelt that way, and it is deliberately not in
     /// here because no plot in either measured model carries a component for it. Whether that is
     /// the ninth is for the team.
@@ -58,20 +62,18 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public static class ComponentFolders
     {
-        public static readonly IReadOnlyList<ComponentFolder> All = new[]
+        /// <summary>
+        /// Every row in force, value and folder, read off <see cref="ComponentTable"/>.
+        /// </summary>
+        public static IReadOnlyList<ComponentFolder> All
         {
-            new ComponentFolder("DAILY MOSQUE", "DAILY MOSQUE"),
-            new ComponentFolder("FRIDAY MOSQUE", "FRIDAY MOSQUE"),
-            new ComponentFolder("SCHOOL", "SCHOOL"),
-            new ComponentFolder("HEALTH", "HEALTHCARE"),
-            new ComponentFolder("PARKING LOT", "PARKING LOT"),
-            new ComponentFolder("EXISTING PARK", "EXISTING PARK"),
-            new ComponentFolder("FUTURE PARK", "FUTURE PARKS"),
-            new ComponentFolder("NH STRT 20m ROW", "STREETS"),
-            new ComponentFolder("NH STRT LESS 20m ROW", "STREETS"),
-            new ComponentFolder("STREET 30m ROW", "STREETS"),
-            new ComponentFolder("STREET 36m ROW", "STREETS")
-        };
+            get
+            {
+                return ComponentTable.InForce.Rows
+                    .Select(row => new ComponentFolder(row.Component, row.Folder))
+                    .ToList();
+            }
+        }
 
         /// <summary>
         /// Every distinct folder the table reaches, in the order the table first names each.
@@ -92,19 +94,13 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// The folder for one component value, or empty when the table does not hold it. The
-        /// comparison is the whole value without case and with edge whitespace off, never a
+        /// comparison is the whole value through <see cref="ComponentMatch"/>, never a
         /// prefix and never a word of it: NH STRT 20m ROW and NH STRT LESS 20m ROW share an
         /// opening and are two different values.
         /// </summary>
         public static string For(string component)
         {
-            if (string.IsNullOrWhiteSpace(component)) return string.Empty;
-
-            string held = component.Trim();
-            ComponentFolder found = All.FirstOrDefault(
-                one => string.Equals(one.Component, held, StringComparison.OrdinalIgnoreCase));
-
-            return found == null ? string.Empty : found.Folder;
+            return ComponentTable.InForce.FolderFor(component);
         }
 
         /// <summary>
@@ -124,7 +120,7 @@ namespace RcrcGreen.Core.Kpi
         /// Every folder the components of one template file under, read off THIS table and
         /// <see cref="ComponentTemplates"/> together rather than held as an eighth table.
         ///
-        /// Both are keyed on the same eleven component values, so which folders a template
+        /// Both are keyed on the same component values, so which folders a template
         /// reaches is already written down twice over and there is nothing here to drift from.
         /// Counted off the two: six templates reach exactly ONE folder each and MOSQUES reaches
         /// TWO, because DAILY MOSQUE and FRIDAY MOSQUE fill one workbook and are filed apart.

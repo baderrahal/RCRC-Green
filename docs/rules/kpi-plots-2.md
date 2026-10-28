@@ -161,8 +161,9 @@ the two not talking that was the fault rather than either one of them.
 
 `PRX_Component` picks the workbook template and **its values are not template names.** No string
 rule turns HEALTH into HEALTHCARE or NH STRT 20m ROW into STREETS. So the mapping is data.
-`ComponentTemplates` is that table, measured on the 1548 scan, 11 distinct values over 1384
-sheets, off the component values block at the end of section 3 of that report:
+`ComponentTemplates` reads that table, which lives in components.csv since 28 Oct under K72. Its
+first eleven rows were measured on the 1548 scan, 11 distinct values over 1384 sheets, off the
+component values block at the end of section 3 of that report:
 
 ```
 DAILY MOSQUE           MOSQUES          NH STRT LESS 20m ROW   STREETS
@@ -215,8 +216,9 @@ MOSQUES   FM, DM            FUTURE PARKS     FP
                             HEALTHCARE       HF
 ```
 
-It agrees with the eleven component values prefix by prefix with nothing left over on either
-side, and a test written out by hand says so.
+It agrees with the component values prefix by prefix with nothing left over on either side,
+counted by asset type, and a test written out by hand says so. **A prefix names an asset type,
+so it cross checks a template's KIND**, under K73: DM agrees with MOSQUES MORE THAN 60.
 
 **Two records of one fact is the fault this repo has met eight times, so the two do not get equal
 standing.** `PRX_Component` decides. The prefix is a cross check: where they agree the pane says
@@ -234,3 +236,56 @@ schedule and on none, EP-05, EP-11, EP-12 and EP-13. No sheet means no PRX_Compo
 says the component could not be read and the prefix was used, rather than preselecting in
 silence, and the line saying which route the answer took shows whichever way it went.
 
+## One component table, components.csv, in three places
+
+**K72.** The value to template table and the value to folder table were two tables in code keyed
+on the same eleven values, compared twice. They are one file now, `components.csv`, header
+`Component,Template,Folder`, one row per value, read by `ComponentTable` in Core.
+
+Three copies, lowest standing first, and a value takes its row from the highest that names it:
+
+```
+shipped    beside the DLLs, from install/components.csv, copied on every install and by the kit
+personal   %APPDATA%\RCRC Green\components.csv, optional
+shared     components.csv in the templates folder set in Setup, optional, and it wins
+```
+
+The Core build copies `install/components.csv` beside `RcrcGreen.Core.dll`, so the tests and the
+add-in read the one file the repo holds, and a gate test reads it against fifteen rows written
+out by hand. **A file that names one value twice with two answers decides neither**, and a lower
+file does not answer in its place. A file without the header line is not read at all. Every row
+keeps its file and line, and both reports print where each value was read: section 3 of the scan
+and WHERE EACH COMPONENT VALUE WAS READ in the create report.
+
+**The folder is the file's spelling, never the model's**, so a model typed LESSTHAN files beside
+every other plot of that value.
+
+**Matching is `ComponentMatch.Key`, the one place it is decided.** Whole value, case blind,
+trimmed, a run of spaces is one, no space before %, and LESSTHAN and MORETHAN read as LESS THAN
+and MORE THAN. PARK still never finds PARKING LOT and NH STRT 20m ROW is still not NH STRT LESS
+20m ROW, and tests hold both.
+
+The pane puts the table in force at the top of every redraw and the handler again at the press,
+through `ComponentFiles` in the Revit project, so the file is read fresh and no copy is held.
+
+## The 60 per cent templates are versions of their kind
+
+**K73.** Four templates of 28 Oct: MOSQUES MORE THAN 60, MOSQUES LESS THAN 60, SCHOOLS MORE THAN
+60 and SCHOOLS LESS THAN 60. Measured cell by cell against MOSQUES and SCHOOLS, in
+`design/component-wiring.md`: the same five sheets, and only H31 to H35 on the first sheet differ,
+the KPI targets, which read row 33, 34, 35 or 36 of Green Strategy KPI's. **The LESS THAN 60 files
+are byte for byte the MOSQUES and SCHOOLS the team already had.** So each carries its kind's cell
+map and the tool measures nothing new.
+
+`KpiTemplate.Kind` is MOSQUES or SCHOOLS for these and the template itself for the seven. The
+plot prefix cross checks the kind. A plot with no component still goes to the kind its prefix
+names, never to a version.
+
+**The first sheet names three templates, so the file name says which**, the way it breaks the
+park tie: the words a version adds to its kind, MORE THAN 60 or LESS THAN 60, as whole words with
+the spacing forgiven. None of them is the kind itself, both is a pick for the user.
+
+The four values, Bader's answers: each fills its own template and files under a new folder named
+as the value. The workbook and the PDF print the value as the model holds it, as they always
+have, off the plot's own reading. The PDF form is still chosen by plot prefix. On the pane the
+four rows read Mosques >60%, Mosques <60%, Schools >60% and Schools <60%.

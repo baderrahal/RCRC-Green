@@ -377,7 +377,7 @@ namespace RcrcGreen.Core.Kpi
                 + home.Where.ToUpperInvariant() + ", " + Count(order.Count, "distinct value")
                 + " over " + Count(everySheet.Count, "sheet") + ". The plot beside each is "
                 + KpiNames.PlotId + " read off the " + TitleBlockFacts.OnSheetsWhere + ".");
-            Line(report, "value | sheets carrying it | plots | template | the plots");
+            Line(report, "value | sheets carrying it | plots | template | folder | read from | the plots");
 
             foreach (string held in order
                 .OrderByDescending(one => carrying[one].Count)
@@ -385,17 +385,22 @@ namespace RcrcGreen.Core.Kpi
             {
                 List<string> named = plots[held].OrderBy(one => one, NaturalOrder.Comparer).ToList();
                 KpiTemplate means = ComponentTemplates.For(held);
+                ComponentRow row = ComponentTable.InForce.RowFor(held);
                 Line(report, Join(
                     held,
                     carrying[held].Count.ToString(CultureInfo.InvariantCulture),
                     named.Count.ToString(CultureInfo.InvariantCulture),
                     means == null ? NotInTheTable : means.Name,
+                    row == null ? "NONE" : row.Folder,
+                    ComponentTable.ReadFromLine(row),
                     named.Count == 0 ? "(no plot on those sheets)" : string.Join(", ", named.ToArray())));
             }
 
             Line(report, "The value is the asset type and it is not a template name. Which template each "
-                + "one means is a table measured off the 1548 scan, read back in the column above. A value "
+                + "one means is " + ComponentTable.FileName + ", read back in the columns above. A value "
                 + NotInTheTable + " preselects nothing and the user picks.");
+            Line(report, string.Empty);
+            foreach (string line in ComponentTable.InForce.InWords()) Line(report, line);
             Line(report, string.Empty);
         }
 

@@ -975,14 +975,14 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "value | sheets carrying it | plots | template | the plots",
-                    "FRIDAY MOSQUE | 2 | 1 | MOSQUES | FM-05",
-                    "SCHOOL | 2 | 1 | SCHOOLS | SC-03",
-                    "EXISTING PARK | 1 | 1 | EXISTING PARKS | EP-02",
-                    "HEALTH | 1 | 1 | HEALTHCARE | NS-19",
-                    "NH STRT 20m ROW | 1 | 1 | STREETS | NS-06",
+                    "value | sheets carrying it | plots | template | folder | read from | the plots",
+                    "FRIDAY MOSQUE | 2 | 1 | MOSQUES | FRIDAY MOSQUE | the shipped components.csv line 3 | FM-05",
+                    "SCHOOL | 2 | 1 | SCHOOLS | SCHOOL | the shipped components.csv line 4 | SC-03",
+                    "EXISTING PARK | 1 | 1 | EXISTING PARKS | EXISTING PARK | the shipped components.csv line 7 | EP-02",
+                    "HEALTH | 1 | 1 | HEALTHCARE | HEALTHCARE | the shipped components.csv line 5 | NS-19",
+                    "NH STRT 20m ROW | 1 | 1 | STREETS | STREETS | the shipped components.csv line 10 | NS-06",
                     "The value is the asset type and it is not a template name. Which template each "
-                        + "one means is a table measured off the 1548 scan, read back in the column "
+                        + "one means is components.csv, read back in the columns "
                         + "above. A value (not in the table) preselects nothing and the user picks."
                 },
                 UntilBlank(lines, "EVERY VALUE OF PRX_Component ON THE SHEET, 5 distinct values over 7 sheets. "
@@ -1054,7 +1054,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     })));
             string[] lines = LinesOf(KpiReport.Write(scan, Noon));
 
-            Assert.Contains("PARKING | 2 | 0 | (not in the table) | (no plot on those sheets)", lines);
+            Assert.Contains("PARKING | 2 | 0 | (not in the table) | NONE | no components.csv holds it | (no plot on those sheets)", lines);
         }
 
         /// <summary>

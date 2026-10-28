@@ -452,6 +452,10 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private void RedrawTemplates()
         {
+            // Every count below places plots through the component table, so it is read first,
+            // fresh, and a line added to the shared file shows on the next redraw.
+            ComponentFiles.PutInForce();
+
             KpiSteps steps = Steps();
             _steps = steps;
             KpiStep open = _stepOpen ?? steps.FirstUnfinished;

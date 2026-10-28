@@ -27,11 +27,13 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
-    /// The table: which template each value of PRX_Component means.
+    /// Which template each value of PRX_Component means, read off <see cref="ComponentTable"/>,
+    /// the components.csv files, and no longer held here.
     ///
-    /// Measured on the 1548 scan, 11 distinct values over 1384 sheets, off the component values
-    /// block at the end of section 3 of that report. That report is not in this repository,
-    /// because nothing under reports/ is ever committed.
+    /// The first eleven rows were measured on the 1548 scan, 11 distinct values over 1384
+    /// sheets, off the component values block at the end of section 3 of that report. That
+    /// report is not in this repository, because nothing under reports/ is ever committed. The
+    /// four 60 per cent values were added by the team on 28 Oct.
     ///
     /// **It is a table and never a string rule.** No string rule turns HEALTH into HEALTHCARE or
     /// NH STRT 20m ROW into STREETS, and the one that used to run here matched a word of the
@@ -40,46 +42,40 @@ namespace RcrcGreen.Core.Kpi
     ///
     /// **It is many to one.** Two values mean MOSQUES and four mean STREETS.
     ///
-    /// **The plot prefix decides nothing and is read nowhere.** STREET 36m ROW covers MM and ST
-    /// plots, and NS carries two different street widths.
+    /// **The plot prefix decides nothing here.** STREET 36m ROW covers MM and ST plots, and NS
+    /// carries two different street widths.
     ///
-    /// A value this table does not hold means no template. Nothing guesses at one and nothing
-    /// falls back to matching on a name.
+    /// A value no file holds means no template. Nothing guesses at one and nothing falls back
+    /// to matching on a name.
     /// </summary>
     public static class ComponentTemplates
     {
-        public static readonly IReadOnlyList<ComponentTemplate> All = new[]
+        /// <summary>
+        /// Every row in force whose template is known, in the table's order.
+        /// </summary>
+        public static IReadOnlyList<ComponentTemplate> All
         {
-            new ComponentTemplate("DAILY MOSQUE", KpiTemplates.Mosques),
-            new ComponentTemplate("FRIDAY MOSQUE", KpiTemplates.Mosques),
-            new ComponentTemplate("SCHOOL", KpiTemplates.Schools),
-            new ComponentTemplate("HEALTH", KpiTemplates.Healthcare),
-            new ComponentTemplate("PARKING LOT", KpiTemplates.Parking),
-            new ComponentTemplate("EXISTING PARK", KpiTemplates.ExistingParks),
-            new ComponentTemplate("FUTURE PARK", KpiTemplates.FutureParks),
-            new ComponentTemplate("NH STRT LESS 20m ROW", KpiTemplates.Streets),
-            new ComponentTemplate("NH STRT 20m ROW", KpiTemplates.Streets),
-            new ComponentTemplate("STREET 30m ROW", KpiTemplates.Streets),
-            new ComponentTemplate("STREET 36m ROW", KpiTemplates.Streets)
-        };
+            get
+            {
+                ComponentTable table = ComponentTable.InForce;
+                return table.Rows
+                    .Select(row => new { row, template = KpiTemplates.Named(row.Template, table.Templates) })
+                    .Where(one => one.template != null)
+                    .Select(one => new ComponentTemplate(one.row.Component, one.template))
+                    .ToList();
+            }
+        }
 
         /// <summary>
-        /// The template a value means, or null when the table does not hold it.
+        /// The template a value means, or null when no file holds it.
         ///
-        /// The whole value is compared, without case and with surrounding whitespace off, and
-        /// nothing else. That is the same plainness species matching keeps: no part of a value
-        /// matches, so PARK never finds PARKING LOT and STREET never finds STREET 30m ROW.
+        /// The whole value is compared through <see cref="ComponentMatch"/>, without case, with
+        /// edge whitespace off and with the spacing forgiven, and nothing else. No part of a
+        /// value matches, so PARK never finds PARKING LOT and STREET never finds STREET 30m ROW.
         /// </summary>
         public static KpiTemplate For(string component)
         {
-            if (string.IsNullOrWhiteSpace(component)) return null;
-
-            string held = component.Trim();
-
-            ComponentTemplate found = All.FirstOrDefault(
-                one => string.Equals(one.Component, held, StringComparison.OrdinalIgnoreCase));
-
-            return found == null ? null : found.Template;
+            return ComponentTable.InForce.TemplateFor(component);
         }
 
         /// <summary>

@@ -106,6 +106,8 @@ lines. Every part was moved byte for byte on 2026-10-28, and the proof is
 - K69 `docs/rules/kpi-pane.md` The scan is a step inside Create, and there is no scan button
 - K70 `docs/rules/kpi-pane.md` The progress window is modeless, owned, and opened outside Execute
 - K71 `docs/rules/kpi-pane.md` The pane is Bader's design of 28 October, and the long words live in the report
+- K72 `docs/rules/kpi-plots-2.md` One component table, components.csv, in three places
+- K73 `docs/rules/kpi-plots-2.md` The 60 per cent templates are versions of their kind
 - C00 `.claude/rules/core-rules.md` the opening lines of the file
 - C01 `.claude/rules/core-rules.md` A view type is the code and the view name together
 - C02 `docs/rules/core-views-and-grid.md` The plot list is the union of four sources

@@ -137,7 +137,8 @@ namespace RcrcGreen.Core.Kpi
             IEnumerable<MappedCell> cells,
             TreeSheet existingTrees,
             TreeSheet proposedTrees,
-            IEnumerable<string> groupsCountedAsProposed = null)
+            IEnumerable<string> groupsCountedAsProposed = null,
+            KpiTemplate kind = null)
         {
             if (name == null) throw new ArgumentNullException("name");
             if (mainSheetName == null) throw new ArgumentNullException("mainSheetName");
@@ -153,9 +154,26 @@ namespace RcrcGreen.Core.Kpi
                 .Where(one => !string.IsNullOrWhiteSpace(one))
                 .Select(one => one.Trim())
                 .ToList();
+            Kind = kind ?? this;
         }
 
         public string Name { get; }
+
+        /// <summary>
+        /// The asset type this template is a version of, itself for the seven of 9 September.
+        /// MOSQUES MORE THAN 60 is a MOSQUES template whose KPI targets read another row, so its
+        /// kind is MOSQUES. **The plot prefix cross checks the kind and never the template**:
+        /// DM says MOSQUES, and a DAILY MOSQUE MORE THAN 60% plot agrees with it.
+        /// </summary>
+        public KpiTemplate Kind { get; }
+
+        /// <summary>
+        /// Whether this template is a version of another rather than an asset type of its own.
+        /// </summary>
+        public bool IsVariant
+        {
+            get { return !ReferenceEquals(Kind, this); }
+        }
 
         /// <summary>
         /// The first sheet's name, which is how a workbook is recognised. It changes per
