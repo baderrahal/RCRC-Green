@@ -3,7 +3,8 @@
 Phase: 9, ship, part (a) of two. Four 60 per cent templates, four new PRX_Component values and
 one components.csv in place of the two tables in code. Part (b), the layout rule and the two
 prompts in the pane, is the pull request after it. Its entry is the top of `steps/log-kpi.md`.
-Nothing in it has run in Revit.
+Review pass 1 fixed: the shared file read while Excel holds it, Excel's csv shapes, a bad
+shared row refusing its value. L41 to L50 are LATENT. Nothing in it has run in Revit.
 
 Phase: 9, ship. Q6, Q7 and the KPI team kit, F2 in `steps/01_next.md`. The Shared tool list
 merged alone as pull request 173, the KPI work in the pull request after it. Its entry is the

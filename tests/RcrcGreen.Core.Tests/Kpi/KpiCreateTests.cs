@@ -152,7 +152,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         [Fact]
-        public void TheCaseAndTheSurroundingSpaceComeOffAndNothingElseDoes()
+        public void TheCaseAndTheSpacingAreForgivenAndNoGluedWordIsPulledApart()
         {
             Assert.Equal("HEALTHCARE", ComponentTemplates.For("  health  ").Name);
             Assert.Equal("STREETS", ComponentTemplates.For("street 36M row").Name);

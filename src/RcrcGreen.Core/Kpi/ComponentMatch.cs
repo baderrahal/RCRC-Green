@@ -7,8 +7,8 @@ namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
     /// The one rule that says whether two PRX_Component values are the same value. Every table
-    /// lookup on a component goes through <see cref="Key"/>, the template, the folder and the
-    /// line a person adds in the pane, so the three cannot drift apart.
+    /// lookup on a component goes through <see cref="Key"/>, the template and the folder alike,
+    /// so the two cannot drift apart.
     ///
     /// **It is still the whole value.** Nothing here makes a part of a value match, so PARK never
     /// finds PARKING LOT and NH STRT 20m ROW is never NH STRT LESS 20m ROW. What it forgives is

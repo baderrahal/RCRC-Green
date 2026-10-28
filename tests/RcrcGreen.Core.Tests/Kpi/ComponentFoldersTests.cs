@@ -58,7 +58,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// Four street values share one folder and the two mosque values do not share theirs,
-        /// which is the whole reason this is a second table beside the template one.
+        /// which is the whole reason the folder is a column of its own beside the template.
         /// </summary>
         [Fact]
         public void TheMosqueValuesSplitWhereTheStreetValuesJoin()
@@ -77,7 +77,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// Every value the template table holds is in this one too, so a plot that can be filled
-        /// can be filed. They are separate tables and nothing keeps them level but this.
+        /// can be filed. Every row carries both columns, and this holds the table to it.
         /// </summary>
         [Fact]
         public void EveryComponentThatPicksATemplateAlsoPicksAFolder()

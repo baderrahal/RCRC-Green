@@ -29,8 +29,8 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
-    /// The third table read off PRX_Component, and it answers a different question from the
-    /// other two. <see cref="ComponentTemplates"/> says which WORKBOOK a plot is filled from
+    /// The folder column of <see cref="ComponentTable"/>, and it answers a different question
+    /// from the template column. <see cref="ComponentTemplates"/> says which WORKBOOK a plot is filled from
     /// and this says which FOLDER the filled workbook is filed in. They are not the same answer
     /// and neither derives from the other:
     ///
@@ -117,11 +117,11 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Every folder the components of one template file under, read off THIS table and
-        /// <see cref="ComponentTemplates"/> together rather than held as an eighth table.
+        /// Every folder the components of one template file under, read off the two columns of
+        /// one table rather than held as a table of its own.
         ///
-        /// Both are keyed on the same component values, so which folders a template
-        /// reaches is already written down twice over and there is nothing here to drift from.
+        /// Both columns sit on the same row of the same value, so which folders a template
+        /// reaches is already written down and there is nothing here to drift from.
         /// Counted off the two: six templates reach exactly ONE folder each and MOSQUES reaches
         /// TWO, because DAILY MOSQUE and FRIDAY MOSQUE fill one workbook and are filed apart.
         /// </summary>

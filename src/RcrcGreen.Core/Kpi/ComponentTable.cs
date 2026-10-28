@@ -14,7 +14,7 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>Beside the add-in's DLLs, copied by every install. The team's starting table.</summary>
         Shipped,
 
-        /// <summary>%APPDATA%\RCRC Green, written by the pane when the shared folder cannot be.</summary>
+        /// <summary>%APPDATA%\RCRC Green, optional, for one person's own lines.</summary>
         Personal,
 
         /// <summary>In the templates folder the person set in Setup. It wins for any value it holds.</summary>
@@ -128,7 +128,18 @@ namespace RcrcGreen.Core.Kpi
             try
             {
                 if (!File.Exists(path)) return Missing(source, path);
-                return Parse(source, path, File.ReadAllLines(path, Encoding.UTF8));
+
+                // Excel holds a file it has open for writing, and a read that refused to share
+                // would drop the team's whole shared table for as long as one person had it open.
+                var lines = new List<string>();
+                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                using (var reader = new StreamReader(stream, Encoding.UTF8, true))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null) lines.Add(line);
+                }
+
+                return Parse(source, path, lines);
             }
             catch (IOException failed)
             {
@@ -144,6 +155,13 @@ namespace RcrcGreen.Core.Kpi
         /// The lines of one file. The first line that is not blank and not a # note must be the
         /// header, Component,Template,Folder, or the whole file is refused: a file whose columns
         /// cannot be named is a file whose every row might be read the wrong way round.
+        ///
+        /// Two things Excel does to a csv are taken: empty fields after the third, which it
+        /// writes once any cell in a fourth column was touched, and a semicolon between fields,
+        /// which it writes where the list separator is one. The header line says which.
+        ///
+        /// **A row that cannot be read refuses its value**, the same as two answers do, and no
+        /// lower file answers in its place. The file that should decide could not.
         /// </summary>
         public static ComponentFile Parse(ComponentSource source, string path, IEnumerable<string> lines)
         {
@@ -151,6 +169,7 @@ namespace RcrcGreen.Core.Kpi
             var problems = new List<string>();
             var refused = new List<string>();
             bool headed = false;
+            char between = ',';
             int number = 0;
 
             foreach (string raw in lines ?? Enumerable.Empty<string>())
@@ -159,11 +178,14 @@ namespace RcrcGreen.Core.Kpi
                 string line = (raw ?? string.Empty).TrimStart('﻿');
                 if (line.Trim().Length == 0 || line.TrimStart().StartsWith("#", StringComparison.Ordinal)) continue;
 
-                List<string> fields = ComponentTable.Fields(line);
-
                 if (!headed)
                 {
-                    if (!ComponentTable.IsHeader(fields))
+                    if (ComponentTable.IsHeader(ComponentTable.Fields(line, ';')) && !ComponentTable.IsHeader(ComponentTable.Fields(line, ',')))
+                    {
+                        between = ';';
+                    }
+
+                    if (!ComponentTable.IsHeader(ComponentTable.Fields(line, between)))
                     {
                         return Unreadable(source, path, "Line " + number + " should be the header "
                             + ComponentTable.Header + " and reads " + line.Trim() + ".");
@@ -173,24 +195,37 @@ namespace RcrcGreen.Core.Kpi
                     continue;
                 }
 
-                if (fields.Count != 3)
-                {
-                    problems.Add("line " + number + " has " + fields.Count + " fields, not 3: " + line.Trim());
-                    continue;
-                }
+                List<string> fields = ComponentTable.Fields(line, between);
 
-                if (fields[0].Trim().Length == 0 || fields[1].Trim().Length == 0 || fields[2].Trim().Length == 0)
+                // A row of nothing but separators is Excel's blank row.
+                if (fields.All(one => one.Trim().Length == 0)) continue;
+
+                string bad = fields.Count != 3
+                    ? "has " + fields.Count + " fields, not 3"
+                    : fields.Any(one => one.Trim().Length == 0) ? "leaves a field empty" : string.Empty;
+
+                if (bad.Length > 0)
                 {
-                    problems.Add("line " + number + " leaves a field empty: " + line.Trim());
+                    string key = fields.Count > 0 ? ComponentMatch.Key(fields[0]) : string.Empty;
+                    if (key.Length > 0)
+                    {
+                        rows.RemoveAll(one => one.Key == key);
+                        if (!refused.Contains(key)) refused.Add(key);
+                    }
+
+                    problems.Add("line " + number + " " + bad + ": " + line.Trim()
+                        + (key.Length > 0 ? ", so " + fields[0].Trim() + " is not used" : string.Empty));
                     continue;
                 }
 
                 var row = new ComponentRow(fields[0], fields[1], fields[2], source, path, number);
                 ComponentRow before = rows.FirstOrDefault(one => one.Key == row.Key);
 
+                if (refused.Contains(row.Key)) continue;
+
                 if (before == null)
                 {
-                    if (!refused.Contains(row.Key)) rows.Add(row);
+                    rows.Add(row);
                     continue;
                 }
 
@@ -212,8 +247,9 @@ namespace RcrcGreen.Core.Kpi
 
         private static bool SameAnswer(ComponentRow one, ComponentRow other)
         {
+            // Windows holds two folder names differing in case as one folder.
             return ComponentMatch.Same(one.Template, other.Template)
-                && string.Equals(one.Folder, other.Folder, StringComparison.Ordinal);
+                && string.Equals(one.Folder, other.Folder, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -292,8 +328,9 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Puts a table in force for every lookup in this Revit session. Only the pane calls it,
-        /// when it reads the three files. A test builds a table and asks it directly instead.
+        /// Puts a table in force for every lookup in this Revit session. Only the Revit side
+        /// calls it, the pane on every redraw and the handler at the press, through
+        /// ComponentFiles. A test builds a table and asks it directly instead.
         /// </summary>
         public static void Use(ComponentTable table)
         {
@@ -323,15 +360,6 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return new ComponentTable(files, rows, templates ?? KpiTemplates.All);
-        }
-
-        /// <summary>
-        /// The same files over another set of templates, for when the pane accepts a template the
-        /// tool did not know by name.
-        /// </summary>
-        public ComponentTable Over(IReadOnlyList<KpiTemplate> templates)
-        {
-            return Layered(templates, Files.ToArray());
         }
 
         /// <summary>The winning row for a value, or null when no file holds it.</summary>
@@ -443,10 +471,11 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// One line split on commas, a field in double quotes allowed to hold a comma and a
-        /// doubled quote standing for one, which is how Excel saves a csv.
+        /// One line split on its separator, a field in double quotes allowed to hold one and a
+        /// doubled quote standing for one, which is how Excel saves a csv. Empty fields after the
+        /// third are dropped, because Excel writes them once a fourth column was ever touched.
         /// </summary>
-        internal static List<string> Fields(string line)
+        internal static List<string> Fields(string line, char between = ',')
         {
             var fields = new List<string>();
             var field = new StringBuilder();
@@ -463,26 +492,13 @@ namespace RcrcGreen.Core.Kpi
                     else field.Append(here);
                 }
                 else if (here == '"') quoted = true;
-                else if (here == ',') { fields.Add(field.ToString()); field.Clear(); }
+                else if (here == between) { fields.Add(field.ToString()); field.Clear(); }
                 else field.Append(here);
             }
 
             fields.Add(field.ToString());
+            while (fields.Count > HeaderFields.Length && fields[fields.Count - 1].Trim().Length == 0) fields.RemoveAt(fields.Count - 1);
             return fields;
-        }
-
-        /// <summary>
-        /// One row written back as a csv line, quoted only where a field needs it.
-        /// </summary>
-        public static string Line(string component, string template, string folder)
-        {
-            return string.Join(",", new[] { component, template, folder }.Select(Quoted).ToArray());
-        }
-
-        private static string Quoted(string field)
-        {
-            string held = (field ?? string.Empty).Trim();
-            return held.IndexOfAny(new[] { ',', '"' }) >= 0 ? "\"" + held.Replace("\"", "\"\"") + "\"" : held;
         }
     }
 }

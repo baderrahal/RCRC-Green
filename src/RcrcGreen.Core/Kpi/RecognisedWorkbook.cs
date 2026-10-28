@@ -251,14 +251,15 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// A file name as words: the extension off, every run of anything but a letter, a digit
-        /// or a per cent sign one space, and the rest through <see cref="ComponentMatch"/>.
+        /// A file name as words: the extension off, every run of anything but a letter or a
+        /// digit one space, and the rest through <see cref="ComponentMatch"/>. A per cent sign is
+        /// a gap too, so a file named MORE THAN 60% is the MORE THAN 60 version.
         /// </summary>
         internal static string NameWords(string fileName)
         {
             string bare = System.IO.Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
             var spaced = new System.Text.StringBuilder();
-            foreach (char one in bare) spaced.Append(char.IsLetterOrDigit(one) || one == '%' ? one : ' ');
+            foreach (char one in bare) spaced.Append(char.IsLetterOrDigit(one) ? one : ' ');
 
             return ComponentMatch.Key(spaced.ToString());
         }

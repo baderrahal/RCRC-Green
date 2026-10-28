@@ -206,8 +206,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "line 5 has 2 fields, not 3: ONLY TWO,FIELDS",
-                    "line 6 leaves a field empty: EMPTY,,FOLDER"
+                    "line 5 has 2 fields, not 3: ONLY TWO,FIELDS, so ONLY TWO is not used",
+                    "line 6 leaves a field empty: EMPTY,,FOLDER, so EMPTY is not used"
                 },
                 file.Problems.ToArray());
         }
@@ -240,11 +240,76 @@ namespace RcrcGreen.Core.Tests.Kpi
                 table.InWords().ToArray());
         }
 
+        /// <summary>
+        /// A shared row the file cannot read refuses its value rather than let the shipped row
+        /// answer, the same as two answers do, because the team's file said something about it.
+        /// </summary>
         [Fact]
-        public void ALineIsWrittenBackQuotedOnlyWhereItNeedsIt()
+        public void ASharedRowThatCannotBeReadIsNotAnsweredByTheShippedOne()
         {
-            Assert.Equal("SCHOOL,SCHOOLS,SCHOOL", ComponentTable.Line(" SCHOOL ", "SCHOOLS", "SCHOOL"));
-            Assert.Equal("\"A, B\",SCHOOLS,\"C \"\"D\"\"\"", ComponentTable.Line("A, B", "SCHOOLS", "C \"D\""));
+            ComponentFile shared = Parse(ComponentSource.Shared, "s.csv",
+                "Component,Template,Folder", "SCHOOL,SCHOOLS", "HEALTH,,HEALTHCARE", "SCHOOL,SCHOOLS,LATER");
+
+            ComponentTable table = ComponentTable.Layered(Shipped(), shared);
+
+            Assert.Null(table.RowFor("SCHOOL"));
+            Assert.Null(table.RowFor("HEALTH"));
+            Assert.Equal("MOSQUES", table.TemplateFor("DAILY MOSQUE").Name);
+        }
+
+        /// <summary>
+        /// What Excel writes: empty fields after the third once a fourth column was touched, and
+        /// a semicolon between fields where that is the list separator.
+        /// </summary>
+        [Fact]
+        public void ACsvExcelSavedIsRead()
+        {
+            ComponentFile commas = Parse(ComponentSource.Shared, "s.csv",
+                "Component,Template,Folder,,", "PUMP STATION,PARKING,PUMPS,,", ",,,,");
+            ComponentFile semicolons = Parse(ComponentSource.Shared, "s.csv",
+                "Component;Template;Folder", "PUMP STATION;PARKING;\"PUMPS; NORTH\"");
+
+            Assert.True(commas.Read, commas.Why);
+            Assert.Equal("PUMPS", commas.Rows.Single().Folder);
+            Assert.Empty(commas.Problems);
+            Assert.True(semicolons.Read, semicolons.Why);
+            Assert.Equal("PUMPS; NORTH", semicolons.Rows.Single().Folder);
+        }
+
+        [Fact]
+        public void TwoFoldersDifferingOnlyInCaseAreOneAnswer()
+        {
+            ComponentFile file = Parse(ComponentSource.Shared, "s.csv",
+                "Component,Template,Folder", "DAILY MOSQUE,MOSQUES,DAILY MOSQUE", "Daily Mosque,mosques,Daily Mosque");
+
+            Assert.Equal("DAILY MOSQUE", file.Rows.Single().Folder);
+            Assert.Empty(file.Problems);
+        }
+
+        /// <summary>
+        /// The shared file open in Excel on somebody's machine is still read. A read that would
+        /// not share the file would drop the team's table for as long as it stayed open.
+        /// </summary>
+        [Fact]
+        public void AFileHeldOpenForWritingIsStillRead()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "rcrc-components-" + Guid.NewGuid().ToString("N") + ".csv");
+            File.WriteAllText(path, "Component,Template,Folder\r\nPUMP STATION,PARKING,PUMPS\r\n");
+
+            try
+            {
+                using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read))
+                {
+                    ComponentFile held = ComponentFile.From(ComponentSource.Shared, path);
+
+                    Assert.True(held.Read, held.Why);
+                    Assert.Equal("PUMPS", held.Rows.Single().Folder);
+                }
+            }
+            finally
+            {
+                File.Delete(path);
+            }
         }
 
         private static ComponentFile Shipped()
@@ -314,6 +379,23 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.EndsWith("The plot prefix agrees.", choice.Why);
         }
 
+        /// <summary>
+        /// The preselection makes the same check: a mosque version on school plots is two routes
+        /// disagreeing, and the user picks.
+        /// </summary>
+        [Fact]
+        public void ThePreselectionRefusesAVersionOfAnotherKind()
+        {
+            TemplateChoice choice = TemplateForComponent.For(
+                new AgreedValue(new[] { new PlotText("SC-03", "DAILY MOSQUE MORE THAN 60%") }), new[] { "SC-03" }, null);
+
+            Assert.True(choice.NeedsAPick);
+            Assert.Equal(
+                "The component and the plot prefix do not agree, so nothing is preselected: DAILY MOSQUE MORE THAN 60% "
+                + "means MOSQUES MORE THAN 60 and the plot prefix says SCHOOLS. Pick the template.",
+                choice.Why);
+        }
+
         [Fact]
         public void APlotWithNoComponentStillGoesToTheKindItsPrefixNames()
         {
@@ -355,6 +437,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("GRP_-_KPI_Checklist_-_DD_SCHOOLS MORE THAN 60.xlsx", "<Schools>", "SCHOOLS MORE THAN 60")]
         [InlineData("GRP_-_KPI_Checklist_-_DD_SCHOOLS LESS THAN 60.xlsx", "<Schools>", "SCHOOLS LESS THAN 60")]
         [InlineData("schools_lessthan_60.xlsx", "<Schools>", "SCHOOLS LESS THAN 60")]
+        [InlineData("GRP_-_KPI_Checklist_-_DD_SCHOOLS MORE THAN 60%.xlsx", "<Schools>", "SCHOOLS MORE THAN 60")]
         [InlineData("GRP_-_KPI_Checklist_-_DD_MOSQUES.xlsx", "<Mosques>", "MOSQUES")]
         [InlineData("GRP_-_KPI_Checklist_-_DD_SCHOOLS.xlsx", "<Schools>", "SCHOOLS")]
         [InlineData("MOSQUES MORE THAN 600.xlsx", "<Mosques>", "MOSQUES")]
