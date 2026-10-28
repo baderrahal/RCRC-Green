@@ -53,7 +53,8 @@
   </ItemGroup>
 
   <!-- The build stamp: the commit's short hash and the time this build ran, as the product
-       version, with the word changed after it where the working copy holds uncommitted changes.
+       version, with the word changed after it where the working copy holds uncommitted changes
+       or a file git does not track yet, because the build compiles every source file it finds.
        The KPI pane header and its reports print it, and the team kit reads its version off it,
        so nobody types a version anywhere. A build where git cannot answer says no-commit. -->
   <PropertyGroup>
@@ -66,7 +67,7 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="RcrcCommit" />
       <Output TaskParameter="ExitCode" PropertyName="RcrcCommitExit" />
     </Exec>
-    <Exec Command="git status --porcelain --untracked-files=no" WorkingDirectory="$(MSBuildProjectDirectory)"
+    <Exec Command="git status --porcelain" WorkingDirectory="$(MSBuildProjectDirectory)"
           ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="low">
       <Output TaskParameter="ConsoleOutput" PropertyName="RcrcChanges" />
     </Exec>

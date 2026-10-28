@@ -19,7 +19,9 @@ To install
      FAILED:   It stopped part way. The line says what to do.
      REFUSED:  Nothing was changed. The line says why and what to do.
    Then press any key to close the window.
-5. Start Revit 2024. On the RCRC Green tab, the KPI panel holds one button, KPI Checklist.
+5. Start Revit 2024. The first time, it asks about RCRC Green because the add-in is not
+   signed. Choose Always Load. Do Not Load leaves you with no RCRC Green tab.
+6. On the RCRC Green tab, the KPI panel holds one button, KPI Checklist.
 
 Installing a newer zip the same way replaces the add-in, keeps the version you had before, and
 keeps every folder you chose in the pane.

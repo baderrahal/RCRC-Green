@@ -11,7 +11,7 @@ own profile.
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen.addin
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\         the assemblies, features.txt, VERSION.txt
   %APPDATA%\RCRC Green\previous-install\                  the version this install replaced
-  %USERPROFILE%\Documents\RCRC Green\reports\             where the pane writes its reports
+  Documents\RCRC Green\reports\                           where the pane writes its reports
 
 The folder the kept version sits in is outside Addins\2024 on purpose, so Revit can never find
 a second manifest and load two copies.
@@ -44,12 +44,20 @@ $installed = Join-Path $addins 'RcrcGreen'
 $manifest = 'RcrcGreen.addin'
 $kept = Join-Path $env:APPDATA 'RCRC Green\previous-install'
 $keptList = Join-Path $kept 'kept-files.txt'
-$reports = Join-Path $env:USERPROFILE 'Documents\RCRC Green\reports'
+# The Documents folder the person sees, which OneDrive may have moved off the profile. Windows
+# can answer with nothing for a profile it does not recognise, and then the plain one is used.
+$documents = [Environment]::GetFolderPath('MyDocuments')
+if (-not $documents) { $documents = Join-Path $env:USERPROFILE 'Documents' }
+$reports = Join-Path $documents 'RCRC Green\reports'
 
 # What this kit puts in the installed folder, and therefore all it keeps and puts back.
 $needed = @('RcrcGreen.Revit.dll', 'RcrcGreen.Core.dll', 'features.txt', 'VERSION.txt')
 $optional = @('RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb')
 $owned = $needed + $optional
+
+# Everything the zip holds. Only these are unblocked, because a zip unpacked loose into Downloads
+# would otherwise take the internet mark off every other file sitting there.
+$kitFiles = $owned + @($manifest, 'team-install.ps1', 'Install RCRC Green KPI.cmd', 'Put back the previous version.cmd', 'INSTALL-TEAM.txt')
 
 # Assemblies Revit 2024 loads itself. The add-in must never carry its own copy of these.
 $fromRevit = @('RevitAPI', 'RevitAPIUI', 'AdWindows', 'UIFramework', 'RevitAPIIFC')
@@ -158,7 +166,10 @@ if ($absent) {
 
 # A DLL saved from a browser or Teams carries a mark that stops .NET loading it, and Revit then
 # says only that the add-in could not be loaded. Taking the mark off first costs nothing.
-Get-ChildItem -LiteralPath $here -File | Unblock-File
+foreach ($name in $kitFiles) {
+    $file = Join-Path $here $name
+    if (Test-Path -LiteralPath $file) { Unblock-File -LiteralPath $file }
+}
 
 $missing = @(MissingReferences $here)
 if ($missing.Count -gt 0) {
@@ -168,11 +179,22 @@ if ($missing.Count -gt 0) {
 $version = VersionIn $here
 $previous = VersionIn $installed
 
+# The same zip installed twice must not keep itself in place of the version before it, or put
+# back would put back nothing and still say DONE. The two builds are compared by their stamps.
+function StampOf([string] $folder) {
+    $dll = Join-Path $folder 'RcrcGreen.Revit.dll'
+    if (-not (Test-Path -LiteralPath $dll)) { return $null }
+    return [System.Diagnostics.FileVersionInfo]::GetVersionInfo($dll).ProductVersion
+}
+$hereStamp = StampOf $here
+$installedStamp = StampOf $installed
+$again = [bool]($installedStamp -and $hereStamp -and ($installedStamp -eq $hereStamp))
+
 try {
     New-Item -ItemType Directory -Path $installed -Force | Out-Null
     New-Item -ItemType Directory -Path $reports -Force | Out-Null
 
-    if ($previous) {
+    if ($previous -and -not $again) {
         if (Test-Path -LiteralPath $kept) { Remove-Item -LiteralPath $kept -Recurse -Force }
         New-Item -ItemType Directory -Path $kept -Force | Out-Null
         $had = New-Object System.Collections.Generic.List[string]
@@ -228,5 +250,16 @@ catch {
     Finish 'FAILED' "Installing stopped part way: $($_.Exception.Message) The add-in folder $installed may hold a mix of two versions. $where Then send Bader a screenshot of this window." 1
 }
 
-$before = if ($previous) { "The version you had before, $previous, is kept in $kept." } else { 'There was no version before this one.' }
+if ($again -and (Test-Path -LiteralPath $keptList)) {
+    $before = "It was already installed, so the version kept before it, $(VersionIn $kept), is still kept in $kept."
+}
+elseif ($again) {
+    $before = 'It was already installed, and no version before it is kept.'
+}
+elseif ($previous) {
+    $before = "The version you had before, $previous, is kept in $kept."
+}
+else {
+    $before = 'There was no version before this one.'
+}
 Finish 'DONE' "$version is installed for $env:USERNAME. $before Reports go to $reportsGo. Start Revit 2024 and open the RCRC Green tab." 0

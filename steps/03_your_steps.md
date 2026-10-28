@@ -1,48 +1,73 @@
 # 03 your steps
 
-This pass checks the KPI pane in Revit 2024 against the approved design, after the round that
-answered Q1 to Q5. Take one screenshot at every step from 6 on, numbered by its step.
+This pass installs the KPI team kit the way the team will, checks the pane in Revit 2024, then
+puts your own full install back. Take one screenshot at every step marked Screenshot.
+
+## Part 1, the kit
 
 1. In GitHub Desktop, pick RCRC-Green, branch main, press Fetch origin, then Pull origin.
-   Look for: the newest commit names Q1 to Q5 and the records split.
+   Look for: the newest commit names Q6, Q7 and the KPI team kit.
 2. In VS Code, File, Open Folder, `C:\Users\bader\Documents\GitHub\RCRC-Green`.
-   Look for: `CLAUDE.md`, `docs` and `steps` in the Explorer on the left.
-3. Close Revit, then in VS Code open Terminal, New Terminal.
+   Look for: `install\build-team-kit.ps1` in the Explorer.
+3. Terminal, New Terminal.
    Look for: a prompt ending in `RCRC-Green>`.
-4. Build:
+4. Skip this step if `C:\Users\bader\Documents\RCRC-Green-Team-Kit` already holds the zip the
+   round's final message named. Otherwise build it:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install\build-team-kit.ps1
+```
+
+   Look for: a last line starting `DONE:` and naming `RCRC Green KPI <version>.zip`.
+5. In File Explorer, open `C:\Users\bader\Documents\RCRC-Green-Team-Kit`, right click the zip,
+   Extract All, Extract. Look for: a folder of 11 files with `Install RCRC Green KPI.cmd`.
+6. Close every Revit window.
+   Look for: no Revit in the task bar.
+7. In the extracted folder, double click `Install RCRC Green KPI.cmd`.
+   Look for: a last line starting `DONE:` that names the version and says your full install is
+   kept in `RCRC Green\previous-install`. Screenshot.
+8. Start Revit 2024 and open the RCRC Green tab.
+   Look for: the KPI panel alone, with no Drawing Sheet and no View Filters. Screenshot.
+
+## Part 2, the pane
+
+9. Open NG05 and press KPI Checklist. Look for: `Build` in the header followed by the same
+   hash and time as the zip's `VERSION.txt`. Screenshot.
+10. Step 1, Setup. Look for: your templates, output and PDF forms folders already set, ticked
+    in green. Screenshot.
+11. Press Next: Read. Look for: the grey line `Reads sheets and schedules. Nothing changes.`
+    above Read model. Screenshot.
+12. Press Read model. Look for: the Plots, Elements and Time boxes. If the status line ever goes
+    red on a read instead, press Read model again at once. Look for: it is not grey. Screenshot.
+13. Step 3, Plots. Tick Mosques. Look for: about 20 plots ticked. Screenshot.
+14. Press Next: Create, then Create, and wait. Look for: the result with Created and Failed and
+    a row per asset type. Screenshot.
+15. Press Open report. Look for: a first line `Build:` with the same hash and time. Screenshot.
+
+## Part 3, your own install back
+
+16. Close Revit, then double click `Put back the previous version.cmd` in the extracted folder.
+    Look for: a last line `DONE:` saying your RCRC Green build is back.
+17. In the VS Code terminal, build:
 
 ```
 dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
 ```
 
    Look for: `0 Warning(s)` and `0 Error(s)`.
-5. Install:
+18. Install your full build:
 
 ```
 .\install\install.ps1
 ```
 
    Look for: `Restart Revit 2024 and look for the RCRC Green tab.`
-6. Open Revit 2024 and NG05, then RCRC Green tab, KPI Checklist, and drag the pane to about
-   300 px wide. Look for: KPI Checklist, the model name, a Build line, four circles Setup Read
-   Plots Create, no sideways scroll.
-7. Step 1, Setup. Look for: Folders, Files and Workbook details as grey upper case titles, a
-   green tick on each set path, `7 templates found`, the footer Next: Read.
-8. Press Next: Read and do not press Read model yet. Look for: one grey line in the body,
-   `Reads sheets and schedules. Nothing changes.`, the footer Read model and `Not read yet`.
-   This is the Q4 answer.
-9. Press Read model. Look for: Plots, Elements and Time boxes, In plot list, Templates matched,
-   the three Values from dropdowns with square corners, and the Q4 line gone.
-10. Step 3, Plots. Tick Mosques. Look for: about 20 plots ticked, the count on the Mosques box,
-    the scroll staying put after a tick.
-11. Press Next: Create. Look for: the big number, the asset type table, the button
-    Create N workbooks, and Nothing in the model changes under it.
-12. Press Create and wait for the result. Look for: every circle ticked, the banner, Created and
-    Failed boxes, a row per asset type, and Open report opening the report.
-
-Then send the screenshots, numbered by step, to the chat.
+19. Start Revit 2024 and open the RCRC Green tab.
+    Look for: three panels, Drawing Sheet, KPI and View Filters. Screenshot.
+20. Send the screenshots, numbered by step, to the chat.
+    Look for: nothing more to do until the next round.
 
 ## Not covered by this pass
 
-- The Revit dark theme, which stays light by Bader's answer to Q1
-- A pane wider than 400 px
+- A team member's PC, with no repo and a Documents folder on OneDrive
+- A refused read on demand: nothing in the pane can make Revit refuse one
