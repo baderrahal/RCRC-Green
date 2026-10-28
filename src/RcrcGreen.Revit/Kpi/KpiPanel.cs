@@ -280,7 +280,7 @@ namespace RcrcGreen.Revit.Kpi
 
             lines.Children.Add(new TextBlock
             {
-                Text = KpiPaneWords.Build(typeof(KpiPanel).Assembly.GetName().Version.ToString()),
+                Text = KpiPaneWords.Build(KpiBuildStamp.Read()),
                 FontSize = KpiTheme.StatusSize,
                 Foreground = KpiTheme.Muted
             });
@@ -385,6 +385,7 @@ namespace RcrcGreen.Revit.Kpi
             Dispatcher.Invoke(() =>
             {
                 _told = what;
+                bool wasReading = _reading;
                 _reading = false;
                 Shut();
 
@@ -392,11 +393,16 @@ namespace RcrcGreen.Revit.Kpi
                 // press's Created and Failed standing under its refusal read as this press's.
                 // Made clears this flag before the end line arrives, so it holds only for a
                 // press that ended without one.
-                if (_pressing)
+                bool wasPressing = _pressing;
+                if (wasPressing)
                 {
                     _pressing = false;
                     _showingResults = false;
                     _reportWhere = string.Empty;
+                }
+
+                if (PressEnd.RedrawsTheSteps(wasPressing, wasReading))
+                {
                     RedrawTemplates();
                     return;
                 }

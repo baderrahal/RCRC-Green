@@ -1,0 +1,59 @@
+RCRC Green KPI, how to install it and run it
+
+This is an add-in for Revit 2024. It fills the client's GRP KPI Checklist workbook and its PDF
+form for each plot, from the open model. It changes nothing in the model. It installs for you
+alone, in your own Windows profile, and needs no admin rights. VERSION.txt in this folder says
+which version this zip holds.
+
+
+To install
+
+1. Close Revit.
+2. Right click the zip and choose Extract All, then open the folder that makes. A file opened
+   inside the zip without extracting it does not work.
+3. Double click "Install RCRC Green KPI.cmd". A black window opens. If Windows asks whether to
+   run it, choose Run.
+4. Read the last line before "Press any key to continue". It starts with one of three words:
+     DONE:     It worked. The line says which version is installed and where the one you had
+               before is kept.
+     FAILED:   It stopped part way. The line says what to do.
+     REFUSED:  Nothing was changed. The line says why and what to do.
+   Then press any key to close the window.
+5. Start Revit 2024. On the RCRC Green tab, the KPI panel holds one button, KPI Checklist.
+
+Installing a newer zip the same way replaces the add-in, keeps the version you had before, and
+keeps every folder you chose in the pane.
+
+
+To run it
+
+Open a model, press KPI Checklist, and work down the four steps in the pane.
+
+1. Setup. The first time only, browse to the KPI templates folder and the PDF forms folder
+   Bader shared on the project Teams or SharePoint, and pick a folder for the output.
+2. Read. Press Read model. It reads the sheets and schedules and changes nothing.
+3. Plots. Tick an asset type to tick all its plots, or tick plots one by one.
+4. Create. Press Create. The result shows what was written and what failed, with a reason.
+
+
+Where it writes
+
+  Workbooks and PDFs   the output folder you picked, one folder per plot named after its UID,
+                       inside a folder per component such as FRIDAY MOSQUE
+  The report           Documents\RCRC Green\reports. Press Open report in the result to see it.
+
+
+If something goes wrong
+
+1. Send Bader the newest report from Documents\RCRC Green\reports.
+2. Take a screenshot of the whole Revit window, with the pane in it, and send it too.
+
+
+To go back to the version you had before
+
+1. Close Revit.
+2. Double click "Put back the previous version.cmd" in the folder of any extracted zip.
+3. Read the last line before "Press any key to continue". DONE: says which version is back.
+
+If any install window ends on FAILED, or on red text that starts with none of the three words,
+take a screenshot of the whole window and send it to Bader.

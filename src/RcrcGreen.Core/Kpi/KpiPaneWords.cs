@@ -120,10 +120,10 @@ namespace RcrcGreen.Core.Kpi
 
         public const string Title = "KPI Checklist";
 
-        /// <summary>The header's third line, off the add-in assembly's own version.</summary>
-        public static string Build(string version)
+        /// <summary>The header's third line, off the build stamp, <see cref="BuildStamp"/>.</summary>
+        public static string Build(string stamp)
         {
-            return "Build " + (string.IsNullOrWhiteSpace(version) ? "unknown" : version.Trim());
+            return "Build " + BuildStamp.Shown(stamp);
         }
 
         public const string Folders = "Folders";
