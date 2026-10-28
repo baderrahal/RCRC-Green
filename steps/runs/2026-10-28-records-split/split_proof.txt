@@ -1,0 +1,79 @@
+Split proof, 2026-10-28. Every original is the blob on main at 4b244b3, read with git
+show, and every part is read back off disk for the join.
+
+.claude/rules/kpi-rules.md on main: 269551 bytes, SHA-256 24c7b5cdce29a3287703c27b19624f73b22fadc20e767f33c98d6e5396a77616
+  .claude/rules/kpi-rules.md                      8277 bytes
+  docs/rules/kpi-measured.md                     11415 bytes
+  docs/rules/kpi-pane.md                         22978 bytes
+  docs/rules/kpi-pdf-1.md                        23437 bytes
+  docs/rules/kpi-pdf-2.md                        22600 bytes
+  docs/rules/kpi-pdf-3.md                        20148 bytes
+  docs/rules/kpi-plots-1.md                      18548 bytes
+  docs/rules/kpi-plots-2.md                      15408 bytes
+  docs/rules/kpi-reading-1.md                    24302 bytes
+  docs/rules/kpi-reading-2.md                    17571 bytes
+  docs/rules/kpi-reading-3.md                    14169 bytes
+  docs/rules/kpi-report.md                       10453 bytes
+  docs/rules/kpi-scan.md                          4208 bytes
+  docs/rules/kpi-species.md                      16481 bytes
+  docs/rules/kpi-workbook-1.md                   24631 bytes
+  docs/rules/kpi-workbook-2.md                   15315 bytes
+  100 units, 100 index lines
+  every file read back is exactly its units in index order
+  units joined in index order: 269551 bytes, SHA-256 24c7b5cdce29a3287703c27b19624f73b22fadc20e767f33c98d6e5396a77616, MATCH
+  headings before 122, after 122, EQUAL
+
+.claude/rules/core-rules.md on main: 37971 bytes, SHA-256 c6da80490c197edac5deaadb8129c05eb1a9215a828c075997453583c03c0d7c
+  .claude/rules/core-rules.md                     4841 bytes
+  docs/rules/core-sheets.md                      21385 bytes
+  docs/rules/core-views-and-grid.md              12020 bytes
+  28 units, 28 index lines
+  every file read back is exactly its units in index order
+  units joined in index order: 37971 bytes, SHA-256 c6da80490c197edac5deaadb8129c05eb1a9215a828c075997453583c03c0d7c, MATCH
+  headings before 28, after 28, EQUAL
+
+.claude/rules/revit-commands.md on main: 42270 bytes, SHA-256 0fa1929cf7ed068eaf7f1c02caf78a96589011f778f68311063cdcfed6a4e610
+  .claude/rules/revit-commands.md                 8772 bytes
+  docs/rules/revit-panel.md                      10907 bytes
+  docs/rules/revit-run.md                        22866 bytes
+  27 units, 27 index lines
+  every file read back is exactly its units in index order
+  units joined in index order: 42270 bytes, SHA-256 0fa1929cf7ed068eaf7f1c02caf78a96589011f778f68311063cdcfed6a4e610, MATCH
+  headings before 27, after 27, EQUAL
+
+CLAUDE.md on main: 28418 bytes, SHA-256 f89aad17def2276c643403313c265ddeef96374eb5732b7ddb2160b24b8da6ac
+  CLAUDE.md                                       6606 bytes
+  docs/rules/project-facts.md                    10501 bytes
+  docs/hooks.md                                   1844 bytes
+  docs/gone-wrong.md                              9899 bytes
+  repointed: measured fact is in the KPI rules, by id in `docs/rules/index.md`.
+  repointed: The KPI rules hold the measurement, K35.09 in `docs/rules/index.md`.
+  each repoint undone and each pointer line put back by its file: 28418 bytes, SHA-256 f89aad17def2276c643403313c265ddeef96374eb5732b7ddb2160b24b8da6ac, MATCH
+  headings before 11, after 11 without the one added over the pointers, EQUAL
+
+steps/log-kpi.md on main: 623058 bytes, SHA-256 f8885e89dab5b4fe1099c1cedd6e761f391c2750edf1a473cabcd7a28987b355
+  steps/log-kpi.md                               23201 bytes, 2 entries kept, its pointer line left out of the join
+  steps/history/log-kpi-1.md                     90369 bytes, 7 entries
+  steps/history/log-kpi-2.md                     99972 bytes, 12 entries
+  steps/history/log-kpi-3.md                     92550 bytes, 12 entries
+  steps/history/log-kpi-4.md                     88916 bytes, 11 entries
+  steps/history/log-kpi-5.md                     94059 bytes, 11 entries
+  steps/history/log-kpi-6.md                     97909 bytes, 16 entries
+  steps/history/log-kpi-7.md                     36220 bytes, 4 entries
+  joined in order: 623058 bytes, SHA-256 f8885e89dab5b4fe1099c1cedd6e761f391c2750edf1a473cabcd7a28987b355, MATCH
+  entry headings before 75, after 75, EQUAL
+
+steps/log-drawing.md on main: 270447 bytes, SHA-256 78b8625d93d7837f74ff40b34d5ceb976801646bc17fb39c2002b5e98a08cdae
+  steps/log-drawing.md                           27575 bytes, 5 entries kept, its pointer line left out of the join
+  steps/history/log-drawing-1.md                 97985 bytes, 21 entries
+  steps/history/log-drawing-2.md                 95489 bytes, 16 entries
+  steps/history/log-drawing-3.md                 49544 bytes, 5 entries
+  joined in order: 270447 bytes, SHA-256 78b8625d93d7837f74ff40b34d5ceb976801646bc17fb39c2002b5e98a08cdae, MATCH
+  entry headings before 47, after 47, EQUAL
+
+steps/ai-max-state-kpi.md on main: 208136 bytes, SHA-256 1a2e4b25f7fa414e3b1b75aefb8999f533425047b974ce285e8824e1654adebb
+  steps/ai-max-state-kpi.md                      28284 bytes, 8 entries kept, its pointer line left out of the join
+  steps/history/ai-max-state-kpi-1.md            98939 bytes, 26 entries
+  steps/history/ai-max-state-kpi-2.md            81069 bytes, 15 entries
+  joined in order: 208136 bytes, SHA-256 1a2e4b25f7fa414e3b1b75aefb8999f533425047b974ce285e8824e1654adebb, MATCH
+  entry headings before 49, after 49, EQUAL

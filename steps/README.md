@@ -15,6 +15,9 @@ Short lines. One action per step. Every command in a code block.
 - `ai-max-state-<task>.md` each task's phase, the file the commit hook asks for
 - `latent.md` findings no real input reaches, kept with no fix
 - `usage.md` one row per session, its tokens and cost
+- `history/` the older entries of a log or state file past its 100 KB cap, moved whole, newest
+  part first
+- `runs/` what a round ran to prove itself, such as the split proof of 2026-10-28
 - The dated files and the `audit-*` and `run-*` files are older rounds' records, kept whole
 
 ## How to read it

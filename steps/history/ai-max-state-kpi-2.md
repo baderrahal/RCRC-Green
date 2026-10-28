@@ -1,0 +1,1096 @@
+Phase: 9, ship. Sixty fifth pass, four things off the first per plot run. NG05 at 00:00, 99
+plots, 98 workbooks. **The tree is right, both files recalculate with zero errors and the street
+reference file works**: ANH-007-ST-100217 came out ROW 36, length 928.782391, and the workbook
+computed the area at 33,436.17 itself. **The audit files stay the one record and this round
+closes none of their findings.** Everything here is wording or a count. Nothing new reads a
+model.
+
+**CHARACTER AND CONTEXT ARE FOUND BY THEIR LABELS AND NEVER BY A LETTER.** Measured by Bader off
+the three workbooks written on 13 September: mosques and schools carry Character at C7 with its
+value at D7 and Context at E7 with its value at F7, and streets carry a Category FORMULA at D7
+with Character and Context one pair to the right at F7 and H7. A map holding D7 because two of
+three templates say so would have destroyed the street sheet's own calculation. `FixedCells.In`
+opens the template when Create is pressed, reads its main sheet, looks for the label and writes
+the cell to its RIGHT. The street's Category is never touched because nothing looks for the word
+Category. A label matched whole and without case, a template naming neither writing nothing and
+saying so, a label found twice writing nothing and naming both cells, and `LabelledCell.Holds`
+carrying what the cell already held, because the mosque template came filled and the report must
+not read as though this run put those values there. `KpiCreatePlan.Of` takes the labels as a
+thirteenth REQUIRED argument and throws on null.
+
+**The name box is gone and `OutputName.Suggested` is DELETED on the SECOND of the two reasons.**
+Reachability is the first and it is the test that was wrong last round. This is the other one:
+the shape it recorded no longer exists, because there is no one file per template any more. One
+line stands where the box was, saying the root, the component folder, the UID2 and the workbook
+named after its folder, with one real path. `Final` and `Extension` stay, because a file still
+has to be named.
+
+**COUNT WHAT HAPPENED, NEVER WHAT WAS PLANNED.** The run read MOSQUES: Nothing was written. 20 of
+21 plots wrote a workbook, beside twenty workbooks on disk. `TemplateOutcome` counts workbooks
+now, `WroteSomeOfThem` is the case that had no word before, and **refused is kept only where
+NOTHING was written**. The summary line read 1 workbook written of 2 templates ticked on a run
+that wrote 98, so it counts workbooks, plots and templates each as itself.
+
+**The create block is one line per template with its notes under it.** `CreateWords.Range` names
+up to four plots and gives the count and the first to last beyond that, so 78 street plots read
+as a count and a range rather than 78 names. A note and a refusal no longer look alike: the
+links, the groups left out and a template with no ticked plot go through a new `Noted` in the
+ordinary text colour. `LinksLoaded.OnThePane` gives the count and what to do rather than six
+lines of paths. The STREETS area line said the number is typed by hand and it is not, so it now
+says the sheet works it out from the road width and the total length off the reference file.
+**Nothing moved and no control changed.**
+
+Four break watches went red on 5, 1, 1 and 1 tests and were restored byte for byte, each checked
+with a diff against its backup. The first is the one that matters: taking D7 as the value cell,
+which is what two of the three templates use, reddens the street test that exists to stop the
+formula being overwritten. Seven existing tests were changed by hand, each because the truth
+under it moved.
+
+**OPEN, FOR BADER: non-permeable hardscape is blank on every workbook and no note mentions it.**
+Nobody has said where it comes from and nothing here names a schedule, a parameter or a filter
+that would produce it. It is written in the log as a question rather than guessed at. Three
+things would settle it: which schedule or parameter holds it, whether it is an area or a count,
+and whether a plot with none prints a zero or stays blank.
+
+**`writing-check.sh` CANNOT SEE A COMMIT MESSAGE PASSED ON STANDARD INPUT.** This round's first
+commit used `-F -` and carried a co-author credit line, which that hook exists to refuse, and it
+was taken in silence. `commit-scope.py` skips a message file named `-` with a bare continue, so
+all three commit hooks scan an empty string. The commit was reset and made again through a file
+the hook can open. **The hook is not changed here**, because it belongs to no task and every
+session depends on it. It is written up for Bader in the log with the one line fix.
+
+**Locally 1640 tests at this branch, 0 failed and 0 skipped, 820 of them KPI, 15 added, against
+the 1625 main carries** at the branch point `70fdb82`. Build zero warnings. Pull request 114, merged into main as `9c865b1`. **The runner executed 1640 tests against the pull request head, 0 failed and 0 skipped. Locally the same 1640 ran at `9c865b1`, 0 failed and 0 skipped, 820 of them KPI.** The merge went through the API with the title and the message both passed on the call, the commit came back off main carrying neither a co-author credit line nor a generated-by footer, and the merged tree is byte for byte the branch head over src, tests, .claude and steps.
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT.**
+
+Phase: 9, ship. Sixty fourth pass, one workbook per plot in a folder tree, off how the team
+really files these. **The audit files stay the one record: counted off them today, 49
+findings, 13 FIXED, 36 OPEN, and this round closes none.** The round message said 32 open. That
+is not what the two files say and nothing here was renumbered to make it so.
+
+**A CHECKLIST IS ONE PLOT.** Tick MOSQUES and press once and you get 20 folders and 20 workbooks
+rather than one file with 20 plots added together. `PlotWorkbookPath` builds
+root/COMPONENT FOLDER/UID2/UID2.xlsx off the team's own folders, the plot gets a folder of its
+own so the PDF asked for later has somewhere to go, the folder is made where it is not there and
+never deleted, and the overwrite is unchanged. **NOTHING ABOUT READING A PLOT CHANGED**: the
+handler still reads a whole share in one pass and `OnePlot` fills, patches and files each
+reading on its own, with the merge functions taking a list of one.
+
+**`ComponentFolders` is a THIRD table off PRX_Component.** One says which workbook a plot is
+filled from and this says which folder it is filed in, and neither derives from the other: the
+two mosque values share one template and get two folders. **Eleven values reach EIGHT folders**,
+counted off Bader's own table, where the round message said nine, and GOVERMENT BUILDING is
+deliberately out of it. That count is an open question rather than a thing I guessed at.
+
+**`StreetReferenceFile` fills D8 and F8 on STREETS**, browsed for and remembered like the other
+two, read by the names in the header row. Measured on the real file: the four columns sit at D,
+H, I and O with no header over B at all, 313 rows are ANH-007-ST, 33 UIDs are on two rows and
+none of them is in ANH-007, and **the file writes an absent value as the text Null rather than
+an empty cell**, on 2,051 rows. Nothing is estimated from the component value, and the file
+proves why: 156 of the 313 street plots read a width of 15.
+
+**A platform answered differently from the machine the tool runs on.**
+`Path.GetInvalidFileNameChars` names nine characters on Windows and two on the Linux runner, so
+a UID2 reading ANH*007 was refused by the tool and accepted by the test meant to check it. The
+nine are data now and my own test caught it on the first run.
+
+**`FixedCells` holds Character as Urban Area Zone and Context as Urban, and WHICH CELL EACH GOES
+IN IS UNKNOWN.** Neither word is measured anywhere in this repository, so the map names no cell,
+every template reports both as not written with that reason in every run, and nothing is
+guessed. That is the one part of this round that is open rather than done.
+
+**The output folder is taken as the root**, a judgement, because the round's two sections
+disagree about how many browsed things there are and a folder deciding nothing is a dead end
+this file already records. The pointer file is unchanged so nobody's setting is lost.
+
+**Nothing is deleted.** What is no longer reached is listed in the rules with why each was kept:
+the merged species list across plots, the identical raw area check, the sum against the printed
+total, the plot counted into two workbooks and the output name box. **The rounding room on a
+group total does NOT stand down**, against the round message, because it is per schedule and per
+plot and nothing about it moved.
+
+Five break watches went red on 3, 2, 9, 3 and 1 tests and were restored byte for byte, each
+checked with a diff against its backup. **The fifth found a gap in my own test rather than in the
+code**: a plot that gets neither a folder nor a workbook was not in the accounting test, and it
+is now. Six existing tests were changed by hand, each because the truth under it moved. **Locally
+1625 tests at this branch, 0 failed and 0 skipped, 805 of them KPI, 47 added, against the 1578
+main carries** at the branch point `386948e`. Build zero warnings. Pull request 113, merged into main as `ae9c324`,
+the runner executing 1625 tests against the pull request head, 0 failed and 0 skipped, and
+locally the same 1625 ran at the merge, 805 of them KPI. **The merged tree is not byte for byte
+the branch head**: Bader uploaded `Branded_Factsheet_Template.docx` straight to main at `57e606a`
+between the branch point and the merge, and every file this round touched landed intact, checked
+by diff over src, tests, .claude and steps. GitHub was in a declared major outage on Pull
+Requests throughout, which cost three 500s and a 502 and was retried rather than worked around. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and the
+five correct workbooks are what a per plot press has to be held against.
+
+Phase: 9, ship. Sixty third pass, two answers from Bader and one short piece of work. **The
+audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**The Read this model button stays and is agreed.** Bader's answer: the round message's wording
+was wrong, the rule is that nothing reads without a press, a button IS a press, and the fault was
+a read nobody asked for rather than a way to ask for one. He also placed it, better than KPI
+Scan was, which sat at the top and on the ribbon whether or not anybody needed it, where this
+sits in the plots block with the thing it produces. The judgement note in the rules is replaced
+by that record. **No code changed for this item.**
+
+**All seven leftover members are deleted, on what each one RECORDS rather than on reachability.**
+`CreateWords.GroupsHeading`, `GroupLabel` and `NoGroupFor`, `PlotTicks.OnlyFor`, and
+`PlotPrefixes.Grouped`, `WithNoKnownPrefix` and `PlotsFor`, each with the place its shape lives
+named in the log and in the rules: the prefix docstring, `CreateWords.TemplateRow`,
+`TemplateSplit.Unplaced`, `TickingATemplate`, `PlotsPerTemplate.Split`, `PlotPrefixes.Across` and
+`PlotPrefixes.For`. **They came out the same because they are one feature's parts and not seven
+things**, and what was worth keeping was never among them: the prefix table is the measurement
+and `All`, `Of`, `For`, `Across` and `PrefixesFor` all stay. Two were worse than unused.
+`OnlyFor` implemented REPLACE, a rule the tool decided against, and `NoGroupFor` told the reader
+to tick such a plot by hand, which now lands it in `Unplaced` writing nowhere.
+
+**`PrefixesFor` is the one kept on that test and it is not one of the seven.** Nothing calls it
+either and it is the only record of the many to one shape, three prefixes meaning STREETS and two
+MOSQUES, which is invisible read the other way off `For`. Its docstring says that and says
+nothing calls it, which is the comment Bader asked for put where it applies.
+
+Four break watches went red on 3, 2, 1 and 1 tests and were restored byte for byte, each checked
+with a diff against its backup. The first reddened `OnlyFor`'s test through `OnlyFor`, so a
+deletion two members deep was watched rather than assumed. **`GroupsHeading` had nothing to
+watch**, no caller and no test anywhere, which is its own finding. Five tests went with the
+members and one of mine was rewritten rather than deleted, the contrast in
+`ItTicksByTheSplitsRuleSoNoTickedPlotCanLandInNoWorkbook`, which now names the two answers for
+DM-12 side by side instead of comparing two lists. **Locally 1451 tests at this branch, 0 failed
+and 0 skipped, 758 of them KPI, 5 fewer than the 1456 main carries** at the branch point
+`6e1b309`. Build zero warnings. Pull request 104, merged into main as `e2e14a3`, the runner
+executing 1451 tests against the pull request head, 0 failed and 0 skipped, and locally the same
+1451 ran at the merge, 758 of them KPI, the merged tree byte for byte the branch head.
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and nothing in it changes what the tool
+does at run time.
+
+Phase: 9, ship. Sixty second pass, three things off the first press over several templates,
+NG05 at 08:37. Two faults and one regression of mine. **The audit files stay the one record: 49
+findings, 13 FIXED, 36 open, and this round closes none.**
+
+**NOTHING HEAVY RUNS WITHOUT A PRESS.** Opening a model started a read with no press behind it,
+because `Took` asked for the plots off any title it had not read, and a dockable pane is
+restored visible at Revit startup. Five read paths were gone through one by one and four were
+already right: the two `WhichModel` asks are the title alone and free, Create is a press, and
+the KPI pane subscribes to DocumentOpened and DocumentClosed nowhere. The third was the fault
+and is gone. `KpiHeader.Lines` in Core is the header, three states and **only the third names a
+count**, because a read that has not happened is an absence rather than a zero.
+
+**The plot read now sits behind a press in the plots block, and that press is my judgement**
+rather than a line Bader wrote: the picker cannot be used before the plots exist. It is one
+control where this round removes a row of them, and it is written into the rules as a judgement
+so it is cheap to overrule.
+
+**Ticking a template row ticks its plots**, and the row IS the grouping button, so the separate
+row goes. `TickingATemplate` ticks by the SPLIT'S rule and never by the prefix, because a plot
+ticked by the prefix could land in no workbook at all. A plot ticked or unticked by hand wins,
+the hand list clears with the model, the row's count is what will really go in, and a template
+with no plots still ticks and still writes nothing. A row ticked before the read gets its plots
+when the read lands.
+
+**`OutputName.Suggested` is restored**, asked per row with that row's own file, so the boxes
+read GRP-KPI-Checklist-DD-MOSQUES.xlsx again rather than MOSQUES. Deleting it last round on
+reachability alone was wrong and that is now a rule: a method the last caller stopped calling
+can still be the only record of a shape.
+
+**What the grouping buttons did that the rows do not**, asked for in the round: they replaced
+the ticks rather than adding, and they could tick a template's plots with its workbook unticked.
+Both are deliberate now. Seven members are left reachable only from tests and **not deleted**,
+because of the lesson directly above. Whether they go is Bader's call.
+
+The round changes the pane, so it carries `design/pr-103/kpi-pane.html`, hand drawn from
+the code: the table of every read path, the header's three states side by side, the plots
+block before and after the one press with the grouping buttons struck through, and a
+ticked template with a plot taken off by hand reading 19 rather than 20.
+
+Three break watches went red on 1, 2 and 1 tests, one per item, and were restored byte for byte,
+each checked with a diff against its backup. **Two existing lines were changed by hand**, the
+plots block's first two states, which both promised the read that was the fault. **Locally 1456
+tests at this branch, 0 failed and 0 skipped, 763 of them KPI, 13 added, against the 1443 main
+carries** at the branch point `d6c9f4a`. Build zero warnings. Pull request 103, merged into
+main as `f41b044`, the runner executing 1456 tests against the merged head, 0 failed and 0
+skipped, and locally the same 1456 ran at the merge, 763 of them KPI, the merged tree byte
+for byte the branch head. **NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and whether opening
+a model is quick again is the one thing only a run can answer.
+
+Phase: 9, ship. Sixty first pass, round two of the two Bader sent together, off a fresh pull of
+main carrying round one. **The audit files stay the one record: 49 findings, 13 FIXED, 36 open,
+not renumbered and not reordered, and this round closes none.**
+
+**Several templates in one press, one workbook each.** The workbook rows are tickable, several
+at once, each ticked row carrying the template it is and its own output name, because one box
+cannot name six files. **NOTHING ABOUT THE PER TEMPLATE LOGIC CHANGED**: `KpiCreateRun` is still
+one template's run and `KpiCreateReport.Write` still prints one template's sections, both
+untouched, and what is new sits above them.
+
+**`PlotsPerTemplate` is the split**, the rule this repository already had for preselecting asked
+per plot: the component decides, the prefix cross checks, and where they disagree neither does.
+A component the table does not hold places NOTHING rather than letting the cross check answer in
+its place. A plot with no component is placed by its prefix, which is what EP-05 and its three
+need. Every plot that goes into no workbook is named.
+
+**A plot in two workbooks refuses the whole press**, checked over the split as it really came
+out rather than trusted to the rule that built it, with two tests because a construction that
+cannot go wrong is not a check.
+
+**Read once and no second cache.** A plot belongs to one template so it is read once, and
+`HeldReadings.Decide` is asked per template with that template's own share and its own held run.
+The progress count runs across the whole press, since counting per template would restart it at
+1 on the second workbook and the rule says the count only grows.
+
+**One report for the run**, the accounting first, then the split, then each template's own
+sections under its name. The four run counts, ticked, written, refused and nothing to write,
+must add up to the number ticked. A refusal on one template does not stop the others and each
+row says what happened to it. The three typed fields are one set for the whole run and the pane
+says so when more than one template is ticked.
+
+`OutputName.Suggested` is deleted with its test, unreachable once every row took its name from
+`CreateWords.SuggestedName`.
+
+The round changes the pane, so it carries `design/pr-102/kpi-pane.html`, hand drawn from the
+code: the workbook list before and after, the create block before and after the press on both
+themes, and the report's own opening. It says in the file that it is a mockup and not a
+screenshot.
+
+Three break watches went red on 2, 1 and 2 tests and were restored byte for byte, each checked
+with a diff against its backup. **One existing test was changed by hand**, the refusal that read
+No template picked and now reads No template ticked. **Locally 1443 tests at this branch, 0
+failed and 0 skipped, 750 of them KPI, 27 added, against the 1416 main carries** at the branch
+point `96b6239`. Build zero warnings. Pull request 102, merged into main as `131b1dd`, the
+runner executing 1443 tests against the merged head, 0 failed and 0 skipped, and locally the
+same 1443 ran at the merge, 750 of them KPI, the merged tree byte for byte the branch head.
+**NOTHING IN THIS ROUND HAS BEEN OBSERVED IN REVIT**, and the two correct workbooks, MOSQUES on
+NG03 at 15:52 and STREETS on NG05 at 01:30, are what a press over two templates has to be held
+against.
+
+Phase: 9, ship. Sixtieth pass, round one of two Bader sent together, built and merged on its
+own so that a single merge cannot hide which half broke anything. **The audit files stay the one
+record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**The third blocker does not bite and its UNKNOWN is closed.** Bader measured the 1552
+workbook: Tree List - Existing holds 98 names on rows 4 to 101 with no empty row inside the
+list and its first gap at 102, Proposed 80 names on rows 4 to 83 with its first gap at 84. Row
+101 is above the first empty row, so `BelowTheList` never reaches it. **No behaviour changed for
+that item**, and what was an UNKNOWN in the log is a measurement with its file and its date.
+
+**The name rule is an alias, not a rule.** `SpeciesAliases` in Core is a table of one entry,
+UNKNOWN means Unknown Tree. No rule could do it: one name in 98 opens with UNKNOWN, and a
+shared opening, a prefix or a longest match also reaches Conocarpus, Ficus and Prosopis, where
+it would have to pick a species. Three guards, all tested. It applies only where it resolves to
+exactly one row on that sheet, two rows being a refusal naming every one. It never overrides a
+real match, the exact name being matched above the table. And the report names it, a how column
+on SPECIES MATCHED and a block of its own with the alias, the sheet, the row and the count, so
+a count resting on a decision of the team's never reads like one that matched word for word.
+`ClosestName` is untouched, still printed beside every remaining miss and still never matched
+on.
+
+`OnTheRow` is the one place a row becomes a match now, asked by the exact name and by the alias
+alike, so the total's reach is one rule rather than two that would drift.
+
+**Street Design counting as Proposed on STREETS now has a run**, the 01:30 STREETS workbook on
+NG05, ST-05 reading 369 existing, 2 proposed and 68 Street Design taken as proposed against a
+printed TOTAL of 439. The never exercised note comes out of the log.
+
+Two break watches went red on 2 and 1 tests, one per guard, and were restored byte for byte,
+the second checked with a diff against its backup. **One existing test was changed by hand**,
+the old UNKNOWN takes no row test, whose four Unknown Tree rows now meet guard a. **Locally
+1425 tests at this branch, 0 failed and 0 skipped, 732 of them KPI, 9 added, against the 1416
+main carries** at the branch point `96b6239`. Build zero warnings. Pull request 101, merged
+into main as `3a3312f`, the runner executing 1425 tests against the merged head, 0 failed and
+0 skipped, and locally the same 1425 ran at the merge, 732 of them KPI, the merged tree byte
+for byte the branch head. **Nothing in this round has been observed in Revit**, and the
+check that matters, Total Trees moving 374 to 390 with the canopy still 11,168, waits on the
+next run.
+
+Phase: 9, ship. Fifty ninth pass, two items measured on two runs. **The audit files stay the
+one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**Item 1(b) was already correct and the round found it out rather than fixing it.** The no
+diameter rule already applies to the empty row route alone, `NotSized` is built nowhere else,
+and a matched row already gets its count in column B with the client's own cells untouched.
+There was one reason UNKNOWN went unwritten on the 1552 run, not two, and it is the name. The
+rule is pinned by a test now instead of being an assertion in a log entry. **A third blocker
+nobody named is in the way too**: an exactly matching name held past the list's first empty row
+is refused, and whether that bites for the real row 101 is UNKNOWN here, because no workbook and
+no report is in this repository. The create report already prints those names and their rows,
+so the 1552 report answers it off the file.
+
+**The match is not widened and no rule was invented.** `SpeciesMatching.ClosestName` prints the
+workbook name sharing the longest opening with each unmatched Revit name, as the second column
+of the unmatched species list, printed and never matched on. The 1552 run's misses cannot be
+enumerated from this repository, so the next run is what tells Bader whether it is one name or
+a family of them. **The name rule itself is his to give and this round does not choose one.**
+
+**A run with no link loaded now says so in three places.** `LinksLoaded` in Core is five states
+with one line each, a note and never a refusal: at the top of the checklist report above the
+reconciliation, on the pane above Create before the press, and beside two counts that cannot
+read green over an empty run, `GroupRowsFound` and `SchedulesWithABody`. The 16:06 STREETS run
+reads 0 group rows and 0 of 156 schedules with a body where every count it already carried read
+green.
+
+**STILL NEVER EXERCISED: Street Design counting as Proposed on STREETS.** It has tests and no
+run. The words appear nowhere in the 2,292 line report of the only STREETS run there has been,
+and they could not, because no link was loaded so no schedule printed a body. ST-05's 369, 2,
+68 and 439 read off a screen are the only measurement behind the whole rule.
+
+The round changes the pane by one line, so it carries a mockup, `design/pr-97/kpi-pane.html`,
+hand drawn from the code, saying in the file that it is a mockup and not a screenshot and that
+the link names in it are invented for the drawing.
+
+Two break watches went red on 3 and 4 tests, one per item, and were restored byte for byte. The
+first attempt at the second was a no-op that changed no behaviour and is recorded as one.
+**Locally 1332 tests at this branch, 0 failed and 0 skipped, 723 of them KPI, 16 added, against
+the 1316 main carries** at the branch point `e3ba145`, measured there in a worktree rather than
+remembered. Build zero warnings. Pull request 97, merged into main as `6275bf3`, the runner executing
+1385 tests against the merged head, 0 failed and 0 skipped, and locally the same 1385 ran at
+the merge, 723 of them KPI. **The merged tree is not byte for byte the branch head**: two
+Drawing Sheet rounds, `d77b90a` and `e2aa4ad`, landed while this one waited on a GitHub rate
+limit and are the whole of the jump from 1332 to 1385, none of them KPI. The KPI half did
+land byte for byte and its count is 723 on both.
+**Nothing in this round has been observed in Revit.**
+
+Phase: 9, ship. Fifty eighth pass, item 1 of the two Bader asked for, on its own so the first
+real run can say which half broke anything. **Item 2, several templates in one run, is NOT in
+this round.** The audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this
+round closes none.
+
+**Create scans if it needs to and the scan button is gone.** `ScanNeeded.Decide` in Core reads
+the model when no scan is held or what is held is of another model, and uses the scan already
+held otherwise, the same shape `HeldReadings.Decide` uses for the readings. The press says
+which it did. KPI Scan is off the pane and out of the request enum, and the ribbon tooltip no
+longer names it. The header's element count comes back with the plot read now, so the model's
+name has a number under it as soon as the pane is shown. The scan report is unchanged, still
+written and still named, and its headline moved to `Progressed` because `Told` is the end line
+that shuts the progress window.
+
+**The progress window is modeless, owned by the Revit main window, and opened outside
+`Execute`**, closed by the run's end line whatever ended it. **There is no Cancel, and that is
+this round's one deliberate refusal**: cancelling mid read leaves a half read set of plots the
+reconciliation would count as read, which is the state the rest of the tool would trust and
+should not, so an honest cancel is its own round.
+
+A breaker on the diff died on a rate limit, so the checks were made here: every path that ends
+a press reaches `Told` so the window always shuts, the scan runs after the refusal guard, the
+header cannot be wiped by the redraw that follows it, and nothing still references the removed
+request. **One real limit is known and left**: a second press while the first run is going
+leaves the second run without a window, because a busy flag that failed to clear would leave
+Create dead with no way back.
+
+The round changes the pane, so it carries a mockup, `design/pr-93/kpi-pane.html`, hand drawn
+from the code: the strip before and after in both themes, the window on four of its real
+lines, and the order a press says them in. It says in the file that it is a mockup and not a
+screenshot.
+
+Three break watches went red on 3, 1 and 1 tests and were restored byte for byte. **Locally
+1289 tests at this branch, 0 failed and 0 skipped, 707 of them KPI, 7 added, against the 1282
+main carries** at the branch point `b5e2c90`. Build zero warnings. Pull request 93, merged
+into main as `ffccfce`, the runner executing 1289 tests against the merged head, 0 failed and
+0 skipped, and locally the same 1289 ran at the merge, 707 of them KPI, the merged tree byte
+for byte the branch head. **Nothing in this round has
+been observed in Revit**, and the window appearing, shutting on every path and the line moving
+mid run are all waiting on the first run.
+
+Phase: 9, ship. Fifty seventh pass, two things off the 13:48 run on RCRC_NG03_EZ. **The audit
+files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**The plots block said open a model while a model was open.** A workflow told Bader's two
+candidates apart from the real cause and neither was it: the repaint pump was born at render
+and never ran at background, and the progress pumps run only inside an Execute after the one
+request slot is emptied. The real cause is older than both: `Ask(Plots)` lived only in `Shown`,
+that one ask was lost when a pane restored visible at startup consumed it against no document,
+or a scan displaced it in the one slot, and nothing asked again, so a scan filled the header
+while the block drew its waiting text, whose words were open a model. Fixed in two halves:
+`CreateWords.PlotsBlock` reads four ways with a Core test, no document says open one, a
+document not yet answered says it is reading, a document answered empty says the model holds
+none, a document answered with plots hands to `PlotSources`; and `Ask(Plots)` moved from
+`Shown` to `Took`, the one place that knows which model answered, guarded by title and reset on
+close, so the plots are read once per model and a model opened under the pane is read the moment
+any request answers with it. The recovery is untestable in Core and waits on a run.
+
+**The ten xUnit warnings are cleared**, four xUnit2029 rewritten from `Assert.Empty(x.Where(p))`
+to `Assert.DoesNotContain(x, p)` and six xUnit2031 from `Assert.Single(x.Where(p))` to
+`Assert.Single(x, p)`, the assertion changed and never the subject, none changed what it checks.
+Build zero warnings.
+
+Two break watches went red on 1 and 1 tests and were restored byte for byte. **Locally 1289
+tests at this branch, 0 failed and 0 skipped, 700 of them KPI, 1 added, against the 1288 main
+carries** at the branch point. Committed in two, the warnings as checkpoint `54ab011` then the
+plots fix. Pull request 92, merged into main as `c8bd1b8`, the runner executing 1282 tests
+against the merged head, 0 failed and 0 skipped, and locally the same 1282 ran at the merge,
+700 of them KPI. The drop from 1289 to 1282 is the Drawing Sheet sixtieth pass `a7cd601` that
+landed in between and net removed seven tests, none of them KPI. **Nothing in this round has
+been observed in Revit**, and whether the recovered pane shows the plots on the next 13:48
+style run is the one thing waiting on Bader.
+
+Phase: 9, ship. Fifty sixth pass, Bader's answers to two of the fifty fifth pass's four open
+questions, no behaviour changes beyond the two lines. **The audit files stay the one record:
+49 findings, 13 FIXED, 36 open, and this round closes none.**
+
+**No ceiling on the rounding room, a line instead.** Both measured models round areas to 1,
+so a coarser step is hypothetical and a ceiling chosen today is a constant pretending to be
+a rule. A project whose step is coarser than the metre opens the create report with one line
+before anybody reads a number, the step and the room per row in square metres. The unit that
+gated the checks travels on `KpiCreateRun`, a reused press carrying the held run's forward.
+**The pane counts the run's rounding notes beside the written cells**, one sentence saying
+they are in the report, singular when one, nothing when none, because a note only the report
+file holds is a note nobody reads.
+
+Two break watches went red on 2 and 1 tests and were restored byte for byte. **Locally 1266
+tests at this branch, 0 failed and 0 skipped, 699 of them KPI, 5 added, against the 1261
+main carries.** Pull request 85, merged into main as `52e4395`, the runner executing 1266
+tests against the merged head, 0 failed and 0 skipped, and locally the same 1266 ran at the
+merge, 699 of them KPI, the merged tree byte for byte the branch head. **Nothing in this round has been observed in Revit.** Two things wait on
+Bader, both on the next 18 plot NG03 run: whether the status line visibly repaints mid run,
+and the rounding note's first sighting, now counted on the pane beside the written cells.
+
+Phase: 9, ship. Fifty fifth pass, two things off the 1208 run on RCRC_NG03_EZ, the first run
+on a second model, where the reading reuse held, a 123 second scan and a 2.5 second create.
+**The audit files stay the one record: 49 findings, 13 FIXED, 36 open, and this round closes
+none.**
+
+**The group total check tolerates the unit's rounding on areas and never on counts.** FM-21
+and FM-22 refused with counts exact and areas off by one in opposite directions, which is
+rounding. Counts still refuse exactly. Areas get half the rounding step per row summed, read
+off the project units by `KpiReader.AreaUnit` and never a constant, within the room is a
+`RoundingNote` printed beside the group total row, outside still refuses naming the room, and
+an unread step allows nothing and says so. Both measured plots are tests and go through noted.
+Every place printed numbers are added against a printed total is named in the log, the ones
+already right included, and the species sum record the forty seventh pass chose, which was
+computed and printed nowhere, prints now.
+
+**The status line moves while a run does**, driven by what is done, never a timer. The scan
+announces each section off the report's own headings and counts the schedules, Sections 5 to 8
+of 9, schedules, 400 of 951, 42%. Create names the plot, Reading DM-44, plot 3 of 18, 11%,
+then the steps name themselves through the patcher's own callback. Percentages only where the
+total is known, floored, off counts that only grow. `ProgressWords` in Core holds the words
+and the counting with tests, and the end line still comes through `Told` on finish, refusal
+and throw. **Whether a line set mid run visibly repaints on a real pane is UNKNOWN until
+somebody runs it**, the pane can share Revit's thread, and `Moved` pumps one render priority
+job after each line so the paint can get through when it does while every queued click stays
+queued until the run returns.
+
+**A breaker read the committed diff before the pull request went ready and five of its ten
+findings changed code**: a phased group printing no total row is said in the report to have
+gone unchecked, the note's numbers print six places so a fine step cannot read off by 0
+within the 0, the species record's 0.005 constant gate became the shared drift epsilon with
+six place numbers, a reused press says Reusing the readings already held on the live line,
+and the pump moved from background to render priority because background would have
+dispatched queued clicks inside `Execute`, the two ownerless folder dialogs included. Found
+and left with reasons in the log: the room has no ceiling on a coarse unit, the rounding
+note is in the report file and not on the pane, a zero or negative accuracy would print as
+not read on a value nobody has seen, and `Repeats` prints nowhere, older than this round.
+
+Seven break watches went red on 3, 1, 2, 1, 1, 1 and 1 tests and were restored byte for
+byte. **Locally 1246 tests at this branch, 0 failed and 0 skipped, 694 of them KPI, 22
+added, against the 1224 main carries.** Pull request 81, merged into main as `8578f86`, the
+runner executing 1261 tests against the merged head, 0 failed and 0 skipped, and locally the
+same 1261 ran at the merge, 694 of them KPI, the 15 above the branch's 1246 being the Drawing
+Sheet fifty sixth pass that landed in between and touches no KPI file. **Nothing in this round has been observed in
+Revit.** Four things wait on Bader: the first run that shows whether the status line
+repaints mid run, the rounding note's first sighting on a real report, whether the room
+wants a ceiling on a project rounding coarser than the metre, and whether the pane should
+say beside the written count that notes exist in the report.
+
+Phase: 9, ship. Fifty fourth pass. **The audit files are the one record of what is open: 49
+numbered findings, 13 carrying a FIXED mark, so 36 open, read off
+`steps/audit-kpi.md` and `steps/audit-kpi-2.md` and counted nowhere else.** Eight marks were
+added this pass after each was verified at today's lines, 1 and 8 to the fortieth pass, 2, 30,
+31 and 32 to the forty fifth, 5 and 36 to the forty sixth. Six of the nineteen believed closed
+are not and stay open: 3, 4, 6, 12, 21 and 26, the round that has never landed on main, each
+found byte for byte in its finding's shape. No finding's text changed, none renumbered, none
+reordered.
+
+**The diameter alone decides whether a species the list does not hold gets an empty row**,
+measured on the MOSQUES template row 21: L reads J, M reads L and the count, O reads N, which
+is typed, and nothing reads I or K. A species with a diameter and no height is written and its
+height cell is named as not written,
+`ASpeciesWithADiameterAndNoHeightIsWrittenAndItsHeightCellIsNamed`, and a species with no
+usable diameter is still withheld, UNKNOWN included, whose DM-25 row 19 prints 0. Two break
+watches went red on 1 and 9 tests and were restored byte for byte. **Locally 1221 tests at
+this branch, 0 failed and 0 skipped, 672 of them KPI, none added net**, the same 1221 main
+carries. Pull request 78, merged into main as `a407284` through the API with the squash
+message on the call: **the runner executed 1224 tests against its merged head, 0 failed and 0
+skipped, and locally the same 1224 ran at `a407284`**, 672 of them KPI. The 3 above the
+branch's own 1221 are the Drawing Sheet round that landed in between, `b7d41dd`, whose files
+are the only ones that differ from this branch and none of them KPI. The merge commit carries
+no co-author line and no generated-by footer. **Nothing in this round has been observed in Revit.** One thing recorded for the
+round that closes finding 4, in the log: `PaneChoicesTests` pins the unfixed behaviour and
+must move with that fix.
+
+Phase: 9, ship. Fifty third pass, one rule measured on the 1836 run over 20 mosque plots. **No
+audit finding is closed here**, because this is a fault off a run rather than an audit entry,
+and none was renumbered or annotated. The count in the round message, 32 open, does not
+reconcile with the two audit files at this branch, which hold 49 numbered findings and 5 FIXED
+marks. That is written down in the log rather than resolved.
+
+**A species the model does not size gets no row at all.** 34 cells were ready, the run wrote the
+workbook, the formula check found 7 formulas that would read an error and deleted it, and every
+one traced to UNKNOWN written into Tree List - Proposed row 85 with a name and a count and no
+canopy diameter, because DM-25 row 19 prints nothing for its height and 0 for its diameter.
+`SpeciesMatching.WrittenInto` asks both measures before it takes a row. A species missing either
+is named with its count and the reason, which quotes what every row printed, and the run goes
+through. **The canopy guard is untouched, byte for byte.** The size is asked before a row is
+taken so nothing is used up, the sheet's own total is still said first, and both measures are
+required, which is Bader's wording rather than a measurement.
+
+**The report says how many trees went nowhere and out of what**, NOT WRITTEN, THE WHOLE RUN: 1
+tree of 528, over every species this run merged, off the one list of matches the section above
+prints from.
+
+12 existing tests went red, which is what a rule change should do. Nine were fixtures that
+predate measures and three were the old rule written down. **The blanket fixture fix was itself
+a fault and the review caught it**: it gave UNKNOWN a size, and UNKNOWN is the one species
+measured to print neither a height nor a diameter. Every test that names UNKNOWN says what the
+model says now.
+
+Three break watches went red on 10, 1 and 1 tests and were restored byte for byte. One of them
+passed first time against a test that was not testing what it said, which is how that test was
+corrected. **Locally 1187 tests at this branch, 0 failed and 0 skipped, 672 of them KPI, 5 added
+net, against the 1182 main carries.** Pull request 75, merged into main as `be72119` through the
+API with the squash message on the call: **the runner executed 1198 tests against its merged
+head, 0 failed and 0 skipped, and locally the same 1198 ran at `be72119`**, 672 of them KPI. The
+11 above the branch's own 1187 are the Drawing Sheet round that landed on main in between,
+`f72834e`, whose files are the only ones that differ from this branch and none of them KPI. The
+merge commit carries no co-author line and no generated-by footer. **Nothing in this round has been observed in Revit.** Two
+things wait on Bader, both in the log: whether both measures should be required or the diameter
+alone, and what a withheld count costs.
+
+Phase: 9, ship. Fifty second pass, one correction on finding 39's filled file test, measured
+by Bader on two template sets. **The 38 open audit findings stay open**, not renumbered, not
+reordered, not annotated, and 39 keeps its FIXED mark with the correction under it.
+
+**A workbook is filled when a cell the tool writes holds something the tool would have written**,
+`FilledMarks`, never when one cell differs from one expected string. Two marks, both cells the
+tool writes: a date at E5, which parses and holds at least two numbers, and a plot reference at
+the template's own reference cell, C5, which is one unbroken run holding a letter and a digit
+and no angle bracket. **Nothing is withheld on a cell the tool has never written**, so an empty
+or absent cell is never a filled file. The cell that decided and what it held are in the reason
+and on their own line in the report, so a template wrongly withheld is traced in one line.
+`KpiTemplates.DatePlaceholder` is deleted, because it decided nothing and was a second record
+of a measurement. The peek reads both cells rather than one.
+
+The two sets it was measured on: KPI CHECKLIST R1 MOSQUES holds `<Date>`, `<Name>`, `<Position>`
+and `<UID>` at E5, G5, H5 and C5, and an earlier production set holds nothing at E5, G5 or C5
+with real values at D3 and H5. One thing in the round message does not hold against the code and
+is said in the log: the old rule offered a template whose E5 was empty, because it refused to
+decide on a blank cell. It was wrong for the reason given rather than for that consequence.
+
+A review of the round found two limits, both now stated in the rules and the log and neither
+guarded against: a filled workbook the tool wrote neither cell into reads as a template, and a
+client set hinting a reference's shape rather than bracketing it would be withheld. It changed
+three things: the sheet part is parsed once per file rather than once per mark, the pane's line
+saying the three typed cells are never written now says they are typed on the pane and copied
+through, and a theory pins what a shape-alike hint does today.
+
+Five break watches went red on 5, 8, 1, 1 and 1 tests and were restored byte for byte.
+**Locally 1182 tests at this branch, 0 failed and 0 skipped, 667 of them KPI, 29 added, against
+the 1153 main carries.** Pull request 73, merged into main as `ba805b1` through the API with the
+squash message on the call: **the runner executed 1182 tests against its merged head, 0 failed
+and 0 skipped, and locally the same 1182 ran at `ba805b1`, 0 failed and 0 skipped**, 667 of them
+KPI. The merge commit carries no co-author line and no generated-by footer, and its tree is the
+branch's tree. **Nothing in this round has been observed in Revit.** Two things wait on
+Bader, both in the log: whether a filled workbook the tool wrote neither cell into matters, and
+whether any client set hints a reference's shape rather than bracketing it.
+
+Phase: 9, ship. Fifty first pass, the five that cost a whole run. **Findings 34, 35, 39, 9 and
+16 are FIXED and marked under their entries. The other 38 audit findings stay open**, not
+renumbered, not reordered, not annotated. All five stood at today's lines before the fix, and
+the round before this one, findings 3, 4, 6, 12, 21 and 26, had not landed on main, so 35 is
+built fresh and finding 6's catch is untouched.
+
+**A throw on one plot names the plot and the run carries on**, `GuardedRead` in the handler
+and a guard per schedule in the reader, the refusal on the reading and the report written. **A
+choice made after a refusal is applied to the run already read**, `HeldReadings.Decide` and
+`Applied`, the model read again only for a named reason and the report saying which, a plot
+whose read was refused among the reasons. **A filled checklist is named as filled and not
+offered**, off E5 against `KpiTemplates.DatePlaceholder`, in the same list, nothing deleted or
+moved, and a filled park file whose name cannot tell the park names neither. **The templates folder is opened once per folder**,
+`TemplateListing`, the opens counted on the pane and in the report. **The plot list keeps its
+place across a tick**, `Scrolling` and `Remembering` in the KPI pane with `ScrollMemory` in Core.
+The read cost is in the log in calls and is unchanged. A review pass over the diff, four
+lenses and a refutation, confirmed four findings of eleven and three changed code, named in
+the log: a refused reading no longer reused, a filled park file that names neither park when
+its name cannot tell, and the templates listing cleared on any press that reached the patcher
+into its folder rather than on every write anywhere.
+
+Eight break watches went red on 4, 2, 2, 2, 6, 2, 2 and 2 tests and were restored byte for
+byte. **Locally 1153 tests at this branch, 0 failed and 0 skipped, 638 of them KPI, 50 added,
+against the 1103 main carries.** Pull request 72, merged into main as `adf164f` through the API
+with the squash message on the call: **the runner executed 1153 tests against its merged head,
+0 failed and 0 skipped, and locally the same 1153 ran at `adf164f`, 0 failed and 0 skipped**,
+638 of them KPI. The merge commit carries no co-author line and no generated-by footer.
+**Nothing in this round has been observed in Revit.** Three things
+wait on Bader: whether all seven production templates hold `<Date>` at E5, whether a model
+edited between a refusal and a pick matters, and whether the scrolling helper becomes a shared
+Revit root file in a round of its own.
+
+Before that, the fiftieth pass, one word too loose, measured on the 1707 run. **The other 43
+audit findings stay open**, not renumbered, not reordered, not annotated.
+
+**Where two headings hold DIAMETER, the column the sheet's own formulas read is taken.** J
+Average Mature Canopy Diameter (m) and K Mature Canopy Diameter (m) both hold the word, the
+reader found two and wrote nothing into J, and the canopy guard deleted the output. L reads J
+and nothing reads K, so `SpeciesList` reads the formulas below the header row off the file and
+takes the one candidate they read, worked out from the file and never from a letter. Still more
+than one, or none, and nothing is written with both named and what the formulas read. How each
+column was chosen is recorded and printed beside the tree list. PHOENIX DACTYLIFERA writes 18
+into I and 15 into J, UNKNOWN writes neither and still refuses through the guard. **The report
+counts the matches that disagree**, 22 of them on the 1707 run, and changes nothing.
+
+Three break watches went red on 3, 2 and 2 tests and were restored byte for byte. Pull
+request 69 is merged into main as `9e966fa`, **1103 tests on the runner against its merged
+head and 1103 locally at that head, 0 failed and 0 skipped on each**, 588 of them KPI, 8 added
+here. **Nothing in this round has been observed in Revit.**
+
+Before that, after the forty ninth pass, one fixture correction: ST-05's Existing group is
+the thirteen species measured off the schedule on screen, adding to 369, in place of an
+assumed split of two. CASSIA GLAUCA under Existing at 1 and Street Design at 62 covers a species
+in a named group and a by-decision group at once. No code changed. Pull request 68 is merged
+into main as `5d062f6`, **1095 tests on the runner against its merged head and 1095 locally at
+that head, 0 failed and 0 skipped on each**, 580 of them KPI, none added. **Nothing in this
+round has been observed in Revit.**
+
+Before that, the forty ninth pass, two things on top of the forty eighth, both Bader's
+decisions. **The other 43 audit findings stay open**, not renumbered, not reordered, not
+annotated.
+
+**Street Design counts as Proposed on STREETS and stays out everywhere else.** ST-05 prints
+Existing 369, Proposed 2 and Street Design 68 under TOTAL 439, and 369 plus 70 is 439. The
+decision is data on the template, `KpiTemplate.GroupsCountedAsProposed`, keyed on the template
+and never on the plot prefix, read by `CountedGroups.Of` into a `GroupByDecision`, and a test
+says the whole map holds exactly one. The merge keys every row on the sheet that takes its
+group through the same `CountedGroups`, so ALBIZIA LEBBECK 2 under Proposed and 6 under Street
+Design is one row of 8 on Tree List - Proposed and trips no refusal. The report's reason beside
+each group row says which route it took. **The note goes on the pane:** `CreateWords.GroupsLeftOut`
+names the plots and the schedules where a group no sheet takes was found, above the Create
+button, a note and not a refusal.
+
+Four break watches went red on 10, 21, 3 and 4 tests and were restored byte for byte.
+Pull request 67 is merged into main as `c79c4d2`, **1095 tests on the runner against its
+merged head and 1095 locally at that head, 0 failed and 0 skipped on each**, 580 of them KPI,
+14 added here. **Nothing in this round has been observed in Revit.**
+
+Before that, the forty eighth pass, the FM-05 refusal answered off the 1536 report: its softscape
+schedule holds THREE groups, and the third, Street Design, is somebody else's scope by Bader's
+decision. The model will be corrected later and until then the tool leaves those rows out and
+says so. **The other 43 audit findings stay open**, not renumbered, not reordered, not
+annotated.
+
+**Only the groups a tree list sheet is named for count.** `CountedGroups` holds the template's
+two sheet names and nothing matches a word. The softscape reader takes the species under those
+groups, checks each group against its own subtotal row and the groups taken plus the groups left
+out against TOTAL: FM-05 6 plus 32 taken, 38 left out, 76 printed. The shrubs and lawn reader
+adds the phase rows a sheet is named for and checks the group total against all of them: GRASS
+96 taken, 69 left out, 165 printed, SHRUBS 361, 459, 820. **The report names every group row,
+always**, with its row, its subtotal, TAKEN or LEFT OUT and why, and the accounting counts the
+schedules holding such a group and names the plots. A species in two groups refuses nothing, in
+one group still does. A repeated group name, DM-25's two Existing rows, is taken both times and
+the second says so. The false comment in `KpiPlotReader` is corrected: FM-05 holds one softscape
+schedule.
+
+Six break watches went red on 18, 9, 3, 2, 1 and 2 tests and were restored byte for byte.
+Pull request 66 is merged into main as `ee13e8c`, **1081 tests on the runner against its
+merged head and 1081 locally at that head, 0 failed and 0 skipped on each**, 566 of them KPI,
+21 added here. **Nothing in this round has been observed in Revit.**
+
+Before that, the forty seventh pass, six things measured on the 20 plot MOSQUES run of
+2026-09-10 at 14:28 and on its workbook opened in Excel. Five fixed, one reported and not
+fixed. **The other 43 audit findings stay open**, not renumbered, not reordered, not annotated.
+
+**A species written in carries its height and its diameter off the schedule**, read by heading,
+agreed across every row, written into the columns the sheet's header row names, and named with
+the reason where a dash, a nought or a disagreement means nothing is written. **The FM-05
+double is two printed rows of one schedule**, not two schedules, and the write is refused naming
+the rows and the counts until Bader says which. **The output's formulas are read for what they
+will compute**, and a written row a formula cannot compute from deletes the output again and
+refuses the run. **calcMode is auto and the fifth check**, with the package searched for any
+other calculation setting. **The _xlfn. functions are counted** by name and by cell. **The report
+ends with every schedule read, as the schedule prints it.** Phoenix dactylifera's two diameters
+are named and nothing is changed, an open question for Bader.
+
+Five break watches went red on 4, 1, 2, 2 and 5 tests and were restored byte for byte.
+Pull request 60 is merged into main as `8eb289b`, **1046 tests on the runner against its
+merged head and 1046 locally at that head, 0 failed and 0 skipped on each**, 557 of them KPI,
+32 added here. **Nothing in this round has been observed in Revit or in Excel.**
+
+Before that, the forty sixth pass, two faults measured on the first twenty plot run, 2026-09-10
+at 11:16, and fixed. **The other 43 audit findings stay open**, not renumbered, not reordered,
+not annotated.
+
+**The tree list rows come off the file and the map holds no range.** The map said B4 to B83, the
+sheet's total said SUM(B4:B92), and the names ran to row 101, so four species with a row waiting
+were reported as having nowhere to go and the workbook went out 85 trees short. `TreeSheet`
+holds a sheet name and nothing else, `SpeciesList` reads every named row down column D and the
+total's own reach off its formula, and a species on a row the total does not reach is refused
+per species with the row and the total named. The report prints both lists as read.
+
+**One schedule of a kind per plot or the kind is not read.** FM-05 holds two softscape
+schedules and its trees were counted twice. The reader counts before it reads, `PlotReading`
+carries every name and refuses numbers beside two, the reconciliation refuses the write naming
+the plot, the kind and every schedule, and the report names the schedule each number came off.
+
+The read cost is measured in calls in the log, every plot walking all 951 schedules, and is not
+changed. Three break watches went red on 5, 1 and 1 tests and were restored byte for byte.
+Pull request 59 is merged into main as `48bd623`, **1014 tests on the runner against its
+merged head and 1014 locally at that head, 0 failed and 0 skipped on each**, 525 of them KPI,
+20 added here. **Nothing in this round has been observed in Revit.**
+
+Before that, the forty fifth pass, four findings that can put a wrong number in front of a
+client: finding 2 of the first audit and findings 30, 31 and 32 of the second. **The other 43
+stay open**, not renumbered, not reordered, not annotated.
+
+**The four cell position fallbacks refuse.** Every reader of a printed schedule hands back what
+it read or every reason it refused, never both, and a column the heading row does not name is
+refused in one sentence that names the column and prints the headings. The refusal travels on
+the plot reading, refuses the write, prints under the plot and among the reasons, and the pane
+draws it in red above Create.
+
+**A digit after the number ends is a refusal.** `CellNumber.Read` refuses "1,234 m2" and
+"1131,72" with the cell named rather than reading 1 and 1131, parses no separator because the
+project's setting has never been read, and every value measured on the real model still reads.
+
+**STREETS reads no area.** The reconciliation takes the template as a required argument, and
+where the map holds no area cell no filled region is read and nothing about the area is refused
+on, so MM-03 and MM-04 reading one raw area no longer end the first 78 plot run. The report says
+the area was not read and why.
+
+**The TOTAL row is read.** The species rows are held against it and a sum that does not match
+refuses the write naming both numbers. DM-12: eight rows adding to 39, TOTAL 39.
+
+Four break watches, one per finding, went red on 2, 6, 4 and 2 tests and were restored byte for
+byte. Pull request 58 is merged into main as `faa6468`, **994 tests on the runner against its
+merged head and 994 locally at that head, 0 failed and 0 skipped on each**, 505 of them KPI, 46
+added here. The 988 measured while building was at the older base, before the Drawing Sheet's
+forty fourth pass put six tests under it. **Nothing in this round has been observed in Revit.**
+
+Before that, the forty second pass, the second audit of the KPI tool alone. It built nothing
+and fixed nothing. Pull request 55 is merged into main as `5beea47`, 942 tests on the runner
+against its merged head and 942 locally, 0 failed and 0 skipped on each, nothing added because
+nothing changed. The only file it adds is `steps/audit-kpi-2.md`, and this file is in the
+commit only because `require-file-on-commit.sh` requires it in every commit.
+
+**Part A first: all 27 open findings of `steps/audit-kpi.md` STILL STAND at `82d95f4`**, with
+today's line numbers, none passed by when the code moved and none found untrue. Twenty new
+findings, numbered 30 to 49 so the two audits cite together: 0 BLOCKS, 3 WRONG, 7 COSTLY, 10
+TIDY, and 9 dropped as costless. The shape hunted was a right line standing on a fact measured
+once, and the logic notes list every such rule in the tool with what it was measured on.
+
+The three WRONG. `CellNumber` reads a digit grouping separator as the end of the number, and
+every value it has met printed under a thousand, so on a project that groups digits a one phase
+group over 999 m2 writes its thousands and the add-up check passes because 1 equals 1. The area
+is read, totalled and refused on for every template and STREETS has no area cell, so the first
+78 plot run will refuse on MM-03 and MM-04, measured identical on the 1355 scan, over a number
+it is not going to write, and read all 78 again after the confirm. The softscape TOTAL row is
+printed by the schedule and read by nothing, so a species row the reader drops with a bare
+continue is invisible, which is how 31 trees reached a workbook where the model held 39.
+
+Three breaks, each restored byte for byte with md5 and the suite rerun green at 942. The shrubs
+and lawn swap and the read back echo stayed green as they did at 904, so findings 10 and 11
+stand re-proved. Printing CELLS WRITTEN off the plan rather than off what landed stayed green
+too, because no test builds a run that wrote. All four hooks fired and blocked when probed,
+with one probe recorded as made wrongly. The two records of one fact tally is twenty one
+instances, eight fixed, twelve standing, one held open on purpose. **942 tests at `82d95f4`,
+459 KPI, and nothing was changed.**
+
+Before that, the forty first pass, three things off the 0928 run, the first twenty plot run this
+tool has done. Pull request 53 is merged into main as `b83e3d6`, 942 tests on the runner against
+its merged head and 942 locally, 0 failed and 0 skipped on each, 927 before and 15 added.
+
+**The subtotal rule was wrong and was measured from the one plot that is the special case.** A
+group prints one subtotal per phase, then the group total, and the LAST row is the value. DM-11
+groups each hold one phase, so each prints two equal rows, which read as one subtotal printed
+twice. Taking the first took one phase and called it the group: 30 where the group is 84, 13
+where it is 241, 96 where it is 165, 361 where it is 820. The 0928 run refused rather than
+writing, so none of the four reached a workbook. The check now is that the last row equals the
+rows above it added, in area and in item count. Corrected in `kpi-rules.md`, added to
+`CLAUDE.md` as a project fact, and the old log entry corrected in place with the wrong claim
+left standing above it. `CLAUDE.md` never carried the wrong claim, checked by grep.
+
+**The run is timed.** The whole press, the model read apart from it, and each plot's own read,
+all in the checklist report. A run nothing timed says NOT TIMED rather than printing nought. What
+the slow part is stays UNKNOWN as a duration, because no Revit ran here, and is countable as
+work: every plot walks all 1385 sheets with a full sort, all 951 schedules reading each one's
+definition and filters, and all 279 filled regions. Gathering each once before the plot loop
+would turn 19,020 schedule definition reads into 951 over 20 plots and 74,178 into 951 over the
+78 street plots. **Nothing was changed. Measure first, then decide.**
+
+**The refusal printed twice**, in red above the button and again in full in the status line. The
+status line counts the reasons and points at the red block now. The patch's own refusal is still
+said in full there, because nothing else on the pane carries it.
+
+All three were watched red before being trusted, five, two and one test. Two tests that encoded
+the replaced rules were rewritten rather than deleted. **Nothing in this round has been observed
+in Revit.**
+
+**Open for Bader**: what the component and the reference cells are for on a checklist covering a
+whole template, where 20 mosque plots hold two component values and 20 references and both cells
+correctly come out empty.
+
+Before that, the fortieth pass, two guards off the audit and nothing else. Pull request 52 is
+merged into main as `1430f22`, 927 tests on the runner against its merged head and 927 locally,
+0 failed and 0 skipped on each, 904 before and 23 added.
+
+**Audit findings 1 and 8 are fixed and the other 27 in steps/audit-kpi.md are untouched**, not
+renumbered, not reordered, not annotated.
+
+**Nothing may delete a template.** Two guards on one comparison, `FilePaths.Compare`, one in
+`KpiRequestHandler.Patched` before the delete and one in `WorkbookPatcher.Patch` before it opens
+anything, both refusing with the one sentence in `CreateWords.WouldOverwriteTheTemplate`. Three
+answers rather than two, so a path that cannot be resolved refuses the same way an equal one
+does. The comparison is textual and its limit is written down: a link or a substituted drive
+still reaches one file under two names. When the output folder and the template folder are one,
+the pane says so before Create is pressed.
+
+**A refused run says why.** `WhyNothingWasWritten` is never empty. Accounting first, then the
+patch's own refusal, then a line saying nobody recorded a reason and that it is a bug. The test
+is that no run with `Written` false can produce an empty status line.
+
+Both guards were watched red before being trusted, three tests each, restored byte for byte.
+**Nothing in this round has been observed in Revit**, and the Revit side guard is reached by no
+test at all.
+
+Before that, the thirty ninth pass, an audit of the KPI tool alone. It built nothing and
+fixed nothing.
+
+Twenty nine findings are in steps/audit-kpi.md, ranked by cost: two BLOCKS, six WRONG, thirteen
+COSTLY, eight TIDY. The two BLOCKS: nothing stops the browsed output path from being the
+template path, and the delete that clears the way for the copy would destroy the client's
+template. The other is that the three schedule readers still fall back to a cell position when
+the heading row names no column, which is the rule CLAUDE.md states and the fault it names three
+rounds running.
+The largest of the WRONG is that `Preselect` in the KPI pane can never run past its own guard,
+so the component table, the prefix cross check and the line saying which route chose the
+template are all unreachable in the shipped pane. Three deliberate breaks: the read back and the
+binding of a value to its cell both left the suite green at 904, and the species group merge went
+red, so that rule alone is covered. All three hooks fired and blocked when probed. The audit ran
+at `92dd36c`, where the suite reads 904, 429 of them KPI. `steps/ai-max-state.md` is in the
+commit only because the commit hook requires it in every commit, which the audit's
+touch-nothing-else rule had to give way to.
+
+Before that, the thirty seventh pass, four things off the first real run. Pull request 46 is
+merged into main as `6f2e521`, 904 tests on the runner against its merged head and 904 locally,
+0 failed and 0 skipped on each.
+
+**Excel showed zeros where the numbers were right.** Stale cached results in the output, and
+`fullCalcOnLoad` alone was never enough. calcId set to 0, the cached `<v>` dropped from every
+formula cell, `xl/calcChain.xml` removed, and `CacheCheck` reads all four facts back off the
+output the way the written cells already are. 37 parts in and 36 out, and the report says which
+part went and why.
+
+**Unmatched species go into the workbook**, which reverses last round's rule. Name in column D,
+count in column B, nothing else, into the empty rows the sheet's own total sums. The empty rows
+come from the file, never from the map: MOSQUES stops at row 83 and B93 sums B4 to B92.
+
+**The plot prefix is a second route to the template and does not decide.** PRX_Component decides,
+the prefix cross checks, and where they disagree neither wins. What it is really for is grouping,
+one button per template beside Select all and Clear. It is the only thing that can place EP-05,
+EP-11, EP-12 and EP-13, which are on a schedule and on no sheet.
+
+**The output folder is browsed for.** Writing beside the model meant a detached model could not
+be used at all. Create no longer asks whether the model has been saved and the model's folder
+came off `OpenModel` with that question.
+
+**Two things to raise**: three of the seven asked for were already delivered in pull request 44
+and were not done again, and the ask says eight prefixes where its own table lists ten. Ten are
+built and tested.
+
+**Open for the team**: the client's species lists are short of trees this project plants, and a
+species written into an empty row carries no family, no genus and no native flag, so the KPIs
+that need those still cannot see it.
+
+Before that, the thirty sixth pass, the first real workbook. Pull request 44 is merged into main as
+`116afdb`, 867 tests on the runner against its merged head and 867 locally, 0 failed and 0
+skipped on each.
+
+**The first workbook is written and correct.** DM-12 on MOSQUES, 37 parts in and 37 out, zero
+recalculation errors, and the client's formulas gave 28.1 percent canopy against a 13 percent
+target. Two things it showed: the three typed boxes reached nothing, because `KpiCreateAsk` did
+not carry them and `KpiCreatePlan.Of` defaulted them to null, and the report claimed every number
+came off a schedule row when the area comes off a filled region parameter. Both fixed, the three
+are required arguments now, and the region row prints raw, converted and printed side by side.
+
+**One open question for the team**: the client's MOSQUES tree list holds 80 species and none
+matches three the model holds, so the workbook reads 31 trees where the model holds 39. The tool
+is right and the list is short. Nothing may ever place an unmatched species by guessing.
+
+Before that, the thirty fifth pass, two more off the KPI pane. Pull request 43 is merged into main as
+`61ea270`, 857 tests on the runner against its merged head and 857 locally, 0 failed and 0
+skipped on each.
+
+The reference sample showed the first plot in the model rather than the first ticked one. And
+Create stayed grey after the model was saved, which had never worked: the folder was a copy taken
+once, the title was a second copy on a different schedule, and the pane's own request for the
+model was being thrown away by a one slot queue. **A PANE HOLDS NO COPY OF ANYTHING IT CAN ASK
+FOR** is the rule that came out of it, and it is in `CLAUDE.md`. Create is greyed out on what the
+pane owns and the model state is decided on the Revit thread when it is pressed. The tests are
+over the decision and not over Revit.
+
+Before that, the thirty fourth pass, five faults off the first real run of the KPI pane. Pull
+request 42 is merged into main as `36dc0f8`, 849 tests on the runner against its merged head and
+849 locally, 0 failed and 0 skipped on each.
+
+Every one of the five is about what reaches the screen rather than what the code computes.
+Create was handed the model's folder and called it the model, so a detached model read as no
+model open. WPF ate the first underscore of every parameter name on a button, so the pane
+offered five names no model holds. The pane described itself reading PRX_COMPONENT off the title
+block, which is the workbook's note rather than anything the tool does. Reference and Location
+preselected by position. Prepared by was cut to Prepared b. A sixth was reported, all 155 plots
+ticked by default, and the code does not do that: the state is pinned by three tests and the
+report is unexplained rather than closed.
+
+Before that, the thirty third pass, the component to template mapping. Pull request 41 is merged
+into main as `a0d3d3b`, 823 tests on the runner against its merged head and 823 locally, 0 failed
+and 0 skipped on each.
+
+The question open since the 1355 run is answered. `ComponentTemplates` is a table of the eleven
+values the 1548 scan measured, many to one, and the word matching it replaces is gone. The two
+park values break the park tie so each preselects its own template, the plot prefix is read
+nowhere, and a value the table does not hold preselects nothing and now says so on the pane. The
+road width inside a street value is recorded in `steps/log-kpi.md` and nothing reads it.
+
+Before that, pull request 40 is merged into main as `5a5ded0`, 804 tests on the runner
+against its merged head and 804 locally, 0 failed and 0 skipped on each. The rule behind the
+last three rounds is written into `CLAUDE.md`: never read a
+schedule value by cell position, ask the heading row which column it is, and a reader that
+cannot find its column says so rather than falling back to a position. Both rules files point at
+it. No code change, so the second half of it is open: four readers still fall back to a position
+and `steps/log-kpi.md` names them.
+
+Before that, the thirty second pass, the group counter, the switch and the component values.
+Pull request 39 is merged into main as `973c817`, 804 tests on the runner against its merged
+head and 804 locally, 0 failed and 0 skipped on each.
+
+The group counter counted what sat under a phase off the first cell, which is the image column,
+and an existing species prints with no photo, so DM-12 Existing came back as 0 named rows of 6
+while the same file printed its five species. Both readers now read the botanical column the
+heading row names. The shrubs reader held the same fault unseen. Every place in Core that reads
+a printed row is listed in `steps/log-kpi.md`, the ones already right included.
+
+A near miss whose values all read Yes or No is a switch and is left out of the section 9 answer
+and kept in section 3. And section 3 now prints every distinct value of PRX_Component with its
+sheets and its plots, because the five measured values are not template names and **which
+template each one means is open**.
+
+Before that, the thirty first pass, the shrubs and lawn shape measured rather than guessed.
+Pull request 38 is merged into main as `82dd51d`, 789 tests on the runner against its merged
+head and 789 locally, 0 failed and 0 skipped on each.
+
+The team supplied the real rows. The group heading sits on its own row with a phase row under
+it, and **the subtotal prints twice**, so adding a group's subtotal rows gives double. One is
+taken and two that disagree refuse the write. The area, the count and the botanical name come
+off the columns the heading row names rather than off assumed positions, because the schedules
+are eleven columns wide. An area carries its unit and can be nought. The shape is now in
+`kpi-rules.md`, sourced to the 1355 scan report, which is not in this repository.
+
+Before that, the thirtieth pass, the plot picker, several plots at once, and the Create button.
+Pull request 37 is merged into main as `ce825b1`, 781 tests on the runner against its merged
+head and 781 locally, 0 failed and 0 skipped on each.
+
+The button the last four rounds deliberately did not add. The pane gains a plot picker offering
+one plot, several or all of them, the three choices the model cannot make, three typed boxes,
+and Create, which copies the chosen template, patches it and writes a report beside the model.
+It creates nothing in the model and never writes to the template.
+
+**Which plots belong to one checklist is not written down anywhere and nothing derives it.**
+The user ticks them and the tool adds up exactly what was ticked. Adding numbers the schedules
+printed is allowed and recomputing one off elements is not. Every plot's own number is printed
+beside every total and a total that does not equal its parts refuses the write, as do two plots
+reporting an identical area and one plot whose two regions both hold one. Species merge on the
+group AND the name. Matching is plain, so UNKNOWN, the slash and the apostrophe all come back
+unmatched and named rather than forced onto a row.
+
+Nothing in this round has been through Revit. The log lists every unobserved thing item by item.
+
+Before that, the twenty ninth pass, two report faults from the 1355 scan and the facts it
+measured. Pull request 36 is merged into main as `01d9886`, 722 tests on the runner against its
+merged head and 722 locally, 0 failed and 0 skipped on each.
+
+Both faults were the report answering a question from the wrong place while the right answer sat
+a screen above it in the same file. Section 9 read NOT FOUND for PRX_COMPONENT while section 3
+printed PRX_Component with 1384 values, so a near miss holding values is now named and counts as
+the answer. Question 8 reported the elements by phase created, which are the link instances the
+softscape schedule lists rather than the plants, so it is answered from the printed group rows
+instead, by `ScheduleGroups` in Core, naming the plot that showed it. Six measured facts are in
+`CLAUDE.md`, which was held at 200 lines by compressing the Drawing Sheet prose `core-rules.md`
+already holds. Two new open questions, both about matching a species by name, are in
+`steps/log-kpi.md`, and four of the five older ones are settled.
+
+Before that, the twenty eighth pass, recognition fixed, the scan gaps, one check against the
+real workbooks, and the review of that work folded back in.
+
+Pull request 35 is merged into main as `1b78c91`, 711 tests on the runner against its merged
+head and 711 locally, 0 failed and 0 skipped on each.
+
+A five lens review of the round below raised 58 findings, 24 were put to a reader whose job was
+to refute them, 14 survived and those are six distinct faults, all fixed. A plot's regions were
+counted off the area values so a region with no area vanished from its plot. A filled region
+type carrying no plot had no row, so the answer none could not print. Absent and blank both
+printed as an empty plot with nothing saying which. The near miss block printed once per
+missing name and listed a wanted name as a near miss of itself. One schedule was recorded as
+both passed over and read in full. And `kpi-rules.md` held both the old one per name rule and
+the new one. The log entry's own claim of eight red tests was wrong as well, reproduced at 14,
+and is corrected. 711 tests locally, 0 failed, with four breaks watched red.
+
+The KPI scanner ran on the real model for the first time. Recognition was reading 0 of 7,
+because the map held the main sheet names with the angle brackets stripped and the brackets are
+part of the name. Fixed for all seven with a test that asserts the shape. A one-off check
+against two real EXISTING PARKS workbooks supplied in a chat session, unrepeatable and covered
+by no gate, agreed with the map on all six cells, proved the patcher keeps 37 of 37 parts while
+an object model loses 21, and confirmed the tree rows. Four scan gaps closed: a near miss is
+now shown as well as named, the four plot parameters print side by side, every filled region
+prints its plot, and three plots per schedule name are read rather than one. The measured facts
+and the five open questions are in `.claude/rules/kpi-rules.md`, because CLAUDE.md is at its
+200 line ceiling. 710 tests locally, 0 failed, up from 657, with three breaks watched red.
+
+Before that, the twenty seventh pass, the template picker and the workbook writer. Pull
+request 33 merged into main as `c88083f` with 696 tests on the runner, 0 failed and 0
+skipped, 657 locally before the merge that brought the divided sheets rounds in and 696
+after it.
+
+The workbook half of the KPI tool. `KpiTemplates` in Core carries the map, one entry per
+template, measured off the annotated seven, with the tree row ranges on the entry because a
+constant wrote quantities into rows no total sums. `RecognisedWorkbook` settles five templates
+on the main sheet name, breaks the park tie on the file name and puts an unsettled pick to the
+user. `WorkbookPatcher` copies the zip and patches only the cells that get a value, through
+the platform's own zip and XML types with no third party assembly, after a live licence search
+found EPPlus moved to Polyform Noncommercial and the object model libraries lose parts. It
+sets recalculate on open and reads every written cell back off the output. The pane gains the
+template block below the unchanged scan block, with no fill button, and `KpiFillValues` is the
+empty seam the next round fills. 657 tests locally, 0 failed, up from 580, three breaks
+watched red. Nothing reads the model and nothing fills.
+
+Before that, the twenty fourth pass, two numbers the cut-off brief left to a guess, corrected.
+
+The KPI row cap goes from 30 to 200, because the workbook's softscape lists run 80 to 89
+species and a cap of 30 lost about 55 of them from the section this round exists to fill. TREE
+joins the workbook words beside SOFTSCAPE, SHRUB, LAWN and HARDSCAPE. Both numbers were choices
+made without a rule when the brief arrived cut off, both were logged as open questions, and
+this is the team's correction. Pull request 31 merged as `b9559ea` with 580 tests on the runner, 0 failed
+and 0 skipped, matching the local run. Nothing else changed.
+
+Before that, the report for the KPI scanner round.
+
+Pull request 28 merged into main as `f40b40a`, a squash of four commits, and the gate executed
+579 tests against it on the runner, 0 failed and 0 skipped. It merged the current main first,
+because pull requests 29 and 30 landed while it was open, touching only Drawing Sheet files.
+
+Before that, the twenty-third pass, the KPI scanner, first round of the second tool. Locally,
+after the last file was written, the build came back with 0 warnings and 0 errors and the tests
+with 541 passed and 0 failed, up from 398, then 579 with the current main merged in.
+
+**The KPI tool** will one day fill the client's GRP KPI Checklist workbook from a model and will
+never create anything in it. This round is the scanner: a second ribbon panel, KPI, with one
+button, KPI Checklist, opening a pane of three things, the model name with when it was last
+read, KPI Scan and a status line. KPI Scan reads the whole document through its own external
+event and handler into a `KpiScan` of plain values, and `KpiReport` in Core writes nine numbered
+sections, one per question the workbook raises, every heading carrying its own count, with a
+READS THAT DID NOT HAPPEN block above section 1. `KpiQuestions` is section 9, one line per
+question saying FOUND or NOT FOUND and where to look.
+
+The brief arrived cut off partway through section 4 of the report. Sections 1 to 4 are as
+specified and 5 to 9 were designed here from questions 6 to 9. The choices made without a rule
+are numbered in `steps/log-kpi.md`. Nothing in this round has been through Revit and no KPI file has
+ever been written. A five lens review raised 76 findings, 28 were sent to a skeptic each, 23
+were confirmed, 21 distinct, and all 21 are fixed in the third commit with the two report fixes
+queued before it. The 5 refuted and the 48 unverified are listed in the log entry, one line
+each, and stay out of the code. `RcrcGreen.Core` outside `Kpi/`, `PanelTheme` and `ReportFile`
+are unchanged.

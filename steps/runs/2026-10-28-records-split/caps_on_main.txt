@@ -1,0 +1,10 @@
+RecordCapsTests, the final version of the file, run in a worktree at 4b244b3 on 2026-10-28,
+before the split, filtered to RecordCapsTests:
+
+  Failed RcrcGreen.Core.Tests.Records.RecordCapsTests.EveryFileInTheRulesFolderIsUnderTenKilobytesAndTwoHundredLines [163 ms]
+   Over the rules cap: core-rules.md is 37971 bytes and 593 lines, kpi-rules.md is 269551 bytes and 4185 lines, revit-commands.md is 42270 bytes and 652 lines
+  Failed RcrcGreen.Core.Tests.Records.RecordCapsTests.EveryFileInDocsAndStepsOutsideHistoryIsAtMostOneHundredKilobytes [284 ms]
+   Over the 100 KB cap: steps/ai-max-state-kpi.md is 208136 bytes, steps/log-drawing.md is 270447 bytes, steps/log-kpi.md is 623058 bytes
+  Failed RcrcGreen.Core.Tests.Records.RecordCapsTests.ClaudeMdIsAtMostTenKilobytes [11 ms]
+   CLAUDE.md is 28418 bytes, over the cap of 10000.
+Failed!  - Failed:     3, Passed:     8, Skipped:     0, Total:    11, Duration: 487 ms - RcrcGreen.Core.Tests.dll (net10.0)

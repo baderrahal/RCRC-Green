@@ -16,6 +16,15 @@ Proved by: the suite and the hook tests in the gate, and `steps/03_your_steps.md
 DONE 2026-10-28, pull request 170, merged as `8a2382f`. The gate read 2368 tests passed and 28
 hook cases. The Revit pass in `steps/03_your_steps.md` is still to run.
 
+## F1b Q1 to Q5 answered, and the records inside the version 4 caps
+
+What: Bader's answers in, Q4's line in step 2, the rules, CLAUDE.md and the three steps files
+over their caps split byte for byte, and the caps held by a test in the gate.
+Why: a round asked for between F1 and F2, because every session paid for 364 KB of rules at start.
+Proved by: `split_proof.txt` and `RecordCapsTests`, failing on main's records and passing here.
+
+DONE 2026-10-28, this round's pull request, the entry at the top of `steps/log-kpi.md`.
+
 ## F2 The team kit
 
 What: the install kit for the production team, with the build stamp in the pane header.
