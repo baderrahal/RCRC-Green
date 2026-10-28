@@ -19,8 +19,9 @@ in `C:\Users\bader\Documents\RCRC-Green-Team-Kit`, built from main after this ro
 5. On the Welcome page, press Next.
    Look for: `This installs RCRC Green KPI` and the version, `for you alone`. Screenshot.
 6. On the Ready to Install page, press Install.
-   Look for: `The full RCRC Green install, with all three tools, is here.` and `Setup replaces it
-   with KPI only.` Screenshot before the press.
+   Look for: `Installed now:` and `an RCRC Green build with no VERSION.txt`, then `The full RCRC
+   Green install, with all three tools, is here.` and `Setup replaces it with KPI only.`
+   Screenshot before the press.
 7. On the last page, press Finish.
    Look for: `Start Revit 2024. When it asks about RCRC Green, choose Always Load.` Screenshot.
 

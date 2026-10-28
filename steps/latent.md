@@ -518,7 +518,8 @@ Found: Setup.exe round, breaker and reviewer
 
 Where: `RCRC Green KPI Setup.iss`, UninstallFilesDir
 Input: somebody clearing %APPDATA%\RCRC Green to reset their own components.csv
-Why latent: nothing tells anybody to clear it, and Uninstall then fails loudly
+Why latent: nothing tells anybody to clear it, and Uninstall then fails loudly. install.ps1 and
+uninstall.ps1 then refuse while the entry stays, with advice that cannot work, reviewer pass 2
 Found: Setup.exe round, breaker
 
 ## L73 The build can find an older ISCC, or none under a missing Program Files (x86)
@@ -555,3 +556,52 @@ Where: `RCRC Green KPI Setup.iss`, WriteWhereMissing
 Input: a pointer file saved as UTF-8 with a BOM and nothing else
 Why latent: nothing writes such a file
 Found: Setup.exe round, breaker
+
+## L78 The Setup's AppId is written out beside the .iss
+
+Where: `install/install.ps1`, `install/uninstall.ps1` and `prove-setup.ps1`, the HKCU entry path
+Input: an AppId changed in the .iss, which would turn both refusals off
+Why latent: the .iss holds one id for every version, and changing it breaks upgrade in place
+Found: Setup.exe round, reviewer pass 2
+
+## L79 The four zip-only names repeat team-install.ps1's list
+
+Where: `install/build-team-kit.ps1`, $zipOnly in the drift check
+Input: a fifth zip-only file added to install\team
+Why latent: none is planned, and the build then refuses, naming the file
+Found: Setup.exe round, reviewer pass 2
+
+## L80 The drift check compares file names, not where each goes
+
+Where: `install/build-team-kit.ps1`, the Source names against the kit
+Input: a Source line with the right name and the wrong DestDir, features.txt beside the manifest
+Why latent: every DestDir in the .iss is right, and the proof compares each installed file
+Found: Setup.exe round, breaker pass 2
+
+## L81 Installed now reads nothing over a VERSION.txt with an empty first line
+
+Where: `RCRC Green KPI Setup.iss`, InstalledNow
+Input: a hand edited VERSION.txt
+Why latent: the kit writes the version on line 1 and install.ps1 deletes the file
+Found: Setup.exe round, breaker pass 2
+
+## L82 A Source line written another way stops the build
+
+Where: `install/build-team-kit.ps1`, the Source pattern
+Input: a leading space, no space after Source:, a subfolder or a wildcard
+Why latent: every line is in the matched form, and the build refuses loudly
+Found: Setup.exe round, breaker pass 2
+
+## L83 The full install note shows on the first Setup only
+
+Where: `RCRC Green KPI Setup.iss`, FullInstallIsHere after a Setup wrote features.txt
+Input: the Setup run twice over what was a full install
+Why latent: only Bader has a full install and his pass runs the Setup once
+Found: Setup.exe round, breaker pass 2
+
+## L84 A throwaway profile run of install.ps1 is refused while the Setup is on the PC
+
+Where: `install/install.ps1` and `uninstall.ps1`, the guard reads the real HKCU
+Input: a session proving install.ps1 in a throwaway profile between Bader's Part 1 and step 20
+Why latent: it refuses loudly and names the Apps uninstall, and step 20 removes the entry
+Found: Setup.exe round, breaker pass 2
