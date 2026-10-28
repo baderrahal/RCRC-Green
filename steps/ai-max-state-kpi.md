@@ -1,7 +1,8 @@
 # ai-max state, KPI
 
-Phase: 9, ship. The pane redesign for company wide use, F1 in `steps/01_next.md`, on branch
-`kpi-pane-redesign`, under AI MAX version 4. Its entry is the top of `steps/log-kpi.md`. Build
+Phase: 9, ship, done. The pane redesign for company wide use, F1 in `steps/01_next.md`, merged
+to main as `8a2382f`, pull request 170, the squash message back off main byte for byte, the gate
+reading 2368 passed and 28 hook cases. Under AI MAX version 4. Its entry is the top of `steps/log-kpi.md`. Build
 0 warnings, 2368 tests passed, 28 hook cases. Nothing in it has been seen in Revit.
 
 Phase: 9, ship. Ninety eighth pass, the KPI pane laid out in four steps with a results panel.
