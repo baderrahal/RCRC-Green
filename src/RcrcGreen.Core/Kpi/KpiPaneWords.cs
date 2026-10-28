@@ -154,6 +154,77 @@ namespace RcrcGreen.Core.Kpi
             return Count(howMany, "template", "templates") + " found";
         }
 
+        // A template the tool did not know by name, and a component value no file places. Each
+        // box line stays under ten words, the rest is in its tooltip.
+
+        public const string UnknownTemplateLayout = "Unknown template layout";
+
+        public const string Use = "Use";
+
+        public const string Skip = "Skip";
+
+        public const string UseSuggestion = "Use suggestion";
+
+        public const string Choose = "Choose";
+
+        public const string Add = "Add";
+
+        public static string NewTemplateSameAs(KpiTemplate sameAs)
+        {
+            return "New template, same layout as " + (sameAs == null ? string.Empty : sameAs.Name);
+        }
+
+        public static string UnknownValue(string value)
+        {
+            return "Unknown value " + value;
+        }
+
+        public static string PlotsCarryIt(int howMany)
+        {
+            return Count(howMany, "plot carries it", "plots carry it");
+        }
+
+        public static string Suggested(KpiTemplate template)
+        {
+            return template == null ? "No suggestion. Choose a template." : "Suggested: " + AssetTypeNames.Display(template);
+        }
+
+        public static string AddsTo(bool shared)
+        {
+            return shared ? "Adds a line to the shared components.csv" : "Adds a line to your own components.csv";
+        }
+
+        /// <summary>The tooltip on an unknown value's box, every sentence the box leaves out.</summary>
+        public static string UnknownValueSays(UnknownComponent unknown, string sharedPath, string personalPath)
+        {
+            return unknown.Value + " is in no components.csv, so its plots go into no workbook. "
+                + "Nothing places a value by a guess.\n\n"
+                + (unknown.Suggested == null
+                    ? "No known template shares a word with it, so choose one."
+                    : "Suggested template " + unknown.Suggested.Name + ", the known one sharing the most words with it.")
+                + " Suggested folder " + unknown.Folder + ", the value itself.\n\n"
+                + "Use suggestion or Choose writes one line to "
+                + (sharedPath.Length > 0 ? sharedPath + ", or to " + personalPath + " if that cannot be written." : personalPath + ".")
+                + " Skip leaves its plots refused until Revit closes.";
+        }
+
+        public static string NewTemplateSays(RecognisedWorkbook workbook)
+        {
+            return workbook.FileName + "\n\n" + workbook.Reason
+                + "\n\nUse holds until Revit closes. A components.csv row naming " + (workbook.Proposed == null ? "it" : workbook.Proposed.Name)
+                + " uses it on every start. Skip leaves the file unused.";
+        }
+
+        public static string LineWritten(string path)
+        {
+            return "Added to " + path;
+        }
+
+        public static string LineNotWritten(string why)
+        {
+            return "Not added. " + why;
+        }
+
         public static string RowsHeld(int howMany)
         {
             return Count(howMany, "row", "rows");

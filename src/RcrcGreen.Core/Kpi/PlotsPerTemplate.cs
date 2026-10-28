@@ -225,9 +225,13 @@ namespace RcrcGreen.Core.Kpi
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
 
+            // The known templates in their order, then any template made for a new file in the
+            // order it was ticked, so a new template is split like any other.
+            List<KpiTemplate> ticks = (tickedTemplates ?? Enumerable.Empty<KpiTemplate>()).Where(one => one != null).ToList();
             List<KpiTemplate> wanted = KpiTemplates.All
-                .Where(template => (tickedTemplates ?? Enumerable.Empty<KpiTemplate>())
-                    .Any(one => ReferenceEquals(one, template)))
+                .Where(template => ticks.Any(one => ReferenceEquals(one, template)))
+                .Concat(ticks.Where(one => !KpiTemplates.All.Any(known => ReferenceEquals(known, one))))
+                .Distinct()
                 .ToList();
 
             var answers = plots.Select(one => For(one, componentOf(one))).ToList();

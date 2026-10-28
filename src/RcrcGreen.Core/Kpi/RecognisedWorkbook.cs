@@ -11,8 +11,12 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class RecognisedWorkbook
     {
-        private RecognisedWorkbook(string fileName, KpiTemplate template, IReadOnlyList<KpiTemplate> candidates, string reason, FilledCell decidedBy = null, KpiTemplate filledAs = null)
+        private RecognisedWorkbook(string fileName, KpiTemplate template, IReadOnlyList<KpiTemplate> candidates, string reason, FilledCell decidedBy = null, KpiTemplate filledAs = null,
+            TemplateLayout layout = null, KpiTemplate proposed = null, bool unknownLayout = false)
         {
+            Layout = layout ?? TemplateLayout.Nothing;
+            Proposed = proposed;
+            UnknownLayout = unknownLayout;
             FileName = fileName;
             Template = template;
             Candidates = candidates ?? new List<KpiTemplate>();
@@ -39,6 +43,75 @@ namespace RcrcGreen.Core.Kpi
         public bool IsFilled
         {
             get { return DecidedBy != null; }
+        }
+
+        /// <summary>
+        /// The file's sheet names and first sheet labels, read in the peek, for
+        /// <see cref="NewTemplates"/> to compare. Nothing where the peek did not carry it.
+        /// </summary>
+        public TemplateLayout Layout { get; }
+
+        /// <summary>
+        /// A template made for this file, whose name the tool does not know and whose layout is
+        /// a known template's, waiting on Use or Skip. Null for anything else.
+        /// </summary>
+        public KpiTemplate Proposed { get; }
+
+        public bool IsNewTemplate
+        {
+            get { return Proposed != null && Template == null; }
+        }
+
+        /// <summary>
+        /// A file whose name the tool does not know and whose layout matches no known template
+        /// in the folder. It is not used.
+        /// </summary>
+        public bool UnknownLayout { get; }
+
+        /// <summary>The same answer carrying the layout the peek read.</summary>
+        public RecognisedWorkbook Laid(TemplateLayout layout)
+        {
+            return new RecognisedWorkbook(FileName, Template, Candidates, Reason, DecidedBy, FilledAs, layout, Proposed, UnknownLayout);
+        }
+
+        /// <summary>
+        /// A file whose name the tool does not know, with the layout of <paramref name="sameAs"/>,
+        /// and the template it would be filled as once someone presses Use.
+        /// </summary>
+        public static RecognisedWorkbook NewTemplate(string fileName, KpiTemplate sameAs, KpiTemplate proposed, TemplateLayout layout)
+        {
+            if (fileName == null) throw new ArgumentNullException("fileName");
+            if (sameAs == null) throw new ArgumentNullException("sameAs");
+            if (proposed == null) throw new ArgumentNullException("proposed");
+
+            return new RecognisedWorkbook(fileName, null, null,
+                KpiPaneWords.NewTemplateSameAs(sameAs) + ". It would be filled as " + proposed.Name
+                    + " with the cell map of " + sameAs.Name + ". Press Use in Setup to use it.",
+                null, null, layout, proposed);
+        }
+
+        /// <summary>
+        /// A file the tool used to offer, by its first sheet, whose name it does not know and
+        /// whose layout matches nothing known in the folder, or a file no template recognises.
+        /// </summary>
+        public static RecognisedWorkbook NotUsed(RecognisedWorkbook workbook, string why)
+        {
+            if (workbook == null) throw new ArgumentNullException("workbook");
+
+            return new RecognisedWorkbook(workbook.FileName, null, null,
+                KpiPaneWords.UnknownTemplateLayout + ". " + why, null, null, workbook.Layout, null, true);
+        }
+
+        /// <summary>
+        /// The same file matched to a template made for it, once Use was pressed or a
+        /// components.csv row named that template.
+        /// </summary>
+        public static RecognisedWorkbook Used(RecognisedWorkbook workbook, KpiTemplate made)
+        {
+            if (workbook == null) throw new ArgumentNullException("workbook");
+            if (made == null) throw new ArgumentNullException("made");
+
+            return new RecognisedWorkbook(workbook.FileName, made, null, null, null, null, workbook.Layout);
         }
 
         public string FileName { get; }
@@ -80,6 +153,7 @@ namespace RcrcGreen.Core.Kpi
                         + ". Pick one, nothing is guessed.";
                 }
                 if (IsFilled) return "filled, not offered. " + Reason;
+                if (IsNewTemplate || UnknownLayout) return Reason;
                 return "not offered. " + Reason;
             }
         }

@@ -1,5 +1,7 @@
 # ai-max state, KPI
 
+Phase: 8, check, part (b). The layout rule and the two prompts, in progress.
+
 Phase: 9, ship, part (a) of two. Four 60 per cent templates, four new PRX_Component values and
 one components.csv in place of the two tables in code. Part (b), the layout rule and the two
 prompts in the pane, is the pull request after it. Its entry is the top of `steps/log-kpi.md`.

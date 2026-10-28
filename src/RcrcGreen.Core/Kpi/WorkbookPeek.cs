@@ -18,11 +18,28 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class PeekedWorkbook
     {
-        private PeekedWorkbook(IReadOnlyList<string> sheetNames, string refusal, IReadOnlyDictionary<string, string> firstSheetCells)
+        private PeekedWorkbook(IReadOnlyList<string> sheetNames, string refusal, IReadOnlyDictionary<string, string> firstSheetCells,
+            IReadOnlyDictionary<string, string> firstSheetLabels = null)
         {
             SheetNames = sheetNames ?? new List<string>();
             Refusal = refusal ?? string.Empty;
             FirstSheetCells = firstSheetCells ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            FirstSheetLabels = firstSheetLabels ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Every cell of the first sheet holding typed text and no formula, by address, which
+        /// is what <see cref="TemplateLayout"/> compares. Read in the same open as the rest.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> FirstSheetLabels { get; }
+
+        /// <summary>
+        /// The layout this file has, for comparing a template whose name the tool does not
+        /// know with the ones it does.
+        /// </summary>
+        public TemplateLayout Layout
+        {
+            get { return WasRead ? TemplateLayout.Of(SheetNames, FirstSheetLabels) : TemplateLayout.Nothing; }
         }
 
         public IReadOnlyList<string> SheetNames { get; }
@@ -72,7 +89,7 @@ namespace RcrcGreen.Core.Kpi
                         .Select(sheet => (string)sheet.Attribute("name") ?? string.Empty)
                         .ToList();
 
-                    return new PeekedWorkbook(names, null, CellsOf(zip, workbookPart, names));
+                    return new PeekedWorkbook(names, null, CellsOf(zip, workbookPart, names), LabelsOf(zip, workbookPart, names));
                 }
             }
             catch (InvalidDataException)
@@ -98,6 +115,18 @@ namespace RcrcGreen.Core.Kpi
         /// the same open as the names, off the sheet part the workbook's relationships point
         /// at, and in one pass over the shared strings rather than one per cell.
         /// </summary>
+        private static IReadOnlyDictionary<string, string> LabelsOf(ZipArchive zip, string workbookPart, List<string> names)
+        {
+            var held = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (names.Count == 0) return held;
+
+            Dictionary<string, string> parts = WorkbookPackage.SheetParts(zip, workbookPart);
+            string partPath;
+            if (!parts.TryGetValue(names[0], out partPath)) return held;
+
+            return WorkbookPackage.Labels(zip, partPath, WorkbookPackage.SharedStrings(zip));
+        }
+
         private static IReadOnlyDictionary<string, string> CellsOf(ZipArchive zip, string workbookPart, List<string> names)
         {
             var held = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -203,6 +232,31 @@ namespace RcrcGreen.Core.Kpi
 
                 found[where] = TextOf(cell, shared);
                 if (found.Count == wanted.Count) break;
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Every cell of a sheet part that holds typed text, a shared or an inline string with
+        /// no formula behind it, by address.
+        /// </summary>
+        public static IReadOnlyDictionary<string, string> Labels(ZipArchive zip, string partPath, List<string> shared)
+        {
+            var found = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            XDocument part = Read(zip, partPath);
+            if (part == null || part.Root == null) return found;
+
+            foreach (XElement cell in Cells(part))
+            {
+                string where = (string)cell.Attribute("r");
+                string kind = (string)cell.Attribute("t");
+                if (where == null || found.ContainsKey(where)) continue;
+                if (kind != "s" && kind != "inlineStr") continue;
+                if (cell.Elements().Any(child => child.Name.LocalName == "f")) continue;
+
+                found[where] = TextOf(cell, shared);
             }
 
             return found;
