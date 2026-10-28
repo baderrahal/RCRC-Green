@@ -29,4 +29,8 @@ DONE 2026-10-28, this round's pull request, the entry at the top of `steps/log-k
 
 What: the install kit for the production team, with the build stamp in the pane header.
 Why: the next round named in the F1 prompt.
-Proved by: UNKNOWN until the round's prompt is written.
+Proved by: the kit installed, installed again, refused and put back in throwaway profiles, and
+Bader's pass in `steps/03_your_steps.md`.
+
+DONE 2026-10-28, pull requests 173 for the Shared tool list and the KPI pull request after it,
+the entry at the top of `steps/log-kpi.md`. The Revit pass is still to run.

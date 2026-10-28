@@ -178,9 +178,10 @@ Found: KPI team kit, 28 Oct 2026, reviewer and breaker
 ## L24 A failed copy while keeping the old version promises a put back that refuses
 
 Where: `install/team/team-install.ps1`, the keep step and the FAILED line
-Input: a disk error between deleting the old kept folder and writing kept-files.txt
+Input: a disk error between deleting the old kept folder and writing kept-files.txt, or a copy
+that fails on the same zip's second install when nothing was ever kept
 Why latent: it needs the disk to fail in that moment
-Found: KPI team kit, reviewer and breaker
+Found: KPI team kit, reviewer and breaker, and the second case in the reviewer's second pass
 
 ## L25 Group Policy over the launcher's policy bypass
 
@@ -259,3 +260,39 @@ Where: `RcrcGreenApplication.cs`, Journal, and `KpiPanel.cs`, Ask, which ignores
 Input: Revit throwing on a journal comment, or answering a raise with Denied or TimedOut
 Why latent: neither has been seen, and the journal line runs only for an unknown name
 Found: KPI team kit, breaker
+
+## L36 A repeat install is known by the stamp, which holds the build minute
+
+Where: `install/team/team-install.ps1`, StampOf and $again
+Input: two kits of one commit built minutes apart both installed, or Bader's own build of the
+same commit in the same minute as the kit
+Why latent: the team installs the one zip on Teams, and the kit is built from a clean worktree
+Found: KPI team kit, breaker second pass
+
+## L37 A reports folder named by an earlier kit is kept
+
+Where: `install/team/team-install.ps1`, reports-folder.txt left as it is when it names a folder
+Input: a PC that installed a kit from before the OneDrive fix
+Why latent: no kit zip has been shared yet
+Found: KPI team kit, breaker second pass
+
+## L38 An install after a half failed put back keeps the mix
+
+Where: `install/team/team-install.ps1`, put back then install again
+Input: a put back that fails part way, then Install instead of a screenshot
+Why latent: it needs a disk failure during the put back
+Found: KPI team kit, breaker second pass
+
+## L39 A source file under an ignored build or dist folder is not counted as a change
+
+Where: `RcrcGreen.Revit.csproj`, git status against `.gitignore`
+Input: a new .cs file under a folder named build or dist inside src
+Why latent: no such folder exists under src
+Found: KPI team kit, breaker second pass
+
+## L40 A Documents folder on an offline share
+
+Where: `install/team/team-install.ps1`, the reports folder
+Input: Documents redirected to a network share that is offline
+Why latent: the install ends on a clear FAILED line
+Found: KPI team kit, breaker second pass
