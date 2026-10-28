@@ -27,6 +27,11 @@ namespace RcrcGreen.Revit.Kpi
             return Pointer.Read();
         }
 
+        public static string ReadRaw()
+        {
+            return Pointer.ReadRaw();
+        }
+
         public static bool Remember(string folder)
         {
             return Pointer.Remember(folder);

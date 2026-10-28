@@ -334,6 +334,11 @@ def main():
         sys.stderr.write("Usage: commit-scope.py paths|message <command>\n")
         return 2
 
+    # Every caller decodes this as UTF-8. Windows gives a pipe its ANSI code page instead,
+    # where an em dash goes out as a byte the caller reads back as a replacement mark, so
+    # the scan found no dash and let the commit through.
+    sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
+
     action = sys.argv[1]
     call = read_commit_call(sys.argv[2])
 

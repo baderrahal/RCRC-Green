@@ -1,0 +1,106 @@
+# Latent
+
+Findings no real input of this repo reaches. Each is kept here with no fix. When real data later
+reaches one, it moves back to the plan as REAL with a test.
+
+## L1 Nought created and nought failed reads green
+
+Where: `KpiResults` AllCreated, read by the result banner in `KpiPanel.cs`
+Input: a template refused because its split does not add up, which records no plot outcome
+Why latent: every plot resolves to at most one template, so the split cannot double count
+Found: KPI pane redesign, pull request of 28 Oct 2026, breaker
+
+## L2 A plot whose read threw is labelled a schedule check
+
+Where: `FailedReasons.cs`, the fallback that sends every other refusal to ScheduleCheck
+Input: `PlotReading.NotRead`, a plot whose read threw
+Why latent: no measured run has had a plot read throw
+Found: KPI pane redesign, breaker
+
+## L3 Write anyway and the identical area confirm are unreachable
+
+Where: `KpiPanel.cs`, TheAnswerable and TheResult, and `PaneWarnings.SameArea`
+Input: two plots reporting one raw area in one run
+Why latent: each run is one plot since a checklist became one plot, so IdenticalAreas is empty.
+The button now presses Create again where main only set the flag, and no input reaches it
+Found: KPI pane redesign, breaker and reviewer
+
+## L4 Retry failed forgets a region picked by hand
+
+Where: `KpiPanel.cs`, Retry failed through Changed, which clears the chosen regions
+Input: a plot whose two regions both hold an area and neither is the note's type
+Why latent: the client's note settles every measured pair, 98 of 98 on the 14:29 run
+Found: KPI pane redesign, breaker
+
+## L5 Members with no production caller after the redesign
+
+Where: `KpiSteps` NothingHasBeenRead, NoTemplateTicked, NoPlotTicked, `KpiStepState` Cell, Mark,
+DoneMark, `KpiWillWrite.Rows`, `KpiResults.NotReadyRows`, `KpiPaneWords` Waiting, NotScanned,
+Scanning, ReadAt, and `StatusLine.NoModel`, which the handler builds a second way
+Input: none, they are reached by tests only
+Why latent: nothing on screen reads them. Whether each is the only record of a shape is for the
+round that deletes them, under the two reasons a thing gets deleted in kpi-rules.md
+Found: KPI pane redesign, reviewer
+
+## L6 A default kind that reads as a deliberate answer
+
+Where: `KpiCreateRunSet.cs`, `PlotOutcome.WroteNothing(..., NotWrittenKind kind = Unknown)`
+Input: a future call that leaves the kind out
+Why latent: every production call passes a kind today
+Found: KPI pane redesign, reviewer
+
+## L7 A locked template reads as a workbook open in Excel
+
+Where: `WorkbookPatcher.Patch`, the sharing codes 0x80070020 and 0x80070021 on any IOException
+Input: a template file held open by another program while the press copies it
+Why latent: no run has met a locked template, the output workbook is the file people open
+Found: KPI pane redesign, reviewer
+
+## L8 Two older points the review passed by
+
+Where: `KpiRequestHandler.cs` an empty catch reached only when the pane is gone, and
+`KpiProgressWindow.cs` a `Process.GetCurrentProcess()` never disposed
+Input: the pane closed mid press, and every press for the second
+Why latent: both were there before this round and neither changes a number or a file
+Found: KPI pane redesign, reviewer
+
+## L9 The Write anyway box is built in two places
+
+Where: `KpiPanel.cs`, TheAnswerable and TheResult
+Input: none, one view is drawn at a time and the box is unreachable under L3
+Why latent: under L3
+Found: KPI pane redesign, reviewer
+
+## L11 A report write that throws after the workbooks landed
+
+Where: `KpiRequestHandler.cs`, the IOException and UnauthorizedAccess catches around the
+report write, then `Say` in `KpiPanel.cs`, which clears the result as a press refused early
+Input: the reports folder refusing the write after every workbook of a press was written
+Why latent: no run has met a report write that fails. The status line still names the failure.
+Also here: when the write returns no path, `Made` keeps the previous press's report for Show in
+report
+Found: KPI pane redesign, second pass, breaker and reviewer
+
+## L12 Coarse short reasons for a reconciliation refusal
+
+Where: `FailedReasons.cs`, the reconciliation branch
+Input: a plot refused for a region pick and for another reason at once, where the pick wins and
+the second reason shows only after the pick
+Why latent: every measured region pair is settled by the client's note, and L2 covers a read
+that threw
+Found: KPI pane redesign, second pass, breaker
+
+## L13 Two template files settling as one asset type
+
+Where: `KpiPanel.cs`, Settled, and the per asset type result table
+Input: two workbooks in the templates folder both recognised as one template
+Why latent: the team's folder holds one file per template. What the press does with two is
+older than this round
+Found: KPI pane redesign, second pass, breaker, marked not verified
+
+## L10 Browse tooltips held in the pane rather than in Core
+
+Where: `KpiPanel.cs`, the Browse and dialog tooltips carried over from main
+Input: none, they are tooltips and not pane lines
+Why latent: the 10 word rule is for what the pane shows, and these were in the pane before
+Found: KPI pane redesign, reviewer and breaker

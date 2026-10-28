@@ -114,8 +114,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             // telling somebody to press KPI Scan would name a control the pane does not hold.
             Assert.Equal("Not read yet.", KpiPaneWords.NotScanned);
             Assert.Equal(
-                "Create reads the model and writes a workbook and two text files. It creates "
-                + "nothing in the model and never writes to a template.",
+                "Create writes one workbook per plot, with a PDF beside it when a forms folder "
+                + "is set, in a component folder and a UID2 folder it makes where they are missing "
+                + "and never deletes. It writes the checklist report, and the scan report when it "
+                + "reads the model. It creates nothing in the model and never writes to a template.",
                 KpiPaneWords.ReadOnly);
             Assert.Equal("No open document. Open a model.", KpiPaneWords.NoModel);
             Assert.DoesNotContain("KPI Scan", KpiPaneWords.NotScanned + KpiPaneWords.ReadOnly + KpiPaneWords.NoModel);

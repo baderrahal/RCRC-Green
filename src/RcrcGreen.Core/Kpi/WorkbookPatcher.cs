@@ -42,7 +42,8 @@ namespace RcrcGreen.Core.Kpi
             SamePath answer = FilePaths.Compare(sourcePath, outputPath);
             if (answer != SamePath.Different)
             {
-                return PatchOutcome.Refused(CreateWords.WouldOverwriteTheTemplate(outputPath, answer));
+                return PatchOutcome.Refused(
+                    CreateWords.WouldOverwriteTheTemplate(outputPath, answer), PatchRefusal.WouldOverwriteTheTemplate);
             }
 
             try
@@ -162,11 +163,13 @@ namespace RcrcGreen.Core.Kpi
             }
             catch (IOException failed)
             {
-                return PatchOutcome.Refused("The file could not be written. " + failed.Message);
+                return PatchOutcome.Refused(
+                    "The file could not be written. " + failed.Message, PatchRefusals.ForIo(failed.HResult));
             }
             catch (UnauthorizedAccessException failed)
             {
-                return PatchOutcome.Refused("The folder refused the write. " + failed.Message);
+                return PatchOutcome.Refused(
+                    "The folder refused the write. " + failed.Message, PatchRefusal.FolderRefused);
             }
             catch (System.Xml.XmlException failed)
             {

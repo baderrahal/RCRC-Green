@@ -120,7 +120,21 @@ namespace RcrcGreen.Core.Kpi
 
                 return NotReady.ToString(CultureInfo.InvariantCulture)
                     + (NotReady == 1 ? " plot is" : " plots are")
-                    + " not ready to send:";
+                    + " not ready to send.";
+            }
+        }
+
+        /// <summary>
+        /// The result screen's `Ready to send  33 of 154`, the two values apart so the pane
+        /// sets one on the left and one on the right. Empty where no list was read, because
+        /// ready is a question about the team's list.
+        /// </summary>
+        public string ReadyOf
+        {
+            get
+            {
+                if (!ListWasSet || !ListWasRead || Rows.Count == 0) return string.Empty;
+                return KpiPaneWords.OfCount(Ready, Rows.Count);
             }
         }
 
@@ -134,6 +148,255 @@ namespace RcrcGreen.Core.Kpi
                 list != null && list.Set,
                 list != null && list.Set && list.Read,
                 PlotListRows.Of(set));
+        }
+    }
+
+    /// <summary>
+    /// One ticked plot with no workbook, as the result screen lists it.
+    /// </summary>
+    public sealed class FailedPlot
+    {
+        internal FailedPlot(string plotId, NotWrittenKind kind, string why)
+        {
+            PlotId = plotId ?? string.Empty;
+            Kind = kind;
+            Why = why ?? string.Empty;
+        }
+
+        public string PlotId { get; }
+
+        public NotWrittenKind Kind { get; }
+
+        /// <summary>At most eight words a sentence, off the kind.</summary>
+        public string Short
+        {
+            get { return FailedReasons.Short(Kind); }
+        }
+
+        /// <summary>The outcome's own reason in full, the line's tooltip.</summary>
+        public string Why { get; }
+    }
+
+    /// <summary>
+    /// Which banner the result opens with: green where every workbook and every expected PDF
+    /// was written, a warning where only PDFs are missing, an error where workbooks are.
+    /// </summary>
+    public enum ResultBanner
+    {
+        AllCreated,
+        PdfsNotWritten,
+        WorkbooksNotCreated
+    }
+
+    /// <summary>
+    /// One ticked plot whose PDF was expected and not written.
+    /// </summary>
+    public sealed class MissingPdf
+    {
+        internal MissingPdf(string plotId, string why)
+        {
+            PlotId = plotId ?? string.Empty;
+            Why = why ?? string.Empty;
+        }
+
+        public string PlotId { get; }
+
+        public string Why { get; }
+    }
+
+    /// <summary>
+    /// One ticked asset type's row in the result: how many of its plots wrote and how many did
+    /// not. **One line for the run would hide which of six failed**, so every ticked type has a
+    /// row, one with no plot of its own included.
+    /// </summary>
+    public sealed class AssetTypeResult
+    {
+        internal AssetTypeResult(string assetType, int created, int failed, bool nothingToWrite, bool unplaced = false)
+        {
+            AssetType = assetType ?? string.Empty;
+            Created = created;
+            Failed = failed;
+            NothingToWrite = nothingToWrite;
+            Unplaced = unplaced;
+        }
+
+        /// <summary>
+        /// The row of plots no ticked asset type took, drawn muted. It is there so the rows
+        /// always add up to Created and Failed.
+        /// </summary>
+        public bool Unplaced { get; }
+
+        public const string NoTickedAssetType = "No ticked asset type";
+
+        public string AssetType { get; }
+
+        public int Created { get; }
+
+        public int Failed { get; }
+
+        public bool NothingToWrite { get; }
+
+        public const string NothingToWriteWords = "Nothing to write";
+    }
+
+    /// <summary>
+    /// What one press did, counted off its outcomes. **Created and Failed are the run set's
+    /// own counts**, `WorkbooksWritten` and `PlotsThatWroteNothing`, which the report's run
+    /// accounting prints, so the screen and the file cannot read two numbers for one press.
+    /// </summary>
+    public sealed class PressResult
+    {
+        private PressResult(
+            int created, IReadOnlyList<FailedPlot> failed, IReadOnlyList<MissingPdf> pdfs,
+            IReadOnlyList<AssetTypeResult> byType)
+        {
+            Created = created;
+            FailedPlots = failed;
+            PdfsNotWritten = pdfs;
+            ByAssetType = byType;
+        }
+
+        public int Created { get; }
+
+        public int Failed
+        {
+            get { return FailedPlots.Count; }
+        }
+
+        /// <summary>Every ticked plot that wrote nothing, in the order the press met them.</summary>
+        public IReadOnlyList<FailedPlot> FailedPlots { get; }
+
+        /// <summary>
+        /// Every ticked plot with no PDF written, on a press that had a forms folder set. Empty
+        /// on a press with none, where no PDF was expected.
+        /// </summary>
+        public IReadOnlyList<MissingPdf> PdfsNotWritten { get; }
+
+        public IReadOnlyList<AssetTypeResult> ByAssetType { get; }
+
+        public bool AllCreated
+        {
+            get { return Failed == 0; }
+        }
+
+        /// <summary>
+        /// **THE GREEN BANNER IS ONLY FOR A PRESS THAT WROTE EVERYTHING IT WAS EXPECTED TO.** A
+        /// press whose workbooks all landed and whose PDFs did not is not that press.
+        /// </summary>
+        public ResultBanner Kind
+        {
+            get
+            {
+                if (Failed > 0) return ResultBanner.WorkbooksNotCreated;
+                return PdfsNotWritten.Count > 0 ? ResultBanner.PdfsNotWritten : ResultBanner.AllCreated;
+            }
+        }
+
+        public string Banner
+        {
+            get
+            {
+                switch (Kind)
+                {
+                    case ResultBanner.WorkbooksNotCreated: return KpiPaneWords.NotCreated(Failed);
+                    case ResultBanner.PdfsNotWritten: return KpiPaneWords.PdfsNotWritten(PdfsNotWritten.Count);
+                    default: return KpiPaneWords.AllCreated;
+                }
+            }
+        }
+
+        public string Status
+        {
+            get { return KpiPaneWords.ResultStatus(Created, Failed); }
+        }
+
+        public static PressResult Of(KpiCreateRunSet set)
+        {
+            if (set == null) throw new ArgumentNullException("set");
+
+            // **THE GLANCE'S OWN RULE**, a plot whose workbook was written and whose PDF was not,
+            // with the PDF's own refusal. Gated on a forms folder having been set, because a
+            // press with none set expected no PDF and the banner says nothing about one.
+            IReadOnlyList<MissingPdf> pdfs = set.PdfsWanted
+                ? MissingPdfs.Of(set.PlotOutcomes)
+                : new List<MissingPdf>();
+
+            var byType = new List<AssetTypeResult>();
+            foreach (TemplateOutcome outcome in set.Outcomes)
+            {
+                List<PlotOutcome> mine = set.PlotOutcomes
+                    .Where(one => ReferenceEquals(one.Template, outcome.Template))
+                    .ToList();
+
+                byType.Add(new AssetTypeResult(
+                    AssetTypeNames.Display(outcome.Template),
+                    mine.Count(one => one.Written),
+                    mine.Count(one => !one.Written),
+                    !outcome.HadPlots));
+            }
+
+            // **EVERY TICKED PLOT SITS IN ONE ROW**, so the rows add up to the two boxes. A plot
+            // no ticked asset type took has no template of its own and goes in this one.
+            List<PlotOutcome> nowhere = set.PlotOutcomes
+                .Where(one => !set.Outcomes.Any(outcome => ReferenceEquals(outcome.Template, one.Template)))
+                .ToList();
+            if (nowhere.Count > 0)
+            {
+                byType.Add(new AssetTypeResult(
+                    AssetTypeResult.NoTickedAssetType,
+                    nowhere.Count(one => one.Written),
+                    nowhere.Count(one => !one.Written),
+                    false,
+                    true));
+            }
+
+            List<FailedPlot> failed = set.PlotOutcomes
+                .Where(one => !one.Written)
+                .Select(one => new FailedPlot(one.PlotId, one.Kind, one.Why))
+                .ToList();
+
+            return new PressResult(set.WorkbooksWritten, failed, pdfs, byType);
+        }
+
+        /// <summary>The failed plots a retry can write, the ones whose kind is retryable.</summary>
+        public IReadOnlyList<string> Retryable
+        {
+            get
+            {
+                return FailedPlots.Where(one => FailedReasons.Retryable(one.Kind)).Select(one => one.PlotId).ToList();
+            }
+        }
+
+        /// <summary>The failed plots a retry would fail again, until something is changed.</summary>
+        public int NeedAChange
+        {
+            get { return FailedPlots.Count(one => !FailedReasons.Retryable(one.Kind)); }
+        }
+
+        /// <summary>
+        /// The result's status line: the two counts, or how many failed plots a retry leaves
+        /// out because each needs a change first.
+        /// </summary>
+        public string StatusLine
+        {
+            get { return NeedAChange > 0 ? KpiPaneWords.NeedAChangeFirst(NeedAChange) : Status; }
+        }
+    }
+
+    /// <summary>
+    /// **ONE RULE FOR A MISSING PDF, READ BY THE REPORT'S GLANCE AND BY THE PANE.** A plot whose
+    /// workbook was written and whose PDF was not, with the PDF's own refusal. A plot with no
+    /// workbook is not counted here: its PDF is a consequence of that, which the failed list
+    /// already names, and a plot with no PDF record at all is one no PDF step was reached for.
+    /// </summary>
+    public static class MissingPdfs
+    {
+        public static IReadOnlyList<MissingPdf> Of(IEnumerable<PlotOutcome> outcomes)
+        {
+            return (outcomes ?? Enumerable.Empty<PlotOutcome>())
+                .Where(one => one != null && one.Pdf != null && !one.Pdf.Written && one.Written)
+                .Select(one => new MissingPdf(one.PlotId, one.Pdf.Refusal))
+                .ToList();
         }
     }
 }

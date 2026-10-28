@@ -285,6 +285,15 @@ that fix was refused by its own message, for naming the marker it introduced. Th
 back beside the text now, as a non-zero exit with the reason on standard error, and every hook
 already refuses on a non-zero exit.
 
+**A wall built on one machine is not a wall on another.** Run on Windows on 28 October, every
+hook failed: `python3` was the Store alias, `block-paths.sh` judged inside the repo by a forward
+slash so every write read as outside it, the two hooks that start `commit-scope.py` from inside
+Python reached the alias again, and a message printed down a Windows pipe lost its em dash, so
+`an em dash is refused` passed the dash through once the test could read its file. The
+comparison is `commonpath` now, the scope script is started with `sys.executable` and writes
+UTF-8, and `hook-tests.sh` reads 28 of 28 on Windows. `python3` itself is a shim in
+`C:\Users\bader\bin` on Bader's machine, outside this repo.
+
 **A guard wired to a tool it cannot read is not wired to it.** `block-paths.sh` is matched on
 Write, Edit AND NotebookEdit and read `file_path` only. NotebookEdit's argument is
 `notebook_path`, so every notebook write reached an empty string and took an `exit 0` meant

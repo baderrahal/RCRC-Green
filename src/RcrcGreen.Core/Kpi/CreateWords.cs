@@ -243,19 +243,15 @@ namespace RcrcGreen.Core.Kpi
             var lines = new List<string>();
             if (split == null) return lines;
 
-            List<PlotTemplate> byPrefix = split.Answers
-                .Where(one => one.Route == TemplateRoute.Prefix)
-                .ToList();
+            List<PlotTemplate> byPrefix = NoComponentPlots(split);
             if (byPrefix.Count == 0) return lines;
 
             List<string> filed = byPrefix
-                .Where(one => ComponentFolders.OnlyFolderFor(one.Template).Length > 0)
+                .Where(one => !FiledNowhere(one))
                 .Select(one => one.PlotId)
                 .ToList();
 
-            List<PlotTemplate> nowhere = byPrefix
-                .Where(one => ComponentFolders.OnlyFolderFor(one.Template).Length == 0)
-                .ToList();
+            List<PlotTemplate> nowhere = byPrefix.Where(FiledNowhere).ToList();
 
             lines.Add(byPrefix.Count.ToString(CultureInfo.InvariantCulture)
                 + (byPrefix.Count == 1 ? " ticked plot carries" : " ticked plots carry")
@@ -277,6 +273,23 @@ namespace RcrcGreen.Core.Kpi
             }
 
             return lines;
+        }
+
+        /// <summary>
+        /// The ticked plots the prefix placed because they carry no component. The pane's
+        /// warning counts them off this and the sentences above are built off it, one rule.
+        /// </summary>
+        public static List<PlotTemplate> NoComponentPlots(TemplateSplit split)
+        {
+            if (split == null) return new List<PlotTemplate>();
+
+            return split.Answers.Where(one => one.Route == TemplateRoute.Prefix).ToList();
+        }
+
+        /// <summary>A plot whose template reaches more than one folder, so none is derived.</summary>
+        public static bool FiledNowhere(PlotTemplate plot)
+        {
+            return plot != null && ComponentFolders.OnlyFolderFor(plot.Template).Length == 0;
         }
 
         /// <summary>
@@ -613,9 +626,8 @@ namespace RcrcGreen.Core.Kpi
                 .Where(one => one != null)
                 .OrderBy(one => one.PlotId, NaturalOrder.Comparer))
             {
-                List<string> inSoftscape = reading.PrintedGroups.Where(one => !one.Counted).Select(one => one.Name).ToList();
-                List<string> inShrubs = reading.Subtotals
-                    .SelectMany(one => one.Phases).Where(one => !one.Counted).Select(one => one.Name).ToList();
+                List<string> inSoftscape = LeftOutInSoftscape(reading);
+                List<string> inShrubs = LeftOutInShrubs(reading);
                 if (inSoftscape.Count == 0 && inShrubs.Count == 0) continue;
 
                 foreach (string name in inSoftscape.Concat(inShrubs))
@@ -642,6 +654,31 @@ namespace RcrcGreen.Core.Kpi
             return string.Join(" and ", names.ToArray()) + " found on " + Count(plots.Count, "plot") + " on "
                 + template.Name + ", which has no sheet for " + (names.Count == 1 ? "it" : "them") + ": "
                 + string.Join(", ", plots.ToArray()) + ". Those rows were left out. Fix them in the model.";
+        }
+
+        /// <summary>
+        /// The plots <see cref="GroupsLeftOut"/> names, in its own order, for the pane's
+        /// warning box. The same two lookups decide both.
+        /// </summary>
+        public static IReadOnlyList<string> PlotsWithGroupsLeftOut(IEnumerable<PlotReading> readings)
+        {
+            return (readings ?? Enumerable.Empty<PlotReading>())
+                .Where(one => one != null)
+                .Where(one => LeftOutInSoftscape(one).Count > 0 || LeftOutInShrubs(one).Count > 0)
+                .OrderBy(one => one.PlotId, NaturalOrder.Comparer)
+                .Select(one => one.PlotId)
+                .ToList();
+        }
+
+        private static List<string> LeftOutInSoftscape(PlotReading reading)
+        {
+            return reading.PrintedGroups.Where(one => !one.Counted).Select(one => one.Name).ToList();
+        }
+
+        private static List<string> LeftOutInShrubs(PlotReading reading)
+        {
+            return reading.Subtotals
+                .SelectMany(one => one.Phases).Where(one => !one.Counted).Select(one => one.Name).ToList();
         }
 
         public static string Refused(Reconciliation reconciliation)

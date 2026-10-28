@@ -139,8 +139,10 @@ namespace RcrcGreen.Revit.Kpi
             string position,
             IEnumerable<KpiCreateRun> heldRuns = null,
             TemplateListing templatesListed = null,
-            IDictionary<string, string> componentPerPlot = null)
+            IDictionary<string, string> componentPerPlot = null,
+            BeforeThePress before = null)
         {
+            Before = before ?? BeforeThePress.Nothing;
             Ticked = (ticked ?? Enumerable.Empty<string>()).Where(one => one != null).ToList();
             Templates = (templates ?? Enumerable.Empty<TemplatePick>()).Where(one => one != null).ToList();
             HeldRuns = (heldRuns ?? Enumerable.Empty<KpiCreateRun>()).Where(one => one != null).ToList();
@@ -157,6 +159,11 @@ namespace RcrcGreen.Revit.Kpi
             Position = position ?? string.Empty;
             TemplatesListed = templatesListed ?? TemplateListing.Nothing;
         }
+
+        /// <summary>
+        /// What the pane said before this press, in full, for the report's BEFORE THE PRESS.
+        /// </summary>
+        public BeforeThePress Before { get; }
 
         /// <summary>
         /// The runs the pane holds from the press before, the same objects and not copies, so a

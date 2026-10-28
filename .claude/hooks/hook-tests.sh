@@ -27,6 +27,10 @@ PASSED=0
 FAILED=0
 
 WORK=$(mktemp -d)
+# The message file is opened by Python, and on Windows a /tmp path from the shell means
+# nothing to it. cygpath -m gives the same folder in a form both can open. Linux has no
+# cygpath and keeps the path as it was.
+if command -v cygpath >/dev/null 2>&1; then WORK=$(cygpath -m "$WORK"); fi
 trap 'rm -rf "$WORK"' EXIT
 
 answer() {

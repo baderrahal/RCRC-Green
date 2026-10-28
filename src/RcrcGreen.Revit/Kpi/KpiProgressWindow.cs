@@ -51,7 +51,28 @@ namespace RcrcGreen.Revit.Kpi
 
             var inside = new StackPanel { Margin = PanelMetrics.StripInside };
             inside.Children.Add(_line);
+            inside.Children.Add(_plot);
             Content = inside;
+        }
+
+        // The plot a KPI press is on, under the count. Empty for every other caller, the View
+        // Filters run included, which still sets its one line through Moved.
+        private readonly TextBlock _plot = new TextBlock
+        {
+            FontFamily = KpiTheme.Mono,
+            Margin = PanelMetrics.Row
+        };
+
+        /// <summary>
+        /// A KPI press's count and plot, handed over as values. Creating 3 of 18 on the first
+        /// line and the plot id under it, and nothing else, which is the redesign's window.
+        /// </summary>
+        public void Advanced(PlotProgress where)
+        {
+            if (where == null) return;
+
+            _line.Text = where.InWords;
+            _plot.Text = where.PlotId;
         }
 
         /// <summary>

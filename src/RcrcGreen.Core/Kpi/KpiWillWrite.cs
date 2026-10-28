@@ -40,7 +40,7 @@ namespace RcrcGreen.Core.Kpi
 
             if (split.Shares.Count == 0) return NothingTicked;
 
-            int workbooks = split.Shares.Sum(one => one.Plots.Count);
+            int workbooks = Workbooks(split);
             if (workbooks == 0) return NoPlotPlaced;
 
             int writing = split.Shares.Count(one => one.WillWrite);
@@ -70,10 +70,74 @@ namespace RcrcGreen.Core.Kpi
             return split.Shares.Select(CreateWords.TemplateRow).ToList();
         }
 
+        /// <summary>
+        /// Step 4's big number: one workbook per plot the split places, the same sum
+        /// <see cref="InWords"/> says in a sentence.
+        /// </summary>
+        public static int Workbooks(TemplateSplit split)
+        {
+            if (split == null) throw new ArgumentNullException("split");
+            return split.Shares.Sum(one => one.Plots.Count);
+        }
+
+        /// <summary>
+        /// **WHAT THE PRESS WOULD REALLY WRITE**, step 4's big number and the Create button's
+        /// count: the placed plots, less every plot whose path is refused and every plot whose
+        /// folder another ticked plot shares. Both are read off the filings the step 4 boxes
+        /// read, through <see cref="SharedUid2.Of"/> and the path itself, so the number and the
+        /// boxes beside it cannot disagree. FM-08 is the one MOSQUES files nowhere.
+        /// </summary>
+        public static int Workbooks(TemplateSplit split, IReadOnlyList<PlotFiling> filings)
+        {
+            if (split == null) throw new ArgumentNullException("split");
+
+            IReadOnlyList<SharedUid2Group> sharing = SharedUid2.Of(filings ?? new List<PlotFiling>());
+
+            return split.Shares
+                .SelectMany(one => one.Plots)
+                .Count(plotId =>
+                {
+                    PlotFiling filing = PlotFilings.For(filings, plotId);
+                    return filing != null && filing.Where.Ok && !SharedUid2.Stops(sharing, plotId);
+                });
+        }
+
+        /// <summary>
+        /// Step 4's table, one row per ticked asset type that has plots, in the split's order.
+        /// A ticked type with none is a warning box instead, because a row reading 0 beside a
+        /// blank range says less than the sentence about why.
+        /// </summary>
+        public static IReadOnlyList<WillWriteRow> Table(TemplateSplit split)
+        {
+            if (split == null) throw new ArgumentNullException("split");
+
+            return split.Shares
+                .Where(one => one.WillWrite)
+                .Select(one => new WillWriteRow(
+                    AssetTypeNames.Display(one.Template), one.Plots.Count, PlotSpan.Of(one.Plots)))
+                .ToList();
+        }
+
         private static string Count(int howMany, string thing)
         {
             return howMany.ToString(CultureInfo.InvariantCulture) + " " + thing
                 + (howMany == 1 ? string.Empty : "s");
         }
+    }
+
+    public sealed class WillWriteRow
+    {
+        public WillWriteRow(string assetType, int plots, string range)
+        {
+            AssetType = assetType ?? string.Empty;
+            Plots = plots;
+            Range = range ?? string.Empty;
+        }
+
+        public string AssetType { get; }
+
+        public int Plots { get; }
+
+        public string Range { get; }
     }
 }

@@ -13,7 +13,9 @@ namespace RcrcGreen.Core.Kpi
     {
         Setup = 1,
         Read = 2,
-        Tick = 3,
+
+        // Called Tick until the pane's redesign, when the step took the team's word, Plots.
+        Plots = 3,
         Create = 4
     }
 
@@ -100,6 +102,23 @@ namespace RcrcGreen.Core.Kpi
         {
             get { return Number.ToString(CultureInfo.InvariantCulture) + " " + Title; }
         }
+
+        /// <summary>
+        /// What the step's cell says when the pointer rests on it, at most ten words. A step
+        /// that cannot be worked on gives its reason, one that can gives its summary.
+        /// </summary>
+        public string Tooltip
+        {
+            get
+            {
+                if (!Usable) return Title + ": " + WhyNot;
+                if (Summary.Length == 0) return Title + ": " + NothingYet;
+
+                return Title + ": " + Summary + (Done ? ", done." : ".");
+            }
+        }
+
+        public const string NothingYet = "nothing done yet.";
     }
 
     /// <summary>
@@ -160,7 +179,7 @@ namespace RcrcGreen.Core.Kpi
             + "length will be left empty";
 
         public const string PlotListNotSet =
-            "the plot list file is not set, so Tick the list cannot be pressed and the report "
+            "the plot list file is not set, so Plot list cannot be pressed and the report "
             + "prints no plot list section";
 
         public const string EverythingIsSet = "Every folder and file this pane is pointed at is set.";
@@ -253,7 +272,7 @@ namespace RcrcGreen.Core.Kpi
 
             string readWhyNot = setupDone
                 ? string.Empty
-                : "Set " + WhichOfTheTwo(templatesFolder, outputFolder) + " in step 1 first.";
+                : "Set " + WhichOfTheTwo(templatesFolder, outputFolder) + " first.";
 
             bool readDone = plotsRead.HasValue;
 
@@ -270,43 +289,70 @@ namespace RcrcGreen.Core.Kpi
             // `3 Tick done` beside a step saying the model has not been read, with step 4
             // open on the strength of it. A mark is a claim about a step somebody can use.
             var tick = new KpiStepState(
-                KpiStep.Tick,
-                "Tick",
+                KpiStep.Plots,
+                "Plots",
                 TickSummary(templatesTicked, plotsTicked),
                 readDone,
-                readDone ? string.Empty : "Read the model in step 2 first.",
+                readDone ? string.Empty : ReadFirst,
                 readDone && templatesTicked > 0 && plotsTicked > 0);
 
-            string createWhyNot = string.Empty;
-            if (!tick.Done)
-            {
-                var missing = new List<string>();
-                if (templatesTicked == 0) missing.Add(NoTemplateTicked);
-                if (plotsTicked == 0) missing.Add(NoPlotTicked);
-
-                // Only where the tick step could have been worked on at all. Before a read
-                // there is nothing to tick, and saying nothing is ticked there would point at
-                // the wrong step.
-                createWhyNot = readDone
-                    ? "In step 3, " + string.Join(" and ", missing.ToArray()) + "."
-                    : "Read the model in step 2 first.";
-            }
+            // **ONE REASON CREATE CANNOT RUN, AND THIS IS WHERE IT IS WORKED OUT.** Step 4's own
+            // reason and the line under the Create button were two rules for one question, and
+            // the pane worked it out a third time for a tooltip. Every one of them reads this.
+            string blocked = CreateBlocked.Reason(
+                modelOpen, templatesFolder, outputFolder, readDone,
+                templatesTicked > 0, plotsTicked > 0, string.Empty);
 
             var create = new KpiStepState(
                 KpiStep.Create,
                 "Create",
                 pressed ? "pressed" : string.Empty,
                 tick.Done,
-                createWhyNot,
+                tick.Done ? string.Empty : blocked,
                 pressed);
 
-            return new KpiSteps(new List<KpiStepState> { setup, read, tick, create });
+            // Step 3's own lack, which is a tick and nothing else. The setup reasons in front of
+            // it in CreateBlocked's order are step 1's to say, so step 3 never names a folder.
+            string plotsLack = templatesTicked == 0
+                ? CreateBlocked.NoAssetType
+                : (plotsTicked == 0 ? CreateBlocked.NoPlot : string.Empty);
+
+            return new KpiSteps(new List<KpiStepState> { setup, read, tick, create })
+            {
+                CreateBlockedBy = blocked,
+                PlotsLack = plotsLack
+            };
         }
+
+        /// <summary>
+        /// What step 3 itself still lacks, no asset type or no plot, or empty where both are
+        /// ticked. It is the Next button's reason on step 3.
+        /// </summary>
+        public string PlotsLack { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// The one reason a press cannot run, in <see cref="CreateBlocked"/>'s order, or empty
+        /// where it can. Step 4's WhyNot is this same string whenever step 4 is shut.
+        /// </summary>
+        public string CreateBlockedBy { get; private set; } = string.Empty;
+
+        public const string ReadFirst = "Read the model first.";
 
         private static string WhichOfTheTwo(bool templatesFolder, bool outputFolder)
         {
-            if (!templatesFolder && !outputFolder) return "the templates folder and the output folder";
+            if (!templatesFolder && !outputFolder) return "the templates and output folders";
             return templatesFolder ? "the output folder" : "the templates folder";
+        }
+
+        /// <summary>
+        /// The status line under Next on step 1: all set, or how many of the five are not.
+        /// **All five count, the three that are notes included**, because the line answers
+        /// what is left to point at rather than what stops a press.
+        /// </summary>
+        public static string SetupStatus(IReadOnlyList<string> notSet)
+        {
+            int left = notSet == null ? 0 : notSet.Count;
+            return left == 0 ? "All set" : left.ToString(CultureInfo.InvariantCulture) + " to set";
         }
 
         /// <summary>
@@ -331,7 +377,7 @@ namespace RcrcGreen.Core.Kpi
         {
             if (templatesTicked == 0 && plotsTicked == 0) return "nothing ticked";
 
-            return Workbooks(templatesTicked) + ", " + Plots(plotsTicked);
+            return AssetTypes(templatesTicked) + ", " + Plots(plotsTicked);
         }
 
         private static string Plots(int howMany)
@@ -340,10 +386,10 @@ namespace RcrcGreen.Core.Kpi
                 + (howMany == 1 ? " plot" : " plots");
         }
 
-        private static string Workbooks(int howMany)
+        private static string AssetTypes(int howMany)
         {
             return howMany.ToString(CultureInfo.InvariantCulture)
-                + (howMany == 1 ? " workbook" : " workbooks");
+                + (howMany == 1 ? " asset type" : " asset types");
         }
     }
 }

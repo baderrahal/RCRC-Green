@@ -7,8 +7,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 {
     /// <summary>
     /// **THE PANE WORKS IN FOUR STEPS, ONE AT A TIME.** Bader's layout of 17 September: Setup,
-    /// Read, Tick, Create. Which step may be worked on is decided here so a test can reach the
-    /// copy that runs, and the pane draws it and decides none of it.
+    /// Read, Plots, Create, where Plots was called Tick until October. Which step may be
+    /// worked on is decided here so a test can reach the copy that runs, and the pane draws it
+    /// and decides none of it.
     ///
     /// **EVERY EXPECTED VALUE HERE IS WRITTEN OUT BY HAND.**
     /// </summary>
@@ -59,17 +60,17 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.True(steps.For(KpiStep.Setup).Usable, "Setup is where every reason below is written, so it is always usable.");
             Assert.False(steps.For(KpiStep.Read).Usable);
-            Assert.False(steps.For(KpiStep.Tick).Usable);
+            Assert.False(steps.For(KpiStep.Plots).Usable);
             Assert.False(steps.For(KpiStep.Create).Usable);
 
             Assert.False(steps.For(KpiStep.Setup).Done);
 
             Assert.Equal(
-                "Set the templates folder and the output folder in step 1 first.",
+                "Set the templates and output folders first.",
                 steps.For(KpiStep.Read).WhyNot);
 
-            Assert.Equal("Read the model in step 2 first.", steps.For(KpiStep.Tick).WhyNot);
-            Assert.Equal("Read the model in step 2 first.", steps.For(KpiStep.Create).WhyNot);
+            Assert.Equal("Read the model first.", steps.For(KpiStep.Plots).WhyNot);
+            Assert.Equal("No model open", steps.For(KpiStep.Create).WhyNot);
 
             Assert.Equal(KpiStep.Setup, steps.FirstUnfinished);
         }
@@ -94,7 +95,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "total length will be left empty",
                 notSet[3]);
             Assert.Equal(
-                "the plot list file is not set, so Tick the list cannot be pressed and the "
+                "the plot list file is not set, so Plot list cannot be pressed and the "
                 + "report prints no plot list section",
                 notSet[4]);
         }
@@ -119,14 +120,14 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "Not set: the forms folder is not set, so no PDF will be written. the street "
                 + "reference file is not set, so every street plot's road width and total "
-                + "length will be left empty. the plot list file is not set, so Tick the list "
+                + "length will be left empty. the plot list file is not set, so Plot list "
                 + "cannot be pressed and the report prints no plot list section.",
                 KpiSteps.StillNotSet(KpiSteps.NotSet(true, true, false, false, false)));
         }
 
         /// <summary>
         /// **EVERYTHING SET AND NOTHING READ.** Setup is done, Read can be worked on and is not,
-        /// and Tick still says what to do.
+        /// and Plots still says what to do.
         /// </summary>
         [Fact]
         public void WithEverythingSetAndNothingReadTheReadStepIsTheOneToWorkOn()
@@ -146,7 +147,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(steps.For(KpiStep.Read).Done);
             Assert.Equal("not read", steps.For(KpiStep.Read).Summary);
 
-            Assert.False(steps.For(KpiStep.Tick).Usable);
+            Assert.False(steps.For(KpiStep.Plots).Usable);
             Assert.False(steps.For(KpiStep.Create).Usable);
 
             Assert.Equal(KpiStep.Read, steps.FirstUnfinished);
@@ -167,27 +168,27 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **ONE READ, NOTHING TICKED.** Tick can be worked on, Create cannot, and Create names
-        /// both things that are missing rather than the first of them.
+        /// **ONE READ, NOTHING TICKED.** Plots can be worked on, Create cannot, and Create names
+        /// the first thing missing, in the one order the button below it reads too.
         /// </summary>
         [Fact]
-        public void WithOneReadAndNothingTickedCreateNamesBothMissingTicks()
+        public void WithOneReadAndNothingTickedCreateNamesTheFirstMissingTick()
         {
             KpiSteps steps = ReadNothingTicked();
 
             Assert.True(steps.For(KpiStep.Read).Done);
             Assert.Equal("154 plots read", steps.For(KpiStep.Read).Summary);
 
-            Assert.True(steps.For(KpiStep.Tick).Usable);
-            Assert.False(steps.For(KpiStep.Tick).Done);
-            Assert.Equal("nothing ticked", steps.For(KpiStep.Tick).Summary);
+            Assert.True(steps.For(KpiStep.Plots).Usable);
+            Assert.False(steps.For(KpiStep.Plots).Done);
+            Assert.Equal("nothing ticked", steps.For(KpiStep.Plots).Summary);
 
             Assert.False(steps.For(KpiStep.Create).Usable);
             Assert.Equal(
-                "In step 3, no workbook is ticked and no plot is ticked.",
+                "No asset type selected",
                 steps.For(KpiStep.Create).WhyNot);
 
-            Assert.Equal(KpiStep.Tick, steps.FirstUnfinished);
+            Assert.Equal(KpiStep.Plots, steps.FirstUnfinished);
         }
 
         /// <summary>
@@ -201,8 +202,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 true, true, true, true, true, true, 154, 1, 0, false);
 
             Assert.False(steps.For(KpiStep.Create).Usable);
-            Assert.Equal("In step 3, no plot is ticked.", steps.For(KpiStep.Create).WhyNot);
-            Assert.Equal("1 workbook, 0 plots", steps.For(KpiStep.Tick).Summary);
+            Assert.Equal("No plot selected", steps.For(KpiStep.Create).WhyNot);
+            Assert.Equal("1 asset type, 0 plots", steps.For(KpiStep.Plots).Summary);
         }
 
         /// <summary>
@@ -215,8 +216,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 true, true, true, true, true, true, 154, 0, 154, false);
 
             Assert.False(steps.For(KpiStep.Create).Usable);
-            Assert.Equal("In step 3, no workbook is ticked.", steps.For(KpiStep.Create).WhyNot);
-            Assert.Equal("0 workbooks, 154 plots", steps.For(KpiStep.Tick).Summary);
+            Assert.Equal("No asset type selected", steps.For(KpiStep.Create).WhyNot);
+            Assert.Equal("0 asset types, 154 plots", steps.For(KpiStep.Plots).Summary);
         }
 
         /// <summary>
@@ -229,8 +230,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             KpiSteps steps = Ticked();
 
-            Assert.True(steps.For(KpiStep.Tick).Done);
-            Assert.Equal("1 workbook, 154 plots", steps.For(KpiStep.Tick).Summary);
+            Assert.True(steps.For(KpiStep.Plots).Done);
+            Assert.Equal("1 asset type, 154 plots", steps.For(KpiStep.Plots).Summary);
 
             Assert.True(steps.For(KpiStep.Create).Usable);
             Assert.Equal(string.Empty, steps.For(KpiStep.Create).WhyNot);
@@ -274,7 +275,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             // SHORTER than an unfinished one. The mark is its own line under the name.
             Assert.Equal("1 Setup", steps.For(KpiStep.Setup).Cell);
             Assert.Equal("2 Read", steps.For(KpiStep.Read).Cell);
-            Assert.Equal("3 Tick", steps.For(KpiStep.Tick).Cell);
+            Assert.Equal("3 Plots", steps.For(KpiStep.Plots).Cell);
             Assert.Equal("4 Create", steps.For(KpiStep.Create).Cell);
 
             Assert.Equal("done", steps.For(KpiStep.Setup).Mark);
@@ -297,15 +298,15 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiSteps steps = KpiSteps.Of(
                 true, true, true, true, true, true, null, 1, 154, false);
 
-            Assert.False(steps.For(KpiStep.Tick).Usable);
+            Assert.False(steps.For(KpiStep.Plots).Usable);
             Assert.False(
-                steps.For(KpiStep.Tick).Done,
-                "A workbook row and 154 plots are ticked and nothing has been read, so Tick "
+                steps.For(KpiStep.Plots).Done,
+                "A workbook row and 154 plots are ticked and nothing has been read, so Plots "
                 + "cannot be worked on, and a mark on a step nobody can open is a claim about "
                 + "a step that is shut.");
 
-            Assert.Equal("3 Tick", steps.For(KpiStep.Tick).Cell);
-            Assert.Equal(string.Empty, steps.For(KpiStep.Tick).Mark);
+            Assert.Equal("3 Plots", steps.For(KpiStep.Plots).Cell);
+            Assert.Equal(string.Empty, steps.For(KpiStep.Plots).Mark);
 
             Assert.False(
                 steps.For(KpiStep.Create).Usable,
@@ -326,7 +327,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(4, all.Count);
             Assert.Equal(new[] { 1, 2, 3, 4 }, all.Select(one => one.Number).ToArray());
             Assert.Equal(
-                new[] { "Setup", "Read", "Tick", "Create" },
+                new[] { "Setup", "Read", "Plots", "Create" },
                 all.Select(one => one.Title).ToArray());
         }
 
@@ -341,7 +342,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 true, true, true, true, true, true, 1, 1, 1, false);
 
             Assert.Equal("1 plot read", steps.For(KpiStep.Read).Summary);
-            Assert.Equal("1 workbook, 1 plot", steps.For(KpiStep.Tick).Summary);
+            Assert.Equal("1 asset type, 1 plot", steps.For(KpiStep.Plots).Summary);
         }
     }
 }
