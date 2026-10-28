@@ -106,6 +106,7 @@ warning box the pane showed for that press.
 | `What each holds on <plot>, the first ticked plot:` and the values | `CreateWords.cs:418`, `Revit/KpiPanel.cs:1263`, `1267` | TOOLTIP on each dropdown |
 | `No plot is ticked, so there is no value to show here...` | `CreateWords.cs:406` | TOOLTIP on each dropdown |
 | none | | NEW boxes `Plots`, `Elements`, `Time`, line `Templates matched  7 of 7`, `Show in report`, `In the report after Create`, footer `Next: Plots`, status `Read at HH:mm` |
+| none, question 4 | `KpiPaneWords.ReadsSheetsAndSchedules` | NEW muted line `Reads sheets and schedules. Nothing changes.` in the body before a read, the button's tooltip on it |
 
 ## Step 3, Plots
 

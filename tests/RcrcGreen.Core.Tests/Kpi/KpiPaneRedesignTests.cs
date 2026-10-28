@@ -85,7 +85,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiPaneWords.TemplatesFound(1), KpiPaneWords.TemplatesFound(1234567),
                 KpiPaneWords.RowsHeld(8353), KpiPaneWords.PlotsListed(154),
                 KpiPaneWords.NextRead, KpiPaneWords.ModelRead, KpiPaneWords.ReadModel, KpiPaneWords.ReadAgain,
-                KpiPaneWords.NotReadYet, KpiPaneWords.NoModelOpen, KpiPaneWords.ReadingTheModel,
+                KpiPaneWords.NotReadYet, KpiPaneWords.ReadsSheetsAndSchedules, KpiPaneWords.NoModelOpen, KpiPaneWords.ReadingTheModel,
                 KpiPaneWords.PlotsBox, KpiPaneWords.ElementsBox, KpiPaneWords.TimeBox,
                 KpiPaneWords.InPlotList, KpiPaneWords.TemplatesMatched, KpiPaneWords.ValuesFrom,
                 KpiPaneWords.Component, KpiPaneWords.Reference, KpiPaneWords.Location,

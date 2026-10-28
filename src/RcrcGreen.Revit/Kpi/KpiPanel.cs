@@ -806,11 +806,13 @@ namespace RcrcGreen.Revit.Kpi
 
             if (_facts == null)
             {
+                string why = _model.IsOpen ? CreateWords.NothingHasReadThisModel : CreateWords.NoModelToReadPlotsFrom;
                 Button read = KpiTheme.Main(Caption(KpiPaneWords.ReadModel));
                 read.IsEnabled = _model.IsOpen && !_reading;
-                read.ToolTip = Tip(_model.IsOpen ? CreateWords.NothingHasReadThisModel : CreateWords.NoModelToReadPlotsFrom);
+                read.ToolTip = Tip(why);
                 read.Click += (sender, e) => PressRead();
                 _footerButtons.Children.Add(read);
+                _body.Children.Add(Muted(KpiPaneWords.ReadsSheetsAndSchedules, why));
 
                 if (!_model.IsOpen) _stepSays = new StatusLine(KpiPaneWords.NoModelOpen, CreateWords.NoModelToReadPlotsFrom);
                 else if (_reading) _stepSays = StatusLine.Reading;

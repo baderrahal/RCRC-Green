@@ -9,6 +9,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         private const string Where = "Written to C:\\Users\\bader\\Desktop\\RCRC-Green-KPI_NG05_2026-09-09_1405.txt";
 
         [Fact]
+        public void StepTwoBeforeAReadSaysWhatTheReadDoesInBadersWords()
+        {
+            Assert.Equal("Reads sheets and schedules. Nothing changes.", KpiPaneWords.ReadsSheetsAndSchedules);
+        }
+
+        [Fact]
         public void ReadAtNamesTheTimeTheCountAndTheSeconds()
         {
             Assert.Equal(

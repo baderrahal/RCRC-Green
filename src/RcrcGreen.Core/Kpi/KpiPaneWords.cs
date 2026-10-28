@@ -170,6 +170,10 @@ namespace RcrcGreen.Core.Kpi
         public const string ReadModel = "Read model";
         public const string ReadAgain = "Read again";
         public const string NotReadYet = "Not read yet";
+
+        // Bader's answer to question 4: step 2 before a read was a footer under an empty body.
+        public const string ReadsSheetsAndSchedules = "Reads sheets and schedules. Nothing changes.";
+
         public const string NoModelOpen = "No model open";
         public const string ReadingTheModel = "Reading the model";
         public const string PlotsBox = "Plots";

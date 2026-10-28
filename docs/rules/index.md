@@ -1,0 +1,166 @@
+# Rules index
+
+One line per rule id and the file it lives in, in the order the rules first stood. K is
+`.claude/rules/kpi-rules.md` as it was, C is `core-rules.md`, R is `revit-commands.md` and M is
+`CLAUDE.md`. An id with a dot is a `###` part of one long rule, and 00 is a file's opening
+lines. Every part was moved byte for byte on 2026-10-28, and the proof is
+`steps/runs/2026-10-28-records-split/split_proof.txt`. Look a rule up here, then read only its part.
+
+- K00 `.claude/rules/kpi-rules.md` the opening lines of the file
+- K01 `.claude/rules/kpi-rules.md` What it is for, and what this round is
+- K02 `docs/rules/kpi-plots-1.md` A CHECKLIST IS ONE PLOT, AND IT LIVES IN A FOLDER NAMED AFTER IT
+- K03 `docs/rules/kpi-plots-1.md` The component folder is a THIRD table, and it is not the template name
+- K04 `docs/rules/kpi-plots-1.md` The team's plot list file, and every plot on it is accounted for
+- K05 `docs/rules/kpi-workbook-1.md` A DIVISION BY A COUNT OVER A RANGE IS A DIVISION
+- K06 `docs/rules/kpi-workbook-1.md` A ROW THAT COMPUTES A CANOPY PER TREE AND ADDS NONE
+- K07 `docs/rules/kpi-workbook-1.md` THE TOTAL CANOPY CHECK MUST NOT SWITCH ITSELF OFF
+- K08 `docs/rules/kpi-workbook-1.md` THE TEMPLATES' OWN TREE LISTS ARE READ ONCE AT THE PRESS, CELL BY CELL
+- K09 `docs/rules/kpi-workbook-1.md` Every printed cell text resolves a shared string to its text
+- K10 `docs/rules/kpi-plots-1.md` TWO PLOTS, ONE FOLDER, AND THE LAST ONE WRITTEN REPLACED THE OTHERS
+- K11 `docs/rules/kpi-report.md` READY is the question the team is actually asking
+- K12 `docs/rules/kpi-report.md` THE PLOTS WITH NO PLANTING AT ALL are named, and their noughts are right
+- K13 `docs/rules/kpi-plots-1.md` A ticked plot the list does not name is work nobody asked for
+- K14 `docs/rules/kpi-workbook-1.md` The street reference file fills the two cells STREETS types by hand
+- K15 `docs/rules/kpi-workbook-1.md` STREETS takes an area again, because the client reissued the template
+- K16 `docs/rules/kpi-report.md` Three lines at the top of the report, so a run can be checked at a glance
+- K17 `docs/rules/kpi-reading-1.md` The client's note holds, and it decides where two regions hold an area
+- K18 `docs/rules/kpi-report.md` A reason that points at a screen is not a reason
+- K19 `.claude/rules/kpi-rules.md` Read every rule off the template, never off the notes copy
+- K20 `docs/rules/kpi-workbook-1.md` SIX CELLS ON THE MAIN SHEET, EVERY ONE FOUND BY A LABEL AND NEVER BY A LETTER
+- K21 `docs/rules/kpi-plots-1.md` What stands down now that a checklist is one plot
+- K22 `docs/rules/kpi-pane.md` The name box is gone, and this is the second reason a thing gets deleted
+- K23 `docs/rules/kpi-pane.md` What the pane says before the press, and how much of it
+- K24 `.claude/rules/kpi-rules.md` Count what happened, never what was planned
+- K25 `.claude/rules/kpi-rules.md` Adding printed numbers is allowed, working one out is not
+- K26 `docs/rules/kpi-reading-1.md` Every plot chosen is accounted for on the way out
+- K27 `docs/rules/kpi-reading-1.md` A run with no link loaded says so before it says anything else
+- K28 `docs/rules/kpi-plots-2.md` Several templates in one press, one workbook each
+- K29 `docs/rules/kpi-pane.md` Nothing heavy runs without a press
+- K30 `docs/rules/kpi-plots-2.md` Ticking a template ticks its plots
+- K31 `docs/rules/kpi-reading-1.md` Only the groups a tree list sheet is named for count
+- K32 `docs/rules/kpi-reading-1.md` Street Design counts as Proposed on STREETS, and nowhere else
+- K33 `docs/rules/kpi-reading-2.md` The shrubs group holds two kinds and the species name says which
+- K34 `docs/rules/kpi-reading-2.md` The irrigation water demand is both schedules' own TOTAL rows, added
+- K35 `docs/rules/kpi-pdf-1.md` A PDF beside every workbook
+- K35.01 `docs/rules/kpi-pdf-1.md` The three forms, and the prefix is what picks one
+- K35.02 `docs/rules/kpi-pdf-1.md` Every field was read off the files and checked back against them
+- K35.03 `docs/rules/kpi-pdf-1.md` Three things the round message said that the files do not
+- K35.04 `docs/rules/kpi-pdf-1.md` The position is the THIRD record, and it is the one a person reads
+- K35.05 `docs/rules/kpi-pdf-1.md` Two numbers the tool COMPUTES, with their working shown
+- K35.06 `docs/rules/kpi-pdf-1.md` The guard on the one formula the computing copies
+- K35.07 `docs/rules/kpi-pdf-1.md` The other two formulas, measured on all seven and guarded now
+- K35.08 `docs/rules/kpi-pdf-1.md` How the two cells are checked, with no letter anywhere
+- K35.09 `docs/rules/kpi-pdf-1.md` A label is what the file holds, and one rule compares every one of them
+- K35.10 `docs/rules/kpi-pdf-1.md` Every unit on all three forms, one by one
+- K35.11 `docs/rules/kpi-pdf-1.md` ALL THREE FORMS TAKE TOTAL GREEN COVER, AND THE OPEN QUESTION IS CLOSED
+- K35.12 `docs/rules/kpi-pdf-2.md` HOW BIG EVERY VALUE IS WRITTEN, SO IT STAYS INSIDE THE CLIENT'S OWN BOX
+- K35.13 `docs/rules/kpi-pdf-2.md` Every field is WRITTEN or EMPTIED, and the tick boxes are the only third case
+- K35.14 `docs/rules/kpi-pdf-2.md` THREE OF THOSE DEFAULTS ARE THE CLIENT'S OWN HEADER, AND CLEARING THEM WAS THE FAULT
+- K35.15 `docs/rules/kpi-pdf-2.md` CONTRACT REFERENCE IS WRITTEN, PER PLOT, FROM PRX_Plot_NH
+- K35.16 `docs/rules/kpi-pdf-2.md` The canopy covers every row this run put a count into
+- K35.17 `docs/rules/kpi-pdf-2.md` The header says WHICH read produced its count
+- K35.18 `docs/rules/kpi-pdf-2.md` Every plot gets its own block
+- K35.19 `docs/rules/kpi-pdf-2.md` Only the formulas this run is answerable for, said once per shape
+- K35.20 `docs/rules/kpi-pdf-2.md` BOTH PARKS WROTE NEITHER COMPUTED NUMBER, AND IT IS NEITHER OF THE TWO CELL CHECKS
+- K35.21 `docs/rules/kpi-pdf-2.md` THE TWO COMPUTED NUMBERS ARE COUNTED AT THE TOP, AND THE REASON IS SAID ONCE
+- K35.22 `docs/rules/kpi-pdf-3.md` ROWS 85, 92 AND 99 CARRY NO CANOPY FORMULA, AND IT IS THE CLIENT'S FILE
+- K35.23 `docs/rules/kpi-pdf-3.md` THE LIST HOLDS PLOTS NOTHING IN THE REPORT EVER MENTIONED, AND THEY ARE IN THE MODEL
+- K35.24 `docs/rules/kpi-pdf-3.md` THE HAND CHOICES ARE ONE RECORD NOW, AND NOTHING MOVES THE TICKS WITHOUT IT
+- K35.25 `docs/rules/kpi-pdf-3.md` SIX MEMBERS IN Core/Kpi HAVE NO CALLER IN src, AND THREE OF THEM BUILD A LINE
+- K35.26 `docs/rules/kpi-pdf-3.md` A SECTION THAT COVERS WHAT WENT IN CANNOT TELL YOU WHAT DID NOT
+- K35.27 `docs/rules/kpi-pdf-3.md` WHAT IS IN THIS FILE, COUNTED OFF THE FILE
+- K35.28 `docs/rules/kpi-pdf-3.md` The units of the fields nobody fills, on record
+- K36 `docs/rules/kpi-species.md` Matching a species is plain or it is nothing
+- K37 `docs/rules/kpi-species.md` UNKNOWN reaches Unknown Tree through an alias, which is a table and not a rule
+- K38 `docs/rules/kpi-species.md` The note text can never be matched against the model
+- K39 `docs/rules/kpi-scan.md` The nine questions, and where each is answered
+- K40 `.claude/rules/kpi-rules.md` The report is the deliverable
+- K41 `docs/rules/kpi-scan.md` A near miss whose values are all Yes or No is a switch
+- K42 `docs/rules/kpi-plots-2.md` The component picks the template, and the mapping is a table
+- K43 `docs/rules/kpi-plots-2.md` The plot prefix is the second route, and it does not decide
+- K44 `docs/rules/kpi-scan.md` Three places a sheet value can live
+- K45 `docs/rules/kpi-scan.md` A few plots of each schedule name are read in full
+- K46 `.claude/rules/kpi-rules.md` The pane reaches Revit through its own door
+- K47 `.claude/rules/kpi-rules.md` What the pane puts on a button is escaped
+- K48 `docs/rules/kpi-pane.md` A picker starts on the name the note asks for
+- K49 `docs/rules/kpi-pane.md` The pane says what it reads, not what the note asks for
+- K50 `docs/rules/kpi-pane.md` The workbook goes where the user browsed, not beside the model
+- K51 `docs/rules/kpi-pane.md` The pane holds no copy of anything it can ask for
+- K52 `docs/rules/kpi-pane.md` The reference values follow the ticked plot
+- K53 `.claude/rules/kpi-rules.md` Shared and not changed
+- K54 `docs/rules/kpi-workbook-2.md` The tool carries the map, and the map is data
+- K55 `docs/rules/kpi-workbook-2.md` A workbook is copied and patched, never loaded and resaved
+- K56 `docs/rules/kpi-workbook-2.md` Nothing may write to a template, and two guards say so
+- K57 `docs/rules/kpi-report.md` Every run that ends with no file says why
+- K58 `docs/rules/kpi-measured.md` What the first real scan measured
+- K59 `docs/rules/kpi-reading-3.md` How a grouped schedule really prints
+- K60 `docs/rules/kpi-measured.md` What the two real workbooks measured, once
+- K61 `docs/rules/kpi-measured.md` What the first real workbook measured
+- K62 `docs/rules/kpi-measured.md` What the first twenty plot run measured
+- K63 `docs/rules/kpi-measured.md` What the 1428 run measured
+- K64 `docs/rules/kpi-measured.md` What the 1536 run measured
+- K65 `docs/rules/kpi-reading-3.md` The area is not a schedule row
+- K66 `docs/rules/kpi-workbook-2.md` What the team types reaches the cells
+- K67 `docs/rules/kpi-scan.md` Open, and not to be guessed at in code
+- K68 `docs/rules/kpi-pane.md` The status line moves while a run does
+- K69 `docs/rules/kpi-pane.md` The scan is a step inside Create, and there is no scan button
+- K70 `docs/rules/kpi-pane.md` The progress window is modeless, owned, and opened outside Execute
+- K71 `docs/rules/kpi-pane.md` The pane is Bader's design of 28 October, and the long words live in the report
+- C00 `.claude/rules/core-rules.md` the opening lines of the file
+- C01 `.claude/rules/core-rules.md` A view type is the code and the view name together
+- C02 `docs/rules/core-views-and-grid.md` The plot list is the union of four sources
+- C03 `.claude/rules/core-rules.md` A view fills the cell named by its own name and by nothing else
+- C04 `docs/rules/core-views-and-grid.md` Step 1 is a tick list of plots, and the grid shows every ticked sub plot
+- C05 `docs/rules/core-views-and-grid.md` A grid cell has four states and carries its sheet number
+- C06 `.claude/rules/core-rules.md` One state, drawn again, never two
+- C07 `.claude/rules/core-rules.md` Inventing a view type is allowed. Inventing a plot is not
+- C08 `docs/rules/core-sheets.md` A definition sits between reading a schedule and writing one
+- C09 `docs/rules/core-sheets.md` A sheet number is built from the plot identifier, never proposed from the model
+- C10 `docs/rules/core-sheets.md` A sheet is named from the saved table, and upper casing is only the fallback
+- C11 `.claude/rules/core-rules.md` What is counted is what gets written
+- C12 `docs/rules/core-views-and-grid.md` SectionPlacement takes the axis, the depth and the cut length as required arguments
+- C13 `.claude/rules/core-rules.md` A number that is not a number still looks like an answer
+- C14 `docs/rules/core-views-and-grid.md` What the run intended and what it did are two objects
+- C15 `docs/rules/core-sheets.md` A sheet is described, not captured, and the views divide
+- C16 `.claude/rules/core-rules.md` Every count the panel shows is worked out here
+- C17 `docs/rules/core-views-and-grid.md` The settings a new view takes travel together on one object
+- C18 `docs/rules/core-sheets.md` Which title block a view type's sheets are made on
+- C19 `docs/rules/core-sheets.md` A preset is steps 2 and 4, and never step 1
+- C20 `docs/rules/core-sheets.md` One set of positions, read by the run and by the preview
+- C21 `docs/rules/core-sheets.md` A sheet with nothing left to carry is not made
+- C22 `docs/rules/core-views-and-grid.md` CodeFor compares against what the file stored
+- C23 `docs/rules/core-sheets.md` The line under the title block picker says which one is in force
+- C24 `docs/rules/core-views-and-grid.md` Which family type a view type is really built with
+- C25 `docs/rules/core-views-and-grid.md` Marking in bulk follows the rule a single click follows
+- C26 `docs/rules/core-views-and-grid.md` A column header is as short as it can be and no shorter
+- C27 `.claude/rules/core-rules.md` A test that reads the code back to itself proves nothing
+- R00 `.claude/rules/revit-commands.md` the opening lines of the file
+- R01 `.claude/rules/revit-commands.md` The panel reaches Revit through one door and no other
+- R02 `.claude/rules/revit-commands.md` A read only command opens no transaction
+- R03 `.claude/rules/revit-commands.md` A command that writes decides everything first, then asks, then writes once
+- R04 `.claude/rules/revit-commands.md` A command never overwrites something a person put there
+- R05 `docs/rules/revit-panel.md` The panel is four numbered rows and a Run button
+- R06 `docs/rules/revit-panel.md` The strip, the steps and the status line
+- R07 `docs/rules/revit-panel.md` Marking a lot of cells at once
+- R08 `docs/rules/revit-panel.md` A column header is the code, not the whole name
+- R09 `.claude/rules/revit-commands.md` A list that is rebuilt comes back where it was left
+- R10 `.claude/rules/revit-commands.md` A control that outlives a redraw has to be taken out of its old parent
+- R11 `.claude/rules/revit-commands.md` No brush and no number is written in the panel file
+- R12 `.claude/rules/revit-commands.md` One tab, two panels
+- R13 `docs/rules/revit-panel.md` Scan Model is the check on the panel
+- R14 `docs/rules/revit-run.md` A new view is set up from ONE sibling, read once
+- R15 `docs/rules/revit-run.md` A section is a different call from a plan view
+- R16 `.claude/rules/revit-commands.md` One list, one fill
+- R17 `docs/rules/revit-run.md` A sheet is described, never copied, and one description makes a set
+- R18 `docs/rules/revit-run.md` A schedule is built on a category number and typed filter values
+- R19 `docs/rules/revit-run.md` A missing filter is not a missing field
+- R20 `.claude/rules/revit-commands.md` A report goes to one place and the panel names it
+- R21 `docs/rules/revit-run.md` Which title block goes with which view type is remembered
+- R22 `docs/rules/revit-panel.md` A preset fills steps 2 and 4 off the strip
+- R23 `docs/rules/revit-panel.md` The run is counted, not drawn
+- R24 `docs/rules/revit-run.md` A sheet number is read back off the sheet
+- R25 `docs/rules/revit-panel.md` A count on the panel opens into the thing it counted
+- R26 `.claude/rules/revit-commands.md` Building and installing
+- M07 `docs/rules/project-facts.md` Project facts, a whole section of `CLAUDE.md`
+- M08 `docs/hooks.md` Hooks, a whole section of `CLAUDE.md`
+- M09 `docs/gone-wrong.md` Things that have gone wrong before, a whole section of `CLAUDE.md`
