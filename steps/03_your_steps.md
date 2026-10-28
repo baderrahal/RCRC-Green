@@ -45,6 +45,6 @@ dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
     Look for: the component field holds the full value. One screenshot per PDF.
 14. Press Open report.
     Look for: the block WHERE EACH COMPONENT VALUE WAS READ, naming each of the four with its
-    template, its folder and `the shipped components.csv line 12` to `15`. Screenshot.
+    template, its folder and `the shipped components.csv line 13` to `16`. Screenshot.
 15. Answer Q8 to Q12 in `steps\02_questions.md` and send the screenshots and the report.
     Look for: an Answer line under each of the five.

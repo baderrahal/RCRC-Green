@@ -66,7 +66,19 @@ namespace RcrcGreen.Revit.Kpi
             string line = ComponentTable.Line(component, template, folder);
             var tried = new List<string>();
 
-            foreach (string path in new[] { SharedPath(TemplateFolder.Read()), PersonalPath() })
+            // A hand edited templates pointer can hold a character no path takes.
+            string[] places;
+            try
+            {
+                places = new[] { SharedPath(TemplateFolder.Read()), PersonalPath() };
+            }
+            catch (ArgumentException failed)
+            {
+                why = failed.Message;
+                return string.Empty;
+            }
+
+            foreach (string path in places)
             {
                 if (path.Length == 0) continue;
 
@@ -88,7 +100,6 @@ namespace RcrcGreen.Revit.Kpi
                 }
                 catch (ArgumentException failed)
                 {
-                    // A hand edited templates pointer can hold a character no path takes.
                     tried.Add(path + ": " + failed.Message);
                 }
                 catch (NotSupportedException failed)

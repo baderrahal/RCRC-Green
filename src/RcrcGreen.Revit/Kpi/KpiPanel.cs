@@ -1938,10 +1938,11 @@ namespace RcrcGreen.Revit.Kpi
             }
 
             ComponentTable table = ComponentTable.InForce;
-            foreach (ComponentFile file in table.Files.Where(one => one.There && (!one.Read || one.Problems.Count > 0)))
+            foreach (ComponentFile file in table.Files.Where(one => one.There && (!one.Read || one.Problems.Count > 0
+                || table.Unmatched.Any(row => row.Path == one.Path))))
             {
                 boxes.Add(WarningBox(new PaneWarning(
-                    KpiPaneWords.ComponentFileSays(file), file.Path,
+                    KpiPaneWords.ComponentFileSays(file, table.Unmatched.Any(row => row.Path == file.Path)), file.Path,
                     string.Join("\n", table.InWords().ToArray()), !file.Read), null));
             }
 
@@ -2057,6 +2058,17 @@ namespace RcrcGreen.Revit.Kpi
         private void AddComponent(string value, KpiTemplate template, string folder)
         {
             if (template == null) return;
+
+            // Asked again at the press of the button, because a colleague may have added the value
+            // to the shared file since the box was drawn, and a second line would refuse it.
+            if (ComponentFiles.PutInForce(_madeTemplates.Values).Names(value))
+            {
+                _choosingValue = string.Empty;
+                Changed();
+                _told = new StatusLine(KpiPaneWords.AlreadyInAFile);
+                PaintStatus();
+                return;
+            }
 
             string why;
             string written = ComponentFiles.Add(value, template.Name, folder, out why);

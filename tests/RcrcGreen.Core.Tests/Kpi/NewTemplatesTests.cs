@@ -356,6 +356,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiPaneWords.ComponentFileSays(ComponentFile.Unreadable(ComponentSource.Shared, "s.csv", "x")));
             Assert.Equal("Your own components.csv has lines not taken",
                 KpiPaneWords.ComponentFileSays(ComponentFile.Parse(ComponentSource.Personal, "p.csv", new[] { "Component,Template,Folder", "A,B" })));
+            Assert.Equal("The shared components.csv names a template not found here",
+                KpiPaneWords.ComponentFileSays(ComponentFile.Parse(ComponentSource.Shared, "s.csv", new[] { "Component,Template,Folder", "X,NOT HERE,X" }), true));
         }
 
         /// <summary>

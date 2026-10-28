@@ -4,34 +4,45 @@ Newest entry first.
 
 ---
 
-## 2026-10-28, the 60 per cent templates and one components.csv, part (a) of two
+## 2026-10-28, the 60 per cent templates, one components.csv, new values and templates without code
 
-**Goal.** Four 60 per cent templates and four new PRX_Component values, one components.csv in
-place of the two tables in code, and the spacing tolerant match. Part (b), the layout rule and the
-two prompts in the pane, is the next pull request.
+**Goal.** Four 60 per cent templates and four new PRX_Component values end to end, one
+components.csv in place of the two tables in code, and a new value or template added in the
+pane. Split in two pull requests as the prompt allowed: (a) 175, then (b).
 
-**Done.** `design/component-wiring.md` maps every use and holds the cell by cell comparison: the
-LESS THAN 60 files are byte for byte MOSQUES and SCHOOLS, and MORE THAN 60 differs in H31 to H35
-only. `install/components.csv`, fifteen rows, read by `ComponentTable`, shipped under personal
-under shared. `ComponentMatch` is the one match rule. The four templates are versions of their
-kind, K72 and K73. install.ps1, the kit and team-install carry the csv. The round prompt asked for
-the install.ps1 change, and the line in `RcrcGreen.Core.csproj` is what puts the file beside the
-DLLs, so both are named here for Bader.
+**Done.** (a) `design/component-wiring.md` maps every use and the comparison: the LESS THAN 60
+files are byte for byte MOSQUES and SCHOOLS, MORE THAN 60 differs in H31 to H35 only. Fifteen rows
+in `install/components.csv`, read by `ComponentTable` shipped under personal under shared, the
+source per value in both reports. `ComponentMatch` is the one match rule. The four templates are
+versions of their kind, K72 and K73. (b) `TemplateLayout` and `NewTemplates`, K74: a file named
+for no template is offered in Setup on a known layout with Use and Skip, else Unknown template
+layout. `UnknownComponents`, K75: one box per unknown value after a read, Use suggestion, Choose,
+Skip, one line written. Setup names a components.csv not read whole. The round prompt asked for
+the install.ps1 change, and the line in `RcrcGreen.Core.csproj` puts the file beside the DLLs,
+both named here for Bader.
 
-**Checked.** RAN after the last code file: build 0 warnings 0 errors, 2472 tests passed against
-2395 before, 28 of 28 hook cases. install.ps1 into a throwaway profile put components.csv beside
-the DLLs, same SHA-256. A kit built from the branch holds it and installs it.
+**Checked.** Run after the last code file, the two late fixes below included: build 0 warnings
+0 errors, 2499 tests passed against 2395 before the round, 28 of 28 hook cases. The gate on 175 read 2472 and 28. Breaking the prefix
+kind check turned 5 tests red, breaking the label check 2. On the real folder and the four new
+files: all eleven known by name, each new file has its kind's layout, MOSQUES and SCHOOLS differ.
+install.ps1 into a throwaway profile put components.csv beside the DLLs, same SHA-256. A kit built
+from branch (a) holds 12 files with components.csv and its team-install put it there. Breaker and
+reviewer, two passes on each pull request. After the last pass on (b), two small fixes went in
+unreviewed: Add asks the files again before it writes, and Setup names a row whose template is
+not found. L41 to L66 are LATENT. Usage 89,845,589 tokens and 35.01 USD, this session alone, read
+before the gate and merge of (b), more than twice F2's 40,444,652 and 16.10.
 
-**UNKNOWN.** Nothing ran in Revit. The model's spelling of the two school values.
+**UNKNOWN.** Nothing ran in Revit: Setup, the boxes, the four values on NG05, the plot counts per
+template before and after. The model's spelling of the two school values.
 
-**Remains.** Part (b).
+**Remains.** Bader's pass in `steps/03_your_steps.md`.
 
-**Known bugs.** A shared components.csv that cannot be read lets the shipped one answer with no
-word on the pane until part (b).
+**Known bugs.** None open.
 
-**Next.** Part (b).
+**Next.** Bader's pass, then the Setup.exe round in a fresh session.
 
-**Your turn.** Nothing until the round ends.
+**Your turn.** Q9 old mosque and school targets, Q10 unreadable shared components.csv, Q11 Use
+lasts the session, Q12 RCRC Green folder name copied, and Q8 still open.
 
 ---
 

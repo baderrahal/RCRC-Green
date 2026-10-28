@@ -224,11 +224,19 @@ namespace RcrcGreen.Core.Kpi
         /// A components.csv that was there and was not read whole. Not read lets the files below
         /// it answer for every value, so it is said on the pane and not only in the report.
         /// </summary>
-        public static string ComponentFileSays(ComponentFile file)
+        public static string ComponentFileSays(ComponentFile file, bool namesAnUnknownTemplate = false)
         {
             string which = file == null ? "A" : char.ToUpperInvariant(ComponentTable.SourceWord(file.Source)[0]) + ComponentTable.SourceWord(file.Source).Substring(1);
-            return which + " components.csv " + (file != null && !file.Read ? "was not read" : "has lines not taken");
+            if (file != null && !file.Read) return which + " components.csv was not read";
+
+            // A row naming a template this folder does not hold places nothing, and its value
+            // gets no box of its own, so the file is named here.
+            return which + " components.csv " + (file != null && file.Problems.Count == 0 && namesAnUnknownTemplate
+                ? "names a template not found here"
+                : "has lines not taken");
         }
+
+        public const string AlreadyInAFile = "Not added. A components.csv already names it.";
 
         public static string LineWritten(string path)
         {

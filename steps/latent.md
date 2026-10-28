@@ -301,7 +301,7 @@ Found: KPI team kit, breaker second pass
 
 Where: `PlotWorkbookPath.cs` 113 and 139, `Path.Combine(root, folder, held)`
 Input: a hand typed Folder such as `D:\KPI`, `..`, `SCHOOL/60` or `STREETS.` in a shared or personal file
-Why latent: no shared or personal file exists yet and the fifteen shipped folders are plain names
+Why latent: no shared or personal file exists yet and the twelve shipped folders are plain names
 Found: 60 per cent round part (a), breaker and reviewer
 
 ## L42 A press reads the table in force more than once
@@ -464,3 +464,17 @@ Where: `KpiPanel.Listing` and `Reviewed`, `NewTemplatesTests.Folder`
 Input: a templates folder of a hundred files, and a long run of the suite on one machine
 Why latent: the folder holds eleven files and the temp folders are small
 Found: 60 per cent round part (b), breaker and reviewer
+
+## L65 A new threshold is suggested the 60 per cent template
+
+Where: `UnknownComponents.Suggest`, most shared words
+Input: a model value DAILY MOSQUE MORE THAN 80% or SCHOOL LESS THAN 70%, then Use suggestion
+Why latent: no such value is in a model. The box shows Suggested: Mosques >60% before the press
+Found: 60 per cent round part (b), breaker and reviewer pass 2
+
+## L66 A templates folder named another way throughout
+
+Where: `NewTemplates.KnownByName` and `Why`
+Input: a folder whose files do not end with their template's name, so none is known by name
+Why latent: the client's folder names all eleven that way, measured
+Found: 60 per cent round part (b), reviewer

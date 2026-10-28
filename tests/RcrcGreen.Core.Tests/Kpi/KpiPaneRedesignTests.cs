@@ -133,6 +133,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiPaneWords.Suggested(KpiTemplates.MosquesMoreThan60), KpiPaneWords.Suggested(null),
                 KpiPaneWords.AddsTo(true), KpiPaneWords.AddsTo(false), KpiPaneWords.SuggestedFolder("DAILY MOSQUE MORE THAN 80%"),
                 KpiPaneWords.ComponentFileSays(shared), KpiPaneWords.ComponentFileSays(taken),
+                KpiPaneWords.ComponentFileSays(taken, true), KpiPaneWords.AlreadyInAFile,
                 KpiPaneWords.LineWritten("C:\\a\\components.csv"), KpiPaneWords.LineNotWritten,
                 KpiPaneWords.PickATemplateAndAFolder
             });
