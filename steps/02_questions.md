@@ -74,3 +74,36 @@ Questions asked before this file existed are in each task's own log and are not 
    says why. B show no tool at all
 
    Answer:
+
+9. The MOSQUES and SCHOOLS templates the team already had are byte for byte the new LESS THAN 60
+   files, so DAILY MOSQUE, FRIDAY MOSQUE and SCHOOL plots get the under 60 per cent KPI targets
+   today. Measured in `design/component-wiring.md`. The tool writes no target and changes nothing.
+
+   Options: A ask the client whether the old values should use the under 60 targets, no change
+   in the tool. B nothing to ask
+
+   Answer:
+
+10. A shared components.csv that is there and cannot be read, a fourth heading typed in D1 or a
+    tab separated save, lets the shipped table answer for every value. Setup shows a box saying
+    the shared file was not read, and both reports name it.
+
+    Options: A keep it, the shipped table answers and Setup says so. B refuse every value while
+    the shared file cannot be read
+
+    Answer:
+
+11. Use on a new template found by its layout lasts until Revit closes. A components.csv row
+    naming that template uses it on every start without a press.
+
+    Options: A keep it, the row is the lasting choice. B remember Use in a file of its own
+
+    Answer:
+
+12. `ComponentFiles` in the KPI Revit folder holds the folder name RCRC Green a third time.
+    Drawing Sheet's `PresetStore` and `TitleBlockSettingsStore` hold the other two, and
+    territory.md asks for a move to Shared rather than a copy.
+
+    Options: A move it to Shared in a round of its own. B leave the three copies
+
+    Answer:

@@ -92,7 +92,7 @@ namespace RcrcGreen.Core.Kpi
         public static TemplateChoice For(
             AgreedValue component, IReadOnlyList<string> ticked, IReadOnlyList<KpiTemplate> templates)
         {
-            IReadOnlyList<KpiTemplate> all = templates ?? KpiTemplates.All;
+            IReadOnlyList<KpiTemplate> all = templates ?? ComponentTable.InForce.Templates;
             KpiTemplate byPrefix = OnePrefixTemplate(ticked);
 
             if (component == null || component.Distinct.Count == 0)

@@ -372,6 +372,16 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// Whether any file says something about a value: a row in force, or a refusal in one of
+        /// the files. A value no file names is the only kind the pane offers a line for.
+        /// </summary>
+        public bool Names(string component)
+        {
+            string key = ComponentMatch.Key(component);
+            return key.Length > 0 && (RowFor(component) != null || Files.Any(file => file.RefusedKeys.Contains(key)));
+        }
+
+        /// <summary>
         /// The template a value fills, or null where no file holds the value or its row names a
         /// template this table does not know.
         /// </summary>
@@ -499,6 +509,34 @@ namespace RcrcGreen.Core.Kpi
             fields.Add(field.ToString());
             while (fields.Count > HeaderFields.Length && fields[fields.Count - 1].Trim().Length == 0) fields.RemoveAt(fields.Count - 1);
             return fields;
+        }
+
+        /// <summary>
+        /// What to append to a file holding <paramref name="existing"/>, null where it is not
+        /// there, so it ends holding the line: the header first into an empty or missing file,
+        /// and a line break first where the file does not end in one. Nothing already in the
+        /// file is rewritten.
+        /// </summary>
+        public static string TextToAppend(string existing, string line)
+        {
+            if (string.IsNullOrWhiteSpace(existing)) return Header + "\r\n" + line + "\r\n";
+
+            bool ends = existing.EndsWith("\n", StringComparison.Ordinal) || existing.EndsWith("\r", StringComparison.Ordinal);
+            return (ends ? string.Empty : "\r\n") + line + "\r\n";
+        }
+
+        /// <summary>
+        /// One row written as a csv line for the pane to add, quoted only where a field needs it.
+        /// </summary>
+        public static string Line(string component, string template, string folder)
+        {
+            return string.Join(",", new[] { component, template, folder }.Select(Quoted).ToArray());
+        }
+
+        private static string Quoted(string field)
+        {
+            string held = (field ?? string.Empty).Trim();
+            return held.IndexOfAny(new[] { ',', '"', ';' }) >= 0 ? "\"" + held.Replace("\"", "\"\"") + "\"" : held;
         }
     }
 }

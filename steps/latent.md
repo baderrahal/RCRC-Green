@@ -301,7 +301,7 @@ Found: KPI team kit, breaker second pass
 
 Where: `PlotWorkbookPath.cs` 113 and 139, `Path.Combine(root, folder, held)`
 Input: a hand typed Folder such as `D:\KPI`, `..`, `SCHOOL/60` or `STREETS.` in a shared or personal file
-Why latent: no shared or personal file exists yet and the fifteen shipped folders are plain names
+Why latent: no shared or personal file exists yet and the twelve shipped folders are plain names
 Found: 60 per cent round part (a), breaker and reviewer
 
 ## L42 A press reads the table in force more than once
@@ -366,3 +366,115 @@ Where: `ComponentTable.Header` and `HeaderFields`
 Input: a change to one of the two and not the other
 Why latent: neither has changed and a test reads the shipped header through both
 Found: 60 per cent round part (a), reviewer
+
+## L51 A bad shared row refuses whatever its first field reads
+
+Where: `ComponentFile.Parse`, a row that cannot be read refuses the key of its first field
+Input: `DAILY MOSQUE;MOSQUES;X` in a comma file, `HEALTH, NEW,HEALTHCARE,HC` unquoted, or a note typed in column D
+Why latent: no shared file exists yet. Each case is named in both reports and on Setup
+Found: 60 per cent round part (a), breaker pass 2
+
+## L52 A components.csv read while it is being saved
+
+Where: `ComponentFile.From`
+Input: a redraw in the moment an editor deletes and renames the shared file, or writes it in place
+Why latent: the window is a moment and the next redraw reads it whole
+Found: 60 per cent round part (a), breaker pass 2
+
+## L53 A quoted line break and Excel's own code page
+
+Where: `ComponentFile.From`, `StreamReader.ReadLine` and UTF-8
+Input: a field holding Alt+Enter, or a value with a non ASCII letter saved as plain CSV
+Why latent: every value and folder today is ASCII on one line. A split row is refused and named
+Found: 60 per cent round part (a), reviewer pass 2
+
+## L54 Two rules say when two folders are one
+
+Where: `ComponentTable` compares folders case blind, `ComponentFolders.Folders` and `FoldersOf` ordinal
+Input: a shared file giving FRIDAY MOSQUE the folder Daily Mosque
+Why latent: no file spells one folder two ways
+Found: 60 per cent round part (a), reviewer pass 2
+
+## L55 A line added to a semicolon file is written with commas
+
+Where: `ComponentFiles.Add` through `ComponentTable.Line`
+Input: a shared components.csv Excel saved with semicolons, then Use suggestion
+Why latent: no shared file exists yet. The added line is then refused and named on Setup
+Found: 60 per cent round part (b), author
+
+## L56 A new template laid out like STREETS gets no road width and no length
+
+Where: `KpiRequestHandler` asks the street reference file only for the STREETS object, and `RunAtAGlance` and `KpiCreateReport` test for STREETS by object or name
+Input: a reissued STREETS file under another name with Use pressed
+Why latent: no new street template exists
+Found: 60 per cent round part (b), breaker
+
+## L57 A new template's name hangs on the rest of the folder, and an old one stays for the session
+
+Where: `NewTemplates.SharedOpening`, and `_madeTemplates` in `KpiPanel`, never cleared
+Input: a `Copy of ..._MOSQUES.xlsx` dropped in the folder, or a new file renamed or removed
+Why latent: the folder holds the eleven, all opening the same way
+Found: 60 per cent round part (b), breaker
+
+## L58 The template a new file is compared with is the first with its layout
+
+Where: `NewTemplates.Review`, the known file picked by layout alone
+Input: a file named FUTURE PARK, singular, when the EXISTING PARKS file is listed first
+Why latent: no such file is in the folder
+Found: 60 per cent round part (b), breaker
+
+## L59 A tick outlives the recognition it was made under
+
+Where: `KpiPanel.TickFor` by file name, the template frozen at the tick
+Input: a colleague removing the row that made a file used, while it is ticked
+Why latent: no new template exists, and the press then writes nothing for it
+Found: 60 per cent round part (b), breaker
+
+## L60 Adding a line to a file of notes only, or into a missing templates folder
+
+Where: `ComponentTable.TextToAppend`, `ComponentFiles.Add`
+Input: a shared file holding only # lines, or a templates folder deleted under an open pane
+Why latent: no shared file exists yet and the folder is checked on every draw
+Found: 60 per cent round part (b), breaker
+
+## L61 Two people adding at once on the synced folder
+
+Where: `ComponentFiles.Add`, a read then an append, not one step
+Input: two machines pressing Use suggestion within one sync, or Excel saving the file meanwhile
+Why latent: the team has not added a value yet. A dropped line brings the box back
+Found: 60 per cent round part (b), breaker and reviewer
+
+## L62 The box says the shared file and the write falls back to your own
+
+Where: `KpiPaneWords.AddsTo`, read before the write
+Input: the shared file held by Excel or read only
+Why latent: the status line names the file really written
+Found: 60 per cent round part (b), breaker
+
+## L63 Choose offers a template made for a file somebody skipped
+
+Where: `KpiPanel.Choosing` and `TemplateForComponent`, both offer every made template
+Input: Skip on a new template, then Choose it for a value, which makes it used by K74
+Why latent: no new template exists
+Found: 60 per cent round part (b), reviewer
+
+## L64 The review runs several times a redraw, and its tests leave temp folders
+
+Where: `KpiPanel.Listing` and `Reviewed`, `NewTemplatesTests.Folder`
+Input: a templates folder of a hundred files, and a long run of the suite on one machine
+Why latent: the folder holds eleven files and the temp folders are small
+Found: 60 per cent round part (b), breaker and reviewer
+
+## L65 A new threshold is suggested the 60 per cent template
+
+Where: `UnknownComponents.Suggest`, most shared words
+Input: a model value DAILY MOSQUE MORE THAN 80% or SCHOOL LESS THAN 70%, then Use suggestion
+Why latent: no such value is in a model. The box shows Suggested: Mosques >60% before the press
+Found: 60 per cent round part (b), breaker and reviewer pass 2
+
+## L66 A templates folder named another way throughout
+
+Where: `NewTemplates.KnownByName` and `Why`
+Input: a folder whose files do not end with their template's name, so none is known by name
+Why latent: the client's folder names all eleven that way, measured
+Found: 60 per cent round part (b), reviewer
