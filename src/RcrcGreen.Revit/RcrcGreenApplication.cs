@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Autodesk.Revit.UI;
+using RcrcGreen.Core;
 using RcrcGreen.Revit.Kpi;
 using RcrcGreen.Revit.ViewFilters;
 
@@ -14,16 +16,20 @@ namespace RcrcGreen.Revit
     /// One tab holding three panels side by side. Drawing Sheet keeps its single button. KPI
     /// is a panel built to carry several buttons later and carries one this round. View
     /// Filters carries its one button the same way.
+    ///
+    /// features.txt beside the assemblies says which of the three this machine shows. A tool
+    /// it leaves out gets no panel and no pane, so the team kit's KPI alone costs Revit nothing
+    /// for the other two. No file shows all three.
     /// </summary>
     public class RcrcGreenApplication : IExternalApplication
     {
         public const string TabName = "RCRC Green";
 
-        public const string DrawingSheetPanelName = "Drawing Sheet";
+        public const string DrawingSheetPanelName = Features.DrawingSheet;
 
-        public const string KpiPanelName = "KPI";
+        public const string KpiPanelName = Features.Kpi;
 
-        public const string ViewFiltersPanelName = "View Filters";
+        public const string ViewFiltersPanelName = Features.ViewFilters;
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -37,70 +43,90 @@ namespace RcrcGreen.Revit
                 // of the add-in is registered.
             }
 
+            Features features = FeaturesOn(application);
+
             // The panes have to be registered before any document opens, which is why they
             // are here rather than in the commands that show them. Each goes through the same
             // guard on its own, so a KPI pane that will not register costs the KPI button its
             // pane and nothing else on the ribbon.
-            ShowDrawingSheetCommand.PaneRegistered = Registered(
-                application,
-                ShowDrawingSheetCommand.PaneId,
-                ShowDrawingSheetCommand.PaneTitle,
-                () => new DrawingSheetPanel());
+            if (features.Shows(Features.DrawingSheet))
+            {
+                ShowDrawingSheetCommand.PaneRegistered = Registered(
+                    application,
+                    ShowDrawingSheetCommand.PaneId,
+                    ShowDrawingSheetCommand.PaneTitle,
+                    () => new DrawingSheetPanel());
+            }
 
-            ShowKpiCommand.PaneRegistered = Registered(
-                application,
-                ShowKpiCommand.PaneId,
-                ShowKpiCommand.PaneTitle,
-                () => new KpiPanel());
+            if (features.Shows(Features.Kpi))
+            {
+                ShowKpiCommand.PaneRegistered = Registered(
+                    application,
+                    ShowKpiCommand.PaneId,
+                    ShowKpiCommand.PaneTitle,
+                    () => new KpiPanel());
+            }
 
-            ShowViewFiltersCommand.PaneRegistered = Registered(
-                application,
-                ShowViewFiltersCommand.PaneId,
-                ShowViewFiltersCommand.PaneTitle,
-                () => new ViewFiltersPane());
+            if (features.Shows(Features.ViewFilters))
+            {
+                ShowViewFiltersCommand.PaneRegistered = Registered(
+                    application,
+                    ShowViewFiltersCommand.PaneId,
+                    ShowViewFiltersCommand.PaneTitle,
+                    () => new ViewFiltersPane());
+            }
 
-            RibbonPanel drawingSheet = PanelNamed(application, DrawingSheetPanelName);
-            Add(drawingSheet, ShowDrawingSheetCommand.ButtonName, ShowDrawingSheetCommand.ButtonText,
-                typeof(ShowDrawingSheetCommand),
-                ShowDrawingSheetCommand.PaneRegistered
-                    ? "Open the Drawing Sheet panel."
-                    : ShowDrawingSheetCommand.NotAvailableTip,
-                ShowDrawingSheetCommand.PaneRegistered
-                    ? "Pick a plot range, untick the plots you are not working on, and see "
-                      + "which view types each of the rest is missing. Marking a missing view "
-                      + "records intent and changes nothing. Scan Model and the scope box "
-                      + "assignment are both in there too."
-                    : ShowDrawingSheetCommand.NotAvailable);
+            if (features.Shows(Features.DrawingSheet))
+            {
+                RibbonPanel drawingSheet = PanelNamed(application, DrawingSheetPanelName);
+                Add(drawingSheet, ShowDrawingSheetCommand.ButtonName, ShowDrawingSheetCommand.ButtonText,
+                    typeof(ShowDrawingSheetCommand),
+                    ShowDrawingSheetCommand.PaneRegistered
+                        ? "Open the Drawing Sheet panel."
+                        : ShowDrawingSheetCommand.NotAvailableTip,
+                    ShowDrawingSheetCommand.PaneRegistered
+                        ? "Pick a plot range, untick the plots you are not working on, and see "
+                          + "which view types each of the rest is missing. Marking a missing view "
+                          + "records intent and changes nothing. Scan Model and the scope box "
+                          + "assignment are both in there too."
+                        : ShowDrawingSheetCommand.NotAvailable);
+            }
 
-            // Scan Model and Scope Box were buttons of their own and are not any more. Both are
-            // still reachable from inside the Drawing Sheet panel, which is where someone
-            // deciding what to do already is. The KPI panel is the second panel on the tab,
-            // and its one button this round shows the KPI pane.
-            RibbonPanel kpi = PanelNamed(application, KpiPanelName);
-            Add(kpi, ShowKpiCommand.ButtonName, ShowKpiCommand.ButtonText,
-                typeof(ShowKpiCommand),
-                ShowKpiCommand.PaneRegistered
-                    ? "Open the KPI pane."
-                    : ShowKpiCommand.NotAvailableTip,
-                ShowKpiCommand.PaneRegistered
-                    ? "Create fills the GRP KPI Checklist from the open model, reading the model "
-                      + "itself when it needs to, and writes a text file saying where every value "
-                      + "came from. It creates nothing in the model and never writes to a template."
-                    : ShowKpiCommand.NotAvailable);
+            if (features.Shows(Features.Kpi))
+            {
+                // Scan Model and Scope Box were buttons of their own and are not any more. Both are
+                // still reachable from inside the Drawing Sheet panel, which is where someone
+                // deciding what to do already is. The KPI panel is the second panel on the tab,
+                // and its one button this round shows the KPI pane.
+                RibbonPanel kpi = PanelNamed(application, KpiPanelName);
+                Add(kpi, ShowKpiCommand.ButtonName, ShowKpiCommand.ButtonText,
+                    typeof(ShowKpiCommand),
+                    ShowKpiCommand.PaneRegistered
+                        ? "Open the KPI pane."
+                        : ShowKpiCommand.NotAvailableTip,
+                    ShowKpiCommand.PaneRegistered
+                        ? "Create fills the GRP KPI Checklist from the open model, reading the model "
+                          + "itself when it needs to, and writes a text file saying where every value "
+                          + "came from. It creates nothing in the model and never writes to a template."
+                        : ShowKpiCommand.NotAvailable);
+            }
 
-            // The third panel, one button, same shape as the KPI one. Scan in the pane reads
-            // and changes nothing, and Apply is the only thing that writes, one transaction.
-            RibbonPanel viewFilters = PanelNamed(application, ViewFiltersPanelName);
-            Add(viewFilters, ShowViewFiltersCommand.ButtonName, ShowViewFiltersCommand.ButtonText,
-                typeof(ShowViewFiltersCommand),
-                ShowViewFiltersCommand.PaneRegistered
-                    ? "Open the View Filters pane."
-                    : ShowViewFiltersCommand.NotAvailableTip,
-                ShowViewFiltersCommand.PaneRegistered
-                    ? "Scan shows, per plot, which of the keyword views' filters exist, will be "
-                      + "created, or cannot be. Apply adds and configures them in one "
-                      + "transaction, one undo, and writes a report of every line it logged."
-                    : ShowViewFiltersCommand.NotAvailable);
+            if (features.Shows(Features.ViewFilters))
+            {
+                // The third panel, one button, same shape as the KPI one. Scan in the pane reads
+                // and changes nothing, and Apply is the only thing that writes, one transaction.
+                RibbonPanel viewFilters = PanelNamed(application, ViewFiltersPanelName);
+                Add(viewFilters, ShowViewFiltersCommand.ButtonName, ShowViewFiltersCommand.ButtonText,
+                    typeof(ShowViewFiltersCommand),
+                    ShowViewFiltersCommand.PaneRegistered
+                        ? "Open the View Filters pane."
+                        : ShowViewFiltersCommand.NotAvailableTip,
+                    ShowViewFiltersCommand.PaneRegistered
+                        ? "Scan shows, per plot, which of the keyword views' filters exist, will be "
+                          + "created, or cannot be. Apply adds and configures them in one "
+                          + "transaction, one undo, and writes a report of every line it logged."
+                        : ShowViewFiltersCommand.NotAvailable);
+            }
 
             return Result.Succeeded;
         }
@@ -108,6 +134,39 @@ namespace RcrcGreen.Revit
         public Result OnShutdown(UIControlledApplication application)
         {
             return Result.Succeeded;
+        }
+
+        /// <summary>
+        /// The tools features.txt names, with every name it holds that is not a tool written to
+        /// Revit's own journal, which is the log a failed startup is read from. A file that
+        /// cannot be read shows all three and says so there.
+        /// </summary>
+        private static Features FeaturesOn(UIControlledApplication application)
+        {
+            string[] lines = null;
+            try
+            {
+                string beside = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string path = string.IsNullOrEmpty(beside) ? null : Path.Combine(beside, Features.FileName);
+                if (path != null && File.Exists(path)) lines = File.ReadAllLines(path);
+            }
+            catch (IOException e)
+            {
+                Journal(application, "RCRC Green: " + Features.FileName + " could not be read, so all three tools are shown. " + e.Message);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                Journal(application, "RCRC Green: " + Features.FileName + " could not be read, so all three tools are shown. " + e.Message);
+            }
+
+            Features features = Features.Of(lines);
+            foreach (string line in features.JournalLines()) Journal(application, line);
+            return features;
+        }
+
+        private static void Journal(UIControlledApplication application, string line)
+        {
+            application.ControlledApplication.WriteJournalComment(line, false);
         }
 
         /// <summary>
