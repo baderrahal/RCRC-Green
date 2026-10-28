@@ -122,8 +122,9 @@ namespace RcrcGreen.Core.Kpi
         ///
         /// Both columns sit on the same row of the same value, so which folders a template
         /// reaches is already written down and there is nothing here to drift from.
-        /// Counted off the two: six templates reach exactly ONE folder each and MOSQUES reaches
-        /// TWO, because DAILY MOSQUE and FRIDAY MOSQUE fill one workbook and are filed apart.
+        /// Counted off the shipped file: ten of the eleven templates reach exactly ONE folder each
+        /// and MOSQUES reaches TWO, because DAILY MOSQUE and FRIDAY MOSQUE fill one workbook and are
+        /// filed apart.
         /// </summary>
         public static IReadOnlyList<string> FoldersOf(KpiTemplate template)
         {

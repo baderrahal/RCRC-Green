@@ -119,7 +119,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// **The two mosque components are filed apart and filled from one workbook.** That is
-        /// the whole reason the folder table is a second table beside the template one.
+        /// the whole reason the folder is a column of its own beside the template.
         /// </summary>
         [Fact]
         public void TheTwoMosqueComponentsShareATemplateAndNotAFolder()
