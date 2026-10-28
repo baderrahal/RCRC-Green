@@ -1,5 +1,10 @@
 # ai-max state, KPI
 
+Phase: 9, ship. Q1 to Q5 answered and the records inside the AI MAX version 4 caps, F1b in
+`steps/01_next.md`. Under AI MAX version 4. Its entry is the top of `steps/log-kpi.md`, and
+the split proof is `steps/runs/2026-10-28-records-split/split_proof.txt`. Entries older than
+the eight kept here are in `steps/history/ai-max-state-kpi-1.md` and `-2.md`.
+
 Phase: 9, ship, done. The pane redesign for company wide use, F1 in `steps/01_next.md`, merged
 to main as `8a2382f`, pull request 170, the squash message back off main byte for byte, the gate
 reading 2368 passed and 28 hook cases. Under AI MAX version 4. Its entry is the top of `steps/log-kpi.md`. Build

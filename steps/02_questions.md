@@ -45,3 +45,22 @@ Questions asked before this file existed are in each task's own log and are not 
    Options: A leave them square. B rebuild the template in a round of its own
 
    Answer: A, 2026-10-28. The dropdowns stay square. No change.
+
+6. A failed read leaves step 2 dead. When Read model is refused, only the status line repaints,
+   and the button stays grey until somebody clicks a step circle. The breaker found it on
+   28 October, it is older than this round, and this round could change no src beyond Q4.
+
+   Options: A fix it in a short round of its own, with the pane redrawing step 2 after a refusal.
+   B leave it, the status line already says why
+
+   Answer:
+
+7. Rules a session needs on every turn now sit in docs/rules. The split kept a few whole
+   sections in .claude/rules and CLAUDE.md under their caps. The two plot parameters fact (M07),
+   K51 the pane holds no copy, K56 never write to a template, R14 one sibling and R18 the
+   category number are read by id now.
+
+   Options: A add one pointer line per rule to CLAUDE.md, naming its id, which costs about 0.5 KB.
+   B leave them in docs/rules, found through the index
+
+   Answer:

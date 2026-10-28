@@ -4,6 +4,59 @@ Newest entry first.
 
 ---
 
+## 2026-10-28, Q1 to Q5 answered and the records inside the version 4 caps
+
+**Goal.** Bader's answers to Q1 to Q5 in, every record a session pays for at start inside the
+AI MAX version 4 caps, split byte for byte, and a test in the gate that holds the caps.
+
+**Done.** Q4: `KpiPaneWords.ReadsSheetsAndSchedules` shows in step 2's body before a read, the
+empty body Q4 named, because the status line already sits under the button. Q1, Q2, Q3 and Q5
+are answered A with no change. The split reads the blobs at `4b244b3` through
+`steps/runs/2026-10-28-records-split/split.py`. Bytes as git stores them:
+
+```
+.claude/rules/kpi-rules.md      269,551 -> 8,277, plus 15 parts in docs/rules/
+.claude/rules/core-rules.md      37,971 -> 4,841, plus 2 parts
+.claude/rules/revit-commands.md  42,270 -> 8,772, plus 2 parts
+CLAUDE.md                        28,418 -> 6,606, plus 3 sections in docs/
+steps/log-kpi.md                623,058 -> 23,201 before this entry, plus 7 history parts
+steps/log-drawing.md            270,447 -> 27,575, plus 3 history parts
+steps/ai-max-state-kpi.md       208,136 -> 28,284 before its new entry, plus 2 history parts
+```
+
+Each docs part is at most 30,000 bytes and each history part at most 100,000.
+`docs/rules/index.md` names the file of all 158 ids, 155 rules and 3 CLAUDE.md sections. `RecordCapsTests` holds the caps. This
+KPI round edited Drawing Sheet's two rules files and log because the round asked for it, and the
+hook reads both folders as common.
+
+**Checked.** RAN after the last file: build 0 warnings 0 errors, 2380 tests passed,
+28 of 28 hook cases. SHA-256 of each original against its parts joined: 7 of 7 MATCH, and
+the heading counts 122, 28, 27, 11, 75, 47 and 49 are equal, in `split_proof.txt`, each part read back off
+disk. The caps test failed 3 of 11 on main's records, `caps_on_main.txt`, and passes 11 here. The
+reviewer and the breaker made one pass each, and the reviewer a second over the fixes. Every REAL
+one is fixed: the script pinned to `4b244b3`, every entry dated from the caps held to 4 KB, the
+one old entry over it pinned at 12,864 bytes, three stale pointers, a heading over the CLAUDE.md
+pointers, and no tooltip on the Q4 line while a read runs. Nine LATENT are L14 to L22. Usage:
+session c82dc224 carries F1 and this round, 214,430,718 tokens and 78.88 USD in all, read
+before the final checks and the merge. This round is 24,229,432 and 12.40, less than F1's
+190,201,286 and 66.48.
+
+**UNKNOWN.** Nothing is seen in Revit, the Q4 line included. Its tooltip change is pane only and
+no test reaches it.
+
+**Remains.** Nine comments in src and tests and eight lines of moved text still name
+`kpi-rules.md` or `CLAUDE.md` for what now sits in docs. Each reaches it through one pointer, and
+both src and moved text were out of scope.
+
+**Known bugs.** A failed read leaves step 2's Read model grey, Q6.
+
+**Next.** F2, the team kit, in a fresh session.
+
+**Your turn.** Q6 A failed read leaves step 2 dead. Q7 Every turn rules now in docs. The run
+in `steps/03_your_steps.md`.
+
+---
+
 ## 2026-10-28, the pane redesign for company wide use, F1
 
 **Goal.** The KPI pane rebuilt to Bader's approved design, no pane sentence over 10 words, the

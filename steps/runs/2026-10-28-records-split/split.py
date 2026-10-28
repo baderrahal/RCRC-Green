@@ -1,23 +1,37 @@
 """The records split of 2026-10-28, kept so it can be run again and checked.
 
-Reads every original off the blob on main, never off the working copy, so a Windows checkout's
-line endings cannot reach a part. Run from the repo root with main at 4b244b3. It writes the
-parts, the index and the proof, and refuses with an assertion when any join differs from its
-original or any heading count moves.
+Reads every original off the blob at 4b244b3, the main this round was cut from, never off the
+working copy, so a Windows checkout's line endings cannot reach a part and a rerun after the
+merge splits the originals again rather than the parts. It writes the parts, the index and the
+proof, and refuses with an assertion when any join differs from its original or any heading
+count moves.
+
+It overwrites what it writes, so it runs only in a throwaway worktree at 4b244b3, never in a
+working copy holding later work, and it refuses anywhere else:
+
+    git worktree add --detach <somewhere> 4b244b3
+    copy this script there and run it from that folder
 """
-import hashlib, math, os, re, subprocess
+import hashlib, math, os, re, subprocess, sys
 
 DAY = "2026-10-28"
 PROOF = "steps/runs/2026-10-28-records-split/split_proof.txt"
 # CHOSEN. A rules part a helper reads is at most 30 KB and a history part at most 100 KB, the
 # version 4 caps. What stays of a log is at most 30 KB, so a session that greps it stays cheap.
+ORIGIN = "4b244b3"
 RULE_PART_CAP = 30000
 LOG_KEEP_CAP = 30000
 HISTORY_PART_CAP = 100000
 
 
+HEAD = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+if not HEAD.startswith(ORIGIN):
+    sys.exit("Refused. HEAD is " + (HEAD or "unreadable") + ", not " + ORIGIN + ". Run this in a "
+             "throwaway worktree at " + ORIGIN + ", because it overwrites every file it writes.")
+
+
 def blob(path):
-    return subprocess.run(["git", "show", "main:" + path], capture_output=True, check=True).stdout
+    return subprocess.run(["git", "show", ORIGIN + ":" + path], capture_output=True, check=True).stdout
 
 
 def sha(b):
@@ -76,7 +90,7 @@ def rules_units(src, letter, sub_split):
     return t, units
 
 
-def place(src, letter, topics, keep, prefix, sub_split=None, sub_topic=None):
+def place(src, letter, topics, keep, prefix, sub_split=None, sub_topic=None, note=b""):
     """topics maps a topic to its 1-based section numbers. keep is what stays in .claude/rules."""
     t, units = rules_units(src, letter, sub_split)
     where = {}
@@ -93,7 +107,8 @@ def place(src, letter, topics, keep, prefix, sub_split=None, sub_topic=None):
 
     files = {}
     kept = b"".join(u[2] for u in units if where[u[0]] is None)
-    files[src] = kept + (b"" if kept.endswith(b"\n\n") else b"\n") + RULES_POINTER
+    sep = b"" if kept.endswith(b"\n\n") else b"\n"
+    files[src] = kept + sep + RULES_POINTER + note
     file_of = {u[0]: src for u in units if where[u[0]] is None}
 
     for name in sorted(set(v for v in where.values() if v)):
@@ -122,16 +137,20 @@ def place(src, letter, topics, keep, prefix, sub_split=None, sub_topic=None):
     for path, data in files.items():
         write(path, data)
 
-    # The proof takes every unit back out of the file the index names, off disk, in index order.
-    rebuilt = b""
-    for uid, _, body in units:
-        assert body in read(file_of[uid]), uid
-        rebuilt += body
+    # The proof reads every file back off disk. Each must be exactly its own units in index
+    # order, the kept file followed by its pointer, so nothing is lost, doubled or reordered.
+    for path in files:
+        mine = b"".join(body for uid, _, body in units if file_of[uid] == path)
+        if path == src:
+            mine += sep + RULES_POINTER + note
+        assert read(path) == mine, path
+    rebuilt = b"".join(body for _, _, body in units)
     after = sum(heading_count(read(p)) for p in files)
     lines = ["%s on main: %d bytes, SHA-256 %s" % (src, len(t), sha(t))]
     for path in files:
         lines.append("  %-44s %7d bytes" % (path, len(read(path))))
     lines.append("  %d units, %d index lines" % (len(units), len(units)))
+    lines.append("  every file read back is exactly its units in index order")
     lines.append("  units joined in index order: %d bytes, SHA-256 %s, %s" % (
         len(rebuilt), sha(rebuilt), "MATCH" if rebuilt == t else "DIFFERS"))
     lines.append("  headings before %d, after %d, %s" % (
@@ -164,7 +183,9 @@ REVIT_TOPICS = {
 }
 REVIT_KEEP = [1, 2, 3, 4, 9, 10, 11, 12, 16, 20, 26]
 
-place(".claude/rules/kpi-rules.md", "K", KPI_TOPICS, KPI_KEEP, "kpi", sub_split=35, sub_topic="pdf")
+place(".claude/rules/kpi-rules.md", "K", KPI_TOPICS, KPI_KEEP, "kpi", sub_split=35, sub_topic="pdf",
+      note=b"K25 above says under the section above. That section is K17, The client's note holds, "
+           b"and the index names its part.\n")
 place(".claude/rules/core-rules.md", "C", CORE_TOPICS, CORE_KEEP, "core")
 place(".claude/rules/revit-commands.md", "R", REVIT_TOPICS, REVIT_KEEP, "revit")
 
@@ -173,9 +194,12 @@ t = blob("CLAUDE.md")
 starts = starts_of(t, rb"^## ")
 bounds = starts + [len(t)]
 sections = {t[s:t.index(b"\n", s)].decode()[3:]: (s, bounds[i + 1]) for i, s in enumerate(starts)}
+# Without a heading of their own the three pointers read as part of the rule above them. It is
+# the one heading the split adds, and the count below takes it off by name.
+MOVED_HEADING = "## Three sections that live in docs\n\n"
 MOVES = [
     ("Project facts", "docs/rules/project-facts.md", "M07",
-     "**Project facts**, from the team and from real models, are in `docs/rules/project-facts.md`.\n\n"),
+     MOVED_HEADING + "**Project facts**, from the team and from real models, are in `docs/rules/project-facts.md`.\n\n"),
     ("Hooks", "docs/hooks.md", "M08",
      "**Hooks**: four walls wired in `.claude/settings.json`, described in `docs/hooks.md`. Run "
      "`bash .claude/hooks/hook-tests.sh` after any change to one.\n\n"),
@@ -183,24 +207,40 @@ MOVES = [
      "**Things that have gone wrong before** are in `docs/gone-wrong.md`. Add to it whenever "
      "something breaks.\n\n"),
 ]
+# Two lines left in CLAUDE.md named kpi-rules.md for measurements that moved, so they are
+# repointed. They are the only words of the kept text that change, and the proof undoes them.
+REPOINTS = [
+    (b"measured fact is in `.claude/rules/kpi-rules.md`.",
+     b"measured fact is in the KPI rules, by id in `docs/rules/index.md`."),
+    (b"The KPI rules file holds the measurement.",
+     b"The KPI rules hold the measurement, K35.09 in `docs/rules/index.md`."),
+]
 new = t
 for title, path, uid, line in reversed(MOVES):
     s, e = sections[title]
     write(path, t[s:e])
     new = new[:s] + line.encode() + new[e:]
+for old, repointed in REPOINTS:
+    assert new.count(old) == 1, old
+    new = new.replace(old, repointed)
 write("CLAUDE.md", new)
 rebuilt = read("CLAUDE.md")
+for old, repointed in REPOINTS:
+    assert rebuilt.count(repointed) == 1, repointed
+    rebuilt = rebuilt.replace(repointed, old)
 for title, path, uid, line in MOVES:
     assert rebuilt.count(line.encode()) == 1
     rebuilt = rebuilt.replace(line.encode(), read(path), 1)
-after = heading_count(read("CLAUDE.md")) + sum(heading_count(read(m[1])) for m in MOVES)
+after = heading_count(read("CLAUDE.md")) - 1 + sum(heading_count(read(m[1])) for m in MOVES)
 lines = ["CLAUDE.md on main: %d bytes, SHA-256 %s" % (len(t), sha(t)),
          "  %-44s %7d bytes" % ("CLAUDE.md", len(read("CLAUDE.md")))]
 for m in MOVES:
     lines.append("  %-44s %7d bytes" % (m[1], len(read(m[1]))))
-lines.append("  each pointer line put back by its file: %d bytes, SHA-256 %s, %s" % (
+for old, repointed in REPOINTS:
+    lines.append("  repointed: %s" % repointed.decode())
+lines.append("  each repoint undone and each pointer line put back by its file: %d bytes, SHA-256 %s, %s" % (
     len(rebuilt), sha(rebuilt), "MATCH" if rebuilt == t else "DIFFERS"))
-lines.append("  headings before %d, after %d, %s" % (
+lines.append("  headings before %d, after %d without the one added over the pointers, %s" % (
     heading_count(t), after, "EQUAL" if heading_count(t) == after else "DIFFER"))
 assert rebuilt == t and heading_count(t) == after
 proof.append("\n".join(lines))

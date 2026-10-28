@@ -36,7 +36,7 @@ template, patches it and writes a report. **Neither creates anything in the mode
 template is opened for reading and never written to. **The elements a schedule lists are
 not the scheduled things:** the softscape schedule returns RVT Link instances, so its printed
 rows are its numbers' only route, and its group rows are the only place a phase shows. Every
-measured fact is in `.claude/rules/kpi-rules.md`.
+measured fact is in the KPI rules, by id in `docs/rules/index.md`.
 
 Build `src\RcrcGreen.Revit\RcrcGreen.Revit.csproj` in Release, then run
 `.\install\install.ps1`. It builds the `Addins\2024\` layout the build does not, so copying the
@@ -90,7 +90,9 @@ A cell found by its label is found by the text THAT CELL carries. All seven KPI 
 ` Total Green cover (m²)` with a leading space and the client's note writes it without, which is
 where the tool's copy came from. Edge whitespace comes off both sides of every whole label
 comparison, through one rule, and **the inside is never touched**, because `LOD /  HARDSCAPE
-SCHEDULES` really carries two spaces. The KPI rules file holds the measurement.
+SCHEDULES` really carries two spaces. The KPI rules hold the measurement, K35.09 in `docs/rules/index.md`.
+
+## Three sections that live in docs
 
 **Project facts**, from the team and from real models, are in `docs/rules/project-facts.md`.
 

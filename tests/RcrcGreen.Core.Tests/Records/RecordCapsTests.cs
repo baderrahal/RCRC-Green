@@ -22,11 +22,18 @@ namespace RcrcGreen.Core.Tests.Records
     {
         private const int Kilobyte = 1000;
 
-        // The caps start with version 4. An entry written before it was never held to 4 KB, and
-        // rewording one to fit is refused by the same rules, so the cap reads the entries from
-        // this date on. The View Filters log's top entry, 12,864 bytes on 19 September, is the
-        // one this exempts today.
+        // The caps start with version 4, so every entry dated from this day on is held to 4 KB,
+        // not only the top one: a round that writes a long entry and then a short merged note
+        // above it, the shape log-drawing.md already holds, would otherwise hide the long one.
         private static readonly DateTime CapsBegan = new DateTime(2026, 10, 27);
+
+        // A top entry written before the caps that is over 4 KB, which may not be reworded to
+        // fit. It is named whole, with its size measured on 2026-10-28, so it cannot grow and a
+        // mistyped date cannot join it. It drops out when View Filters writes a newer entry.
+        private static readonly (string Log, string Heading, int Bytes)[] OverBeforeTheCaps =
+        {
+            ("log-view-filters.md", "## 2026-09-19, third pass. The rail: five numbered steps, one open at a time", 12864),
+        };
 
         private static readonly Regex EntryDate = new Regex(@"^## (\d{4}-\d{2}-\d{2})");
 
@@ -62,25 +69,42 @@ namespace RcrcGreen.Core.Tests.Records
         }
 
         [Fact]
-        public void TheTopEntryOfEveryLogIsAtMostFourKilobytes()
+        public void TheTopEntryAndEveryEntrySinceTheCapsOfEveryLogIsAtMostFourKilobytes()
         {
             string[] logs = Directory.GetFiles(Path.Combine(Root(), "steps"), "log-*.md");
             Assert.NotEmpty(logs);
 
-            List<string> over = new List<string>();
-            foreach (string log in logs)
-            {
-                string top = TopEntry(Normalised(log));
-                if (top == null || WrittenBeforeTheCaps(top)) continue;
-
-                int bytes = Bytes(top);
-                if (bytes > 4 * Kilobyte)
-                    over.Add(Path.GetFileName(log) + " top entry is " + bytes + " bytes");
-            }
-
+            List<string> over = logs.SelectMany(log => Faults(Path.GetFileName(log), Normalised(log))).ToList();
             Assert.True(over.Count == 0, "Over the 4 KB cap: " + string.Join(", ", over));
         }
 
+        [Fact]
+        public void ALongEntryUnderAShortMergedNoteIsStillCaught()
+        {
+            string log = "# Log\n\n## 2026-10-29, merged\n\nShort.\n\n## 2026-10-29, the round\n\n"
+                + new string('x', 5000) + "\n";
+            Assert.Single(Faults("log-kpi.md", log));
+        }
+
+        [Fact]
+        public void TheOneOldEntryOverTheCapMayNotGrow()
+        {
+            string heading = "## 2026-09-19, third pass. The rail: five numbered steps, one open at a time\n";
+            Assert.Empty(Faults("log-view-filters.md", heading + new string('x', 12000)));
+            Assert.Single(Faults("log-view-filters.md", heading + new string('x', 13000)));
+            Assert.Single(Faults("log-drawing.md", heading + new string('x', 12000)));
+        }
+
+        [Fact]
+        public void AnOldTopEntryNotNamedAndAnUndatedOneAreBothCapped()
+        {
+            Assert.Single(Faults("log-drawing.md", "## 2026-09-19, the sixty fourth pass\n" + new string('x', 5000)));
+            Assert.Single(Faults("log-kpi.md", "## A heading with no date\n" + new string('x', 5000)));
+            Assert.Empty(Faults("log-drawing.md", "## 2026-09-19, a\n\nshort\n\n## 2026-09-18, b\n" + new string('x', 5000)));
+        }
+
+        // Under 200 lines is the skill's. Under 10 KB is the round prompt's of 2026-10-28, because
+        // a session pays for every file here on every turn its paths match.
         [Fact]
         public void EveryFileInTheRulesFolderIsUnderTenKilobytesAndTwoHundredLines()
         {
@@ -129,19 +153,13 @@ namespace RcrcGreen.Core.Tests.Records
         }
 
         [Fact]
-        public void AnEntryBeforeTheCapsIsTheOnlyOneExempt()
-        {
-            Assert.True(WrittenBeforeTheCaps("## 2026-09-19, third pass\n"));
-            Assert.False(WrittenBeforeTheCaps("## 2026-10-27, a round\n"));
-            Assert.False(WrittenBeforeTheCaps("## A heading with no date\n"));
-        }
-
-        [Fact]
-        public void TheTopEntryRunsFromTheFirstHeadingToTheNext()
+        public void AnEntryRunsFromItsHeadingToTheNext()
         {
             string log = "# KPI log\n\nNewest entry first.\n\n---\n\n## 2026-10-28, new\n\nBody.\n\n## 2026-10-27, old\n\nOld.\n";
-            Assert.Equal("## 2026-10-28, new\n\nBody.\n\n", TopEntry(log));
-            Assert.Null(TopEntry("# Log\n\nNo entries here.\n"));
+            Assert.Equal(
+                new[] { "## 2026-10-28, new\n\nBody.\n\n", "## 2026-10-27, old\n\nOld.\n" },
+                Entries(log));
+            Assert.Empty(Entries("# Log\n\nNo entries here.\n"));
         }
 
         [Fact]
@@ -150,24 +168,51 @@ namespace RcrcGreen.Core.Tests.Records
             Assert.Equal(Bytes("a\nb\n"), Bytes("a\r\nb\r\n".Replace("\r\n", "\n")));
         }
 
-        internal static string TopEntry(string log)
+        /// <summary>
+        /// The top entry and every entry dated from the caps on, each over 4 KB, unless it is the
+        /// one old entry named above and no larger than it was measured.
+        /// </summary>
+        internal static List<string> Faults(string logName, string log)
         {
-            MatchCollection headings = Regex.Matches(log, "^## ", RegexOptions.Multiline);
-            if (headings.Count == 0) return null;
+            List<string> faults = new List<string>();
+            List<string> entries = Entries(log);
 
-            int from = headings[0].Index;
-            int to = headings.Count > 1 ? headings[1].Index : log.Length;
-            return log.Substring(from, to - from);
+            for (int at = 0; at < entries.Count; at++)
+            {
+                string entry = entries[at];
+                if (at > 0 && !DatedFromTheCaps(entry)) continue;
+
+                int bytes = Bytes(entry);
+                string heading = entry.Split('\n')[0];
+                int cap = OverBeforeTheCaps
+                    .Where(x => x.Log == logName && x.Heading == heading)
+                    .Select(x => x.Bytes)
+                    .DefaultIfEmpty(4 * Kilobyte)
+                    .First();
+
+                if (bytes > cap)
+                    faults.Add(logName + " entry '" + heading + "' is " + bytes + " bytes, over " + cap);
+            }
+
+            return faults;
         }
 
-        internal static bool WrittenBeforeTheCaps(string entry)
+        internal static List<string> Entries(string log)
+        {
+            List<int> starts = Regex.Matches(log, "^## ", RegexOptions.Multiline).Select(m => m.Index).ToList();
+            return starts
+                .Select((from, i) => log.Substring(from, (i + 1 < starts.Count ? starts[i + 1] : log.Length) - from))
+                .ToList();
+        }
+
+        internal static bool DatedFromTheCaps(string entry)
         {
             Match date = EntryDate.Match(entry);
             if (!date.Success) return false;
 
             DateTime when = DateTime.ParseExact(
                 date.Groups[1].Value, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-            return when < CapsBegan;
+            return when >= CapsBegan;
         }
 
         private static void AtMost(string text, int cap, string name)

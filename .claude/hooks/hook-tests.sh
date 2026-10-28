@@ -6,7 +6,7 @@
 # carried a co-author credit line straight past writing-check.sh: commit-scope.py skipped a
 # message file named with a single dash, so the check scanned an empty string and passed. A
 # guard that fails open reads exactly like a guard that passed, which is the first thing
-# CLAUDE.md says.
+# docs/gone-wrong.md says.
 #
 # Run it from anywhere in the repo:
 #

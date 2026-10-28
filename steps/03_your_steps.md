@@ -1,53 +1,48 @@
 # 03 your steps
 
-This pass checks the redesigned KPI pane in Revit 2024 against the approved design. It needs the
-build from main after the KPI pane redesign merged. The repo on this machine is at
-`C:\Users\bader\Documents\GitHub\RCRC-Green`. Use your own clone's folder if it is elsewhere.
+This pass checks the KPI pane in Revit 2024 against the approved design, after the round that
+answered Q1 to Q5. Take one screenshot at every step from 6 on, numbered by its step.
 
 1. In GitHub Desktop, pick RCRC-Green, branch main, press Fetch origin, then Pull origin.
-   Look for: the newest commit is the KPI pane redesign merge.
-2. In VS Code, File, Open Folder, `C:\Users\bader\Documents\GitHub\RCRC-Green`, then Terminal,
-   New Terminal. Close Revit, then build:
+   Look for: the newest commit names Q1 to Q5 and the records split.
+2. In VS Code, File, Open Folder, `C:\Users\bader\Documents\GitHub\RCRC-Green`.
+   Look for: `CLAUDE.md`, `docs` and `steps` in the Explorer on the left.
+3. Close Revit, then in VS Code open Terminal, New Terminal.
+   Look for: a prompt ending in `RCRC-Green>`.
+4. Build:
 
 ```
 dotnet build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj -c Release
 ```
 
    Look for: `0 Warning(s)` and `0 Error(s)`.
-3. Install:
+5. Install:
 
 ```
 .\install\install.ps1
 ```
 
    Look for: `Restart Revit 2024 and look for the RCRC Green tab.`
-4. Open Revit 2024 and NG05, then RCRC Green tab, KPI Checklist. Drag the pane to about 300 px
-   wide. Look for: KPI Checklist, the model name, a Build line, four circles Setup Read Plots
-   Create, nothing running off the right edge, no sideways scroll.
-5. Step 1. Look for: Folders, Files and Workbook details as upper case grey titles, a green
-   tick on each set path, `7 templates found`, a red edge and Not set on any empty box except
-   Plot list, the footer Next: Read with All set or a count to set.
-6. Press Next: Read, then Read model. Look for: Plots, Elements and Time boxes, In plot list
-   and Templates matched lines, the three Values from dropdowns, one warning box per problem,
-   and Read at with the time in the status line.
-7. Step 3. Tick Mosques. Look for: about 20 plots ticked with the count on the Mosques box, the
-   plot ids in Consolas, the asset type in grey on the right, any plot with No type or Shared
-   id greyed, and the scroll staying where it was after a tick.
-8. Type DM in the search box, then press Plot list. Look for: the list narrowed to DM plots,
-   and Plot list ticking exactly the listed plots.
-9. Next: Create. Look for: the big number, the asset type table with ranges, the warning boxes,
-   Files with the same name are replaced, the button Create N workbooks, and Nothing in the
-   model changes under it. FM-08 ticked should not count in N.
-10. Press Create. Look for: the progress window reading Reading i of n, then Creating i of n,
-    with the plot id on a second line.
-11. The result. Look for: every circle ticked, the banner, Created and Failed boxes, a row per
-    asset type, a Failed line per plot in a few words, Open output folder and Open report
-    working, and Retry failed only when something failed and a retry can help.
-12. Hover over a greyed button, a warning box and a path box. Look for: a tooltip with the
-    reason or the full text. Then send a screenshot of each step and the result, and the
-    report's `BEFORE THE PRESS` section, to the chat.
+6. Open Revit 2024 and NG05, then RCRC Green tab, KPI Checklist, and drag the pane to about
+   300 px wide. Look for: KPI Checklist, the model name, a Build line, four circles Setup Read
+   Plots Create, no sideways scroll.
+7. Step 1, Setup. Look for: Folders, Files and Workbook details as grey upper case titles, a
+   green tick on each set path, `7 templates found`, the footer Next: Read.
+8. Press Next: Read and do not press Read model yet. Look for: one grey line in the body,
+   `Reads sheets and schedules. Nothing changes.`, the footer Read model and `Not read yet`.
+   This is the Q4 answer.
+9. Press Read model. Look for: Plots, Elements and Time boxes, In plot list, Templates matched,
+   the three Values from dropdowns with square corners, and the Q4 line gone.
+10. Step 3, Plots. Tick Mosques. Look for: about 20 plots ticked, the count on the Mosques box,
+    the scroll staying put after a tick.
+11. Press Next: Create. Look for: the big number, the asset type table, the button
+    Create N workbooks, and Nothing in the model changes under it.
+12. Press Create and wait for the result. Look for: every circle ticked, the banner, Created and
+    Failed boxes, a row per asset type, and Open report opening the report.
+
+Then send the screenshots, numbered by step, to the chat.
 
 ## Not covered by this pass
 
-- The Revit dark theme, which is question 1 in `steps/02_questions.md`
+- The Revit dark theme, which stays light by Bader's answer to Q1
 - A pane wider than 400 px

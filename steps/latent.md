@@ -104,3 +104,66 @@ Where: `KpiPanel.cs`, the Browse and dialog tooltips carried over from main
 Input: none, they are tooltips and not pane lines
 Why latent: the 10 word rule is for what the pane shows, and these were in the pane before
 Found: KPI pane redesign, reviewer and breaker
+
+## L14 The record caps read a file through its own byte order mark
+
+Where: `RecordCapsTests.cs`, Normalised, which reads text and counts it as UTF-8
+Input: a UTF-16 file under steps, docs or .claude/rules, as Windows PowerShell 5.1 writes one
+Why latent: every record in the repo is UTF-8 and no session writes through PowerShell redirection
+Found: records split, 28 Oct 2026, breaker
+
+## L15 A line starting with two hashes inside a code block cuts an entry short
+
+Where: `RecordCapsTests.cs`, Entries
+Input: an entry quoting a markdown heading inside a fenced block
+Why latent: every such line in the five logs today is a dated entry heading
+Found: records split, breaker and reviewer
+
+## L16 A log the caps test cannot read is passed in silence
+
+Where: `RecordCapsTests.cs`, Faults, and text above a log's first entry
+Input: a new log whose entries use another heading level, or a long preface
+Why latent: all five logs use one shape and their prefaces are four lines
+Found: records split, breaker
+
+## L17 The caps globs miss a case and a subfolder
+
+Where: `RecordCapsTests.cs`, the `log-*.md` pattern and the rules folder read
+Input: a `Log-x.md` on the runner, or a file in a folder under .claude/rules
+Why latent: no log is named that way and .claude/rules has no subfolder
+Found: records split, breaker
+
+## L18 Stored line endings, ignored files and pictures under steps
+
+Where: `RecordCapsTests.cs`, which measures the working tree with CRLF counted as one byte
+Input: a file committed with CRLF, an ignored PDF under steps, or a screenshot saved there
+Why latent: there is no such file, and the steps send screenshots to the chat
+Found: records split, breaker
+
+## L19 The split script reads a section number from two characters
+
+Where: `steps/runs/2026-10-28-records-split/split.py`, place
+Input: a rules file of 100 sections or more, or a topic list naming a number twice
+Why latent: the script has run once, on files of 71, 27 and 26 sections, and every join matched
+Found: records split, reviewer
+
+## L20 A fourth walk up to the repo root
+
+Where: `RecordCapsTests.cs`, Root, beside three in other tasks' tests
+Input: none, it is a copy
+Why latent: a shared helper would cross three territories, which is a Shared round of its own
+Found: records split, reviewer
+
+## L21 Two models with one title read as one model
+
+Where: `CreateWords.cs`, OpenModel.Is, which compares titles only
+Input: two files of one name opened from two folders in one session
+Why latent: no measured session has done it, and it is older than this round
+Found: records split, breaker
+
+## L22 The CLAUDE.md heading count takes off one heading without naming it
+
+Where: `steps/runs/2026-10-28-records-split/split.py`, the CLAUDE.md proof
+Input: a rerun whose pointer text gains a second heading
+Why latent: the script refuses outside 4b244b3, and the line holding the heading is checked once
+Found: records split, reviewer second pass

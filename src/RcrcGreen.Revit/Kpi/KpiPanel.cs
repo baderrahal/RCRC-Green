@@ -812,7 +812,8 @@ namespace RcrcGreen.Revit.Kpi
                 read.ToolTip = Tip(why);
                 read.Click += (sender, e) => PressRead();
                 _footerButtons.Children.Add(read);
-                _body.Children.Add(Muted(KpiPaneWords.ReadsSheetsAndSchedules, why));
+                // While the read runs, "waits for a press" is no longer true, so the line carries no tooltip.
+                _body.Children.Add(Muted(KpiPaneWords.ReadsSheetsAndSchedules, _reading ? null : why));
 
                 if (!_model.IsOpen) _stepSays = new StatusLine(KpiPaneWords.NoModelOpen, CreateWords.NoModelToReadPlotsFrom);
                 else if (_reading) _stepSays = StatusLine.Reading;

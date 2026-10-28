@@ -135,3 +135,4 @@ boxes, where Prepared by came out as Prepared b running into its box at the shar
 added rather than a widening of `LabelWidth`, which the Drawing Sheet uses in two places.
 
 The rest of these rules moved, byte for byte, to `docs/rules/` on 2026-10-28. `docs/rules/index.md` holds one line per rule id and the file it lives in. Read a rule there by its id, and only its part. A new rule goes into the part for its topic, with its line in the index.
+K25 above says under the section above. That section is K17, The client's note holds, and the index names its part.
