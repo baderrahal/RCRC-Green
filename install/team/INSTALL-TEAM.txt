@@ -2,11 +2,26 @@ RCRC Green KPI, how to install it and run it
 
 This is an add-in for Revit 2024. It fills the client's GRP KPI Checklist workbook and its PDF
 form for each plot, from the open model. It changes nothing in the model. It installs for you
-alone, in your own Windows profile, and needs no admin rights. VERSION.txt in this folder says
-which version this zip holds.
+alone, in your own Windows profile, and needs no admin rights.
 
 
 To install
+
+1. Download "RCRC Green KPI Setup" from the project Teams or SharePoint folder, and close Revit.
+2. Double click it. If Windows says it protected your PC, choose More info, then Run anyway.
+3. Press Next, then Install, then Finish.
+4. Start Revit 2024. When it asks about RCRC Green, choose Always Load. On the RCRC Green tab,
+   the KPI panel holds one button, KPI Checklist.
+
+A newer Setup installs over the older one the same way, and keeps every folder you chose.
+
+To uninstall, open Windows Settings, Apps, Installed apps, find RCRC Green KPI and choose
+Uninstall. Your folders, your reports and your own components.csv are kept.
+
+
+If your PC will not run the Setup, use the zip instead
+
+Use one way on a PC, the Setup or the zip, not both.
 
 1. Close Revit.
 2. Right click the zip and choose Extract All, then open the folder that makes. A file opened
@@ -19,12 +34,11 @@ To install
      FAILED:   It stopped part way. The line says what to do.
      REFUSED:  Nothing was changed. The line says why and what to do.
    Then press any key to close the window.
-5. Start Revit 2024. The first time, it asks about RCRC Green because the add-in is not
-   signed. Choose Always Load. Do Not Load leaves you with no RCRC Green tab.
-6. On the RCRC Green tab, the KPI panel holds one button, KPI Checklist.
+5. Start Revit 2024 and choose Always Load, as in step 4 of To install. VERSION.txt in the folder says
+   which version the zip holds.
 
-Installing a newer zip the same way replaces the add-in, keeps the version you had before, and
-keeps every folder you chose in the pane.
+To go back to the version you had before the last zip install, close Revit, double click
+"Put back the previous version.cmd" in the extracted folder, and read the line that starts DONE.
 
 
 To run it
@@ -53,12 +67,5 @@ If something goes wrong
 1. Send Bader the newest report from Documents\RCRC Green\reports.
 2. Take a screenshot of the whole Revit window, with the pane in it, and send it too.
 
-
-To go back to the version you had before
-
-1. Close Revit.
-2. Double click "Put back the previous version.cmd" in the folder of any extracted zip.
-3. Read the last line before "Press any key to continue". DONE: says which version is back.
-
-If any install window ends on FAILED, or on red text that starts with none of the three words,
-take a screenshot of the whole window and send it to Bader.
+If the Setup shows a message, or an install window ends on FAILED or on red text that starts
+with none of the three words, take a screenshot of it and send it to Bader.

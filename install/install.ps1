@@ -64,6 +64,13 @@ if ($missing) {
     throw "Nothing to install. $BuildOutput is missing $($missing -join ', '). Build src\RcrcGreen.Revit\RcrcGreen.Revit.csproj in $Configuration first."
 }
 
+# The team Setup.exe leaves an entry in Apps whose Uninstall removes the files it put here. Over
+# this install that would take the full install away under the name RCRC Green KPI, so the
+# Setup's install goes first. The id is the AppId in install\team\RCRC Green KPI Setup.iss.
+if (Test-Path -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{B2B66EEE-05CF-49A3-9F38-6020B8046379}_is1') {
+    throw 'RCRC Green KPI from the team Setup.exe is installed. Uninstall it first in Windows Settings, Apps, Installed apps, then run this again. Nothing was changed.'
+}
+
 $addinsFolder = Join-Path $env:APPDATA 'Autodesk\Revit\Addins\2024'
 $assemblyFolder = Join-Path $addinsFolder 'RcrcGreen'
 

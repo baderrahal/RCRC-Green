@@ -73,7 +73,7 @@ Questions asked before this file existed are in each task's own log and are not 
    Options: A keep it, three tools shown is a fault somebody sees and reports, and the journal
    says why. B show no tool at all
 
-   Answer:
+   Answer: A, 2026-10-28. Three tools shown stays. No change.
 
 9. The MOSQUES and SCHOOLS templates the team already had are byte for byte the new LESS THAN 60
    files, so DAILY MOSQUE, FRIDAY MOSQUE and SCHOOL plots get the under 60 per cent KPI targets
@@ -82,7 +82,8 @@ Questions asked before this file existed are in each task's own log and are not 
    Options: A ask the client whether the old values should use the under 60 targets, no change
    in the tool. B nothing to ask
 
-   Answer:
+   Answer: B, 2026-10-28. The 60 per cent values are added data beside the old values, and the
+   old values keep their templates. Nothing to ask the client. No change.
 
 10. A shared components.csv that is there and cannot be read, a fourth heading typed in D1 or a
     tab separated save, lets the shipped table answer for every value. Setup shows a box saying
@@ -91,19 +92,32 @@ Questions asked before this file existed are in each task's own log and are not 
     Options: A keep it, the shipped table answers and Setup says so. B refuse every value while
     the shared file cannot be read
 
-    Answer:
+    Answer: A, 2026-10-28. The shipped table answers and Setup says so. No change.
 
 11. Use on a new template found by its layout lasts until Revit closes. A components.csv row
     naming that template uses it on every start without a press.
 
     Options: A keep it, the row is the lasting choice. B remember Use in a file of its own
 
-    Answer:
+    Answer: A, 2026-10-28. Use lasts until Revit closes, a components.csv row is the lasting
+    choice. No change.
 
 12. `ComponentFiles` in the KPI Revit folder holds the folder name RCRC Green a third time.
     Drawing Sheet's `PresetStore` and `TitleBlockSettingsStore` hold the other two, and
     territory.md asks for a move to Shared rather than a copy.
 
     Options: A move it to Shared in a round of its own. B leave the three copies
+
+    Answer: A, 2026-10-28. Moved to Shared in a round of its own later, F3 in
+    `steps/01_next.md`. Not in the Setup.exe round.
+
+13. The Setup.exe and the add-in are unsigned, so Windows SmartScreen shows Windows protected your
+    PC on a downloaded Setup.exe, Revit asks about RCRC Green once, and a PC whose policy blocks
+    unsigned programs cannot run the Setup at all, which is why the zip stays. A code signing
+    certificate from Parsons IT would sign both the Setup.exe and the DLLs in build-team-kit.ps1.
+
+    Options: A ask Parsons IT for a code signing certificate, or for their signing service, and
+    sign in a round of its own once it is in hand. B stay unsigned, with More info, Run anyway
+    and Always Load in INSTALL-TEAM.txt
 
     Answer:

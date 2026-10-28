@@ -9,6 +9,7 @@ One row per session, added after its phase merges. Taken from
 | 2026-10-28 | c82dc224 | F1b Q1 to Q5 answered, and the records inside the caps | 24,229,432 | 12.40 |
 | 2026-10-28 | c82dc224 | F2 Q6, Q7 and the KPI team kit | 40,444,652 | 16.10 |
 | 2026-10-28 | 493e4ebb | 60 per cent templates, components.csv, new values and templates, two pull requests | 89,845,589 | 35.01 |
+| 2026-10-28 | 204d63e4 | F2b the KPI Setup.exe, and Q8 to Q12 answered | 22,122,165 | 11.30 |
 
 The first row, so no phase before it to compare against. 97.7 % of it was cache read.
 
@@ -23,3 +24,6 @@ than F1b and less than twice it.
 The 60 per cent row is this session alone, read before pull request (b)'s final gate and merge, so
 those turns are not in it. It is more than twice F2, named in its log entry: two pull requests,
 two review passes on each, and the pane prompts.
+
+The Setup.exe row is this session alone, read before the final gate and the merge, so those turns
+are not in it. It cost less than the 60 per cent round.

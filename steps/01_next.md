@@ -4,7 +4,7 @@ The plan. One section per item, F and a number, worked in the order below. One s
 first open item, or the group the order line names, and stops when it merges. A finished item gets
 one DONE line under its own section, with the date, the pull request and what proved it.
 
-Order: F1, F2
+Order: F1, F2, F2b, F3
 
 ## F1 KPI pane redesign for company wide use
 
@@ -34,3 +34,21 @@ Bader's pass in `steps/03_your_steps.md`.
 
 DONE 2026-10-28, pull requests 173 for the Shared tool list and the KPI pull request after it,
 the entry at the top of `steps/log-kpi.md`. The Revit pass is still to run.
+
+## F2b The KPI Setup.exe
+
+What: one file Setup.exe for the KPI team kit, built beside the zip by `build-team-kit.ps1`,
+per user and with no admin rights, and INSTALL-TEAM.txt leading with it.
+Why: the team wants one file, double click, Next, Install, Finish, with no zip to extract.
+Proved by: the Setup.exe installed, upgraded, refused, uninstalled and run over a full install
+in throwaway profiles, and Bader's pass in `steps/03_your_steps.md`.
+
+DONE 2026-10-28, this round's pull request, the entry at the top of `steps/log-kpi.md`. 59 checks
+in `steps/runs/2026-10-28-setup-exe/proof.txt`. The Revit pass is still to run.
+
+## F3 The RCRC Green folder name in Shared
+
+What: the folder name RCRC Green, held by `ComponentFiles`, `PresetStore` and
+`TitleBlockSettingsStore`, moved to one place in Shared, Q12.
+Why: three copies of one fact, and territory.md asks for a move rather than a copy.
+Proved by: the suite, and the three stores reading the same folder as before.

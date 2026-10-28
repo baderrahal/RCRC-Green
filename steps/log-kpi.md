@@ -4,6 +4,48 @@ Newest entry first.
 
 ---
 
+## 2026-10-28, the KPI Setup.exe, and Bader's answers Q8 to Q12
+
+**Goal.** One file Setup.exe for the KPI team kit beside the zip, and Q8 to Q12 recorded.
+
+**Done.** Q8 A, Q9 B, Q10 A, Q11 A and Q12 A in `steps/02_questions.md`, no change for any, Q12 as
+F3 in `steps/01_next.md`. Inno Setup was missing and went in per user with `winget install
+JRSoftware.InnoSetup`, 6.7.3. `install/team/RCRC Green KPI Setup.iss`: per user, no admin, the
+layout team-install.ps1 makes, Welcome, Ready and Finish only, refuses while any Revit.exe runs, at
+start, at Install and on uninstall. It makes the reports folder and the three pointer files in code,
+so the uninstall leaves them, and keeps its uninstaller in %APPDATA%\RCRC Green\Setup.
+`build-team-kit.ps1` compiles it from the checked kit folder and refuses when the .iss and the kit
+name different files. INSTALL-TEAM.txt leads with the Setup. Review pass 1 added: install.ps1 and
+uninstall.ps1 refuse while the Setup's Apps entry is there, and Ready names what is installed now.
+
+**Checked.** RAN after the last code file, at `e869e1b`: build 0 warnings 0 errors, 2499 tests
+passed with the record caps, 28 of 28 hook cases, the same as before the round. The kit from that
+commit: Setup 2,592,449 bytes, zip 651,463 bytes of 12 files. `prove-setup.ps1` in throwaway
+profiles, 59 checks passed and 0 failed, output in `proof.txt` beside it. Fresh: every installed
+file byte for byte the zip's, Apps entry RCRC Green KPI with the version. Uninstall: add-in files
+gone, five pointer files, the shared and the personal components.csv and a report kept. Upgrade
+`7e29aba` to `e869e1b` in place, one uninstaller. A stand-in Revit.exe: Setup exit 1 with nothing
+written, uninstall exit 1. Over install.ps1's full install: KPI only, then install.ps1 and
+uninstall.ps1 refuse. A profile with no Documents folder. Visible runs, screenshots read: Welcome,
+Ready over a full and over a kit install, Finish with the asked line. The drift check went red on a
+removed Source line and on an added kit file. Breaker and reviewer, two passes each, L67 to L84
+LATENT. Usage, this session alone, read before the final gate and merge: 22,122,165 tokens and
+11.30 USD, under the 60 per cent round.
+
+**UNKNOWN.** Nothing ran in Revit. SmartScreen on a downloaded Setup, a OneDrive Documents folder, a
+policy blocking unsigned programs, a team PC. The no Documents profile: the shell made the folder
+itself, so the fallback branch never ran.
+
+**Remains.** The kit from main after the merge. Bader's pass.
+
+**Known bugs.** None open.
+
+**Next.** Bader's pass in `steps/03_your_steps.md`, then both files to Teams or SharePoint.
+
+**Your turn.** Q13 Code signing through Parsons IT. The pass in `steps/03_your_steps.md`.
+
+---
+
 ## 2026-10-28, the 60 per cent templates, one components.csv, new values and templates without code
 
 **Goal.** Four 60 per cent templates and four new PRX_Component values end to end, one
