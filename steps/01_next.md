@@ -13,6 +13,9 @@ panel, no pane sentence over 10 words, the long texts moved to the report and to
 Why: the pane reads like a log and is going to the whole production team.
 Proved by: the suite and the hook tests in the gate, and `steps/03_your_steps.md` in Revit 2024.
 
+DONE 2026-10-28, pull request 170, merged as `8a2382f`. The gate read 2368 tests passed and 28
+hook cases. The Revit pass in `steps/03_your_steps.md` is still to run.
+
 ## F2 The team kit
 
 What: the install kit for the production team, with the build stamp in the pane header.
