@@ -202,7 +202,36 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "RCRC_OUT OF SCOPE (PRESENTATION), which is the type the area cell's own note, "
                 + "REVIT 00 LINK / ID FILLED REGION RCRC_OUT OF SCOPE (PRESENTATION) / "
                 + "PRX_Intervention Area, names, "
-                + "2 off a type it does not name, and 0 chose no region at all.",
+                + "2 off a type it does not name, 0 off the first of regions all holding the same "
+                + "area, and 0 chose no region at all.",
+                glance.Regions.InWords);
+        }
+
+        /// <summary>
+        /// A plot whose two regions hold one area, neither the note's type, took the first by
+        /// K77. That is the tool's pick, not a disagreement with the note, so it is counted apart.
+        /// </summary>
+        [Fact]
+        public void APlotTakenOnTheSameAreaIsNotCountedAgainstTheNote()
+        {
+            KpiCreateRun same = CreateFixture.Run(
+                template: KpiTemplates.Streets,
+                readings: new[]
+                {
+                    CreateFixture.Plot("NS-02", regions: new[]
+                    {
+                        CreateFixture.Region(Cadastral, 1245.30),
+                        CreateFixture.Region("RCRC_OTHER", 1245.30)
+                    })
+                });
+
+            RunGlance glance = RunAtAGlance.Of(Set(Plot("DM-11", KpiTemplates.Mosques, OutOfScope), same));
+
+            Assert.Equal(2, glance.Regions.Plots);
+            Assert.Equal(1, glance.Regions.OffTheTypeTheNoteNames);
+            Assert.Equal(0, glance.Regions.OffATypeTheNoteDoesNotName);
+            Assert.Equal(1, glance.Regions.SameArea);
+            Assert.Contains("0 off a type it does not name, 1 off the first of regions all holding the same area",
                 glance.Regions.InWords);
         }
 

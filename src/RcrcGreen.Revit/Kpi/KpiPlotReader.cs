@@ -237,7 +237,8 @@ namespace RcrcGreen.Revit.Kpi
                         AreaUnits.SquareMetresFromSquareFeet(raw),
                         ParameterReading.HoldsAValue(area)
                             ? ParameterReading.Printed(area)
-                            : LinkContents.NoAreaValue));
+                            : LinkContents.NoAreaValue,
+                        region.UniqueId));
                 }
             }
 
@@ -572,18 +573,26 @@ namespace RcrcGreen.Revit.Kpi
         {
             var seen = new List<string>();
 
-            foreach (RevitLinkInstance instance in new FilteredElementCollector(document)
-                .OfClass(typeof(RevitLinkInstance))
-                .Cast<RevitLinkInstance>())
+            foreach (RevitLinkInstance instance in ZeroZeroLinks(document))
             {
                 Document linked = instance.GetLinkDocument();
-                if (linked == null) continue;
-                if (!KpiNames.Holds(instance.Name, KpiNames.LinkMark)) continue;
                 if (seen.Contains(linked.Title, StringComparer.Ordinal)) continue;
 
                 seen.Add(linked.Title);
                 yield return linked;
             }
+        }
+
+        /// <summary>
+        /// Every loaded 00 link instance. **The one test of which link is the 00 link**, read by
+        /// the region read and by Show, so Show looks exactly where the regions were found.
+        /// </summary>
+        internal static IEnumerable<RevitLinkInstance> ZeroZeroLinks(Document document)
+        {
+            return new FilteredElementCollector(document)
+                .OfClass(typeof(RevitLinkInstance))
+                .Cast<RevitLinkInstance>()
+                .Where(instance => instance.GetLinkDocument() != null && KpiNames.Holds(instance.Name, KpiNames.LinkMark));
         }
 
         private static double RawOf(Parameter parameter)

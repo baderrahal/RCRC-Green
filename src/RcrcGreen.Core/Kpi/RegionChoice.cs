@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace RcrcGreen.Core.Kpi
@@ -41,7 +42,15 @@ namespace RcrcGreen.Core.Kpi
         /// **Bader's decision of 14 September**, and the report says the note chose rather
         /// than a person.
         /// </summary>
-        TheTypeTheNoteNames
+        TheTypeTheNoteNames,
+
+        /// <summary>
+        /// More than one held an area, the note's type settled none of them, and every one of
+        /// them holds the same area to the hundredth of a square metre. **Bader's decision of 29
+        /// October**: the pane asked "Two regions hold an area. Pick one." over two equal areas,
+        /// a question whose every answer writes the same number.
+        /// </summary>
+        TheSameAreaOnAll
     }
 
     /// <summary>
@@ -50,10 +59,11 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class RegionPick
     {
-        private RegionPick(string typeName, RegionRoute route)
+        private RegionPick(string typeName, RegionRoute route, IEnumerable<string> sameAreaTypes = null)
         {
             TypeName = typeName ?? string.Empty;
             Route = route;
+            SameAreaTypes = (sameAreaTypes ?? Enumerable.Empty<string>()).ToList();
         }
 
         public static readonly RegionPick Nothing = new RegionPick(string.Empty, RegionRoute.Nothing);
@@ -73,9 +83,21 @@ namespace RcrcGreen.Core.Kpi
             return new RegionPick(typeName, RegionRoute.TheTypeTheNoteNames);
         }
 
+        /// <summary>
+        /// The first of the regions holding one area, carrying every one of their types so the
+        /// report can name them.
+        /// </summary>
+        public static RegionPick SameArea(string typeName, IEnumerable<string> types)
+        {
+            return new RegionPick(typeName, RegionRoute.TheSameAreaOnAll, types);
+        }
+
         public string TypeName { get; }
 
         public RegionRoute Route { get; }
+
+        /// <summary>The type of every region that held the one area, empty on any other route.</summary>
+        public IReadOnlyList<string> SameAreaTypes { get; }
 
         public bool WasChosen
         {
@@ -98,6 +120,9 @@ namespace RcrcGreen.Core.Kpi
                     case RegionRoute.TheTypeTheNoteNames:
                         return "more than one held an area and this is the type "
                             + RegionChoice.TheNote + " names";
+                    case RegionRoute.TheSameAreaOnAll:
+                        return "same area on " + SameAreaTypes.Count + " regions, "
+                            + string.Join(" and ", SameAreaTypes.ToArray());
                     default: return "nothing chosen";
                 }
             }
@@ -123,6 +148,11 @@ namespace RcrcGreen.Core.Kpi
         /// **The question stays where the note's type is not among them**, because that is
         /// still something the data cannot settle. So is the note's type held by two of them
         /// at once, which no model has shown and which the note cannot separate either.
+        ///
+        /// **UNLESS EVERY ONE OF THEM HOLDS THE SAME AREA.** Bader's decision of 29 October:
+        /// equal after rounding to 0.01 m2, the rounding the workbook prints, takes the first
+        /// without asking, because every answer to the question writes the same number. It
+        /// comes after the note and a person's pick, so neither changes.
         /// </summary>
         public static RegionPick Pick(IEnumerable<RegionArea> regions, string chosenByHand)
         {
@@ -139,7 +169,46 @@ namespace RcrcGreen.Core.Kpi
 
             List<RegionArea> named = holding.Where(one => IsTheNote(one.TypeName)).ToList();
 
-            return named.Count == 1 ? RegionPick.TheNote(named[0].TypeName) : RegionPick.Nothing;
+            if (named.Count == 1) return RegionPick.TheNote(named[0].TypeName);
+
+            return HoldOneArea(holding)
+                ? RegionPick.SameArea(holding[0].TypeName, holding.Select(one => one.TypeName))
+                : RegionPick.Nothing;
+        }
+
+        /// <summary>
+        /// Whether every region here holds the same area once each is rounded to 0.01 m2.
+        /// </summary>
+        private static bool HoldOneArea(IReadOnlyList<RegionArea> holding)
+        {
+            double first = Rounded(holding[0].SquareMetres);
+            return holding.All(one => Rounded(one.SquareMetres) == first);
+        }
+
+        /// <summary>
+        /// **An area to the hundredth of a square metre, half away from zero**, which is how
+        /// Excel shows the 0.00 the area cell prints. The same rounding decides whether two
+        /// areas are the same and prints each one on the pane, so where two regions ask, they
+        /// never read one number. Round half away from zero is CHOSEN, because what the
+        /// templates' own number format rounds a raw double to was not measured. Two regions of
+        /// one area among three that differ still ask, and then two lines read one number.
+        /// </summary>
+        public static double Rounded(double squareMetres)
+        {
+            return Math.Round(squareMetres, 2, MidpointRounding.AwayFromZero);
+        }
+
+        /// <summary>
+        /// One option on the pane where the areas differ: the type, two spaces, and the area in
+        /// square metres to two places with a thousands comma, as in
+        /// <c>RCRC_CADASTRAL LIMIT  1,245.30 m2</c>.
+        /// </summary>
+        public static string OptionLine(RegionArea region)
+        {
+            if (region == null) return string.Empty;
+
+            return region.TypeName + "  "
+                + Rounded(region.SquareMetres).ToString("#,##0.00", CultureInfo.InvariantCulture) + " m2";
         }
 
         private static bool IsTheNote(string typeName)
@@ -215,10 +284,11 @@ namespace RcrcGreen.Core.Kpi
 
             if (holding.Count > 1)
             {
-                // **The note's type settles this case now**, so reaching here means either it is
-                // not among them, which is a question the data cannot settle, or it is among
-                // them twice, which the note cannot separate either. The reason says which,
-                // because the two need different answers from a person.
+                // **The note's type and one shared area settle this case now**, so reaching here
+                // means the areas differ and either the note's type is not among them, which is
+                // a question the data cannot settle, or it is among them twice, which the note
+                // cannot separate either. The reason says which, because the two need different
+                // answers from a person.
                 int named = holding.Count(one => IsTheNote(one.TypeName));
                 string names = string.Join(" and ", holding.Select(one => one.TypeName).ToArray());
 

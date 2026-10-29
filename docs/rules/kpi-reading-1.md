@@ -49,7 +49,7 @@ beside it.
 ### The report says WHO chose, and a route is not a type name
 
 `RegionPick` carries the type and the route as one record, set where the choice is made, and
-`PlotReading.ChosenRegionPick` holds it so the two cannot drift. Four routes, one column in the
+`PlotReading.ChosenRegionPick` holds it so the two cannot drift. Five routes, one column in the
 region table, `how it was chosen`:
 
 ```
@@ -57,6 +57,7 @@ nothing chosen
 chosen by hand on the pane
 the only region holding an area
 more than one held an area and this is the type the client's note names
+same area on <n> regions, <type> and <type>
 ```
 
 **A count of picks the note made and a count a person made are two different facts about a
@@ -69,6 +70,34 @@ came back with no `PRX_Plot_UID2` and was refused a second time with `no PRX_Plo
 off this plot's first sheet`. That is a sentence about the model and it was about that method.
 **A default that reads as a deliberate empty is how a whole link in a chain goes missing without
 a word**, which this file already carries once, about the three the team types.
+
+### The same area on every region holding one is taken, and Show finds each region
+
+**K77.** Bader's decision of 29 October, after the pane asked "Two regions hold an area. Pick
+one." on plots whose regions hold the same area. `RegionChoice.Pick` takes one more step, after
+a person's pick, the only one and the note's type: **where every region holding an area holds
+the same area once each is rounded to 0.01 m2, the first is taken without asking**, route
+`TheSameAreaOnAll`, and the report's how it was chosen column reads `same area on <n> regions,
+<type> and <type>`. The rounding is `RegionChoice.Rounded`, half away from zero, CHOSEN, because
+how the templates' number format rounds a raw double was not measured. Two of three holding one
+area is not every one, so that still asks. The note's type held twice on one area is taken by
+the area.
+
+Where the areas differ the pane still asks, one line per region, `RegionChoice.OptionLine`:
+the type, two spaces, the area to two places with a thousands comma, `RCRC_CADASTRAL LIMIT
+1,245.30 m2`, through the same rounding, so two options alone never read one number. Show beside each
+selects that region in the 00 link through a link reference and zooms the open view to its box
+taken through the link transform, through the pane's own external event and no transaction.
+`RegionShowing` decides: a region no loaded 00 link holds is `Region not found in a loaded 00
+link`. A view that is not a plan, one hiding the link, and one not drawing the region, which is
+a plan showing the link by host view or through another of its views, is `Open a plan that
+shows the 00 link`, its own reason in the tooltip, and nothing is selected or zoomed, because a
+filled region is view specific. `RegionArea` carries the region's UniqueId for it. THE REGION
+TYPE line in the glance counts these plots apart, `off the first of regions all holding the same
+area`, so a pick the tool made is not counted as a disagreement with the note.
+
+`PlotReading.ChosenRegion` takes the chosen type's region holding an area first, so a region of
+that type at 0 listed before it is not the one the area cell is written from.
 
 ## Every plot chosen is accounted for on the way out
 

@@ -481,7 +481,7 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class RegionArea
     {
-        public RegionArea(string typeName, double rawSquareFeet, double squareMetres, string printed)
+        public RegionArea(string typeName, double rawSquareFeet, double squareMetres, string printed, string uniqueId = null)
         {
             if (typeName == null) throw new ArgumentNullException("typeName");
 
@@ -489,9 +489,16 @@ namespace RcrcGreen.Core.Kpi
             RawSquareFeet = rawSquareFeet;
             SquareMetres = squareMetres;
             Printed = printed ?? string.Empty;
+            UniqueId = uniqueId ?? string.Empty;
         }
 
         public string TypeName { get; }
+
+        /// <summary>
+        /// The region's own UniqueId in the linked model, so Show on the pane can find this one
+        /// region again on the Revit thread. Empty where the reader did not carry it.
+        /// </summary>
+        public string UniqueId { get; }
 
         /// <summary>
         /// What Revit holds, square feet whatever the project displays. The identical area
@@ -969,12 +976,19 @@ namespace RcrcGreen.Core.Kpi
             get { return Species.Sum(one => one.Quantity); }
         }
 
+        /// <summary>
+        /// The region of the chosen type, one holding an area first. A plot carrying two regions
+        /// of one type, one of them at 0, would otherwise hand back the empty one whenever it was
+        /// listed first, and the area cell would be written empty off a choice that held one.
+        /// </summary>
         public RegionArea ChosenRegion
         {
             get
             {
-                return Regions.FirstOrDefault(one =>
-                    string.Equals(one.TypeName, ChosenRegionTypeName, StringComparison.Ordinal));
+                List<RegionArea> typed = Regions
+                    .Where(one => string.Equals(one.TypeName, ChosenRegionTypeName, StringComparison.Ordinal))
+                    .ToList();
+                return typed.FirstOrDefault(one => one.HoldsAnArea) ?? typed.FirstOrDefault();
             }
         }
 

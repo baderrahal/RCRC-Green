@@ -41,6 +41,29 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
+        /// Two regions holding one area, neither the note's type: the row names both and the
+        /// paragraph under the table says the same area rule, not that the run asks.
+        /// </summary>
+        [Fact]
+        public void ARegionTakenOnTheSameAreaIsNamedAsThat()
+        {
+            PlotReading plot = CreateFixture.Plot("DM-12", regions: new[]
+            {
+                new RegionArea("RCRC_CADASTRAL LIMIT", 13404.27, 1245.30, "1245.30 m\u00b2"),
+                new RegionArea("RCRC_OTHER", 13404.27, 1245.30, "1245.30 m\u00b2")
+            });
+
+            string[] lines = LinesOf(CreateFixture.Run(new[] { plot }));
+            string row = lines.Single(line => line.StartsWith("  DM-12 | ", StringComparison.Ordinal));
+
+            Assert.Contains(
+                "  DM-12 | RCRC_CADASTRAL LIMIT | same area on 2 regions, RCRC_CADASTRAL LIMIT and RCRC_OTHER | ",
+                row);
+            Assert.Contains("  the first is taken, which is Bader's decision of 29 October, and the column", lines);
+            Assert.DoesNotContain(lines, line => line.Contains("the run still asks, and the column reads chosen by hand."));
+        }
+
+        /// <summary>
         /// No line may claim the area came off a schedule row, because it did not.
         /// </summary>
         [Fact]

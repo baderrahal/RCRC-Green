@@ -4,6 +4,44 @@ Newest entry first.
 
 ---
 
+## 2026-10-29, region areas, and folders flat or grouped, part (a)
+
+**Goal.** Take a plot whose regions hold one area without asking, show each area where they
+differ, and Show each region. Part (b), the folders, follows in its own pull request, because it
+changes the path builder 64 test call sites in 19 files reach.
+
+**Done.** `RegionChoice.Pick` takes one step more, after a hand pick, the only one and the note:
+every region holding an area equal to 0.01 m2, half away from zero, takes the first, route
+`TheSameAreaOnAll`, and the report's how column reads `same area on <n> regions, <type> and
+<type>`, K77. Options where areas differ read `RCRC_CADASTRAL LIMIT  1,245.30 m2` with Show
+beside each. Show is a fourth request on the KPI handler, no transaction: the region found by
+UniqueId in the 00 link instances `KpiPlotReader.ZeroZeroLinks` gives, the one test of that
+link in the Revit readers now, selected through a link reference and zoomed through the link transform.
+`RegionShowing` decides, and a view not a plan, hiding the link or not drawing the region says
+`Open a plan that shows the 00 link` with its reason as tooltip. `ChosenRegion` takes the chosen
+type's region holding an area first. THE REGION TYPE glance line counts same area plots apart.
+
+**Checked.** RAN after the last file of this part: Revit Release build 0 warnings 0 errors,
+2569 tests passed against 2555 before, 28 of 28 hook cases. Breaking the rounding, run before
+the review fixes, turned `SameIsEqualAfterRoundingToTheHundredth` red. Reviewer and breaker, two
+passes: REAL fixed, the report paragraph and two rules files on the old rule, the paragraph's
+note held twice case apart, L108, Show saying Selected over a region the view does not draw,
+the 00 link test written twice, the glance count, the handler summary saying three requests.
+L97 to L108 LATENT.
+
+**UNKNOWN.** Nothing ran in Revit. Whether the team's plans draw the 00 link by host view, and
+what `GetLinkOverrides` returns under a view template, Q17. How the templates' 0.00 rounds.
+
+**Remains.** Part (b), the folders. The kit after it.
+
+**Known bugs.** None REAL. Q17 may make Show refuse on every plan until answered.
+
+**Next.** Part (b) in this session.
+
+**Your turn.** Q17, after the Revit pass part (b) writes into `steps/03_your_steps.md`.
+
+---
+
 ## 2026-10-29, PRX_Component values placed by word rules
 
 **Goal.** Place new PRX_Component values by Bader's word rules instead of one row each.

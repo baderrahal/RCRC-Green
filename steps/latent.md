@@ -689,3 +689,87 @@ Where: `ComponentTable.Fields`, HeaderFields.Length rather than the header read
 Input: a header of other than three names in either file
 Why latent: both headers are three names today
 Found: component rules round, breaker pass 2
+
+## L97 A hand pick goes in by type name, so one type held twice writes the first area
+
+Where: `KpiPanel.RegionButtons` stores the type, `PlotReading.ChosenRegion` takes the first of it
+Input: one plot with two regions of one type holding different areas, the second picked
+Why latent: no measured model holds one type twice on a plot
+Found: region same area round, reviewer and breaker pass 1
+
+## L98 Show is dropped without a word while another request waits
+
+Where: `KpiRequestHandler.Ask`, Show never takes the slot
+Input: Show pressed while a read or a press is still waiting to run
+Why latent: the slot empties as soon as Revit is idle, and a second press works
+Found: region same area round, reviewer and breaker pass 1
+
+## L99 Which of two 00 link instances Show uses has no test
+
+Where: `KpiRequestHandler.ShowRegion`, the fit of each instance
+Input: a model holding the 00 link twice
+Why latent: no measured model holds two 00 link instances
+Found: region same area round, reviewer pass 1
+
+## L100 A same area pick can name the type the note does not name
+
+Where: `RegionChoice.Pick` takes the first region holding the area
+Input: CADASTRAL 900 read first, then OUT OF SCOPE 900 twice
+Why latent: the number written is right, and no model holds the note's type twice
+Found: region same area round, breaker pass 1
+
+## L101 Three regions, two of one area, offer two lines reading one number
+
+Where: `RegionChoice.OptionLine` over `RegionsHoldingAnArea`
+Input: regions of 900, 900 and 250 on one plot
+Why latent: no measured plot holds three regions, and the pane still asks
+Found: region same area round, breaker pass 1
+
+## L102 A region type read empty chooses with no type to print
+
+Where: `KpiPlotReader.RegionsFor`, `ParameterReading.NameOf` empty
+Input: a filled region whose type name reads empty
+Why latent: a filled region always has a type, and the same path stood before this round
+Found: region same area round, breaker pass 1
+
+## L103 A stale hand pick on a type now at 0 writes 0 into the PDF
+
+Where: `PlotReading.ChosenRegion` and `PdfFill`, a pick by hand beating every rule
+Input: a type picked by hand, then the model edited so it holds 0, then a press
+Why latent: it needs an edit of the model between two presses with the pane kept open
+Found: region same area round, breaker pass 1, standing before this round
+
+## L104 A Show queued behind a press replaces the press's end line
+
+Where: `KpiRequestHandler.ShowRegion` through `Told`
+Input: Show pressed while Create runs, then run after it
+Why latent: the result screen and the report still carry the press, only the status line moves
+Found: region same area round, breaker pass 1
+
+## L105 Show checks the link display and the linked view, not what hides a region inside it
+
+Where: `KpiRequestHandler.RegionDrawnIn`
+Input: Custom display hiding detail items, the region hidden or cropped in its own view, or out of the host crop
+Why latent: none of these setups is measured on a real model
+Found: region same area round, reviewer and breaker pass 2
+
+## L106 The Show tooltips are held by their opening words only
+
+Where: `RegionShowingTests`, Assert.StartsWith over three of the four Detail lines
+Input: a broken ending of a tooltip, or of the not found one
+Why latent: tooltips only, no number reaches them
+Found: region same area round, reviewer pass 2
+
+## L107 A dependent view of the region's own view reads as not drawn
+
+Where: `KpiRequestHandler.RegionDrawnIn`, view ids compared exactly
+Input: a host plan showing the 00 link by a dependent of the region's own linked view
+Why latent: no team plan is known to link a dependent view, and the answer is loud
+Found: region same area round, breaker pass 2
+
+## L108 The report paragraph says the note decides where its type is held twice
+
+Where: `KpiCreateReport`, the paragraph under the region table
+Input: OUT OF SCOPE 900 and OUT OF SCOPE 900 on one plot
+Why latent: no model holds the note's type twice, and the row beside it is right
+Found: region same area round, breaker pass 2

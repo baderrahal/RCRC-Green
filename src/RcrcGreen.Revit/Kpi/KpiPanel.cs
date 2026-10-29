@@ -1509,24 +1509,46 @@ namespace RcrcGreen.Revit.Kpi
             return NotWrittenKinds.WaitsOnARegion(reading);
         }
 
+        /// <summary>
+        /// One line per region holding an area: the type and its area, which picks it, and
+        /// Show beside it, which selects it in the 00 link and zooms to it without picking.
+        /// </summary>
         private UIElement RegionButtons(PlotReading reading)
         {
-            var row = new WrapPanel { Margin = KpiTheme.Row };
+            var rows = new StackPanel { Margin = KpiTheme.Row };
             foreach (RegionArea region in reading.RegionsHoldingAnArea)
             {
                 string plotId = reading.PlotId;
                 string typeName = region.TypeName;
-                Button choice = KpiTheme.Small(Caption(typeName + "   " + region.Printed));
-                choice.Margin = KpiTheme.RightGap;
+                string uniqueId = region.UniqueId;
+
+                var line = new DockPanel { Margin = KpiTheme.StatusGap };
+
+                Button show = KpiTheme.Small(Caption(KpiPaneWords.Show));
+                show.Margin = KpiTheme.LeftGap;
+                show.IsEnabled = uniqueId.Length > 0;
+                show.ToolTip = Tip(KpiPaneWords.ShowTip);
+                show.Click += (sender, e) =>
+                {
+                    _handler.Showing = new RegionToShow(uniqueId, typeName);
+                    Ask(KpiRequest.ShowRegion);
+                };
+                DockPanel.SetDock(show, Dock.Right);
+                line.Children.Add(show);
+
+                Button choice = KpiTheme.Small(Caption(RegionChoice.OptionLine(region)));
+                choice.HorizontalContentAlignment = HorizontalAlignment.Left;
                 choice.Click += (sender, e) =>
                 {
                     _chosenRegions[plotId] = typeName;
                     AskedToCreate();
                 };
-                row.Children.Add(choice);
+                line.Children.Add(choice);
+
+                rows.Children.Add(line);
             }
 
-            return row;
+            return rows;
         }
 
         // ---------------------------------------------------------------- the result

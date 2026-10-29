@@ -104,11 +104,19 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class RegionGlance
     {
-        public RegionGlance(IEnumerable<RegionTypeCount> types, int nothingChosen)
+        public RegionGlance(IEnumerable<RegionTypeCount> types, int nothingChosen, int sameArea = 0)
         {
             Types = (types ?? Enumerable.Empty<RegionTypeCount>()).ToList();
             NothingChosen = nothingChosen;
+            SameArea = sameArea;
         }
+
+        /// <summary>
+        /// Plots whose regions all held one area, K77, counted apart from every type. The tool
+        /// took the first of them, so counting it under that type would read as a disagreement
+        /// with the note that nobody made.
+        /// </summary>
+        public int SameArea { get; }
 
         public static readonly RegionGlance NoAreaRead =
             new RegionGlance(new List<RegionTypeCount>(), 0);
@@ -138,7 +146,7 @@ namespace RcrcGreen.Core.Kpi
 
         public int Plots
         {
-            get { return Types.Sum(one => one.Plots) + NothingChosen; }
+            get { return Types.Sum(one => one.Plots) + SameArea + NothingChosen; }
         }
 
         public string InWords
@@ -155,7 +163,8 @@ namespace RcrcGreen.Core.Kpi
                     + (Plots == 1 ? " plot" : " plots") + " wanting an area, "
                     + OffTheTypeTheNoteNames + " took it off " + RegionChoice.TheNoteNames
                     + ", which is the type " + RegionChoice.TheNote + " names, "
-                    + OffATypeTheNoteDoesNotName + " off a type it does not name, and "
+                    + OffATypeTheNoteDoesNotName + " off a type it does not name, "
+                    + SameArea + " off the first of regions all holding the same area, and "
                     + NothingChosen + " chose no region at all.";
             }
         }
@@ -864,6 +873,7 @@ namespace RcrcGreen.Core.Kpi
             var perType = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var order = new List<string>();
             int nothingChosen = 0;
+            int sameArea = 0;
 
             foreach (KpiCreateRun run in set.Runs)
             {
@@ -875,6 +885,12 @@ namespace RcrcGreen.Core.Kpi
                     if (type.Length == 0)
                     {
                         nothingChosen = nothingChosen + 1;
+                        continue;
+                    }
+
+                    if (reading.ChosenRegionPick.Route == RegionRoute.TheSameAreaOnAll)
+                    {
+                        sameArea = sameArea + 1;
                         continue;
                     }
 
@@ -898,7 +914,7 @@ namespace RcrcGreen.Core.Kpi
                 .ThenBy(one => one.TypeName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            return new RegionGlance(counts, nothingChosen);
+            return new RegionGlance(counts, nothingChosen, sameArea);
         }
 
         /// <summary>

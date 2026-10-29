@@ -257,5 +257,122 @@ namespace RcrcGreen.Core.Tests.Kpi
                 RegionChoice.WhyUnchosen(
                     new[] { Region(Cadastral, 3982.0), Region(OutOfScope, 4295.0) }));
         }
+        // ------------------------------------------------------------ same area, 29 October
+
+        /// <summary>
+        /// **Bader met "Two regions hold an area. Pick one." over two equal areas.** Neither is
+        /// the note's type, so the old rule asked. Equal to 0.01 m2 takes the first, says so and
+        /// names both types.
+        /// </summary>
+        [Fact]
+        public void TwoRegionsHoldingTheSameAreaAreTakenWithoutAsking()
+        {
+            RegionPick pick = RegionChoice.Pick(
+                new[] { Region(Cadastral, 1245.30), Region(SomethingElse, 1245.30) }, null);
+
+            Assert.Equal(Cadastral, pick.TypeName);
+            Assert.Equal(RegionRoute.TheSameAreaOnAll, pick.Route);
+            Assert.Equal(
+                "same area on 2 regions, RCRC_CADASTRAL LIMIT and RCRC_SOMETHING NOBODY HAS MEASURED",
+                pick.InWords);
+            Assert.Equal(string.Empty, RegionChoice.WhyUnchosen(
+                new[] { Region(Cadastral, 1245.30), Region(SomethingElse, 1245.30) }));
+        }
+
+        /// <summary>
+        /// Same means the same once each is rounded to two places. 1245.304 and 1245.296 both
+        /// print 1245.30, and 1245.30 against 1245.31 is a real difference that still asks.
+        /// </summary>
+        [Fact]
+        public void SameIsEqualAfterRoundingToTheHundredth()
+        {
+            Assert.Equal(RegionRoute.TheSameAreaOnAll, RegionChoice.Pick(
+                new[] { Region(Cadastral, 1245.304), Region(SomethingElse, 1245.296) }, null).Route);
+
+            RegionPick apart = RegionChoice.Pick(
+                new[] { Region(Cadastral, 1245.30), Region(SomethingElse, 1245.31) }, null);
+            Assert.Equal(RegionRoute.Nothing, apart.Route);
+            Assert.Equal(string.Empty, apart.TypeName);
+        }
+
+        /// <summary>
+        /// Two of three holding one area is not every one of them, so the pane still asks.
+        /// </summary>
+        [Fact]
+        public void ThreeWithOneAreaDifferentStillAsk()
+        {
+            RegionPick pick = RegionChoice.Pick(
+                new[] { Region(Cadastral, 900.0), Region(SomethingElse, 900.0), Region(Cadastral, 250.0) },
+                null);
+
+            Assert.Equal(RegionRoute.Nothing, pick.Route);
+        }
+
+        /// <summary>
+        /// The note keeps its place before the same area rule: a pair holding one area with the
+        /// note's type among them is still the note's pick, and the report says the note chose.
+        /// </summary>
+        [Fact]
+        public void TheNoteStillChoosesBeforeTheSameArea()
+        {
+            RegionPick pick = RegionChoice.Pick(
+                new[] { Region(Cadastral, 4295.0), Region(OutOfScope, 4295.0) }, null);
+
+            Assert.Equal(OutOfScope, pick.TypeName);
+            Assert.Equal(RegionRoute.TheTypeTheNoteNames, pick.Route);
+        }
+
+        /// <summary>
+        /// The note's type held twice settled nothing on its own, and on one area it settles by
+        /// the area. Different areas still ask, which the case above this section holds.
+        /// </summary>
+        [Fact]
+        public void TheNotesTypeHeldTwiceOnOneAreaIsTaken()
+        {
+            RegionPick pick = RegionChoice.Pick(
+                new[] { Region(OutOfScope, 900.0), Region(OutOfScope, 900.0) }, null);
+
+            Assert.Equal(OutOfScope, pick.TypeName);
+            Assert.Equal(RegionRoute.TheSameAreaOnAll, pick.Route);
+        }
+
+        [Fact]
+        public void AHandPickStillWinsOverTheSameArea()
+        {
+            RegionPick pick = RegionChoice.Pick(
+                new[] { Region(Cadastral, 1245.30), Region(SomethingElse, 1245.30) }, SomethingElse);
+
+            Assert.Equal(SomethingElse, pick.TypeName);
+            Assert.Equal(RegionRoute.ChosenByHand, pick.Route);
+        }
+
+        /// <summary>
+        /// One option per line on the pane, the type, two spaces, and the area to two places
+        /// with a thousands comma, Bader's own example.
+        /// </summary>
+        [Fact]
+        public void AnOptionReadsItsTypeAndItsArea()
+        {
+            Assert.Equal("RCRC_CADASTRAL LIMIT  1,245.30 m2", RegionChoice.OptionLine(Region(Cadastral, 1245.3)));
+            Assert.Equal("RCRC_CADASTRAL LIMIT  12,182.06 m2", RegionChoice.OptionLine(Region(Cadastral, 12182.05561411)));
+            Assert.Equal("RCRC_CADASTRAL LIMIT  0.13 m2", RegionChoice.OptionLine(Region(Cadastral, 0.125)));
+            Assert.Equal(string.Empty, RegionChoice.OptionLine(null));
+        }
+
+        /// <summary>
+        /// The chosen type's region holding an area is the one the area comes off, even where a
+        /// region of that type holding nothing is listed before it.
+        /// </summary>
+        [Fact]
+        public void TheChosenRegionIsTheOneOfItsTypeHoldingAnArea()
+        {
+            PlotReading reading = CreateFixture.Plot(
+                "DM-11",
+                regions: new[] { Region(Cadastral, 0.0), Region(Cadastral, 500.0), Region(SomethingElse, 500.0) });
+
+            Assert.Equal(RegionRoute.TheSameAreaOnAll, reading.ChosenRegionPick.Route);
+
+            Assert.Equal(500.0, reading.ChosenRegion.SquareMetres);
+        }
     }
 }
