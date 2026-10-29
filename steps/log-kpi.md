@@ -4,6 +4,47 @@ Newest entry first.
 
 ---
 
+## 2026-10-29, PRX_Component values placed by word rules
+
+**Goal.** Place new PRX_Component values by Bader's word rules instead of one row each.
+
+**Done.** `install/component-rules.csv`, his 14 rules in his order, read by `ComponentRules.cs`,
+K76. `ComponentTable.PlaceOf` is the one order: exact row, nothing for a value a components.csv
+refused, first rule whose whole words the value holds, nothing. Folder `value` is the value
+through `ComponentMatch.Key`, Q15. A shared copy in the templates folder replaces the shipped list
+when read whole, and one bad line refuses the whole file. All 15 rows were answered the same way
+by a rule, so `install/components.csv` is its header alone. Step 2 shows `<n> values placed by
+rule` with each value and its rule in the tooltip, and the unknown value box stays for the rest.
+The create report prints each value's template, folder, what placed it and the file. Section 3 of
+the scan prints template, folder and what placed it with the file's line, the paths below.
+Rule folders count for a plot with no component, so EP plots still file under EXISTING PARK, and
+SCHOOLS now reaches a folder per value like MOSQUES, Q14. Street gaps: no change, the workbook was
+already written with each gap named, now held by `StreetGapsTests`. install.ps1, team-install.ps1,
+the .iss, build-team-kit.ps1 and the Core csproj ship the file. INSTALL-TEAM.txt says in one line
+that new values are placed by the rules file in the shared templates folder.
+
+**Checked.** RAN after the last file: build 0 warnings 0 errors, 2555 tests passed against 2499
+before, 28 of 28 hook cases, the same 28 as before. The 22 value test, the trap tests, the order,
+file and pane tests are in `ComponentRulesTests.cs`. Taking the per cent strip off turned 24 tests
+red, trying the last rule instead of the first 34. Breaker and reviewer, two passes: REAL fixed,
+one csv reader, one row check and one word rule instead of two, one template wording, stale
+comments, a test over an empty list. L85 to L96 LATENT. Usage, this session alone, read before
+the final gate and merge: 34,612,438 tokens and 15.15 USD, more than the Setup.exe round and less
+than twice it.
+
+**UNKNOWN.** Nothing ran in Revit. The NG05 spelling of the seven new values: no local KPI scan of
+NG05, so the tests carry Bader's spelling. Any components.csv on a team machine.
+
+**Remains.** The kit from main after the merge. Bader's pass.
+
+**Known bugs.** None REAL. L85, latent: a value typed DAILY MOSQUE >60% would reach MOSQUES, Q16.
+
+**Next.** Bader's pass in `steps/03_your_steps.md`.
+
+**Your turn.** Q13 to Q16. The pass in `steps/03_your_steps.md`.
+
+---
+
 ## 2026-10-28, the KPI Setup.exe, and Bader's answers Q8 to Q12
 
 **Goal.** One file Setup.exe for the KPI team kit beside the zip, and Q8 to Q12 recorded.

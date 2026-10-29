@@ -85,3 +85,22 @@ The local NG03 reports of 12 Sep print `DAILY MOSQUE LESS THAN 60%` on 4 sheets 
 been read since the team added them, so the school spellings and NG05's mosque spellings are
 UNKNOWN. The table holds the spelling with the space, and the spacing rule matches
 `LESSTHAN` to it.
+
+## Placing by rule, 29 Oct
+
+Bader's rules in `install/component-rules.csv`, K76, read by `ComponentRules.cs`. Every lookup
+above that went through `ComponentTable.RowFor` now goes through `ComponentTable.PlaceOf`: the
+exact row, then nothing for a refused value, then the first rule whose whole words the value
+holds, then nothing. `TemplateFor`, `FolderFor`, `Names`, `FoldersOf` and both report sections
+read it, and `UnknownComponents.PlacedByRule` counts step 2's line.
+
+- All fifteen rows of 28 Oct are answered the same way by a rule, so the shipped components.csv
+  is its header alone. A test holds the fifteen and the seven new values to their answers
+- `ComponentFolders.OnlyFolderFor` counts rule folders. A rule filing under the value reaches a
+  folder per value, so MOSQUES and SCHOOLS reach no one folder. SCHOOLS reached SCHOOL before,
+  while SCHOOL was its only row. No plot measured so far has an SC prefix and no sheet, Q14
+- The spelling of the seven new values on NG05 is UNKNOWN. No local report of NG05 holds a KPI
+  scan, so the tests carry the spellings as Bader typed them
+- WALKWAY and street plots: nothing changed. A UID2 missing from the street reference file
+  leaves D8 and F8 empty with one reason each and the workbook written, and a prefix with no
+  form writes no PDF with one line. `StreetGapsTests` holds both

@@ -1133,8 +1133,8 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Which components.csv each value on the ticked plots was read from, and every file the
-        /// table was read from, with every line it did not take. The shared copy in the
+        /// What placed each value on the ticked plots, a components.csv row or a rule, and the file
+        /// it came from, then every file the table was read from, with every line it did not take. The shared copy in the
         /// templates folder wins over the person's own and the shipped one, so a value can place
         /// a plot differently on two machines, and this is where that shows.
         /// </summary>
@@ -1149,18 +1149,19 @@ namespace RcrcGreen.Core.Kpi
                 .ToList();
 
             Heading(report, "WHERE EACH COMPONENT VALUE WAS READ", held.Count,
-                "one table, " + ComponentTable.FileName + ", the shared copy winning over yours and the shipped one");
+                "an exact row in " + ComponentTable.FileName + " first, the shared copy winning over yours and the shipped one, "
+                + "then the first rule in " + ComponentRules.FileName + " whose words the value holds");
 
-            Line(report, "  value | template | folder | read from");
+            Line(report, "  value | template | folder | placed by | file");
             foreach (string value in held)
             {
-                ComponentRow row = table.RowFor(value);
-                KpiTemplate template = table.TemplateFor(value);
+                ComponentPlacement placed = table.PlaceOf(value);
                 Line(report, "  " + Join(
                     value,
-                    template == null ? (row == null ? "NONE" : "NONE, " + row.Template + " is not a template this tool knows") : template.Name,
-                    row == null ? "NONE" : row.Folder,
-                    ComponentTable.ReadFrom(row)));
+                    placed.TemplateShown("NONE"),
+                    placed.Folder.Length == 0 ? "NONE" : placed.Folder,
+                    placed.How,
+                    placed.FromPath.Length == 0 ? "NONE" : placed.FromPath));
             }
 
             foreach (string line in table.InWords()) Line(report, "  " + line);

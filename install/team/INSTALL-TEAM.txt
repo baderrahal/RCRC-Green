@@ -51,7 +51,8 @@ Open a model, press KPI Checklist, and work down the four steps in the pane.
 3. Plots. Tick an asset type to tick all its plots, or tick plots one by one.
 4. Create. Press Create. The result shows what was written and what failed, with a reason.
 
-A component value the tool does not know shows in step 2 after Read, with one click to add it.
+New component values are placed by the rules file, component-rules.csv, in the shared templates folder.
+A component value no rule places shows in step 2 after Read, with one click to add it.
 A new template laid out like a known one shows in Setup, with Use and Skip.
 
 

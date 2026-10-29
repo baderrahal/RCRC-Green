@@ -121,3 +121,31 @@ Questions asked before this file existed are in each task's own log and are not 
     and Always Load in INSTALL-TEAM.txt
 
     Answer:
+
+14. A SCHOOLS plot with no component, on no sheet, is now refused before the press. Its rule files
+    each value under a folder named as the value, so with no value there is no folder, the same
+    as MOSQUES since the start. While SCHOOL was the only school row it filed under SCHOOL. No
+    plot measured so far has an SC prefix and no sheet.
+
+    Options: A keep refusing it, the plot named before the press. B file it under SCHOOL
+
+    Answer:
+
+15. Folder `value` is the value with its spacing put right, LESSTHAN as LESS THAN, upper case,
+    one space between words. For every value seen so far that is the value exactly. A model that
+    types one value two ways still files all its plots in one folder.
+
+    Options: A keep it so. B the value exactly as each sheet spells it, two folders for two
+    spellings
+
+    Answer:
+
+16. A mosque or school value written with a sign or another word, DAILY MOSQUE >60% or ABOVE 60%,
+    holds no MORE and no 60 as whole words, so the MOSQUE rule places it in MOSQUES, the under 60
+    targets, with no box. The only measured spelling is MORE THAN 60%. NG05's is UNKNOWN until
+    step 11 of your pass shows it, L85.
+
+    Options: A wait for step 11, and add a rule line for any such spelling it shows. B add rules
+    now for >60, <60, ABOVE and BELOW
+
+    Answer:

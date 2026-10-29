@@ -22,9 +22,10 @@ namespace RcrcGreen.Core.Tests.Kpi
     /// the two records are the two steps of one decision.
     ///
     /// The answer adds no table. The template and the folder are two columns of one row per
-    /// component, so which folders a template reaches is already written down, and ten of the
-    /// eleven templates reach exactly ONE folder. That one is where a plot with no component of its own is filed.
-    /// MOSQUES reaches two, so FM-08 is still refused, and it is refused BEFORE the press.
+    /// component, so which folders a template reaches is already written down. Under the rules of
+    /// 29 Oct five templates reach exactly ONE folder, and that one is where a plot with no
+    /// component of its own is filed. MOSQUES and SCHOOLS file under each value, so FM-08 is
+    /// still refused, and it is refused BEFORE the press.
     /// </summary>
     public class PlotWithNoComponentTests
     {
@@ -34,18 +35,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Counted off the two tables by hand rather than worked out with the same rule the code
-        /// uses. Six templates reach one folder each and MOSQUES reaches two, because DAILY
-        /// MOSQUE and FRIDAY MOSQUE fill one workbook and are filed apart.
+        /// Counted off the rules by hand rather than worked out with the same rule the code uses.
+        /// Five templates reach one named folder each.
         /// </summary>
         [Theory]
         [InlineData("EXISTING PARKS", "EXISTING PARK")]
         [InlineData("FUTURE PARKS", "FUTURE PARKS")]
         [InlineData("HEALTHCARE", "HEALTHCARE")]
         [InlineData("PARKING", "PARKING LOT")]
-        [InlineData("SCHOOLS", "SCHOOL")]
         [InlineData("STREETS", "STREETS")]
-        public void SixTemplatesReachExactlyOneFolderAndThatIsTheOne(string name, string folder)
+        public void FiveTemplatesReachExactlyOneFolderAndThatIsTheOne(string name, string folder)
         {
             KpiTemplate template = KpiTemplates.All.Single(one => one.Name == name);
 
@@ -54,22 +53,24 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **MOSQUES is the one that cannot answer**, and nothing is derived for it. Two folders
-        /// and no component to say which is a question the tables cannot settle, the same shape
-        /// as two filled regions holding an area on one plot.
+        /// **MOSQUES and SCHOOLS cannot answer**, and nothing is derived for them. Their rules file
+        /// each value under a folder named as the value, so a plot with no component has no value
+        /// to name its folder. SCHOOLS reached SCHOOL alone while SCHOOL was its only row, and the
+        /// rule of 29 Oct makes it the same as MOSQUES, Q14.
         /// </summary>
-        [Fact]
-        public void MosquesReachesTwoFoldersSoNothingIsDerived()
+        [Theory]
+        [InlineData("MOSQUES")]
+        [InlineData("SCHOOLS")]
+        public void AFolderPerValueSoNothingIsDerived(string name)
         {
-            Assert.Equal(
-                new[] { "DAILY MOSQUE", "FRIDAY MOSQUE" },
-                ComponentFolders.FoldersOf(KpiTemplates.Mosques));
+            KpiTemplate template = KpiTemplates.All.Single(one => one.Name == name);
 
-            Assert.Equal(string.Empty, ComponentFolders.OnlyFolderFor(KpiTemplates.Mosques));
+            Assert.Empty(ComponentFolders.FoldersOf(template));
+            Assert.Equal(string.Empty, ComponentFolders.OnlyFolderFor(template));
             Assert.Equal(
-                "MOSQUES files under DAILY MOSQUE and FRIDAY MOSQUE, and this plot carries no "
+                name + " files each value under a folder named as the value, and this plot carries no "
                 + "component to say which",
-                ComponentFolders.NoFolderForTemplate(KpiTemplates.Mosques));
+                ComponentFolders.NoFolderForTemplate(template));
         }
 
         /// <summary>
@@ -90,18 +91,18 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// **FM-08 is still refused, and the reason names both folders** rather than saying the
-        /// table does not hold an empty component, which told nobody anything.
+        /// **FM-08 is still refused, and the reason says the folder is named per value** rather
+        /// than saying the table does not hold an empty component, which told nobody anything.
         /// </summary>
         [Fact]
-        public void AMosquePlotWithNoComponentIsStillRefusedAndBothFoldersAreNamed()
+        public void AMosquePlotWithNoComponentIsStillRefusedAndSaysWhy()
         {
             PlotWorkbookPath path = PlotWorkbookPath.For(
                 Joined("R"), KpiTemplates.Mosques, string.Empty, "ANH-007-MO-100008");
 
             Assert.False(path.Ok);
             Assert.Equal(
-                "MOSQUES files under DAILY MOSQUE and FRIDAY MOSQUE, and this plot carries no "
+                "MOSQUES files each value under a folder named as the value, and this plot carries no "
                 + "component to say which",
                 path.Why);
         }
@@ -189,8 +190,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "4 ticked plots carry no component, because it is on no sheet, and the plot "
                     + "prefix placed each one, EP-05, EP-11, EP-12, FM-08.",
                     "3 of those file under their template's own folder, EP-05, EP-11, EP-12.",
-                    "FM-08 WILL BE READ AND WRITTEN NOWHERE: MOSQUES files under DAILY MOSQUE and "
-                    + "FRIDAY MOSQUE, and this plot carries no component to say which. Untick it, "
+                    "FM-08 WILL BE READ AND WRITTEN NOWHERE: MOSQUES files each value under a folder "
+                    + "named as the value, and this plot carries no component to say which. Untick it, "
                     + "or give it a sheet carrying a component."
                 },
                 said);

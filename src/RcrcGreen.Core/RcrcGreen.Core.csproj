@@ -21,6 +21,9 @@
     <None Include="..\..\install\components.csv" Link="components.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\install\component-rules.csv" Link="component-rules.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

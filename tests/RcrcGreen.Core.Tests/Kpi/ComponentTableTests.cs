@@ -70,52 +70,34 @@ namespace RcrcGreen.Core.Tests.Kpi
     public class ComponentTableTests
     {
         /// <summary>
-        /// The shipped file itself, read through the same reader the add-in uses, against the
-        /// fifteen rows written out here by hand. The four at the end are the team's of 28 Oct,
-        /// each to its own template and its own folder named as the value, Bader's answers.
+        /// The shipped file holds exceptions only, and on 29 Oct a rule answers every one of the
+        /// fifteen it held the same way, so it is its header and nothing else. A row added later
+        /// is an exception, and this test is where it is written out by hand.
         /// </summary>
         [Fact]
-        public void TheShippedFileHoldsTheFifteen()
+        public void TheShippedFileHoldsOnlyExceptionsAndTodayThatIsNone()
         {
             ComponentFile file = ComponentFile.From(ComponentSource.Shipped, InstallFile());
 
             Assert.True(file.Read, file.Why);
             Assert.Empty(file.Problems);
-            Assert.Equal(
-                new[]
-                {
-                    "DAILY MOSQUE|MOSQUES|DAILY MOSQUE",
-                    "FRIDAY MOSQUE|MOSQUES|FRIDAY MOSQUE",
-                    "SCHOOL|SCHOOLS|SCHOOL",
-                    "HEALTH|HEALTHCARE|HEALTHCARE",
-                    "PARKING LOT|PARKING|PARKING LOT",
-                    "EXISTING PARK|EXISTING PARKS|EXISTING PARK",
-                    "FUTURE PARK|FUTURE PARKS|FUTURE PARKS",
-                    "NH STRT LESS 20m ROW|STREETS|STREETS",
-                    "NH STRT 20m ROW|STREETS|STREETS",
-                    "STREET 30m ROW|STREETS|STREETS",
-                    "STREET 36m ROW|STREETS|STREETS",
-                    "DAILY MOSQUE MORE THAN 60%|MOSQUES MORE THAN 60|DAILY MOSQUE MORE THAN 60%",
-                    "DAILY MOSQUE LESS THAN 60%|MOSQUES LESS THAN 60|DAILY MOSQUE LESS THAN 60%",
-                    "SCHOOL MORE THAN 60%|SCHOOLS MORE THAN 60|SCHOOL MORE THAN 60%",
-                    "SCHOOL LESS THAN 60%|SCHOOLS LESS THAN 60|SCHOOL LESS THAN 60%"
-                },
-                file.Rows.Select(one => one.Component + "|" + one.Template + "|" + one.Folder).ToArray());
-
-            Assert.Empty(ComponentTable.Layered(file).Unmatched);
+            Assert.Empty(file.Rows);
         }
 
         /// <summary>
-        /// The copy the build puts beside RcrcGreen.Core.dll is the same file byte for byte, so
-        /// the add-in and the tests read what install/ holds and nothing else.
+        /// The copies the build puts beside RcrcGreen.Core.dll are the same files byte for byte,
+        /// so the add-in and the tests read what install/ holds and nothing else.
         /// </summary>
         [Fact]
-        public void TheCopyBesideTheAssemblyIsTheInstallFile()
+        public void TheCopiesBesideTheAssemblyAreTheInstallFiles()
         {
             Assert.True(File.Exists(ComponentTable.ShippedPath), ComponentTable.ShippedPath);
             Assert.Equal(File.ReadAllBytes(InstallFile()), File.ReadAllBytes(ComponentTable.ShippedPath));
+            Assert.True(File.Exists(ComponentTable.ShippedRulesPath), ComponentTable.ShippedRulesPath);
+            Assert.Equal(File.ReadAllBytes(ComponentRulesTests.InstallRulesFile()), File.ReadAllBytes(ComponentTable.ShippedRulesPath));
             Assert.True(ComponentTable.Shipped.Files.Single().Read);
-            Assert.Equal(15, ComponentTable.Shipped.Rows.Count);
+            Assert.Empty(ComponentTable.Shipped.Rows);
+            Assert.Equal(14, ComponentTable.Shipped.Rules.Count);
         }
 
         [Theory]
@@ -312,9 +294,29 @@ namespace RcrcGreen.Core.Tests.Kpi
             }
         }
 
+        /// <summary>
+        /// The fifteen rows the shipped file held before the rules, written out by hand, so the
+        /// layering tests keep a lower file that answers.
+        /// </summary>
         private static ComponentFile Shipped()
         {
-            return ComponentFile.From(ComponentSource.Shipped, InstallFile());
+            return Parse(ComponentSource.Shipped, "shipped.csv",
+                "Component,Template,Folder",
+                "DAILY MOSQUE,MOSQUES,DAILY MOSQUE",
+                "FRIDAY MOSQUE,MOSQUES,FRIDAY MOSQUE",
+                "SCHOOL,SCHOOLS,SCHOOL",
+                "HEALTH,HEALTHCARE,HEALTHCARE",
+                "PARKING LOT,PARKING,PARKING LOT",
+                "EXISTING PARK,EXISTING PARKS,EXISTING PARK",
+                "FUTURE PARK,FUTURE PARKS,FUTURE PARKS",
+                "NH STRT LESS 20m ROW,STREETS,STREETS",
+                "NH STRT 20m ROW,STREETS,STREETS",
+                "STREET 30m ROW,STREETS,STREETS",
+                "STREET 36m ROW,STREETS,STREETS",
+                "DAILY MOSQUE MORE THAN 60%,MOSQUES MORE THAN 60,DAILY MOSQUE MORE THAN 60%",
+                "DAILY MOSQUE LESS THAN 60%,MOSQUES LESS THAN 60,DAILY MOSQUE LESS THAN 60%",
+                "SCHOOL MORE THAN 60%,SCHOOLS MORE THAN 60,SCHOOL MORE THAN 60%",
+                "SCHOOL LESS THAN 60%,SCHOOLS LESS THAN 60,SCHOOL LESS THAN 60%");
         }
 
         private static ComponentFile Parse(ComponentSource source, string path, params string[] lines)
@@ -502,21 +504,25 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new System.Collections.Generic.List<TemplateOutcome>());
 
             ComponentTable table = ComponentTable.Layered(
-                ComponentFile.From(ComponentSource.Shipped, ComponentTableTests.InstallFile()),
-                ComponentFile.Parse(ComponentSource.Shared, @"T:\templates\components.csv",
-                    new[] { "Component,Template,Folder", "SCHOOL,SCHOOLS,SCHOOL SHARED" }));
+                    ComponentFile.From(ComponentSource.Shipped, ComponentTableTests.InstallFile()),
+                    ComponentFile.Parse(ComponentSource.Shared, @"T:\templates\components.csv",
+                        new[] { "Component,Template,Folder", "SCHOOL,SCHOOLS,SCHOOL SHARED" }))
+                .WithRules(ComponentRuleFile.From(ComponentSource.Shipped, ComponentRulesTests.InstallRulesFile()));
 
             var report = new System.Text.StringBuilder();
             KpiCreateReport.TheComponentTable(report, set, table);
             string[] lines = report.ToString().Replace("\r", string.Empty).Split('\n');
 
             Assert.Equal("== WHERE EACH COMPONENT VALUE WAS READ (3) ==", lines[0]);
+            Assert.Contains("  value | template | folder | placed by | file", lines);
             Assert.Contains(lines, line => line.StartsWith(
-                "  DAILY MOSQUE LESSTHAN 60% | MOSQUES LESS THAN 60 | DAILY MOSQUE LESS THAN 60% | the shipped components.csv line 14, ",
+                "  DAILY MOSQUE LESSTHAN 60% | MOSQUES LESS THAN 60 | DAILY MOSQUE LESS THAN 60% | rule MOSQUE LESS 60, the shipped component-rules.csv line 3 | ",
                 StringComparison.Ordinal));
-            Assert.Contains("  PUMP STATION | NONE | NONE | no components.csv holds it", lines);
-            Assert.Contains(@"  SCHOOL | SCHOOLS | SCHOOL SHARED | the shared components.csv line 2, T:\templates\components.csv", lines);
+            Assert.Contains("  PUMP STATION | NONE | NONE | nothing | NONE", lines);
+            Assert.Contains(@"  SCHOOL | SCHOOLS | SCHOOL SHARED | row, the shared components.csv line 2 | T:\templates\components.csv", lines);
             Assert.Contains(@"  the shared components.csv, T:\templates\components.csv: 1 row", lines);
+            Assert.Contains(lines, line => line.StartsWith("  the shipped component-rules.csv, ", StringComparison.Ordinal)
+                && line.EndsWith(": 14 rules, the rules in force", StringComparison.Ordinal));
 
             // The two spellings of one value are one line, the model's first spelling shown.
             Assert.Single(lines, line => line.Contains("| MOSQUES LESS THAN 60 |"));

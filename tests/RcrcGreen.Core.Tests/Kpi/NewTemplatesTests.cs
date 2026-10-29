@@ -303,9 +303,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             var components = new Dictionary<string, string>
             {
+                { "HF-50", "HEALTHCARE CLINIC" },
+                { "HF-51", "healthcare  clinic" },
                 { "DM-50", "DAILY MOSQUE MORE THAN 80%" },
-                { "DM-51", "daily mosque  more than 80 %" },
-                { "SC-09", "SCHOOL MORE THAN 80%" },
                 { "PS-01", "PUMP STATION" },
                 { "DM-12", "DAILY MOSQUE" },
                 { "EP-05", "" }
@@ -314,12 +314,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             IReadOnlyList<UnknownComponent> unknown = UnknownComponents.In(
                 components.Keys, plot => components[plot], ComponentTable.Shipped, KpiTemplates.All);
 
-            Assert.Equal(new[] { "DAILY MOSQUE MORE THAN 80%", "SCHOOL MORE THAN 80%", "PUMP STATION" }, unknown.Select(one => one.Value).ToArray());
-            Assert.Equal(new[] { "DM-50", "DM-51" }, unknown[0].Plots.ToArray());
-            Assert.Equal("MOSQUES MORE THAN 60", unknown[0].Suggested.Name);
-            Assert.Equal("DAILY MOSQUE MORE THAN 80%", unknown[0].Folder);
-            Assert.Equal("SCHOOLS MORE THAN 60", unknown[1].Suggested.Name);
-            Assert.Null(unknown[2].Suggested);
+            // DAILY MOSQUE MORE THAN 80% holds MOSQUE and no 60, so the MOSQUE rule places it.
+            Assert.Equal(new[] { "HEALTHCARE CLINIC", "PUMP STATION" }, unknown.Select(one => one.Value).ToArray());
+            Assert.Equal(new[] { "HF-50", "HF-51" }, unknown[0].Plots.ToArray());
+            Assert.Equal("HEALTHCARE", unknown[0].Suggested.Name);
+            Assert.Equal("HEALTHCARE CLINIC", unknown[0].Folder);
+            Assert.Null(unknown[1].Suggested);
         }
 
         /// <summary>

@@ -10,6 +10,7 @@ One row per session, added after its phase merges. Taken from
 | 2026-10-28 | c82dc224 | F2 Q6, Q7 and the KPI team kit | 40,444,652 | 16.10 |
 | 2026-10-28 | 493e4ebb | 60 per cent templates, components.csv, new values and templates, two pull requests | 89,845,589 | 35.01 |
 | 2026-10-28 | 204d63e4 | F2b the KPI Setup.exe, and Q8 to Q12 answered | 22,122,165 | 11.30 |
+| 2026-10-29 | f0ee7c3b | PRX_Component values placed by word rules | 34,612,438 | 15.15 |
 
 The first row, so no phase before it to compare against. 97.7 % of it was cache read.
 
@@ -27,3 +28,6 @@ two review passes on each, and the pane prompts.
 
 The Setup.exe row is this session alone, read before the final gate and the merge, so those turns
 are not in it. It cost less than the 60 per cent round.
+
+The component rules row is this session alone, read before the final gate and the merge, so those
+turns and the kit rebuild are not in it. It cost more than the Setup.exe round and less than twice it.

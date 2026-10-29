@@ -1,5 +1,10 @@
 # ai-max state, KPI
 
+Phase: 9, ship. PRX_Component values placed by Bader's word rules, install/component-rules.csv,
+K76, one pull request. Its entry is the top of `steps/log-kpi.md`. Two review passes each:
+REAL fixed, L85 to L96 LATENT, the claim checker's three wordings fixed. Q14 to Q16 asked.
+Nothing in it has run in Revit. The kit is rebuilt from main after the merge.
+
 Phase: 10, package. The KPI Setup.exe, F2b in `steps/01_next.md`, built by Inno Setup beside
 the team zip, INSTALL-TEAM.txt leading with it, and Bader's answers to Q8 to Q12. The proof
 script is `steps/runs/2026-10-28-setup-exe/prove-setup.ps1`. Its entry is the top of `steps/log-kpi.md`.

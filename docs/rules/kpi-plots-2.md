@@ -197,6 +197,9 @@ Nothing guesses and nothing falls back to matching a word of the value against a
 template name. That old rule made PARKING LOT look like a park, because PARKING begins with
 PARK, and answered nothing at all for the four street values.
 
+Since 29 Oct a value no row holds is placed by its words under K76, and the eleven above are
+answered by rules, so the shipped components.csv holds none of them.
+
 Section 3 still ends with every distinct value the model holds, how many sheets carry each, the
 template it means and every plot those sheets are for, uncapped where the rest of the section
 shows twenty examples. The template column is this table read back, so a value the model grows
@@ -251,8 +254,8 @@ shared     components.csv in the templates folder set in Setup, optional, and it
 ```
 
 The Core build copies `install/components.csv` beside `RcrcGreen.Core.dll`, so the tests and the
-add-in read the one file the repo holds, and a gate test reads it against fifteen rows written
-out by hand. **A file that names one value twice with two answers decides neither**, and a lower
+add-in read the one file the repo holds. Since 29 Oct it holds exceptions only, a row a K76 rule
+does not answer the same way, and a gate test reads it as its header alone. **A file that names one value twice with two answers decides neither**, and a lower
 file does not answer in its place. A file without the header line is not read at all. Every row
 keeps its file and line, and both reports print where each value was read: section 3 of the scan
 and WHERE EACH COMPONENT VALUE WAS READ in the create report.
@@ -311,7 +314,7 @@ lets the files below it answer.
 
 ## A component value no file holds is offered one line, never placed by a guess
 
-**K75.** After a read, step 2 shows one box per value no components.csv places: the value, how
+**K75.** After a read, step 2 shows one box per value no components.csv row and no K76 rule places: the value, how
 many plots carry it, and a suggestion. The suggested template is the known one sharing the most
 words with the value, a plural S and a per cent sign off each word, and none on a tie or where no
 word is shared, because a tie between the over and under 60 templates is one press from the wrong
@@ -321,3 +324,22 @@ two dropdowns of the templates and the known folders, each write one line, to th
 where the templates folder is set and takes the write, else to `%APPDATA%\RCRC Green\components.csv`,
 and the box and the status line say which. Skip hides the box until Revit closes. Until a line is
 written the value's plots are refused as before, with the value named.
+
+## A value no row holds is placed by its words
+
+**K76.** Bader's rules of 29 Oct, in `install/component-rules.csv`, header `Words,Template,Folder`,
+read by `ComponentRules` and tried top to bottom. The first rule whose words ALL appear in the
+value, as whole words after the `ComponentMatch.Key` spacing rule with % off each word, wins.
+Folder `value` is the value through `ComponentMatch.Key`, so one value typed two ways files in one
+folder. `ComponentTable.PlaceOf` is the one order: an exact components.csv row, then nothing for a
+value a components.csv refused, then the first rule, then nothing.
+
+Two copies: shipped beside the DLLs, and shared in the templates folder, which replaces the
+shipped list whole where it is read. One line that cannot be read refuses the whole file, because
+a dropped line moves values to a later rule in silence, and the shipped list answers and Setup
+says so. A rule naming a template not found here places its value nowhere and is named.
+
+Whole words keep the traps shut: PARK is no word of PARKING LOT, 60 is no word of 600, and a
+MOSQUE value with MORE and no 60 reaches MOSQUES. Step 2 shows `<n> values placed by rule` with
+each value and its rule in the tooltip. A template whose rule files under the value reaches no one
+folder, so a MOSQUES or SCHOOLS plot with no component is refused before the press, Q14.
