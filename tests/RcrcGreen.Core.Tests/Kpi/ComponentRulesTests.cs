@@ -415,12 +415,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void APrefixWithNoFormWritesNoPdfAndSaysSoInOneLine()
         {
-            Assert.Same(PdfForms.Roads, PdfForms.ForPlot("NS-01"));
-            Assert.Same(PdfForms.Roads, PdfForms.ForPlot("ST-01"));
-            Assert.Same(PdfForms.Roads, PdfForms.ForPlot("MM-01"));
+            Assert.Same(PdfForms.Roads, PdfForms.ForPlot("NS-01", null));
+            Assert.Same(PdfForms.Roads, PdfForms.ForPlot("ST-01", null));
+            Assert.Same(PdfForms.Roads, PdfForms.ForPlot("MM-01", null));
 
-            Assert.Null(PdfForms.ForPlot("WW-01"));
-            Assert.Equal("no form is named for the plot prefix WW, so no PDF was written", PdfForms.NoFormFor("WW-01"));
+            Assert.Null(PdfForms.ForPlot("WW-01", null));
+            Assert.Equal("no form is named for the plot prefix WW, so no PDF was written", PdfForms.NoFormFor("WW-01", null));
         }
     }
 }

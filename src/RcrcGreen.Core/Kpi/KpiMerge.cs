@@ -492,8 +492,8 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// Every species row across the chosen plots, merged on the tree list sheet that takes
-        /// the row's group and the botanical name compared without case and with surrounding
-        /// whitespace off. The sheet comes off <paramref name="counted"/>, the one resolver the
+        /// the row's group and the botanical name through <see cref="SpeciesNames.Key"/>, the
+        /// key the workbook match uses. The sheet comes off <paramref name="counted"/>, the one resolver the
         /// readers use, so on STREETS a species under Proposed and under Street Design is one
         /// row here, ALBIZIA LEBBECK 2 plus 6 on ST-05, because both go to Tree List -
         /// Proposed, and the row says both groups. A group no sheet takes merges on its own
@@ -596,9 +596,11 @@ namespace RcrcGreen.Core.Kpi
         private static string Key(SpeciesRow row, CountedGroups counted)
         {
             string home = counted.SheetFor(row.GroupName) ?? row.GroupName;
+            // The matcher's own key, so two spellings of one tree are one species before a row
+            // is looked for and never two counts aimed at one row.
             return home.Trim().ToUpperInvariant()
                 + " | "
-                + row.BotanicalName.Trim().ToUpperInvariant();
+                + SpeciesNames.Key(row.BotanicalName);
         }
 
         /// <summary>

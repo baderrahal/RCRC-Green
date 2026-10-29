@@ -13,7 +13,7 @@ out of the workbook this run has just written. That ordering is a rule and `OneP
 `KpiRequestHandler` is the one line that keeps it. Overwritten silently if one is there, the
 same as the workbook.
 
-### The three forms, and the prefix is what picks one
+### The three forms, and the template is what picks one
 
 ```
 Projects Basic Data - Parks                                42 fields   EP, FP
@@ -21,11 +21,23 @@ Projects Basic Data - Open spaces associated to buildings  49 fields   HF, FM, D
 Projects Basic Data - Roads                                34 fields   NS, ST, MM
 ```
 
-**KEYED ON THE PLOT PREFIX, which is the first thing the prefix decides on its own.** Everywhere
-else in this tool it cross checks a component that has the last word. Which form a plot gets is
-the team's filing and `PRX_Component` says nothing about it. A prefix `PdfForms` does not hold
-writes no PDF and is named, and a test walks every prefix `PlotPrefixes` holds so the two
-records cannot say different things about which prefixes exist.
+**THE FORM FOLLOWS THE PLOT'S TEMPLATE**, Bader's rule of 29 October. STREETS takes Roads.
+MOSQUES, SCHOOLS, their four 60 per cent versions, HEALTHCARE and PARKING take Open spaces
+associated to buildings. EXISTING PARKS and FUTURE PARKS take Parks. NG05's walkway was placed in
+STREETS by component-rules.csv and wrote no PDF, because its prefix is none of the ten above.
+
+`PdfForms.ByTemplate` is the table, keyed on the template's kind, so a 60 per cent template and a
+template offered on its layout take their kind's form. A table in Core and not a Form column in
+component-rules.csv, because components.csv rows and new templates place plots too and a rules
+column would reach neither. A test holds a form to every template `KpiTemplates.All` names.
+
+**The prefixes above answer only for a plot no template placed.** A test walks every prefix
+measured so far and finds the same form through its template as through its prefix. A plot with
+neither writes no PDF and is named.
+
+**Only the Open spaces form has a Project Type box.** It prints PRX_Component as the model holds
+it. Measured off the client's Roads file on 29 October, 34 fields and none a type, so a walkway's
+Roads PDF carries WALKWAY nowhere, Q21.
 
 ### Every field was read off the files and checked back against them
 

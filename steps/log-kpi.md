@@ -4,6 +4,48 @@ Newest entry first.
 
 ---
 
+## 2026-10-29, slash trees, the PDF form by template, and the walkway's road width
+
+**Goal.** Bader's three NG05 faults: slash trees counted nowhere, no PDF for a walkway, no ROW.
+
+**Done, K36.** `SpeciesNames.Key` takes out every slash and reads every whitespace run as one
+space, on both names. The matcher, the tree merge, the one species on two rows refusal and the
+tree list check all key on it, so two spellings are one species before a row is asked. The seven
+R3 templates hold the same 8 slash names on all 14 tree sheets and the tidy makes no two rows one.
+
+**Done, K35.01.** The form follows the plot's template through `PdfForms.ByTemplate`, a table in
+Core keyed on the template's kind, not a csv column, because components.csv rows and new
+templates place plots too. The prefix answers only with no template. `PdfFill.Of` takes the
+template. The Roads form has no Project Type box, read off the client's file, Q21.
+
+**Done, K14.** The cause: the walkway's row, ANH-012-ST-100298, is Pedestrian Walk with QUANTITY
+UNIT sqm and a ROAD_WIDTH, and the unit refused the whole row. The unit now decides the length
+alone. Breaker found the create report's street section listed workbook refusals, not the file's
+answers, so it now prints the answer the press used, carried on each plot's outcome.
+
+**Checked.** RAN after the last code file: Revit Release build 0 warnings 0 errors, 2667 tests
+passed against 2614 in the last entry, 28 of 28 hook cases. Breaking each fix turned its tests
+red: 13 for the slash, 4 for the form, 3 for the street, 1 for each report fix. The real
+reference file read through the tool's own reader: NG05's 81 street UID2s of the 17 September run got width and
+length 81 before and 81 after, the walkway row neither before and its width after. Two review
+passes. REAL fixed: three texts the code contradicted, the street section, then in pass 2 that
+section blaming a missing UID2 on a refused path. That last fix had no third pass, two being the
+cap. L118 to L128 LATENT.
+
+**UNKNOWN.** How NG05 spells its slash trees now, the newest NG05 report here being of 17
+September, where its two slash trees already matched. Which UID2 Bader's walkway carries. Nothing
+ran in Revit.
+
+**Remains.** The kit from main after the merge. Bader's pass.
+
+**Known bugs.** None REAL. A walkway's total length stays empty, Q22.
+
+**Next.** Bader's pass in `steps/03_your_steps.md`.
+
+**Your turn.** Q20 to Q22, then Q13 and Q16 to Q19. The pass.
+
+---
+
 ## 2026-10-29, region areas, and folders flat or grouped
 
 **Goal.** Regions of one area taken without asking, areas and Show where they differ, and each

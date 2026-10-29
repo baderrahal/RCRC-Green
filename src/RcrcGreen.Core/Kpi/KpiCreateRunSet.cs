@@ -130,7 +130,8 @@ namespace RcrcGreen.Core.Kpi
     {
         private PlotOutcome(
             string plotId, KpiTemplate template, PlotWorkbookPath where,
-            bool written, bool folderMade, string why, PdfOutcome pdf, NotWrittenKind kind)
+            bool written, bool folderMade, string why, PdfOutcome pdf, NotWrittenKind kind,
+            StreetReferenceAnswer street = null)
         {
             if (string.IsNullOrWhiteSpace(plotId)) throw new ArgumentNullException("plotId");
 
@@ -142,6 +143,7 @@ namespace RcrcGreen.Core.Kpi
             Why = why ?? string.Empty;
             Pdf = pdf;
             Kind = kind;
+            Street = street;
         }
 
         /// <summary>
@@ -164,7 +166,20 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public PlotOutcome WithPdf(PdfOutcome pdf)
         {
-            return new PlotOutcome(PlotId, Template, Where, Written, FolderMade, Why, pdf, Kind);
+            return new PlotOutcome(PlotId, Template, Where, Written, FolderMade, Why, pdf, Kind, Street);
+        }
+
+        /// <summary>
+        /// What the street reference file answered for this plot AT THE PRESS, or null where the
+        /// press never asked it. **The report prints this and never asks the file again**: a
+        /// refused path carries no UID2, so asking again blamed a missing UID2 on a plot that
+        /// has one, reviewer pass 2 of the slash round.
+        /// </summary>
+        public StreetReferenceAnswer Street { get; }
+
+        public PlotOutcome WithStreet(StreetReferenceAnswer street)
+        {
+            return new PlotOutcome(PlotId, Template, Where, Written, FolderMade, Why, Pdf, Kind, street);
         }
 
         public static PlotOutcome Wrote(string plotId, KpiTemplate template, PlotWorkbookPath where)

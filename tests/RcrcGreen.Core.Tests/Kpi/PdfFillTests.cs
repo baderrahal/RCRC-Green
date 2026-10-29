@@ -58,7 +58,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         private static PdfPlan Plan(PlotReading reading, KpiTemplate template = null, bool workbookWritten = true)
         {
             return PdfFill.Of(
-                reading, CountedGroups.Of(template ?? KpiTemplates.Mosques),
+                reading, null, CountedGroups.Of(template ?? KpiTemplates.Mosques),
                 null, Today, workbookWritten, PdfWorkbookNumbers.None);
         }
 
@@ -343,7 +343,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void APlotWithNoWorkbookComputesNeitherNumberAndSaysWhy()
         {
             PdfPlan refused = PdfFill.Of(
-                Plot("EP-05"), CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, false,
+                Plot("EP-05"), null, CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, false,
                 PdfWorkbookNumbers.None);
 
             Assert.Equal(PdfFill.TheWorkbookWasNotWritten, Blank(refused, PdfValue.TotalAreasToBeGreened));
@@ -353,7 +353,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             // either**, because the canopy is the workbook's own arithmetic worked out again and
             // a check that cannot see its subject has to refuse.
             PdfPlan unchecked_ = PdfFill.Of(
-                Plot("EP-05"), CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, true,
+                Plot("EP-05"), null, CountedGroups.Of(KpiTemplates.ExistingParks), null, Today, true,
                 PdfWorkbookNumbers.None);
 
             Assert.Equal(WorkbookArithmetic.NoWorkbookRead, Blank(unchecked_, PdfValue.TotalAreasToBeGreened));
@@ -415,7 +415,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PdfPlan found = PdfFill.Of(
                 CreateFixture.Plot("ST-05", uid2: "ANH-007-ST-100210"),
-                CountedGroups.Of(KpiTemplates.Streets),
+                null, CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
                 Today, true, PdfWorkbookNumbers.None);
 
@@ -426,7 +426,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             PdfPlan missing = PdfFill.Of(
                 CreateFixture.Plot("ST-05", uid2: "ANH-007-ST-100210"),
-                CountedGroups.Of(KpiTemplates.Streets),
+                null, CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Nothing("the file names no row for this plot"),
                 Today, true, PdfWorkbookNumbers.None);
 

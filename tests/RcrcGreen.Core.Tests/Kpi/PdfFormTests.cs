@@ -85,11 +85,11 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void APrefixTheTableDoesNotHoldWritesNothingAndIsNamed()
         {
             Assert.Null(PdfForms.For("ZZ"));
-            Assert.Null(PdfForms.ForPlot("ZZ-01"));
+            Assert.Null(PdfForms.ForPlot("ZZ-01", null));
 
             Assert.Equal(
                 "no form is named for the plot prefix ZZ, so no PDF was written",
-                PdfForms.NoFormFor("ZZ-01"));
+                PdfForms.NoFormFor("ZZ-01", null));
         }
 
         /// <summary>

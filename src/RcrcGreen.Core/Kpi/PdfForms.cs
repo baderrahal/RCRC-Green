@@ -170,9 +170,9 @@ namespace RcrcGreen.Core.Kpi
         public int FieldCount { get; }
 
         /// <summary>
-        /// The plot prefixes this form is for. **This is the first thing the prefix decides on
-        /// its own** rather than cross checking a component: which form a plot gets is the
-        /// team's filing and PRX_Component says nothing about it.
+        /// The plot prefixes this form is for, **asked only for a plot no template placed**.
+        /// A placed plot's form follows its template, Bader's rule of 29 October, through
+        /// <see cref="PdfForms.ByTemplate"/>.
         /// </summary>
         public IReadOnlyList<string> Prefixes { get; }
 
@@ -361,6 +361,28 @@ namespace RcrcGreen.Core.Kpi
         public static readonly IReadOnlyList<PdfForm> All = new[] { Parks, OpenSpaces, Roads };
 
         /// <summary>
+        /// **THE FORM FOLLOWS THE TEMPLATE.** Bader, 29 October: a walkway's plot carries no
+        /// prefix the form table held, so NG05 wrote no PDF for it while component-rules.csv had
+        /// placed it in STREETS. Keyed on the template's kind, so the four 60 per cent templates
+        /// and a new template offered on its layout take their kind's form with no line here.
+        ///
+        /// A table here rather than a Form column in component-rules.csv, because components.csv
+        /// rows and new templates place plots too and a rules column would reach neither. A new
+        /// kind of template is a code change in `KpiTemplates` anyway, and its form goes on the
+        /// line below it, which a test holds to every kind `KpiTemplates.All` names.
+        /// </summary>
+        public static readonly IReadOnlyList<KeyValuePair<KpiTemplate, PdfForm>> ByTemplate = new[]
+        {
+            new KeyValuePair<KpiTemplate, PdfForm>(KpiTemplates.Streets, Roads),
+            new KeyValuePair<KpiTemplate, PdfForm>(KpiTemplates.Mosques, OpenSpaces),
+            new KeyValuePair<KpiTemplate, PdfForm>(KpiTemplates.Schools, OpenSpaces),
+            new KeyValuePair<KpiTemplate, PdfForm>(KpiTemplates.Healthcare, OpenSpaces),
+            new KeyValuePair<KpiTemplate, PdfForm>(KpiTemplates.Parking, OpenSpaces),
+            new KeyValuePair<KpiTemplate, PdfForm>(KpiTemplates.ExistingParks, Parks),
+            new KeyValuePair<KpiTemplate, PdfForm>(KpiTemplates.FutureParks, Parks)
+        };
+
+        /// <summary>
         /// The form a plot's prefix reaches, or null. **A prefix the table does not hold writes
         /// no PDF and is named**, the same rule a component the folder table does not hold
         /// follows.
@@ -375,16 +397,33 @@ namespace RcrcGreen.Core.Kpi
                 one => string.Equals(one, held, StringComparison.OrdinalIgnoreCase)));
         }
 
-        /// <summary>
-        /// The form a plot reaches, off the two letters at the front of its identifier.
-        /// </summary>
-        public static PdfForm ForPlot(string plotId)
+        /// <summary>The form a template's kind takes, or null for a kind the table does not hold.</summary>
+        public static PdfForm ForTemplate(KpiTemplate template)
         {
-            return For(PlotPrefixes.Of(plotId));
+            if (template == null) return null;
+
+            return ByTemplate
+                .Where(one => ReferenceEquals(one.Key, template.Kind))
+                .Select(one => one.Value)
+                .FirstOrDefault();
         }
 
-        public static string NoFormFor(string plotId)
+        /// <summary>
+        /// The form a plot reaches: its template's where a template placed it, and the two
+        /// letters at the front of its identifier only where none did.
+        /// </summary>
+        public static PdfForm ForPlot(string plotId, KpiTemplate template)
         {
+            return template != null ? ForTemplate(template) : For(PlotPrefixes.Of(plotId));
+        }
+
+        public static string NoFormFor(string plotId, KpiTemplate template)
+        {
+            if (template != null)
+            {
+                return "no form is named for the template " + template.Name + ", so no PDF was written";
+            }
+
             string prefix = PlotPrefixes.Of(plotId);
 
             return prefix.Length == 0

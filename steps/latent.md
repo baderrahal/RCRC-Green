@@ -836,3 +836,80 @@ Where: `KpiRequestHandler` AlreadyInThatFolder over the K78 path
 Input: MM-01 and MM-09 to MM-15 refused, an earlier press's file in STREETS\ANH-007-ST-100213
 Why latent: moving or naming an earlier run's files is out of this round, and the line is true of the folder it names
 Found: folder layout round, breaker pass 1
+
+## L118 UNKNOWN and Unknown Tree on one plot aim two counts at one row
+
+Where: KpiMerge.Key with SpeciesAliases.For, SpeciesMatching.Against
+Input: one plot printing both UNKNOWN and Unknown Tree under one group
+Why latent: the merge keys on the name and the alias is asked after, so the two stay two species and both write B101. No run has shown both spellings on one plot
+Found: slash round, breaker pass 1
+
+## L119 A new template of the STREETS kind gets Roads and no street answer
+
+Where: KpiRequestHandler street answer on ReferenceEquals(pick.Template, KpiTemplates.Streets), against PdfForms.ForTemplate on Kind
+Input: a template offered on the STREETS layout under another name
+Why latent: no such template is recorded, and the reason it would print, only the STREETS template has this cell, would be untrue
+Found: slash round, breaker pass 1 and reviewer pass 1
+
+## L120 A unit other than m and sqm also gives a width
+
+Where: StreetReferenceFile.For, the test is not m rather than is sqm
+Input: a street row whose QUANTITY UNIT is empty or Null with a numeric ROAD_WIDTH
+Why latent: the one Null unit row of the real file is a SCHOOL row with no width, measured 29 October
+Found: slash round, breaker pass 1
+
+## L121 A name of slashes and spaces alone keys as empty
+
+Where: SpeciesNames.Key
+Input: a workbook row holding only a slash, against a species with no name
+Why latent: no real list or schedule holds one
+Found: slash round, breaker pass 1
+
+## L122 Other slash and space characters are not tidied
+
+Where: SpeciesNames.Key
+Input: a backslash, a division slash, a full width slash or a zero width space in a name
+Why latent: none in the seven templates or the 17 September NG05 run
+Found: slash round, breaker pass 1
+
+## L123 Two spellings under one group on one plot now refuse the plot
+
+Where: PlotReading.SpeciesPrintedOnMoreThanOneRow through Reconciliation
+Input: X / Y and X Y printed under one group on one plot
+Why latent: loud rather than silent, and no run has shown such a pair
+Found: slash round, breaker pass 1
+
+## L124 The alias lookup compares names its own way
+
+Where: SpeciesAliases.For and the comment above it
+Input: an alias whose Revit name carries a slash or a double space
+Why latent: the table holds UNKNOWN alone, which both rules read the same
+Found: slash round, reviewer pass 1
+
+## L125 The prefix lists on the three forms are a second record
+
+Where: PdfForm.Prefixes against PlotPrefixes and PdfForms.ByTemplate
+Input: a prefix added to one table and not the other
+Why latent: the prefix route is reached only for a plot no template placed, and a test holds the two equal
+Found: slash round, reviewer pass 1
+
+## L126 SpeciesNames.Slash is public with no reader outside
+
+Where: SpeciesNames
+Input: none, it is a visibility question
+Why latent: no input reaches it
+Found: slash round, reviewer pass 1
+
+## L127 A plot whose read threw is asked with no UID2
+
+Where: PlotReading.NotRead, then the street answer in KpiRequestHandler.OnePlot
+Input: a STREETS plot whose read threw, whose title block does carry a UID2
+Why latent: no read has thrown on a street plot in a measured run, and the plot's own row names the throw
+Found: slash round, breaker pass 2
+
+## L128 A refused split leaves no plot rows behind
+
+Where: KpiRequestHandler where the split does not add up
+Input: a split whose shares and unplaced plots do not cover the ticked list
+Why latent: PlotsPerTemplate builds the split so that it always adds up, and every per plot section shares it
+Found: slash round, breaker pass 2

@@ -51,7 +51,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             return PdfFill.Of(
                 CreateFixture.Plot(plotId, uid2: "ANH-006-NP-100002"),
-                CountedGroups.Of(template), null, Today, true, numbers);
+                null, CountedGroups.Of(template), null, Today, true, numbers);
         }
 
         private static PdfFieldFill Field(PdfPlan plan, PdfValue value)

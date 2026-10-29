@@ -46,9 +46,11 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class StreetReferenceAnswer
     {
-        private StreetReferenceAnswer(bool found, double width, double length, string why, string printedWidth, string printedLength)
+        private StreetReferenceAnswer(
+            bool widthFound, bool lengthFound, double width, double length, string why, string printedWidth, string printedLength)
         {
-            Found = found;
+            WidthFound = widthFound;
+            LengthFound = lengthFound;
             Width = width;
             Length = length;
             Why = why ?? string.Empty;
@@ -56,16 +58,29 @@ namespace RcrcGreen.Core.Kpi
             PrintedLength = printedLength ?? string.Empty;
         }
 
-        public bool Found { get; }
+        /// <summary>Both cells answered.</summary>
+        public bool Found
+        {
+            get { return WidthFound && LengthFound; }
+        }
+
+        /// <summary>
+        /// The road width answered. **It can be without the length**: a walkway's row gives its
+        /// quantity in sqm, which is no length, and its ROAD_WIDTH all the same.
+        /// </summary>
+        public bool WidthFound { get; }
+
+        public bool LengthFound { get; }
 
         public double Width { get; }
 
         public double Length { get; }
 
         /// <summary>
-        /// Why the two cells stay empty, and empty when they do not. **It is never a refusal of
-        /// the run.** A street plot the file does not name is written with both cells left empty
-        /// and is named in the report with its UID, the same way the link note works.
+        /// Why a cell stays empty, and empty when neither does. Where only the length is
+        /// missing it is the length's reason. **It is never a refusal of the run.** A street
+        /// plot the file does not name is written with both cells left empty and is named in
+        /// the report with its UID, the same way the link note works.
         /// </summary>
         public string Why { get; }
 
@@ -78,12 +93,17 @@ namespace RcrcGreen.Core.Kpi
 
         public static StreetReferenceAnswer Nothing(string why)
         {
-            return new StreetReferenceAnswer(false, 0.0, 0.0, why, string.Empty, string.Empty);
+            return new StreetReferenceAnswer(false, false, 0.0, 0.0, why, string.Empty, string.Empty);
         }
 
         public static StreetReferenceAnswer Of(double width, double length, string printedWidth, string printedLength)
         {
-            return new StreetReferenceAnswer(true, width, length, string.Empty, printedWidth, printedLength);
+            return new StreetReferenceAnswer(true, true, width, length, string.Empty, printedWidth, printedLength);
+        }
+
+        public static StreetReferenceAnswer WidthOnly(double width, string printedWidth, string whyNoLength)
+        {
+            return new StreetReferenceAnswer(true, false, width, 0.0, whyNoLength, printedWidth, string.Empty);
         }
     }
 
@@ -105,7 +125,7 @@ namespace RcrcGreen.Core.Kpi
     /// </code>
     ///
     /// **The file writes an absent value as the text Null in angle brackets rather than leaving
-    /// the cell empty**, on every one of the 2,051 sqm rows' road width and on one row's unit. It
+    /// the cell empty**, on 2,050 of the 2,051 sqm rows' road width and on one row's unit. It
     /// is text, so <see cref="CellNumber"/> reads no number out of it and the plot is named
     /// rather than written with it, which is the whole reason the numbers go through that reader
     /// rather than through a parse of my own.
@@ -132,9 +152,9 @@ namespace RcrcGreen.Core.Kpi
         public const string WidthColumn = "ROAD_WIDTH";
 
         /// <summary>
-        /// The only unit a length may be in. A row in anything else is not used and is named,
+        /// The only unit a length may be in. A row in anything else gives no length and is named,
         /// because 2,051 of the file's rows are areas in sqm and an area written into a length
-        /// cell computes an area of its own.
+        /// cell computes an area of its own. Its ROAD_WIDTH is still used where it is a number.
         /// </summary>
         public const string Metres = "m";
 
@@ -243,16 +263,24 @@ namespace RcrcGreen.Core.Kpi
             }
 
             StreetReferenceRow row = found[0];
+            CellNumberRead width = CellNumber.Read(row.RoadWidth);
 
+            // **THE UNIT IS THE QUANTITY'S AND NEVER THE WIDTH'S.** Measured 29 October on
+            // Scope_Validation_21072026: two STREET rows of 6,244 are in sqm and both are
+            // Pedestrian Walk, one holding a ROAD_WIDTH and one not. Refusing the row on its
+            // unit lost NG05's walkway a width the file holds.
+            // The length still waits for m, because an area is no length.
             if (!string.Equals(row.Unit, Metres, StringComparison.OrdinalIgnoreCase))
             {
-                return StreetReferenceAnswer.Nothing(
-                    held + " is on row " + row.Row + " with " + UnitColumn + " reading "
-                    + Shown(row.Unit) + " rather than " + Metres
-                    + ", so the row is not used");
+                string unitSays = held + " is on row " + row.Row + " with " + UnitColumn + " reading "
+                    + Shown(row.Unit) + " rather than " + Metres;
+
+                if (!width.IsNumber) return StreetReferenceAnswer.Nothing(unitSays + ", so the row is not used");
+
+                return StreetReferenceAnswer.WidthOnly(width.Value, row.RoadWidth,
+                    unitSays + ", so its " + QuantityColumn + " is no length and the total length is left empty");
             }
 
-            CellNumberRead width = CellNumber.Read(row.RoadWidth);
             CellNumberRead length = CellNumber.Read(row.Quantity);
 
             if (!width.IsNumber || !length.IsNumber)

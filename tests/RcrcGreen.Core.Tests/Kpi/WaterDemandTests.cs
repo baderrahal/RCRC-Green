@@ -256,7 +256,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             PdfPlan plan = PdfFill.Of(
                 CreateFixture.Plot("MM-08", component: "STREET 30m ROW", uid2: "ANH-007-MM-100113", water: demand),
-                CountedGroups.Of(KpiTemplates.Streets),
+                null, CountedGroups.Of(KpiTemplates.Streets),
                 CreateFixture.NoStreetFile,
                 new DateTime(2026, 9, 15),
                 true,
@@ -528,7 +528,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     WaterDemandRead.Of("FM-05-(600) SHRUBS AND LAWN SCHEDULE", 1340.0, 8)));
 
             PdfPlan plan = PdfFill.Of(
-                reading, CountedGroups.Of(KpiTemplates.Mosques), null,
+                reading, null, CountedGroups.Of(KpiTemplates.Mosques), null,
                 new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None);
 
             PdfFieldFill field = plan.Fields.Single(one => one.Value == PdfValue.IrrigationWaterDemand);
@@ -548,7 +548,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     WaterDemandRead.Of("FM-06-(600) SHRUBS AND LAWN SCHEDULE", 105.0, 8)));
 
             PdfPlan thin = PdfFill.Of(
-                small, CountedGroups.Of(KpiTemplates.Mosques), null,
+                small, null, CountedGroups.Of(KpiTemplates.Mosques), null,
                 new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None);
 
             Assert.Equal(
@@ -571,7 +571,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     WaterDemandRead.NoSchedule(WaterDemand.ShrubsAndLawnKind)));
 
             PdfPlan plan = PdfFill.Of(
-                reading, CountedGroups.Of(KpiTemplates.Mosques), null,
+                reading, null, CountedGroups.Of(KpiTemplates.Mosques), null,
                 new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None);
 
             PdfFieldFill field = plan.Fields.Single(one => one.Value == PdfValue.IrrigationWaterDemand);

@@ -46,7 +46,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             return PdfFill.Of(
                 CreateFixture.Plot("ST-05", component: "STREET 30m ROW", uid2: "ANH-007-ST-100210"),
-                CountedGroups.Of(KpiTemplates.Streets),
+                null, CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
                 Today,
                 workbookWritten,
@@ -112,7 +112,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     CreateFixture.Plot(
                         "ST-05", component: "STREET 30m ROW", uid2: "ANH-007-ST-100210",
                         shrubsAndLawnRead: false),
-                    CountedGroups.Of(KpiTemplates.Streets),
+                    null, CountedGroups.Of(KpiTemplates.Streets),
                     StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
                     Today,
                     true,
@@ -169,7 +169,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             PdfOutcome outcome = PdfChecklist.Write(
                 RoadsForm(),
                 Path.Combine(_folder, "never.pdf"),
-                PdfFill.Of(CreateFixture.Plot("ZZ-01"), CountedGroups.Of(KpiTemplates.Mosques), null, Today, true,
+                PdfFill.Of(CreateFixture.Plot("ZZ-01"), null, CountedGroups.Of(KpiTemplates.Mosques), null, Today, true,
                     PdfWorkbookNumbers.None));
 
             Assert.False(outcome.Written);
@@ -294,7 +294,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             return PdfFill.Of(
                 CreateFixture.Plot(plotId, component: "EXISTING PARK", uid2: uid2),
-                CountedGroups.Of(KpiTemplates.ExistingParks),
+                null, CountedGroups.Of(KpiTemplates.ExistingParks),
                 null,
                 Today,
                 true,

@@ -2,13 +2,21 @@
 
 The workbook's own column D is the only species list there is and `SpeciesList` reads it out of
 the template. Nothing in this repo carries a copy of the plant palette. Matching is the
-botanical name compared without case and with surrounding whitespace off, and nothing else.
+botanical name compared without case, with every slash taken out and every run of whitespace
+read as one space, on the workbook's name and the Revit name alike, and nothing else.
 
-Three measured cases are why nothing is stripped, split or normalised past that. The model
+**The slash is Bader's decision of 29 October**, after NG05 found its slash trees counted
+nowhere. `SpeciesNames.Key` is the one tidy, and the matcher, the tree merge, the one species on
+two rows refusal and the tree list check all key on it, so two spellings of one tree are one
+species before a row is looked for. Two workbook rows the tidy makes one name refuse as two rows
+always have. All fourteen tree sheets of the seven R3 templates hold the same eight slash names
+and the tidy makes no two rows on any of them one name, measured 29 October. A slash with no
+space either side joins its words, ACACIA/VACHELLIA reading ACACIAVACHELLIA, Q20.
+
+Two measured cases are why nothing is split or normalised past that. The model
 prints a species called UNKNOWN, and the 2026-09-09 check found four rows all named Unknown
 Tree, so nothing could match those on name. The 1552 workbook holds ONE, at row 101, and the
 alias below is how it is reached. Four rows is what that alias refuses on.
-ACACIA / VACHELLIA FARNESIANA carries a slash.
 BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an apostrophe, and the shrub rows are prefixed
 SHRUBS: and GRASS: where the workbook's list is not.
 
@@ -69,8 +77,8 @@ empty row is 84. Row 101 sits ABOVE the first empty row, so `BelowTheList` never
 The rule is right, it is unchanged, and the round before this one raised it as UNKNOWN from this
 repository, which it no longer is.
 
-**THE MATCH IS NOT WIDENED AND THE REPORT NAMES WHAT IT MISSED.** Matching is still the
-botanical name without case and with edge whitespace off and nothing else. `SpeciesMatching.ClosestName`
+**THE MATCH IS NOT WIDENED PAST K36 AND THE REPORT NAMES WHAT IT MISSED.** Matching is the
+botanical name through `SpeciesNames.Key` and nothing else, K36 above. `SpeciesMatching.ClosestName`
 finds the workbook name sharing the longest opening with the Revit name, ties broken by the
 shorter name and then naturally, and empty where nothing is shared. It is carried on
 `SpeciesMatch.NearestInTheList`, printed as the second column of the unmatched species list in

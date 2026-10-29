@@ -42,7 +42,7 @@ lines. Every part was moved byte for byte on 2026-10-28, and the proof is
 - K33 `docs/rules/kpi-reading-2.md` The shrubs group holds two kinds and the species name says which
 - K34 `docs/rules/kpi-reading-2.md` The irrigation water demand is both schedules' own TOTAL rows, added
 - K35 `docs/rules/kpi-pdf-1.md` A PDF beside every workbook
-- K35.01 `docs/rules/kpi-pdf-1.md` The three forms, and the prefix is what picks one
+- K35.01 `docs/rules/kpi-pdf-1.md` The three forms, and the template is what picks one
 - K35.02 `docs/rules/kpi-pdf-1.md` Every field was read off the files and checked back against them
 - K35.03 `docs/rules/kpi-pdf-1.md` Three things the round message said that the files do not
 - K35.04 `docs/rules/kpi-pdf-1.md` The position is the THIRD record, and it is the one a person reads

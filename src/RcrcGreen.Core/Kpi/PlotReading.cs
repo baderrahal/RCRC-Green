@@ -959,7 +959,8 @@ namespace RcrcGreen.Core.Kpi
             {
                 return Species
                     .Where(one => one.HasGroup)
-                    .GroupBy(one => one.GroupName.Trim().ToUpperInvariant() + " | " + one.BotanicalName.Trim().ToUpperInvariant())
+                    // The merge's key, or two spellings on one plot would be added there unseen.
+                    .GroupBy(one => one.GroupName.Trim().ToUpperInvariant() + " | " + SpeciesNames.Key(one.BotanicalName))
                     .Where(group => group.Count() > 1)
                     .Select(group => new RepeatedSpecies(group.First().BotanicalName, group.First().GroupName, group))
                     .ToList();

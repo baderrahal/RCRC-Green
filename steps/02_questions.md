@@ -185,3 +185,42 @@ Questions asked before this file existed are in each task's own log and are not 
     STREETS whatever the folders, because the reference row is keyed on the UID2
 
     Answer:
+
+20. Your slash rule takes out every slash and reads runs of spaces as one, K36. A slash with no
+    space either side joins its two words, so a tree Revit spells ACACIA/VACHELLIA SEYAL reads
+    ACACIAVACHELLIA SEYAL and does not match the workbook's Acacia / Vachellia seyal. The seven
+    R3 templates hold eight slash names, read on 29 October, each with a space either side of the
+    slash: Acacia arabica / Vachellia nilotica, Acacia / Vachellia farnesiana, Acacia saligna /
+    cyanophylla, Acacia / Vachellia seyal, Acacia / Vachellia tortilis raddiana, Acacia /
+    Vachellia tortilis spirocarpa, Acacia / Vachellia xanthophloea and Parkinsonia / Cercidium
+    floridum. Which spelling NG05 uses now is
+    UNKNOWN on this machine, the newest NG05 report here is of 17 September and its two slash
+    trees carry the spaces.
+
+    Options: A read each slash as a space, so ACACIA/VACHELLIA, ACACIA / VACHELLIA and ACACIA
+    VACHELLIA are one name. B keep the rule as decided
+
+    Answer:
+
+21. A walkway placed in STREETS now gets the Roads PDF, K35.01. The Roads form has no Project
+    Type box, measured off the client's own file on 29 October, 34 fields and none of them a
+    type. Only the Open spaces form has one. So a walkway's PDF says WALKWAY nowhere. Its
+    workbook does, in D3, and the PDF carries its UID2.
+
+    Options: A leave it, the UID2 and the workbook say what it is. B ask the client for a Roads
+    form with a Project Type box, and fill it when it comes
+
+    Answer:
+
+22. The walkway's total length. Its street reference row, ANH-012-ST-100298 on row 294 of
+    Scope Validation 21072026, is CL_SUBCATEGORY Pedestrian Walk with QUANTITY UNIT sqm, so its
+    ES_QUANTITY is an area and no length. Its ROAD_WIDTH is a number and now goes into D8 and the
+    PDF's Row. F8, Streets Total Length (m), and the PDF's Length stay empty with the reason,
+    K14. The only other sqm street row, ANH-071-ST-100305 on row 1359, holds no ROAD_WIDTH and
+    gives neither.
+
+    Options: A leave the length empty and named, as now, until the file gives one in m. B write
+    ES_QUANTITY over ROAD_WIDTH as the length, said as worked out in the report. C ask the
+    client to give walkway rows a length in m
+
+    Answer:

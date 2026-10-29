@@ -261,9 +261,13 @@ namespace RcrcGreen.Core.Kpi
         /// **The workbook numbers are a REQUIRED argument.** A default that reads as a
         /// deliberate empty is how a whole link in a chain goes missing without a word, which
         /// this tool has already paid for once with the three the team types.
+        ///
+        /// **So is the template**, the one the plot was placed in, because the form follows it.
+        /// Null means no template placed the plot and the prefix answers instead.
         /// </summary>
         public static PdfPlan Of(
             PlotReading reading,
+            KpiTemplate template,
             CountedGroups counted,
             StreetReferenceAnswer street,
             DateTime today,
@@ -275,8 +279,8 @@ namespace RcrcGreen.Core.Kpi
             if (counted == null) throw new ArgumentNullException("counted");
             if (workbook == null) throw new ArgumentNullException("workbook");
 
-            PdfForm form = PdfForms.ForPlot(reading.PlotId);
-            if (form == null) return PdfPlan.NoForm(reading.PlotId, PdfForms.NoFormFor(reading.PlotId));
+            PdfForm form = PdfForms.ForPlot(reading.PlotId, template);
+            if (form == null) return PdfPlan.NoForm(reading.PlotId, PdfForms.NoFormFor(reading.PlotId, template));
 
             PhaseSplit shrubs = ShrubsByPhase.Of(reading, KpiMerge.ShrubsHeading, counted, areaUnit);
             GroupSubtotal lawn = reading.SubtotalHeaded(KpiMerge.LawnHeading);
@@ -337,9 +341,11 @@ namespace RcrcGreen.Core.Kpi
                         : PdfFieldFill.Writing(wanted.Value, name, Number(reading.ChosenRegion.SquareMetres), unit);
 
                 case PdfValue.Row:
-                    // The form's unit column prints m beside this box and the reference file's
-                    // QUANTITY UNIT reads m. Same unit, no conversion.
-                    return street == null || !street.Found
+                    // The form's unit column prints m beside this box. ROAD_WIDTH carries no unit
+                    // of its own and QUANTITY UNIT is the quantity's, not its. Measured 29 October,
+                    // it reads the metres the row's CL_SUBCATEGORY names, 20 on 20m rows, 30 on
+                    // 30m and 60 on 60m, so it is metres on a sqm row too. No conversion.
+                    return street == null || !street.WidthFound
                         ? PdfFieldFill.Blank(wanted.Value, name,
                             street == null ? NotAStreetPlot : street.Why)
                         : PdfFieldFill.Writing(wanted.Value, name, Number(street.Width), unit);
@@ -437,13 +443,13 @@ namespace RcrcGreen.Core.Kpi
         /// Streets Total Length (m) cell takes the metres unchanged. So the metres are divided by
         /// a thousand FOR THE PDF ALONE and the workbook is left exactly as it was.
         ///
-        /// A row in any unit but m never reaches here: <see cref="StreetReferenceFile.For"/>
-        /// refuses it, naming the plot, the row and what the unit said, and this writes nothing
-        /// and carries that reason.
+        /// A row in any unit but m never gives a length: <see cref="StreetReferenceFile.For"/>
+        /// answers its width alone where it holds one, naming the plot, the row and what the
+        /// unit said, and this writes nothing and carries that reason.
         /// </summary>
         private static PdfFieldFill Length(PdfFormField wanted, StreetReferenceAnswer street, string unit)
         {
-            if (street == null || !street.Found)
+            if (street == null || !street.LengthFound)
             {
                 return PdfFieldFill.Blank(wanted.Value, wanted.FieldName,
                     street == null ? NotAStreetPlot : street.Why);
