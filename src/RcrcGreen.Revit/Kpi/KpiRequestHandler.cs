@@ -473,6 +473,10 @@ namespace RcrcGreen.Revit.Kpi
             // judges the press by the folder it started with.
             bool pdfsWanted = FormsFolder.Read().Length > 0;
 
+            // The folder layout, read once with the root, so every path of the press and the
+            // report's first lines name the same one.
+            FolderLayout layout = FolderLayoutSetting.Read();
+
             // The reference file is read ONCE for the whole press. It is 8,353 rows and every
             // street plot asks the same copy of it.
             StreetReferenceFile streets = StreetReferenceFile.In(StreetReferenceFileSetting.Read());
@@ -481,7 +485,8 @@ namespace RcrcGreen.Revit.Kpi
                 OpenModel.Of(document.Title),
                 root,
                 asked != null && asked.Templates.Count > 0,
-                asked != null && asked.Ticked.Count > 0);
+                asked != null && asked.Ticked.Count > 0,
+                layout);
 
             if (cannot.Length > 0)
             {
@@ -491,7 +496,7 @@ namespace RcrcGreen.Revit.Kpi
                     CreateBlocked.Reason(
                         OpenModel.Of(document.Title).IsOpen, true, !string.IsNullOrWhiteSpace(root), true,
                         asked != null && asked.Templates.Count > 0,
-                        asked != null && asked.Ticked.Count > 0, cannot),
+                        asked != null && asked.Ticked.Count > 0, cannot, layout != FolderLayout.None),
                     cannot));
                 return;
             }
@@ -593,7 +598,7 @@ namespace RcrcGreen.Revit.Kpi
                 foreach (PlotReading reading in one.Readings)
                 {
                     filings.Add(PlotFilings.One(
-                        root, one.Pick.Template, reading.PlotId,
+                        layout, root, one.Pick.Template, reading.PlotId,
                         KpiMerge.Component(new[] { reading }).Value, reading.Uid2));
                 }
             }
@@ -628,7 +633,7 @@ namespace RcrcGreen.Revit.Kpi
                 document.Title, split, runs, outcomes,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
                 plotOutcomes, streets, KpiPlotReader.Plots(document),
-                PlotListFile.In(PlotListFileSetting.Read()), sharing, treeLists, pdfsWanted);
+                PlotListFile.In(PlotListFileSetting.Read()), sharing, treeLists, pdfsWanted, layout);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;

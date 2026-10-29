@@ -134,7 +134,10 @@ namespace RcrcGreen.Core.Kpi
             var contents = new StringBuilder();
             TheContents(contents, body);
 
-            return contents + body;
+            // **THE FOLDER LAYOUT IS THE FILE'S FIRST LINE**, under the build stamp the handler
+            // puts above it, Bader's decision of 29 October, so the tree a person is about to
+            // open is named before anything else in the file.
+            return FolderLayouts.InWords(set.Layout) + "\r\n" + contents + body;
         }
 
         private static void ThePane(StringBuilder report, BeforeThePress before)
@@ -1152,7 +1155,7 @@ namespace RcrcGreen.Core.Kpi
                 "an exact row in " + ComponentTable.FileName + " first, the shared copy winning over yours and the shipped one, "
                 + "then the first rule in " + ComponentRules.FileName + " whose words the value holds");
 
-            Line(report, "  value | template | folder | placed by | file");
+            Line(report, "  value | template | folder | main | placed by | file");
             foreach (string value in held)
             {
                 ComponentPlacement placed = table.PlaceOf(value);
@@ -1160,6 +1163,7 @@ namespace RcrcGreen.Core.Kpi
                     value,
                     placed.TemplateShown("NONE"),
                     placed.Folder.Length == 0 ? "NONE" : placed.Folder,
+                    ComponentFolders.MainInWords(placed),
                     placed.How,
                     placed.FromPath.Length == 0 ? "NONE" : placed.FromPath));
             }

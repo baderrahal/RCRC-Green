@@ -509,7 +509,8 @@ namespace RcrcGreen.Revit.Kpi
                 _facts == null ? (int?)null : _facts.Plots.All.Count,
                 Settled().Count,
                 _ticks.Count,
-                _showingResults);
+                _showingResults,
+                FolderLayoutSetting.Read());
         }
 
         private IReadOnlyList<string> NotSet()
@@ -519,7 +520,8 @@ namespace RcrcGreen.Revit.Kpi
                 OutputFolder.Read().Length > 0,
                 FormsFolder.Read().Length > 0,
                 StreetReferenceFileSetting.Read().Length > 0,
-                PlotListFileSetting.Read().Length > 0);
+                PlotListFileSetting.Read().Length > 0,
+                FolderLayoutSetting.Read() != FolderLayout.None);
         }
 
         /// <summary>
@@ -667,6 +669,8 @@ namespace RcrcGreen.Revit.Kpi
             PaneWarning sameFolder = PaneWarnings.ForOutputFolder(output, templates);
             if (sameFolder != null) _body.Children.Add(WarningBox(sameFolder, null));
 
+            TheFolderLayout();
+
             _body.Children.Add(PathRow(
                 KpiPaneWords.PdfForms, false, forms, FormsFolder.ReadRaw(), string.Empty, true,
                 (forms.Length == 0 ? KpiSteps.FormsFolderNotSet + ". " : forms + "\n\n")
@@ -721,6 +725,43 @@ namespace RcrcGreen.Revit.Kpi
 
             IReadOnlyList<string> notSet = NotSet();
             _stepSays = new StatusLine(KpiSteps.SetupStatus(notSet), KpiSteps.StillNotSet(notSet));
+        }
+
+        /// <summary>
+        /// **FLAT OR GROUPED, NEITHER TICKED UNTIL SOMEBODY PICKS.** Bader's decision of 29
+        /// October. The pick is read off its file on every draw, never held, and a click writes it
+        /// and draws again, so the two buttons always show what the press would use.
+        /// </summary>
+        private void TheFolderLayout()
+        {
+            FolderLayout picked = FolderLayoutSetting.Read();
+
+            _body.Children.Add(Section(KpiPaneWords.FolderLayoutTitle, null, KpiPaneWords.FolderLayoutTip));
+
+            var two = new UniformGrid { Columns = KpiTheme.DetailsColumns };
+            two.Children.Add(LayoutChoice(FolderLayout.Flat, KpiPaneWords.Flat, KpiPaneWords.FlatTip, picked));
+            two.Children.Add(LayoutChoice(FolderLayout.Grouped, KpiPaneWords.Grouped, KpiPaneWords.GroupedTip, picked));
+            _body.Children.Add(two);
+        }
+
+        private UIElement LayoutChoice(FolderLayout layout, string caption, string tip, FolderLayout picked)
+        {
+            var choice = new RadioButton
+            {
+                Content = Caption(caption),
+                GroupName = FolderLayoutSetting.FileName,
+                IsChecked = picked == layout,
+                Foreground = KpiTheme.Text,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Margin = KpiTheme.Row,
+                ToolTip = Tip(tip)
+            };
+            choice.Click += (sender, e) =>
+            {
+                Remembered(FolderLayoutSetting.Remember(layout), FolderLayoutSetting.FileName);
+                RedrawTemplates();
+            };
+            return choice;
         }
 
         /// <summary>
@@ -1378,7 +1419,8 @@ namespace RcrcGreen.Revit.Kpi
             // Greyed with ONE reason, the one KpiSteps worked out for step 4 itself, so the body
             // and this line cannot say two things. The full refusal is the line's tooltip, and
             // the handler asks the live document again at the press, which is what decides.
-            string cannot = CreateWords.CannotCreate(_model, output, Settled().Count > 0, _ticks.Count > 0);
+            string cannot = CreateWords.CannotCreate(
+                _model, output, Settled().Count > 0, _ticks.Count > 0, FolderLayoutSetting.Read());
             string reason = _steps.CreateBlockedBy;
 
             Button create = KpiTheme.Main(Caption(KpiPaneWords.CreateWorkbooks(workbooks)));
@@ -2412,7 +2454,7 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private IReadOnlyList<PlotFiling> TickedFilings()
         {
-            return PlotFilings.Of(OutputFolder.Read(), _ticks.Ticked, ComponentOn, Uid2On);
+            return PlotFilings.Of(FolderLayoutSetting.Read(), OutputFolder.Read(), _ticks.Ticked, ComponentOn, Uid2On);
         }
 
         private TemplateSplit TheSplit()

@@ -104,3 +104,17 @@ read it, and `UnknownComponents.PlacedByRule` counts step 2's line.
 - WALKWAY and street plots: nothing changed. A UID2 missing from the street reference file
   leaves D8 and F8 empty with one reason each and the workbook written, and a prefix with no
   form writes no PDF with one line. `StreetGapsTests` holds both
+
+## Folders flat or grouped, 29 Oct
+
+K78. `ComponentPlacement` carries `Main` beside `Folder`, read off the rules file's fourth column,
+and `FolderLayouts.Under` is the one place the two are joined for a layout.
+
+- `PlotWorkbookPath.For` takes the layout first. Its two callers in the add-in, the pane's
+  `TickedFilings` and the handler's press, read `FolderLayoutSetting` live
+- `ComponentTable.OnlyFolderFor(template, out main)` gives a plot with no component its one folder
+  and main, empty where a rule files per value or under its base, which now covers STREETS
+- `UnknownComponents.FolderFor`, the unknown value box's suggestion, is the tidy name too
+- Both reports gained a main column beside folder, `one level` for a type filed alone
+- `KpiSteps`, `CreateBlocked` and `CreateWords.CannotCreate` take the layout, so the pane's gate
+  and the press's refusal are one rule

@@ -773,3 +773,66 @@ Where: `KpiCreateReport`, the paragraph under the region table
 Input: OUT OF SCOPE 900 and OUT OF SCOPE 900 on one plot
 Why latent: no model holds the note's type twice, and the row beside it is right
 Found: region same area round, breaker pass 2
+
+## L109 A rules file's Main or fixed Folder reaches the path unchecked
+
+Where: `FolderLayouts.Under` and `PlotWorkbookPath.For`
+Input: a shared rules line with Main `\STREETS`, `C:\KPI`, `..` or the word value
+Why latent: no shared rules file exists yet, L89
+Found: folder layout round, breaker pass 1
+
+## L110 One 60 per cent value typed with and without THAN files in two folders
+
+Where: `ComponentFolderName.Tidy`, THAN added only before a width in metres
+Input: SCHOOL LESS 60% on one plot and SCHOOL LESS THAN 60% on another, or 20 M with a space
+Why latent: the measured spellings carry THAN and a per cent sign
+Found: folder layout round, breaker pass 1
+
+## L111 A plot with no component is refused in Flat over two mains only Grouped uses
+
+Where: `ComponentTable.OnlyFolderFor`, which takes no layout
+Input: a template reaching one folder by a components.csv row and a rule with a fixed Main
+Why latent: no shipped template has a fixed folder under a fixed Main
+Found: folder layout round, breaker pass 1
+
+## L112 Two people on one output root can leave both layouts in one tree
+
+Where: `FolderLayoutSetting`, the pick per person
+Input: one person on Flat and one on Grouped, or one on the old kit, pressing into one root
+Why latent: whether the team shares one output root is UNKNOWN
+Found: folder layout round, breaker pass 1
+
+## L113 A second Revit window shows the old layout until it redraws
+
+Where: `KpiPanel.TheFolderLayout`, read on each draw
+Input: a pick made in one Revit window while a second one shows its pane
+Why latent: the press reads the file again and its report names the layout it used
+Found: folder layout round, breaker pass 1
+
+## L114 Grouped adds a level, and no path length is caught
+
+Where: `PlotWorkbookPath.For`, nothing in Kpi catching PathTooLongException outside SamePath
+Input: a long output root with DAILY MOSQUE\DAILY MOSQUE LESS THAN 60% under it
+Why latent: the team's output root length is UNKNOWN
+Found: folder layout round, breaker pass 1
+
+## L115 A value folder is not checked for characters Windows refuses
+
+Where: `ComponentFolderName.Tidy` into `PlotWorkbookPath.For`, only the UID2 checked
+Input: a PRX_Component value holding a slash, a colon or a question mark, or ending in a dot
+Why latent: no measured value holds one
+Found: folder layout round, reviewer pass 1
+
+## L116 An unreadable layout file reads as no layout picked
+
+Where: `FolderLayoutSetting.Read` through `RememberedFolder.ReadRaw`
+Input: kpi-folder-layout.txt held by another program or denied
+Why latent: no real input is known to make it unreadable, and Create stays off
+Found: folder layout round, reviewer pass 1
+
+## L117 A refusal names earlier files in the new folder, not the old tree
+
+Where: `KpiRequestHandler` AlreadyInThatFolder over the K78 path
+Input: MM-01 and MM-09 to MM-15 refused, an earlier press's file in STREETS\ANH-007-ST-100213
+Why latent: moving or naming an earlier run's files is out of this round, and the line is true of the folder it names
+Found: folder layout round, breaker pass 1

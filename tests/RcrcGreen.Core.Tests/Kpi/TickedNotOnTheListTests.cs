@@ -123,7 +123,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PlotListRead list = ListOf("HF-01");
 
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 "C:\\out", KpiTemplates.Streets, "STREET 36m ROW", "ANH-007-ST-100210");
 
             var set = new KpiCreateRunSet(

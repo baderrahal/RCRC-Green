@@ -72,6 +72,10 @@ way an unknown component already is, and nothing falls back to the template name
 **The folder comes off the PLOT'S OWN component and never off the template**, which is what
 keeps DAILY MOSQUE and FRIDAY MOSQUE apart on a run that fills both from MOSQUES.
 
+**Since 29 October the street values above no longer share STREETS.** Every value gets its own
+folder, the value tidied, flat or grouped under a main folder, K78 in `kpi-plots-2.md`. The
+table above is the first edition, kept as the source of the main names.
+
 ### A plot with NO component is filed under its template's own folder
 
 **Measured on the 09:18 run, NG05, 156 plots over 7 templates, 150 workbooks.** Six plots were

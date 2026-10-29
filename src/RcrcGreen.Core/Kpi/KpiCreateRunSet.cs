@@ -237,10 +237,12 @@ namespace RcrcGreen.Core.Kpi
             PlotListRead plotList = null,
             IReadOnlyList<SharedUid2Group> sharing = null,
             IReadOnlyList<TreeListSheetCheck> treeLists = null,
-            bool pdfsWanted = false)
+            bool pdfsWanted = false,
+            FolderLayout layout = FolderLayout.None)
         {
             if (split == null) throw new ArgumentNullException("split");
 
+            Layout = layout;
             PdfsWanted = pdfsWanted;
             TreeLists = treeLists ?? new List<TreeListSheetCheck>();
             Sharing = sharing ?? new List<SharedUid2Group>();
@@ -265,6 +267,12 @@ namespace RcrcGreen.Core.Kpi
         /// sheets whichever plot the press is on.
         /// </summary>
         public IReadOnlyList<TreeListSheetCheck> TreeLists { get; }
+
+        /// <summary>
+        /// The folder layout the press filed under, read once at the press. None on a set built
+        /// without one, which the report says rather than naming a layout nobody picked.
+        /// </summary>
+        public FolderLayout Layout { get; }
 
         /// <summary>
         /// Whether a forms folder was set when this press ran, read once at the press. It is

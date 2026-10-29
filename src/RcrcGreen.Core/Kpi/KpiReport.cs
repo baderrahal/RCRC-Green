@@ -377,7 +377,7 @@ namespace RcrcGreen.Core.Kpi
                 + home.Where.ToUpperInvariant() + ", " + Count(order.Count, "distinct value")
                 + " over " + Count(everySheet.Count, "sheet") + ". The plot beside each is "
                 + KpiNames.PlotId + " read off the " + TitleBlockFacts.OnSheetsWhere + ".");
-            Line(report, "value | sheets carrying it | plots | template | folder | placed by | the plots");
+            Line(report, "value | sheets carrying it | plots | template | folder | main | placed by | the plots");
 
             foreach (string held in order
                 .OrderByDescending(one => carrying[one].Count)
@@ -391,6 +391,7 @@ namespace RcrcGreen.Core.Kpi
                     named.Count.ToString(CultureInfo.InvariantCulture),
                     placed.TemplateShown(NotInTheTable),
                     placed.Folder.Length == 0 ? "NONE" : placed.Folder,
+                    ComponentFolders.MainInWords(placed),
                     placed.How,
                     named.Count == 0 ? "(no plot on those sheets)" : string.Join(", ", named.ToArray())));
             }

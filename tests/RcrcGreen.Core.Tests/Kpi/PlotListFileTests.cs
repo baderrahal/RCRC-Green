@@ -251,7 +251,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             var outcomes = new List<PlotOutcome>
             {
                 PlotOutcome.Wrote("DM-12", KpiTemplates.Mosques,
-                    PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006")),
+                    PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006")),
                 PlotOutcome.WroteNothing("DM-11", KpiTemplates.Mosques,
                     PlotWorkbookPath.Refused("no PRX_Plot_UID2 was read off this plot's first sheet"),
                     false, "no PRX_Plot_UID2 was read off this plot's first sheet")

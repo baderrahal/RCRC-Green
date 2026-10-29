@@ -24,29 +24,30 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "MOSQUE MORE 60|MOSQUES MORE THAN 60|value",
-                    "MOSQUE LESS 60|MOSQUES LESS THAN 60|value",
-                    "MOSQUE|MOSQUES|value",
-                    "SCHOOL MORE 60|SCHOOLS MORE THAN 60|value",
-                    "SCHOOL LESS 60|SCHOOLS LESS THAN 60|value",
-                    "SCHOOL|SCHOOLS|value",
-                    "HEALTH|HEALTHCARE|HEALTHCARE",
-                    "PARKING|PARKING|PARKING LOT",
-                    "EXISTING PARK|EXISTING PARKS|EXISTING PARK",
-                    "FUTURE PARK|FUTURE PARKS|FUTURE PARKS",
-                    "STREET|STREETS|STREETS",
-                    "STRT|STREETS|STREETS",
-                    "WALKWAY|STREETS|STREETS",
-                    "ROW|STREETS|STREETS"
+                    "MOSQUE MORE 60|MOSQUES MORE THAN 60|value|base",
+                    "MOSQUE LESS 60|MOSQUES LESS THAN 60|value|base",
+                    "MOSQUE|MOSQUES|value|base",
+                    "SCHOOL MORE 60|SCHOOLS MORE THAN 60|value|base",
+                    "SCHOOL LESS 60|SCHOOLS LESS THAN 60|value|base",
+                    "SCHOOL|SCHOOLS|value|base",
+                    "HEALTH|HEALTHCARE|HEALTHCARE|",
+                    "PARKING|PARKING|PARKING LOT|",
+                    "EXISTING PARK|EXISTING PARKS|EXISTING PARK|",
+                    "FUTURE PARK|FUTURE PARKS|FUTURE PARKS|",
+                    "STREET|STREETS|value|STREETS",
+                    "STRT|STREETS|value|STREETS",
+                    "WALKWAY|STREETS|value|STREETS",
+                    "ROW|STREETS|value|STREETS"
                 },
-                file.Rules.Select(one => one.Words + "|" + one.Template + "|" + one.Folder).ToArray());
+                file.Rules.Select(one => one.Words + "|" + one.Template + "|" + one.Folder + "|" + one.Main).ToArray());
 
             Assert.Empty(ComponentTable.Shipped.UnmatchedRules);
         }
 
         /// <summary>
-        /// **The 22 values**: the fifteen components.csv held, which must reach the template and
-        /// folder their rows gave, and the seven new ones, which must reach what Bader listed.
+        /// **The 22 values**: the fifteen components.csv held, which must reach the template their
+        /// rows gave and, since K78, the street values their own tidied folder rather than
+        /// STREETS, and the seven new ones, which must reach what Bader listed.
         /// Every one is placed by a rule, because the shipped file holds no row.
         /// </summary>
         [Theory]
@@ -57,21 +58,21 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("PARKING LOT", "PARKING", "PARKING LOT", "PARKING")]
         [InlineData("EXISTING PARK", "EXISTING PARKS", "EXISTING PARK", "EXISTING PARK")]
         [InlineData("FUTURE PARK", "FUTURE PARKS", "FUTURE PARKS", "FUTURE PARK")]
-        [InlineData("NH STRT LESS 20m ROW", "STREETS", "STREETS", "STRT")]
-        [InlineData("NH STRT 20m ROW", "STREETS", "STREETS", "STRT")]
-        [InlineData("STREET 30m ROW", "STREETS", "STREETS", "STREET")]
-        [InlineData("STREET 36m ROW", "STREETS", "STREETS", "STREET")]
+        [InlineData("NH STRT LESS 20m ROW", "STREETS", "NH STREET LESS THAN 20m ROW", "STRT")]
+        [InlineData("NH STRT 20m ROW", "STREETS", "NH STREET 20m ROW", "STRT")]
+        [InlineData("STREET 30m ROW", "STREETS", "STREET 30m ROW", "STREET")]
+        [InlineData("STREET 36m ROW", "STREETS", "STREET 36m ROW", "STREET")]
         [InlineData("DAILY MOSQUE MORE THAN 60%", "MOSQUES MORE THAN 60", "DAILY MOSQUE MORE THAN 60%", "MOSQUE MORE 60")]
         [InlineData("DAILY MOSQUE LESS THAN 60%", "MOSQUES LESS THAN 60", "DAILY MOSQUE LESS THAN 60%", "MOSQUE LESS 60")]
         [InlineData("SCHOOL MORE THAN 60%", "SCHOOLS MORE THAN 60", "SCHOOL MORE THAN 60%", "SCHOOL MORE 60")]
         [InlineData("SCHOOL LESS THAN 60%", "SCHOOLS LESS THAN 60", "SCHOOL LESS THAN 60%", "SCHOOL LESS 60")]
         [InlineData("FRIDAY MOSQUE MORE THAN 60%", "MOSQUES MORE THAN 60", "FRIDAY MOSQUE MORE THAN 60%", "MOSQUE MORE 60")]
         [InlineData("FRIDAY MOSQUE LESS THAN 60%", "MOSQUES LESS THAN 60", "FRIDAY MOSQUE LESS THAN 60%", "MOSQUE LESS 60")]
-        [InlineData("NH STREET 20m ROW", "STREETS", "STREETS", "STREET")]
-        [InlineData("NH STREET LESS THAN 20m ROW", "STREETS", "STREETS", "STREET")]
-        [InlineData("NH STREET 25m ROW", "STREETS", "STREETS", "STREET")]
-        [InlineData("NH STREET 30m ROW", "STREETS", "STREETS", "STREET")]
-        [InlineData("WALKWAY", "STREETS", "STREETS", "WALKWAY")]
+        [InlineData("NH STREET 20m ROW", "STREETS", "NH STREET 20m ROW", "STREET")]
+        [InlineData("NH STREET LESS THAN 20m ROW", "STREETS", "NH STREET LESS THAN 20m ROW", "STREET")]
+        [InlineData("NH STREET 25m ROW", "STREETS", "NH STREET 25m ROW", "STREET")]
+        [InlineData("NH STREET 30m ROW", "STREETS", "NH STREET 30m ROW", "STREET")]
+        [InlineData("WALKWAY", "STREETS", "WALKWAY", "WALKWAY")]
         public void EachOfTheTwentyTwoReachesItsTemplateAndFolderByItsRule(string value, string template, string folder, string rule)
         {
             ComponentPlacement placed = ComponentTable.Shipped.PlaceOf(value);
@@ -98,6 +99,10 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("PARKING", ComponentTable.Shipped.PlaceOf("FUTURE PARKING").Template.Name);
         }
 
+        /// <summary>
+        /// Two street values are two values and, since 29 October, two folders, each the value
+        /// tidied, both grouped under STREETS.
+        /// </summary>
         [Fact]
         public void TheTwoStreetValuesStayTwoValuesAndBothReachStreets()
         {
@@ -110,7 +115,8 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             Assert.Equal(new[] { "NH STRT 20m ROW", "NH STRT LESS 20m ROW" }, placed.Select(one => one.Key).ToArray());
             Assert.All(placed, one => Assert.Equal("STREETS", one.Value.Template.Name));
-            Assert.All(placed, one => Assert.Equal("STREETS", one.Value.Folder));
+            Assert.Equal(new[] { "NH STREET 20m ROW", "NH STREET LESS THAN 20m ROW" }, placed.Select(one => one.Value.Folder).ToArray());
+            Assert.All(placed, one => Assert.Equal("STREETS", one.Value.Main));
         }
 
         [Theory]
@@ -167,7 +173,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         "Component,Template,Folder",
                         "WALKWAY,PARKING,WALKS"
                     }))
-                .WithRules(Rules(ComponentSource.Shipped, "r.csv", "Words,Template,Folder", "WALKWAY,STREETS,STREETS"));
+                .WithRules(Rules(ComponentSource.Shipped, "r.csv", "Words,Template,Folder,Main", "WALKWAY,STREETS,STREETS"));
 
             ComponentPlacement placed = table.PlaceOf("walkway");
 
@@ -192,7 +198,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                         "WALKWAY,PARKING,A",
                         "WALKWAY,STREETS,B"
                     }))
-                .WithRules(Rules(ComponentSource.Shipped, "r.csv", "Words,Template,Folder", "WALKWAY,STREETS,STREETS"));
+                .WithRules(Rules(ComponentSource.Shipped, "r.csv", "Words,Template,Folder,Main", "WALKWAY,STREETS,STREETS"));
 
             ComponentPlacement placed = table.PlaceOf("WALKWAY");
 
@@ -206,7 +212,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheFirstRuleWinsInTheFilesOrder()
         {
             ComponentTable table = ComponentTable.Layered().WithRules(Rules(ComponentSource.Shipped, "r.csv",
-                "Words,Template,Folder", "ROW,STREETS,STREETS", "MOSQUE,MOSQUES,value"));
+                "Words,Template,Folder,Main", "ROW,STREETS,STREETS", "MOSQUE,MOSQUES,value"));
 
             Assert.Equal("ROW", table.PlaceOf("MOSQUE ROW").Rule.Words);
             Assert.Equal("STREETS", table.PlaceOf("MOSQUE ROW").Template.Name);
@@ -219,9 +225,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheSharedRulesReplaceTheShippedOnesAndOneNotReadIsSaid()
         {
-            ComponentRuleFile shipped = Rules(ComponentSource.Shipped, "shipped.csv", "Words,Template,Folder", "WALKWAY,STREETS,STREETS");
-            ComponentRuleFile shared = Rules(ComponentSource.Shared, "shared.csv", "Words,Template,Folder", "PUMP,PARKING,PUMPS");
-            ComponentRuleFile broken = Rules(ComponentSource.Shared, "shared.csv", "Words,Template,Folder", "PUMP,PARKING");
+            ComponentRuleFile shipped = Rules(ComponentSource.Shipped, "shipped.csv", "Words,Template,Folder,Main", "WALKWAY,STREETS,STREETS");
+            ComponentRuleFile shared = Rules(ComponentSource.Shared, "shared.csv", "Words,Template,Folder,Main", "PUMP,PARKING,PUMPS");
+            ComponentRuleFile broken = Rules(ComponentSource.Shared, "shared.csv", "Words,Template,Folder,Main", "PUMP,PARKING");
 
             ComponentTable replaced = ComponentTable.Layered().WithRules(shipped, shared);
             Assert.False(replaced.PlaceOf("WALKWAY").Placed);
@@ -233,7 +239,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("STREETS", fellBack.PlaceOf("WALKWAY").Template.Name);
             Assert.False(fellBack.PlaceOf("PUMP STATION").Placed);
             Assert.Contains(fellBack.InWords(), line => line.StartsWith(
-                "the shared component-rules.csv, shared.csv: NOT READ. Line 2 has 2 fields, not 3", StringComparison.Ordinal));
+                "the shared component-rules.csv, shared.csv: NOT READ. Line 2 has 2 fields, not 4", StringComparison.Ordinal));
             Assert.Equal("Shared component-rules.csv was not read", KpiPaneWords.RulesFileSays(broken));
         }
 
@@ -245,10 +251,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("MOSQUE MORE 60,MOSQUES MORE THAN 60")]
         [InlineData("MOSQUE MORE 60,,value")]
         [InlineData("%,MOSQUES MORE THAN 60,value")]
-        [InlineData("MOSQUE,MORE,60,value")]
+        [InlineData("MOSQUE,MORE,60,value,base")]
         public void OneUnreadableLineRefusesTheWholeFile(string bad)
         {
-            ComponentRuleFile file = Rules(ComponentSource.Shared, "s.csv", "Words,Template,Folder", bad, "MOSQUE,MOSQUES,value");
+            ComponentRuleFile file = Rules(ComponentSource.Shared, "s.csv", "Words,Template,Folder,Main", bad, "MOSQUE,MOSQUES,value");
 
             Assert.False(file.Read);
             Assert.Empty(file.Rules);
@@ -261,7 +267,13 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(Rules(ComponentSource.Shared, "s.csv", "MOSQUE,MOSQUES,value").Read);
             Assert.False(Rules(ComponentSource.Shared, "s.csv", "Component,Template,Folder", "MOSQUE,MOSQUES,value").Read);
 
-            ComponentRuleFile semicolons = Rules(ComponentSource.Shared, "s.csv", "Words;Template;Folder", "PUMP;PARKING;\"PUMPS; NORTH\"", ";;");
+            // The three column header of 29 October says nothing about Main, so it is refused
+            // whole and the shipped rules answer, rather than every value filing one level.
+            ComponentRuleFile old = Rules(ComponentSource.Shared, "s.csv", "Words,Template,Folder", "MOSQUE,MOSQUES,value");
+            Assert.False(old.Read);
+            Assert.Equal("Line 1 should be the header Words,Template,Folder,Main and reads Words,Template,Folder.", old.Why);
+
+            ComponentRuleFile semicolons = Rules(ComponentSource.Shared, "s.csv", "Words;Template;Folder;Main", "PUMP;PARKING;\"PUMPS; NORTH\";", ";;;");
             Assert.True(semicolons.Read, semicolons.Why);
             Assert.Equal("PUMPS; NORTH", semicolons.Rules.Single().Folder);
         }
@@ -274,7 +286,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void ARuleNamingAnUnknownTemplatePlacesNothingAndIsNamed()
         {
             ComponentTable table = ComponentTable.Layered().WithRules(Rules(ComponentSource.Shared, "s.csv",
-                "Words,Template,Folder", "PUMP,PUMP STATIONS,PUMPS", "STATION,PARKING,PARKING LOT"));
+                "Words,Template,Folder,Main", "PUMP,PUMP STATIONS,PUMPS", "STATION,PARKING,PARKING LOT"));
 
             ComponentPlacement placed = table.PlaceOf("PUMP STATION");
 
@@ -294,7 +306,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("FUTURE PARKS", "FUTURE PARKS")]
         [InlineData("HEALTHCARE", "HEALTHCARE")]
         [InlineData("PARKING", "PARKING LOT")]
-        [InlineData("STREETS", "STREETS")]
+        [InlineData("STREETS", "")]
         [InlineData("MOSQUES", "")]
         [InlineData("SCHOOLS", "")]
         public void APlotWithNoComponentFilesUnderItsTemplatesOneFolderWhereThereIsOne(string template, string folder)
@@ -306,7 +318,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheKnownFoldersAreTheRulesNamedOnes()
         {
             Assert.Equal(
-                new[] { "HEALTHCARE", "PARKING LOT", "EXISTING PARK", "FUTURE PARKS", "STREETS" },
+                new[] { "HEALTHCARE", "PARKING LOT", "EXISTING PARK", "FUTURE PARKS" },
                 ComponentFolders.Folders.ToArray());
         }
 
@@ -331,7 +343,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(KpiPaneWords.PlacedByRule(placed.Count).Split(' ').Length <= 10);
             Assert.Equal(
                 "FRIDAY MOSQUE MORE THAN 60%: rule MOSQUE MORE 60, MOSQUES MORE THAN 60, folder FRIDAY MOSQUE MORE THAN 60%\n"
-                + "WALKWAY: rule WALKWAY, STREETS, folder STREETS\n\n"
+                + "WALKWAY: rule WALKWAY, STREETS, folder WALKWAY\n\n"
                 + "An exact row in components.csv beats every rule.",
                 KpiPaneWords.PlacedByRuleSays(placed));
 

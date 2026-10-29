@@ -21,7 +21,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static KpiSteps NothingSet()
         {
-            return KpiSteps.Of(false, false, false, false, false, false, null, 0, 0, false);
+            return KpiSteps.Of(false, false, false, false, false, false, null, 0, 0, false, FolderLayout.Flat);
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static KpiSteps AllSetNothingRead()
         {
-            return KpiSteps.Of(true, true, true, true, true, true, null, 0, 0, false);
+            return KpiSteps.Of(true, true, true, true, true, true, null, 0, 0, false, FolderLayout.Flat);
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static KpiSteps ReadNothingTicked()
         {
-            return KpiSteps.Of(true, true, true, true, true, true, 154, 0, 0, false);
+            return KpiSteps.Of(true, true, true, true, true, true, 154, 0, 0, false, FolderLayout.Flat);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static KpiSteps Ticked()
         {
-            return KpiSteps.Of(true, true, true, true, true, true, 154, 1, 154, false);
+            return KpiSteps.Of(true, true, true, true, true, true, 154, 1, 154, false, FolderLayout.Flat);
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheLineNamesEveryFolderAndFileThatIsNotSet()
         {
-            IReadOnlyList<string> notSet = KpiSteps.NotSet(false, false, false, false, false);
+            IReadOnlyList<string> notSet = KpiSteps.NotSet(false, false, false, false, false, true);
 
             Assert.Equal(5, notSet.Count);
             Assert.Equal("the templates folder is not set", notSet[0]);
@@ -109,7 +109,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheThreeNotesAreNamedAndStopNothing()
         {
             KpiSteps steps = KpiSteps.Of(
-                true, true, false, false, false, true, null, 0, 0, false);
+                true, true, false, false, false, true, null, 0, 0, false, FolderLayout.Flat);
 
             Assert.True(steps.For(KpiStep.Setup).Done);
             Assert.True(steps.For(KpiStep.Read).Usable);
@@ -122,7 +122,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 + "reference file is not set, so every street plot's road width and total "
                 + "length will be left empty. the plot list file is not set, so Plot list "
                 + "cannot be pressed and the report prints no plot list section.",
-                KpiSteps.StillNotSet(KpiSteps.NotSet(true, true, false, false, false)));
+                KpiSteps.StillNotSet(KpiSteps.NotSet(true, true, false, false, false, true)));
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("all set", steps.For(KpiStep.Setup).Summary);
             Assert.Equal(
                 "Every folder and file this pane is pointed at is set.",
-                KpiSteps.StillNotSet(KpiSteps.NotSet(true, true, true, true, true)));
+                KpiSteps.StillNotSet(KpiSteps.NotSet(true, true, true, true, true, true)));
 
             Assert.True(steps.For(KpiStep.Read).Usable);
             Assert.False(steps.For(KpiStep.Read).Done);
@@ -161,7 +161,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void WithNoModelOpenTheReadStepSaysSo()
         {
             KpiSteps steps = KpiSteps.Of(
-                true, true, true, true, true, false, null, 0, 0, false);
+                true, true, true, true, true, false, null, 0, 0, false, FolderLayout.Flat);
 
             Assert.Equal("no model is open", steps.For(KpiStep.Read).Summary);
             Assert.True(steps.For(KpiStep.Read).Usable);
@@ -199,7 +199,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AWorkbookTickedWithNoPlotNamesOnlyThePlot()
         {
             KpiSteps steps = KpiSteps.Of(
-                true, true, true, true, true, true, 154, 1, 0, false);
+                true, true, true, true, true, true, 154, 1, 0, false, FolderLayout.Flat);
 
             Assert.False(steps.For(KpiStep.Create).Usable);
             Assert.Equal("No plot selected", steps.For(KpiStep.Create).WhyNot);
@@ -213,7 +213,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void PlotsTickedWithNoWorkbookNameOnlyTheWorkbook()
         {
             KpiSteps steps = KpiSteps.Of(
-                true, true, true, true, true, true, 154, 0, 154, false);
+                true, true, true, true, true, true, 154, 0, 154, false, FolderLayout.Flat);
 
             Assert.False(steps.For(KpiStep.Create).Usable);
             Assert.Equal("No asset type selected", steps.For(KpiStep.Create).WhyNot);
@@ -248,7 +248,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AFinishedPressMarksCreateDone()
         {
             KpiSteps steps = KpiSteps.Of(
-                true, true, true, true, true, true, 154, 1, 154, true);
+                true, true, true, true, true, true, 154, 1, 154, true, FolderLayout.Flat);
 
             Assert.True(steps.For(KpiStep.Create).Done);
             Assert.Equal("pressed", steps.For(KpiStep.Create).Summary);
@@ -296,7 +296,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void AStepThatCannotBeWorkedOnIsNotMarkedDone()
         {
             KpiSteps steps = KpiSteps.Of(
-                true, true, true, true, true, true, null, 1, 154, false);
+                true, true, true, true, true, true, null, 1, 154, false, FolderLayout.Flat);
 
             Assert.False(steps.For(KpiStep.Plots).Usable);
             Assert.False(
@@ -339,7 +339,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void OnePlotAndOneWorkbookReadInTheSingular()
         {
             KpiSteps steps = KpiSteps.Of(
-                true, true, true, true, true, true, 1, 1, 1, false);
+                true, true, true, true, true, true, 1, 1, 1, false, FolderLayout.Flat);
 
             Assert.Equal("1 plot read", steps.For(KpiStep.Read).Summary);
             Assert.Equal("1 asset type, 1 plot", steps.For(KpiStep.Plots).Summary);

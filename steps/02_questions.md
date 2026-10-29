@@ -129,7 +129,9 @@ Questions asked before this file existed are in each task's own log and are not 
 
     Options: A keep refusing it, the plot named before the press. B file it under SCHOOL
 
-    Answer:
+    Answer: A, 29 Oct, in the folder layout round prompt: a plot with no component keeps
+    today's rule, refused before Create where its template reaches more than one folder.
+    STREETS now does too, K78.
 
 15. Folder `value` is the value with its spacing put right, LESSTHAN as LESS THAN, upper case,
     one space between words. For every value seen so far that is the value exactly. A model that
@@ -138,7 +140,9 @@ Questions asked before this file existed are in each task's own log and are not 
     Options: A keep it so. B the value exactly as each sheet spells it, two folders for two
     spellings
 
-    Answer:
+    Answer: A and more, 29 Oct, in the folder layout round prompt: the value tidied, the
+    spacing rule plus STRT as STREET and LESS <n>m as LESS THAN <n>m, every value its own
+    folder, flat or grouped. Done in `ComponentFolderName`, K78.
 
 16. A mosque or school value written with a sign or another word, DAILY MOSQUE >60% or ABOVE 60%,
     holds no MORE and no 60 as whole words, so the MOSQUE rule places it in MOSQUES, the under 60
@@ -159,5 +163,25 @@ Questions asked before this file existed are in each task's own log and are not 
 
     Options: A on a plan that shows the link but not the region, still zoom to the region's box
     and say Zoomed, region not drawn in this plan. B keep refusing with your line
+
+    Answer:
+
+18. A components.csv row has Component, Template and Folder and no Main, so in the Grouped layout
+    a value placed by a row files one level, Output then its Folder then UID2, K78. The shipped
+    components.csv holds no row, and the step 2 box writes rows there when someone adds a value.
+
+    Options: A keep rows one level, and add a rule line to component-rules.csv for any value that
+    should group. B give components.csv a fourth column, Main, read the same way as the rules file
+
+    Answer:
+
+19. Every street value has its own folder now, K78, so two street plots sharing one
+    PRX_Plot_UID2 but carrying two values, NS-01 and NS-42 on ANH-007-ST-100210 if their values
+    differ, file apart and both write, each with the same street reference row and length. Your
+    rule of 16 September already writes a shared UID2 in two folders and names it. Whether those
+    two plots carry two values is UNKNOWN.
+
+    Options: A keep your 16 September rule, both written and named. B refuse a shared UID2 on
+    STREETS whatever the folders, because the reference row is keyed on the UID2
 
     Answer:

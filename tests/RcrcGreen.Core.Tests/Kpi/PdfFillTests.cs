@@ -521,7 +521,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void ThePdfSitsBesideTheWorkbookUnderTheSameName()
         {
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 Path.Combine(_folder, "root"), KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006");
 
             Assert.True(where.Ok, where.Why);

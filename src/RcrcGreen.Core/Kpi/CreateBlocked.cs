@@ -18,6 +18,7 @@ namespace RcrcGreen.Core.Kpi
         public const string NoModelOpen = "No model open";
         public const string NoTemplatesFolder = "Templates folder not set";
         public const string NoOutputFolder = "Output folder not set";
+        public const string NoLayout = "Pick a folder layout in Setup";
         public const string ModelNotRead = "Model not read";
         public const string NoAssetType = "No asset type selected";
         public const string NoPlot = "No plot selected";
@@ -28,7 +29,7 @@ namespace RcrcGreen.Core.Kpi
         /// <paramref name="otherRefusal"/> is `CreateWords.CannotCreate`'s answer where the
         /// caller has one: the handler passes it at the press, so a refusal that reached it
         /// still has a short line. `KpiSteps.Of` passes nothing, because every refusal
-        /// `CannotCreate` makes today is one of the six above, which a test holds.
+        /// `CannotCreate` makes today is one of the seven above, which a test holds.
         /// </summary>
         public static string Reason(
             bool modelOpen,
@@ -37,11 +38,13 @@ namespace RcrcGreen.Core.Kpi
             bool modelRead,
             bool assetTypeSelected,
             bool plotSelected,
-            string otherRefusal)
+            string otherRefusal,
+            bool layoutPicked)
         {
             if (!modelOpen) return NoModelOpen;
             if (!templatesFolder) return NoTemplatesFolder;
             if (!outputFolder) return NoOutputFolder;
+            if (!layoutPicked) return NoLayout;
             if (!modelRead) return ModelNotRead;
             if (!assetTypeSelected) return NoAssetType;
             if (!plotSelected) return NoPlot;

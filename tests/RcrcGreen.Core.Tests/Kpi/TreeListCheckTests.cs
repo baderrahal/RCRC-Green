@@ -209,7 +209,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static PlotOutcome Wrote(string plotId)
         {
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100019");
 
             return PlotOutcome.Wrote(plotId, KpiTemplates.Mosques, where)

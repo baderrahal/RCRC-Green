@@ -226,7 +226,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             PdfOutcome moved = PdfChecklist.Write(
                 RoadsForm("moved.pdf", PdfValue.Row), Path.Combine(_folder, "two.pdf"), RoadPlan());
 
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 Path.Combine(_folder, "root"), KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100210");
 
             var set = new KpiCreateRunSet(
@@ -331,7 +331,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 form, Path.Combine(_folder, "three.pdf"),
                 ParkPlan("EP-03", "ANH-007-NP-100003", PdfWorkbookNumbers.None));
 
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 Path.Combine(_folder, "root"), KpiTemplates.ExistingParks,
                 "EXISTING PARK", "ANH-007-NP-100001");
 

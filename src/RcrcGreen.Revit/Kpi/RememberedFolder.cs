@@ -10,7 +10,8 @@ namespace RcrcGreen.Revit.Kpi
     /// same reason reports-folder.txt exists.
     ///
     /// Two folders are remembered this way, the templates and the output, and this is the one
-    /// piece of code that reads or writes either. Two copies of a read that has to fail quietly
+    /// piece of code that reads or writes either. `FolderLayoutSetting` keeps its one word
+    /// through it too, K78. Two copies of a read that has to fail quietly
     /// is two places for one of them to start failing loudly.
     /// </summary>
     internal sealed class RememberedFolder

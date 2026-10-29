@@ -149,9 +149,18 @@ namespace RcrcGreen.Core.Kpi
             string where = string.IsNullOrWhiteSpace(root) ? "the output folder" : root.Trim();
 
             return "One workbook per plot, under " + where
-                + ", in a folder named for the plot: the component folder, then the plot's "
-                + KpiNames.PlotUid2 + ", then the workbook named after that folder. "
-                + where + Separator + "FRIDAY MOSQUE" + Separator + "ANH-008-MO-100006"
+                + ", in a folder named for the plot: the value folder, under its main folder in "
+                + "the Grouped layout, then the plot's "
+                + KpiNames.PlotUid2 + ", then the workbook named after that folder. Flat: "
+                + Example(where, "FRIDAY MOSQUE") + ". Grouped: "
+                + Example(where, "FRIDAY MOSQUE" + Separator + "FRIDAY MOSQUE") + ".";
+        }
+
+        // Both layouts are shown, because Setup and the report's BEFORE THE PRESS print this
+        // whichever is picked, and one example of one tree read as the other's on a Grouped press.
+        private static string Example(string where, string folder)
+        {
+            return where + Separator + folder + Separator + "ANH-008-MO-100006"
                 + Separator + "ANH-008-MO-100006" + OutputName.Extension;
         }
 
@@ -166,6 +175,9 @@ namespace RcrcGreen.Core.Kpi
             "No plot in this model. Open a model that holds one.";
 
         public const string NoModel = "No model is open.";
+
+        public const string NoLayoutPicked =
+            "No folder layout is picked in Setup, Flat or Grouped, so nothing says how the folders nest.";
 
         /// <summary>
         /// The refusal that replaced the never saved one. **Whether the model has been saved is
@@ -448,13 +460,14 @@ namespace RcrcGreen.Core.Kpi
         /// moment Create is pressed, so nothing here can be deciding on a copy taken earlier.
         /// </summary>
         public static string CannotCreate(
-            OpenModel model, string outputFolder, bool hasTemplate, bool hasAPlot)
+            OpenModel model, string outputFolder, bool hasTemplate, bool hasAPlot, FolderLayout layout)
         {
             OpenModel open = model ?? OpenModel.Nothing;
 
             var missing = new List<string>();
             if (!open.IsOpen) missing.Add(NoModel);
             if (string.IsNullOrWhiteSpace(outputFolder)) missing.Add(NoOutputFolder);
+            if (layout == FolderLayout.None) missing.Add(NoLayoutPicked);
             if (!hasTemplate) missing.Add(NoTemplate);
             if (!hasAPlot) missing.Add(NoPlotTicked);
 

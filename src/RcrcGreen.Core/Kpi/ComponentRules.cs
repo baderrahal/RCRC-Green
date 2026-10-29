@@ -5,21 +5,26 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// One line of component-rules.csv: the words a value must hold, the template it then fills
-    /// and the folder it is filed under, with the file and line it came off.
+    /// One line of component-rules.csv: the words a value must hold, the template it then fills,
+    /// the folder it is filed under and the main folder that folder groups under, with the file
+    /// and line it came off.
     /// </summary>
     public sealed class ComponentRule
     {
         /// <summary>The Folder column's word for a folder named as the value itself.</summary>
         public const string ValueFolder = "value";
 
-        public ComponentRule(string words, string template, string folder, ComponentSource source, string path, int line)
+        /// <summary>The Main column's word for the value with its 60 per cent part removed.</summary>
+        public const string BaseMain = "base";
+
+        public ComponentRule(string words, string template, string folder, ComponentSource source, string path, int line, string main = null)
         {
             if (string.IsNullOrWhiteSpace(words)) throw new ArgumentNullException("words");
 
             Words = string.Join(" ", words.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
             Template = (template ?? string.Empty).Trim();
             Folder = (folder ?? string.Empty).Trim();
+            Main = (main ?? string.Empty).Trim();
             Source = source;
             Path = path ?? string.Empty;
             Line = line;
@@ -34,6 +39,13 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>A folder name as the file spells it, or <see cref="ValueFolder"/>.</summary>
         public string Folder { get; }
 
+        /// <summary>
+        /// The main folder a Grouped layout files the folder under: a name as the file spells
+        /// it, <see cref="BaseMain"/>, or empty for a one level type, filed under its folder alone
+        /// in both layouts.
+        /// </summary>
+        public string Main { get; }
+
         public ComponentSource Source { get; }
 
         public string Path { get; }
@@ -47,6 +59,11 @@ namespace RcrcGreen.Core.Kpi
             get { return string.Equals(Folder, ValueFolder, StringComparison.OrdinalIgnoreCase); }
         }
 
+        public bool MainIsTheBase
+        {
+            get { return string.Equals(Main, BaseMain, StringComparison.OrdinalIgnoreCase); }
+        }
+
         public bool Matches(string value)
         {
             HashSet<string> held = ComponentRules.WordsOf(value);
@@ -55,13 +72,22 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// The folder for a value this rule placed. A folder named as the value is the value
-        /// through <see cref="ComponentMatch.Key"/>, so a model that types one value two ways,
-        /// LESSTHAN on one sheet and LESS THAN on the next, still files every plot of it in one
+        /// through <see cref="ComponentFolderName.Tidy"/>, so a model that types one value two
+        /// ways, STRT on one sheet and STREET on the next, still files every plot of it in one
         /// folder rather than two.
         /// </summary>
         public string FolderFor(string value)
         {
-            return FolderIsTheValue ? ComponentMatch.Key(value) : Folder;
+            return FolderIsTheValue ? ComponentFolderName.Tidy(value) : Folder;
+        }
+
+        /// <summary>
+        /// The main folder for a value this rule placed, empty for a one level type. base is the
+        /// value with its 60 per cent part removed through <see cref="ComponentFolderName.Base"/>.
+        /// </summary>
+        public string MainFor(string value)
+        {
+            return MainIsTheBase ? ComponentFolderName.Base(value) : Main;
         }
     }
 
@@ -115,12 +141,15 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// The lines of one file, header first, the same csv as components.csv.
+        /// The lines of one file, header first, the same csv as components.csv with a fourth
+        /// column, Main, which may be left empty. A row of three fields is a row whose Main is
+        /// empty, because Excel drops a trailing empty cell.
         ///
         /// **One line that cannot be read refuses the whole file**, where components.csv refuses
         /// only that line's value. The rules are tried in order and the first match wins, so a
         /// dropped MOSQUE MORE 60 line would send every over 60 mosque to MOSQUES with nothing
-        /// on screen. A file that refuses lets the shipped rules answer, and says so.
+        /// on screen. A file that refuses lets the shipped rules answer, and says so. So does a
+        /// file with the three column header of 29 October, which says nothing about Main.
         /// </summary>
         public static ComponentRuleFile Parse(ComponentSource source, string path, IEnumerable<string> lines)
         {
@@ -150,7 +179,7 @@ namespace RcrcGreen.Core.Kpi
                 List<string> fields = ComponentTable.Fields(line, between);
                 if (ComponentTable.IsBlankRow(fields)) continue;
 
-                string bad = ComponentTable.RowShapeFault(fields);
+                string bad = ComponentRules.RowShapeFault(fields);
                 if (bad.Length == 0 && ComponentRules.WordsOf(fields[0]).Count == 0) bad = "holds no word to match";
 
                 if (bad.Length > 0)
@@ -159,7 +188,8 @@ namespace RcrcGreen.Core.Kpi
                         + ". The rules are tried in order, so none of this file is used.");
                 }
 
-                rules.Add(new ComponentRule(fields[0], fields[1], fields[2], source, path, number));
+                rules.Add(new ComponentRule(fields[0], fields[1], fields[2], source, path, number,
+                    fields.Count > 3 ? fields[3] : string.Empty));
             }
 
             if (!headed)
@@ -176,15 +206,20 @@ namespace RcrcGreen.Core.Kpi
     /// </summary>
     public sealed class ComponentPlacement
     {
-        private ComponentPlacement(ComponentRow row, ComponentRule rule, KpiTemplate template, string folder, bool refused)
+        private ComponentPlacement(ComponentRow row, ComponentRule rule, KpiTemplate template, string folder, bool refused, string main = null)
         {
             Row = row;
             Rule = rule;
             Template = template;
             Folder = folder ?? string.Empty;
+            Main = main ?? string.Empty;
             Refused = refused;
         }
 
+        /// <summary>
+        /// **A components.csv row files one level in both layouts**, its Folder column the whole
+        /// folder, because the file has no Main column. CHOSEN, Q18.
+        /// </summary>
         public static ComponentPlacement ByRow(ComponentRow row, KpiTemplate template)
         {
             return new ComponentPlacement(row, null, template, row.Folder, false);
@@ -192,7 +227,7 @@ namespace RcrcGreen.Core.Kpi
 
         public static ComponentPlacement ByRule(ComponentRule rule, KpiTemplate template, string value)
         {
-            return new ComponentPlacement(null, rule, template, rule.FolderFor(value), false);
+            return new ComponentPlacement(null, rule, template, rule.FolderFor(value), false, rule.MainFor(value));
         }
 
         public static readonly ComponentPlacement Nothing = new ComponentPlacement(null, null, null, string.Empty, false);
@@ -210,6 +245,9 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>Empty where nothing placed it.</summary>
         public string Folder { get; }
+
+        /// <summary>The main folder Grouped files it under, empty for a one level type.</summary>
+        public string Main { get; }
 
         /// <summary>A components.csv gave the value two answers or a line it could not read.</summary>
         public bool Refused { get; }
@@ -275,9 +313,19 @@ namespace RcrcGreen.Core.Kpi
     {
         public const string FileName = "component-rules.csv";
 
-        public const string Header = "Words,Template,Folder";
+        public const string Header = "Words,Template,Folder,Main";
 
-        internal static readonly string[] HeaderFields = { "Words", "Template", "Folder" };
+        internal static readonly string[] HeaderFields = { "Words", "Template", "Folder", "Main" };
+
+        /// <summary>
+        /// Why a rule row is not three or four fields with the first three filled, or empty where
+        /// it is. Main may be empty, which is a one level type.
+        /// </summary>
+        internal static string RowShapeFault(List<string> fields)
+        {
+            if (fields.Count < 3 || fields.Count > 4) return "has " + fields.Count + " fields, not 4";
+            return fields.Take(3).Any(one => one.Trim().Length == 0) ? "leaves a field empty" : string.Empty;
+        }
 
         /// <summary>
         /// The whole words of a value or a rule, case blind, LESSTHAN apart, % off. The pane's

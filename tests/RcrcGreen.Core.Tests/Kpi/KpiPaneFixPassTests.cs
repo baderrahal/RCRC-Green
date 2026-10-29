@@ -27,24 +27,24 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void EveryPathRefusalCarriesItsOwnKind()
         {
             Assert.Equal(PathRefusal.TemplateReachesTwoFolders,
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, string.Empty, "ANH-007-MO-100030").RefusedAs);
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, string.Empty, "ANH-007-MO-100030").RefusedAs);
             Assert.Equal(PathRefusal.NoFolderForComponent,
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "SOMETHING NOBODY KNOWS", "ANH-007-MO-100030").RefusedAs);
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "SOMETHING NOBODY KNOWS", "ANH-007-MO-100030").RefusedAs);
             Assert.Equal(PathRefusal.NoUid2,
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", " ").RefusedAs);
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", " ").RefusedAs);
             Assert.Equal(PathRefusal.UnusableUid2,
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH/007").RefusedAs);
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH/007").RefusedAs);
             Assert.Equal(PathRefusal.NoRoot,
-                PlotWorkbookPath.For(string.Empty, KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030").RefusedAs);
+                PlotWorkbookPath.For(FolderLayout.Flat, string.Empty, KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030").RefusedAs);
             Assert.Equal(PathRefusal.Other, PlotWorkbookPath.Refused("from outside").RefusedAs);
             Assert.Equal(PathRefusal.None,
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030").RefusedAs);
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030").RefusedAs);
         }
 
         [Fact]
         public void FM08ReadsAsTwoFoldersAndNotAsAMissingUid2()
         {
-            PlotWorkbookPath fm08 = PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, string.Empty, "ANH-007-MO-100019");
+            PlotWorkbookPath fm08 = PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, string.Empty, "ANH-007-MO-100019");
 
             KpiCreateRun run = CreateFixture.Run(where: fm08);
 
@@ -56,16 +56,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void EachPathKindMapsToItsOwnShortReason()
         {
             Assert.Equal(NotWrittenKind.NoFolderForComponent, NotWrittenKinds.ForPath(
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "SOMETHING NOBODY KNOWS", "ANH-007-MO-100030")));
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "SOMETHING NOBODY KNOWS", "ANH-007-MO-100030")));
             Assert.Equal(NotWrittenKind.NoUid2, NotWrittenKinds.ForPath(
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", string.Empty)));
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", string.Empty)));
             Assert.Equal(NotWrittenKind.UnusableUid2, NotWrittenKinds.ForPath(
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH*007")));
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH*007")));
             Assert.Equal(NotWrittenKind.NoOutputRoot, NotWrittenKinds.ForPath(
-                PlotWorkbookPath.For(null, KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030")));
+                PlotWorkbookPath.For(FolderLayout.Flat, null, KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030")));
             Assert.Equal(NotWrittenKind.PathRefused, NotWrittenKinds.ForPath(PlotWorkbookPath.Refused("from outside")));
             Assert.Equal(NotWrittenKind.Unknown, NotWrittenKinds.ForPath(
-                PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030")));
+                PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100030")));
             Assert.Equal(NotWrittenKind.Unknown, NotWrittenKinds.ForPath(null));
         }
 
@@ -129,7 +129,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static PlotWorkbookPath Where(string uid2)
         {
-            return PlotWorkbookPath.For("C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
+            return PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
         }
 
         private static PlotOutcome WithPdf(string plotId, bool pdfWritten)
@@ -215,7 +215,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void PlotsSharingAFolderAreNotMissingPdfs()
         {
-            PlotWorkbookPath shared = PlotWorkbookPath.For("C:\\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100210");
+            PlotWorkbookPath shared = PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100210");
             PlotOutcome ns01 = PlotOutcome.WroteNothing("NS-01", KpiTemplates.Streets, shared, false, "shared", NotWrittenKind.SharedFolder);
             PlotOutcome ns42 = PlotOutcome.WroteNothing("NS-42", KpiTemplates.Streets, shared, false, "shared", NotWrittenKind.SharedFolder);
 
@@ -237,7 +237,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void TheTemplatesFolderAsOutputIsANoteAndStopsNothing()
         {
             Assert.False(PaneWarnings.OutputIsTheTemplatesFolder().Blocks);
-            Assert.Equal(string.Empty, CreateBlocked.Reason(true, true, true, true, true, true, string.Empty));
+            Assert.Equal(string.Empty, CreateBlocked.Reason(true, true, true, true, true, true, string.Empty, true));
         }
 
         // ------------------------------------------------------------ item 5, every box once
@@ -274,17 +274,17 @@ namespace RcrcGreen.Core.Tests.Kpi
 
                 KpiSteps steps = KpiSteps.Of(
                     templates, output, false, false, false, open,
-                    read ? 154 : (int?)null, assetType ? 1 : 0, plot ? 154 : 0, false);
+                    read ? 154 : (int?)null, assetType ? 1 : 0, plot ? 154 : 0, false, FolderLayout.Flat);
 
                 Assert.Equal(
-                    CreateBlocked.Reason(open, templates, output, read, assetType, plot, string.Empty),
+                    CreateBlocked.Reason(open, templates, output, read, assetType, plot, string.Empty, true),
                     steps.CreateBlockedBy);
 
                 KpiStepState create = steps.For(KpiStep.Create);
                 if (!create.Usable) Assert.Equal(steps.CreateBlockedBy, create.WhyNot);
 
                 string cannot = CreateWords.CannotCreate(
-                    open ? OpenModel.Of("NG05") : OpenModel.Nothing, output ? "C:\\o" : string.Empty, assetType, plot);
+                    open ? OpenModel.Of("NG05") : OpenModel.Nothing, output ? "C:\\o" : string.Empty, assetType, plot, FolderLayout.Flat);
                 if (cannot.Length > 0) Assert.NotEqual(string.Empty, steps.CreateBlockedBy);
             }
         }
@@ -362,9 +362,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             var sharing = SharedUid2.Of(new[]
             {
                 new PlotFiling("DM-11", "ANH-007-MO-100001",
-                    PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "DAILY MOSQUE", "ANH-007-MO-100001")),
+                    PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "DAILY MOSQUE", "ANH-007-MO-100001")),
                 new PlotFiling("FM-05", "ANH-007-MO-100001",
-                    PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100001"))
+                    PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-007-MO-100001"))
             });
 
             TemplateSplit split = PlotsPerTemplate.Split(
@@ -570,8 +570,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheAssetTypeRowsAddUpToTheTwoBoxes()
         {
-            PlotWorkbookPath dm11 = PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "DAILY MOSQUE", "ANH-007-MO-100001");
-            PlotWorkbookPath dm12 = PlotWorkbookPath.For("C:\\out", KpiTemplates.Mosques, "DAILY MOSQUE", "ANH-007-MO-100002");
+            PlotWorkbookPath dm11 = PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "DAILY MOSQUE", "ANH-007-MO-100001");
+            PlotWorkbookPath dm12 = PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Mosques, "DAILY MOSQUE", "ANH-007-MO-100002");
 
             var set = new KpiCreateRunSet(
                 "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
@@ -618,7 +618,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             TemplateSplit split = PlotsPerTemplate.Split(plots, componentOf, new[] { KpiTemplates.Mosques });
 
             Assert.Equal(21, KpiWillWrite.Workbooks(split));
-            Assert.Equal(20, KpiWillWrite.Workbooks(split, PlotFilings.Of("C:\\out", plots, componentOf, MosqueUid2)));
+            Assert.Equal(20, KpiWillWrite.Workbooks(split, PlotFilings.Of(FolderLayout.Flat, "C:\\out", plots, componentOf, MosqueUid2)));
         }
 
         [Fact]
@@ -631,7 +631,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             TemplateSplit split = PlotsPerTemplate.Split(plots, componentOf, new[] { KpiTemplates.Streets });
 
             Assert.Equal(3, KpiWillWrite.Workbooks(split));
-            Assert.Equal(1, KpiWillWrite.Workbooks(split, PlotFilings.Of("C:\\out", plots, componentOf, uid2Of)));
+            Assert.Equal(1, KpiWillWrite.Workbooks(split, PlotFilings.Of(FolderLayout.Flat, "C:\\out", plots, componentOf, uid2Of)));
         }
 
         // ------------------------------------------------------------ pass 2, item 5, what a retry can write
@@ -668,7 +668,11 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void EveryKindIsAnsweredForRetry()
         {
-            Assert.Equal(19, Enum.GetValues(typeof(NotWrittenKind)).Length);
+            Assert.Equal(20, Enum.GetValues(typeof(NotWrittenKind)).Length);
+
+            // No folder layout needs a pick in Setup before anything can be written, K78.
+            Assert.False(FailedReasons.Retryable(NotWrittenKind.NoFolderLayout));
+            Assert.Equal("Pick a folder layout in Setup.", FailedReasons.Short(NotWrittenKind.NoFolderLayout));
         }
 
         [Fact]
@@ -700,12 +704,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             // The output folder is not set and step 3 still names the tick it lacks, never the
             // folder, which is step 1's to say.
-            KpiSteps noAssetType = KpiSteps.Of(true, false, false, false, false, true, 154, 0, 154, false);
+            KpiSteps noAssetType = KpiSteps.Of(true, false, false, false, false, true, 154, 0, 154, false, FolderLayout.Flat);
             Assert.Equal("Output folder not set", noAssetType.CreateBlockedBy);
             Assert.Equal("No asset type selected", noAssetType.PlotsLack);
 
-            Assert.Equal("No plot selected", KpiSteps.Of(true, true, false, false, false, true, 154, 1, 0, false).PlotsLack);
-            Assert.Equal(string.Empty, KpiSteps.Of(true, false, false, false, false, true, 154, 1, 154, false).PlotsLack);
+            Assert.Equal("No plot selected", KpiSteps.Of(true, true, false, false, false, true, 154, 1, 0, false, FolderLayout.Flat).PlotsLack);
+            Assert.Equal(string.Empty, KpiSteps.Of(true, false, false, false, false, true, 154, 1, 154, false, FolderLayout.Flat).PlotsLack);
         }
 
         // ------------------------------------------------------------ pass 2, item 7, one rule each

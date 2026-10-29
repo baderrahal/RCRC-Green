@@ -4,7 +4,7 @@ The plan. One section per item, F and a number, worked in the order below. One s
 first open item, or the group the order line names, and stops when it merges. A finished item gets
 one DONE line under its own section, with the date, the pull request and what proved it.
 
-Order: F1, F2, F2b, F3
+Order: F1, F2, F2b, F4, F3
 
 ## F1 KPI pane redesign for company wide use
 
@@ -63,4 +63,6 @@ value apart.
 Proved by: the suite and the hook tests in the gate, and the Revit pass part (b) writes into
 `steps/03_your_steps.md`.
 
-DONE (a) 2026-10-29, the region pull request, the entry at the top of `steps/log-kpi.md`.
+DONE (a) 2026-10-29, pull request 179, merged as `6105adf`, the entry at the top of `steps/log-kpi.md`.
+
+DONE (b) 2026-10-29, the folder layout pull request, the same entry.

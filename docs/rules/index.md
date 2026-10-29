@@ -112,6 +112,7 @@ lines. Every part was moved byte for byte on 2026-10-28, and the proof is
 - K75 `docs/rules/kpi-plots-2.md` A component value no file holds is offered one line, never placed by a guess
 - K76 `docs/rules/kpi-plots-2.md` A value no row holds is placed by its words
 - K77 `docs/rules/kpi-reading-1.md` The same area on every region holding one is taken, and Show finds each region
+- K78 `docs/rules/kpi-plots-2.md` Each value in its own folder, flat or grouped
 - C00 `.claude/rules/core-rules.md` the opening lines of the file
 - C01 `.claude/rules/core-rules.md` A view type is the code and the view name together
 - C02 `docs/rules/core-views-and-grid.md` The plot list is the union of four sources

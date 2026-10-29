@@ -173,7 +173,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheReportOpensWithEveryPlotTheToolOfferedAndNamesTheOnesNobodyTicked()
         {
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 @"C:\out", KpiTemplates.Streets, "STREET 36m ROW", "ANH-007-ST-100210");
 
             var set = new KpiCreateRunSet(

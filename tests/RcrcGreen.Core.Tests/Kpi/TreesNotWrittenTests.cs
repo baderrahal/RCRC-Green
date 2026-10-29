@@ -196,7 +196,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static PlotWorkbookPath Where(string uid2)
         {
-            return PlotWorkbookPath.For(
+            return PlotWorkbookPath.For(FolderLayout.Flat,
                 System.IO.Path.Combine(System.IO.Path.GetTempPath(), "rcrc-out"),
                 KpiTemplates.FutureParks, "FUTURE PARK", uid2);
         }

@@ -171,6 +171,8 @@ namespace RcrcGreen.Core.Kpi
 
         public const string OutputFolderNotSet = "the output folder is not set";
 
+        public const string LayoutNotPicked = "the folder layout is not picked, Flat or Grouped";
+
         public const string FormsFolderNotSet =
             "the forms folder is not set, so no PDF will be written";
 
@@ -193,9 +195,10 @@ namespace RcrcGreen.Core.Kpi
         public const string NoPlotTicked = "no plot is ticked";
 
         /// <summary>
-        /// **THE TWO THAT REFUSE AND THE THREE THAT ARE NOTES.** Only the templates folder and
-        /// the output folder stop a press: `TemplateWords.NoFolder` ends the workbook list
-        /// before it starts and `CreateWords.CannotCreate` refuses on the output folder. The
+        /// **THE THREE THAT REFUSE AND THE THREE THAT ARE NOTES.** The templates folder, the
+        /// output folder and the folder layout stop a press: `TemplateWords.NoFolder` ends the
+        /// workbook list before it starts and `CreateWords.CannotCreate` refuses on the output
+        /// folder and on no layout picked, K78. The
         /// forms folder, the street reference file and the plot list file are each recorded in
         /// `kpi-rules.md` as a NOTE AND NEVER A REFUSAL, so they are named here and gate
         /// nothing. Gating on one of them would hold back a press the tool is willing to make.
@@ -205,12 +208,14 @@ namespace RcrcGreen.Core.Kpi
             bool outputFolder,
             bool formsFolder,
             bool streetReference,
-            bool plotList)
+            bool plotList,
+            bool layoutPicked)
         {
             var said = new List<string>();
 
             if (!templatesFolder) said.Add(TemplatesFolderNotSet);
             if (!outputFolder) said.Add(OutputFolderNotSet);
+            if (!layoutPicked) said.Add(LayoutNotPicked);
             if (!formsFolder) said.Add(FormsFolderNotSet);
             if (!streetReference) said.Add(StreetReferenceNotSet);
             if (!plotList) said.Add(PlotListNotSet);
@@ -243,6 +248,7 @@ namespace RcrcGreen.Core.Kpi
         /// <param name="templatesTicked">How many workbook rows are ticked with a settled template.</param>
         /// <param name="plotsTicked">How many plots are ticked.</param>
         /// <param name="pressed">Whether a press has finished and its results are being shown.</param>
+        /// <param name="layout">The folder layout picked in Setup, None where none is.</param>
         public static KpiSteps Of(
             bool templatesFolder,
             bool outputFolder,
@@ -253,14 +259,19 @@ namespace RcrcGreen.Core.Kpi
             int? plotsRead,
             int templatesTicked,
             int plotsTicked,
-            bool pressed)
+            bool pressed,
+            FolderLayout layout)
         {
+            bool layoutPicked = layout != FolderLayout.None;
             IReadOnlyList<string> notSet = NotSet(
-                templatesFolder, outputFolder, formsFolder, streetReference, plotList);
+                templatesFolder, outputFolder, formsFolder, streetReference, plotList, layoutPicked);
 
             // **SETUP IS ALWAYS USABLE**, because it is where every reason below is fixed. A
-            // pane whose first step is shut has nowhere to say what is wrong.
-            bool setupDone = templatesFolder && outputFolder;
+            // pane whose first step is shut has nowhere to say what is wrong. It is done with
+            // the two folders and a folder layout, the three that stop a press, and Read needs
+            // only the folders, because reading a model needs no layout.
+            bool foldersSet = templatesFolder && outputFolder;
+            bool setupDone = foldersSet && layoutPicked;
 
             var setup = new KpiStepState(
                 KpiStep.Setup,
@@ -270,7 +281,7 @@ namespace RcrcGreen.Core.Kpi
                 string.Empty,
                 setupDone);
 
-            string readWhyNot = setupDone
+            string readWhyNot = foldersSet
                 ? string.Empty
                 : "Set " + WhichOfTheTwo(templatesFolder, outputFolder) + " first.";
 
@@ -280,7 +291,7 @@ namespace RcrcGreen.Core.Kpi
                 KpiStep.Read,
                 "Read",
                 ReadSummary(modelOpen, plotsRead),
-                setupDone,
+                foldersSet,
                 readWhyNot,
                 readDone);
 
@@ -301,7 +312,7 @@ namespace RcrcGreen.Core.Kpi
             // the pane worked it out a third time for a tooltip. Every one of them reads this.
             string blocked = CreateBlocked.Reason(
                 modelOpen, templatesFolder, outputFolder, readDone,
-                templatesTicked > 0, plotsTicked > 0, string.Empty);
+                templatesTicked > 0, plotsTicked > 0, string.Empty, layoutPicked);
 
             var create = new KpiStepState(
                 KpiStep.Create,

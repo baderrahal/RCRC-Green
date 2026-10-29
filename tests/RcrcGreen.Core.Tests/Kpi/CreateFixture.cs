@@ -191,7 +191,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached",
                 which,
                 @"C:\templates\MOSQUES.xlsx",
-                where ?? PlotWorkbookPath.For(
+                where ?? PlotWorkbookPath.For(FolderLayout.Flat,
                     outputRoot ?? @"C:\models", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006"),
                 "PRX_Component",
                 "PRX_Plot_UID2",

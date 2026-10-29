@@ -152,10 +152,13 @@ namespace RcrcGreen.Core.Kpi
             return tied ? null : best;
         }
 
-        /// <summary>The value itself, edge whitespace off and every run of spaces one.</summary>
+        /// <summary>
+        /// The value tidied by <see cref="ComponentFolderName.Tidy"/>, the one rule that names a
+        /// value's folder, so the suggestion and a rule filing under the value agree.
+        /// </summary>
         public static string FolderFor(string value)
         {
-            return string.Join(" ", (value ?? string.Empty).Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
+            return ComponentFolderName.Tidy(value);
         }
 
         private static HashSet<string> Words(string text)

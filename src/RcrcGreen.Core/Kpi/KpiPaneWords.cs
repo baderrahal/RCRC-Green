@@ -130,6 +130,22 @@ namespace RcrcGreen.Core.Kpi
         public const string Folders = "Folders";
         public const string Files = "Files";
         public const string WorkbookDetails = "Workbook details";
+        public const string FolderLayoutTitle = "Folder layout";
+        public const string Flat = "Flat";
+        public const string Grouped = "Grouped";
+
+        public const string FolderLayoutTip =
+            "How the plot folders nest under the output folder. Nothing is picked until you pick "
+            + "one, and Create stays off until then. It is remembered beside the installed add-in.";
+
+        public const string FlatTip =
+            @"Output\<value folder>\<UID2>, for example Output\FRIDAY MOSQUE MORE THAN 60%\<UID2>. "
+            + @"Parks, healthcare and parking: Output\HEALTHCARE\<UID2>.";
+
+        public const string GroupedTip =
+            @"Output\<main>\<value folder>\<UID2>, for example "
+            + @"Output\FRIDAY MOSQUE\FRIDAY MOSQUE MORE THAN 60%\<UID2> and "
+            + @"Output\STREETS\NH STREET 20m ROW\<UID2>. Parks, healthcare and parking stay one level.";
         public const string Templates = "Templates";
         public const string Output = "Output";
         public const string PdfForms = "PDF forms";

@@ -16,7 +16,8 @@ namespace RcrcGreen.Core.Kpi
         NoFolderForComponent,
         TemplateReachesTwoFolders,
         NoUid2,
-        UnusableUid2
+        UnusableUid2,
+        NoFolderLayout
     }
 
     /// <summary>
@@ -24,9 +25,10 @@ namespace RcrcGreen.Core.Kpi
     ///
     /// <code>
     /// MUGHARAZAT/                        the root the user browsed to
-    ///    FRIDAY MOSQUE/                  the component folder
-    ///       ANH-008-MO-100006/           the plot's own folder, its UID2
-    ///          ANH-008-MO-100006.xlsx    the workbook, named after its folder
+    ///    FRIDAY MOSQUE/                  the main folder, Grouped only, K78
+    ///       FRIDAY MOSQUE/               the value folder
+    ///          ANH-008-MO-100006/        the plot's own folder, its UID2
+    ///             ANH-008-MO-100006.xlsx the workbook, named after its folder
     /// </code>
     ///
     /// **The plot gets a folder of its own holding one file.** That reads as one file too many
@@ -64,7 +66,8 @@ namespace RcrcGreen.Core.Kpi
         public PathRefusal RefusedAs { get; }
 
         /// <summary>
-        /// The component folder under the root, empty when the component placed nothing.
+        /// The folder under the root before the UID2: the value folder, under its main in the
+        /// Grouped layout. Empty when the component placed nothing.
         /// </summary>
         public string Folder { get; }
 
@@ -87,6 +90,9 @@ namespace RcrcGreen.Core.Kpi
         public const string NoRoot =
             "no output root is set, so there is nowhere to build the folder tree";
 
+        public const string NoLayout =
+            "no folder layout is picked in Setup, so nothing says how the folders nest";
+
         public const string NoUid2 =
             "no " + KpiNames.PlotUid2 + " was read off this plot's first sheet, and the folder "
             + "and the file are both named after it";
@@ -104,13 +110,17 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>
         /// Where this plot's checklist goes. The TEMPLATE is here because a plot with no
         /// component of its own reached that template by its plot prefix, and the folder every
-        /// component of that template files under is the only thing that can file it.
+        /// component of that template files under is the only thing that can file it. The
+        /// LAYOUT says whether the value folder sits under its main, K78, and None files nothing.
         /// </summary>
-        public static PlotWorkbookPath For(string root, KpiTemplate template, string component, string uid2)
+        public static PlotWorkbookPath For(FolderLayout layout, string root, KpiTemplate template, string component, string uid2)
         {
             if (string.IsNullOrWhiteSpace(root)) return Refused(NoRoot, PathRefusal.NoRoot);
+            if (layout == FolderLayout.None) return Refused(NoLayout, PathRefusal.NoFolderLayout);
 
-            string folder = ComponentFolders.For(component);
+            ComponentPlacement placed = ComponentTable.InForce.PlaceOf(component);
+            string folder = placed.Folder;
+            string main = placed.Main;
             if (folder.Length == 0)
             {
                 // **An absence and an answer nobody knows are two different things.** A component
@@ -123,7 +133,7 @@ namespace RcrcGreen.Core.Kpi
                     return Refused(ComponentFolders.NoFolderFor(component), PathRefusal.NoFolderForComponent);
                 }
 
-                folder = ComponentFolders.OnlyFolderFor(template);
+                folder = ComponentFolders.OnlyFolderFor(template, out main);
                 if (folder.Length == 0)
                 {
                     return Refused(ComponentFolders.NoFolderForTemplate(template), PathRefusal.TemplateReachesTwoFolders);
@@ -136,10 +146,11 @@ namespace RcrcGreen.Core.Kpi
             string bad = Unusable(held);
             if (bad.Length > 0) return Refused(bad, PathRefusal.UnusableUid2);
 
-            string plotFolder = Path.Combine(root.Trim(), folder, held);
+            string under = FolderLayouts.Under(layout, folder, main);
+            string plotFolder = Path.Combine(root.Trim(), under, held);
 
             return new PlotWorkbookPath(
-                true, folder, held, plotFolder,
+                true, under, held, plotFolder,
                 Path.Combine(plotFolder, held + OutputName.Extension),
                 string.Empty);
         }

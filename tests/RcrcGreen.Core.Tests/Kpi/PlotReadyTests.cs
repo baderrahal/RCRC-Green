@@ -26,7 +26,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static PlotWorkbookPath Where(string uid2)
         {
-            return PlotWorkbookPath.For("C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
+            return PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void APlotStoppedByASharedUid2ReadsNoAndNamesTheValue()
         {
-            IReadOnlyList<SharedUid2Group> sharing = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> sharing = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 "C:\\out",
                 new[] { "MM-01", "MM-09" },
                 plotId => "STREET 36m ROW",

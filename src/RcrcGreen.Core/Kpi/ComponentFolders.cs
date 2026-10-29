@@ -158,10 +158,28 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static string OnlyFolderFor(KpiTemplate template)
         {
-            bool perValue;
-            IReadOnlyList<string> folders = ComponentTable.InForce.FoldersOf(template, out perValue);
-            return folders.Count == 1 && !perValue ? folders[0] : string.Empty;
+            string main;
+            return OnlyFolderFor(template, out main);
         }
+
+        /// <summary>
+        /// The same, with the main folder Grouped files it under, empty for a one level type.
+        /// </summary>
+        public static string OnlyFolderFor(KpiTemplate template, out string main)
+        {
+            return ComponentTable.InForce.OnlyFolderFor(template, out main);
+        }
+
+        /// <summary>
+        /// The main column of both reports: the main folder, one level for a type filed under its
+        /// folder alone in both layouts, NONE where nothing placed the value.
+        /// </summary>
+        public static string MainInWords(ComponentPlacement placed)
+        {
+            if (placed == null || placed.Folder.Length == 0) return "NONE";
+            return placed.Main.Length == 0 ? "one level" : placed.Main;
+        }
+
 
         /// <summary>
         /// Why a plot with no component of its own cannot be filed under its template's folder,

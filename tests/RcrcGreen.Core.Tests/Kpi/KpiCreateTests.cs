@@ -595,7 +595,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.Equal(
                 "Cannot create. No model is open.",
-                CreateWords.CannotCreate(NoDocument, Somewhere, true, true));
+                CreateWords.CannotCreate(NoDocument, Somewhere, true, true, FolderLayout.Flat));
         }
 
         /// <summary>
@@ -608,10 +608,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void AModelThatWasNeverSavedIsNoLongerRefused()
         {
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(NeverSaved, Somewhere, true, true));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(NeverSaved, Somewhere, true, true, FolderLayout.Flat));
             Assert.Equal(
-                CreateWords.CannotCreate(Saved, Somewhere, true, true),
-                CreateWords.CannotCreate(NeverSaved, Somewhere, true, true));
+                CreateWords.CannotCreate(Saved, Somewhere, true, true, FolderLayout.Flat),
+                CreateWords.CannotCreate(NeverSaved, Somewhere, true, true, FolderLayout.Flat));
         }
 
         /// <summary>
@@ -620,20 +620,20 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void NoOutputFolderSaysToBrowseForOne()
         {
-            string said = CreateWords.CannotCreate(Saved, string.Empty, true, true);
+            string said = CreateWords.CannotCreate(Saved, string.Empty, true, true, FolderLayout.Flat);
 
             Assert.Equal(
                 "Cannot create. No output folder is set. Press Browse beside Output folder and "
                 + "point at where the filled workbooks should be written.",
                 said);
-            Assert.Equal(said, CreateWords.CannotCreate(Saved, "   ", true, true));
-            Assert.Equal(said, CreateWords.CannotCreate(Saved, null, true, true));
+            Assert.Equal(said, CreateWords.CannotCreate(Saved, "   ", true, true, FolderLayout.Flat));
+            Assert.Equal(said, CreateWords.CannotCreate(Saved, null, true, true, FolderLayout.Flat));
         }
 
         [Fact]
         public void ADocumentAndAFolderRefuseNothing()
         {
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true, FolderLayout.Flat));
         }
 
         /// <summary>
@@ -643,9 +643,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void EachStateGivesItsOwnLine()
         {
-            string none = CreateWords.CannotCreate(NoDocument, Somewhere, true, true);
-            string nowhere = CreateWords.CannotCreate(Saved, string.Empty, true, true);
-            string ready = CreateWords.CannotCreate(Saved, Somewhere, true, true);
+            string none = CreateWords.CannotCreate(NoDocument, Somewhere, true, true, FolderLayout.Flat);
+            string nowhere = CreateWords.CannotCreate(Saved, string.Empty, true, true, FolderLayout.Flat);
+            string ready = CreateWords.CannotCreate(Saved, Somewhere, true, true, FolderLayout.Flat);
 
             Assert.Equal(3, new[] { none, nowhere, ready }.Distinct().Count());
             Assert.DoesNotContain(CreateWords.NoOutputFolder, none);
@@ -659,8 +659,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void SettingTheOutputFolderIsWhatArmsCreate()
         {
-            Assert.NotEqual(string.Empty, CreateWords.CannotCreate(Saved, string.Empty, true, true));
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true));
+            Assert.NotEqual(string.Empty, CreateWords.CannotCreate(Saved, string.Empty, true, true, FolderLayout.Flat));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true, FolderLayout.Flat));
         }
 
         /// <summary>
@@ -674,11 +674,11 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "Cannot create. No model is open. " + TemplateWords.NoOutputFolder
                     + " No template ticked. No plot ticked.",
-                CreateWords.CannotCreate(NoDocument, string.Empty, false, false));
+                CreateWords.CannotCreate(NoDocument, string.Empty, false, false, FolderLayout.Flat));
 
             Assert.Equal("Cannot create. No plot ticked.",
-                CreateWords.CannotCreate(Saved, Somewhere, true, false));
-            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true));
+                CreateWords.CannotCreate(Saved, Somewhere, true, false, FolderLayout.Flat));
+            Assert.Equal(string.Empty, CreateWords.CannotCreate(Saved, Somewhere, true, true, FolderLayout.Flat));
         }
 
         /// <summary>
@@ -702,7 +702,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.False(OpenModel.Nothing.IsOpen);
             Assert.Equal(
                 "Cannot create. No model is open.",
-                CreateWords.CannotCreate(null, Somewhere, true, true));
+                CreateWords.CannotCreate(null, Somewhere, true, true, FolderLayout.Flat));
         }
 
         /// <summary>
@@ -731,7 +731,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.Equal(
                 "Cannot create. No model is open.",
-                CreateWords.CannotCreate(OpenModel.Of(string.Empty), Somewhere, true, true));
+                CreateWords.CannotCreate(OpenModel.Of(string.Empty), Somewhere, true, true, FolderLayout.Flat));
         }
 
         /// <summary>
