@@ -327,11 +327,11 @@ written the value's plots are refused as before, with the value named.
 
 ## A value no row holds is placed by its words
 
-**K76.** Bader's rules of 29 Oct, in `install/component-rules.csv`, header `Words,Template,Folder`,
-read by `ComponentRules` and tried top to bottom. The first rule whose words ALL appear in the
+**K76.** Bader's rules of 29 Oct, in `install/component-rules.csv`, header `Words,Template,Folder,Main`
+since K78, read by `ComponentRules` and tried top to bottom. The first rule whose words ALL appear in the
 value, as whole words after the `ComponentMatch.Key` spacing rule with % off each word, wins.
-Folder `value` is the value through `ComponentMatch.Key`, so one value typed two ways files in one
-folder. `ComponentTable.PlaceOf` is the one order: an exact components.csv row, then nothing for a
+Folder `value` is the value through `ComponentFolderName.Tidy`, K78, so one value typed two ways
+files in one folder. `ComponentTable.PlaceOf` is the one order: an exact components.csv row, then nothing for a
 value a components.csv refused, then the first rule, then nothing.
 
 Two copies: shipped beside the DLLs, and shared in the templates folder, which replaces the
@@ -343,3 +343,33 @@ Whole words keep the traps shut: PARK is no word of PARKING LOT, 60 is no word o
 MOSQUE value with MORE and no 60 reaches MOSQUES. Step 2 shows `<n> values placed by rule` with
 each value and its rule in the tooltip. A template whose rule files under the value reaches no one
 folder, so a MOSQUES or SCHOOLS plot with no component is refused before the press, Q14.
+
+## Each value in its own folder, flat or grouped
+
+**K78.** Bader's rule of 29 October. Every PRX_Component value gets its own folder, streets
+included. The folder of a value is the value tidied by `ComponentFolderName.Tidy`, the one place
+the tidy words live: the `ComponentMatch.Key` spacing rule, STRT read as STREET, LESS before a
+width in metres read as LESS THAN, and the metre m written lower case. So NH STRT 20m ROW and NH
+STREET 20m ROW share NH STREET 20m ROW.
+
+The rules file's fourth column, Main, says what a Grouped layout puts the folder under: a fixed
+name, `base` for the value with its MORE or LESS THAN 60% part removed by
+`ComponentFolderName.Base`, or empty for a one level type filed under its Folder alone in both
+layouts. The file's own `#` lines say the same for a person adding a rule. Mosques and schools
+are `value,base`, streets and WALKWAY `value,STREETS`, and parks, healthcare and parking their
+first edition names with Main empty. A file with the three column header is refused whole and
+the shipped rules answer. A components.csv row has no Main and files one level, Q18.
+
+```
+Flat      Output\<value folder>\<UID2>\
+Grouped   Output\<main>\<value folder>\<UID2>\     FRIDAY MOSQUE\FRIDAY MOSQUE\<UID2>
+One level Output\<folder>\<UID2>\ in both          HEALTHCARE\<UID2>
+```
+
+**No default layout.** Setup shows Flat and Grouped, neither ticked, remembered per person in
+`kpi-folder-layout.txt` beside the add-in. Until one is picked Setup is not done, Create is off
+with `Pick a folder layout in Setup`, the press refuses with the same reason, and a path built
+with none refuses as `NoFolderLayout`, which a retry cannot fix. The create report's first line
+under the build stamp names the layout. `FolderLayoutTests` holds Bader's eleven value table off
+the shipped file. A plot with no component keeps K02's rule, so STREETS, a folder per value now,
+is refused before the press like MOSQUES and SCHOOLS.

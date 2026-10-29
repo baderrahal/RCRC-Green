@@ -514,12 +514,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             string[] lines = report.ToString().Replace("\r", string.Empty).Split('\n');
 
             Assert.Equal("== WHERE EACH COMPONENT VALUE WAS READ (3) ==", lines[0]);
-            Assert.Contains("  value | template | folder | placed by | file", lines);
+            Assert.Contains("  value | template | folder | main | placed by | file", lines);
             Assert.Contains(lines, line => line.StartsWith(
-                "  DAILY MOSQUE LESSTHAN 60% | MOSQUES LESS THAN 60 | DAILY MOSQUE LESS THAN 60% | rule MOSQUE LESS 60, the shipped component-rules.csv line 3 | ",
+                "  DAILY MOSQUE LESSTHAN 60% | MOSQUES LESS THAN 60 | DAILY MOSQUE LESS THAN 60% | DAILY MOSQUE | rule MOSQUE LESS 60, the shipped component-rules.csv line 11 | ",
                 StringComparison.Ordinal));
-            Assert.Contains("  PUMP STATION | NONE | NONE | nothing | NONE", lines);
-            Assert.Contains(@"  SCHOOL | SCHOOLS | SCHOOL SHARED | row, the shared components.csv line 2 | T:\templates\components.csv", lines);
+            Assert.Contains("  PUMP STATION | NONE | NONE | NONE | nothing | NONE", lines);
+            Assert.Contains(@"  SCHOOL | SCHOOLS | SCHOOL SHARED | one level | row, the shared components.csv line 2 | T:\templates\components.csv", lines);
             Assert.Contains(@"  the shared components.csv, T:\templates\components.csv: 1 row", lines);
             Assert.Contains(lines, line => line.StartsWith("  the shipped component-rules.csv, ", StringComparison.Ordinal)
                 && line.EndsWith(": 14 rules, the rules in force", StringComparison.Ordinal));

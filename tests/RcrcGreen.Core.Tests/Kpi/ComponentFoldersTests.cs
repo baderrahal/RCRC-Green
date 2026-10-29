@@ -23,10 +23,10 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("PARKING LOT", "PARKING LOT")]
         [InlineData("EXISTING PARK", "EXISTING PARK")]
         [InlineData("FUTURE PARK", "FUTURE PARKS")]
-        [InlineData("NH STRT 20m ROW", "STREETS")]
-        [InlineData("NH STRT LESS 20m ROW", "STREETS")]
-        [InlineData("STREET 30m ROW", "STREETS")]
-        [InlineData("STREET 36m ROW", "STREETS")]
+        [InlineData("NH STRT 20m ROW", "NH STREET 20m ROW")]
+        [InlineData("NH STRT LESS 20m ROW", "NH STREET LESS THAN 20m ROW")]
+        [InlineData("STREET 30m ROW", "STREET 30m ROW")]
+        [InlineData("STREET 36m ROW", "STREET 36m ROW")]
         public void EveryComponentValueReachesItsFolder(string component, string folder)
         {
             Assert.Equal(folder, ComponentFolders.For(component));
@@ -34,30 +34,35 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// The shipped components.csv holds no row since the rules of 29 Oct, so every folder
-        /// comes off a rule: five named ones, and the mosque and school rules file under the
-        /// value itself. The team's snip also holds GOVERMENT BUILDING, which no rule word
-        /// reaches, and it is deliberately not placed.
+        /// comes off a rule: four named ones, the one level types, and the mosque, school and
+        /// street rules file under the value itself, K78. The team's snip also holds GOVERMENT
+        /// BUILDING, which no rule word reaches, and it is deliberately not placed.
         /// </summary>
         [Fact]
-        public void NoRowIsShippedAndTheRulesNameFiveFolders()
+        public void NoRowIsShippedAndTheRulesNameFourFolders()
         {
             Assert.Empty(ComponentFolders.All);
 
             Assert.Equal(
-                new[] { "HEALTHCARE", "PARKING LOT", "EXISTING PARK", "FUTURE PARKS", "STREETS" },
+                new[] { "HEALTHCARE", "PARKING LOT", "EXISTING PARK", "FUTURE PARKS" },
                 ComponentFolders.Folders.ToArray());
         }
 
         /// <summary>
-        /// Four street values share one folder and the two mosque values do not share theirs,
-        /// which is the whole reason the folder is a column of its own beside the template.
+        /// **Every street value gets its own folder since 29 October**, all four grouped under
+        /// STREETS, and the two mosque values are filed apart too, which is why the folder is a
+        /// column of its own beside the template.
         /// </summary>
         [Fact]
-        public void TheMosqueValuesSplitWhereTheStreetValuesJoin()
+        public void TheMosqueValuesSplitAndTheStreetValuesGroupUnderStreets()
         {
+            Assert.Equal(
+                new[] { "NH STREET LESS THAN 20m ROW", "NH STREET 20m ROW", "STREET 30m ROW", "STREET 36m ROW" },
+                new[] { "NH STRT LESS 20m ROW", "NH STRT 20m ROW", "STREET 30m ROW", "STREET 36m ROW" }
+                    .Select(ComponentFolders.For).ToArray());
             Assert.All(
                 new[] { "NH STRT LESS 20m ROW", "NH STRT 20m ROW", "STREET 30m ROW", "STREET 36m ROW" },
-                one => Assert.Equal("STREETS", ComponentFolders.For(one)));
+                one => Assert.Equal("STREETS", ComponentTable.Shipped.PlaceOf(one).Main));
 
             // Both mosque values fill the one MOSQUES workbook and are filed apart.
             Assert.Equal("MOSQUES", ComponentTemplates.For("DAILY MOSQUE").Name);
@@ -108,8 +113,8 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void WholeWordsAreComparedAndNeverAnOpening()
         {
-            Assert.Equal("STREETS", ComponentFolders.For("  nh strt less 20m row  "));
-            Assert.Equal("STREETS", ComponentFolders.For("NH STRT"));
+            Assert.Equal("NH STREET LESS THAN 20m ROW", ComponentFolders.For("  nh strt less 20m row  "));
+            Assert.Equal("NH STREET", ComponentFolders.For("NH STRT"));
             Assert.Equal(string.Empty, ComponentFolders.For("NH STR"));
             Assert.Equal(string.Empty, ComponentFolders.For("ROWS"));
         }
@@ -134,7 +139,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void ThePathIsTheRootTheFolderTheUidAndTheUidAgain()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("C:", "RCRC", "MUGHARAZAT"), KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006");
 
             Assert.True(path.Ok);
@@ -151,27 +156,33 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// A street plot, where four component values land in the one folder and the plot's own
-        /// folder is still its own.
+        /// Two street plots, each value in its own folder: alone under the root in Flat, under
+        /// STREETS in Grouped, K78.
         /// </summary>
         [Fact]
-        public void FourStreetValuesFileIntoOneFolderAndKeepTheirOwnPlotFolders()
+        public void EachStreetValueFilesInItsOwnFolderUnderStreetsWhenGrouped()
         {
-            PlotWorkbookPath wide = PlotWorkbookPath.For(
+            PlotWorkbookPath wide = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R"), KpiTemplates.Streets, "STREET 36m ROW", "ANH-007-ST-100210");
-            PlotWorkbookPath narrow = PlotWorkbookPath.For(
+            PlotWorkbookPath narrow = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R"), KpiTemplates.Streets, "NH STRT LESS 20m ROW", "ANH-007-ST-100050");
 
-            Assert.Equal(Joined("R", "STREETS", "ANH-007-ST-100210", "ANH-007-ST-100210.xlsx"),
+            Assert.Equal(Joined("R", "STREET 36m ROW", "ANH-007-ST-100210", "ANH-007-ST-100210.xlsx"),
                 wide.FilePath);
-            Assert.Equal(Joined("R", "STREETS", "ANH-007-ST-100050", "ANH-007-ST-100050.xlsx"),
+            Assert.Equal(Joined("R", "NH STREET LESS THAN 20m ROW", "ANH-007-ST-100050", "ANH-007-ST-100050.xlsx"),
                 narrow.FilePath);
+
+            PlotWorkbookPath grouped = PlotWorkbookPath.For(FolderLayout.Grouped,
+                Joined("R"), KpiTemplates.Streets, "NH STRT LESS 20m ROW", "ANH-007-ST-100050");
+            Assert.Equal(Joined("STREETS", "NH STREET LESS THAN 20m ROW"), grouped.Folder);
+            Assert.Equal(Joined("R", "STREETS", "NH STREET LESS THAN 20m ROW", "ANH-007-ST-100050", "ANH-007-ST-100050.xlsx"),
+                grouped.FilePath);
         }
 
         [Fact]
         public void NoRootIsARefusalThatSaysSo()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For("  ", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006");
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat, "  ", KpiTemplates.Mosques, "FRIDAY MOSQUE", "ANH-008-MO-100006");
 
             Assert.False(path.Ok);
             Assert.Equal(string.Empty, path.FilePath);
@@ -182,7 +193,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void AComponentTheTableDoesNotHoldWritesNothingAndIsNamed()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R"), null, "GOVERMENT BUILDING", "ANH-007-GB-100001");
 
             Assert.False(path.Ok);
@@ -195,7 +206,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void NoUidMeansNoFolderAndNoFileBecauseBothAreNamedAfterIt()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(Joined("R"), KpiTemplates.Schools, "SCHOOL", "   ");
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat, Joined("R"), KpiTemplates.Schools, "SCHOOL", "   ");
 
             Assert.False(path.Ok);
             Assert.Equal(
@@ -214,7 +225,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             foreach (string separator in new[] { "/", "\\" })
             {
-                PlotWorkbookPath slashed = PlotWorkbookPath.For(
+                PlotWorkbookPath slashed = PlotWorkbookPath.For(FolderLayout.Flat,
                     Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH" + separator + "007");
 
                 Assert.False(slashed.Ok);
@@ -238,14 +249,14 @@ namespace RcrcGreen.Core.Tests.Kpi
                 new[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' },
                 PlotWorkbookPath.RefusedInAName);
 
-            PlotWorkbookPath starred = PlotWorkbookPath.For(Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH*007?");
+            PlotWorkbookPath starred = PlotWorkbookPath.For(FolderLayout.Flat, Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH*007?");
 
             Assert.False(starred.Ok);
             Assert.Equal(
                 "PRX_Plot_UID2 reads ANH*007?, which holds '*' '?', so it cannot name a folder",
                 starred.Why);
 
-            PlotWorkbookPath colon = PlotWorkbookPath.For(Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH:007");
+            PlotWorkbookPath colon = PlotWorkbookPath.For(FolderLayout.Flat, Joined("R"), KpiTemplates.Schools, "SCHOOL", "ANH:007");
 
             Assert.False(colon.Ok);
             Assert.Equal(

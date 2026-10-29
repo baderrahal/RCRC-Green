@@ -26,7 +26,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// </summary>
         private static PlotWorkbookPath Where(string component, string uid2, KpiTemplate template = null)
         {
-            return PlotWorkbookPath.For(
+            return PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R", "MUGHARAZAT"),
                 template ?? ComponentTemplates.For(component),
                 component,

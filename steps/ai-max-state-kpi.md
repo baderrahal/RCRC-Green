@@ -1,5 +1,11 @@
 # ai-max state, KPI
 
+Phase: 9, ship, part (b) of two. Each PRX_Component value in its own folder, flat or grouped,
+K78, F4 in `steps/01_next.md`. Part (a) merged as pull request 179, `6105adf`. Two review passes
+each, REAL fixed, L109 to L117 LATENT, Q14 and Q15 answered, Q18 and Q19 asked. Its entry is the
+top of `steps/log-kpi.md`. The kit is rebuilt from main after the merge. Nothing in it has run in
+Revit.
+
 Phase: 9, ship, part (a) of two. Region areas: one shared area taken without asking, each
 option with its area and Show, K77, F4 in `steps/01_next.md`. Part (b), each component value in
 its own folder, flat or grouped, is the pull request after it. Its entry is the top of

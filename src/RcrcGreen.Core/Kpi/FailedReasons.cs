@@ -41,7 +41,8 @@ namespace RcrcGreen.Core.Kpi
         FolderRefused,
         FormulaError,
         WouldOverwriteTheTemplate,
-        Crashed
+        Crashed,
+        NoFolderLayout
     }
 
     public static class PatchRefusals
@@ -118,6 +119,7 @@ namespace RcrcGreen.Core.Kpi
                 case PathRefusal.TemplateReachesTwoFolders: return NotWrittenKind.TwoFoldersFit;
                 case PathRefusal.NoUid2: return NotWrittenKind.NoUid2;
                 case PathRefusal.UnusableUid2: return NotWrittenKind.UnusableUid2;
+                case PathRefusal.NoFolderLayout: return NotWrittenKind.NoFolderLayout;
                 default: return NotWrittenKind.PathRefused;
             }
         }
@@ -148,7 +150,7 @@ namespace RcrcGreen.Core.Kpi
         /// refused by what the model or the ticks hold fails the same way every press**, so Retry
         /// failed leaves it out: its asset type not ticked, a folder another plot shares, no
         /// folder for its component, two folders fitting, no UID2 or one that cannot name a
-        /// folder, and a plot no route places at all. Everything else, a workbook held open in
+        /// folder, no folder layout picked in Setup, and a plot no route places at all. Everything else, a workbook held open in
         /// Excel, a region to pick, a write that stopped, can go through on the next press.
         /// </summary>
         public static bool Retryable(NotWrittenKind kind)
@@ -162,6 +164,7 @@ namespace RcrcGreen.Core.Kpi
                 case NotWrittenKind.TwoFoldersFit:
                 case NotWrittenKind.NoUid2:
                 case NotWrittenKind.UnusableUid2:
+                case NotWrittenKind.NoFolderLayout:
                     return false;
                 default:
                     return true;
@@ -190,6 +193,7 @@ namespace RcrcGreen.Core.Kpi
                 case NotWrittenKind.FormulaError: return "Workbook formulas would show an error.";
                 case NotWrittenKind.WouldOverwriteTheTemplate: return "It would write over a template.";
                 case NotWrittenKind.Crashed: return "The write stopped on an error.";
+                case NotWrittenKind.NoFolderLayout: return CreateBlocked.NoLayout + ".";
                 default: return Fallback;
             }
         }

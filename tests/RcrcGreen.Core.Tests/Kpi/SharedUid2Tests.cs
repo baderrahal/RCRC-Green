@@ -42,7 +42,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TwoPlotsSharingOneUid2WriteNothingAndEachNamesTheOther()
         {
-            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "MM-05", "MM-09" },
                 plotId => Street,
@@ -53,7 +53,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.True(
                 SharedUid2.Stops(groups, "MM-01"),
                 "MM-01 and MM-09 both carry ANH-007-ST-100213, so ONE WORKBOOK PER PLOT files "
-                + "both at " + At("STREETS", "ANH-007-ST-100213") + " and the last one written "
+                + "both at " + At(Street, "ANH-007-ST-100213") + " and the last one written "
                 + "replaces the other. That is what the 16:37 press did to ten plots with every "
                 + "row of THE PLOT LIST reading YES. The values this check found: "
                 + (groups.Count == 0
@@ -69,7 +69,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries "
                 + "ANH-007-ST-100213. One workbook per plot files all 2 files at "
-                + At("STREETS", "ANH-007-ST-100213")
+                + At(Street, "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
                 SharedUid2.WhyStopped(groups, "MM-01"));
@@ -77,7 +77,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-01 carries "
                 + "ANH-007-ST-100213. One workbook per plot files all 2 files at "
-                + At("STREETS", "ANH-007-ST-100213")
+                + At(Street, "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
                 SharedUid2.WhyStopped(groups, "MM-09"));
@@ -93,7 +93,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void OneValueInTwoComponentFoldersIsNamedAndBothStillWrite()
         {
-            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "SC-03" },
                 plotId => plotId == "SC-03" ? "SCHOOL" : Street,
@@ -122,7 +122,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void AGroupHoldingBothKindsNamesEachPlotForItself()
         {
-            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "MM-09", "SC-03" },
                 plotId => plotId == "SC-03" ? "SCHOOL" : Street,
@@ -143,7 +143,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries "
                 + "ANH-007-ST-100213. One workbook per plot files all 2 files at "
-                + At("STREETS", "ANH-007-ST-100213")
+                + At(Street, "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
                 SharedUid2.WhyStopped(groups, "MM-01"));
@@ -162,7 +162,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TwoUid2ValuesDifferingOnlyInCaseAreOneFolderAndBothAreStopped()
         {
-            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "MM-09" },
                 plotId => Street,
@@ -174,7 +174,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 SharedUid2.Stops(groups, "MM-01") && SharedUid2.Stops(groups, "MM-09"),
                 "MM-01 carries ANH-007-ST-100213 and MM-09 carries anh-007-st-100213, and a "
                 + "Windows folder ignores letter case, so both file at "
-                + At("STREETS", "ANH-007-ST-100213") + " and the last one written replaces the "
+                + At(Street, "ANH-007-ST-100213") + " and the last one written replaces the "
                 + "other. The groups this check found: "
                 + (groups.Count == 0
                     ? "none"
@@ -190,7 +190,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "this plot's PRX_Plot_UID2 is ANH-007-ST-100213, and MM-09 carries "
                 + "anh-007-st-100213. Those spellings differ only in letter case, and Windows "
                 + "files them in one folder under one name anyway. One workbook per plot files "
-                + "all 2 files at " + At("STREETS", "ANH-007-ST-100213")
+                + "all 2 files at " + At(Street, "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
                 SharedUid2.WhyStopped(groups, "MM-01"));
@@ -199,7 +199,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "this plot's PRX_Plot_UID2 is anh-007-st-100213, and MM-01 carries "
                 + "ANH-007-ST-100213. Those spellings differ only in letter case, and Windows "
                 + "files them in one folder under one name anyway. One workbook per plot files "
-                + "all 2 files at " + At("STREETS", "ANH-007-ST-100213")
+                + "all 2 files at " + At(Street, "ANH-007-ST-100213")
                 + ", so the last one written would replace the others. No file is written for "
                 + "any of them, and nothing already in that folder is touched.",
                 SharedUid2.WhyStopped(groups, "MM-09"));
@@ -213,7 +213,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TwoCaseDifferentValuesInTwoFoldersAreNamedAndBothStillWrite()
         {
-            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "SC-03" },
                 plotId => plotId == "SC-03" ? "SCHOOL" : Street,
@@ -239,7 +239,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void PlotsWithNoUid2AreNotAGroup()
         {
-            Assert.Empty(SharedUid2.Of(PlotFilings.Of(
+            Assert.Empty(SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "MM-05" },
                 plotId => Street,
@@ -252,7 +252,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheGlanceLineCountsTheStoppedPlotsAndNamesTheValues()
         {
-            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "MM-09", "NS-01", "NS-42" },
                 plotId => Street,
@@ -301,7 +301,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheShortLineFiresExactlyWhereTheLongOneDoes()
         {
-            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(
+            IReadOnlyList<SharedUid2Group> groups = SharedUid2.Of(PlotFilings.Of(FolderLayout.Flat,
                 Root,
                 new[] { "MM-01", "MM-05", "MM-09" },
                 plotId => Street,

@@ -87,7 +87,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 Set(PlotOutcome.WroteNothing(
                     "NS-02",
                     KpiTemplates.Streets,
-                    PlotWorkbookPath.For(@"C:\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100050"),
+                    PlotWorkbookPath.For(FolderLayout.Flat, @"C:\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100050"),
                     true,
                     CreateWords.WhyThisOneWroteNothing(run))),
                 new DateTime(2026, 9, 14, 14, 29, 0));
@@ -160,7 +160,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void APlotRefusedByItsOwnPathAlreadyCarriedItsWordsAndStillDoes()
         {
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 @"C:\out", KpiTemplates.ExistingParks, "EXISTING PARK", string.Empty);
 
             Assert.False(where.Ok);

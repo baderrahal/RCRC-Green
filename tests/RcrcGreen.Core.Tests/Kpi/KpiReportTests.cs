@@ -975,12 +975,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 new[]
                 {
-                    "value | sheets carrying it | plots | template | folder | placed by | the plots",
-                    "FRIDAY MOSQUE | 2 | 1 | MOSQUES | FRIDAY MOSQUE | rule MOSQUE, the shipped component-rules.csv line 4 | FM-05",
-                    "SCHOOL | 2 | 1 | SCHOOLS | SCHOOL | rule SCHOOL, the shipped component-rules.csv line 7 | SC-03",
-                    "EXISTING PARK | 1 | 1 | EXISTING PARKS | EXISTING PARK | rule EXISTING PARK, the shipped component-rules.csv line 10 | EP-02",
-                    "HEALTH | 1 | 1 | HEALTHCARE | HEALTHCARE | rule HEALTH, the shipped component-rules.csv line 8 | NS-19",
-                    "NH STRT 20m ROW | 1 | 1 | STREETS | STREETS | rule STRT, the shipped component-rules.csv line 13 | NS-06",
+                    "value | sheets carrying it | plots | template | folder | main | placed by | the plots",
+                    "FRIDAY MOSQUE | 2 | 1 | MOSQUES | FRIDAY MOSQUE | FRIDAY MOSQUE | rule MOSQUE, the shipped component-rules.csv line 12 | FM-05",
+                    "SCHOOL | 2 | 1 | SCHOOLS | SCHOOL | SCHOOL | rule SCHOOL, the shipped component-rules.csv line 15 | SC-03",
+                    "EXISTING PARK | 1 | 1 | EXISTING PARKS | EXISTING PARK | one level | rule EXISTING PARK, the shipped component-rules.csv line 18 | EP-02",
+                    "HEALTH | 1 | 1 | HEALTHCARE | HEALTHCARE | one level | rule HEALTH, the shipped component-rules.csv line 16 | NS-19",
+                    "NH STRT 20m ROW | 1 | 1 | STREETS | NH STREET 20m ROW | STREETS | rule STRT, the shipped component-rules.csv line 21 | NS-06",
                     "The value is the asset type and it is not a template name. Which template each "
                         + "one means is its exact row in components.csv, else the first rule in "
                         + "component-rules.csv whose words it holds, read back in the columns "
@@ -1055,7 +1055,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     })));
             string[] lines = LinesOf(KpiReport.Write(scan, Noon));
 
-            Assert.Contains("PARK | 2 | 0 | (not in the table) | NONE | nothing | (no plot on those sheets)", lines);
+            Assert.Contains("PARK | 2 | 0 | (not in the table) | NONE | NONE | nothing | (no plot on those sheets)", lines);
         }
 
         /// <summary>

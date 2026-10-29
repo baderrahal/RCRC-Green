@@ -22,7 +22,7 @@ namespace RcrcGreen.Core.Tests.Kpi
     {
         private static PlotWorkbookPath Where(string uid2)
         {
-            return PlotWorkbookPath.For("C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
+            return PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
         }
 
         private static string Uid2Of(string plotId)

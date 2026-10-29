@@ -1,15 +1,23 @@
-Words,Template,Folder
-MOSQUE MORE 60,MOSQUES MORE THAN 60,value
-MOSQUE LESS 60,MOSQUES LESS THAN 60,value
-MOSQUE,MOSQUES,value
-SCHOOL MORE 60,SCHOOLS MORE THAN 60,value
-SCHOOL LESS 60,SCHOOLS LESS THAN 60,value
-SCHOOL,SCHOOLS,value
-HEALTH,HEALTHCARE,HEALTHCARE
-PARKING,PARKING,PARKING LOT
-EXISTING PARK,EXISTING PARKS,EXISTING PARK
-FUTURE PARK,FUTURE PARKS,FUTURE PARKS
-STREET,STREETS,STREETS
-STRT,STREETS,STREETS
-WALKWAY,STREETS,STREETS
-ROW,STREETS,STREETS
+# How a PRX_Component value no components.csv row names is placed. Read top to bottom and the first rule whose Words all appear in the value wins.
+# Words: whole words the value must hold in any order. Case and spacing do not matter and a per cent sign is ignored.
+# Template: the workbook the value fills.
+# Folder: a fixed folder name or the word value. value is the value tidied: one space between words and STRT read as STREET and LESS 20m read as LESS THAN 20m.
+# Main: the folder the Grouped layout puts Folder under. A fixed name or the word base or left empty.
+# base is the value with its MORE THAN 60% or LESS THAN 60% part removed so FRIDAY MOSQUE MORE THAN 60% groups under FRIDAY MOSQUE.
+# Main left empty files one level in both layouts: Output then Folder then the plot's UID2.
+# Flat files Output then Folder then UID2. Grouped files Output then Main then Folder then UID2.
+Words,Template,Folder,Main
+MOSQUE MORE 60,MOSQUES MORE THAN 60,value,base
+MOSQUE LESS 60,MOSQUES LESS THAN 60,value,base
+MOSQUE,MOSQUES,value,base
+SCHOOL MORE 60,SCHOOLS MORE THAN 60,value,base
+SCHOOL LESS 60,SCHOOLS LESS THAN 60,value,base
+SCHOOL,SCHOOLS,value,base
+HEALTH,HEALTHCARE,HEALTHCARE,
+PARKING,PARKING,PARKING LOT,
+EXISTING PARK,EXISTING PARKS,EXISTING PARK,
+FUTURE PARK,FUTURE PARKS,FUTURE PARKS,
+STREET,STREETS,value,STREETS
+STRT,STREETS,value,STREETS
+WALKWAY,STREETS,value,STREETS
+ROW,STREETS,value,STREETS

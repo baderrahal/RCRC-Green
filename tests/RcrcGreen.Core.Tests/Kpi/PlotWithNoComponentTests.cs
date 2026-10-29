@@ -36,15 +36,15 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         /// <summary>
         /// Counted off the rules by hand rather than worked out with the same rule the code uses.
-        /// Five templates reach one named folder each.
+        /// Four templates reach one named folder each. STREETS reached STREETS until 29 October,
+        /// when each street value got its own folder, K78.
         /// </summary>
         [Theory]
         [InlineData("EXISTING PARKS", "EXISTING PARK")]
         [InlineData("FUTURE PARKS", "FUTURE PARKS")]
         [InlineData("HEALTHCARE", "HEALTHCARE")]
         [InlineData("PARKING", "PARKING LOT")]
-        [InlineData("STREETS", "STREETS")]
-        public void FiveTemplatesReachExactlyOneFolderAndThatIsTheOne(string name, string folder)
+        public void FourTemplatesReachExactlyOneFolderAndThatIsTheOne(string name, string folder)
         {
             KpiTemplate template = KpiTemplates.All.Single(one => one.Name == name);
 
@@ -61,6 +61,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Theory]
         [InlineData("MOSQUES")]
         [InlineData("SCHOOLS")]
+        [InlineData("STREETS")]
         public void AFolderPerValueSoNothingIsDerived(string name)
         {
             KpiTemplate template = KpiTemplates.All.Single(one => one.Name == name);
@@ -82,7 +83,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("ANH-007-EP-100011")]
         public void AParkPlotWithNoComponentIsFiledUnderItsTemplatesOwnFolder(string uid2)
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R"), KpiTemplates.ExistingParks, string.Empty, uid2);
 
             Assert.True(path.Ok, path.Why);
@@ -97,7 +98,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void AMosquePlotWithNoComponentIsStillRefusedAndSaysWhy()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R"), KpiTemplates.Mosques, string.Empty, "ANH-007-MO-100008");
 
             Assert.False(path.Ok);
@@ -116,7 +117,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void AComponentTheTableDoesNotHoldStillPlacesNothingEvenWithATemplate()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R"), KpiTemplates.Schools, "GOVERMENT BUILDING", "ANH-007-GB-100001");
 
             Assert.False(path.Ok);
@@ -133,7 +134,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void APlotNoTemplatePlacedIsSaidToBeThatRatherThanAFolderQuestion()
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(Joined("R"), null, string.Empty, "ANH-1");
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat, Joined("R"), null, string.Empty, "ANH-1");
 
             Assert.False(path.Ok);
             Assert.Equal("no template placed this plot, so it has no folder either", path.Why);
@@ -149,7 +150,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [InlineData("FRIDAY MOSQUE", "FRIDAY MOSQUE")]
         public void APlotWithAComponentIsStillFiledByItsOwnComponent(string component, string folder)
         {
-            PlotWorkbookPath path = PlotWorkbookPath.For(
+            PlotWorkbookPath path = PlotWorkbookPath.For(FolderLayout.Flat,
                 Joined("R"), KpiTemplates.Mosques, component, "ANH-008-MO-100006");
 
             Assert.True(path.Ok, path.Why);

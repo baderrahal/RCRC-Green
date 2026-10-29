@@ -47,6 +47,7 @@ Open a model, press KPI Checklist, and work down the four steps in the pane.
 
 1. Setup. The first time only, browse to the KPI templates folder and the PDF forms folder
    Bader shared on the project Teams or SharePoint, and pick a folder for the output.
+   Also the first time, pick a folder layout, Flat or Grouped. Create stays off until you do.
 2. Read. Press Read model. It reads the sheets and schedules and changes nothing.
 3. Plots. Tick an asset type to tick all its plots, or tick plots one by one.
 4. Create. Press Create. The result shows what was written and what failed, with a reason.

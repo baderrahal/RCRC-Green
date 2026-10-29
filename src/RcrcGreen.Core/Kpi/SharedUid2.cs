@@ -56,9 +56,9 @@ namespace RcrcGreen.Core.Kpi
         /// The press is that caller: the split placed the plot before the read began.
         /// </summary>
         public static PlotFiling One(
-            string root, KpiTemplate template, string plotId, string component, string uid2)
+            FolderLayout layout, string root, KpiTemplate template, string plotId, string component, string uid2)
         {
-            return new PlotFiling(plotId, uid2, PlotWorkbookPath.For(root, template, component, uid2));
+            return new PlotFiling(plotId, uid2, PlotWorkbookPath.For(layout, root, template, component, uid2));
         }
 
         /// <summary>
@@ -70,6 +70,7 @@ namespace RcrcGreen.Core.Kpi
         /// dropped, so it is counted where it is counted and collides with nothing.
         /// </summary>
         public static IReadOnlyList<PlotFiling> Of(
+            FolderLayout layout,
             string root,
             IEnumerable<string> plotIds,
             Func<string, string> componentOf,
@@ -88,7 +89,7 @@ namespace RcrcGreen.Core.Kpi
 
                 found.Add(placed.Template == null
                     ? new PlotFiling(plotId, uid2, PlotWorkbookPath.Refused(placed.Why))
-                    : One(root, placed.Template, plotId, component, uid2));
+                    : One(layout, root, placed.Template, plotId, component, uid2));
             }
 
             return found;

@@ -93,7 +93,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal("ANH-007-MO-100019", chosen.Uid2);
 
             // And the path built from it is usable, which is the thing the plot was refused on.
-            PlotWorkbookPath where = PlotWorkbookPath.For(
+            PlotWorkbookPath where = PlotWorkbookPath.For(FolderLayout.Flat,
                 @"C:\out", KpiTemplates.Mosques, "FRIDAY MOSQUE", chosen.Uid2);
 
             Assert.True(where.Ok, where.Why);

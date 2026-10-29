@@ -429,28 +429,59 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// Every folder the rows and the rules of one template reach, and whether one of its
-        /// rules names the folder after each value, which reaches a folder per value and so no
-        /// one folder at all.
+        /// rules names the folder or its main after each value, which reaches a folder per value
+        /// and so no one folder at all.
         /// </summary>
         public IReadOnlyList<string> FoldersOf(KpiTemplate template, out bool perValue)
         {
+            string main;
+            return Filings(template, out perValue, out main);
+        }
+
+        /// <summary>
+        /// The one folder every plot of a template is filed under, and its main, or empty where
+        /// the template reaches more than one, or a folder per value. A row files one level.
+        /// </summary>
+        public string OnlyFolderFor(KpiTemplate template, out string main)
+        {
+            bool perValue;
+            IReadOnlyList<string> folders = Filings(template, out perValue, out main);
+            if (folders.Count == 1 && !perValue && main != null) return folders[0];
+
+            main = string.Empty;
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// The named folders, the per value flag, and the main shared by every one of them, null
+        /// where two answers name two mains, so one folder under two mains is not one filing.
+        /// </summary>
+        private IReadOnlyList<string> Filings(KpiTemplate template, out bool perValue, out string main)
+        {
             perValue = false;
+            main = string.Empty;
             var seen = new List<string>();
+            var mains = new List<string>();
             if (template == null) return seen;
 
             foreach (ComponentRow row in Rows)
             {
                 if (!ReferenceEquals(KpiTemplates.Named(row.Template, Templates), template)) continue;
                 if (!seen.Contains(row.Folder, StringComparer.Ordinal)) seen.Add(row.Folder);
+                if (!mains.Contains(string.Empty, StringComparer.Ordinal)) mains.Add(string.Empty);
             }
 
             foreach (ComponentRule rule in Rules)
             {
                 if (!ReferenceEquals(KpiTemplates.Named(rule.Template, Templates), template)) continue;
-                if (rule.FolderIsTheValue) perValue = true;
-                else if (!seen.Contains(rule.Folder, StringComparer.Ordinal)) seen.Add(rule.Folder);
+                if (rule.FolderIsTheValue || rule.MainIsTheBase) perValue = true;
+                if (rule.FolderIsTheValue) continue;
+
+                if (!seen.Contains(rule.Folder, StringComparer.Ordinal)) seen.Add(rule.Folder);
+                if (!mains.Contains(rule.Main, StringComparer.Ordinal)) mains.Add(rule.Main);
             }
 
+            main = mains.Count <= 1 ? (mains.Count == 0 ? string.Empty : mains[0]) : null;
             return seen;
         }
 

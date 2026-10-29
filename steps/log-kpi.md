@@ -4,41 +4,52 @@ Newest entry first.
 
 ---
 
-## 2026-10-29, region areas, and folders flat or grouped, part (a)
+## 2026-10-29, region areas, and folders flat or grouped
 
-**Goal.** Take a plot whose regions hold one area without asking, show each area where they
-differ, and Show each region. Part (b), the folders, follows in its own pull request, because it
-changes the path builder 64 test call sites in 19 files reach.
+**Goal.** Regions of one area taken without asking, areas and Show where they differ, and each
+PRX_Component value in its own folder, flat or grouped. Two pull requests: (a) the regions, 179,
+merged as `6105adf`, and (b) the folders, because (b) changes the path builder 64 test call
+sites in 19 files on main reach.
 
-**Done.** `RegionChoice.Pick` takes one step more, after a hand pick, the only one and the note:
-every region holding an area equal to 0.01 m2, half away from zero, takes the first, route
-`TheSameAreaOnAll`, and the report's how column reads `same area on <n> regions, <type> and
-<type>`, K77. Options where areas differ read `RCRC_CADASTRAL LIMIT  1,245.30 m2` with Show
-beside each. Show is a fourth request on the KPI handler, no transaction: the region found by
-UniqueId in the 00 link instances `KpiPlotReader.ZeroZeroLinks` gives, the one test of that
-link in the Revit readers now, selected through a link reference and zoomed through the link transform.
-`RegionShowing` decides, and a view not a plan, hiding the link or not drawing the region says
-`Open a plan that shows the 00 link` with its reason as tooltip. `ChosenRegion` takes the chosen
-type's region holding an area first. THE REGION TYPE glance line counts same area plots apart.
+**Done (a), K77.** `RegionChoice.Pick` takes one step more after a hand pick, the only one and
+the note: every region holding an area equal to 0.01 m2 takes the first, and the report's how
+column reads `same area on <n> regions` with the types. Where areas differ each option reads
+`RCRC_CADASTRAL LIMIT  1,245.30 m2` with Show beside it, a fourth request on the KPI handler,
+no transaction, selecting the region through a link reference and zooming through the link
+transform. A view not a plan, hiding the link or not drawing the region says `Open a plan that
+shows the 00 link`, its reason as tooltip.
 
-**Checked.** RAN after the last file of this part: Revit Release build 0 warnings 0 errors,
-2569 tests passed against 2555 before, 28 of 28 hook cases. Breaking the rounding, run before
-the review fixes, turned `SameIsEqualAfterRoundingToTheHundredth` red. Reviewer and breaker, two
-passes: REAL fixed, the report paragraph and two rules files on the old rule, the paragraph's
-note held twice case apart, L108, Show saying Selected over a region the view does not draw,
-the 00 link test written twice, the glance count, the handler summary saying three requests.
-L97 to L108 LATENT.
+**Done (b), K78.** `ComponentFolderName` holds the tidy words, STRT as STREET and LESS <n>m as
+LESS THAN <n>m, and the base, the 60 per cent part removed. component-rules.csv gains Main, a
+name, `base` or empty for one level, explained in its `#` lines. `PlotWorkbookPath.For` takes
+the layout: Flat `<value folder>`, Grouped `<main>\<value folder>`, one level types alone in
+both. Setup shows Flat and Grouped, neither ticked, kept in `kpi-folder-layout.txt` through
+`RememberedFolder`. Until one is picked Create is off with `Pick a folder layout in Setup` and
+the press refuses. The create report's first line under the build stamp names the layout, and
+both reports gained a main column. A STREETS plot with no component is now refused before the
+press, Q14. INSTALL-TEAM.txt says to pick a layout the first time.
 
-**UNKNOWN.** Nothing ran in Revit. Whether the team's plans draw the 00 link by host view, and
-what `GetLinkOverrides` returns under a view template, Q17. How the templates' 0.00 rounds.
+**Checked.** RAN after the last file: Revit Release build 0 warnings 0 errors, 2614 tests passed
+against 2569 after (a) and 2555 before the round, 28 of 28 hook cases. Breaking STRT turned 3
+of the 14 in the `FolderLayoutTests` class red, the only class that run took, and breaking the
+rounding in (a) 1 of 22 in `RegionChoiceTests`. Two review passes on each part:
+REAL fixed in (a) the report paragraph, two rules files, Show over a region not drawn, the 00
+link test written twice, the glance count. In (b) a third copy of the beside the add-in file
+code, two members only tests called, the example path showing Flat on a Grouped press. L97 to
+L117 LATENT. Usage, this session alone, read before the final gate: 85,097,374 tokens and 30.84 USD,
+about twice the component rules round, named here: two pull requests where that was one.
 
-**Remains.** Part (b), the folders. The kit after it.
+**UNKNOWN.** Nothing ran in Revit. Q17, whether the team's plans draw the 00 link by host view.
+How the templates' 0.00 rounds. Whether NS-01 and NS-42 carry two street values, Q19.
 
-**Known bugs.** None REAL. Q17 may make Show refuse on every plan until answered.
+**Remains.** The kit from main after the merge. Bader's pass.
 
-**Next.** Part (b) in this session.
+**Known bugs.** None REAL. Files of earlier presses stay in the old folders and nothing names
+them, L117.
 
-**Your turn.** Q17, after the Revit pass part (b) writes into `steps/03_your_steps.md`.
+**Next.** Bader's pass in `steps/03_your_steps.md`.
+
+**Your turn.** Q13 and Q16 to Q19. The pass in `steps/03_your_steps.md`.
 
 ---
 

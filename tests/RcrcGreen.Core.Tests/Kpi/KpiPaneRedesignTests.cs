@@ -171,14 +171,14 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static IEnumerable<KpiSteps> EveryStepState()
         {
-            yield return KpiSteps.Of(false, false, false, false, false, false, null, 0, 0, false);
-            yield return KpiSteps.Of(true, false, false, false, false, true, null, 0, 0, false);
-            yield return KpiSteps.Of(false, true, false, false, false, true, null, 0, 0, false);
-            yield return KpiSteps.Of(true, true, true, true, true, true, null, 0, 0, false);
-            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 0, 0, false);
-            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 7, 0, false);
-            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 0, 99999, false);
-            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 7, 99999, true);
+            yield return KpiSteps.Of(false, false, false, false, false, false, null, 0, 0, false, FolderLayout.Flat);
+            yield return KpiSteps.Of(true, false, false, false, false, true, null, 0, 0, false, FolderLayout.Flat);
+            yield return KpiSteps.Of(false, true, false, false, false, true, null, 0, 0, false, FolderLayout.Flat);
+            yield return KpiSteps.Of(true, true, true, true, true, true, null, 0, 0, false, FolderLayout.Flat);
+            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 0, 0, false, FolderLayout.Flat);
+            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 7, 0, false, FolderLayout.Flat);
+            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 0, 99999, false, FolderLayout.Flat);
+            yield return KpiSteps.Of(true, true, true, true, true, true, 99999, 7, 99999, true, FolderLayout.Flat);
         }
 
         // ------------------------------------------------------------ the step row
@@ -186,7 +186,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheThirdStepIsCalledPlots()
         {
-            KpiSteps steps = KpiSteps.Of(true, true, true, true, true, true, 154, 1, 154, false);
+            KpiSteps steps = KpiSteps.Of(true, true, true, true, true, true, 154, 1, 154, false, FolderLayout.Flat);
 
             Assert.Equal("Plots", steps.For(KpiStep.Plots).Title);
             Assert.Equal(3, (int)KpiStep.Plots);
@@ -195,12 +195,12 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void EachCellsTooltipSaysItsStateShort()
         {
-            KpiSteps nothing = KpiSteps.Of(false, false, false, false, false, false, null, 0, 0, false);
+            KpiSteps nothing = KpiSteps.Of(false, false, false, false, false, false, null, 0, 0, false, FolderLayout.Flat);
             Assert.Equal("Setup: 5 not set.", nothing.For(KpiStep.Setup).Tooltip);
             Assert.Equal("Read: Set the templates and output folders first.", nothing.For(KpiStep.Read).Tooltip);
             Assert.Equal("Plots: Read the model first.", nothing.For(KpiStep.Plots).Tooltip);
 
-            KpiSteps ticked = KpiSteps.Of(true, true, true, true, true, true, 154, 1, 154, false);
+            KpiSteps ticked = KpiSteps.Of(true, true, true, true, true, true, 154, 1, 154, false, FolderLayout.Flat);
             Assert.Equal("Setup: all set, done.", ticked.For(KpiStep.Setup).Tooltip);
             Assert.Equal("Read: 154 plots read, done.", ticked.For(KpiStep.Read).Tooltip);
             Assert.Equal("Plots: 1 asset type, 154 plots, done.", ticked.For(KpiStep.Plots).Tooltip);
@@ -211,9 +211,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void ReadNamesWhichFolderIsMissing()
         {
             Assert.Equal("Set the output folder first.",
-                KpiSteps.Of(true, false, false, false, false, true, null, 0, 0, false).For(KpiStep.Read).WhyNot);
+                KpiSteps.Of(true, false, false, false, false, true, null, 0, 0, false, FolderLayout.Flat).For(KpiStep.Read).WhyNot);
             Assert.Equal("Set the templates folder first.",
-                KpiSteps.Of(false, true, false, false, false, true, null, 0, 0, false).For(KpiStep.Read).WhyNot);
+                KpiSteps.Of(false, true, false, false, false, true, null, 0, 0, false, FolderLayout.Flat).For(KpiStep.Read).WhyNot);
         }
 
         // ------------------------------------------------------------ the status lines
@@ -221,9 +221,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void SetupSaysAllSetOrHowManyAreLeft()
         {
-            Assert.Equal("All set", KpiSteps.SetupStatus(KpiSteps.NotSet(true, true, true, true, true)));
-            Assert.Equal("3 to set", KpiSteps.SetupStatus(KpiSteps.NotSet(true, true, false, false, false)));
-            Assert.Equal("5 to set", KpiSteps.SetupStatus(KpiSteps.NotSet(false, false, false, false, false)));
+            Assert.Equal("All set", KpiSteps.SetupStatus(KpiSteps.NotSet(true, true, true, true, true, true)));
+            Assert.Equal("3 to set", KpiSteps.SetupStatus(KpiSteps.NotSet(true, true, false, false, false, true)));
+            Assert.Equal("5 to set", KpiSteps.SetupStatus(KpiSteps.NotSet(false, false, false, false, false, true)));
             Assert.Equal("All set", KpiSteps.SetupStatus(null));
         }
 
@@ -289,14 +289,14 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void CreateNamesTheFirstReasonInTheFixedOrder()
         {
-            Assert.Equal("No model open", CreateBlocked.Reason(false, false, false, false, false, false, "x"));
-            Assert.Equal("Templates folder not set", CreateBlocked.Reason(true, false, false, false, false, false, "x"));
-            Assert.Equal("Output folder not set", CreateBlocked.Reason(true, true, false, false, false, false, "x"));
-            Assert.Equal("Model not read", CreateBlocked.Reason(true, true, true, false, false, false, "x"));
-            Assert.Equal("No asset type selected", CreateBlocked.Reason(true, true, true, true, false, false, "x"));
-            Assert.Equal("No plot selected", CreateBlocked.Reason(true, true, true, true, true, false, "x"));
-            Assert.Equal("Create refused. See the tooltip.", CreateBlocked.Reason(true, true, true, true, true, true, "x"));
-            Assert.Equal(string.Empty, CreateBlocked.Reason(true, true, true, true, true, true, string.Empty));
+            Assert.Equal("No model open", CreateBlocked.Reason(false, false, false, false, false, false, "x", true));
+            Assert.Equal("Templates folder not set", CreateBlocked.Reason(true, false, false, false, false, false, "x", true));
+            Assert.Equal("Output folder not set", CreateBlocked.Reason(true, true, false, false, false, false, "x", true));
+            Assert.Equal("Model not read", CreateBlocked.Reason(true, true, true, false, false, false, "x", true));
+            Assert.Equal("No asset type selected", CreateBlocked.Reason(true, true, true, true, false, false, "x", true));
+            Assert.Equal("No plot selected", CreateBlocked.Reason(true, true, true, true, true, false, "x", true));
+            Assert.Equal("Create refused. See the tooltip.", CreateBlocked.Reason(true, true, true, true, true, true, "x", true));
+            Assert.Equal(string.Empty, CreateBlocked.Reason(true, true, true, true, true, true, string.Empty, true));
         }
 
         /// <summary>
@@ -306,9 +306,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void EveryRefusalCannotCreateGivesGreysTheButton()
         {
-            string cannot = CreateWords.CannotCreate(OpenModel.Of("NG05"), string.Empty, true, true);
+            string cannot = CreateWords.CannotCreate(OpenModel.Of("NG05"), string.Empty, true, true, FolderLayout.Flat);
             Assert.NotEqual(string.Empty, cannot);
-            Assert.Equal("Output folder not set", CreateBlocked.Reason(true, true, false, true, true, true, cannot));
+            Assert.Equal("Output folder not set", CreateBlocked.Reason(true, true, false, true, true, true, cannot, true));
         }
 
         // ------------------------------------------------------------ the short reasons, one per kind
@@ -408,7 +408,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static PlotWorkbookPath Where(string uid2)
         {
-            return PlotWorkbookPath.For("C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
+            return PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Healthcare, "HEALTH", uid2);
         }
 
         private static KpiCreateRunSet Press(params PlotOutcome[] outcomes)
@@ -697,9 +697,9 @@ namespace RcrcGreen.Core.Tests.Kpi
             var sharing = SharedUid2.Of(new[]
             {
                 new PlotFiling("NS-01", "ANH-007-ST-100210",
-                    PlotWorkbookPath.For("C:\\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100210")),
+                    PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100210")),
                 new PlotFiling("NS-42", "ANH-007-ST-100210",
-                    PlotWorkbookPath.For("C:\\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100210"))
+                    PlotWorkbookPath.For(FolderLayout.Flat, "C:\\out", KpiTemplates.Streets, "STREET 30m ROW", "ANH-007-ST-100210"))
             });
 
             TemplateSplit split = PlotsPerTemplate.Split(
