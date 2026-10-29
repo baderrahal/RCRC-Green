@@ -76,7 +76,8 @@ existing and 13 proposed on DM-12, and merging on the name would put 14 in one t
 MM-04 both read 12182.05561411 in the 00 link. Either they are the same size or one region is
 counted twice, and a double count nobody sees is the worst thing this tool can produce, so a
 person confirms before anything is written. More than one region holding an area on one plot
-refuses the same way **where the client's note names none of them**, under the section above.
+refuses the same way **where the client's note names none of them and their areas differ**,
+under the section above and K77.
 
 ## The report is the deliverable
 

@@ -52,3 +52,15 @@ What: the folder name RCRC Green, held by `ComponentFiles`, `PresetStore` and
 `TitleBlockSettingsStore`, moved to one place in Shared, Q12.
 Why: three copies of one fact, and territory.md asks for a move rather than a copy.
 Proved by: the suite, and the three stores reading the same folder as before.
+
+## F4 Region areas and folder layout
+
+What: (a) a plot whose regions hold one area is taken without asking, and where areas differ
+each option shows its area with Show. (b) each component value in its own folder, flat or
+grouped under its main, picked in Setup.
+Why: Bader met Two regions hold an area. Pick one. on equal areas, and the team files each
+value apart.
+Proved by: the suite and the hook tests in the gate, and the Revit pass part (b) writes into
+`steps/03_your_steps.md`.
+
+DONE (a) 2026-10-29, the region pull request, the entry at the top of `steps/log-kpi.md`.

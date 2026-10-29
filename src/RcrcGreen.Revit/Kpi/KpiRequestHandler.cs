@@ -15,7 +15,24 @@ namespace RcrcGreen.Revit.Kpi
         Nothing,
         WhichModel,
         Plots,
-        Create
+        Create,
+        ShowRegion
+    }
+
+    /// <summary>
+    /// The one region Show asked for: its UniqueId in the 00 link and its type for the line.
+    /// </summary>
+    internal sealed class RegionToShow
+    {
+        public RegionToShow(string uniqueId, string typeName)
+        {
+            UniqueId = uniqueId ?? string.Empty;
+            TypeName = typeName ?? string.Empty;
+        }
+
+        public string UniqueId { get; }
+
+        public string TypeName { get; }
     }
 
     /// <summary>
@@ -23,7 +40,7 @@ namespace RcrcGreen.Revit.Kpi
     /// external event, so nothing the KPI pane asks for goes through the Drawing Sheet's and
     /// a failure in one can never cost the other.
     ///
-    /// Three requests. WhichModel reads the document title and nothing else, so the pane can
+    /// Four requests. WhichModel reads the document title and nothing else, so the pane can
     /// name the model the moment it is shown. Plots reads the plots, the dropdown names and
     /// the element count the header shows. Create fills the workbook, and the scan of the
     /// whole model is a step inside it rather than a request of its own, because pressing
@@ -105,6 +122,12 @@ namespace RcrcGreen.Revit.Kpi
         public KpiCreateAsk Asked { get; set; }
 
         /// <summary>
+        /// The region the next ShowRegion selects and zooms to, set by the pane immediately
+        /// before it asks.
+        /// </summary>
+        public RegionToShow Showing { get; set; }
+
+        /// <summary>
         /// One slot, and WhichModel never takes it from anything.
         ///
         /// The pane asks for WhichModel on every draw, so it is the request most likely to
@@ -119,7 +142,10 @@ namespace RcrcGreen.Revit.Kpi
 
             lock (_asking)
             {
-                if (wanted == KpiRequest.WhichModel && _wanted != KpiRequest.Nothing) return;
+                // Show is a glance, so it never takes the slot from a read or a press waiting
+                // in it either.
+                if ((wanted == KpiRequest.WhichModel || wanted == KpiRequest.ShowRegion)
+                    && _wanted != KpiRequest.Nothing) return;
 
                 _wanted = wanted;
             }
@@ -187,6 +213,9 @@ namespace RcrcGreen.Revit.Kpi
                         break;
                     case KpiRequest.Create:
                         Create(document);
+                        break;
+                    case KpiRequest.ShowRegion:
+                        ShowRegion(open);
                         break;
                 }
             }
@@ -290,6 +319,111 @@ namespace RcrcGreen.Revit.Kpi
                 instances,
                 clock.Elapsed.TotalSeconds,
                 links));
+        }
+
+        /// <summary>
+        /// **SHOW: SELECT ONE FILLED REGION IN THE 00 LINK AND ZOOM THE OPEN VIEW TO IT.** Read
+        /// only, so no transaction: a selection and a zoom change nothing in the model. The
+        /// region is found by its UniqueId in every loaded 00 link, through the same instances
+        /// <see cref="KpiPlotReader.RegionsFor"/> read it off, an instance the open view draws
+        /// first. What to do is decided in Core by <see cref="RegionShowing"/>, and a view
+        /// that cannot show it gets its line and no selection and no zoom.
+        /// </summary>
+        private void ShowRegion(UIDocument open)
+        {
+            RegionToShow wanted = Showing;
+            if (wanted == null) return;
+
+            View view = open.ActiveView;
+            bool isAPlan = view is ViewPlan && !view.IsTemplate;
+
+            RevitLinkInstance holder = null;
+            FilledRegion region = null;
+            int best = 0;
+
+            if (wanted.UniqueId.Length > 0)
+            {
+                foreach (RevitLinkInstance instance in KpiPlotReader.ZeroZeroLinks(open.Document))
+                {
+                    FilledRegion found = instance.GetLinkDocument().GetElement(wanted.UniqueId) as FilledRegion;
+                    if (found == null) continue;
+
+                    // An instance that shows the link beats one that hides it, and one that also
+                    // draws the region beats both.
+                    int fit = !isAPlan || !LinkShownIn(view, instance) ? 0 : (RegionDrawnIn(view, instance, found) ? 2 : 1);
+                    if (holder != null && fit <= best) continue;
+
+                    holder = instance;
+                    region = found;
+                    best = fit;
+                }
+            }
+
+            RegionShowAnswer answer = RegionShowing.Of(region != null, isAPlan, best >= 1, best == 2);
+            if (answer == RegionShowAnswer.Shown)
+            {
+                open.Selection.SetReferences(new List<Reference> { new Reference(region).CreateLinkReference(holder) });
+                ZoomTo(open, view, holder, region);
+            }
+
+            Told?.Invoke(new StatusLine(RegionShowing.Words(answer, wanted.TypeName), RegionShowing.Detail(answer)));
+        }
+
+        /// <summary>
+        /// **A FILLED REGION IS VIEW SPECIFIC, SO A PLAN DRAWS IT ONLY THROUGH ITS OWN VIEW.**
+        /// The host plan has to show the 00 link by a linked view, or custom with one, and that
+        /// linked view has to be the region's own. By host view, the default, draws no detail
+        /// element of a link at all. The instance's own setting is asked first and its type's
+        /// where the instance holds none.
+        /// </summary>
+        private static bool RegionDrawnIn(View view, RevitLinkInstance instance, FilledRegion region)
+        {
+            RevitLinkGraphicsSettings settings = view.GetLinkOverrides(instance.Id)
+                ?? view.GetLinkOverrides(instance.GetTypeId());
+            if (settings == null || settings.LinkVisibilityType == LinkVisibility.ByHostView) return false;
+
+            return settings.LinkedViewId == region.OwnerViewId;
+        }
+
+        /// <summary>
+        /// Whether the open view draws this link: the Revit Links category, the instance and its
+        /// type all left visible.
+        /// </summary>
+        private static bool LinkShownIn(View view, RevitLinkInstance instance)
+        {
+            if (view.GetCategoryHidden(new ElementId(BuiltInCategory.OST_RvtLinks))) return false;
+            if (instance.IsHidden(view)) return false;
+
+            Element type = instance.Document.GetElement(instance.GetTypeId());
+            return type == null || !type.IsHidden(view);
+        }
+
+        /// <summary>
+        /// The region's box in the link, taken through the box's own transform and the link's
+        /// into the host, and the open view zoomed to the corners of that. A region with no box
+        /// is still selected and the view is left where it was.
+        /// </summary>
+        private static void ZoomTo(UIDocument open, View view, RevitLinkInstance holder, FilledRegion region)
+        {
+            View owner = region.Document.GetElement(region.OwnerViewId) as View;
+            BoundingBoxXYZ box = region.get_BoundingBox(owner) ?? region.get_BoundingBox(null);
+            if (box == null) return;
+
+            Transform toHost = holder.GetTotalTransform().Multiply(box.Transform);
+            var corners = new List<XYZ>();
+            foreach (double x in new[] { box.Min.X, box.Max.X })
+            {
+                foreach (double y in new[] { box.Min.Y, box.Max.Y })
+                {
+                    foreach (double z in new[] { box.Min.Z, box.Max.Z }) corners.Add(toHost.OfPoint(new XYZ(x, y, z)));
+                }
+            }
+
+            var low = new XYZ(corners.Min(one => one.X), corners.Min(one => one.Y), corners.Min(one => one.Z));
+            var high = new XYZ(corners.Max(one => one.X), corners.Max(one => one.Y), corners.Max(one => one.Z));
+
+            UIView shown = open.GetOpenUIViews().FirstOrDefault(one => one.ViewId == view.Id);
+            if (shown != null) shown.ZoomAndCenterRectangle(low, high);
         }
 
         /// <summary>

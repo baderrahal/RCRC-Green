@@ -384,6 +384,35 @@ namespace RcrcGreen.Core.Kpi
         public const string NewRun = "New run";
         public const string WriteAnyway = "Write anyway";
 
+        /// <summary>Beside each region option, selects and zooms to it.</summary>
+        public const string Show = "Show";
+
+        public const string ShowTip = "Select it in the 00 link and zoom to it";
+
+        public const string OpenAPlanShowingTheLink = "Open a plan that shows the 00 link";
+
+        public const string RegionNotFound = "Region not found in a loaded 00 link";
+
+        public const string RegionNotFoundTip =
+            "No loaded 00 link holds this filled region now. Read the model again.";
+
+        public const string NotAPlanTip =
+            "The open view is not a plan. A sheet, a schedule or a 3D view does not "
+            + "draw a filled region from the 00 link.";
+
+        public const string LinkHiddenTip =
+            "The open plan hides the 00 link, by its category, the link instance or its type.";
+
+        public const string RegionNotDrawnTip =
+            "The open plan draws the 00 link by host view, or through another of its "
+            + "views, so this filled region is not drawn. A plan drawing the link by the "
+            + "region's own linked view shows it.";
+
+        public static string RegionShown(string typeName)
+        {
+            return "Selected " + (typeName ?? string.Empty).Trim();
+        }
+
         /// <summary>The result's status line when Retry failed leaves plots out.</summary>
         public static string NeedAChangeFirst(int plots)
         {

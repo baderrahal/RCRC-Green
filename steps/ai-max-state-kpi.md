@@ -1,5 +1,11 @@
 # ai-max state, KPI
 
+Phase: 9, ship, part (a) of two. Region areas: one shared area taken without asking, each
+option with its area and Show, K77, F4 in `steps/01_next.md`. Part (b), each component value in
+its own folder, flat or grouped, is the pull request after it. Its entry is the top of
+`steps/log-kpi.md`. Two review passes each, REAL fixed, L97 to L108 LATENT, Q17 asked. Nothing
+in it has run in Revit.
+
 Phase: 9, ship. PRX_Component values placed by Bader's word rules, install/component-rules.csv,
 K76, one pull request. Its entry is the top of `steps/log-kpi.md`. Two review passes each:
 REAL fixed, L85 to L96 LATENT, the claim checker's three wordings fixed. Q14 to Q16 asked.

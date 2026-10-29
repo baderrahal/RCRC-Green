@@ -2165,8 +2165,10 @@ namespace RcrcGreen.Core.Kpi
                 + "and the note's type is");
             Line(report, "  among them, the note decides, which is Bader's decision of "
                 + "14 September, and the how column");
-            Line(report, "  says so. Where it is not among them the run still asks, and the "
-                + "column reads chosen by hand.");
+            Line(report, "  says so. Where it is not among them and every one holds the same area to 0.01 m2,");
+            Line(report, "  the first is taken, which is Bader's decision of 29 October, and the column");
+            Line(report, "  names them. Where the areas differ the run still asks, and the column reads");
+            Line(report, "  chosen by hand.");
         }
 
         /// <summary>

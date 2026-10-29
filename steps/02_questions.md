@@ -149,3 +149,15 @@ Questions asked before this file existed are in each task's own log and are not 
     now for >60, <60, ABOVE and BELOW
 
     Answer:
+
+17. Show selects a filled region in the 00 link and zooms to it, K77. A filled region is view
+    specific, so a host plan draws it only where the 00 link is shown by the region's own linked
+    view. By host view, Revit's default, draws none, and Show then says Open a plan that shows the
+    00 link, with the reason in the tooltip, on a plan that does show the link. Whether the
+    team's plans are set by host view, and whether a view template's link setting is what Revit
+    hands back, is UNKNOWN until your Revit pass shows it.
+
+    Options: A on a plan that shows the link but not the region, still zoom to the region's box
+    and say Zoomed, region not drawn in this plan. B keep refusing with your line
+
+    Answer:
