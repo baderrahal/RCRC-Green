@@ -4,7 +4,7 @@ The plan. One section per item, F and a number, worked in the order below. One s
 first open item, or the group the order line names, and stops when it merges. A finished item gets
 one DONE line under its own section, with the date, the pull request and what proved it.
 
-Order: F1, F2, F2b, F4, F3
+Order: F1, F2, F2b, F4, F5, F3
 
 ## F1 KPI pane redesign for company wide use
 
@@ -66,3 +66,15 @@ Proved by: the suite and the hook tests in the gate, and the Revit pass part (b)
 DONE (a) 2026-10-29, pull request 179, merged as `6105adf`, the entry at the top of `steps/log-kpi.md`.
 
 DONE (b) 2026-10-29, the folder layout pull request, the same entry.
+
+## F5 Slash trees, the PDF form by template, and the walkway width
+
+What: tree names compared with every slash out and spaces as one, the PDF form picked by the
+plot's template with the prefix only for a plot no template placed, and a street reference row
+in sqm giving its road width.
+Why: Bader met all three on NG05, slash trees counted nowhere, no PDF for a walkway and no ROW.
+Proved by: the suite and the hook tests in the gate, the real reference file read through the
+tool's own reader before and after, and the Revit pass in `steps/03_your_steps.md`.
+
+DONE 2026-10-29, this round's pull request, the entry at the top of `steps/log-kpi.md`. The gate
+read 2667 tests passed and 28 hook cases. The Revit pass is still to run.

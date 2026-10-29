@@ -153,12 +153,12 @@ namespace RcrcGreen.Core.Kpi
             PlotTemplate placed = PlotsPerTemplate.For(
                 plotId, componentOf == null ? string.Empty : componentOf(plotId));
 
-            PdfForm form = PdfForms.ForPlot(plotId);
+            PdfForm form = PdfForms.ForPlot(plotId, placed.Template);
 
             if (placed.Template == null && form == null)
             {
                 return plotId + " would get NO workbook and NO PDF. " + placed.Why + ". "
-                    + PdfForms.NoFormFor(plotId);
+                    + PdfForms.NoFormFor(plotId, null);
             }
 
             if (placed.Template == null)
@@ -169,7 +169,7 @@ namespace RcrcGreen.Core.Kpi
 
             if (form == null)
             {
-                return plotId + " would get a workbook and NO PDF. " + PdfForms.NoFormFor(plotId);
+                return plotId + " would get a workbook and NO PDF. " + PdfForms.NoFormFor(plotId, placed.Template);
             }
 
             return string.Empty;

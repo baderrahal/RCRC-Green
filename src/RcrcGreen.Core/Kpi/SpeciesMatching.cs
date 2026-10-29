@@ -167,12 +167,13 @@ namespace RcrcGreen.Core.Kpi
     /// <summary>
     /// Matches what Revit printed against what the workbook holds.
     ///
-    /// Plainly: the botanical name compared without case and with surrounding whitespace off,
-    /// and nothing else. Names are not stripped, split or normalised past that. Three measured
-    /// cases are the reason: the model prints a species called UNKNOWN while the workbook holds
-    /// four rows all named Unknown Tree, ACACIA / VACHELLIA FARNESIANA carries a slash, and
-    /// BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an apostrophe. Normalising past any of them
-    /// would put a quantity on a row nobody chose.
+    /// Plainly: the botanical name compared without case, with every slash taken out and every
+    /// run of whitespace read as one space, on both sides, through <see cref="SpeciesNames"/>,
+    /// and nothing else. **The slash is Bader's decision of 29 October**, after NG05 found its
+    /// Acacia / Vachellia trees counted nowhere. Names are not split or normalised past that.
+    /// Two measured cases are why: the model prints a species called UNKNOWN while the workbook
+    /// holds four rows all named Unknown Tree, and BOUGAINVILLEA GLABRA 'PINK PIXIE' carries an
+    /// apostrophe. Normalising past either would put a quantity on a row nobody chose.
     /// </summary>
     public static class SpeciesMatching
     {
@@ -514,8 +515,8 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>
         /// The name in the workbook's list nearest to a name the list does not hold, PRINTED
-        /// AND NEVER MATCHED ON. The match itself stays exact, and widening it is the user's
-        /// decision rather than this tool's.
+        /// AND NEVER MATCHED ON. The match itself stays the one tidy of <see cref="SpeciesNames"/>,
+        /// Bader's of 29 October, and widening it further is his decision rather than this tool's.
         ///
         /// **Measured on the 1552 run.** Revit prints a species called UNKNOWN, 16 trees, and
         /// the MOSQUES Existing list holds Unknown Tree at row 101. Compared without case and
@@ -576,10 +577,7 @@ namespace RcrcGreen.Core.Kpi
 
         private static bool Same(string workbook, string revit)
         {
-            return string.Equals(
-                (workbook ?? string.Empty).Trim(),
-                (revit ?? string.Empty).Trim(),
-                StringComparison.OrdinalIgnoreCase);
+            return SpeciesNames.Same(workbook, revit);
         }
     }
 }

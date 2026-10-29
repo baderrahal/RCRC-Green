@@ -49,7 +49,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                 {
                     Shrubs(Phase(CreateFixture.Existing, 30.0), Phase(CreateFixture.Proposed, 54.0))
                 }),
-                CountedGroups.Of(template), null, Today, true, PdfWorkbookNumbers.None);
+                null, CountedGroups.Of(template), null, Today, true, PdfWorkbookNumbers.None);
 
             return plan.Fields.Single(one => one.Value == value).Text;
         }
@@ -219,7 +219,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PdfPlan plan = PdfFill.Of(
                 CreateFixture.Plot("ST-05", uid2: "ANH-007-ST-100210"),
-                CountedGroups.Of(KpiTemplates.Streets),
+                null, CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
                 Today, true, PdfWorkbookNumbers.None);
 

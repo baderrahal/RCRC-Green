@@ -210,8 +210,8 @@ namespace RcrcGreen.Core.Kpi
 
             // The two cells the STREETS sheet says are typed by hand, off the reference file.
             // H8 is the two multiplied and the workbook computes it, so nothing goes there.
-            FromTheStreetFile(template, KpiValue.StreetsRoadWidth, street, street.Width, writes, skipped);
-            FromTheStreetFile(template, KpiValue.StreetsTotalLength, street, street.Length, writes, skipped);
+            FromTheStreetFile(template, KpiValue.StreetsRoadWidth, street, street.WidthFound, street.Width, writes, skipped);
+            FromTheStreetFile(template, KpiValue.StreetsTotalLength, street, street.LengthFound, street.Length, writes, skipped);
 
             // Always the same two words, into the cell right of each label on this template's
             // own sheet. Never a letter: STREETS carries a Category formula where the other two
@@ -309,6 +309,7 @@ namespace RcrcGreen.Core.Kpi
             KpiTemplate template,
             KpiValue value,
             StreetReferenceAnswer street,
+            bool answered,
             double number,
             List<CellWrite> writes,
             List<NotWritten> skipped)
@@ -321,7 +322,8 @@ namespace RcrcGreen.Core.Kpi
                 return;
             }
 
-            if (!street.Found)
+            // Each cell on its own answer, because a walkway's row gives a width and no length.
+            if (!answered)
             {
                 skipped.Add(new NotWritten(template.MainSheetName, cell.Cell, value.ToString(), street.Why));
                 return;

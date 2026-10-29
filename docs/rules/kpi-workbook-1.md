@@ -194,17 +194,23 @@ VALUE.** STREET 30m ROW looks like it says 30, and the 313 street rows read 15 o
 the component name would be a number nobody measured, in a client file, on more than half the
 plots.
 
-**QUANTITY UNIT is read and checked.** A row in anything but m is not used and is named, because
-2,051 of the file's rows are areas in sqm and one written into the total length cell would have
-the workbook compute an area of an area.
+**QUANTITY UNIT is read and checked, for the length alone.** A row in anything but m gives no
+length and is named, because 2,051 of the file's rows are areas in sqm and one written into the
+total length cell would have the workbook compute an area of an area. **The unit is the
+quantity's and never the width's**, so such a row still gives its ROAD_WIDTH where that is a
+number, and is refused whole only where it is not. Measured 29 October: of 6,244 STREET rows two
+are in sqm, both Pedestrian Walk, one holding a ROAD_WIDTH and one not. Refusing on the unit lost
+NG05's walkway its width. A row in m is unchanged, both cells or neither. ROAD_WIDTH has no unit of
+its own and reads the metres its row's CL_SUBCATEGORY names, 20 on 20m rows, 30 on 30m, 60 on 60m,
+so it is metres on a sqm row too. What a walkway's total length should be is Q22.
 
 **Two rows for one UID refuses and names both.** The file holds 33 such UIDs, none of them in
 ANH-007, so it fires on no NG05 plot today and is still the rule.
 
 **The file writes an absent value as the text Null in angle brackets rather than leaving the cell
-empty**, on all 2,051 sqm rows' road width and on one row's unit. It is text, so `CellNumber`
-reads no number out of it and the plot is named, which is why the numbers go through that tested
-reader rather than through a parse written here.
+empty**, on 2,050 of the 2,051 sqm rows' road width and on one row's unit, measured again 29
+October. It is text, so `CellNumber` reads no number out of it and the plot is named, which is
+why the numbers go through that tested reader rather than through a parse written here.
 
 **No file set, or one that cannot be read, is a NOTE and not a refusal.** Both cells stay empty,
 the run goes through, and the report says so once at the top rather than 78 times underneath.

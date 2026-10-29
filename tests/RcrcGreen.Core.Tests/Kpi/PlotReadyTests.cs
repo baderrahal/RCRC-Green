@@ -21,7 +21,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static PdfForm Healthcare
         {
-            get { return PdfForms.ForPlot("HF-01"); }
+            get { return PdfForms.ForPlot("HF-01", null); }
         }
 
         private static PlotWorkbookPath Where(string uid2)

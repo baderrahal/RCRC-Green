@@ -661,17 +661,48 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
             ThePdfs(report, set);
 
-            var missed = set.PlotOutcomes
-                .Where(one => !one.Written && one.Where.Uid2.Length > 0
-                    && one.Template != null && one.Template.Name == KpiTemplates.Streets.Name)
+            TheStreetsNotAnswered(report, set);
+        }
+
+        public const string StreetsNotAnsweredHeading = "STREET PLOTS THE REFERENCE FILE COULD NOT ANSWER FOR";
+
+        /// <summary>
+        /// Every STREETS plot the reference file left a cell empty for, with the file's own
+        /// reason. **It prints the answer the press wrote from**, carried on the plot's outcome,
+        /// and never asks the file again. It used to list street plots whose WORKBOOK was not
+        /// written with the write's reason, so a written walkway with no length was left out and
+        /// the heading read 0, and a plot refused for its folder was listed as one the file
+        /// could not answer. A plot the press never asked, one that crashed or was refused before
+        /// it was read, is in ONE WORKBOOK PER PLOT with its own reason and not here. A file that
+        /// was not read is said once, under K14, rather than once per plot.
+        /// </summary>
+        private static void TheStreetsNotAnswered(StringBuilder report, KpiCreateRunSet set)
+        {
+            List<PlotOutcome> streets = set.PlotOutcomes
+                .Where(one => ReferenceEquals(one.Template, KpiTemplates.Streets))
                 .ToList();
 
-            Heading(report, "STREET PLOTS THE REFERENCE FILE COULD NOT ANSWER FOR", missed.Count,
-                "their road width and total length cells are left empty and nothing is estimated "
-                + "from the component value");
+            const string Said = "each cell named is left empty and nothing is estimated from the component value";
+
+            if (!set.Streets.Read)
+            {
+                Heading(report, StreetsNotAnsweredHeading, streets.Count, Said);
+                if (streets.Count > 0) Line(report, "  every one, because the file was not read. " + set.Streets.Why);
+                Line(report, string.Empty);
+                return;
+            }
+
+            List<PlotOutcome> missed = streets
+                .Where(one => one.Street != null && !one.Street.Found)
+                .ToList();
+
+            Heading(report, StreetsNotAnsweredHeading, missed.Count, Said);
             foreach (PlotOutcome one in missed)
             {
-                Line(report, "  " + Join(one.PlotId, one.Where.Uid2, one.Why));
+                Line(report, "  " + Join(
+                    one.PlotId,
+                    (one.Street.WidthFound ? "road width answered, total length not. " : "neither answered. ")
+                        + one.Street.Why));
             }
 
             Line(report, string.Empty);

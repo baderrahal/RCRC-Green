@@ -1176,7 +1176,7 @@ namespace RcrcGreen.Revit.Kpi
             trail.WritingThePdf(PdfChecklist.Beside(where));
 
             PdfOutcome pdf = ThePdf(
-                held, counted, street, where, run.Wrote, folderMade,
+                held, pick.Template, counted, street, where, run.Wrote, folderMade,
                 WorkbookNumbers(
                     pick.Template, plan, outcome, existing, proposed, area, shrubs, lawn, computed,
                     totalCanopy),
@@ -1185,7 +1185,7 @@ namespace RcrcGreen.Revit.Kpi
             if (run.Wrote)
             {
                 wrote.Add(held.PlotId);
-                plotOutcomes.Add(PlotOutcome.Wrote(held.PlotId, pick.Template, where).WithPdf(pdf));
+                plotOutcomes.Add(PlotOutcome.Wrote(held.PlotId, pick.Template, where).WithPdf(pdf).WithStreet(street));
                 return;
             }
 
@@ -1193,7 +1193,7 @@ namespace RcrcGreen.Revit.Kpi
             why.Add(held.PlotId + ": " + refusal);
             plotOutcomes.Add(PlotOutcome.WroteNothing(
                 held.PlotId, pick.Template, where, folderMade, refusal,
-                NotWrittenKinds.Of(run)).WithPdf(pdf));
+                NotWrittenKinds.Of(run)).WithPdf(pdf).WithStreet(street));
         }
 
         /// <summary>
@@ -1287,6 +1287,7 @@ namespace RcrcGreen.Revit.Kpi
         /// </summary>
         private PdfOutcome ThePdf(
             PlotReading held,
+            KpiTemplate template,
             CountedGroups counted,
             StreetReferenceAnswer street,
             PlotWorkbookPath where,
@@ -1299,7 +1300,8 @@ namespace RcrcGreen.Revit.Kpi
             // The species rows are added and checked against the group total the schedule
             // printed, and every printed area is already rounded, so the check earns the same
             // room per row the phase rows already earn rather than a constant written here.
-            PdfPlan plan = PdfFill.Of(held, counted, street, DateTime.Today, workbookWritten, numbers, areaUnit);
+            // The template the plot was placed in, because the form follows it, K35.01.
+            PdfPlan plan = PdfFill.Of(held, template, counted, street, DateTime.Today, workbookWritten, numbers, areaUnit);
 
             if (!plan.Wanted) return PdfOutcome.WroteNothing(held.PlotId, plan.Form, plan.Why, null);
 

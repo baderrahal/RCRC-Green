@@ -39,7 +39,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             return PlotOutcome.Wrote(plotId, KpiTemplates.Healthcare, where)
                 .WithPdf(PdfOutcome.Wrote(
-                    plotId, PdfForms.ForPlot(plotId), PdfChecklist.Beside(where), null,
+                    plotId, PdfForms.ForPlot(plotId, null), PdfChecklist.Beside(where), null,
                     new List<PdfLandedField>(), new PdfFieldFill[0]));
         }
 
@@ -52,7 +52,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             return PlotOutcome.Wrote(plotId, KpiTemplates.Healthcare, where)
                 .WithPdf(PdfOutcome.Wrote(
-                    plotId, PdfForms.ForPlot(plotId), PdfChecklist.Beside(where), null,
+                    plotId, PdfForms.ForPlot(plotId, null), PdfChecklist.Beside(where), null,
                     new List<PdfLandedField>(),
                     new[]
                     {

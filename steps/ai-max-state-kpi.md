@@ -1,5 +1,11 @@
 # ai-max state, KPI
 
+Phase: 9, ship. F5 in `steps/01_next.md`: slash trees matched through SpeciesNames, K36, the
+PDF form picked by the plot's template, K35.01, and a sqm street row giving its road width, K14.
+One pull request. Two review passes each, REAL fixed, L118 to L128 LATENT, Q20 to Q22 asked.
+Its entry is the top of `steps/log-kpi.md`. The kit is rebuilt from main after the merge.
+Nothing in it has run in Revit.
+
 Phase: 9, ship, part (b) of two. Each PRX_Component value in its own folder, flat or grouped,
 K78, F4 in `steps/01_next.md`. Part (a) merged as pull request 179, `6105adf`. Two review passes
 each, REAL fixed, L109 to L117 LATENT, Q14 and Q15 answered, Q18 and Q19 asked. Its entry is the

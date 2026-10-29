@@ -136,9 +136,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PlotWorkbookPath where = Where("ANH-007-HF-1000" + plotId.Substring(3));
             PdfOutcome pdf = pdfWritten
-                ? PdfOutcome.Wrote(plotId, PdfForms.ForPlot(plotId), PdfChecklist.Beside(where), null,
+                ? PdfOutcome.Wrote(plotId, PdfForms.ForPlot(plotId, null), PdfChecklist.Beside(where), null,
                     new List<PdfLandedField>(), new PdfFieldFill[0])
-                : PdfOutcome.WroteNothing(plotId, PdfForms.ForPlot(plotId), "the form's fields have moved", null);
+                : PdfOutcome.WroteNothing(plotId, PdfForms.ForPlot(plotId, null), "the form's fields have moved", null);
 
             return PlotOutcome.Wrote(plotId, KpiTemplates.Healthcare, where).WithPdf(pdf);
         }
@@ -196,7 +196,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "HF-03", KpiTemplates.Healthcare, where, true,
                     "The workbook could not be written.", NotWrittenKind.WriteFailed)
                 .WithPdf(PdfOutcome.WroteNothing(
-                    "HF-03", PdfForms.ForPlot("HF-03"), "the workbook it reads was not written", null));
+                    "HF-03", PdfForms.ForPlot("HF-03", null), "the workbook it reads was not written", null));
 
             PressResult result = PressResult.Of(Press(true, null, WithPdf("HF-01", false), refused));
 

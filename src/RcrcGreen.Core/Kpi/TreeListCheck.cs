@@ -483,7 +483,7 @@ namespace RcrcGreen.Core.Kpi
 
             // 6. Names held on more than one row.
             foreach (IGrouping<string, SpeciesListRow> same in list.Rows
-                .GroupBy(one => one.BotanicalName.Trim(), StringComparer.OrdinalIgnoreCase)
+                .GroupBy(one => SpeciesNames.Key(one.BotanicalName), StringComparer.Ordinal)
                 .Where(group => group.Count() > 1))
             {
                 faults.Add(new TreeListFault(
@@ -491,7 +491,7 @@ namespace RcrcGreen.Core.Kpi
                     string.Join(" and ", same
                         .Select(one => "D" + one.Row.ToString(CultureInfo.InvariantCulture))
                         .ToArray()),
-                    same.Key + " is on " + same.Count()
+                    same.First().BotanicalName.Trim() + " is on " + same.Count()
                         + " rows, so nothing can say which row a count belongs on"));
             }
 

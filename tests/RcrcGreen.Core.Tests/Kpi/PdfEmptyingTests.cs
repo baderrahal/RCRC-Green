@@ -54,7 +54,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             return PdfFill.Of(
                 CreateFixture.Plot("ST-05", component: "STREET 30m ROW", uid2: "ANH-007-ST-100210"),
-                CountedGroups.Of(KpiTemplates.Streets),
+                null, CountedGroups.Of(KpiTemplates.Streets),
                 StreetReferenceAnswer.Of(20.0, 330.66, "20", "330.66"),
                 Today, true, PdfWorkbookNumbers.None);
         }

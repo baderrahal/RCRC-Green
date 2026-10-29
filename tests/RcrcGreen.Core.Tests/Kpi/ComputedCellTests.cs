@@ -208,7 +208,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             PdfPlan plan = PdfFill.Of(
                 CreateFixture.Plot("EP-05", uid2: "ANH-006-NP-100002"),
-                CountedGroups.Of(KpiTemplates.ExistingParks), null, new DateTime(2026, 9, 14), true,
+                null, CountedGroups.Of(KpiTemplates.ExistingParks), null, new DateTime(2026, 9, 14), true,
                 new PdfWorkbookNumbers(
                     CanopyArea.Of(new[] { new CanopyRow(Proposed, 7, "BAUHINIA PURPUREA", 19, 5.0) }),
                     410.0, 60.0, 771.0,
@@ -276,7 +276,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             PdfPlan plan = PdfFill.Of(
                 CreateFixture.Plot("EP-05", uid2: "ANH-006-NP-100002"),
-                CountedGroups.Of(KpiTemplates.ExistingParks), null, new DateTime(2026, 9, 14), true,
+                null, CountedGroups.Of(KpiTemplates.ExistingParks), null, new DateTime(2026, 9, 14), true,
                 new PdfWorkbookNumbers(
                     CanopyArea.Of(new[] { new CanopyRow(Proposed, 4, "ALBIZIA LEBBECK", 11, 8.0) }),
                     0.0, 0.0, 771.0,

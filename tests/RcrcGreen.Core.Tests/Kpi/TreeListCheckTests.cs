@@ -69,13 +69,15 @@ namespace RcrcGreen.Core.Tests.Kpi
         /// Rows 4 to 92 named with no gap, which is the real MOSQUES shape one list short: the
         /// names stop at 92 and the sheet runs to 101 with the total reaching all of it.
         /// </summary>
-        private static WorkbookFixture.TreeRow[] NamedToRow92(bool oneNameTwice)
+        private static WorkbookFixture.TreeRow[] NamedToRow92(bool oneNameTwice, string[] spelledAt22And84 = null)
         {
             var rows = new List<WorkbookFixture.TreeRow>();
             for (int row = 4; row <= 92; row++)
             {
                 string name = oneNameTwice && (row == 22 || row == 84)
                     ? "Albizia lebbeck"
+                    : spelledAt22And84 != null && row == 22 ? spelledAt22And84[0]
+                    : spelledAt22And84 != null && row == 84 ? spelledAt22And84[1]
                     : "Species " + row;
 
                 rows.Add(new WorkbookFixture.TreeRow(row, name, "15", "8"));
@@ -104,11 +106,12 @@ namespace RcrcGreen.Core.Tests.Kpi
             string sameTextAt = null,
             int oddTextAt = 0,
             string refInALiteralAt = null,
-            bool withoutQuantityTotal = false)
+            bool withoutQuantityTotal = false,
+            string[] spelledAt22And84 = null)
         {
             return WorkbookFixture.Computing(
                 _folder,
-                NamedToRow92(oneNameTwice),
+                NamedToRow92(oneNameTwice, spelledAt22And84),
                 new[] { new WorkbookFixture.TreeRow(4, "Phoenix dactylifera", "15", "8") },
                 fileName: fileName,
                 withGreenCoverLabel: true,
@@ -214,7 +217,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             return PlotOutcome.Wrote(plotId, KpiTemplates.Mosques, where)
                 .WithPdf(PdfOutcome.Wrote(
-                    plotId, PdfForms.ForPlot(plotId), PdfChecklist.Beside(where), null,
+                    plotId, PdfForms.ForPlot(plotId, null), PdfChecklist.Beside(where), null,
                     new List<PdfLandedField>(), new PdfFieldFill[0]));
         }
 
@@ -299,6 +302,22 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(
                 "a formula reads a range that stops before the list ends",
                 kinds["<Mosques> D12"]);
+        }
+
+        /// <summary>
+        /// **TWO SPELLINGS THE SLASH TIDY MAKES ONE ARE ONE NAME ON TWO ROWS**, the same question
+        /// the matcher refuses on, so the check and the press cannot disagree about it. Bader's
+        /// rule of 29 October, K36. The name printed is the first row's, as the file holds it.
+        /// </summary>
+        [Fact]
+        public void TwoSpellingsTheSlashTidyMakesOneAreOneNameOnTwoRows()
+        {
+            TreeListSheetCheck sheet = Sheet(Checked(Template(
+                "slash.xlsx", spelledAt22And84: new[] { "Acacia / Vachellia seyal", "Acacia  Vachellia seyal" })), Existing);
+
+            TreeListFault twice = Assert.Single(sheet.Faults, one => one.Cell == "D22 and D84");
+            Assert.Equal("this name is on more than one row", twice.Kind);
+            Assert.StartsWith("Acacia / Vachellia seyal is on 2 rows", twice.Why);
         }
 
         /// <summary>

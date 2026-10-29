@@ -12,6 +12,7 @@ One row per session, added after its phase merges. Taken from
 | 2026-10-28 | 204d63e4 | F2b the KPI Setup.exe, and Q8 to Q12 answered | 22,122,165 | 11.30 |
 | 2026-10-29 | f0ee7c3b | PRX_Component values placed by word rules | 34,612,438 | 15.15 |
 | 2026-10-29 | 32273d1a | Region areas and folder layout, two pull requests | 85,097,374 | 30.84 |
+| 2026-10-29 | ec3ab4cb | F5 slash trees, the PDF form by template, the walkway width | 51,770,282 | 18.56 |
 
 The first row, so no phase before it to compare against. 97.7 % of it was cache read.
 
@@ -36,3 +37,6 @@ turns and the kit rebuild are not in it. It cost more than the Setup.exe round a
 The region areas and folder layout row is this session alone, read before the final gate and the
 merge of the second pull request, so those turns and the kit rebuild are not in it. It cost about
 twice the component rules round, and ran two pull requests where that ran one.
+
+The F5 row is this session alone, read before the final gate and the merge, so those turns and the
+kit rebuild are not in it. It cost less than the region areas and folder layout round.

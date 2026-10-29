@@ -288,7 +288,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             PdfPlan plan = PdfFill.Of(
                 CreateFixture.Plot("DM-99", uid2: "ANH-008-MO-100006", subtotals: new[] { group }),
-                CountedGroups.Of(KpiTemplates.Mosques), null,
+                null, CountedGroups.Of(KpiTemplates.Mosques), null,
                 new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None, ProjectUnit.Unknown);
 
             foreach (PdfValue value in new[]
@@ -454,7 +454,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PdfPlan plan = PdfFill.Of(
                 CreateFixture.Plot("HF-01", uid2: "ANH-008-MO-100006", subtotals: new[] { HfOne() }),
-                CountedGroups.Of(KpiTemplates.Healthcare), null,
+                null, CountedGroups.Of(KpiTemplates.Healthcare), null,
                 new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None, ProjectUnit.Unknown);
 
             Assert.Equal("231", Written(plan, PdfValue.ExistingShrubs));
@@ -744,7 +744,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             PdfPlan plan = PdfFill.Of(
                 Reading(plotId, schedule),
-                CountedGroups.Of(KpiTemplates.Mosques), null,
+                null, CountedGroups.Of(KpiTemplates.Mosques), null,
                 new DateTime(2026, 9, 15), true, PdfWorkbookNumbers.None, ProjectUnit.Unknown);
 
             return plan.Fields.Single(one => one.Value == value).Text;
