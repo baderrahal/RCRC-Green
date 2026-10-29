@@ -49,15 +49,13 @@ namespace RcrcGreen.Core.Kpi
     /// **The rows live in components.csv now, read through <see cref="ComponentTable"/>**, one
     /// table with the template column beside the folder, so the two answers keep one key.
     ///
-    /// **Eleven values first. The table as Bader wrote it reaches EIGHT distinct folders**, counted
-    /// off the entries rather than off the round message, which said nine. The four 60 per cent
-    /// values of 28 Oct each file under a folder of their own, named as the value. The team's snip
-    /// also holds a GOVERMENT BUILDING folder, spelt that way, and it is deliberately not in
-    /// here because no plot in either measured model carries a component for it. Whether that is
-    /// the ninth is for the team.
+    /// **Since 29 Oct the rules in component-rules.csv answer every value the rows once held**:
+    /// five named folders, and the mosque and school rules file each value under a folder named
+    /// as the value. The team's snip also holds a GOVERMENT BUILDING folder, spelt that way, and
+    /// no rule word reaches it, because no plot in either measured model carries it.
     ///
-    /// A value this table does not hold places nothing and is named, the same rule the template
-    /// table follows. Nothing falls back to the template name, because a folder built from a
+    /// A value no row and no rule places places nothing and is named, the same rule the template
+    /// column follows. Nothing falls back to the template name, because a folder built from a
     /// guess sits beside the team's own and nobody notices for a month.
     /// </summary>
     public static class ComponentFolders
@@ -76,16 +74,19 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Every distinct folder the table reaches, in the order the table first names each.
+        /// Every distinct named folder the rows and then the rules reach, in the order each first
+        /// names it. A rule filing under the value names no folder of its own and adds none.
         /// </summary>
         public static IReadOnlyList<string> Folders
         {
             get
             {
                 var seen = new List<string>();
-                foreach (ComponentFolder one in All)
+                IEnumerable<string> named = All.Select(one => one.Folder)
+                    .Concat(ComponentTable.InForce.Rules.Where(rule => !rule.FolderIsTheValue).Select(rule => rule.Folder));
+                foreach (string one in named)
                 {
-                    if (!seen.Contains(one.Folder, StringComparer.Ordinal)) seen.Add(one.Folder);
+                    if (!seen.Contains(one, StringComparer.Ordinal)) seen.Add(one);
                 }
 
                 return seen;
@@ -93,10 +94,10 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// The folder for one component value, or empty when the table does not hold it. The
-        /// comparison is the whole value through <see cref="ComponentMatch"/>, never a
-        /// prefix and never a word of it: NH STRT 20m ROW and NH STRT LESS 20m ROW share an
-        /// opening and are two different values.
+        /// The folder for one component value, or empty when nothing places it: its exact row,
+        /// else the first rule whose whole words it holds, through
+        /// <see cref="ComponentTable.PlaceOf"/>. An exact row is never a prefix: NH STRT 20m ROW
+        /// and NH STRT LESS 20m ROW share an opening and are two different values.
         /// </summary>
         public static string For(string component)
         {
@@ -117,27 +118,15 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Every folder the components of one template file under, read off the two columns of
-        /// one table rather than held as a table of its own.
-        ///
-        /// Both columns sit on the same row of the same value, so which folders a template
-        /// reaches is already written down and there is nothing here to drift from.
-        /// Counted off the shipped file: ten of the eleven templates reach exactly ONE folder each
-        /// and MOSQUES reaches TWO, because DAILY MOSQUE and FRIDAY MOSQUE fill one workbook and are
-        /// filed apart.
+        /// Every named folder the rows and rules of one template file under, read off the same
+        /// columns that place a value rather than held as a table of its own. Counted off the
+        /// shipped files: five templates reach exactly ONE folder each, and MOSQUES, SCHOOLS and
+        /// the four 60 per cent templates reach a folder per value, which this list leaves out.
         /// </summary>
         public static IReadOnlyList<string> FoldersOf(KpiTemplate template)
         {
-            if (template == null) return new List<string>();
-
-            var seen = new List<string>();
-            foreach (ComponentFolder one in All)
-            {
-                if (!ReferenceEquals(ComponentTemplates.For(one.Component), template)) continue;
-                if (!seen.Contains(one.Folder, StringComparer.Ordinal)) seen.Add(one.Folder);
-            }
-
-            return seen;
+            bool perValue;
+            return ComponentTable.InForce.FoldersOf(template, out perValue);
         }
 
         /// <summary>
@@ -158,8 +147,8 @@ namespace RcrcGreen.Core.Kpi
         /// six.
         ///
         /// **Where a template reaches more than one folder, nothing is derived.** MOSQUES files
-        /// under DAILY MOSQUE and FRIDAY MOSQUE and a plot with no component cannot say which,
-        /// so FM-08 is still refused, with a reason that names both folders instead of naming an
+        /// each value under a folder named as the value and a plot with no component has no value
+        /// to name it, so FM-08 is still refused, with a reason that says so instead of naming an
         /// empty component. It is refused BEFORE the press now rather than after its read.
         ///
         /// **This is for an ABSENT component only.** A component the table does not hold still
@@ -169,8 +158,9 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static string OnlyFolderFor(KpiTemplate template)
         {
-            IReadOnlyList<string> folders = FoldersOf(template);
-            return folders.Count == 1 ? folders[0] : string.Empty;
+            bool perValue;
+            IReadOnlyList<string> folders = ComponentTable.InForce.FoldersOf(template, out perValue);
+            return folders.Count == 1 && !perValue ? folders[0] : string.Empty;
         }
 
         /// <summary>
@@ -181,7 +171,15 @@ namespace RcrcGreen.Core.Kpi
         {
             if (template == null) return "no template placed this plot, so it has no folder either";
 
-            IReadOnlyList<string> folders = FoldersOf(template);
+            bool perValue;
+            IReadOnlyList<string> folders = ComponentTable.InForce.FoldersOf(template, out perValue);
+            if (perValue)
+            {
+                return template.Name + " files each value under a folder named as the value"
+                    + (folders.Count == 0 ? string.Empty : " or under " + string.Join(" and ", folders.ToArray()))
+                    + ", and this plot carries no component to say which";
+            }
+
             if (folders.Count == 0)
             {
                 return "no component in the folder table fills " + template.Name

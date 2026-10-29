@@ -8,7 +8,8 @@ The production team runs Revit 2024 with no repo, no Visual Studio and no admin 
 needs the KPI tool alone. This makes the one zip they install from:
 
   RcrcGreen.addin, RcrcGreen.Revit.dll, RcrcGreen.Core.dll and their symbol files
-  components.csv                        the component values, their templates and folders
+  components.csv                        the component values placed by an exact row, exceptions only
+  component-rules.csv                   the rules that place every other value by its words
   features.txt                          KPI, so the ribbon builds the KPI panel and nothing else
   VERSION.txt                           the version, read off the build stamp, never typed
   team-install.ps1                      and the two launchers that start it
@@ -18,7 +19,7 @@ needs the KPI tool alone. This makes the one zip they install from:
 
 Beside the zip it writes RCRC Green KPI Setup <version>.exe, compiled by Inno Setup from
 install\team\RCRC Green KPI Setup.iss against the same checked kit folder, so the Setup.exe
-installs the same add-in files, components.csv and features.txt with the same version. The zip
+installs the same add-in files, components.csv, component-rules.csv and features.txt with the same version. The zip
 stays as the way in on a PC that blocks an unsigned exe.
 
 It builds in a throwaway git worktree of origin/main, so what the team gets is what main holds
@@ -96,7 +97,7 @@ try {
 
     $kit = Join-Path $work 'kit'
     New-Item -ItemType Directory -Path $kit -Force | Out-Null
-    foreach ($name in @('RcrcGreen.addin', 'RcrcGreen.Revit.dll', 'RcrcGreen.Core.dll', 'RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb', 'components.csv')) {
+    foreach ($name in @('RcrcGreen.addin', 'RcrcGreen.Revit.dll', 'RcrcGreen.Core.dll', 'RcrcGreen.Revit.pdb', 'RcrcGreen.Core.pdb', 'components.csv', 'component-rules.csv')) {
         Copy-Item -LiteralPath (Join-Path $built $name) -Destination $kit
     }
     # The installer script makes the Setup.exe and is nothing a person installing needs.

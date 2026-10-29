@@ -123,32 +123,10 @@ namespace RcrcGreen.Core.Kpi
         /// </summary>
         public static ComponentFile From(ComponentSource source, string path)
         {
-            if (string.IsNullOrWhiteSpace(path)) return Missing(source, path);
-
-            try
-            {
-                if (!File.Exists(path)) return Missing(source, path);
-
-                // Excel holds a file it has open for writing, and a read that refused to share
-                // would drop the team's whole shared table for as long as one person had it open.
-                var lines = new List<string>();
-                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-                using (var reader = new StreamReader(stream, Encoding.UTF8, true))
-                {
-                    string line;
-                    while ((line = reader.ReadLine()) != null) lines.Add(line);
-                }
-
-                return Parse(source, path, lines);
-            }
-            catch (IOException failed)
-            {
-                return Unreadable(source, path, "It could not be read. " + failed.Message);
-            }
-            catch (UnauthorizedAccessException failed)
-            {
-                return Unreadable(source, path, "It could not be read. " + failed.Message);
-            }
+            return ComponentTable.ReadFile(path,
+                lines => Parse(source, path, lines),
+                () => Missing(source, path),
+                why => Unreadable(source, path, why));
         }
 
         /// <summary>
@@ -175,17 +153,12 @@ namespace RcrcGreen.Core.Kpi
             foreach (string raw in lines ?? Enumerable.Empty<string>())
             {
                 number++;
-                string line = (raw ?? string.Empty).TrimStart('﻿');
-                if (line.Trim().Length == 0 || line.TrimStart().StartsWith("#", StringComparison.Ordinal)) continue;
+                string line = ComponentTable.WithoutMark(raw);
+                if (ComponentTable.IsNote(line)) continue;
 
                 if (!headed)
                 {
-                    if (ComponentTable.IsHeader(ComponentTable.Fields(line, ';')) && !ComponentTable.IsHeader(ComponentTable.Fields(line, ',')))
-                    {
-                        between = ';';
-                    }
-
-                    if (!ComponentTable.IsHeader(ComponentTable.Fields(line, between)))
+                    if (!ComponentTable.ReadHeader(line, ComponentTable.HeaderFields, out between))
                     {
                         return Unreadable(source, path, "Line " + number + " should be the header "
                             + ComponentTable.Header + " and reads " + line.Trim() + ".");
@@ -196,13 +169,9 @@ namespace RcrcGreen.Core.Kpi
                 }
 
                 List<string> fields = ComponentTable.Fields(line, between);
+                if (ComponentTable.IsBlankRow(fields)) continue;
 
-                // A row of nothing but separators is Excel's blank row.
-                if (fields.All(one => one.Trim().Length == 0)) continue;
-
-                string bad = fields.Count != 3
-                    ? "has " + fields.Count + " fields, not 3"
-                    : fields.Any(one => one.Trim().Length == 0) ? "leaves a field empty" : string.Empty;
+                string bad = ComponentTable.RowShapeFault(fields);
 
                 if (bad.Length > 0)
                 {
@@ -264,7 +233,9 @@ namespace RcrcGreen.Core.Kpi
     /// because it is the team's and everybody reads it. Every row keeps the file it came off,
     /// so the report can say where each answer was read.
     ///
-    /// **A value no file holds places nothing**, exactly as before. Nothing guesses at one.
+    /// **A value no row holds is tried against the rules**, component-rules.csv, under
+    /// <see cref="ComponentRules"/>, and <see cref="PlaceOf"/> is the one place that order is
+    /// decided. A value no row and no rule places places nothing, exactly as before.
     /// </summary>
     public sealed class ComponentTable
     {
@@ -272,18 +243,22 @@ namespace RcrcGreen.Core.Kpi
 
         public const string Header = "Component,Template,Folder";
 
-        private static readonly string[] HeaderFields = { "Component", "Template", "Folder" };
+        internal static readonly string[] HeaderFields = { "Component", "Template", "Folder" };
 
         private static volatile ComponentTable _inForce;
 
         private static readonly Lazy<ComponentTable> ShippedTable = new Lazy<ComponentTable>(
-            () => Layered(ComponentFile.From(ComponentSource.Shipped, ShippedPath)));
+            () => Layered(ComponentFile.From(ComponentSource.Shipped, ShippedPath))
+                .WithRules(ComponentRuleFile.From(ComponentSource.Shipped, ShippedRulesPath)));
 
-        private ComponentTable(IReadOnlyList<ComponentFile> files, IReadOnlyList<ComponentRow> rows, IReadOnlyList<KpiTemplate> templates)
+        private ComponentTable(IReadOnlyList<ComponentFile> files, IReadOnlyList<ComponentRow> rows, IReadOnlyList<KpiTemplate> templates,
+            IReadOnlyList<ComponentRuleFile> ruleFiles, ComponentRuleFile rulesInForce)
         {
             Files = files;
             Rows = rows;
             Templates = templates;
+            RuleFiles = ruleFiles ?? new List<ComponentRuleFile>();
+            RulesFile = rulesInForce;
         }
 
         /// <summary>The files as read, lowest standing first, every one of them, read or not.</summary>
@@ -297,6 +272,18 @@ namespace RcrcGreen.Core.Kpi
 
         /// <summary>The templates a row's Template column is matched against.</summary>
         public IReadOnlyList<KpiTemplate> Templates { get; }
+
+        /// <summary>The rules files as read, shipped first, read or not.</summary>
+        public IReadOnlyList<ComponentRuleFile> RuleFiles { get; }
+
+        /// <summary>The rules file whose rules are tried, null where none was read.</summary>
+        public ComponentRuleFile RulesFile { get; }
+
+        /// <summary>The rules tried, in order. Empty where no rules file was read.</summary>
+        public IReadOnlyList<ComponentRule> Rules
+        {
+            get { return RulesFile != null ? RulesFile.Rules : new List<ComponentRule>(); }
+        }
 
         /// <summary>
         /// Where the shipped file sits: beside the Core assembly, which is beside the add-in once
@@ -312,7 +299,17 @@ namespace RcrcGreen.Core.Kpi
             }
         }
 
-        /// <summary>The shipped file alone, read once.</summary>
+        /// <summary>component-rules.csv beside the Core assembly, copied there the same way.</summary>
+        public static string ShippedRulesPath
+        {
+            get
+            {
+                string here = Path.GetDirectoryName(typeof(ComponentTable).Assembly.Location) ?? string.Empty;
+                return Path.Combine(here, ComponentRules.FileName);
+            }
+        }
+
+        /// <summary>The shipped components.csv and the shipped rules, read once.</summary>
         public static ComponentTable Shipped
         {
             get { return ShippedTable.Value; }
@@ -359,7 +356,40 @@ namespace RcrcGreen.Core.Kpi
                 }
             }
 
-            return new ComponentTable(files, rows, templates ?? KpiTemplates.All);
+            return new ComponentTable(files, rows, templates ?? KpiTemplates.All, null, null);
+        }
+
+        /// <summary>
+        /// The same rows with rules: the shipped rules file, then the shared one, which replaces
+        /// the shipped list where it was read. A table built without this tries no rule.
+        /// </summary>
+        public ComponentTable WithRules(ComponentRuleFile shipped, ComponentRuleFile shared = null)
+        {
+            List<ComponentRuleFile> files = new[] { shipped, shared }.Where(one => one != null).ToList();
+            ComponentRuleFile inForce = ComponentRules.InForce(shipped, shared);
+            return new ComponentTable(Files, Rows, Templates, files, inForce != null && inForce.Read ? inForce : null);
+        }
+
+        /// <summary>
+        /// **What places a value, in Bader's order**: its exact row in a components.csv first,
+        /// then nothing where a components.csv refused it, because the file that should decide
+        /// could not, then the first rule whose words it holds, then nothing. Every lookup on a
+        /// component, template and folder alike, comes through here.
+        /// </summary>
+        public ComponentPlacement PlaceOf(string component)
+        {
+            string key = ComponentMatch.Key(component);
+            if (key.Length == 0) return ComponentPlacement.Nothing;
+
+            ComponentRow row = RowFor(component);
+            if (row != null) return ComponentPlacement.ByRow(row, KpiTemplates.Named(row.Template, Templates));
+
+            if (Files.Any(file => file.RefusedKeys.Contains(key))) return ComponentPlacement.RefusedByAFile;
+
+            ComponentRule rule = ComponentRules.FirstMatching(Rules, component);
+            return rule == null
+                ? ComponentPlacement.Nothing
+                : ComponentPlacement.ByRule(rule, KpiTemplates.Named(rule.Template, Templates), component);
         }
 
         /// <summary>The winning row for a value, or null when no file holds it.</summary>
@@ -372,30 +402,62 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Whether any file says something about a value: a row in force, or a refusal in one of
-        /// the files. A value no file names is the only kind the pane offers a line for.
+        /// Whether any file says something about a value: a row in force, a rule it matches, or
+        /// a refusal in one of the files. A value no file names is the only kind the pane offers
+        /// a line for.
         /// </summary>
         public bool Names(string component)
         {
-            string key = ComponentMatch.Key(component);
-            return key.Length > 0 && (RowFor(component) != null || Files.Any(file => file.RefusedKeys.Contains(key)));
+            ComponentPlacement placed = PlaceOf(component);
+            return placed.Placed || placed.Refused;
         }
 
         /// <summary>
-        /// The template a value fills, or null where no file holds the value or its row names a
-        /// template this table does not know.
+        /// The template a value fills, or null where nothing places the value or what places it
+        /// names a template this table does not know.
         /// </summary>
         public KpiTemplate TemplateFor(string component)
         {
-            ComponentRow row = RowFor(component);
-            return row == null ? null : KpiTemplates.Named(row.Template, Templates);
+            return PlaceOf(component).Template;
         }
 
-        /// <summary>The folder a value files under, or empty where no file holds it.</summary>
+        /// <summary>The folder a value files under, or empty where nothing places it.</summary>
         public string FolderFor(string component)
         {
-            ComponentRow row = RowFor(component);
-            return row == null ? string.Empty : row.Folder;
+            return PlaceOf(component).Folder;
+        }
+
+        /// <summary>
+        /// Every folder the rows and the rules of one template reach, and whether one of its
+        /// rules names the folder after each value, which reaches a folder per value and so no
+        /// one folder at all.
+        /// </summary>
+        public IReadOnlyList<string> FoldersOf(KpiTemplate template, out bool perValue)
+        {
+            perValue = false;
+            var seen = new List<string>();
+            if (template == null) return seen;
+
+            foreach (ComponentRow row in Rows)
+            {
+                if (!ReferenceEquals(KpiTemplates.Named(row.Template, Templates), template)) continue;
+                if (!seen.Contains(row.Folder, StringComparer.Ordinal)) seen.Add(row.Folder);
+            }
+
+            foreach (ComponentRule rule in Rules)
+            {
+                if (!ReferenceEquals(KpiTemplates.Named(rule.Template, Templates), template)) continue;
+                if (rule.FolderIsTheValue) perValue = true;
+                else if (!seen.Contains(rule.Folder, StringComparer.Ordinal)) seen.Add(rule.Folder);
+            }
+
+            return seen;
+        }
+
+        /// <summary>Rules whose Template column names no template this table knows.</summary>
+        public IReadOnlyList<ComponentRule> UnmatchedRules
+        {
+            get { return Rules.Where(one => KpiTemplates.Named(one.Template, Templates) == null).ToList(); }
         }
 
         /// <summary>
@@ -471,13 +533,112 @@ namespace RcrcGreen.Core.Kpi
                     + ", which is not a template this tool knows, so it places nothing. " + ReadFrom(row));
             }
 
+            foreach (ComponentRuleFile file in RuleFiles)
+            {
+                string where = SourceWord(file.Source) + " " + ComponentRules.FileName + ", "
+                    + (file.Path.Length == 0 ? "no path" : file.Path);
+
+                if (!file.There)
+                {
+                    lines.Add(where + ": not there" + (file.Source == ComponentSource.Shipped
+                        ? ". No value is placed by a rule until it is. Run the install again." : "."));
+                }
+                else if (!file.Read)
+                {
+                    lines.Add(where + ": NOT READ. " + file.Why);
+                }
+                else
+                {
+                    lines.Add(where + ": " + file.Rules.Count + (file.Rules.Count == 1 ? " rule" : " rules")
+                        + (ReferenceEquals(file, RulesFile) ? ", the rules in force" : ", not used, the shared rules are in force"));
+                }
+            }
+
+            foreach (ComponentRule rule in UnmatchedRules)
+            {
+                lines.Add("  rule " + rule.Words + " names template " + rule.Template
+                    + ", which is not a template this tool knows, so a value it places goes nowhere. "
+                    + ComponentRules.ReadFromLine(rule) + ", " + rule.Path);
+            }
+
             return lines;
         }
 
-        internal static bool IsHeader(List<string> fields)
+        /// <summary>
+        /// One csv file off disk, for components.csv and component-rules.csv alike. Anything that
+        /// stops it being read is said rather than thrown.
+        /// </summary>
+        internal static T ReadFile<T>(string path, Func<IEnumerable<string>, T> parse, Func<T> missing, Func<string, T> unreadable)
         {
-            return fields.Count == HeaderFields.Length
-                && fields.Select(one => one.Trim()).SequenceEqual(HeaderFields, StringComparer.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(path)) return missing();
+
+            try
+            {
+                if (!File.Exists(path)) return missing();
+
+                // Excel holds a file it has open for writing, and a read that refused to share
+                // would drop the team's whole shared table for as long as one person had it open.
+                var lines = new List<string>();
+                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                using (var reader = new StreamReader(stream, Encoding.UTF8, true))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null) lines.Add(line);
+                }
+
+                return parse(lines);
+            }
+            catch (IOException failed)
+            {
+                return unreadable("It could not be read. " + failed.Message);
+            }
+            catch (UnauthorizedAccessException failed)
+            {
+                return unreadable("It could not be read. " + failed.Message);
+            }
+        }
+
+        internal static string WithoutMark(string raw)
+        {
+            return (raw ?? string.Empty).TrimStart('﻿');
+        }
+
+        /// <summary>A blank line or a # note, which neither file reads.</summary>
+        internal static bool IsNote(string line)
+        {
+            return line.Trim().Length == 0 || line.TrimStart().StartsWith("#", StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Why a row of either file is not three fields with something in each, or empty where
+        /// it is. What a bad row costs is each file's own: one value, or the whole rules file.
+        /// </summary>
+        internal static string RowShapeFault(List<string> fields)
+        {
+            if (fields.Count != 3) return "has " + fields.Count + " fields, not 3";
+            return fields.Any(one => one.Trim().Length == 0) ? "leaves a field empty" : string.Empty;
+        }
+
+        /// <summary>A row of nothing but separators is Excel's blank row.</summary>
+        internal static bool IsBlankRow(List<string> fields)
+        {
+            return fields.All(one => one.Trim().Length == 0);
+        }
+
+        /// <summary>
+        /// Whether a line is the header naming these fields, and the separator it uses: a
+        /// semicolon where Excel's list separator is one, else a comma.
+        /// </summary>
+        internal static bool ReadHeader(string line, string[] names, out char between)
+        {
+            between = IsHeader(Fields(line, ';'), names) && !IsHeader(Fields(line, ','), names) ? ';' : ',';
+            return IsHeader(Fields(line, between), names);
+        }
+
+        private static bool IsHeader(List<string> fields, string[] names)
+        {
+            return fields.Count == names.Length
+                && fields.Select(one => one.Trim()).SequenceEqual(names, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>

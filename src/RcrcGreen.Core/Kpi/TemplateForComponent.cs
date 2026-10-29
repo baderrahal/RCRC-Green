@@ -119,7 +119,7 @@ namespace RcrcGreen.Core.Kpi
             if (meant == null)
             {
                 return TemplateChoice.Between(all, held + " " + NotInTheTable
-                    + ". Pick the template. The values it knows are in components.csv."
+                    + ". Pick the template. The values it knows are in components.csv and component-rules.csv."
                     + (byPrefix == null ? string.Empty : " The plot prefix says " + byPrefix.Name + "."));
             }
 

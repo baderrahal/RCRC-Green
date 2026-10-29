@@ -60,7 +60,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             var byPrefix = new HashSet<string>(
                 PlotPrefixes.All.Select(one => one.Template.Name));
             var byComponent = new HashSet<string>(
-                ComponentTemplates.All.Select(one => one.Template.Kind.Name));
+                ComponentTable.Shipped.Rules.Select(one => KpiTemplates.Named(one.Template).Kind.Name));
 
             Assert.Equal(7, byPrefix.Count);
             Assert.Equal(7, byComponent.Count);

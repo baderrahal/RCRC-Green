@@ -13,7 +13,7 @@ namespace RcrcGreen.Core.Tests.Kpi
     {
         /// <summary>
         /// All eleven, each spelt out. SCHOOL singular, EXISTING PARK singular, FUTURE PARKS
-        /// plural: that is not a pattern, which is why it is a table.
+        /// plural: that is not a pattern, which is why each rule names its folder.
         /// </summary>
         [Theory]
         [InlineData("DAILY MOSQUE", "DAILY MOSQUE")]
@@ -33,26 +33,18 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Fifteen values and the folders they reach, written out here rather than counted off
-        /// the table. **The round message said nine folders and the first eleven reach eight**,
-        /// so the number is asserted rather than left to be read off the list. The four 60 per
-        /// cent values of 28 Oct each reach a new folder named as the value, Bader's answer. The
-        /// team's snip also holds GOVERMENT BUILDING, which no plot in either measured model
-        /// carries a component for, and it is deliberately not in the table.
+        /// The shipped components.csv holds no row since the rules of 29 Oct, so every folder
+        /// comes off a rule: five named ones, and the mosque and school rules file under the
+        /// value itself. The team's snip also holds GOVERMENT BUILDING, which no rule word
+        /// reaches, and it is deliberately not placed.
         /// </summary>
         [Fact]
-        public void FifteenValuesReachTwelveFolders()
+        public void NoRowIsShippedAndTheRulesNameFiveFolders()
         {
-            Assert.Equal(15, ComponentFolders.All.Count);
+            Assert.Empty(ComponentFolders.All);
 
             Assert.Equal(
-                new[]
-                {
-                    "DAILY MOSQUE", "FRIDAY MOSQUE", "SCHOOL", "HEALTHCARE",
-                    "PARKING LOT", "EXISTING PARK", "FUTURE PARKS", "STREETS",
-                    "DAILY MOSQUE MORE THAN 60%", "DAILY MOSQUE LESS THAN 60%",
-                    "SCHOOL MORE THAN 60%", "SCHOOL LESS THAN 60%"
-                },
+                new[] { "HEALTHCARE", "PARKING LOT", "EXISTING PARK", "FUTURE PARKS", "STREETS" },
                 ComponentFolders.Folders.ToArray());
         }
 
@@ -63,10 +55,9 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheMosqueValuesSplitWhereTheStreetValuesJoin()
         {
-            Assert.Equal(
+            Assert.All(
                 new[] { "NH STRT LESS 20m ROW", "NH STRT 20m ROW", "STREET 30m ROW", "STREET 36m ROW" },
-                ComponentFolders.All.Where(one => one.Folder == "STREETS")
-                    .Select(one => one.Component).ToArray());
+                one => Assert.Equal("STREETS", ComponentFolders.For(one)));
 
             // Both mosque values fill the one MOSQUES workbook and are filed apart.
             Assert.Equal("MOSQUES", ComponentTemplates.For("DAILY MOSQUE").Name);
@@ -76,15 +67,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// Every value the template table holds is in this one too, so a plot that can be filled
-        /// can be filed. Every row carries both columns, and this holds the table to it.
+        /// A value a rule places into a template is filed too, so a plot that can be filled can
+        /// be filed. Each rule's own words are a value it places, and this holds every rule to it.
         /// </summary>
         [Fact]
-        public void EveryComponentThatPicksATemplateAlsoPicksAFolder()
+        public void EveryRuleThatPicksATemplateAlsoPicksAFolder()
         {
+            Assert.Equal(14, ComponentTable.Shipped.Rules.Count);
             Assert.All(
-                ComponentTemplates.All,
-                one => Assert.NotEqual(string.Empty, ComponentFolders.For(one.Component)));
+                ComponentTable.Shipped.Rules,
+                one => Assert.NotEqual(string.Empty, ComponentFolders.For(one.Words)));
         }
 
         /// <summary>
@@ -110,16 +102,16 @@ namespace RcrcGreen.Core.Tests.Kpi
         }
 
         /// <summary>
-        /// The whole value is compared, never an opening. NH STRT 20m ROW is the start of
-        /// nothing and NH STRT LESS 20m ROW is a different value that happens to share five
-        /// characters with it.
+        /// Whole words are compared, never an opening of one. STRT is a word of NH STRT and
+        /// places it, and STR is the opening of nothing.
         /// </summary>
         [Fact]
-        public void TheWholeValueIsComparedAndNeverAnOpening()
+        public void WholeWordsAreComparedAndNeverAnOpening()
         {
             Assert.Equal("STREETS", ComponentFolders.For("  nh strt less 20m row  "));
-            Assert.Equal(string.Empty, ComponentFolders.For("NH STRT"));
-            Assert.Equal(string.Empty, ComponentFolders.For("NH STRT 20m ROW EXTRA"));
+            Assert.Equal("STREETS", ComponentFolders.For("NH STRT"));
+            Assert.Equal(string.Empty, ComponentFolders.For("NH STR"));
+            Assert.Equal(string.Empty, ComponentFolders.For("ROWS"));
         }
     }
 

@@ -8,10 +8,11 @@ using RcrcGreen.Core.Kpi;
 namespace RcrcGreen.Revit.Kpi
 {
     /// <summary>
-    /// Finds the three components.csv files on this machine, puts their table in force and adds
-    /// the one line a person takes in the pane. Core reads, layers and words them, and this only
-    /// says where each one is: beside the installed assembly, in %APPDATA%\RCRC Green, and in the
-    /// templates folder the person set in Setup.
+    /// Finds the three components.csv files and the two component-rules.csv files on this
+    /// machine, puts their table in force and adds the one line a person takes in the pane. Core
+    /// reads, layers and words them, and this only says where each one is: beside the installed
+    /// assembly, in %APPDATA%\RCRC Green for components.csv alone, and in the templates folder
+    /// the person set in Setup.
     ///
     /// It reads afresh every time it is asked, because the shared file is the team's and can
     /// change under an open pane, and a copy held here would be the second record of it.
@@ -25,6 +26,13 @@ namespace RcrcGreen.Revit.Kpi
             return string.IsNullOrWhiteSpace(templatesFolder)
                 ? string.Empty
                 : Path.Combine(templatesFolder, ComponentTable.FileName);
+        }
+
+        public static string SharedRulesPath(string templatesFolder)
+        {
+            return string.IsNullOrWhiteSpace(templatesFolder)
+                ? string.Empty
+                : Path.Combine(templatesFolder, ComponentRules.FileName);
         }
 
         public static string PersonalPath()
@@ -46,11 +54,15 @@ namespace RcrcGreen.Revit.Kpi
                 .Distinct()
                 .ToList();
 
+            string templatesFolder = TemplateFolder.Read();
             ComponentTable table = ComponentTable.Layered(
                 templates,
                 ComponentFile.From(ComponentSource.Shipped, ComponentTable.ShippedPath),
                 ComponentFile.From(ComponentSource.Personal, PersonalPath()),
-                ComponentFile.From(ComponentSource.Shared, SharedPath(TemplateFolder.Read())));
+                ComponentFile.From(ComponentSource.Shared, SharedPath(templatesFolder)))
+                .WithRules(
+                    ComponentRuleFile.From(ComponentSource.Shipped, ComponentTable.ShippedRulesPath),
+                    ComponentRuleFile.From(ComponentSource.Shared, SharedRulesPath(templatesFolder)));
 
             ComponentTable.Use(table);
             return table;

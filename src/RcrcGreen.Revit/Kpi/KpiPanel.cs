@@ -892,6 +892,20 @@ namespace RcrcGreen.Revit.Kpi
             IReadOnlyList<PaneWarning> warnings = PaneWarnings.ForRead(_facts.Plots, _facts.Links, list);
             if (warnings.Count > 0) _body.Children.Add(new Border { Margin = KpiTheme.Group });
             foreach (PaneWarning warning in warnings) _body.Children.Add(WarningBox(warning, null));
+
+            IReadOnlyList<KeyValuePair<string, ComponentPlacement>> byRule =
+                UnknownComponents.PlacedByRule(_facts.Plots.All, ComponentOn, ComponentTable.InForce);
+            if (byRule.Count > 0)
+            {
+                _body.Children.Add(new TextBlock
+                {
+                    Text = KpiPaneWords.PlacedByRule(byRule.Count),
+                    Foreground = KpiTheme.Muted,
+                    Margin = KpiTheme.StatusGap,
+                    ToolTip = Tip(KpiPaneWords.PlacedByRuleSays(byRule))
+                });
+            }
+
             foreach (UIElement box in UnknownValueBoxes()) _body.Children.Add(box);
 
             Button next = KpiTheme.Main(Caption(KpiPaneWords.NextPlots));
@@ -1946,11 +1960,19 @@ namespace RcrcGreen.Revit.Kpi
                     string.Join("\n", table.InWords().ToArray()), !file.Read), null));
             }
 
+            foreach (ComponentRuleFile file in table.RuleFiles.Where(one => one.There
+                && (!one.Read || (ReferenceEquals(one, table.RulesFile) && table.UnmatchedRules.Count > 0))))
+            {
+                boxes.Add(WarningBox(new PaneWarning(
+                    KpiPaneWords.RulesFileSays(file), file.Path,
+                    string.Join("\n", table.InWords().ToArray()), !file.Read), null));
+            }
+
             return boxes;
         }
 
         /// <summary>
-        /// Step 2's box per component value no components.csv places, after a read. Its plots
+        /// Step 2's box per component value no components.csv row and no rule places, after a read. Its plots
         /// are refused until a line is added. Use suggestion and Choose each add one line, and
         /// Skip hides the box until Revit closes with the plots still refused.
         /// </summary>
@@ -2210,7 +2232,10 @@ namespace RcrcGreen.Revit.Kpi
         private IReadOnlyList<RecognisedWorkbook> Reviewed(IReadOnlyList<RecognisedWorkbook> listed)
         {
             int before = _madeTemplates.Count;
-            List<string> used = _usedTemplates.Concat(ComponentTable.InForce.Rows.Select(row => row.Template)).ToList();
+            List<string> used = _usedTemplates
+                .Concat(ComponentTable.InForce.Rows.Select(row => row.Template))
+                .Concat(ComponentTable.InForce.Rules.Select(rule => rule.Template))
+                .ToList();
             IReadOnlyList<RecognisedWorkbook> reviewed = NewTemplates.Review(listed, used, _madeTemplates);
 
             if (_madeTemplates.Count != before) ComponentFiles.PutInForce(_madeTemplates.Values);

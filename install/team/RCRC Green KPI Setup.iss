@@ -8,7 +8,7 @@
 ; team-install.ps1 makes:
 ;
 ;   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen.addin
-;   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\         the assemblies, components.csv, features.txt, VERSION.txt
+;   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\         the assemblies, components.csv, component-rules.csv, features.txt, VERSION.txt
 ;   Documents\RCRC Green\reports\                           where the pane writes its reports
 ;
 ; What somebody chose in the pane lives in pointer files beside the assemblies. Setup makes the
@@ -61,6 +61,7 @@ Source: "{#Kit}\RcrcGreen.Core.dll"; DestDir: "{app}\RcrcGreen"; Flags: ignoreve
 Source: "{#Kit}\RcrcGreen.Revit.pdb"; DestDir: "{app}\RcrcGreen"; Flags: ignoreversion
 Source: "{#Kit}\RcrcGreen.Core.pdb"; DestDir: "{app}\RcrcGreen"; Flags: ignoreversion
 Source: "{#Kit}\components.csv"; DestDir: "{app}\RcrcGreen"; Flags: ignoreversion
+Source: "{#Kit}\component-rules.csv"; DestDir: "{app}\RcrcGreen"; Flags: ignoreversion
 Source: "{#Kit}\features.txt"; DestDir: "{app}\RcrcGreen"; Flags: ignoreversion
 Source: "{#Kit}\VERSION.txt"; DestDir: "{app}\RcrcGreen"; Flags: ignoreversion
 

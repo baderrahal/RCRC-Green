@@ -605,3 +605,87 @@ Where: `install/install.ps1` and `uninstall.ps1`, the guard reads the real HKCU
 Input: a session proving install.ps1 in a throwaway profile between Bader's Part 1 and step 20
 Why latent: it refuses loudly and names the Apps uninstall, and step 20 removes the entry
 Found: Setup.exe round, breaker pass 2
+
+## L85 A mosque or school value typed with > or ABOVE gets the base template
+
+Where: `install/component-rules.csv` lines 4 and 7, through `ComponentRule.Matches`
+Input: DAILY MOSQUE >60%, ABOVE 60%, MORE THAN60%, a trailing dot
+Why latent: the only measured spelling is MORE THAN 60%, NG05's is UNKNOWN, Q16
+Found: component rules round, breaker pass 1
+
+## L86 One value with and without the per cent sign files in two folders
+
+Where: `ComponentRule.FolderFor`, the folder keeps % and the match drops it
+Input: DAILY MOSQUE MORE THAN 60% and DAILY MOSQUE MORE THAN 60 on two plots
+Why latent: no measured value leaves the sign off
+Found: component rules round, breaker pass 1
+
+## L87 A folder named as the value reaches a path unchecked
+
+Where: `PlotWorkbookPath.For`, only the UID2 goes through Unusable
+Input: a MOSQUE or SCHOOL value holding < > | " : / or ending in a dot
+Why latent: no measured value holds one, and the pane would throw on the redraw
+Found: component rules round, breaker pass 1, reviewer pass 1
+
+## L88 A row the K75 box wrote last round beats the rule for its value
+
+Where: `ComponentTable.PlaceOf`, rows first, and step 2's line counts rules only
+Input: a shared components.csv line such as NH STREET 20m ROW,STREETS,NH STREET 20m ROW
+Why latent: no components.csv on this machine holds one, team machines UNKNOWN
+Found: component rules round, breaker pass 1
+
+## L89 A shared rules file with a header and no rules places nothing, with no box
+
+Where: `ComponentRules.InForce` and the Setup boxes in `KpiPanel`
+Input: a shared component-rules.csv cut down to its header, or missing the 60 rules
+Why latent: no shared rules file exists yet
+Found: component rules round, breaker pass 1
+
+## L90 Choose no longer offers the folders named after a value
+
+Where: `ComponentFolders.Folders`, which feeds the Choose dropdown
+Input: an unknown mosque value to be filed beside DAILY MOSQUE
+Why latent: no real value reaches a box today, and the value itself is offered first
+Found: component rules round, breaker pass 1, reviewer pass 1
+
+## L91 Words that point at a components.csv now holding its header alone
+
+Where: `ComponentTable.InWords` shipped not there, `install.ps1` refusal, `AlreadyInAFile`
+Input: a missing shipped file, or a press on a value a rule already names
+Why latent: reached only by a missing install file or a value no rule places
+Found: component rules round, reviewer pass 1
+
+## L92 INSTALL-TEAM.txt names the shared rules file and not the shipped one
+
+Where: `install/team/INSTALL-TEAM.txt`, the line on new values
+Input: a team member looking for the rules file with no shared copy made yet
+Why latent: the line is the one the round prompt asked for, and the shipped list answers
+Found: component rules round, reviewer pass 1
+
+## L93 Section 3 prints not in the table for a value a components.csv refused
+
+Where: `KpiReport.cs`, the template column through `TemplateShown`
+Input: a value a components.csv names twice with two answers
+Why latent: the placed by column says it was refused, and no file refuses one today
+Found: component rules round, breaker pass 1
+
+## L94 An exception row typed with the other separator is answered by a rule
+
+Where: `ComponentFile.Parse`, a bad row refuses the key of its first field
+Input: a comma headed components.csv holding DAILY MOSQUE;MOSQUES MORE THAN 60;DAILY MOSQUE
+Why latent: the shipped file is its header alone and no shared file exists yet
+Found: component rules round, breaker pass 2
+
+## L95 A rule line starting with # is skipped as a note without a word
+
+Where: `ComponentTable.IsNote`, read by `ComponentRuleFile.Parse`
+Input: a shared component-rules.csv line #MOSQUE MORE 60,MOSQUES MORE THAN 60,value
+Why latent: no shared rules file exists yet, and a # note is meant to be skipped
+Found: component rules round, breaker pass 2
+
+## L96 Fields trims trailing empty fields at the components.csv width
+
+Where: `ComponentTable.Fields`, HeaderFields.Length rather than the header read
+Input: a header of other than three names in either file
+Why latent: both headers are three names today
+Found: component rules round, breaker pass 2

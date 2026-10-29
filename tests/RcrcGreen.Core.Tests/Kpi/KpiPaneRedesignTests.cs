@@ -135,7 +135,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 KpiPaneWords.ComponentFileSays(shared), KpiPaneWords.ComponentFileSays(taken),
                 KpiPaneWords.ComponentFileSays(taken, true), KpiPaneWords.AlreadyInAFile,
                 KpiPaneWords.LineWritten("C:\\a\\components.csv"), KpiPaneWords.LineNotWritten,
-                KpiPaneWords.PickATemplateAndAFolder
+                KpiPaneWords.PickATemplateAndAFolder,
+                KpiPaneWords.PlacedByRule(1), KpiPaneWords.PlacedByRule(12345),
+                KpiPaneWords.RulesFileSays(ComponentRuleFile.Unreadable(ComponentSource.Shared, "r.csv", "x")),
+                KpiPaneWords.RulesFileSays(ComponentRuleFile.Parse(ComponentSource.Shipped, "r.csv", new[] { "Words,Template,Folder" }))
             });
 
             foreach (KpiSteps steps in EveryStepState())

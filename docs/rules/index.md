@@ -110,6 +110,7 @@ lines. Every part was moved byte for byte on 2026-10-28, and the proof is
 - K73 `docs/rules/kpi-plots-2.md` The 60 per cent templates are versions of their kind
 - K74 `docs/rules/kpi-plots-2.md` A new template is offered on its layout, never used on it alone
 - K75 `docs/rules/kpi-plots-2.md` A component value no file holds is offered one line, never placed by a guess
+- K76 `docs/rules/kpi-plots-2.md` A value no row holds is placed by its words
 - C00 `.claude/rules/core-rules.md` the opening lines of the file
 - C01 `.claude/rules/core-rules.md` A view type is the code and the view name together
 - C02 `docs/rules/core-views-and-grid.md` The plot list is the union of four sources

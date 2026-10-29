@@ -104,51 +104,49 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(templateName, found.Name);
         }
 
-        [Fact]
-        public void TheTableHoldsTheFifteenAndNothingElse()
-        {
-            Assert.Equal(15, ComponentTemplates.All.Count);
-            Assert.Equal(15, ComponentTemplates.All.Select(one => one.Component).Distinct().Count());
-            Assert.All(ComponentTemplates.All,
-                one => Assert.Contains(one.Template, KpiTemplates.All));
-        }
-
         /// <summary>
-        /// Many to one, said as counts rather than left to be read off the list.
+        /// The rows are exceptions only, and the shipped file holds none since the rules.
         /// </summary>
         [Fact]
-        public void TwoValuesMeanMosquesAndFourMeanStreets()
+        public void TheShippedTableHoldsNoRow()
         {
-            Assert.Equal(
-                new[] { "DAILY MOSQUE", "FRIDAY MOSQUE" },
-                ComponentTemplates.ValuesFor(KpiTemplates.Mosques));
-            Assert.Equal(
-                new[] { "NH STRT LESS 20m ROW", "NH STRT 20m ROW", "STREET 30m ROW", "STREET 36m ROW" },
-                ComponentTemplates.ValuesFor(KpiTemplates.Streets));
+            Assert.Empty(ComponentTemplates.All);
+            Assert.Empty(ComponentTemplates.ValuesFor(KpiTemplates.Mosques));
         }
 
         /// <summary>
-        /// A template no value reaches could never be preselected, so the map would have a hole
+        /// Many to one, said as counts rather than left to be read off the list: one rule means
+        /// MOSQUES and four mean STREETS.
+        /// </summary>
+        [Fact]
+        public void OneRuleMeansMosquesAndFourMeanStreets()
+        {
+            Assert.Equal(new[] { "MOSQUE" }, RulesFor(KpiTemplates.Mosques));
+            Assert.Equal(new[] { "STREET", "STRT", "WALKWAY", "ROW" }, RulesFor(KpiTemplates.Streets));
+        }
+
+        /// <summary>
+        /// A template no rule reaches could never be preselected, so the map would have a hole
         /// nothing on screen would show.
         /// </summary>
         [Fact]
-        public void EveryTemplateIsReachedByAtLeastOneValue()
+        public void EveryTemplateIsReachedByAtLeastOneRule()
         {
-            Assert.All(KpiTemplates.All, one => Assert.NotEmpty(ComponentTemplates.ValuesFor(one)));
+            Assert.All(KpiTemplates.All, one => Assert.NotEmpty(RulesFor(one)));
         }
 
         /// <summary>
-        /// The whole value is compared and no part of one matches. PARK is not a value, and
-        /// finding it inside PARKING LOT is the string rule this table replaced.
+        /// Whole words are compared and no part of a word matches. PARK is not a word of
+        /// PARKING LOT, and finding it inside one is the string rule the table replaced.
         /// </summary>
         [Fact]
-        public void NoPartOfAValueMatches()
+        public void NoPartOfAWordMatches()
         {
             Assert.Null(ComponentTemplates.For("PARK"));
-            Assert.Null(ComponentTemplates.For("PARKING"));
-            Assert.Null(ComponentTemplates.For("STREET"));
-            Assert.Null(ComponentTemplates.For("MOSQUE"));
-            Assert.Null(ComponentTemplates.For("NH STRT 20m ROW AND MORE"));
+            Assert.Null(ComponentTemplates.For("PARKINGS"));
+            Assert.Null(ComponentTemplates.For("STREE"));
+            Assert.Null(ComponentTemplates.For("MOSQ"));
+            Assert.Null(ComponentTemplates.For("HEALTHY"));
         }
 
         [Fact]
@@ -156,9 +154,17 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             Assert.Equal("HEALTHCARE", ComponentTemplates.For("  health  ").Name);
             Assert.Equal("STREETS", ComponentTemplates.For("street 36M row").Name);
-            Assert.Null(ComponentTemplates.For("STREET36m ROW"));
+            Assert.Null(ComponentTemplates.For("STREET36m"));
             Assert.Null(ComponentTemplates.For(null));
             Assert.Null(ComponentTemplates.For("   "));
+        }
+
+        private static string[] RulesFor(KpiTemplate template)
+        {
+            return ComponentTable.Shipped.Rules
+                .Where(rule => ReferenceEquals(KpiTemplates.Named(rule.Template), template))
+                .Select(rule => rule.Words)
+                .ToArray();
         }
     }
 
@@ -243,7 +249,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             Assert.Equal(11, choice.Candidates.Count);
             Assert.Equal(
                 "PUMP STATION is not one of the component values this tool knows. Pick the "
-                + "template. The values it knows are in components.csv.",
+                + "template. The values it knows are in components.csv and component-rules.csv.",
                 choice.Why);
         }
 

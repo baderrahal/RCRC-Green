@@ -35,10 +35,12 @@ namespace RcrcGreen.Core.Kpi
     /// report is not in this repository, because nothing under reports/ is ever committed. The
     /// four 60 per cent values were added by the team on 28 Oct.
     ///
-    /// **It is a table and never a string rule.** No string rule turns HEALTH into HEALTHCARE or
-    /// NH STRT 20m ROW into STREETS, and the one that used to run here matched a word of the
-    /// component against a word of the template name: PARK inside PARKING made a parking plot
-    /// look like a park, and every street value matched nothing at all.
+    /// **It is data and never a match against the template's name.** No rule on a template name
+    /// turns HEALTH into HEALTHCARE or NH STRT 20m ROW into STREETS, and the one that used to run
+    /// here matched a word of the component against a word of the template name: PARK inside
+    /// PARKING made a parking plot look like a park, and every street value matched nothing at
+    /// all. Since 29 Oct the words Bader wrote down in component-rules.csv place a value no row
+    /// holds, under <see cref="ComponentRules"/>, and those are whole words he chose.
     ///
     /// **It is many to one.** Two values mean MOSQUES and four mean STREETS.
     ///
@@ -67,11 +69,11 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// The template a value means, or null when no file holds it.
+        /// The template a value means, or null when no row and no rule places it.
         ///
-        /// The whole value is compared through <see cref="ComponentMatch"/>, without case, with
-        /// edge whitespace off and with the spacing forgiven, and nothing else. No part of a
-        /// value matches, so PARK never finds PARKING LOT and STREET never finds STREET 30m ROW.
+        /// Through <see cref="ComponentTable.PlaceOf"/>: an exact row compares the whole value
+        /// through <see cref="ComponentMatch"/>, and a rule compares whole words, so STREET 30m
+        /// ROW reaches STREETS by its word STREET and PARK never finds PARKING LOT.
         /// </summary>
         public static KpiTemplate For(string component)
         {
@@ -79,8 +81,8 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
-        /// Every value that means one template, in the order the table lists them, so the report
-        /// and the pane can say which values a template answers to rather than only its name.
+        /// Every value an exact row sends to one template, in the order the table lists them. The
+        /// rows are exceptions only since the rules, so this names no value a rule places.
         /// </summary>
         public static IReadOnlyList<string> ValuesFor(KpiTemplate template)
         {

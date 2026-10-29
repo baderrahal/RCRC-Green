@@ -21,6 +21,7 @@ Layout this produces:
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\kpi-output-folder.txt
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\ViewFilters.json
   %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\components.csv
+  %APPDATA%\Autodesk\Revit\Addins\2024\RcrcGreen\component-rules.csv
 
 .PARAMETER Configuration
 Which build to install. Release unless you are debugging.
@@ -169,6 +170,15 @@ if (-not (Test-Path -LiteralPath $components)) {
 }
 Copy-Item -LiteralPath $components -Destination $assemblyFolder -Force
 $copied.Add((Join-Path $assemblyFolder 'components.csv'))
+
+# The rules that place a value no components.csv row holds, by its words. Shipped the same way,
+# and a component-rules.csv in the shared templates folder replaces this list when it is there.
+$componentRules = Join-Path $PSScriptRoot 'component-rules.csv'
+if (-not (Test-Path -LiteralPath $componentRules)) {
+    throw "Nothing to install. $componentRules is missing, and without it no component value is placed by a rule."
+}
+Copy-Item -LiteralPath $componentRules -Destination $assemblyFolder -Force
+$copied.Add((Join-Path $assemblyFolder 'component-rules.csv'))
 
 $templatesPointer = Join-Path $assemblyFolder 'templates-folder.txt'
 if (-not (Test-Path -LiteralPath $templatesPointer)) {

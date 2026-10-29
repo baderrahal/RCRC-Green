@@ -5,8 +5,8 @@ using System.Linq;
 namespace RcrcGreen.Core.Kpi
 {
     /// <summary>
-    /// One PRX_Component value no components.csv places, the plots carrying it, and what the
-    /// pane suggests for it.
+    /// One PRX_Component value no components.csv row and no rule places, the plots carrying it,
+    /// and what the pane suggests for it.
     /// </summary>
     public sealed class UnknownComponent
     {
@@ -35,7 +35,8 @@ namespace RcrcGreen.Core.Kpi
     }
 
     /// <summary>
-    /// **A value in no components.csv is never placed by a guess.** Its plots are refused as they
+    /// **A value no row and no rule places is never placed by a guess.** A rule is not a guess:
+    /// it is Bader's words, written down in component-rules.csv. Its plots are refused as they
     /// always were, with the value named, and the pane shows one box per value after a read with
     /// a suggestion a person can take with one press. Taking it writes one line, and only then
     /// does a plot of that value go anywhere.
@@ -93,6 +94,34 @@ namespace RcrcGreen.Core.Kpi
         }
 
         /// <summary>
+        /// Every value carried by a plot that no exact row holds and a rule places, in the order
+        /// the plots list them, each value once however its plots spell it, with what placed it.
+        /// Step 2 counts these on one line, so a value placed by its words is seen and not only
+        /// trusted.
+        /// </summary>
+        public static IReadOnlyList<KeyValuePair<string, ComponentPlacement>> PlacedByRule(
+            IEnumerable<string> plots, Func<string, string> componentOf, ComponentTable table)
+        {
+            if (componentOf == null) throw new ArgumentNullException("componentOf");
+            ComponentTable reading = table ?? ComponentTable.InForce;
+
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var placed = new List<KeyValuePair<string, ComponentPlacement>>();
+
+            foreach (string plot in plots ?? Enumerable.Empty<string>())
+            {
+                string value = (componentOf(plot) ?? string.Empty).Trim();
+                string key = ComponentMatch.Key(value);
+                if (key.Length == 0 || !seen.Add(key)) continue;
+
+                ComponentPlacement how = reading.PlaceOf(value);
+                if (how.Rule != null) placed.Add(new KeyValuePair<string, ComponentPlacement>(value, how));
+            }
+
+            return placed;
+        }
+
+        /// <summary>
         /// The template whose name shares the most words with the value, or null where none shares
         /// one or two share the most.
         /// </summary>
@@ -131,11 +160,11 @@ namespace RcrcGreen.Core.Kpi
 
         private static HashSet<string> Words(string text)
         {
+            // The plural S comes off here only, so SCHOOL meets SCHOOLS for a suggestion and never
+            // for a rule.
             return new HashSet<string>(
-                ComponentMatch.Key(text).Split(' ')
-                    .Select(word => word.TrimEnd('%'))
-                    .Select(word => word.Length > 1 && word.EndsWith("S", StringComparison.Ordinal) ? word.Substring(0, word.Length - 1) : word)
-                    .Where(word => word.Length > 0),
+                ComponentRules.WordsOf(text)
+                    .Select(word => word.Length > 1 && word.EndsWith("S", StringComparison.Ordinal) ? word.Substring(0, word.Length - 1) : word),
                 StringComparer.Ordinal);
         }
     }

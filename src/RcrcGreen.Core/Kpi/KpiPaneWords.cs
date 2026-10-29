@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
@@ -174,6 +175,21 @@ namespace RcrcGreen.Core.Kpi
             return "New template, same layout as " + (sameAs == null ? string.Empty : sameAs.Name);
         }
 
+        public static string PlacedByRule(int howMany)
+        {
+            return Count(howMany, "value placed by rule", "values placed by rule");
+        }
+
+        /// <summary>The line's tooltip, one value a line with the rule that placed it.</summary>
+        public static string PlacedByRuleSays(IEnumerable<KeyValuePair<string, ComponentPlacement>> placed)
+        {
+            return string.Join("\n", (placed ?? Enumerable.Empty<KeyValuePair<string, ComponentPlacement>>())
+                .Select(one => one.Key + ": rule " + one.Value.Rule.Words + ", "
+                    + one.Value.TemplateShown(string.Empty) + ", folder " + one.Value.Folder)
+                .ToArray())
+                + "\n\nAn exact row in " + ComponentTable.FileName + " beats every rule.";
+        }
+
         public static string UnknownValue(string value)
         {
             return "Unknown value " + value;
@@ -202,7 +218,7 @@ namespace RcrcGreen.Core.Kpi
         /// <summary>The tooltip on an unknown value's box, every sentence the box leaves out.</summary>
         public static string UnknownValueSays(UnknownComponent unknown, string sharedPath, string personalPath)
         {
-            return unknown.Value + " is in no components.csv, so its plots go into no workbook. "
+            return unknown.Value + " is in no components.csv and no rule places it, so its plots go into no workbook. "
                 + "Nothing places a value by a guess.\n\n"
                 + (unknown.Suggested == null
                     ? "No known template shares a word with it, so choose one."
@@ -236,7 +252,19 @@ namespace RcrcGreen.Core.Kpi
                 : "has lines not taken");
         }
 
-        public const string AlreadyInAFile = "Not added. A components.csv already names it.";
+        /// <summary>
+        /// A component-rules.csv that was there and was not read, or names a template not found
+        /// here. A shared file not read lets the shipped rules answer, so it is said on the pane.
+        /// </summary>
+        public static string RulesFileSays(ComponentRuleFile file)
+        {
+            string which = file != null && file.Source == ComponentSource.Shared ? "Shared" : "Shipped";
+            return file != null && !file.Read
+                ? which + " component-rules.csv was not read"
+                : which + " component-rules.csv names a template not found here";
+        }
+
+        public const string AlreadyInAFile ="Not added. A components.csv already names it.";
 
         public static string LineWritten(string path)
         {
