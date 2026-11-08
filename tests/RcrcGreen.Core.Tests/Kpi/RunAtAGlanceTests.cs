@@ -179,6 +179,39 @@ namespace RcrcGreen.Core.Tests.Kpi
             }, glance.StreetsArea.Without.ToArray());
         }
 
+        private static KpiCreateRun FormulaRun(string plotId, StreetReferenceAnswer street)
+        {
+            MappedCell cell = KpiTemplates.Streets.CellFor(KpiValue.Area);
+
+            return CreateFixture.Run(
+                template: KpiTemplates.Streets,
+                readings: new[] { CreateFixture.Plot(plotId) },
+                street: street.WithH8(StreetsH8Option.RowTimesLength),
+                outcome: PatchOutcome.Done(37, 36, null, new[]
+                {
+                    new LandedCell(KpiTemplates.Streets.MainSheetName, cell.Cell, "=F8*D8")
+                }, CacheCheck.NotChecked));
+        }
+
+        /// <summary>
+        /// **A FORMULA OVER A MISSING LENGTH IS NOT AN AREA**, K79. The cell landed and shows 0,
+        /// so the glance names the plot rather than counting it among those that got a value.
+        /// </summary>
+        [Fact]
+        public void UnderRowTimesLengthOnlyAWorkedOutAreaCountsAsWritten()
+        {
+            RunGlance glance = RunAtAGlance.Of(Set(
+                FormulaRun("ST-05", StreetReferenceAnswer.Of(20.0, 330.5, "20", "330.5")),
+                FormulaRun("ST-06", StreetReferenceAnswer.WidthOnly(8.0, "8", "its ES_QUANTITY is no length"))));
+
+            Assert.Equal(1, glance.StreetsArea.Written);
+            Assert.Equal(new[]
+            {
+                "ST-06: ROW x Length could not be worked out, its ES_QUANTITY is no length. "
+                + "The H8 formula is =F8*D8 and nothing was taken from Revit."
+            }, glance.StreetsArea.Without.ToArray());
+        }
+
         /// <summary>
         /// **Two counts and a list, not 156 lines.** Which type a plot's area came off is one
         /// row per plot in the section below, and the note is only settled by counting them.

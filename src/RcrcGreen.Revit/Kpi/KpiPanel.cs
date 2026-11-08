@@ -670,6 +670,7 @@ namespace RcrcGreen.Revit.Kpi
             if (sameFolder != null) _body.Children.Add(WarningBox(sameFolder, null));
 
             TheFolderLayout();
+            TheStreetsH8();
 
             _body.Children.Add(PathRow(
                 KpiPaneWords.PdfForms, false, forms, FormsFolder.ReadRaw(), string.Empty, true,
@@ -759,6 +760,44 @@ namespace RcrcGreen.Revit.Kpi
             choice.Click += (sender, e) =>
             {
                 Remembered(FolderLayoutSetting.Remember(layout), FolderLayoutSetting.FileName);
+                RedrawTemplates();
+            };
+            return choice;
+        }
+
+        /// <summary>
+        /// **STREETS H8, K79.** The pick is read off its file on every draw like the layout,
+        /// and with no file it reads Intervention area, Bader's default.
+        /// </summary>
+        private void TheStreetsH8()
+        {
+            StreetsH8Option picked = StreetsH8Setting.Read();
+
+            _body.Children.Add(Section(KpiPaneWords.StreetsH8Title, null, KpiPaneWords.StreetsH8Tip));
+
+            var two = new UniformGrid { Columns = KpiTheme.DetailsColumns };
+            two.Children.Add(StreetsH8Choice(
+                StreetsH8Option.InterventionArea, KpiPaneWords.InterventionArea, KpiPaneWords.InterventionAreaTip, picked));
+            two.Children.Add(StreetsH8Choice(
+                StreetsH8Option.RowTimesLength, KpiPaneWords.RowTimesLength, KpiPaneWords.RowTimesLengthTip, picked));
+            _body.Children.Add(two);
+        }
+
+        private UIElement StreetsH8Choice(StreetsH8Option option, string caption, string tip, StreetsH8Option picked)
+        {
+            var choice = new RadioButton
+            {
+                Content = Caption(caption),
+                GroupName = StreetsH8Setting.FileName,
+                IsChecked = picked == option,
+                Foreground = KpiTheme.Text,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Margin = KpiTheme.Row,
+                ToolTip = Tip(tip)
+            };
+            choice.Click += (sender, e) =>
+            {
+                Remembered(StreetsH8Setting.Remember(option), StreetsH8Setting.FileName);
                 RedrawTemplates();
             };
             return choice;
@@ -1146,7 +1185,7 @@ namespace RcrcGreen.Revit.Kpi
 
                 lines.Add(string.Empty);
                 lines.Add("What " + template.Name + " would fill:");
-                lines.AddRange(TemplateWords.WouldFill(template, Chosen()));
+                lines.AddRange(TemplateWords.WouldFill(template, Chosen(), StreetsH8Setting.Read()));
             }
 
             return string.Join("\n", lines.ToArray());
@@ -2595,7 +2634,7 @@ namespace RcrcGreen.Revit.Kpi
             foreach (WorkbookTick tick in Settled())
             {
                 fills.Add(tick.SettledAs.Name + ", from " + tick.Workbook.FileName + ":");
-                fills.AddRange(TemplateWords.WouldFill(tick.SettledAs, Chosen()).Select(one => "  " + one));
+                fills.AddRange(TemplateWords.WouldFill(tick.SettledAs, Chosen(), StreetsH8Setting.Read()).Select(one => "  " + one));
             }
 
             return new BeforeThePress(

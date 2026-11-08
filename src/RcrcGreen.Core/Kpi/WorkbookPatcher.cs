@@ -127,7 +127,9 @@ namespace RcrcGreen.Core.Kpi
                         landed.Add(new LandedCell(
                             write.SheetName,
                             write.Cell.ToString(),
-                            CellText(zip, sheetParts[write.SheetName], write.Cell)));
+                            write.IsFormula
+                                ? FormulaText(zip, sheetParts[write.SheetName], write.Cell)
+                                : CellText(zip, sheetParts[write.SheetName], write.Cell)));
                     }
 
                     // Read back off the output, the same rule every written cell follows. A
@@ -229,7 +231,13 @@ namespace RcrcGreen.Core.Kpi
                     || child.Name.LocalName == "is"
                     || child.Name.LocalName == "f").Remove();
 
-                if (write.IsText)
+                if (write.IsFormula)
+                {
+                    // An f and no v, the same shape DropCachedResults leaves every other formula
+                    // in, so Excel works it out on open rather than trusting a number from here.
+                    cell.Add(new XElement(ns + "f", write.Stored));
+                }
+                else if (write.IsText)
                 {
                     cell.SetAttributeValue("t", "inlineStr");
                     cell.Add(new XElement(ns + "is",
@@ -455,6 +463,33 @@ namespace RcrcGreen.Core.Kpi
 
         private static string CellText(ZipArchive zip, string partPath, CellRef reference)
         {
+            XElement cell = CellElement(zip, partPath, reference);
+            if (cell == null) return null;
+
+            XElement inline = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "is");
+            if (inline != null) return string.Concat(inline.Descendants()
+                .Where(child => child.Name.LocalName == "t").Select(child => child.Value));
+
+            XElement value = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "v");
+            return value == null ? string.Empty : value.Value;
+        }
+
+        /// <summary>
+        /// A formula cell as it landed, with its equals sign, so the report prints what the
+        /// file holds. Empty where the cell holds no formula, which then reads as not landed.
+        /// </summary>
+        private static string FormulaText(ZipArchive zip, string partPath, CellRef reference)
+        {
+            XElement cell = CellElement(zip, partPath, reference);
+            XElement formula = cell == null
+                ? null
+                : cell.Elements().FirstOrDefault(child => child.Name.LocalName == "f");
+
+            return formula == null ? string.Empty : "=" + formula.Value;
+        }
+
+        private static XElement CellElement(ZipArchive zip, string partPath, CellRef reference)
+        {
             XDocument sheet = WorkbookPackage.Read(zip, partPath);
             if (sheet == null) return null;
 
@@ -464,17 +499,10 @@ namespace RcrcGreen.Core.Kpi
                 .Elements().Where(element => element.Name.LocalName == "c"))
             {
                 CellRef parsed = CellRef.TryParse((string)cell.Attribute("r"));
-                if (parsed == null || parsed.Row != reference.Row || parsed.ColumnNumber != reference.ColumnNumber)
+                if (parsed != null && parsed.Row == reference.Row && parsed.ColumnNumber == reference.ColumnNumber)
                 {
-                    continue;
+                    return cell;
                 }
-
-                XElement inline = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "is");
-                if (inline != null) return string.Concat(inline.Descendants()
-                    .Where(child => child.Name.LocalName == "t").Select(child => child.Value));
-
-                XElement value = cell.Elements().FirstOrDefault(child => child.Name.LocalName == "v");
-                return value == null ? string.Empty : value.Value;
             }
 
             return null;

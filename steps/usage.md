@@ -13,6 +13,7 @@ One row per session, added after its phase merges. Taken from
 | 2026-10-29 | f0ee7c3b | PRX_Component values placed by word rules | 34,612,438 | 15.15 |
 | 2026-10-29 | 32273d1a | Region areas and folder layout, two pull requests | 85,097,374 | 30.84 |
 | 2026-10-29 | ec3ab4cb | F5 slash trees, the PDF form by template, the walkway width | 51,770,282 | 18.56 |
+| 2026-11-08 | 6cd97115 | STREETS H8 option, taken before the merge and the kit rebuild | 21,551,832 | 15.61 |
 
 The first row, so no phase before it to compare against. 97.7 % of it was cache read.
 

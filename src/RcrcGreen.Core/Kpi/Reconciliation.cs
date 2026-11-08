@@ -217,7 +217,25 @@ namespace RcrcGreen.Core.Kpi
         {
             if (template == null) throw new ArgumentNullException("template");
 
-            bool areaWanted = !template.TakesNoArea;
+            return Of(ticked, readings, totals, identicalAreasConfirmed, template, !template.TakesNoArea, false);
+        }
+
+        /// <summary>
+        /// The same, with whether an area is wanted said outright. **False is what a press under
+        /// ROW x Length passes on STREETS**, K79, so no region is asked about and none refuses it.
+        /// <paramref name="areaFromTheStreetFile"/> says that press worked an area out, so a plot
+        /// with no planting is not listed as having contributed nothing.
+        /// </summary>
+        public static Reconciliation Of(
+            IEnumerable<string> ticked,
+            IEnumerable<PlotReading> readings,
+            IEnumerable<Totalled> totals,
+            bool identicalAreasConfirmed,
+            KpiTemplate template,
+            bool areaWanted,
+            bool areaFromTheStreetFile)
+        {
+            if (template == null) throw new ArgumentNullException("template");
 
             List<string> wanted = (ticked ?? Enumerable.Empty<string>())
                 .Where(one => !string.IsNullOrWhiteSpace(one))
@@ -365,7 +383,7 @@ namespace RcrcGreen.Core.Kpi
                 areaWanted
                     ? Named(held, one => one.ChosenRegion == null || !one.ChosenRegion.HoldsAnArea)
                     : new List<string>(),
-                Nothing(held, areaWanted),
+                Nothing(held, areaWanted, areaFromTheStreetFile),
                 identical,
                 refusals,
                 areaWanted,
@@ -394,7 +412,8 @@ namespace RcrcGreen.Core.Kpi
 
         public const string ReadRefused = "a schedule read on it was refused, see above";
 
-        private static IReadOnlyList<PlotAndReason> Nothing(List<PlotReading> readings, bool areaWanted)
+        private static IReadOnlyList<PlotAndReason> Nothing(
+            List<PlotReading> readings, bool areaWanted, bool areaFromTheStreetFile)
         {
             var found = new List<PlotAndReason>();
 
@@ -402,7 +421,8 @@ namespace RcrcGreen.Core.Kpi
             {
                 bool trees = reading.SoftscapeRead && reading.Species.Count > 0;
                 bool ground = reading.ShrubsAndLawnRead && reading.Subtotals.Count > 0;
-                bool area = areaWanted && reading.ChosenRegion != null && reading.ChosenRegion.HoldsAnArea;
+                bool area = areaFromTheStreetFile
+                    || (areaWanted && reading.ChosenRegion != null && reading.ChosenRegion.HoldsAnArea);
                 if (trees || ground || area) continue;
 
                 var why = new List<string>();

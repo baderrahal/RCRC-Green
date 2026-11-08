@@ -4,6 +4,50 @@ Newest entry first.
 
 ---
 
+## 2026-11-08, STREETS H8 as the Revit area or the formula =F8*D8
+
+**Goal.** Two options for H8 on the STREETS template, picked in Setup, the Revit area by default.
+
+**Done, K79.** `CellWrite.Formula` and the patcher write a formula with no cached result, on the
+recalculation flags already there. `StreetsH8` holds the option. Under ROW x Length H8 holds
+=F8*D8, D8 and F8 are written as before, the tool's area is D8 x F8, no filled region is read, the
+reconciliation asks nothing, and held readings are not reused across a change of option. With no
+usable ROW or length the formula is still written and the plot's area line names what is missing.
+A Setup row remembered in `kpi-streets-h8.txt`, one line in INSTALL-TEAM.txt, and the line under
+the report's folder layout line names the option.
+
+**Done, found on the way.** The Roads form STREETS and walkway plots use has no Area box, Q23, so
+the PDF Area in the brief does not exist on those PDFs. Row and Length are written as before. Total
+areas to be greened reads no area on any form. Neither changed.
+
+**Checked.** RAN after the last code file: Revit Release build 0 warnings 0 errors, 2721 tests
+passed against 2667 in the last entry, 28 of 28 hook cases. Option 1 is held by a test against the
+SHA-256 of every part of a built STREETS workbook, taken off the unchanged code at 43c52ae before
+any file changed, zip timestamps left out. Six deliberate breaks turned 3, 2, 1, 7, 5 and 1 tests
+red. The real R3 STREETS template and Scope Validation 21072026 through Core both ways, opened in
+Excel 16: under ROW x Length H8 reads =F8*D8 and shows 22070.32838, which is 20 x 1103.516419 and
+the tool's own number, and under Intervention area H8 is the plain number it was given. The
+template's own D8, F8 and H8 measured empty. Two review passes. REAL fixed: the report's option
+line false on a mixed press and on a plot with no workbook, a formula over empty cells counted as a
+plot with an area, a line saying H8 holds a formula on a plot that wrote nothing, a street plot
+with an area listed as contributing nothing, two lines misdescribing the formula, and the captions
+held outside KpiPaneWords. The last wording fix had no third pass, two being the cap. L129 to L133
+LATENT.
+
+**UNKNOWN.** NG05 could not be read here, nothing ran in Revit, so the Setup row, H8 on a model's
+own plot under both options and the walkway's row are in Bader's steps.
+
+**Remains.** The kit from main after the merge. Bader's pass.
+
+**Known bugs.** None REAL. A walkway under ROW x Length shows 0 in H8 until it has a length, Q22,
+by Bader's rule that the formula is still written.
+
+**Next.** Bader's pass in `steps/03_your_steps.md`.
+
+**Your turn.** Q23, then Q20 to Q22, Q13 and Q16 to Q19. The pass.
+
+---
+
 ## 2026-10-29, slash trees, the PDF form by template, and the walkway's road width
 
 **Goal.** Bader's three NG05 faults: slash trees counted nowhere, no PDF for a walkway, no ROW.

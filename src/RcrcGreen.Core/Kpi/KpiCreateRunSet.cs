@@ -253,11 +253,13 @@ namespace RcrcGreen.Core.Kpi
             IReadOnlyList<SharedUid2Group> sharing = null,
             IReadOnlyList<TreeListSheetCheck> treeLists = null,
             bool pdfsWanted = false,
-            FolderLayout layout = FolderLayout.None)
+            FolderLayout layout = FolderLayout.None,
+            StreetsH8Option streetsH8 = StreetsH8Option.InterventionArea)
         {
             if (split == null) throw new ArgumentNullException("split");
 
             Layout = layout;
+            StreetsH8 = streetsH8;
             PdfsWanted = pdfsWanted;
             TreeLists = treeLists ?? new List<TreeListSheetCheck>();
             Sharing = sharing ?? new List<SharedUid2Group>();
@@ -288,6 +290,9 @@ namespace RcrcGreen.Core.Kpi
         /// without one, which the report says rather than naming a layout nobody picked.
         /// </summary>
         public FolderLayout Layout { get; }
+
+        /// <summary>The STREETS H8 option the press ran under, read once at the press, K79.</summary>
+        public StreetsH8Option StreetsH8 { get; }
 
         /// <summary>
         /// Whether a forms folder was set when this press ran, read once at the press. It is

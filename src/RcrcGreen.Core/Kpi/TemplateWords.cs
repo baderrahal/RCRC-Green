@@ -80,7 +80,8 @@ namespace RcrcGreen.Core.Kpi
         /// What the pick would fill, line by line. This is the whole point of the round: a
         /// person checks the map against the annotated workbook before anything is written.
         /// </summary>
-        public static IReadOnlyList<string> WouldFill(KpiTemplate template, ChosenParameters chosen)
+        public static IReadOnlyList<string> WouldFill(
+            KpiTemplate template, ChosenParameters chosen, StreetsH8Option streetsH8)
         {
             if (template == null) throw new ArgumentNullException("template");
 
@@ -89,7 +90,10 @@ namespace RcrcGreen.Core.Kpi
 
             foreach (MappedCell cell in template.Cells)
             {
-                lines.Add("  " + cell.Cell + "  " + KpiTemplates.SourceOf(cell.Value, chosen));
+                lines.Add("  " + cell.Cell + "  " + (cell.Value == KpiValue.Area
+                    && StreetsH8.Effective(template, streetsH8) == StreetsH8Option.RowTimesLength
+                        ? "the formula =" + StreetsH8.Formula(template) + ", the road width times the length, picked in Setup"
+                        : KpiTemplates.SourceOf(cell.Value, chosen)));
             }
 
             if (template.TakesNoArea)

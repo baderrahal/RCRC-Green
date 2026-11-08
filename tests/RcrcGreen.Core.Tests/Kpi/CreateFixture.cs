@@ -173,7 +173,8 @@ namespace RcrcGreen.Core.Tests.Kpi
             ProjectUnit areaUnit = null,
             LinksLoaded links = null,
             LabelledCells labels = null,
-            PlotWorkbookPath where = null)
+            PlotWorkbookPath where = null,
+            StreetReferenceAnswer street = null)
         {
             KpiTemplate which = template ?? KpiTemplates.Mosques;
 
@@ -197,7 +198,10 @@ namespace RcrcGreen.Core.Tests.Kpi
                 "PRX_Plot_UID2",
                 "KING FAHD",
                 held,
-                Reconciliation.Of(ticked ?? held.Select(one => one.PlotId).ToArray(), held, null, false, which),
+                Reconciliation.Of(
+                    ticked ?? held.Select(one => one.PlotId).ToArray(), held, null, false, which,
+                    !which.TakesNoArea && (street == null || !street.UsesRowTimesLength),
+                    street != null && street.UsesRowTimesLength && street.AreaWorkedOut),
                 KpiCreatePlan.Of(which, null, null, "KING FAHD", area, null, null,
                     matches, "2026-09-09", "xx", "bb", CreateFixture.NoStreetFile,
                     labels ?? RowFive(which.MainSheetName)),
@@ -215,7 +219,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 readingsSource,
                 templatesListed,
                 areaUnit,
-                links);
+                links,
+                street);
         }
 
         public static PlotReading Plot(

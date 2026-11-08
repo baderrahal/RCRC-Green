@@ -137,7 +137,8 @@ namespace RcrcGreen.Core.Kpi
             // **THE FOLDER LAYOUT IS THE FILE'S FIRST LINE**, under the build stamp the handler
             // puts above it, Bader's decision of 29 October, so the tree a person is about to
             // open is named before anything else in the file.
-            return FolderLayouts.InWords(set.Layout) + "\r\n" + contents + body;
+            return FolderLayouts.InWords(set.Layout) + "\r\n"
+                + StreetsH8.InWords(set.StreetsH8) + "\r\n" + contents + body;
         }
 
         private static void ThePane(StringBuilder report, BeforeThePress before)
@@ -703,6 +704,11 @@ namespace RcrcGreen.Core.Kpi
                     one.PlotId,
                     (one.Street.WidthFound ? "road width answered, total length not. " : "neither answered. ")
                         + one.Street.Why));
+            }
+
+            if (missed.Count > 0 && set.StreetsH8 == StreetsH8Option.RowTimesLength)
+            {
+                Line(report, "  Under ROW x Length a written workbook for these plots holds the formula over an empty D8 or F8.");
             }
 
             Line(report, string.Empty);
@@ -1351,7 +1357,7 @@ namespace RcrcGreen.Core.Kpi
                 held.WithoutShrubsAndLawn, held.WithMoreThanOneShrubsAndLawn));
             Line(report, held.AreaWanted
                 ? "  " + Counted("plots with an area", held.Read.Count - held.WithoutArea.Count, held.WithoutArea)
-                : "  plots with an area   " + AreaNotRead);
+                : "  plots with an area   " + AreaNotReadFor(run));
 
             // One line that would have shown Street Design on the first twenty plot run rather
             // than the fourth.
@@ -1392,7 +1398,7 @@ namespace RcrcGreen.Core.Kpi
             }
             else
             {
-                Line(report, "  AREA, SQUARE METRES, " + AreaNotRead);
+                Line(report, "  AREA, SQUARE METRES, " + AreaNotReadFor(run));
                 Line(report, string.Empty);
             }
 
@@ -1406,6 +1412,17 @@ namespace RcrcGreen.Core.Kpi
         /// words are the pane's own line for the same condition, with why nothing was refused.
         /// </summary>
         public static readonly string AreaNotRead = "not read. " + CreateWords.TakesNoArea;
+
+        /// <summary>
+        /// The same place in a run under ROW x Length, K79, where no region is read because the
+        /// area comes from the street file and the sentence above would be false.
+        /// </summary>
+        private static string AreaNotReadFor(KpiCreateRun run)
+        {
+            return run.StreetsH8 == StreetsH8Option.RowTimesLength
+                ? StreetsH8.AreaInWords(run.Street)
+                : AreaNotRead;
+        }
 
         /// <summary>
         /// Each plot's own number and the total underneath it, so the arithmetic can be checked
@@ -1543,7 +1560,9 @@ namespace RcrcGreen.Core.Kpi
                 }
 
                 RegionArea chosen = reading.ChosenRegion;
-                Line(report, "    area: " + (!run.Reconciliation.AreaWanted
+                Line(report, "    area: " + (run.StreetsH8 == StreetsH8Option.RowTimesLength
+                    ? StreetsH8.AreaInWords(run.Street)
+                    : !run.Reconciliation.AreaWanted
                     ? "not read, the template takes none"
                     : chosen == null
                         ? "none chosen"
@@ -1800,7 +1819,7 @@ namespace RcrcGreen.Core.Kpi
             Line(report, string.Empty);
             Line(report, "  FUNCTIONS THE READER'S EXCEL MAY NOT HAVE, " + check.FunctionsExcelMayNotHave.Count
                 + ". The file stores a function with the _xlfn. prefix when an older Excel does not have it,");
-            Line(report, "  and such a cell reads #NAME? there. The tool writes no formula and did not put these here.");
+            Line(report, "  and such a cell reads #NAME? there. The tool writes none of these functions and did not put these here.");
             foreach (FunctionUse one in check.FunctionsExcelMayNotHave)
             {
                 Line(report, "    _xlfn." + one.Name + " in " + Count(one.Cells, "cell")
@@ -2144,7 +2163,7 @@ namespace RcrcGreen.Core.Kpi
             }
             else
             {
-                Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF: " + AreaNotRead);
+                Line(report, "  WHICH REGION EACH PLOT'S AREA CAME OFF: " + AreaNotReadFor(run));
             }
 
             Line(report, string.Empty);

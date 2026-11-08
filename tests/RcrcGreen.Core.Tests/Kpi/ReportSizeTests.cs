@@ -167,8 +167,9 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             string report = KpiCreateReport.WriteAll(set, new DateTime(2026, 9, 14, 19, 52, 0));
 
-            // The folder layout line is the one line above the contents, K78.
-            Assert.StartsWith("Folder layout: none picked, so no path was built.\r\n== " + KpiCreateReport.ContentsHeading + " (", report);
+            // The folder layout line and the H8 option are the two lines above the contents, K78, K79.
+            Assert.StartsWith("Folder layout: none picked, so no path was built.\r\n"
+                + "STREETS H8: Intervention area, the Revit area off the 00 link.\r\n== " + KpiCreateReport.ContentsHeading + " (", report);
             Assert.Contains("    lines |  blocks |    each | section", report);
             Assert.Contains(KpiCreateReport.GlanceHeading, report);
             Assert.Contains("lines in the body below. This block is above them and is not in the counts.", report);

@@ -146,6 +146,22 @@ namespace RcrcGreen.Core.Kpi
             @"Output\<main>\<value folder>\<UID2>, for example "
             + @"Output\FRIDAY MOSQUE\FRIDAY MOSQUE MORE THAN 60%\<UID2> and "
             + @"Output\STREETS\NH STREET 20m ROW\<UID2>. Parks, healthcare and parking stay one level.";
+
+        public const string StreetsH8Title = "STREETS H8";
+        public const string InterventionArea = "Intervention area";
+        public const string RowTimesLength = "ROW x Length";
+
+        public const string StreetsH8Tip =
+            "What the STREETS area cell holds. Intervention area is the default and writes the Revit "
+            + "area as before. It is remembered beside the installed add-in.";
+
+        public const string InterventionAreaTip =
+            "H8 holds the intervention area off the 00 link, and a plot whose regions differ is asked about.";
+
+        public const string RowTimesLengthTip =
+            "H8 holds the formula =F8*D8, ROAD_WIDTH times length off the street reference file. "
+            + "No filled region is read or asked about on a street plot.";
+
         public const string Templates = "Templates";
         public const string Output = "Output";
         public const string PdfForms = "PDF forms";
