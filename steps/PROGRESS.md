@@ -1,16 +1,15 @@
-STATE WAITING for a fresh session, 2026-10-29
+STATE WAITING for a fresh session, 2026-11-08
 
 ## Now
-- Tree names match with every slash out and spaces as one, K36, F5
-- The PDF form follows the plot's template, so a walkway gets Roads, K35.01
-- A street reference row in sqm gives its road width and no length, K14
-- The create report's street section prints the answer the press used
+- STREETS H8 is the Revit area or the formula =F8*D8, picked in Setup, K79
+- Intervention area is the default and no workbook changes for anyone who does not pick
+- The Roads PDF has no Area box, Q23
 - Nothing has run in Revit since the pane redesign
 
 ## Next
 1. This session rebuilds the kit from main after this merge, then stops
-2. Bader runs steps/03_your_steps.md: the Setup.exe, NG05, then his full install back
-3. Bader answers Q20 to Q22, then Q13 and Q16 to Q19
+2. Bader runs steps/03_your_steps.md: the Setup.exe, then ROW x Length and Intervention area
+3. Bader answers Q23, then Q20 to Q22, Q13 and Q16 to Q19
 4. F3, the RCRC Green folder name in Shared, in a fresh session started with steps/START.md
 
 ## Waiting for Bader
@@ -23,6 +22,7 @@ STATE WAITING for a fresh session, 2026-10-29
 - Q20 A slash with no space joins two words
 - Q21 The Roads form has no Project Type box
 - Q22 The walkway's total length
+- Q23 The Roads form has no Area box
 
 ## Blockers and known bugs
 - python3 on this machine is a shim in C:\Users\bader\bin, outside the repo
@@ -30,7 +30,7 @@ STATE WAITING for a fresh session, 2026-10-29
 - While the Setup is installed, install.ps1 and uninstall.ps1 refuse until it is uninstalled in Apps
 - L85: a value typed DAILY MOSQUE >60% goes to MOSQUES with no box, Q16
 - L117: files of earlier presses stay in the old folders and nothing names them
-- A walkway's total length stays empty, Q22
+- A walkway's total length stays empty, Q22, so under ROW x Length its H8 shows 0
 
 ## Where things are
 - Rules: .claude/rules for every turn, the rest by id through docs/rules/index.md
@@ -40,5 +40,6 @@ STATE WAITING for a fresh session, 2026-10-29
 - Component rows: install/components.csv. Rules with Main: install/component-rules.csv. Map in
   design/component-wiring.md
 - PDF form per template: PdfForms.ByTemplate in Core, K35.01
+- STREETS H8 option: StreetsH8 in Core, K79
 - Kit: install/build-team-kit.ps1, install/team/ and its Setup script, the output in
   Documents\RCRC-Green-Team-Kit. Proof: steps/runs/2026-10-28-setup-exe/

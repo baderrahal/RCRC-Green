@@ -40,10 +40,12 @@ namespace RcrcGreen.Core.Kpi
             ReadingsSource readingsSource = null,
             TemplateListing templatesListed = null,
             ProjectUnit areaUnit = null,
-            LinksLoaded links = null)
+            LinksLoaded links = null,
+            StreetReferenceAnswer street = null)
         {
             if (reconciliation == null) throw new ArgumentNullException("reconciliation");
 
+            Street = street;
             Links = links ?? LinksLoaded.NotRead;
             ExistingList = existingList;
             ProposedList = proposedList;
@@ -70,6 +72,17 @@ namespace RcrcGreen.Core.Kpi
             Ungrouped = Held(ungrouped);
             Outcome = outcome;
             Timing = timing ?? RunTiming.NotTimed;
+        }
+
+        /// <summary>
+        /// What the street file said for this plot and which H8 option it was used under. Null
+        /// on a run built without one, which reads as Option 1.
+        /// </summary>
+        public StreetReferenceAnswer Street { get; }
+
+        public StreetsH8Option StreetsH8
+        {
+            get { return Street == null ? StreetsH8Option.InterventionArea : Street.H8; }
         }
 
         public string DocumentTitle { get; }

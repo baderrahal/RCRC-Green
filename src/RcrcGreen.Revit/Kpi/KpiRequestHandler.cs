@@ -280,6 +280,8 @@ namespace RcrcGreen.Revit.Kpi
         // the scan reuses the report it wrote.
         private string _scanHeadline = string.Empty;
 
+        private StreetsH8Option _streetsH8 = StreetsH8Option.InterventionArea;
+
         /// <summary>
         /// The plots and the two lists the dropdowns offer, read in one pass. The component
         /// per plot comes with them, because it is what preselects a template and asking for
@@ -477,6 +479,10 @@ namespace RcrcGreen.Revit.Kpi
             // report's first lines name the same one.
             FolderLayout layout = FolderLayoutSetting.Read();
 
+            // The STREETS H8 option, read once with the layout, so the whole press and the
+            // report's first lines name the same one, K79.
+            _streetsH8 = StreetsH8Setting.Read();
+
             // The reference file is read ONCE for the whole press. It is 8,353 rows and every
             // street plot asks the same copy of it.
             StreetReferenceFile streets = StreetReferenceFile.In(StreetReferenceFileSetting.Read());
@@ -633,7 +639,7 @@ namespace RcrcGreen.Revit.Kpi
                 document.Title, split, runs, outcomes,
                 RunTiming.Of(whole.Elapsed.TotalSeconds, readSeconds),
                 plotOutcomes, streets, KpiPlotReader.Plots(document),
-                PlotListFile.In(PlotListFileSetting.Read()), sharing, treeLists, pdfsWanted, layout);
+                PlotListFile.In(PlotListFileSetting.Read()), sharing, treeLists, pdfsWanted, layout, _streetsH8);
 
             Progressed?.Invoke(ProgressWords.WritingTheReport);
             DateTime writtenAt = DateTime.Now;
@@ -685,7 +691,8 @@ namespace RcrcGreen.Revit.Kpi
             // of the seven since the client emptied STREETS H8 and said it comes off the 00
             // link. STREETS reads its regions like every other template now, and it does so
             // because this asks the MAP rather than the template's name.
-            bool areaWanted = !pick.Template.TakesNoArea;
+            // Under ROW x Length nothing asks a region either, K79, so none is read.
+            bool areaWanted = StreetsH8.ReadsRegions(pick.Template, _streetsH8);
 
             // **A CHOICE MADE AFTER A REFUSAL IS APPLIED TO WHAT WAS ALREADY READ.** The run this
             // template produced last press is the record, Core says whether it can answer this
@@ -693,7 +700,8 @@ namespace RcrcGreen.Revit.Kpi
             // template with that template's own share of the plots.
             ReadingsSource source = HeldReadings.Decide(
                 asked.HeldRunFor(pick.Template), document.Title, pick.Template, pick.TemplatePath,
-                asked.ComponentParameter, asked.ReferenceParameter, share.Plots);
+                asked.ComponentParameter, asked.ReferenceParameter, share.Plots,
+                StreetsH8.Effective(pick.Template, _streetsH8));
 
             ProjectUnit areaUnit;
             if (source.Reused)
@@ -1097,7 +1105,14 @@ namespace RcrcGreen.Revit.Kpi
             var readings = new List<PlotReading> { held };
             var mine = new[] { held.PlotId };
 
-            Totalled area = KpiMerge.Area(readings);
+            // Only STREETS asks the reference file, and it is asked per plot on this plot's own
+            // UID2 rather than on whatever the user picked under Reference. The answer carries
+            // the H8 option, so the plan and the PDF cannot be told two different things.
+            StreetReferenceAnswer street = ReferenceEquals(pick.Template, KpiTemplates.Streets)
+                ? streets.For(held.Uid2).WithH8(StreetsH8.Effective(pick.Template, _streetsH8))
+                : StreetReferenceAnswer.Nothing(KpiCreatePlan.NotAStreetTemplate);
+
+            Totalled area = StreetsH8.Area(held.PlotId, readings, street);
             Totalled shrubs = KpiMerge.Shrubs(readings);
             Totalled lawn = KpiMerge.Lawn(readings);
             AgreedValue component = KpiMerge.Component(readings);
@@ -1105,7 +1120,8 @@ namespace RcrcGreen.Revit.Kpi
 
             Reconciliation reconciliation = Reconciliation.Of(
                 mine, readings, new[] { area, shrubs, lawn }, asked.IdenticalAreasConfirmed,
-                pick.Template);
+                pick.Template, StreetsH8.ReadsRegions(pick.Template, _streetsH8),
+                street.UsesRowTimesLength && street.AreaWorkedOut);
 
             IReadOnlyList<MergedSpecies> merged = KpiMerge.Species(readings, counted);
 
@@ -1120,12 +1136,6 @@ namespace RcrcGreen.Revit.Kpi
                 : filing.Where;
 
             trail.Filing(where);
-
-            // Only STREETS asks the reference file, and it is asked per plot on this plot's own
-            // UID2 rather than on whatever the user picked under Reference.
-            StreetReferenceAnswer street = ReferenceEquals(pick.Template, KpiTemplates.Streets)
-                ? streets.For(held.Uid2)
-                : StreetReferenceAnswer.Nothing(KpiCreatePlan.NotAStreetTemplate);
 
             KpiCreatePlan plan = KpiCreatePlan.Of(
                 pick.Template, component, reference, location, area, shrubs, lawn,
@@ -1166,7 +1176,7 @@ namespace RcrcGreen.Revit.Kpi
                 readings, reconciliation, plan, area, shrubs, lawn, component, reference,
                 merged, KpiMerge.Ungrouped(readings), outcome,
                 RunTiming.Of(readSeconds, source.Reused ? 0.0 : readSeconds),
-                existing, proposed, source, asked.TemplatesListed, areaUnit, _scannedLinks);
+                existing, proposed, source, asked.TemplatesListed, areaUnit, _scannedLinks, street);
 
             runs.Add(run);
 

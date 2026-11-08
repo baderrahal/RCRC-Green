@@ -278,7 +278,8 @@ namespace RcrcGreen.Core.Tests.Kpi
                 .Split(new[] { "\r\n" }, StringSplitOptions.None);
 
             Assert.Equal(line, lines[0]);
-            Assert.Equal("== WHAT IS IN THIS FILE (12) ==", lines[1]);
+            Assert.Equal("STREETS H8: Intervention area, the Revit area off the 00 link.", lines[1]);
+            Assert.Equal("== WHAT IS IN THIS FILE (12) ==", lines[2]);
             Assert.Single(lines, one => one.StartsWith("Folder layout: ", StringComparison.Ordinal));
         }
     }

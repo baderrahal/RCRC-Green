@@ -249,6 +249,9 @@ else changed, because `KpiTemplate.TakesNoArea` reads the MAP and every path tha
 asks that one thing. **H8 is hard coded nowhere.** The letters on these sheets have moved before
 and row 7 proved it, so the cell is taken off the template the same way every other value is.
 
+Setup can now put the formula =F8*D8 in H8 instead, K79. This section is what Intervention area,
+the default, does.
+
 ## SIX CELLS ON THE MAIN SHEET, EVERY ONE FOUND BY A LABEL AND NEVER BY A LETTER
 
 **Bader's answer: Character is always Urban Area Zone and Context is always Urban.** They come

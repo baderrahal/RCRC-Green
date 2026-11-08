@@ -820,6 +820,10 @@ namespace RcrcGreen.Core.Kpi
             MappedCell cell = run.Template == null ? null : run.Template.CellFor(KpiValue.Area);
             if (cell == null || run.Outcome == null) return false;
 
+            // A formula over a missing width or length has landed and shows nothing worth the
+            // name, so it is not counted as a plot that got a value, K79.
+            if (run.StreetsH8 == StreetsH8Option.RowTimesLength && !run.Street.AreaWorkedOut) return false;
+
             string wanted = CellRef.Parse(cell.Cell).ToString();
 
             return run.Outcome.Landed.Any(one =>
@@ -842,6 +846,11 @@ namespace RcrcGreen.Core.Kpi
             if (run.Outcome == null || !run.Outcome.Written)
             {
                 return CreateWords.WhyThisOneWroteNothing(run);
+            }
+
+            if (run.StreetsH8 == StreetsH8Option.RowTimesLength && !run.Street.AreaWorkedOut)
+            {
+                return StreetsH8.AreaInWords(run.Street);
             }
 
             NotWritten skipped = run.Plan == null

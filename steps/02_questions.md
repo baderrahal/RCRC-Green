@@ -224,3 +224,14 @@ Questions asked before this file existed are in each task's own log and are not 
     client to give walkway rows a length in m
 
     Answer:
+
+23. Your STREETS H8 note names the PDF Area field, and the Roads form STREETS and walkway plots
+    use has no Area box, only Row and Length, read off K35.01 and PdfForms.Roads. So under either
+    H8 option no PDF box carries the area on a street plot, and Total areas to be greened is
+    canopy plus planting plus lawn with no area in it, your decision of 15 September. Under ROW x
+    Length the two numbers H8 multiplies are the PDF's Row and Length, the length in km.
+
+    Options: A leave the form as the client issued it, Row and Length are the two numbers of the
+    area. B ask the client for an Area box on the Roads form, and fill it when it comes
+
+    Answer:

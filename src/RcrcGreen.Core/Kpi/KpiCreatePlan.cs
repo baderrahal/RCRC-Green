@@ -204,7 +204,19 @@ namespace RcrcGreen.Core.Kpi
             // it on all seven, so it is found the same way as the three above.
             AgreedAtTheLabel(template, LabelledPlaces.ReferenceName, KpiValue.Reference, reference, labels, writes, skipped);
             Text(template, KpiValue.Location, location, writes, skipped);
-            Number(template, KpiValue.Area, area, writes, skipped);
+
+            // **THE STREETS H8 OPTION, K79.** The formula goes in whether or not the street file
+            // answered, Bader's decision, because the two cells it reads are the team's to fix.
+            if (street.UsesRowTimesLength && StreetsH8.HasTheCells(template))
+            {
+                writes.Add(CellWrite.Formula(
+                    template.MainSheetName, template.CellFor(KpiValue.Area).Cell, StreetsH8.Formula(template)));
+            }
+            else
+            {
+                Number(template, KpiValue.Area, area, writes, skipped);
+            }
+
             Number(template, KpiValue.Shrubs, shrubs, writes, skipped);
             Number(template, KpiValue.Lawn, lawn, writes, skipped);
 

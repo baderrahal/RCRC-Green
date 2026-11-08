@@ -91,6 +91,58 @@ namespace RcrcGreen.Core.Kpi
 
         public string PrintedLength { get; }
 
+        /// <summary>
+        /// The H8 option this answer is used under, K79. It rides on the answer because the
+        /// plan and the PDF already both require the answer, so neither can be handed one and
+        /// miss the other. Option 1 unless <see cref="WithH8"/> says otherwise.
+        /// </summary>
+        public StreetsH8Option H8 { get; private set; }
+
+        public bool UsesRowTimesLength
+        {
+            get { return H8 == StreetsH8Option.RowTimesLength; }
+        }
+
+        /// <summary>The same answer, used under this option.</summary>
+        public StreetReferenceAnswer WithH8(StreetsH8Option option)
+        {
+            var copy = (StreetReferenceAnswer)MemberwiseClone();
+            copy.H8 = option;
+            return copy;
+        }
+
+        /// <summary>
+        /// Whether D8 x F8 gives an area. **Nought is no area**, because the formula would then
+        /// show 0 and the PDF would carry it as though somebody measured it.
+        /// </summary>
+        public bool AreaWorkedOut
+        {
+            get { return Found && Width > 0.0 && Length > 0.0; }
+        }
+
+        /// <summary>The road width times the length, in square metres.</summary>
+        public double RowTimesLength
+        {
+            get { return Width * Length; }
+        }
+
+        /// <summary>
+        /// What is missing, in the file's own words where it gave a reason, empty where the area
+        /// was worked out.
+        /// </summary>
+        public string WhyNoArea
+        {
+            get
+            {
+                if (AreaWorkedOut) return string.Empty;
+
+                return Found
+                    ? StreetReferenceFile.WidthColumn + " reads " + PrintedWidth + " and "
+                        + StreetReferenceFile.QuantityColumn + " reads " + PrintedLength + ", which gives no area"
+                    : Why;
+            }
+        }
+
         public static StreetReferenceAnswer Nothing(string why)
         {
             return new StreetReferenceAnswer(false, false, 0.0, 0.0, why, string.Empty, string.Empty);

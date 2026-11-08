@@ -41,7 +41,7 @@ namespace RcrcGreen.Core.Tests.Kpi
                     "  Which rows hold a name and which rows the total reaches are read off the file when "
                     + "Create is pressed, never off a range in this tool, and the report says what it found."
                 },
-                TemplateWords.WouldFill(KpiTemplates.ExistingParks, Picked));
+                TemplateWords.WouldFill(KpiTemplates.ExistingParks, Picked, StreetsH8Option.InterventionArea));
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             foreach (KpiTemplate template in KpiTemplates.All)
             {
-                foreach (string line in TemplateWords.WouldFill(template, Picked))
+                foreach (string line in TemplateWords.WouldFill(template, Picked, StreetsH8Option.InterventionArea))
                 {
                     if (!line.StartsWith("Tree List", System.StringComparison.Ordinal)) continue;
 
@@ -70,7 +70,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         public void WithNothingPickedTheLinesPointAtThePickers()
         {
             IReadOnlyList<string> lines = TemplateWords.WouldFill(
-                KpiTemplates.ExistingParks, ChosenParameters.NonePicked);
+                KpiTemplates.ExistingParks, ChosenParameters.NonePicked, StreetsH8Option.InterventionArea);
 
             Assert.Contains("  D3  the parameter picked under Component, read off the plot's first sheet", lines);
             Assert.Contains("  E4  the parameter picked under Location, read off Project Information", lines);
@@ -93,7 +93,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         {
             foreach (KpiTemplate template in KpiTemplates.All)
             {
-                foreach (string line in TemplateWords.WouldFill(template, Picked))
+                foreach (string line in TemplateWords.WouldFill(template, Picked, StreetsH8Option.InterventionArea))
                 {
                     Assert.DoesNotContain("PRX_COMPONENT", line);
                     Assert.DoesNotContain("title block", line);
@@ -104,7 +104,7 @@ namespace RcrcGreen.Core.Tests.Kpi
         [Fact]
         public void TheStreetsBlockNamesAllThreeCellsOfRowEightAndWhereEachComesFrom()
         {
-            IReadOnlyList<string> lines = TemplateWords.WouldFill(KpiTemplates.Streets, Picked);
+            IReadOnlyList<string> lines = TemplateWords.WouldFill(KpiTemplates.Streets, Picked, StreetsH8Option.InterventionArea);
 
             // **Three cells on one row from three sources**, since the client emptied H8. The
             // area is off the 00 link, the width and the length off the reference file, and the

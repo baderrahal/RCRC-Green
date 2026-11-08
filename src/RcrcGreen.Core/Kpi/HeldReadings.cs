@@ -56,11 +56,19 @@ namespace RcrcGreen.Core.Kpi
             string templatePath,
             string componentParameter,
             string referenceParameter,
-            IEnumerable<string> ticked)
+            IEnumerable<string> ticked,
+            StreetsH8Option streetsH8)
         {
             if (template == null) throw new ArgumentNullException("template");
 
             if (held == null) return ReadingsSource.Read("no run is held, so the model was read");
+
+            // **A READING TAKEN UNDER ROW x LENGTH HOLDS NO REGIONS**, K79, so going back to
+            // the Revit area on it would write nothing and read as a plot with no area.
+            if (held.StreetsH8 != streetsH8)
+            {
+                return ReadingsSource.Read("the STREETS H8 option changed since the run before, so the model was read again");
+            }
 
             if (held.Wrote)
             {

@@ -344,14 +344,14 @@ namespace RcrcGreen.Core.Tests.Kpi
 
             ReadingsSource again = HeldReadings.Decide(
                 mosques, "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached", KpiTemplates.Mosques,
-                @"C:\templates\MOSQUES.xlsx", "PRX_Component", "PRX_Plot_UID2", new[] { "DM-12" });
+                @"C:\templates\MOSQUES.xlsx", "PRX_Component", "PRX_Plot_UID2", new[] { "DM-12" }, StreetsH8Option.InterventionArea);
 
             Assert.True(again.Reused);
 
             // The same held run offered for another template reads the model again and says so.
             ReadingsSource other = HeldReadings.Decide(
                 mosques, "RCRC_NG05_NU_MAIN_RVT24_SHEETS_detached", KpiTemplates.Streets,
-                @"C:\templates\STREETS.xlsx", "PRX_Component", "PRX_Plot_UID2", new[] { "DM-12" });
+                @"C:\templates\STREETS.xlsx", "PRX_Component", "PRX_Plot_UID2", new[] { "DM-12" }, StreetsH8Option.InterventionArea);
 
             Assert.False(other.Reused);
             Assert.Equal(

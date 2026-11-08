@@ -37,7 +37,7 @@ namespace RcrcGreen.Core.Tests.Kpi
 
         private static ReadingsSource DecideSame(KpiCreateRun run, params string[] ticked)
         {
-            return HeldReadings.Decide(run, Title, KpiTemplates.Mosques, TemplatePath, "PRX_Component", "PRX_Plot_UID2", ticked);
+            return HeldReadings.Decide(run, Title, KpiTemplates.Mosques, TemplatePath, "PRX_Component", "PRX_Plot_UID2", ticked, StreetsH8Option.InterventionArea);
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace RcrcGreen.Core.Tests.Kpi
             KpiTemplate template = KpiTemplates.All.Single(one => one.Name == templateName);
 
             ReadingsSource source = HeldReadings.Decide(
-                CreateFixture.Run(), title, template, templatePath, component, reference, ticked.Split(','));
+                CreateFixture.Run(), title, template, templatePath, component, reference, ticked.Split(','), StreetsH8Option.InterventionArea);
 
             Assert.False(source.Reused);
             Assert.Contains(named, source.Why);

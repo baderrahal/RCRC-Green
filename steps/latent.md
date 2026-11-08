@@ -913,3 +913,38 @@ Where: KpiRequestHandler where the split does not add up
 Input: a split whose shares and unplaced plots do not cover the ticked list
 Why latent: PlotsPerTemplate builds the split so that it always adds up, and every per plot section shares it
 Found: slash round, breaker pass 2
+
+## L129 A new template laid out like STREETS under ROW x Length
+
+Where: KpiRequestHandler.OnePlot asks ReferenceEquals against KpiTemplates.Streets, StreetsH8 asks the map
+Input: an unknown workbook offered on the STREETS layout with ROW x Length picked
+Why latent: no such workbook exists, the same reason as L56 and L119
+Found: H8 round, breaker and reviewer pass 1
+
+## L130 A nought in the street file is missed by the not answered section
+
+Where: KpiCreateReport.TheStreetsNotAnswered filters on Found
+Input: a ROAD_WIDTH or ES_QUANTITY of 0
+Why latent: whether the file holds a 0 is UNKNOWN, and the plot's own area line and the glance both name it
+Found: H8 round, breaker pass 1
+
+## L131 A zero H8 is invisible to the divide by zero check
+
+Where: WorkbookFormulas never judges a formula cell as a divisor
+Input: a template dividing by H8 with no guard, with H8 a formula over an empty cell
+Why latent: STREETS divides through the defined name in a guarded IF, E32, and the J8 division is only in the test fixture
+Found: H8 round, breaker pass 1
+
+## L132 Two stale sentences and a restated rule
+
+Where: KpiCreatePlan.cs and StreetReference.cs comments saying nothing goes in H8, and CreateFixture.Run restating ReadsRegions
+Input: none, these are comments and a test fixture
+Why latent: no output changes. The five argument Reconciliation.Of has only test callers for the same reason
+Found: H8 round, reviewer pass 1
+
+## L133 What the formula check prints, an old H8, and one flag for a list
+
+Where: WorkbookFormulas Holds, StreetsH8.InWords with an old H8, Reconciliation areaFromTheStreetFile
+Input: a mapped cell holding a template formula, a STREETS copy where H8 is still =Width*F8, a run of several plots
+Why latent: no current template has a formula in a mapped cell, the client emptied H8, and the only caller passes one plot
+Found: H8 round, breaker pass 2

@@ -1343,7 +1343,12 @@ namespace RcrcGreen.Core.Kpi
                     }
                 }
 
-                found.Add(new ComputedFrom(input, present, held == null ? string.Empty : held.Text, readers, blanks));
+                // A formula with no cached result has no text, and "holds (empty)" misdescribes it.
+                string holds = held == null
+                    ? string.Empty
+                    : held.HasFormula && held.Text.Length == 0 ? "a formula" : held.Text;
+
+                found.Add(new ComputedFrom(input, present, holds, readers, blanks));
             }
 
             return found;

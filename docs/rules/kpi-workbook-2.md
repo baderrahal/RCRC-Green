@@ -211,3 +211,32 @@ The three are REQUIRED arguments of `KpiCreatePlan.Of` now, so a caller that for
 not compile. A default that reads as a deliberate empty is how a whole link in a chain goes
 missing without a word.
 
+## STREETS H8, the Revit area or the formula
+
+**K79.** Bader's rule of 8 November, STREETS only, one row in Setup with two radio buttons,
+remembered per person in `kpi-streets-h8.txt` beside the add-in. A missing or unreadable file is
+Intervention area, so no workbook changes for anyone who does not pick. The report gains one line.
+
+```
+Intervention area    H8 holds the Revit area off the 00 link, as K15 says
+ROW x Length         H8 holds =F8*D8, D8 and F8 written as ever off the street file
+```
+
+`StreetsH8` in Core is the one place for this: the file's words, the parse, the formula and the area.
+The formula's cells come off the map, and a template without all three cells ignores the option. The option rides on `StreetReferenceAnswer` through `WithH8`
+because the plan and the PDF already both require that argument.
+
+**Under ROW x Length** no filled region is read, the reconciliation wants no area, so a street plot
+is never refused or asked about two regions, and the area every number takes is D8 x F8 through
+`StreetsH8.Area`, the same number Excel shows at H8. **Held readings are not reused across a change
+of option**, because a reading taken under ROW x Length holds no regions.
+
+**With no usable ROW or length**, a row in sqm, a missing row or a nought, the formula is still written
+and shows 0 until both cells hold a number, nothing is taken from Revit for that plot, and the report's area line names what is missing in one line. The workbook recalculates on open
+through the three flags `WorkbookPatcher` already sets, and the formula cell carries no cached result.
+
+**The Roads PDF has no Area box**, only Row and Length, Q23, so no PDF box reads this area on a street
+plot under either option. Total areas to be greened is canopy plus planting plus lawn on all three
+forms and reads no area. The report names the layout and then the option on the two lines under its
+build stamp.
+
